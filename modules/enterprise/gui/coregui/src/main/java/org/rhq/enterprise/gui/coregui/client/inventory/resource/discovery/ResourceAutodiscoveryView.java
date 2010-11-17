@@ -24,6 +24,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -129,6 +130,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         treeGrid.setDataSource(dataSource);
         treeGrid.setAutoFetchData(true);
         treeGrid.setResizeFieldsInRealTime(true);
+        treeGrid.setAutoFitData(Autofit.HORIZONTAL);
+        treeGrid.setWrapCells(true);
+        treeGrid.setFixedRecordHeights(false);
 
         final TreeGridField name, key, type, description, status, ctime;
         name = new TreeGridField("name");

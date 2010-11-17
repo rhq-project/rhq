@@ -38,6 +38,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
@@ -45,6 +46,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * @author Greg Hinkle
  */
 public class ResourceTypePluginTreeDataSource extends DataSource {
+
+    private Messages MSG = CoreGUI.getMessages();
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
@@ -54,17 +57,17 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-        DataSourceTextField idField = new DataSourceTextField("id", "ID");
+        DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG.view_type_parentId());
         parentIdField.setForeignKey("id");
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.common_title_name());
 
-        DataSourceTextField resourceKeyField = new DataSourceTextField("plugin", "Plugin");
+        DataSourceTextField resourceKeyField = new DataSourceTextField("plugin", MSG.common_title_plugin());
 
-        DataSourceTextField resourceTypeField = new DataSourceTextField("category", "Category");
+        DataSourceTextField resourceTypeField = new DataSourceTextField("category", MSG.common_title_category());
 
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField);
     }
@@ -98,7 +101,7 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
 
             resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load resource type tree data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_type_typeTreeLoadFailure(), caught);
                 }
 
                 public void onSuccess(PageList<ResourceType> result) {
@@ -175,6 +178,8 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
 
     public static class PluginTreeNode extends TreeNode {
 
+        private static String pluginStr = CoreGUI.getMessages().common_title_plugin();
+
         String id;
 
         PluginTreeNode(String pluginName) {
@@ -183,7 +188,7 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             this.id = pluginName;
             setParentID(null);
 
-            setAttribute("name", pluginName + " Plugin");
+            setAttribute("name", pluginName + " " + pluginStr);
             //            setAttribute("plugin",pluginName);
             setIcon("types/plugin_16.png"); // todo doesn't work
             setEnabled(true);

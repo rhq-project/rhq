@@ -67,15 +67,15 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
             availableFilterForm.setNumCols(6);
             availableFilterForm.setWidth("75%");
-            final TextItem search = new TextItem("search", "Search");
+            final TextItem search = new TextItem("search", MSG.common_label_search());
             final SelectItem categorySelect;
 
-            typeSelectItem = new IPickTreeItem("type", "Type");
+            typeSelectItem = new IPickTreeItem("type", MSG.common_title_type());
             typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource());
             typeSelectItem.setValueField("id");
             typeSelectItem.setCanSelectParentItems(true);
             typeSelectItem.setLoadDataOnDemand(false);
-            typeSelectItem.setEmptyMenuMessage("Loading...");
+            typeSelectItem.setEmptyMenuMessage(MSG.common_msg_loading());
             typeSelectItem.setShowIcons(true);
 
             if (this.forceResourceTypeFilter) {
@@ -85,7 +85,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
                 typeSelectItem.setVisible(false);
             }
 
-            categorySelect = new SelectItem("category", "Category");
+            categorySelect = new SelectItem("category", MSG.common_title_category());
             LinkedHashMap<String, String> valueMap = buildResourceCategoryValueMap();
             categorySelect.setValueMap(valueMap);
             categorySelect.setAllowEmptyValue(true);
@@ -142,7 +142,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
     @Override
     protected String getItemTitle() {
-        return "resource";  
+        return "resource";
     }
 
     /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.

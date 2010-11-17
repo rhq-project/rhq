@@ -31,17 +31,18 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  * @author Greg Hinkle
  */
 public class MeasurementOOBView extends Table {
+
     public static final String VIEW_ID = "SuspectMetrics";
-    
+    private static final String TITLE = MSG.view_measurementOob_title();
+
     public MeasurementOOBView(String locatorId) {
-        super(locatorId, "Suspect Metrics");
+        super(locatorId, TITLE);
 
         setDataSource(new MeasurementOOBDataSource());
     }
 
     @Override
     protected void configureTable() {
-
         getListGrid().setAlternateRecordStyles(false);
 
         getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
@@ -49,6 +50,5 @@ public class MeasurementOOBView extends Table {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
             }
         });
-
     }
 }

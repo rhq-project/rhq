@@ -58,22 +58,22 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField metricField = new DataSourceTextField("scheduleName", "Metric");
+        DataSourceTextField metricField = new DataSourceTextField("scheduleName", MSG.dataSource_measurementOob_field_scheduleName());
         fields.add(metricField);
 
-        DataSourceTextField resourceField = new DataSourceTextField("resourceName", "Resource");
+        DataSourceTextField resourceField = new DataSourceTextField("resourceName", MSG.dataSource_measurementOob_field_resourceName());
         fields.add(resourceField);
 
-        DataSourceTextField parentField = new DataSourceTextField("parentName", "Parent");
+        DataSourceTextField parentField = new DataSourceTextField("parentName", MSG.dataSource_measurementOob_field_parentName());
         fields.add(parentField);
 
-        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", "Band");
+        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", MSG.dataSource_measurementOob_field_formattedBaseband());
         fields.add(bandField);
 
-        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", "Outlier");
+        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", MSG.dataSource_measurementOob_field_formattedOutlier());
         fields.add(outlierField);
 
-        DataSourceTextField factorField = new DataSourceTextField("factor", "Out of range factor (%)");
+        DataSourceTextField factorField = new DataSourceTextField("factor", MSG.dataSource_measurementOob_field_factor());
         fields.add(factorField);
 
         return fields;
@@ -88,7 +88,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         GWTServiceLookup.getMeasurementDataService().getSchedulesWithOOBs(null, null, null, pc,
             new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load measurement OOB information", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_measurementOob_error_fetchFailure(), caught);
                 }
 
                 public void onSuccess(PageList<MeasurementOOBComposite> result) {

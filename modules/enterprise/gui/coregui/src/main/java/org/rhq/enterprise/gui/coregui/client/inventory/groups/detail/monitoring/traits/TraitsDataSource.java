@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring
 import java.util.List;
 
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -47,12 +46,12 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField groupIdField = new DataSourceIntegerField(
-            MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, "Group Id");
+            MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, MSG.dataSource_traits_group_field_groupId());
         groupIdField.setHidden(true);
         fields.add(0, groupIdField);
 
         DataSourceTextField resourceNameField = new DataSourceTextField(
-            MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, "Member Resource");
+            MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, MSG.dataSource_traits_group_field_memberResource());
         fields.add(0, resourceNameField);
 
         return fields;

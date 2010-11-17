@@ -239,8 +239,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
                 if (node != null) {
                     treeGrid.selectSingleRecord(node);
                 } else {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Unknown page name '" + pageName + "' for section '" + sectionName + "' - URL is invalid.");
+                    CoreGUI.getErrorHandler().handleError(MSG.view_leftNav_unknownPage(pageName, sectionName));
                 }
             }
         }

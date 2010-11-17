@@ -28,7 +28,7 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
 
     public BundleDistributionFileUploadForm(String locatorId, boolean showUploadButton) {
 
-        super(locatorId, "Distribution File", "0", true, showUploadButton, null);
+        super(locatorId, MSG.view_upload_bundleDistFile(), "0", true, showUploadButton, null);
 
         setAction(GWT.getModuleBaseURL() + "BundleDistributionFileUploadServlet");
     }
@@ -64,7 +64,7 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
         try {
             id = Integer.parseInt(bundleVersionIdString);
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Bad distribution file upload results", e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_bundleDistFile(), e);
         }
         return id;
     }

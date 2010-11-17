@@ -43,7 +43,7 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
-        TagCriteria criteria = new TagCriteria();
+        // TagCriteria criteria = new TagCriteria();
 
         String search = (String) request.getCriteria().getValues().get("tag");
         if (search != null) {
@@ -53,7 +53,7 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
 
         GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(), new AsyncCallback<PageList<Tag>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tags_error_1(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

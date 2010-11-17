@@ -60,11 +60,11 @@ public class GroupCreateWizard extends AbstractWizard {
     }
 
     public String getWindowTitle() {
-        return "Create Group";
+        return MSG.view_groupCreateWizard_windowTitle();
     }
 
     public String getTitle() {
-        return "Create Group";
+        return MSG.view_groupCreateWizard_title();
     }
 
     public String getSubtitle() {
@@ -86,15 +86,15 @@ public class GroupCreateWizard extends AbstractWizard {
         groupService.createResourceGroup(createStep.getGroup(), memberStep.getSelectedResourceIds(),
             new AsyncCallback<ResourceGroup>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create Resource group.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_groupCreateWizard_createFailure(), caught);
                 }
 
                 public void onSuccess(ResourceGroup result) {
                     String groupUrl = LinkManager.getResourceGroupLink(result.getId());
-                    String conciseMessage = "Resource group created. [<a href='" + groupUrl + "'>View Group</a>]";
-                    String detailedMessage =
-                        "Created new " + result.getGroupCategory().name().toLowerCase() + " Resource group '"
-                            + result.getName() + "' with " + memberStep.getSelectedResourceIds().length + " members.";
+                    String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise(groupUrl);
+                    String detailedMessage = MSG.view_groupCreateWizard_createSuccessful_full(result.getGroupCategory()
+                        .name().toLowerCase(), result.getName(), String
+                        .valueOf(memberStep.getSelectedResourceIds().length));
                     CoreGUI.getMessageCenter().notify(new Message(conciseMessage, detailedMessage));
                     resourceGroupListView.refresh();
                 }

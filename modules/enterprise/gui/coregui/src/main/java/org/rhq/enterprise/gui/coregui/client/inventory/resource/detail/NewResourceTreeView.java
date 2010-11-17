@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
@@ -127,7 +128,7 @@ public class NewResourceTreeView extends LocatableVLayout {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                         ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
                             .getSelectedRecord();
-                        com.allen_sauer.gwt.log.client.Log.info("Resource selected in tree: " + node.getResource());
+                        Log.info("Resource selected in tree: " + node.getResource());
 
                         String newToken = "Resource/" + node.getResource().getId();
                         String currentToken = History.getToken();
@@ -187,16 +188,16 @@ public class NewResourceTreeView extends LocatableVLayout {
     private void buildResourceContextMenu(final Resource resource, final ResourceType resourceType) {
         contextMenu.setItems(new MenuItem(resource.getName()));
 
-        contextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
+        contextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(resourceType.getName())));
 
-        MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
+        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_pluginConfiguration());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int resourceId = resource.getId();
                 int resourceTypeId = resourceType.getId();
 
                 Window configEditor = new Window();
-                configEditor.setTitle("Edit " + resource.getName() + " plugin configuration");
+                configEditor.setTitle(MSG.view_tree_common_contextMenu_editPluginConfiguration(resource.getName()));
                 configEditor.setWidth(800);
                 configEditor.setHeight(800);
                 configEditor.setIsModal(true);
@@ -212,14 +213,14 @@ public class NewResourceTreeView extends LocatableVLayout {
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
         contextMenu.addItem(editPluginConfiguration);
 
-        MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
+        MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
         editResourceConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int resourceId = resource.getId();
                 int resourceTypeId = resourceType.getId();
 
                 final Window configEditor = new Window();
-                configEditor.setTitle("Edit " + resource.getName() + " resource configuration");
+                configEditor.setTitle(MSG.view_tree_common_contextMenu_editResourceConfiguration(resource.getName()));
                 configEditor.setWidth(800);
                 configEditor.setHeight(800);
                 configEditor.setIsModal(true);
@@ -244,7 +245,7 @@ public class NewResourceTreeView extends LocatableVLayout {
         contextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem("Operations");
+        MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
         Menu opSubMenu = new Menu();
         for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
             MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
@@ -263,7 +264,7 @@ public class NewResourceTreeView extends LocatableVLayout {
         contextMenu.addItem(buildMetricsMenu(resourceType));
 
         // Create Menu
-        MenuItem createChildMenu = new MenuItem("Create Child");
+        MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
         Menu createChildSubMenu = new Menu();
         for (final ResourceType childType : resourceType.getChildResourceTypes()) {
             if (childType.isCreatable()) {
@@ -282,7 +283,7 @@ public class NewResourceTreeView extends LocatableVLayout {
         contextMenu.addItem(createChildMenu);
 
         // Manually Add Menu
-        MenuItem importChildMenu = new MenuItem("Import");
+        MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
         Menu importChildSubMenu = new Menu();
         for (ResourceType childType : resourceType.getChildResourceTypes()) {
             if (childType.isSupportsManualAdd()) {
@@ -306,7 +307,8 @@ public class NewResourceTreeView extends LocatableVLayout {
         criteria.fetchParentResourceTypes(true);
         rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load platform manual add children", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_manualAddChildren(),
+                    caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {
@@ -326,7 +328,7 @@ public class NewResourceTreeView extends LocatableVLayout {
 
         GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load user dashboards", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(), caught);
             }
 
             public void onSuccess(List<Dashboard> result) {
@@ -339,7 +341,8 @@ public class NewResourceTreeView extends LocatableVLayout {
                     defItem.setSubmenu(defSubItem);
 
                     for (final Dashboard d : result) {
-                        MenuItem addToDBItem = new MenuItem("Add chart to Dashboard: " + d.getName());
+                        MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
+                            .getName()));
                         defSubItem.addItem(addToDBItem);
 
                         addToDBItem.addClickHandler(new ClickHandler() {
@@ -357,14 +360,15 @@ public class NewResourceTreeView extends LocatableVLayout {
                                 GWTServiceLookup.getDashboardService().storeDashboard(d,
                                     new AsyncCallback<Dashboard>() {
                                         public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError("Failed to save dashboard to server",
-                                                caught);
+                                            CoreGUI.getErrorHandler().handleError(
+                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(), caught);
                                         }
 
                                         public void onSuccess(Dashboard result) {
                                             CoreGUI.getMessageCenter().notify(
-                                                new Message("Saved dashboard " + result.getName() + " to server",
-                                                    Message.Severity.Info));
+                                                new Message(MSG
+                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                        .getName()), Message.Severity.Info));
                                         }
                                     });
 
@@ -431,7 +435,7 @@ public class NewResourceTreeView extends LocatableVLayout {
 
             resourceService.getPlatformForResource(selectedResource.getId(), new AsyncCallback<Resource>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("adasdf", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_root(), caught);
                 }
 
                 public void onSuccess(Resource result) {
@@ -443,7 +447,8 @@ public class NewResourceTreeView extends LocatableVLayout {
 
                     resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("lkasldf", caught);
+                            CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_tree_common_loadFailed_descendants(), caught);
                         }
 
                         public void onSuccess(PageList<Resource> result) {

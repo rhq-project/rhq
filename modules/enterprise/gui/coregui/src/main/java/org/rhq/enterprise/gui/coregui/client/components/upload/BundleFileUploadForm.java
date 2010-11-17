@@ -55,7 +55,7 @@ public class BundleFileUploadForm extends FileUploadForm {
     }
 
     protected boolean processSubmitCompleteResults(String submitCompleteEventResults) {
-        return !submitCompleteEventResults.contains("Failed to upload file");
+        return !submitCompleteEventResults.contains(MSG.view_upload_error_file());
     }
 
 }

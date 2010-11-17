@@ -118,7 +118,7 @@ public class TagEditorView extends LocatableLayout {
         if (!vertical)
             layout.setMembersMargin(8);
 
-        HTMLFlow title = new HTMLFlow("<b>Tags:</b>");
+        HTMLFlow title = new HTMLFlow("<b>" + MSG.view_tags_title() + "</b>");
         title.setAutoWidth();
         layout.addMember(title);
 
@@ -140,7 +140,7 @@ public class TagEditorView extends LocatableLayout {
 
                 final Img remove = new LocatableImg(tagLayout.extendLocatorId("Remove"),
                     "[skin]/images/actions/remove.png", 16, 16);
-                remove.setTooltip("Click to remove this tag");
+                remove.setTooltip(MSG.view_tags_tooltip_1());
                 remove.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         tags.remove(tag);
@@ -173,7 +173,7 @@ public class TagEditorView extends LocatableLayout {
             final Img modeImg = new LocatableImg(((Locatable) layout).getLocatorId(), "[skin]/images/actions/add.png",
                 16, 16);
 
-            modeImg.setTooltip("Click to edit tags");
+            modeImg.setTooltip(MSG.view_tags_tooltip_2());
             modeImg.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
 
@@ -203,7 +203,7 @@ public class TagEditorView extends LocatableLayout {
         criteria.addSortName(PageOrdering.ASC);
         GWTServiceLookup.getTagService().findTagsByCriteria(criteria, new AsyncCallback<PageList<Tag>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tags_error_1(), caught);
             }
 
             public void onSuccess(PageList<Tag> result) {
@@ -220,8 +220,7 @@ public class TagEditorView extends LocatableLayout {
         tagInput.setDisplayField("tag");
         tagInput.setType("comboBox");
         tagInput.setTextMatchStyle(TextMatchStyle.SUBSTRING);
-        tagInput
-            .setTooltip("Enter a tag in the format \"(namespace:)(semantic=)tagname\" (e.g. it:env=QA, or owner=John)");
+        tagInput.setTooltip(MSG.view_tags_tooltip_3());
         /*tagInput.addBlurHandler(new BlurHandler() {
             public void onBlur(BlurEvent blurEvent) {
                 String tag = form.getValueAsString("tag");

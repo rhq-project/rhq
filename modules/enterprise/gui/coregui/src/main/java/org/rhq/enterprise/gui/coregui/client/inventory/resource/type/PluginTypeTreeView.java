@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -32,15 +31,17 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class PluginTypeTreeView extends VLayout {
+public class PluginTypeTreeView extends LocatableVLayout {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    public PluginTypeTreeView() {
+    public PluginTypeTreeView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
     }
@@ -49,15 +50,13 @@ public class PluginTypeTreeView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
-
         final TreeGrid treeGrid = new CustomResourceTypeTreeGrid();
 
         treeGrid.setHeight100();
 
-        treeGrid.setTitle("Resource Types");
+        treeGrid.setTitle(MSG.view_type_resourceTypes());
         treeGrid.setAnimateFolders(false);
         treeGrid.setResizeFieldsInRealTime(true);
-
 
         final TreeGridField name, plugin, category;
         name = new TreeGridField("name");
@@ -72,20 +71,18 @@ public class PluginTypeTreeView extends VLayout {
         criteria.fetchParentResourceTypes(true);
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        resourceTypeService.findResourceTypesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceType>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue", caught);
-                    }
+        resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load", caught);
+            }
 
-                    public void onSuccess(PageList<ResourceType> result) {
+            public void onSuccess(PageList<ResourceType> result) {
 
-                        treeGrid.getTree().linkNodes(ResourceTypePluginTreeDataSource.buildNodes(result));
+                treeGrid.getTree().linkNodes(ResourceTypePluginTreeDataSource.buildNodes(result));
 
-                    }
-                });
+            }
+        });
     }
-
 
     public static class CustomResourceTypeTreeGrid extends TreeGrid {
         @Override
@@ -95,15 +92,16 @@ public class PluginTypeTreeView extends VLayout {
                 boolean open = getTree().isOpen((TreeNode) record);
 
                 if (record instanceof ResourceTypePluginTreeDataSource.ResourceTypeTreeNode) {
-                    ResourceType resourceType = ((ResourceTypePluginTreeDataSource.ResourceTypeTreeNode) record).getResourceType();
+                    ResourceType resourceType = ((ResourceTypePluginTreeDataSource.ResourceTypeTreeNode) record)
+                        .getResourceType();
 
                     switch (resourceType.getCategory()) {
-                        case PLATFORM:
-                            return "types/Platform_up_16.png";
-                        case SERVER:
-                            return "types/Server_up_16.png";
-                        case SERVICE:
-                            return "types/Service_up_16.png";
+                    case PLATFORM:
+                        return "types/Platform_up_16.png";
+                    case SERVER:
+                        return "types/Server_up_16.png";
+                    case SERVICE:
+                        return "types/Service_up_16.png";
                     }
                 } else if (record instanceof ResourceTypePluginTreeDataSource.PluginTreeNode) {
                     return "types/plugin_16.png";

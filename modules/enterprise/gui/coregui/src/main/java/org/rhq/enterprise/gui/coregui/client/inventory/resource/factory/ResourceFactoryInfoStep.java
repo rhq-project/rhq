@@ -179,7 +179,7 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Resource Information";
+        return MSG.widget_resourceFactoryWizard_infoStepName();
     }
 
     public String getResourceName() {

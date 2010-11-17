@@ -56,7 +56,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
 
         treeGrid.setHeight100();
 
-        treeGrid.setTitle("Resource Types");
+        treeGrid.setTitle(MSG.view_type_resourceTypes());
         treeGrid.setAnimateFolders(false);
         treeGrid.setResizeFieldsInRealTime(true);
 
@@ -75,7 +75,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to load", caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {
@@ -96,7 +96,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
         protected String getIcon(Record record, boolean defaultState) {
 
             if (record instanceof TreeNode) {
-                boolean open = getTree().isOpen((TreeNode) record);
+                // boolean open = getTree().isOpen((TreeNode) record);
 
                 if (record instanceof ResourceTypeTreeDataSource.ResourceTypeTreeNode) {
                     ResourceType resourceType = ((ResourceTypeTreeDataSource.ResourceTypeTreeNode) record)

@@ -46,10 +46,10 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         availableFilterForm.setWidth100();
         availableFilterForm.setNumCols(4);
 
-        final TextItem search = new TextItem("search", "Search");
+        final TextItem search = new TextItem("search", MSG.common_label_search());
 
-        SelectItem groupCategorySelect = new SelectItem("groupCategory", "Group Category");
-        groupCategorySelect.setValueMap("Compatible", "Mixed");
+        SelectItem groupCategorySelect = new SelectItem("groupCategory", MSG.widget_resourceSelector_groupCategory());
+        groupCategorySelect.setValueMap("Compatible", "Mixed"); // I don't think we can i18n these, may need these literal values - need to double check this
         groupCategorySelect.setAllowEmptyValue(true);
         availableFilterForm.setItems(search, groupCategorySelect, new SpacerItem());
 

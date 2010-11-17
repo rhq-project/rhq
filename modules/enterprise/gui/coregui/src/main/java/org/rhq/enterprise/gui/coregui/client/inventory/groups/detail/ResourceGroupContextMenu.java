@@ -92,7 +92,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
         addItem(new MenuItem("Type: " + resourceType.getName()));
 
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_group_contextMenu_pluginConfiguration());
+        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_pluginConfiguration());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int groupId = group.getId();
@@ -116,14 +116,14 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
         addItem(editPluginConfiguration);
 
-        MenuItem editResourceConfiguration = new MenuItem(MSG.view_group_contextMenu_resourceConfiguration());
+        MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
         editResourceConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int groupId = group.getId();
                 int resourceTypeId = resourceType.getId();
 
                 final Window configEditor = new Window();
-                configEditor.setTitle(MSG.view_group_contextMenu_editResourceConfiguration(group.getName()));
+                configEditor.setTitle(MSG.view_tree_common_contextMenu_editResourceConfiguration(group.getName()));
                 configEditor.setWidth(800);
                 configEditor.setHeight(800);
                 configEditor.setIsModal(true);
@@ -149,7 +149,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem(MSG.view_group_contextMenu_operations());
+        MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
         Menu opSubMenu = new Menu();
         if (resourceType.getOperationDefinitions() != null) {
             for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
@@ -247,7 +247,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
     }
 
     private MenuItem buildMetricsMenu(final ResourceType type) {
-        MenuItem measurements = new MenuItem(MSG.view_group_contextMenu_measurements());
+        MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
 
         GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
@@ -266,7 +266,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                         defItem.setSubmenu(defSubItem);
 
                         for (final Dashboard d : result) {
-                            MenuItem addToDBItem = new MenuItem(MSG.view_group_contextMenu_addChartToDashboard(d
+                            MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
                                 .getName()));
                             defSubItem.addItem(addToDBItem);
 
@@ -274,7 +274,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                 public void onClick(MenuItemClickEvent menuItemClickEvent) {
 
                                     DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " "
-                                        + MSG.view_group_contextMenu_chart(), GraphPortlet.KEY, 250);
+                                        + MSG.view_tree_common_contextMenu_chart(), GraphPortlet.KEY, 250);
                                     p.getConfiguration().put(
                                         new PropertySimple(GraphPortlet.CFG_RESOURCE_GROUP_ID, currentGroup.getId()));
                                     p.getConfiguration().put(
@@ -286,14 +286,18 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                         new AsyncCallback<Dashboard>() {
                                             public void onFailure(Throwable caught) {
                                                 CoreGUI.getErrorHandler().handleError(
-                                                    MSG.view_group_contextMenu_saveChartToDashboardFailure(), caught);
+                                                    MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                    caught);
                                             }
 
                                             public void onSuccess(Dashboard result) {
-                                                CoreGUI.getMessageCenter().notify(
-                                                    new Message(MSG
-                                                        .view_group_contextMenu_saveChartToDashboardSuccessful(result
-                                                            .getName()), Message.Severity.Info));
+                                                CoreGUI
+                                                    .getMessageCenter()
+                                                    .notify(
+                                                        new Message(
+                                                            MSG
+                                                                .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                    .getName()), Message.Severity.Info));
                                             }
                                         });
 

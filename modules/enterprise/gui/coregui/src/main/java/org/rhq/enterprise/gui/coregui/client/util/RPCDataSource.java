@@ -419,8 +419,8 @@ public abstract class RPCDataSource<T> extends DataSource {
             int[] intermediates = criteria.getAttributeAsIntArray(paramName);
             resultArray = (S[]) new Integer[intermediates.length];
             int index = 0;
-            for (Integer next : intermediates) {
-                resultArray[index++] = (S) next;
+            for (int next : intermediates) {
+                resultArray[index++] = (S) Integer.valueOf(next);
             }
         } else if (type == String.class) {
             String[] intermediates = criteria.getAttributeAsStringArray(paramName);
@@ -440,7 +440,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedArrayFilterType(type.getName()));
         }
 
-        Log.debug("Result array = " + resultArray);
+        Log.debug("Result array = " + Arrays.toString(resultArray));
 
         return resultArray;
     }

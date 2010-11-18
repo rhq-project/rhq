@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 /**
  * @author Greg Hinkle
  */
+// TODO (ips, 11/17/10): Can this class be deleted?
 public class OperationWizard extends VLayout{
 
     private Resource resource;
@@ -37,15 +38,6 @@ public class OperationWizard extends VLayout{
         this.resource = resource;
         this.operation = operation;
     }
-
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-
-    }
-
-
 
     public static void startPopupOperationWizard(Resource resource, String operation) {
         final Window dialog = new Window();
@@ -64,6 +56,6 @@ public class OperationWizard extends VLayout{
         });
         dialog.addItem(new OperationWizard(resource, operation));
         dialog.show();
-
     }
+
 }

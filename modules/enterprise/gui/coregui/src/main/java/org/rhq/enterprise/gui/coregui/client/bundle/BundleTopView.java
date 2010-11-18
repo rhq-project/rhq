@@ -67,17 +67,17 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        SectionStackSection bundlesSection = new SectionStackSection("Bundles");
+        SectionStackSection bundlesSection = new SectionStackSection(MSG.view_bundle_bundles());
         bundleTreeView = new BundleTreeView(extendLocatorId("BundleTree"));
         bundlesSection.addItem(bundleTreeView);
         sectionStack.addSection(bundlesSection);
 
-        SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
+        SectionStackSection repositoriesSection = new SectionStackSection(MSG.common_title_repositories());
         ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView(extendLocatorId("RepoTree"));
         repositoriesSection.addItem(repoTree);
         sectionStack.addSection(repositoriesSection);
 
-        SectionStackSection providersSection = new SectionStackSection("Providers");
+        SectionStackSection providersSection = new SectionStackSection(MSG.common_title_providers());
         sectionStack.addSection(providersSection);
 
         addMember(sectionStack);

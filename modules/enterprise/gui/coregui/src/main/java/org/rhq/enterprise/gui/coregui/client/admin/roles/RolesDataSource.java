@@ -31,6 +31,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
@@ -65,6 +66,9 @@ public class RolesDataSource extends RPCDataSource<Role> {
         public static final String LDAP_GROUPS = "ldapGroups";
     }
 
+    public static final int ID_SUPERUSER = 1;
+    public static final int ID_ALL_RESOURCES = 2;
+
     private static RolesDataSource INSTANCE;
 
     private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
@@ -93,7 +97,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField(Field.ID, "ID");
+        DataSourceIntegerField idDataField = new DataSourceIntegerField(Field.ID, "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
@@ -104,6 +108,21 @@ public class RolesDataSource extends RPCDataSource<Role> {
         DataSourceTextField descriptionField = new DataSourceTextField(Field.DESCRIPTION, MSG
             .common_title_description(), 100, false);
         fields.add(descriptionField);
+
+        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, "Resource Groups");
+        fields.add(resourceGroupsField);
+
+        DataSourceField globalPermissionsField = new DataSourceField(Field.GLOBAL_PERMISSIONS, FieldType.ANY, "Global Permissions");
+        fields.add(globalPermissionsField);
+
+        DataSourceField resourcePermissionsField = new DataSourceField(Field.RESOURCE_PERMISSIONS, FieldType.ANY, "Resource Permissions");
+        fields.add(resourcePermissionsField);
+
+        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
+        fields.add(subjectsField);
+
+        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY, "LDAP Groups");
+        fields.add(ldapGroupsField);
 
         return fields;
     }

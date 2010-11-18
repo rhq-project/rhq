@@ -287,18 +287,30 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         // Load the data into the form.
         this.form.editRecord(record);
 
+        // This tells form.saveData() to invoke executeUpdate() on the dataSource.
+        this.form.setSaveOperationType(DSOperationType.UPDATE);
+
         // Now that all the widgets have been created and initialized, make everything visible.
-        LOADING_LABEL.hide();
-        this.editCanvas.show();
-        markForRedraw();
+        displayForm();
     }
 
     private void editNewRecord() {
         this.titleBar.setTitle("New " + this.dataTypeName);
+
         Record record = createNewRecord();
-        editRecord(record);
+        this.form.editRecord(record);
+
         // This tells form.saveData() to invoke executeAdd() on the dataSource.
         this.form.setSaveOperationType(DSOperationType.ADD);
+
+        // Now that all the widgets have been created and initialized, make everything visible.
+        displayForm();
+    }
+
+    private void displayForm() {
+        LOADING_LABEL.hide();
+        this.editCanvas.show();
+        markForRedraw();
     }
 
     protected abstract Record createNewRecord();
@@ -325,8 +337,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected void onExistingRecordFetched(Record record) {
         editRecord(record);
-        // This tells form.saveData() to invoke executeUpdate() on the dataSource.
-        this.form.setSaveOperationType(DSOperationType.UPDATE);
+
 
         // Perform up front validation for existing records.
         // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.

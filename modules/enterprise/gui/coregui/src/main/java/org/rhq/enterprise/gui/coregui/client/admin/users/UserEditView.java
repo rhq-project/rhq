@@ -53,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsCh
  */
 public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
-    private static final String DATA_TYPE_NAME = "user";
     private static final String HEADER_ICON = "global/User_24.png";
     private static final int SUBJECT_ID_RHQADMIN = 2;
 
@@ -62,7 +61,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private boolean hasManageSecurityPermission;
 
     public UserEditView(String locatorId, int subjectId) {
-        super(locatorId, new UsersDataSource(), subjectId, DATA_TYPE_NAME, HEADER_ICON);
+        super(locatorId, new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
     }
 
     @Override
@@ -204,4 +203,5 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         super.reset();
         this.roleSelector.reset();
     }
+    
 }

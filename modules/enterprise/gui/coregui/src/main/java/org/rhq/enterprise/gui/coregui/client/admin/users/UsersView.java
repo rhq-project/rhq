@@ -22,14 +22,12 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all users and provides the ability to view details of or delete those users and to create new
@@ -44,12 +42,7 @@ public class UsersView extends TableSection {
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
-    private static final int ID_OVERLORD = 1;
-    private static final int ID_RHQADMIN = 2;
-
     private static final String HEADER_ICON = "global/User_24.png";
-
-    private static Message message;
 
     public UsersView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_users());
@@ -58,15 +51,6 @@ public class UsersView extends TableSection {
 
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
-    }
-
-    @Override
-    public void refresh() {
-        super.refresh();
-        if (UsersView.message != null) {
-            CoreGUI.getMessageCenter().notify(UsersView.message);
-            UsersView.message = null;
-        }
     }
 
     @Override
@@ -97,8 +81,8 @@ public class UsersView extends TableSection {
                     }
 
                     for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt("id");
-                        if (id == ID_OVERLORD || id == ID_RHQADMIN) {
+                        int id = record.getAttributeAsInt(UsersDataSource.Field.ID);
+                        if (id == UsersDataSource.ID_OVERLORD || id == UsersDataSource.ID_RHQADMIN) {
                             // The superuser and rhqadmin users cannot be deleted.
                             return false;
                         }
@@ -125,12 +109,12 @@ public class UsersView extends TableSection {
 
     @Override
     protected String getDataTypeName() {
-        return "user";
+        return MSG.common_label_user();
     }
 
     @Override
     protected String getDataTypeNamePlural() {
-        return "users";
+        return MSG.common_label_users();
     }
 
 }

@@ -38,9 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 public class RolesView extends TableSection implements BookmarkableView {
     public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
 
-    private static final int ID_SUPERUSER = 1;
-    private static final int ID_ALL_RESOURCES = 2;
-
     // TODO: We need a 24x24 version of the Role icon.
     private static final String HEADER_ICON = "global/Role_16.png";
 
@@ -72,7 +69,7 @@ public class RolesView extends TableSection implements BookmarkableView {
 
                     for (ListGridRecord record : selection) {
                         int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
-                        if (id == ID_SUPERUSER || id == ID_ALL_RESOURCES) {
+                        if (id == RolesDataSource.ID_SUPERUSER || id == RolesDataSource.ID_ALL_RESOURCES) {
                             // The superuser and all-resources roles cannot be deleted.
                             return false;
                         }

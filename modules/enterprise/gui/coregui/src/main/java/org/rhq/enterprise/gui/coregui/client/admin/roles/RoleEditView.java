@@ -57,7 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
  */
 public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implements BookmarkableView {
 
-    private static final String DATA_TYPE_NAME = "role";
     private static final String HEADER_ICON = "global/Role_16.png";
 
     private PermissionEditorView permissionEditorItem;
@@ -75,7 +74,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private boolean isLdapConfigured;
 
     public RoleEditView(String locatorId, int roleId) {
-        super(locatorId, new RolesDataSource(), roleId, DATA_TYPE_NAME, HEADER_ICON);
+        super(locatorId, new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
     }
 
     @Override

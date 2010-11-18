@@ -74,6 +74,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         public static final String PASSWORD_VERIFY = "passwordVerify";
     }
 
+    public static final int ID_OVERLORD = 1;
+    public static final int ID_RHQADMIN = 2;
+
     private final SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
     public static UsersDataSource getInstance() {

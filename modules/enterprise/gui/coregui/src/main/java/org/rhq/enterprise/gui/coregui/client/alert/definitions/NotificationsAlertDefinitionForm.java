@@ -178,10 +178,12 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         protected List<DataSourceField> addDataSourceFields() {
             List<DataSourceField> fields = super.addDataSourceFields();
 
-            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, "Sender");
+            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, MSG
+                .view_alert_definition_notification_editor_field_sender());
             fields.add(senderField);
 
-            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, "Configuration");
+            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, MSG
+                .view_alert_definition_notification_editor_field_configuration());
             fields.add(configField);
 
             return fields;
@@ -198,7 +200,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             record.setAttribute(FIELD_OBJECT, from);
             record.setAttribute(FIELD_SENDER, from.getSenderName());
             // our executeFetch will fill in the real value for FIELD_CONFIGURATION
-            record.setAttribute(FIELD_CONFIGURATION, "(unknown)");
+            record.setAttribute(FIELD_CONFIGURATION, "("
+                + MSG.view_alert_definition_notification_editor_field_configuration_not_loaded() + ")");
             return record;
         }
 
@@ -221,8 +224,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get notification configuration preview",
-                            caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_editor_field_configuration_loadFailed(), caught);
                         response.setData(records);
                         processResponse(request.getRequestId(), response);
                     }
@@ -241,9 +244,11 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
         @Override
         protected void configureTable() {
-            ListGridField senderField = new ListGridField(FIELD_SENDER, "Sender");
+            ListGridField senderField = new ListGridField(FIELD_SENDER, MSG
+                .view_alert_definition_notification_editor_field_sender());
             senderField.setWidth("25%");
-            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, "Configuration");
+            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, MSG
+                .view_alert_definition_notification_editor_field_configuration());
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
 
@@ -260,34 +265,34 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 }
             });
 
-            addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
+            addTableAction(this.extendLocatorId("add"), MSG.common_button_add(), null, new AbstractTableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);
                 }
             });
 
-            addTableAction(this.extendLocatorId("delete"), "Delete",
-                "Are you sure you want to delete the selected alert notifications?", new AbstractTableAction(
-                    TableActionEnablement.ANY) {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        for (ListGridRecord record : selection) {
-                            AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
-                            notifications.remove(notif);
-                        }
-                        table.refresh();
+            addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+                .view_alert_definition_notification_editor_delete_confirm(), new AbstractTableAction(
+                TableActionEnablement.ANY) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    for (ListGridRecord record : selection) {
+                        AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
+                        notifications.remove(notif);
                     }
-                });
+                    table.refresh();
+                }
+            });
         }
 
         private void popupNotificationEditor(AlertNotification notifToEdit) {
             final Window winModal = new LocatableWindow(NotificationsAlertDefinitionForm.this
                 .extendLocatorId("notificationEditorWindow"));
             if (notifToEdit == null) {
-                winModal.setTitle("Add Notification");
+                winModal.setTitle(MSG.view_alert_definition_notification_editor_title_add());
             } else {
-                winModal.setTitle("Edit Notification");
+                winModal.setTitle(MSG.view_alert_definition_notification_editor_title_edit());
             }
             winModal.setOverflow(Overflow.VISIBLE);
             winModal.setShowMinimizeButton(false);

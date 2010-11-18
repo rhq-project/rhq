@@ -53,7 +53,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourcePermission permissions;
 
     public GroupAlertDefinitionsView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, "Group Alert Definitions");
+        super(locatorId, MSG.view_alert_definitions_table_title_group());
         this.group = groupComposite.getResourceGroup();
         this.permissions = groupComposite.getResourcePermission();
 
@@ -131,13 +131,13 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 @Override
                 public void onSuccess(Integer result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("[" + result + "] group alert definitions enabled.", Severity.Info));
+                        new Message(MSG.view_alert_definitions_enable_success(String.valueOf(result)), Severity.Info));
                     GroupAlertDefinitionsView.this.refresh();
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to enable group alert definitions", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_enable_failure(), caught);
                 }
             });
     }
@@ -159,13 +159,13 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 @Override
                 public void onSuccess(Integer result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("[" + result + "] group alert definitions disabled.", Severity.Info));
+                        new Message(MSG.view_alert_definitions_disable_success(String.valueOf(result)), Severity.Info));
                     GroupAlertDefinitionsView.this.refresh();
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to disable group alert definitions.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_disable_failure(), caught);
                 }
             });
     }
@@ -187,13 +187,13 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 @Override
                 public void onSuccess(Integer result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("[" + result + "] group alert definitions deleted.", Severity.Info));
+                        new Message(MSG.view_alert_definitions_delete_success(String.valueOf(result)), Severity.Info));
                     GroupAlertDefinitionsView.this.refresh();
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to delete group alert definitions.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_delete_failure(), caught);
                 }
             });
     }
@@ -205,13 +205,14 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 Integer.valueOf(this.group.getId()), new AsyncCallback<Integer>() {
                     @Override
                     public void onSuccess(Integer result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Alert definition is created", Severity.Info));
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create alert definition.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_create_failure(), caught);
                     }
                 });
         } else {
@@ -220,12 +221,12 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     @Override
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Group alert definition is updated.", Severity.Info));
+                            new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update group alert definition.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
                     }
                 });
         }

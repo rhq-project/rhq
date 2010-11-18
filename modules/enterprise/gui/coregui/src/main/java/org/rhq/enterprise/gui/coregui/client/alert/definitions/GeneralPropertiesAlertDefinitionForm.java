@@ -100,10 +100,10 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             priorityStatic.setValue(alertDef.getPriority().name());
 
             enabledSelection.setValue(alertDef.getEnabled() ? "yes" : "no");
-            enabledStatic.setValue(alertDef.getEnabled() ? "Yes" : "No");
+            enabledStatic.setValue(alertDef.getEnabled() ? MSG.common_val_yes() : MSG.common_val_no());
 
             readOnlySelection.setValue(alertDef.isReadOnly() ? "yes" : "no");
-            readOnlyStatic.setValue(alertDef.isReadOnly() ? "Yes" : "No");
+            readOnlyStatic.setValue(alertDef.isReadOnly() ? MSG.common_val_yes() : MSG.common_val_no());
         }
 
         markForRedraw();
@@ -204,17 +204,17 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     private void buildForm() {
         if (!formBuilt) {
-            nameTextField = new TextItem("name", "Name");
+            nameTextField = new TextItem("name", MSG.common_title_name());
             nameTextField.setWidth(300);
             nameTextField.setDefaultValue("");
-            nameStatic = new StaticTextItem("nameStatic", "Name");
+            nameStatic = new StaticTextItem("nameStatic", MSG.common_title_name());
 
-            descriptionTextField = new TextAreaItem("description", "Description");
+            descriptionTextField = new TextAreaItem("description", MSG.common_title_description());
             descriptionTextField.setWidth(300);
             descriptionTextField.setDefaultValue("");
-            descriptionStatic = new StaticTextItem("descriptionStatic", "Description");
+            descriptionStatic = new StaticTextItem("descriptionStatic", MSG.common_title_description());
 
-            prioritySelection = new SelectItem("priority", "Priority");
+            prioritySelection = new SelectItem("priority", MSG.view_alerts_field_priority());
             LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
             priorities.put(AlertPriority.HIGH.name(), AlertPriority.HIGH.name());
             priorities.put(AlertPriority.MEDIUM.name(), AlertPriority.MEDIUM.name());
@@ -226,26 +226,25 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             prioritySelection.setValueMap(priorities);
             prioritySelection.setValueIcons(priorityIcons);
             prioritySelection.setDefaultValue(AlertPriority.MEDIUM.name());
-            priorityStatic = new StaticTextItem("priorityStatic", "Priority");
+            priorityStatic = new StaticTextItem("priorityStatic", MSG.view_alerts_field_priority());
             priorityStatic.setValueIcons(priorityIcons);
 
-            enabledSelection = new RadioGroupItem("enabled", "Enabled");
+            enabledSelection = new RadioGroupItem("enabled", MSG.view_alerts_field_enabled());
             LinkedHashMap<String, String> enabledYesNo = new LinkedHashMap<String, String>(2);
-            enabledYesNo.put("yes", "Yes");
-            enabledYesNo.put("no", "No");
+            enabledYesNo.put("yes", MSG.common_val_yes());
+            enabledYesNo.put("no", MSG.common_val_no());
             enabledSelection.setValueMap(enabledYesNo);
             enabledSelection.setDefaultValue("yes");
-            enabledStatic = new StaticTextItem("enabledStatic", "Enabled");
+            enabledStatic = new StaticTextItem("enabledStatic", MSG.view_alerts_field_enabled());
 
-            readOnlySelection = new RadioGroupItem("readOnly", "Protected");
+            readOnlySelection = new RadioGroupItem("readOnly", MSG.view_alerts_field_protected());
             LinkedHashMap<String, String> readOnlyYesNo = new LinkedHashMap<String, String>(2);
-            readOnlyYesNo.put("yes", "Yes");
-            readOnlyYesNo.put("no", "No");
+            readOnlyYesNo.put("yes", MSG.common_val_yes());
+            readOnlyYesNo.put("no", MSG.common_val_no());
             readOnlySelection.setValueMap(readOnlyYesNo);
             readOnlySelection.setDefaultValue("yes");
-            readOnlySelection
-                .setPrompt("If true, this definition is protected from being changed by the parent definition. In other words, the parent definition settings will not override this definition.");
-            readOnlyStatic = new StaticTextItem("readOnlyStatic", "Protected");
+            readOnlySelection.setPrompt(MSG.view_alerts_field_protected_tooltip());
+            readOnlyStatic = new StaticTextItem("readOnlyStatic", MSG.view_alerts_field_protected());
 
             setFields(nameTextField, nameStatic, descriptionTextField, descriptionStatic, prioritySelection,
                 priorityStatic, enabledSelection, enabledStatic, readOnlySelection, readOnlyStatic);

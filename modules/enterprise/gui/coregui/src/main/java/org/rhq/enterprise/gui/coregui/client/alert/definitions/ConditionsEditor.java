@@ -92,12 +92,12 @@ public class ConditionsEditor extends LocatableVLayout {
         final ConditionDataSource dataSource = new ConditionDataSource();
         table.setDataSource(dataSource);
 
-        table.addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
+        table.addTableAction(this.extendLocatorId("add"), MSG.common_button_add(), null, new AbstractTableAction() {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final Window winModal = new LocatableWindow(ConditionsEditor.this
                     .extendLocatorId("newConditionEditorWindow"));
-                winModal.setTitle("Add Condition");
+                winModal.setTitle(MSG.view_alert_common_tab_conditions_modal_title());
                 winModal.setOverflow(Overflow.VISIBLE);
                 winModal.setShowMinimizeButton(false);
                 winModal.setIsModal(true);
@@ -126,8 +126,8 @@ public class ConditionsEditor extends LocatableVLayout {
                 winModal.show();
             }
         });
-        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?", new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+            .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 for (ListGridRecord record : selection) {
@@ -159,7 +159,8 @@ public class ConditionsEditor extends LocatableVLayout {
         protected List<DataSourceField> addDataSourceFields() {
             List<DataSourceField> fields = super.addDataSourceFields();
 
-            DataSourceTextField conditionField = new DataSourceTextField(FIELD_CONDITION, "Condition");
+            DataSourceTextField conditionField = new DataSourceTextField(FIELD_CONDITION, MSG
+                .view_alert_common_tab_conditions_text());
             fields.add(conditionField);
 
             return fields;

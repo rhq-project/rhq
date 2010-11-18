@@ -95,7 +95,7 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
             refreshWidgets(allAlertDefinitions);
 
             disableWhenFiredSelection.setValue(alertDef.getWillRecover() ? "yes" : "no");
-            disableWhenFiredStatic.setValue(alertDef.getWillRecover() ? "Yes" : "No");
+            disableWhenFiredStatic.setValue(alertDef.getWillRecover() ? MSG.common_val_yes() : MSG.common_val_no());
         }
 
         markForRedraw();
@@ -150,28 +150,31 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
 
     private void buildForm() {
         if (!formBuilt) {
-            disableWhenFiredSelection = new RadioGroupItem("disableWhenFired", "Disable When Fired");
+            disableWhenFiredSelection = new RadioGroupItem("disableWhenFired", MSG
+                .view_alert_definition_recovery_editor_disable_when_fired());
             LinkedHashMap<String, String> yesNo = new LinkedHashMap<String, String>(2);
-            yesNo.put("yes", "Yes");
-            yesNo.put("no", "No");
+            yesNo.put("yes", MSG.common_val_yes());
+            yesNo.put("no", MSG.common_val_no());
             disableWhenFiredSelection.setValueMap(yesNo);
             disableWhenFiredSelection.setDefaultValue("no");
             disableWhenFiredSelection.setWrapTitle(false);
             disableWhenFiredSelection.setWidth(300);
             disableWhenFiredSelection.setHoverWidth(300);
             disableWhenFiredSelection
-                .setTooltip("Indicates if this alert will be disabled after it fires. Once disabled, the alert can be manually re-enabled or a recovery alert can be set up to automatically re-enable it. If this alert is a recovery alert itself, this setting cannot be turned on.");
-            disableWhenFiredStatic = new StaticTextItem("disableWhenFiredStatic", "Disable When Fired");
+                .setTooltip(MSG.view_alert_definition_recovery_editor_disable_when_fired_tooltip());
+            disableWhenFiredStatic = new StaticTextItem("disableWhenFiredStatic", MSG
+                .view_alert_definition_recovery_editor_disable_when_fired());
             disableWhenFiredStatic.setWrapTitle(false);
 
-            recoverAlertSelection = new SelectItem("recoveryAlert", "Recover Alert");
+            recoverAlertSelection = new SelectItem("recoveryAlert", MSG
+                .view_alert_definition_recovery_editor_recovery_alert());
             recoverAlertSelection.setDefaultValue("0");
             recoverAlertSelection.setWrapTitle(false);
             recoverAlertSelection.setHoverWidth(300);
-            recoverAlertSelection
-                .setTooltip("The target alert that will be recovered (i.e. re-enabled) after this alert triggers. Do not select an alert here if you are not defining a recovery alert.");
+            recoverAlertSelection.setTooltip(MSG.view_alert_definition_recovery_editor_recovery_alert_tooltip());
 
-            recoverAlertStatic = new StaticTextItem("recoveryAlertStatic", "Recover Alert");
+            recoverAlertStatic = new StaticTextItem("recoveryAlertStatic", MSG
+                .view_alert_definition_recovery_editor_recovery_alert());
             recoverAlertStatic.setDefaultValue(getNoRecoveryMenuItemTitle());
             recoverAlertStatic.setWrapTitle(false);
             recoverAlertStatic.setWidth(300);
@@ -217,7 +220,8 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
             GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<AlertDefinition>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Cannot build recovery menu", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_recovery_editor_loadFailed(),
+                            caught);
                     }
 
                     public void onSuccess(PageList<AlertDefinition> result) {
@@ -275,7 +279,7 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
     private String getNoRecoveryMenuItemTitle() {
         StringBuilder str = new StringBuilder();
         str.append("-- ");
-        str.append("None");
+        str.append(MSG.view_alert_definition_recovery_editor_none_available());
         str.append(" --");
         return str.toString();
     }

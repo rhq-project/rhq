@@ -78,13 +78,14 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                            .handleError("Cannot determine current roles - starting empty", caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_role_editor_loadFailed(), caught);
                         createNewSelector(null);
                     }
                 });
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot use current roles - starting empty", e);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_alert_definition_notification_role_editor_restoreFailed(), e);
                 createNewSelector(null);
             }
         } else {
@@ -110,7 +111,8 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
                 return true;
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot save the selected roles", e);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_role_editor_saveFailed(),
+                    e);
                 return false;
             }
         }
@@ -187,5 +189,5 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
             return "role";
         }
     }
-    
+
 }

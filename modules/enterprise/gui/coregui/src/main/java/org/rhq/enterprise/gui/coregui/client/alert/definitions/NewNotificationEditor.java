@@ -81,7 +81,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         senderCanvasItem.setShowTitle(false);
         senderCanvasItem.setColSpan(2);
 
-        notificationSenderSelectItem = new SelectItem("notificationSender", "Notification Sender");
+        notificationSenderSelectItem = new SelectItem("notificationSender", MSG
+            .view_alert_definition_notification_editor_sender());
         notificationSenderSelectItem.setDefaultToFirstOption(true);
         notificationSenderSelectItem.setWrapTitle(false);
         notificationSenderSelectItem.setRedrawOnChange(true);
@@ -115,13 +116,15 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                         switchToAlertSender(result[0]);
                         senderCanvasItem.show();
                     } else {
-                        CoreGUI.getErrorHandler().handleError("No alert senders available");
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_editor_none_available());
                     }
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot get alert senders", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_editor_loadFailed(),
+                        caught);
                 }
             });
         }
@@ -142,7 +145,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         spacer2.setColSpan(2);
         spacer2.setHeight(5);
 
-        ButtonItem ok = new ButtonItem("okButtonItem", "OK");
+        ButtonItem ok = new ButtonItem("okButtonItem", MSG.common_button_ok());
         ok.setEndRow(false);
         ok.setAlign(Alignment.RIGHT);
         ok.addClickHandler(new ClickHandler() {
@@ -159,7 +162,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             }
         });
 
-        ButtonItem cancel = new ButtonItem("cancelButtonItem", "Cancel");
+        ButtonItem cancel = new ButtonItem("cancelButtonItem", MSG.common_button_cancel());
         cancel.setStartRow(false);
         cancel.setAlign(Alignment.LEFT);
         cancel.addClickHandler(new ClickHandler() {

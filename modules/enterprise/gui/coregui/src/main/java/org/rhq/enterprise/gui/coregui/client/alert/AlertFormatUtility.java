@@ -159,28 +159,28 @@ public class AlertFormatUtility {
             break;
         }
         case CONTROL: {
-            str.append(MSG.view_alert_common_tab_conditions_type_metric_operation());
+            str.append(MSG.view_alert_common_tab_conditions_type_operation());
             str.append(" [");
             str.append(condition.getName());
             str.append("] ");
-            str.append(MSG.view_alert_common_tab_conditions_type_metric_status());
+            str.append(MSG.view_alert_common_tab_conditions_type_operation_status());
             str.append(" [");
             str.append(condition.getOption());
             str.append("]");
             break;
         }
         case RESOURCE_CONFIG: {
-            str.append(MSG.view_alert_common_tab_conditions_type_metric_resource_configuration());
+            str.append(MSG.view_alert_common_tab_conditions_type_resource_configuration());
             break;
         }
         case EVENT: {
-            str.append(MSG.view_alert_common_tab_conditions_type_metric_event());
+            str.append(MSG.view_alert_common_tab_conditions_type_event());
             str.append(" [");
             str.append(condition.getName());
             str.append("]");
             if (condition.getOption() != null && condition.getOption().length() > 0) {
                 str.append(" ");
-                str.append(MSG.view_alert_common_tab_conditions_type_metric_event_matching());
+                str.append(MSG.view_alert_common_tab_conditions_type_event_matching());
                 str.append(" '");
                 str.append(condition.getOption());
                 str.append("'");
@@ -188,7 +188,7 @@ public class AlertFormatUtility {
             break;
         }
         default: {
-            str.append(MSG.view_alert_common_tab_conditions_type_invalid(category.name()));
+            str.append(MSG.view_alert_common_tab_invalid_condition_category(category.name()));
             break;
         }
         }

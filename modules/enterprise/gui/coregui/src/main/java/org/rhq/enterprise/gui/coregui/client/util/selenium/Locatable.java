@@ -1,7 +1,6 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.google.gwt.core.client.GWT;
-
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
@@ -9,7 +8,7 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
  */
 public interface Locatable {
 
-    Messages MSG = GWT.create(Messages.class);
+    Messages MSG = CoreGUI.getMessages();
 
     /**
      * Returns the locatorId.  This can be useful for constructing more granular locatorIds. For example, if

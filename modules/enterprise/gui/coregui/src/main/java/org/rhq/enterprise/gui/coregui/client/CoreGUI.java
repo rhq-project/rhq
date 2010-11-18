@@ -63,7 +63,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
-    private static final Messages MSG = CoreGUI.getMessages();
+    // This must come first to ensure proper I18N class loading for dev mode
+    private static final Messages MSG = GWT.create(Messages.class);
 
     private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
 
@@ -91,8 +92,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static ViewPath currentViewPath;
 
     private static CoreGUI coreGUI;
-
-    public static Messages messages = GWT.create(Messages.class);
 
     private static Message pendingMessage;
 
@@ -298,7 +297,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static Messages getMessages() {
-        return messages;
+        return MSG;
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {

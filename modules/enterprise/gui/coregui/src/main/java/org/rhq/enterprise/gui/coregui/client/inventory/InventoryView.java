@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLe
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
@@ -53,32 +54,37 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.Resour
  * @author Ian Springer
  */
 public class InventoryView extends AbstractSectionedLeftNavigationView {
-    public static final String VIEW_ID = "Inventory";
+    public static final ViewName VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     // view IDs for Resources section
-    private static final String RESOURCES_SECTION_VIEW_ID = "Resources";
+    private static final ViewName RESOURCES_SECTION_VIEW_ID = new ViewName("Resources", MSG
+        .view_inventory_resources_title());
 
-    private static final String PAGE_AUTODISCOVERY_QUEUE = "AutodiscoveryQueue";
-    private static final String PAGE_ALL_RESOURCES = "AllResources";
-    private static final String PAGE_PLATFORMS = "Platforms";
-    private static final String PAGE_SERVERS = "Servers";
-    private static final String PAGE_SERVICES = "Services";
-    private static final String PAGE_DOWN_SERVERS = "DownServers";
+    private static final ViewName PAGE_AUTODISCOVERY_QUEUE = new ViewName("AutodiscoveryQueue", MSG
+        .view_inventory_adq());
+    private static final ViewName PAGE_ALL_RESOURCES = new ViewName("AllResources", MSG.view_inventory_allResources());
+    private static final ViewName PAGE_PLATFORMS = new ViewName("Platforms", MSG.view_inventory_platforms());
+    private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers());
+    private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services());
+    private static final ViewName PAGE_DOWN_SERVERS = new ViewName("DownServers", MSG.view_inventory_downServers());
 
     // view IDs for Groups section
-    private static final String GROUPS_SECTION_VIEW_ID = "Groups";
+    private static final ViewName GROUPS_SECTION_VIEW_ID = new ViewName("Groups", MSG.view_inventory_groups());
 
-    private static final String PAGE_DYNAGROUP_DEFINITIONS = "DynagroupDefinitions";
-    private static final String PAGE_ALL_GROUPS = "AllGroups";
-    private static final String PAGE_COMPATIBLE_GROUPS = "CompatibleGroups";
-    private static final String PAGE_MIXED_GROUPS = "MixedGroups";
-    private static final String PAGE_PROBLEM_GROUPS = "ProblemGroups";
+    private static final ViewName PAGE_DYNAGROUP_DEFINITIONS = new ViewName("DynagroupDefinitions", MSG
+        .view_inventory_dynagroupDefs());
+    private static final ViewName PAGE_ALL_GROUPS = new ViewName("AllGroups", MSG.view_inventory_allGroups());
+    private static final ViewName PAGE_COMPATIBLE_GROUPS = new ViewName("CompatibleGroups", MSG
+        .common_title_compatibleGroups());
+    private static final ViewName PAGE_MIXED_GROUPS = new ViewName("MixedGroups", MSG.common_title_mixedGroups());
+    private static final ViewName PAGE_PROBLEM_GROUPS = new ViewName("ProblemGroups", MSG
+        .view_inventory_problemGroups());
 
     private Set<Permission> globalPermissions;
 
     public InventoryView() {
         // This is a top level view, so our locator id can simply be our view id.
-        super(VIEW_ID);
+        super(VIEW_ID.getName());
     }
 
     @Override
@@ -123,40 +129,40 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem autodiscoveryQueueItem = new NavigationItem(PAGE_AUTODISCOVERY_QUEUE, "global/Recent_16.png",
             new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE));
+                    return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE.getName()));
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         // TODO: Specify an icon for this item.
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES), null, PAGE_ALL_RESOURCES,
-                    "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
+                return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES.getName()), null, PAGE_ALL_RESOURCES
+                    .getTitle(), "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
             }
         });
 
         NavigationItem platformsItem = new NavigationItem(PAGE_PLATFORMS, "types/Platform_up_16.png",
             new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS), new Criteria(
+                    return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()), new Criteria(
                         ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()),
-                        PAGE_PLATFORMS, "types/Platform_up_24.png");
+                        PAGE_PLATFORMS.getTitle(), "types/Platform_up_24.png");
                 }
             });
 
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, "types/Server_up_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_SERVERS), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS,
-                    "types/Server_up_24.png");
+                return new ResourceSearchView(extendLocatorId(PAGE_SERVERS.getName()), new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS
+                    .getTitle(), "types/Server_up_24.png");
             }
         });
 
         NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, "types/Service_up_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_SERVICES), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES,
-                    "types/Service_up_24.png");
+                return new ResourceSearchView(extendLocatorId(PAGE_SERVICES.getName()), new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES
+                    .getTitle(), "types/Service_up_24.png");
             }
         });
 
@@ -168,7 +174,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                     criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER
                         .name());
                     // TODO (ips, 10/28/10): Should we include down platforms too?
-                    return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS), criteria, MSG
+                    return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS.getName()), criteria, MSG
                         .view_inventory_downServers());
                 }
             });
@@ -182,33 +188,33 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             "types/GroupDefinition_16.png", new ViewFactory() {
                 public Canvas createView() {
                     // TODO: Do we have a 24x24 groupdef icon?
-                    return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS),
+                    return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName()),
                         "types/GroupDefinition_16.png");
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, "types/Group_up_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS), null,
-                    MSG.view_inventory_allGroups(), "types/Cluster_up_24.png", "types/Group_up_24.png");
+                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS.getName()), null, PAGE_ALL_GROUPS
+                    .getTitle(), "types/Cluster_up_24.png", "types/Group_up_24.png");
             }
         });
 
         NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_16.png",
             new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS), new Criteria(
-                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()), MSG
-                        .common_title_compatibleGroups(), "types/Cluster_up_24.png");
+                    return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
+                        PAGE_COMPATIBLE_GROUPS.getTitle(), "types/Cluster_up_24.png");
                 }
             });
 
         NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, "types/Group_up_16.png",
             new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS), new Criteria(
-                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()), MSG
-                        .common_title_mixedGroups(), "types/Group_up_24.png");
+                    return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()), new Criteria(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
+                        PAGE_MIXED_GROUPS.getTitle(), "types/Group_up_24.png");
                 }
             });
 
@@ -217,8 +223,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 public Canvas createView() {
                     // TODO: There is no underlying support for this criteria. Also, there should not be an active New
                     //       button on this page.
-                    return new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS), new Criteria("availability",
-                        "down"), MSG.view_inventory_problemGroups(), "types/Cluster_down_16.png");
+                    return new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()), new Criteria(
+                        "availability", "down"), PAGE_PROBLEM_GROUPS.getTitle(), "types/Cluster_down_16.png");
                 }
             });
 

@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -39,11 +40,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class UsersView extends TableSection {
 
-    public static final String VIEW_ID = "Users";
+    public static final ViewName VIEW_ID = new ViewName("Users", MSG.view_adminSecurity_users());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
-
-    private static final String TITLE = "Users";
 
     private static final int ID_OVERLORD = 1;
     private static final int ID_RHQADMIN = 2;
@@ -53,7 +52,7 @@ public class UsersView extends TableSection {
     private static Message message;
 
     public UsersView(String locatorId) {
-        super(locatorId, TITLE);
+        super(locatorId, MSG.view_adminSecurity_users());
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
 

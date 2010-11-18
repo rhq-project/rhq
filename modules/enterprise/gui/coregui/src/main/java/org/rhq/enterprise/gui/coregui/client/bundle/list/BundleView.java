@@ -99,7 +99,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        addMember(new BackButton(extendLocatorId("BackButton"), "Back to All Bundles", BundleTopView.VIEW_ID));
+        addMember(new BackButton(extendLocatorId("BackButton"), "Back to All Bundles", BundleTopView.VIEW_ID.getTitle()));
 
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 

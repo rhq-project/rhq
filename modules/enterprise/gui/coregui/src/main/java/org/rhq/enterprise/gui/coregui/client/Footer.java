@@ -119,11 +119,11 @@ public class Footer extends LocatableToolStrip {
         }
 
         public void refreshLoggedIn() {
-            setContents("Logged in as " + UserSessionManager.getSessionSubject().getName());
+            setContents(MSG.view_core_loggedInAs(UserSessionManager.getSessionSubject().getName()));
         }
 
         public void refreshLoggedOut() {
-            setContents("Logged out");
+            setContents(MSG.view_core_loggedOut());
         }
     }
 
@@ -158,15 +158,15 @@ public class Footer extends LocatableToolStrip {
                 GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
                     new AsyncCallback<PageList<Alert>>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Latest alerts lookup failed", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
                         }
 
                         public void onSuccess(PageList<Alert> result) {
                             if (result.isEmpty()) {
-                                setContents("no recent alerts");
+                                setContents(MSG.view_core_recentAlerts("0"));
                                 setIcon("subsystems/alert/Alert_LOW_16.png");
                             } else {
-                                setContents(result.getTotalSize() + " recent alerts");
+                                setContents(MSG.view_core_recentAlerts(Integer.toString(result.getTotalSize())));
                                 setIcon("subsystems/alert/Alert_HIGH_16.png");
                             }
                         }

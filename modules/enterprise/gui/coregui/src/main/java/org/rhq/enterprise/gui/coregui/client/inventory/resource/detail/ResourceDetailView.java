@@ -370,7 +370,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                         new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
                             Message.Severity.Warning));
 
-                    CoreGUI.goToView(InventoryView.VIEW_ID);
+                    CoreGUI.goToView(InventoryView.VIEW_ID.getName());
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {

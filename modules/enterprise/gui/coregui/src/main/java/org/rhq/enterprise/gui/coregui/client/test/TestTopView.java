@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLe
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
@@ -41,28 +42,27 @@ import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
  * @author Ian Springer
  */
 public class TestTopView extends AbstractSectionedLeftNavigationView {
-
-    public static final String VIEW_ID = "Test";
+    public static final ViewName VIEW_ID = new ViewName("Test");
 
     // view IDs for Inventory section
-    private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
+    private static final ViewName INVENTORY_SECTION_VIEW_ID = new ViewName("Inventory");
 
-    private static final String PAGE_RESOURCE_SELECTOR = "ResourceSelector";
-    private static final String PAGE_TYPE_TREE = "TypeTree";
+    private static final ViewName PAGE_RESOURCE_SELECTOR = new ViewName("ResourceSelector");
+    private static final ViewName PAGE_TYPE_TREE = new ViewName("TypeTree");
 
     // view IDs for Configuration section
-    private static final String CONFIGURATION_SECTION_VIEW_ID = "Configuration";
+    private static final ViewName CONFIGURATION_SECTION_VIEW_ID = new ViewName("Configuration");
 
-    private static final String PAGE_CONFIG_EDITOR = "ConfigEditor";
-    private static final String PAGE_GROUP_CONFIG_EDITOR = "GroupConfigEditor";
+    private static final ViewName PAGE_CONFIG_EDITOR = new ViewName("ConfigEditor");
+    private static final ViewName PAGE_GROUP_CONFIG_EDITOR = new ViewName("GroupConfigEditor");
 
     // view IDs for Misc section
-    private static final String MISC_SECTION_VIEW_ID = "Misc";
-    private static final String PAGE_PLURALIZATION_TEST = "PluralizationTest";
+    private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
+    private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
-        super(VIEW_ID);
+        super(VIEW_ID.getName());
     }
 
     protected Canvas defaultView() {
@@ -91,13 +91,13 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildInventorySection() {
         NavigationItem resourceSelectorItem = new NavigationItem(PAGE_RESOURCE_SELECTOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR));
+                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR.getName()));
             }
         });
 
         NavigationItem typeTreeItem = new NavigationItem(PAGE_TYPE_TREE, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceTypeTreeView(extendLocatorId(PAGE_TYPE_TREE));
+                return new ResourceTypeTreeView(extendLocatorId(PAGE_TYPE_TREE.getName()));
             }
         });
 
@@ -107,13 +107,13 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildConfigurationSection() {
         NavigationItem configEditorItem = new NavigationItem(PAGE_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestConfigurationView(extendLocatorId(PAGE_CONFIG_EDITOR));
+                return new TestConfigurationView(extendLocatorId(PAGE_CONFIG_EDITOR.getName()));
             }
         });
 
         NavigationItem groupConfigEditorItem = new NavigationItem(PAGE_GROUP_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestGroupConfigurationView(extendLocatorId(PAGE_GROUP_CONFIG_EDITOR));
+                return new TestGroupConfigurationView(extendLocatorId(PAGE_GROUP_CONFIG_EDITOR.getName()));
             }
         });
 
@@ -123,7 +123,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildMiscSection() {
         NavigationItem pluralizationItem = new NavigationItem(PAGE_PLURALIZATION_TEST, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST));
+                return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST.getName()));
             }
         });
 

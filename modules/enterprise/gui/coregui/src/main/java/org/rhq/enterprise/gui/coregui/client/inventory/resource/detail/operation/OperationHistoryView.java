@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -46,15 +47,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  * @author Greg Hinkle
  */
 public class OperationHistoryView extends TableSection {
-
-    public static final String VIEW_ID = "RecentOperations";
-    private static final String TITLE = MSG.view_operationHistoryList_title();
+    public static final ViewName VIEW_ID = new ViewName("RecentOperations", MSG.common_title_recent_operations());
 
     private ResourceComposite composite;
     private Resource resource;
 
     public OperationHistoryView(String locatorId) {
-        super(locatorId, TITLE);
+        super(locatorId, VIEW_ID.getTitle());
         setWidth100();
         setHeight100();
 
@@ -63,9 +62,8 @@ public class OperationHistoryView extends TableSection {
     }
 
     public OperationHistoryView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, TITLE, new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID,
-            String.valueOf(resourceComposite.getResource()
-            .getId())));
+        super(locatorId, VIEW_ID.getTitle(), new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID, String
+            .valueOf(resourceComposite.getResource().getId())));
         this.composite = resourceComposite;
         this.resource = resourceComposite.getResource();
 
@@ -134,9 +132,8 @@ public class OperationHistoryView extends TableSection {
                     }
                 });
 
-            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"),
-                MSG.view_operationHistoryList_button_runOperation(),
-                operationMenu);
+            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), MSG
+                .view_operationHistoryList_button_runOperation(), operationMenu);
             operationsButton.setShowMenuBelow(false);
             operationsButton.setAutoFit(true);
             addExtraWidget(operationsButton);

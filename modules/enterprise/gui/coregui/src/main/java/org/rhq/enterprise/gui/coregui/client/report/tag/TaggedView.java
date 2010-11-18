@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinatio
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTileLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -43,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
-    public static final String VIEW_ID = "Tag";
+    public static final ViewName VIEW_ID = new ViewName("Tag", MSG.view_tags_tags());
 
     private TagCloudView tagCloudView;
 
@@ -103,8 +104,8 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
                 criteria);
             tiles.add(bundleDestinationListView);
 
-            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria,
-                MSG.view_taggedResources_title());
+            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, MSG
+                .view_taggedResources_title());
             tiles.add(resourceView);
 
             for (Table t : tiles) {
@@ -124,5 +125,5 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             viewTag(tagString);
         }
     }
-    
+
 }

@@ -31,6 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
@@ -39,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack
  * @author Greg Hinkle
  */
 public class BundleTopView extends LocatableHLayout implements BookmarkableView {
-    public static final String VIEW_ID = "Bundles";
+    public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles());
 
     private BundleTreeView bundleTreeView;
 

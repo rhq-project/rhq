@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
@@ -47,10 +48,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class MenuBarView extends LocatableVLayout {
 
-    public static final String[] SECTIONS = {DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
-        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID};
+    public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
+        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID };
 
-    private String currentlySelectedSection = DashboardsView.VIEW_ID;
+    private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
 
     public MenuBarView(String locatorId) {
         super(locatorId);
@@ -111,7 +112,7 @@ public class MenuBarView extends LocatableVLayout {
             "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-        for (String section : SECTIONS) {
+        for (ViewName section : SECTIONS) {
 
             String styleClass = "TopSectionLink";
             if (section.equals(currentlySelectedSection)) {
@@ -119,9 +120,9 @@ public class MenuBarView extends LocatableVLayout {
             }
 
             // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td id=\"").append(section).append("\" class=\"").append(styleClass)
-                .append("\" onclick=\"document.location='#").append(section).append("'\" >");
-            headerString.append(section);
+            headerString.append("<td id=\"").append(section).append("\" class=\"").append(styleClass).append(
+                "\" onclick=\"document.location='#").append(section).append("'\" >");
+            headerString.append(section.getTitle());
             headerString.append("</td>\n");
 
             headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
@@ -147,5 +148,5 @@ public class MenuBarView extends LocatableVLayout {
 
         return layout;
     }
-    
+
 }

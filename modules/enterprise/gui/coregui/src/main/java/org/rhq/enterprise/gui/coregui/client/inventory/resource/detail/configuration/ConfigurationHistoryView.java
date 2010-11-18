@@ -35,14 +35,14 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
-    
-    public static final String VIEW_ID = "RecentConfigurationChanges";
-    private static final String TITLE = MSG.view_configurationHistoryList_title();
+    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
+        .view_configurationHistoryList_title());
 
     private Integer resourceId;
 
@@ -50,7 +50,7 @@ public class ConfigurationHistoryView extends TableSection {
      * Use this constructor to view config histories for all viewable Resources.
      */
     public ConfigurationHistoryView(String locatorId) {
-        super(locatorId, TITLE);
+        super(locatorId, VIEW_ID.getTitle());
         final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
@@ -61,7 +61,7 @@ public class ConfigurationHistoryView extends TableSection {
      * @param resourceId a Resource ID
      */
     public ConfigurationHistoryView(String locatorId, int resourceId) {
-        super(locatorId, TITLE, createCriteria(resourceId));
+        super(locatorId, VIEW_ID.getTitle(), createCriteria(resourceId));
         this.resourceId = resourceId;
         ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
@@ -124,15 +124,14 @@ public class ConfigurationHistoryView extends TableSection {
 
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(),
-            MSG.common_msg_deleteConfirm(MSG.common_msg_deleteConfirm(MSG.view_configurationHistoryList_itemNamePlural())),
-            new AbstractTableAction(
-                TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    // TODO: Implement this method.
-                    CoreGUI.getErrorHandler().handleError("Not implemented");
-                }
-            });
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_deleteConfirm(MSG
+            .common_msg_deleteConfirm(MSG.view_configurationHistoryList_itemNamePlural())), new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                // TODO: Implement this method.
+                CoreGUI.getErrorHandler().handleError("Not implemented");
+            }
+        });
 
         addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
             TableActionEnablement.MULTIPLE) {

@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class GraphListView extends LocatableVLayout implements ResourceSelectListener {
 
     private Resource resource;
-    private Label loadingLabel = new Label("Loading...");
+    private Label loadingLabel = new Label(MSG.common_msg_loading());
 
     public GraphListView(String locatorId, Resource resource) {
         super(locatorId);
@@ -107,13 +107,14 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
                         System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to load data for graphs", caught);
-                                loadingLabel.setContents("failed to load graphs");
+                                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
+                                    caught);
+                                loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
                             }
 
                             public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
                                 if (result.isEmpty()) {
-                                    loadingLabel.setContents("No graphs available");
+                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
                                 } else {
                                     loadingLabel.hide();
                                     int i = 0;

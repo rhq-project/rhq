@@ -101,7 +101,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(DETAIL_ID, from.getDetail());
-        record.setAttribute(ERROR_TYPE_ID, from.getErrorType().toString());
+        record.setAttribute(ERROR_TYPE_ID, from.getErrorType().name());
         record.setAttribute(SUMMARY_ID, from.getSummary());
         record.setAttribute(TIME_OCCURED_ID, new Date(from.getTimeOccurred()));
 

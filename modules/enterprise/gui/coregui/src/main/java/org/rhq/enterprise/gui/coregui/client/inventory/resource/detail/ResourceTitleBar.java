@@ -100,7 +100,8 @@ public class ResourceTitleBar extends LocatableHLayout {
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Resource tags updated", Message.Severity.Info));
+                                    new Message(MSG.view_titleBar_common_updateTagsSuccessful(resource.getName()),
+                                        Message.Severity.Info));
                                 // update what is essentially our local cache
                                 resource.setTags(tags);
                             }
@@ -124,7 +125,8 @@ public class ResourceTitleBar extends LocatableHLayout {
         GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
             new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Could not load resource tags", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_titleBar_common_loadTagsFailure(resource.getName()),
+                        caught);
                 }
 
                 public void onSuccess(PageList<Resource> result) {
@@ -164,7 +166,11 @@ public class ResourceTitleBar extends LocatableHLayout {
 
     private void updateFavoriteButton() {
         this.favoriteButton.setSrc(favorite ? FAV_ICON : NOT_FAV_ICON);
-        this.favoriteButton.setTooltip("Click to " + (favorite ? "remove" : "add") + " this Resource as a favorite.");
+        if (favorite) {
+            this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToRemoveFav());
+        } else {
+            this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToAddFav());
+        }
     }
 
     private Set<Integer> toggleFavoriteLocally() {
@@ -181,16 +187,25 @@ public class ResourceTitleBar extends LocatableHLayout {
 
     public class UpdateFavoritesCallback implements AsyncCallback<Subject> {
         public void onSuccess(Subject subject) {
-            CoreGUI.getMessageCenter().notify(
-                new Message((favorite ? "Added " : "Removed ") + " Resource "
-                    + ResourceTitleBar.this.resource.getName() + " as a favorite.", Message.Severity.Info));
+            String msg = null;
+            if (favorite) {
+                msg = MSG.view_titleBar_common_addedFav(resource.getName());
+            } else {
+                msg = MSG.view_titleBar_common_removedFav(resource.getName());
+            }
+            CoreGUI.getMessageCenter().notify(new Message(msg, Message.Severity.Info));
             updateFavoriteButton();
         }
 
         public void onFailure(Throwable throwable) {
-            CoreGUI.getMessageCenter().notify(
-                new Message("Failed to " + (favorite ? "add " : "remove ") + " Resource "
-                    + ResourceTitleBar.this.resource.getName() + " as a favorite.", Message.Severity.Error));
+            String msg = null;
+            if (favorite) {
+                msg = MSG.view_titleBar_common_addedFavFailure(resource.getName());
+            } else {
+                msg = MSG.view_titleBar_common_removedFavFailure(resource.getName());
+            }
+            CoreGUI.getMessageCenter().notify(new Message(msg, Message.Severity.Info));
+
             // Revert back to our original favorite status, since the server update failed.
             toggleFavoriteLocally();
         }

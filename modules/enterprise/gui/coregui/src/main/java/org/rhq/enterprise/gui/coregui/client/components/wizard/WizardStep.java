@@ -20,10 +20,15 @@ package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
 /**
  * @author Greg Hinkle
  */
 public interface WizardStep {
+
+    Messages MSG = CoreGUI.getMessages();
 
     Canvas getCanvas();
 

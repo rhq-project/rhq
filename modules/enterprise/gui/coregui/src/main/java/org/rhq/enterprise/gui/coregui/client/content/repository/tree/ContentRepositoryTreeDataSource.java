@@ -58,15 +58,16 @@ public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceTextField("id", "ID");
+        DataSourceField idDataField = new DataSourceTextField("id", MSG.common_title_id());
         idDataField.setPrimaryKey(true);
         fields.add(idDataField);
 
-        DataSourceTextField nameDataField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameDataField = new DataSourceTextField("name", MSG.common_title_name());
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG
+            .dataSource_ContentRepoTree_field_parentId());
         parentIdField.setForeignKey("id");
         fields.add(parentIdField);
 
@@ -80,7 +81,7 @@ public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo> {
 
         repoService.findReposByCriteria(criteria, new AsyncCallback<PageList<Repo>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load repositories", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_ContentRepoTree_error_load(), caught);
             }
 
             public void onSuccess(PageList<Repo> result) {

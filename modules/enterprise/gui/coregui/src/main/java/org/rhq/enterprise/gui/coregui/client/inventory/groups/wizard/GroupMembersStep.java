@@ -54,7 +54,7 @@ public class GroupMembersStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Select Members";
+        return MSG.view_groupCreateWizard_membersStepName();
     }
 
     public int[] getSelectedResourceIds() {

@@ -96,12 +96,12 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_group_titleBar_updateTagsFailure(group.getName()), caught);
+                                    MSG.view_titleBar_common_updateTagsFailure(group.getName()), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_group_titleBar_updateTagsSuccessful(group.getName()),
+                                    new Message(MSG.view_titleBar_common_updateTagsSuccessful(group.getName()),
                                         Message.Severity.Info));
                                 // update what is essentially our local cache
                                 group.setTags(tags);
@@ -128,7 +128,7 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_group_titleBar_loadTagsFailure(group.getName()),
+                    CoreGUI.getErrorHandler().handleError(MSG.view_titleBar_common_loadTagsFailure(group.getName()),
                         caught);
                 }
 
@@ -167,9 +167,9 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
     private void updateFavoriteButton() {
         this.favoriteButton.setSrc(favorite ? FAV_ICON : NOT_FAV_ICON);
         if (favorite) {
-            this.favoriteButton.setTooltip(MSG.view_group_titleBar_clickToRemoveFav());
+            this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToRemoveFav());
         } else {
-            this.favoriteButton.setTooltip(MSG.view_group_titleBar_clickToAddFav());
+            this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToAddFav());
         }
     }
 
@@ -188,9 +188,9 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
         public void onSuccess(Subject subject) {
             String m;
             if (favorite) {
-                m = MSG.view_group_titleBar_addedFav(ResourceGroupTitleBar.this.group.getName());
+                m = MSG.view_titleBar_common_addedFav(ResourceGroupTitleBar.this.group.getName());
             } else {
-                m = MSG.view_group_titleBar_removedFav(ResourceGroupTitleBar.this.group.getName());
+                m = MSG.view_titleBar_common_removedFav(ResourceGroupTitleBar.this.group.getName());
             }
             CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Info));
             updateFavoriteButton();
@@ -199,9 +199,9 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
         public void onFailure(Throwable throwable) {
             String m;
             if (favorite) {
-                m = MSG.view_group_titleBar_addedFavFailure(ResourceGroupTitleBar.this.group.getName());
+                m = MSG.view_titleBar_common_addedFavFailure(ResourceGroupTitleBar.this.group.getName());
             } else {
-                m = MSG.view_group_titleBar_removedFavFailure(ResourceGroupTitleBar.this.group.getName());
+                m = MSG.view_titleBar_common_removedFavFailure(ResourceGroupTitleBar.this.group.getName());
             }
             CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Error));
             // Revert back to our original favorite status, since the server update failed.

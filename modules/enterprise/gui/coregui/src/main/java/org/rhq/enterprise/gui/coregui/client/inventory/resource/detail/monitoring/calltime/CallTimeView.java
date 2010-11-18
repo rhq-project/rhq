@@ -73,8 +73,8 @@ public class CallTimeView extends LocatableLayout {
                             GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
                                 new AsyncCallback<PageList<Resource>>() {
                                     public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError("Failed to load resource for call time",
-                                            caught);
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_resource_monitor_calltime_lookupFailed(), caught);
                                     }
 
                                     public void onSuccess(PageList<Resource> result) {
@@ -112,25 +112,26 @@ public class CallTimeView extends LocatableLayout {
 
     public void setup() {
 
-        Table table = new Table(extendLocatorId("Table"), "Call Time Data", new Criteria("scheduleId", String
-            .valueOf(scheduleId)));
+        Table table = new Table(extendLocatorId("Table"), MSG.view_resource_monitor_calltime_title(), new Criteria(
+            "scheduleId", String.valueOf(scheduleId)));
         table.getListGrid().setAlternateRecordStyles(false);
         table.setDataSource(new CallTimeDataSource());
         table.getListGrid().setUseAllDataSourceFields(true);
 
         final NumberFormat format = NumberFormat.getFormat("0");
 
-        ListGridField callDestination = new ListGridField("callDestination", "Call Destination");
-        ListGridField count = new ListGridField("count", 70);
-        ListGridField minimum = new ListGridField("minimum", 70);
-        ListGridField average = new ListGridField("average", 70);        
+        ListGridField callDestination = new ListGridField("callDestination", MSG
+            .view_resource_monitor_calltime_destination());
+        ListGridField count = new ListGridField("count", MSG.view_resource_monitor_calltime_count(), 70);
+        ListGridField minimum = new ListGridField("minimum", MSG.view_resource_monitor_calltime_minimum(), 70);
+        ListGridField average = new ListGridField("average", MSG.view_resource_monitor_calltime_average(), 70);
         average.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return format.format(((Number) o).doubleValue());
             }
         });
-        ListGridField maximum = new ListGridField("maximum", 70);
-        ListGridField total = new ListGridField("total", 70);
+        ListGridField maximum = new ListGridField("maximum", MSG.view_resource_monitor_calltime_maximum(), 70);
+        ListGridField total = new ListGridField("total", MSG.view_resource_monitor_calltime_total(), 70);
 
         table.getListGrid().setFields(callDestination, count, minimum, average, maximum, total);
 

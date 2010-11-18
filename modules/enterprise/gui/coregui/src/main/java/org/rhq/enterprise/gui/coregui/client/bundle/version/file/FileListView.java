@@ -52,15 +52,15 @@ public class FileListView extends LocatableVLayout {
 
     private void viewFiles(PageList<BundleFile> files) {
 
-        Table table = new Table(extendLocatorId("BundleFiles"), "Bundle Files");
+        Table table = new Table(extendLocatorId("BundleFiles"), MSG.view_bundle_bundleFiles());
 
-        ListGridField id = new ListGridField("id", "Id");
+        ListGridField id = new ListGridField("id", MSG.common_title_id());
         id.setWidth("20%");
 
-        ListGridField name = new ListGridField("name", "Name");
+        ListGridField name = new ListGridField("name", MSG.common_title_name());
         name.setWidth("60%");
 
-        ListGridField size = new ListGridField("size", "File Size");
+        ListGridField size = new ListGridField("size", MSG.view_bundle_fileListView_fileSize());
         name.setWidth("20%");
 
         // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
@@ -81,7 +81,7 @@ public class FileListView extends LocatableVLayout {
         GWTServiceLookup.getBundleService().findBundleFilesByCriteria(criteria,
             new AsyncCallback<PageList<BundleFile>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load bundle file data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_fileListView_loadFailure(), caught);
                 }
 
                 public void onSuccess(PageList<BundleFile> result) {

@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.user.client.History;
@@ -59,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
     implements BookmarkableView, DetailsView {
 
-    private static final Label LOADING_LABEL = new Label("Loading...");
+    private static final Label LOADING_LABEL = new Label(MSG.widget_recordEditor_label_loading());
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
 
@@ -232,6 +233,12 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         if (!this.isReadOnly) {
             this.saveButton.setDisabled(!isValid);
             this.resetButton.setDisabled(false);
+            if (!isValid) {
+                Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
+                    + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
+                    Message.Option.Sticky, Message.Option.Transient));
+                CoreGUI.getMessageCenter().notify(message);
+            }
         }
     }
 
@@ -352,4 +359,5 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
     }
+    
 }

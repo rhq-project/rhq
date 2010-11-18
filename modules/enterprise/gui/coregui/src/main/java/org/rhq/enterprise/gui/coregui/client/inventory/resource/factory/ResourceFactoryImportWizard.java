@@ -53,7 +53,8 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
         // skip the info step if the type has only the default template to offer for user selection.
         Map<String, ConfigurationTemplate> templates = childType.getPluginConfigurationDefinition().getTemplates();
         if (templates.size() > 1) {
-            this.infoStep = new ResourceFactoryInfoStep(this, null, "Connection Settings Templates", templates);
+            this.infoStep = new ResourceFactoryInfoStep(this, null, MSG.widget_resourceFactoryWizard_templatePrompt(),
+                templates);
             steps.add(infoStep);
         }
 
@@ -65,11 +66,11 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
     }
 
     public String getWindowTitle() {
-        return "Resource Import Wizard";
+        return MSG.widget_resourceFactoryWizard_importWizardWindowTitle();
     }
 
     public String getTitle() {
-        return "Import Resource of Type: " + getChildType().getName();
+        return MSG.widget_resourceFactoryWizard_importWizardTitle(getChildType().getName());
     }
 
     public void execute() {
@@ -81,13 +82,13 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
         GWTServiceLookup.getResourceService().manuallyAddResource(createTypeId, parentResourceId, newConfiguration,
             new AsyncCallback<Resource>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to manually import resource", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_importFailure(), caught);
                     getView().closeDialog();
                 }
 
                 public void onSuccess(Resource result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Submitted request to manually import [" + getChildType().getName() + "]",
+                        new Message(MSG.widget_resourceFactoryWizard_importSubmitted(getChildType().getName()),
                             Message.Severity.Info));
                     getView().closeDialog();
                 }
@@ -104,5 +105,4 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
                 }
             });
     }
-
 }

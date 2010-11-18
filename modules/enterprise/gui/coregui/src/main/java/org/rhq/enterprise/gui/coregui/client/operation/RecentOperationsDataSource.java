@@ -1,5 +1,3 @@
-package org.rhq.enterprise.gui.coregui.client.operation;
-
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2010 Red Hat, Inc.
@@ -18,6 +16,8 @@ package org.rhq.enterprise.gui.coregui.client.operation;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+package org.rhq.enterprise.gui.coregui.client.operation;
+
 import java.util.Date;
 import java.util.List;
 
@@ -41,25 +41,27 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-/** Responsible for defining and populating the Smart GWT datasource details and
- *  translating the deserialized content into specific record entries for display
+/**
+ * Responsible for defining and populating the Smart GWT datasource details and
+ * translating the deserialized content into specific record entries for display
  * 
  * @author Simeon Pinder
  */
 public class RecentOperationsDataSource extends
     RPCDataSource<DisambiguationReport<ResourceOperationLastCompletedComposite>> {
-    //ui keys
-    public static final String resource = "resource";
-    public static final String location = "location";
-    public static final String operation = "operation";
-    public static final String time = "time";
-    public static final String status = "status";
+
+    // fields
+    public static final String FIELD_RESOURCE = "resource";
+    public static final String FIELD_LOCATION = "location";
+    public static final String FIELD_OPERATION = "operation";
+    public static final String FIELD_TIME = "time";
+    public static final String FIELD_STATUS = "status";
+
     private Portlet portlet;
 
     //config attributes
     private boolean operationsRangeLastEnabled = false;
-    private int operationsRangeCompleted = -1;
-    public static String RANGE_DISABLED_MESSAGE = "(Results currently disabled. Change settings to enable results.)";
+    private int operationsRangeCompleted = -1;    
 
     /** Build list of fields for the datasource and then adds them to it.
      */
@@ -74,20 +76,25 @@ public class RecentOperationsDataSource extends
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(resource, "Resource");
+        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE,
+            MSG.dataSource_recentOperations_field_resource());
         resourceField.setPrimaryKey(true);
         fields.add(resourceField);
 
-        DataSourceTextField locationField = new DataSourceTextField(location, "Location", 200);
+        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION,
+            MSG.dataSource_recentOperations_field_location(), 200);
         fields.add(locationField);
 
-        DataSourceTextField operationField = new DataSourceTextField(operation, "Operation");
+        DataSourceTextField operationField = new DataSourceTextField(FIELD_OPERATION,
+            MSG.dataSource_recentOperations_field_operation());
         fields.add(operationField);
 
-        DataSourceDateTimeField timeField = new DataSourceDateTimeField(time, "Date/Time");
+        DataSourceDateTimeField timeField = new DataSourceDateTimeField(FIELD_TIME,
+            MSG.dataSource_recentOperations_field_time());
         fields.add(timeField);
 
-        DataSourceTextField statusField = new DataSourceTextField(status, "Status");
+        DataSourceTextField statusField = new DataSourceTextField(FIELD_STATUS,
+            MSG.dataSource_recentOperations_field_status());
         fields.add(statusField);
 
         return fields;
@@ -127,7 +134,7 @@ public class RecentOperationsDataSource extends
                 new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
 
                     public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load recently completed operations.",
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_recentOperations_error_fetchFailure(),
                             throwable);
                     }
 
@@ -170,17 +177,17 @@ public class RecentOperationsDataSource extends
             for (DisambiguationReport<ResourceOperationLastCompletedComposite> report : list) {
                 ListGridRecord record = new ListGridRecord();
                 //disambiguated Resource name, decorated with html anchors to problem resources 
-                record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                     report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
                         .getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents(), true));
+                record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //operation name.
-                record.setAttribute(operation, report.getOriginal().getOperationName());
+                record.setAttribute(FIELD_OPERATION, report.getOriginal().getOperationName());
                 //timestamp.
-                record.setAttribute(time, new Date(report.getOriginal().getOperationStartTime()));
+                record.setAttribute(FIELD_TIME, new Date(report.getOriginal().getOperationStartTime()));
                 String link = generateResourceOperationStatusLink(report);
-                record.setAttribute(status, link);
+                record.setAttribute(FIELD_STATUS, link);
 
                 dataValues[indx++] = record;
             }
@@ -221,12 +228,12 @@ public class RecentOperationsDataSource extends
     @Override
     public ListGridRecord copyValues(DisambiguationReport<ResourceOperationLastCompletedComposite> from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
             from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
-        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
-        record.setAttribute(operation, from.getOriginal().getOperationName());
-        record.setAttribute(time, from.getOriginal().getOperationStartTime());
-        record.setAttribute(status, generateResourceOperationStatusLink(from));
+        record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(from.getParents(), true));
+        record.setAttribute(FIELD_OPERATION, from.getOriginal().getOperationName());
+        record.setAttribute(FIELD_TIME, from.getOriginal().getOperationStartTime());
+        record.setAttribute(FIELD_STATUS, generateResourceOperationStatusLink(from));
 
         record.setAttribute("entity", from);
 

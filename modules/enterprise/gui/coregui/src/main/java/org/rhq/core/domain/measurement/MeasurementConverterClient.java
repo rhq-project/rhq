@@ -29,10 +29,14 @@ import com.google.gwt.i18n.client.NumberFormat;
 
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 public class MeasurementConverterClient {
+    private static final Messages MSG = CoreGUI.getMessages();
+
     private static final int MAX_PRECISION_DIGITS = 4;
-    private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";
+    private static final String NULL_OR_NAN_FORMATTED_VALUE = MSG.view_measure_nan();
 
     private static NumberFormat getDefaultNumberFormat() {
         NumberFormat nf = NumberFormat.getFormat("0.0");
@@ -122,7 +126,6 @@ public class MeasurementConverterClient {
             targetUnits = fittedUnits;
         }
 
-        @SuppressWarnings("unused")
         Set<String> existingStrings; // technically this *is* unused because
         int precisionDigits = 0;
         boolean scaleWithMorePrecision = true;

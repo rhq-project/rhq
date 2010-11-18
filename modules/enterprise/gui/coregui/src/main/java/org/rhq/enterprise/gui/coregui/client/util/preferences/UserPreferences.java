@@ -101,7 +101,7 @@ public class UserPreferences {
 
         UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, value, oldValue);
         for (UserPreferenceChangeListener listener : changeListeners) {
-            listener.onPreferrenceChange(event);
+            listener.onPreferenceChange(event);
         }
     }
 

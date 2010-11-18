@@ -50,14 +50,14 @@ public class GroupCreateStep extends AbstractWizardStep {
             form.setWidth100();
             form.setNumCols(2);
 
-            TextItem name = new TextItem("name", "Name");
+            TextItem name = new TextItem("name", MSG.common_title_name());
             name.setRequired(true);
             name.setWidth(300);
 
-            TextAreaItem description = new AutoFitTextAreaItem("description", "Description");
+            TextAreaItem description = new AutoFitTextAreaItem("description", MSG.common_title_description());
             description.setWidth(300);
 
-            CheckboxItem recursive = new CheckboxItem("recursive", "Recursive");
+            CheckboxItem recursive = new CheckboxItem("recursive", MSG.view_groupCreateWizard_createStep_recursive());
 
             form.setFields(name, description, recursive);
         }
@@ -70,7 +70,7 @@ public class GroupCreateStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Group Settings";
+        return MSG.view_groupCreateWizard_createStepName();
     }
 
     public ResourceGroup getGroup() {

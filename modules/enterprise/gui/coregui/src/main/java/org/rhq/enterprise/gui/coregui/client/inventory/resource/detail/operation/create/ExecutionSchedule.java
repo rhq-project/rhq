@@ -29,9 +29,12 @@ import com.google.gwt.i18n.client.DateTimeFormat;
  */
 public class ExecutionSchedule implements Serializable {
 
-
     public enum Start {
         Immediately, Future
+    };
+
+    public enum End {
+        Never, EndOn
     };
 
     public enum Recurr {
@@ -273,7 +276,6 @@ public class ExecutionSchedule implements Serializable {
         return cseconds + " " + cminutes + " " + chours + " " + cdayOfMonth + " " + cmonth + " " + cdayOfWeek;
 
     }
-
 
     public String suffix(int num) {
         int last = num % 10;

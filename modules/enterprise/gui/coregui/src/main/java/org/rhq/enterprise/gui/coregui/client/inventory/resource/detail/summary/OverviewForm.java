@@ -42,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -86,13 +85,8 @@ public class OverviewForm extends EnhancedDynamicForm {
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
-                    try {
-                        buildForm(type);
-                        loadTraitValues();
-                    } catch (Exception e) {
-                        SC.say("Form load failure");
-                        e.printStackTrace();
-                    }
+                    buildForm(type);
+                    loadTraitValues();
                 }
             });
     }
@@ -122,7 +116,6 @@ public class OverviewForm extends EnhancedDynamicForm {
                     }
                 }
         );
-
     }
 
     private void buildForm(ResourceType type) {
@@ -146,7 +139,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         headerItem.setValue("Summary");
         formItems.add(headerItem);
 
-        StaticTextItem typeItem = new StaticTextItem("type", "Type");
+        StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
         typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());
         typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
         formItems.add(typeItem);
@@ -156,7 +149,7 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         final FormItem nameItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
         nameItem.setName("name");
-        nameItem.setTitle("Name");
+        nameItem.setTitle(MSG.view_summaryOverviewForm_field_name());
         nameItem.setValue(resource.getName());
         if (nameItem instanceof TogglableTextItem) {
             TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
@@ -191,7 +184,7 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         final FormItem descriptionItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
         descriptionItem.setName("description");
-        descriptionItem.setTitle("Description");
+        descriptionItem.setTitle(MSG.view_summaryOverviewForm_field_description());
         descriptionItem.setValue(resource.getDescription());
         if (descriptionItem instanceof TogglableTextItem) {
             TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
@@ -226,7 +219,7 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         final FormItem locationItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
         locationItem.setName("location");
-        locationItem.setTitle("Location");
+        locationItem.setTitle(MSG.view_summaryOverviewForm_field_location());
         locationItem.setValue(resource.getLocation());
         if (locationItem instanceof TogglableTextItem) {
             TogglableTextItem togglableNameItem = (TogglableTextItem) locationItem;
@@ -260,10 +253,10 @@ public class OverviewForm extends EnhancedDynamicForm {
         formItems.add(locationItem);
 
 
-        StaticTextItem versionItem = new StaticTextItem("version", "Version");
+        StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
         formItems.add(versionItem);
 
-        StaticTextItem parentItem = new StaticTextItem("parent", "Parent");
+        StaticTextItem parentItem = new StaticTextItem("parent", MSG.view_summaryOverviewForm_field_parent());
         formItems.add(parentItem);
 
         for (MeasurementDefinition trait : traits) {
@@ -296,4 +289,5 @@ public class OverviewForm extends EnhancedDynamicForm {
                 ("<a href=\"#Resource/" + parentResource.getId() + "\">" +
                         parentResource.getName() + "</a>") : "<i>none</i>");    
     }
+    
 }

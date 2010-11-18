@@ -52,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class PluginConfigurationEditView extends LocatableVLayout
     implements PropertyValueChangeListener, RefreshableView {
+
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
@@ -73,7 +74,7 @@ public class PluginConfigurationEditView extends LocatableVLayout
 
         toolStrip.addMember(new LayoutSpacer());
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -86,7 +87,7 @@ public class PluginConfigurationEditView extends LocatableVLayout
         refresh();
 
         if (!this.resourcePermission.isInventory()) {
-            Message message = new Message("You do not have permission to edit this Resource's connection settings.",
+            Message message = new Message(MSG.view_connectionSettingsDetails_noPermission(),
                 Message.Severity.Info, EnumSet.of(Message.Option.Transient));
             CoreGUI.getMessageCenter().notify(message);
         }
@@ -115,13 +116,14 @@ public class PluginConfigurationEditView extends LocatableVLayout
         GWTServiceLookup.getConfigurationService().updatePluginConfiguration(resource.getId(), updatedConfiguration,
             new AsyncCallback<PluginConfigurationUpdate>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update connection settings.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_connectionSettingsDetails_error_updateFailure(),
+                        caught);
                 }
 
                 public void onSuccess(PluginConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Connection settings updated.",
-                            "Connection settings updated for Resource [" + resource.getName() + "]."));
+                        new Message(MSG.view_connectionSettingsDetails_messageConcise_updateSuccess(),
+                            MSG.view_connectionSettingsDetails_messageDetailed_updateSuccess(resource.getName())));
                     refresh();
                 }
             });
@@ -135,12 +137,11 @@ public class PluginConfigurationEditView extends LocatableVLayout
             Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
-                message = new Message("All connection settings have valid values, so the settings can now be saved.",
+                message = new Message(MSG.view_connectionSettingsDetails_allPropertiesValid(),
                     Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("The following connection settings have invalid values: " + invalidPropertyNames
-                    + ". The values must be corrected before the settings can be saved.",
+                message = new Message(MSG.view_connectionSettingsDetails_somePropertiesInvalid(invalidPropertyNames.toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
@@ -148,4 +149,5 @@ public class PluginConfigurationEditView extends LocatableVLayout
             this.saveButton.enable();
         }
     }
+
 }

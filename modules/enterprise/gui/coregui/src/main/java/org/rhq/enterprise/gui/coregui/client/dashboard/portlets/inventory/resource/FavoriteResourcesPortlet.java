@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
  */
 public class FavoriteResourcesPortlet extends ResourceSearchView implements Portlet {
 
-    public static final String KEY = "Favorite Resources";
+    public static final String KEY = MSG.view_portlet_favoriteResources_title();
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 
@@ -99,7 +99,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays your favorite resources");
+        return new HTMLFlow(MSG.view_portlet_favoriteResources_msg());
     }
 
     public static final class Factory implements PortletViewFactory {

@@ -26,22 +26,23 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
  * @author Greg Hinkle
  */
 public class MeasurementOOBView extends Table {
-    public static final String VIEW_ID = "SuspectMetrics";
-    
+
+    public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title());
+
     public MeasurementOOBView(String locatorId) {
-        super(locatorId, "Suspect Metrics");
+        super(locatorId, VIEW_ID.getTitle());
 
         setDataSource(new MeasurementOOBDataSource());
     }
 
     @Override
     protected void configureTable() {
-
         getListGrid().setAlternateRecordStyles(false);
 
         getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
@@ -49,6 +50,5 @@ public class MeasurementOOBView extends Table {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
             }
         });
-
     }
 }

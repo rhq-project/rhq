@@ -121,70 +121,80 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     protected List<TwoLevelTab> createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
-        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), "Summary",
+        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), MSG.view_tabs_common_summary(),
             "/images/icons/Service_up_16.png");
-        summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), "Overview", null);
-        summaryDashboard = new SubTab(summaryTab.extendLocatorId("Dashboard"), "Dashboard", null);
-        summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), "Timeline", null);
+        summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), MSG.view_tabs_common_overview(), null);
+        summaryDashboard = new SubTab(summaryTab.extendLocatorId("Dashboard"), MSG.view_tabs_common_dashboard(), null);
+        summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), MSG.view_tabs_common_timeline(), null);
         summaryTab.registerSubTabs(summaryOverview, summaryDashboard, summaryTimeline);
         tabs.add(summaryTab);
 
-        monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), "Monitoring",
+        monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), MSG.view_tabs_common_monitoring(),
             "/images/icons/Monitor_grey_16.png");
-        monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), "Graphs", null);
-        monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), "Tables", null);
-        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), "Traits", null);
-        monitorAvail = new SubTab(monitoringTab.extendLocatorId("Availability"), "Availability", null);
-        monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), "Schedules", null);
-        monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), "Call Time", null);
+        monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), MSG.view_tabs_common_graphs(), null);
+        monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), MSG.view_tabs_common_tables(), null);
+        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), MSG.view_tabs_common_traits(), null);
+        monitorAvail = new SubTab(monitoringTab.extendLocatorId("Availability"), MSG.view_tabs_common_availability(),
+            null);
+        monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), MSG.view_tabs_common_schedules(), null);
+        monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), MSG.view_tabs_common_calltime(), null);
         monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorAvail, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
-        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), "Inventory",
+        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), MSG.view_tabs_common_inventory(),
             "/images/icons/Inventory_grey_16.png");
-        inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), "Child Resources", null);
-        inventoryChildHistory = new SubTab(inventoryTab.extendLocatorId("ChildHist"), "Child History", null);
-        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
-        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"), "Connection Settings History",
-            null);
-        inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), "Groups", null);
-        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), "Group Membership", null);
+        inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"),
+            MSG.view_tabs_common_child_resources(), null);
+        inventoryChildHistory = new SubTab(inventoryTab.extendLocatorId("ChildHist"), MSG
+            .view_tabs_common_child_history(), null);
+        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), MSG
+            .view_tabs_common_connectionSettings(), null);
+        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"), MSG
+            .view_tabs_common_connectionSettingsHistory(), null);
+        inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), MSG.view_tabs_common_groups(), null);
+        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), MSG
+            .view_tabs_common_group_membership(), null);
         inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
             this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership);
         tabs.add(inventoryTab);
 
-        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
+        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), MSG.view_tabs_common_operations(),
             "/images/icons/Operation_grey_16.png");
-        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), "History", null);
-        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), "Scheduled", null);
+        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
+        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), MSG.view_tabs_common_scheduled(), null);
         operationsTab.registerSubTabs(this.opHistory, this.opSched);
         tabs.add(operationsTab);
 
-        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
-        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), "History", null);
-        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), "Definitions", null);
+        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), MSG.view_tabs_common_alerts(),
+            "/images/icons/Alert_grey_16.png");
+        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
+        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), MSG.view_tabs_common_definitions(), null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
         tabs.add(alertsTab);
 
-        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), "Configuration",
-            "/images/icons/Configure_grey_16.png");
-        this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), "Current", null);
-        this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), "History", null);
+        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), MSG
+            .view_tabs_common_configuration(), "/images/icons/Configure_grey_16.png");
+        this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), MSG.view_tabs_common_current(),
+            null);
+        this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), MSG.view_tabs_common_history(),
+            null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
-        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), "Events", "/images/icons/Events_grey_16.png");
-        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), "History", null);
+        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), MSG.view_tabs_common_events(),
+            "/images/icons/Events_grey_16.png");
+        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
 
-        contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), "Content",
+        contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), MSG.view_tabs_common_content(),
             "/images/icons/Content_grey_16.png");
-        this.contentDeployed = new SubTab(contentTab.extendLocatorId("Deployed"), "Deployed", null);
-        this.contentNew = new SubTab(contentTab.extendLocatorId("New"), "New", null);
-        this.contentSubscrip = new SubTab(contentTab.extendLocatorId("Subscriptions"), "Subscriptions", null);
-        this.contentHistory = new SubTab(contentTab.extendLocatorId("History"), "History", null);
+        this.contentDeployed = new SubTab(contentTab.extendLocatorId("Deployed"), MSG.view_tabs_common_deployed(), null);
+        this.contentNew = new SubTab(contentTab.extendLocatorId("New"), MSG.view_tabs_common_new(), null);
+        this.contentSubscrip = new SubTab(contentTab.extendLocatorId("Subscriptions"), MSG
+            .view_tabs_common_subscriptions(), null);
+        this.contentHistory = new SubTab(contentTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
         contentTab.registerSubTabs(contentDeployed, contentNew, contentSubscrip, contentHistory);
         tabs.add(contentTab);
 
@@ -357,16 +367,16 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Resource with id [" + resourceId + "] does not exist or is not accessible.",
+                        new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
                             Message.Severity.Warning));
 
-                    CoreGUI.goToView(InventoryView.VIEW_ID);
+                    CoreGUI.goToView(InventoryView.VIEW_ID.getName());
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
-                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
+                        onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
                         // First load the user's permissions for the Resource.

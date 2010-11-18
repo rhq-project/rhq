@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 public class FavoritesButton extends LocatableIMenuButton {
 
     public FavoritesButton(String locatorId) {
-        super(locatorId, "Favorites");
+        super(locatorId, MSG.common_title_favorites());
 
         final Menu favoritesMenu = new Menu();
         setMenu(favoritesMenu);
@@ -83,7 +83,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                     GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
                         new AsyncCallback<PageList<Resource>>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
                             }
 
                             public void onSuccess(PageList<Resource> resources) {

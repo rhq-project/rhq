@@ -28,6 +28,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
@@ -35,6 +37,8 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
  * @author Joseph Marques
  */
 public class MonitoringRequestCallback implements RequestCallback {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private int id;
     private String name;
@@ -75,7 +79,7 @@ public class MonitoringRequestCallback implements RequestCallback {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    SC.say("Unable to determine login status - check Server status.");
+                    SC.say(MSG.util_monitoringRequestCallback_error_checkServerStatusFailure());
                 }
             });
         }
@@ -94,7 +98,7 @@ public class MonitoringRequestCallback implements RequestCallback {
     }
 
     public String toString() {
-        return "id=" + id + ", name=" + name + ", age=" + age();
+        return "MonitoringRequestCallback{id=" + id + ", name=" + name + ", age=" + age() + "}";
     }
 
 }

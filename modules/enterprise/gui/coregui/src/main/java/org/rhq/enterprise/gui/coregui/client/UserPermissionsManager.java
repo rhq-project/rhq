@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
  * @author Ian Springer
  */
 public class UserPermissionsManager {
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private static final UserPermissionsManager INSTANCE = new UserPermissionsManager();
     private static final AuthorizationGWTServiceAsync AUTHORIZATION_SERVICE = GWTServiceLookup
@@ -179,8 +180,8 @@ public class UserPermissionsManager {
     private void loadGlobalPermissions() {
         AUTHORIZATION_SERVICE.getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable throwable) {
-                MESSAGE_CENTER.notify(new Message("Failed to load your global permissions - assuming none for now.",
-                    throwable, Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
+                MESSAGE_CENTER.notify(new Message(MSG.util_userPerm_loadFailGlobal(), throwable,
+                    Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
                 UserPermissionsManager.this.globalPermissions.clear();
                 UserPermissionsManager.this.globalCacheDirty = true;
                 notifyGlobalPermissionsLoadedListener();
@@ -204,9 +205,9 @@ public class UserPermissionsManager {
     private void loadCurrentResourcePermissions() {
         AUTHORIZATION_SERVICE.getExplicitResourcePermissions(this.currentId, new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable throwable) {
-                MESSAGE_CENTER.notify(new Message("Failed to load your permissions for Resource with id ["
-                    + UserPermissionsManager.this.currentId + "] - assuming none for now.", throwable,
-                    Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
+                MESSAGE_CENTER.notify(new Message(MSG.util_userPerm_loadFailResource(Integer
+                    .toString(UserPermissionsManager.this.currentId)), throwable, Message.Severity.Error, EnumSet
+                    .of(Message.Option.BackgroundJobResult)));
                 UserPermissionsManager.this.resourcePermissions.clear();
                 UserPermissionsManager.this.resourceCacheDirty = true;
                 notifyResourcePermissionsLoadedListener();
@@ -223,9 +224,9 @@ public class UserPermissionsManager {
     private void loadCurrentGroupPermissions() {
         AUTHORIZATION_SERVICE.getExplicitGroupPermissions(this.currentId, new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable throwable) {
-                MESSAGE_CENTER.notify(new Message("Failed to load your permissions for group with id ["
-                    + UserPermissionsManager.this.currentId + "] - assuming none for now.", throwable,
-                    Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
+                MESSAGE_CENTER.notify(new Message(MSG.util_userPerm_loadFailGroup(Integer
+                    .toString(UserPermissionsManager.this.currentId)), throwable, Message.Severity.Error, EnumSet
+                    .of(Message.Option.BackgroundJobResult)));
                 UserPermissionsManager.this.resourcePermissions.clear();
                 UserPermissionsManager.this.resourceCacheDirty = true;
                 notifyResourcePermissionsLoadedListener();

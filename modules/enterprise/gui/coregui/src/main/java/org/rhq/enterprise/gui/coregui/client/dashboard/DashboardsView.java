@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -48,6 +49,7 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
@@ -70,6 +72,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class DashboardsView extends LocatableVLayout implements BookmarkableView {
+
     public static final ViewName VIEW_ID = new ViewName("Dashboard", MSG.view_dashboards_title());
 
     private TabSet tabSet;
@@ -78,7 +81,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
     private boolean editMode = false;
 
-    private List<Dashboard> dashboards;
     private Map<String, Dashboard> dashboardsByName;
 
     private DashboardView selectedDashboardView;
@@ -116,8 +118,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
     private void updateDashboards(List<Dashboard> dashboards) {
         removeMembers(getMembers());
-        this.dashboards = dashboards;
-        this.dashboardsByName = new HashMap(dashboards.size());
+        this.dashboardsByName = new HashMap<String, Dashboard>(dashboards.size());
         for (Dashboard dashboard : dashboards) {
             this.dashboardsByName.put(dashboard.getName(), dashboard);
         }
@@ -326,4 +327,5 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     public Dashboard getDashboard() {
         return selectedDashboard;
     }
+    
 }

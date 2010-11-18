@@ -40,12 +40,11 @@ import com.smartgwt.client.widgets.grid.events.CellClickHandler;
  */
 public class OverviewView extends LocatableVLayout {
 
-    private OverviewForm form;
     private Table errorsGrid;
     
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
-        form = new OverviewForm(extendLocatorId("form"), resourceComposite);
+        OverviewForm form = new OverviewForm(extendLocatorId("form"), resourceComposite);
         errorsGrid = new Table(extendLocatorId("errors"), "Detected errors", null, null, new String[] { ResourceErrorsDataSource.DETAIL_ID });
 
         Resource resource = resourceComposite.getResource();        
@@ -106,4 +105,5 @@ public class OverviewView extends LocatableVLayout {
             }
         });
     }
+    
 }

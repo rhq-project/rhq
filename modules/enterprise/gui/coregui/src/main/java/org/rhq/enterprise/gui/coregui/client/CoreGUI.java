@@ -92,7 +92,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static CoreGUI coreGUI;
 
-    private static Messages messages;
+    public static Messages messages = GWT.create(Messages.class);
+
     private static Message pendingMessage;
 
     public void onModuleLoad() {
@@ -127,8 +128,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         });
 
         messageCenter = new MessageCenter();
-
-        messages = GWT.create(Messages.class);
 
         UserSessionManager.login();
 

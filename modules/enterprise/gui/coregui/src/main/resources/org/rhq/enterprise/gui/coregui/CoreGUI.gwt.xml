@@ -90,7 +90,7 @@
          the Constants, ConstantsWithLookup, and Messages class).  Note, these other locales
          must have a file suffixed with _<locale>.properties in the same package/directory as
          the corresponding GWT i18n interface class resides.-->
-    <extend-property name="locale" values="de,fr"/>
+    <!--<extend-property name="locale" values="de,fr"/>-->
 
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
     <entry-point class='org.rhq.enterprise.gui.coregui.client.SearchGUI'/>

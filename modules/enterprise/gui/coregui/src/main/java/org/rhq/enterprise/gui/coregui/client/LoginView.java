@@ -159,7 +159,7 @@ public class LoginView extends LocatableCanvas {
             window = new Window();
             window.setWidth(400);
             window.setHeight(275);
-            window.setTitle("Welcome");
+            window.setTitle(MSG.view_login_welcome());
 
             // forced focused, static size, can't close / dismiss
             window.setIsModal(true);
@@ -204,7 +204,7 @@ public class LoginView extends LocatableCanvas {
 
             VLayout column = new VLayout();
             HeaderItem header = new HeaderItem();
-            header.setValue(MSG.view_login_welcome());
+            header.setValue(MSG.view_login_welcomeMsg());
             //build ui elements for registration screen
             first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
             {

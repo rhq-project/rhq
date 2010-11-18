@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.user.client.History;
@@ -232,6 +233,12 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         if (!this.isReadOnly) {
             this.saveButton.setDisabled(!isValid);
             this.resetButton.setDisabled(false);
+            if (!isValid) {
+                Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
+                    + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
+                    Message.Option.Sticky, Message.Option.Transient));
+                CoreGUI.getMessageCenter().notify(message);
+            }
         }
     }
 

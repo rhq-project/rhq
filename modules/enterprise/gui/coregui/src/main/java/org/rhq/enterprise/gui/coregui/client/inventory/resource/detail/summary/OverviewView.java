@@ -45,7 +45,8 @@ public class OverviewView extends LocatableVLayout {
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
         OverviewForm form = new OverviewForm(extendLocatorId("form"), resourceComposite);
-        errorsGrid = new Table(extendLocatorId("errors"), "Detected errors", null, null, new String[] { ResourceErrorsDataSource.DETAIL_ID });
+        errorsGrid = new Table(extendLocatorId("errors"), MSG.view_summaryOverview_header_detectedErrors(), null, null, new String[]
+            { ResourceErrorsDataSource.Field.DETAIL });
 
         Resource resource = resourceComposite.getResource();        
         ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
@@ -58,7 +59,6 @@ public class OverviewView extends LocatableVLayout {
         
         addMember(form);
         addMember(errorsGrid);
-     
     }
 
     @Override 
@@ -68,12 +68,12 @@ public class OverviewView extends LocatableVLayout {
     }
     
     private void initErrorsGrid() {        
-        errorsGrid.setTooltip("Click on the rows to see the error details.");
+        errorsGrid.setTooltip(MSG.view_summaryOverview_tooltip_detectedErrors());
         errorsGrid.getListGrid().addCellClickHandler(new CellClickHandler() {
             public void onCellClick(CellClickEvent event) {
                 ListGridRecord record = event.getRecord();
                 final Window w = new Window();
-                w.setTitle("Error Details");
+                w.setTitle(MSG.view_summaryOverview_title_errorDetailsWindow());
                 w.setIsModal(true);
                 w.setShowMinimizeButton(false);
                 w.setShowModalMask(true);
@@ -89,10 +89,10 @@ public class OverviewView extends LocatableVLayout {
                 w.addItem(layout);
                 
                 HTMLPane details = new HTMLPane();                
-                details.setContents("<pre>" + record.getAttribute(ResourceErrorsDataSource.DETAIL_ID) + "</pre>");
+                details.setContents("<pre>" + record.getAttribute(ResourceErrorsDataSource.Field.DETAIL) + "</pre>");
                 layout.addMember(details);
                 
-                IButton ok = new IButton("Ok");
+                IButton ok = new IButton(MSG.common_button_ok());
                 ok.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
                         w.destroy();

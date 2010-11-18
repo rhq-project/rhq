@@ -48,7 +48,7 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 /**
- * The Resource Summary>Overview tab, the form with resource data.
+ * The Resource Summary>Overview tab - Resource general properties + summary traits.
  *
  * @author Greg Hinkle
  * @author Ian Springer
@@ -98,7 +98,8 @@ public class OverviewForm extends EnhancedDynamicForm {
                 DisplayType.SUMMARY,
                 new AsyncCallback<List<MeasurementDataTrait>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load traits for " + resource + ".",
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_summaryOverviewForm_error_traitsLoadFailure(resource.toString()),
                                 caught);
                     }
 
@@ -135,12 +136,13 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         List<FormItem> formItems = new ArrayList<FormItem>();
 
-        HeaderItem headerItem = new HeaderItem("header", "Summary");
-        headerItem.setValue("Summary");
+        HeaderItem headerItem = new HeaderItem("header", MSG.view_summaryOverviewForm_header_summary());
+        headerItem.setValue(MSG.view_summaryOverviewForm_header_summary());
         formItems.add(headerItem);
 
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
-        typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());
+        typeItem.setTooltip(MSG.view_summaryOverviewForm_label_plugin() + type.getPlugin() + "\n<br>"
+            + MSG.view_summaryOverviewForm_label_type() + type.getName());
         typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
         formItems.add(typeItem);
 
@@ -162,9 +164,9 @@ public class OverviewForm extends EnhancedDynamicForm {
                     resource.setName(newName);
                     OverviewForm.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to change name of Resource with id "
-                                                + resource.getId()
-                                                + " from \"" + oldName + "\" to \"" + newName + "\".", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_summaryOverviewForm_error_nameChangeFailure(
+                                                String.valueOf(resource.getId()),
+                                                oldName, newName), caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setName(oldName);
@@ -172,9 +174,10 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(new Message("Name of Resource with id "
-                                                + resource.getId() + " was changed from \""
-                                                + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(
+                                                String.valueOf(resource.getId()),
+                                                oldName, newName)
+                                                , Message.Severity.Info));
                         }
                     });
                 }
@@ -197,9 +200,9 @@ public class OverviewForm extends EnhancedDynamicForm {
                     resource.setDescription(newDescription);
                     OverviewForm.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to change description of Resource with id "
-                                                + resource.getId()
-                                                + " from \"" + oldDescription + "\" to \"" + newDescription + "\".", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_summaryOverviewForm_error_descriptionChangeFailure(
+                                                String.valueOf(resource.getId()),
+                                                oldDescription, newDescription), caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setDescription(oldDescription);
@@ -207,9 +210,9 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(new Message("Description of Resource with id "
-                                                + resource.getId() + " was changed from \""
-                                                + oldDescription + "\" to \"" + newDescription + "\".", Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(
+                                                String.valueOf(resource.getId()),
+                                                oldDescription, newDescription), Message.Severity.Info));
                         }
                     });
                 }
@@ -232,9 +235,9 @@ public class OverviewForm extends EnhancedDynamicForm {
                     resource.setLocation(newLocation);
                     OverviewForm.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to change location of Resource with id "
-                                                + resource.getId()
-                                                + " from \"" + oldLocation + "\" to \"" + newLocation + "\".", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_summaryOverviewForm_error_locationChangeFailure(
+                                                String.valueOf(resource.getId()),
+                                                oldLocation, newLocation), caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setLocation(oldLocation);
@@ -242,9 +245,9 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(new Message("Location of Resource with id "
-                                                + resource.getId() + " was changed from \""
-                                                + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(
+                                                String.valueOf(resource.getId()),
+                                                oldLocation, newLocation), Message.Severity.Info));
                         }
                     });
                 }
@@ -283,11 +286,11 @@ public class OverviewForm extends EnhancedDynamicForm {
         setValue("name", resource.getName());
         setValue("description", resource.getDescription());
         setValue("location", resource.getLocation());
-        setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>none</i>");
+        setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none() + "</i>");
         Resource parentResource = resource.getParentResource();
         setValue("parent", parentResource != null ?
                 ("<a href=\"#Resource/" + parentResource.getId() + "\">" +
-                        parentResource.getName() + "</a>") : "<i>none</i>");    
+                        parentResource.getName() + "</a>") : "<i>" + MSG.common_label_none() + "</i>");
     }
     
 }

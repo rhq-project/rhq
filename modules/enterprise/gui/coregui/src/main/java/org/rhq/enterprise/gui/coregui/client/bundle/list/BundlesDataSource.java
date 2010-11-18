@@ -54,17 +54,17 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField bundleTypeDataField = new DataSourceTextField("bundleType", "Bundle Type");
+        DataSourceTextField bundleTypeDataField = new DataSourceTextField("bundleType", MSG.view_bundle_bundleType());
         fields.add(bundleTypeDataField);
 
         return fields;

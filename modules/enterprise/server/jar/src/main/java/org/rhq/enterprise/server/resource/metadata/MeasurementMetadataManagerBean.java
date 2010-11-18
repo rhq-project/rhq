@@ -34,8 +34,14 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
     @Override
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
+        log.debug("Updating metric definitions for " + existingType);
+
         Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
         if (existingDefinitions.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug(existingType + " currently does not define any metric definitions.");
+                log.debug("New metric definitions to be added: " + newType.getMetricDefinitions());
+            }
             // They're all new.
             for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
                 if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
@@ -57,6 +63,10 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                     if (existingDefinition.getName().equals(newDefinition.getName())
                             && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
                         found = true;
+
+                        if (log.isDebugEnabled()) {
+                            log.debug("Updating existing metric definition: " + existingDefinition);
+                        }
 
                         existingDefinition.update(newDefinition, false);
 
@@ -80,6 +90,9 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
                 if (!found) {
                     // Its new, create it
+                    if (log.isDebugEnabled()) {
+                        log.debug("Adding metric definition: " + newDefinition);
+                    }
                     existingType.addMetricDefinition(newDefinition);
                     entityMgr.persist(newDefinition);
 
@@ -97,7 +110,6 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                     definitionsToDelete.add(existingDefinition);
                 }
             }
-
             // ... and remove them
             existingDefinitions.removeAll(definitionsToDelete);
             for (MeasurementDefinition definitionToDelete : definitionsToDelete) {
@@ -116,6 +128,8 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
     @Override
     public void deleteMetadata(ResourceType existingType) {
+        log.debug("Deleting metric definitions for " + existingType);
+
         // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
         // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
         // of removing any associated schedules and those schedules' OOBs.

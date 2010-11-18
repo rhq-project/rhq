@@ -122,7 +122,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
         for (ResourceType resourceType : nonRunsInsideResourceTypes) {
+            long startTime = System.currentTimeMillis();
             updateType(resourceType);
+            long endTime = System.currentTimeMillis();
+            log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime) +
+                    " ms");
+
             legitimateChildren.addAll(resourceType.getChildResourceTypes());
         }
         // Only recurse if there are actually children - this prevents infinite recursion.

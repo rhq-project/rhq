@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
@@ -16,6 +18,8 @@ import java.util.Set;
 @Stateless
 public class EventMetadataManagerBean implements EventMetdataManagerLocal {
 
+    private static Log log = LogFactory.getLog(EventMetadataManagerBean.class);
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
 
@@ -24,6 +28,8 @@ public class EventMetadataManagerBean implements EventMetdataManagerLocal {
 
     @Override
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
+        log.debug("Updating event definitions for " + existingType);
+
         Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
         // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
         for (EventDefinition def : newEventDefs) {
@@ -38,6 +44,12 @@ public class EventMetadataManagerBean implements EventMetdataManagerLocal {
         Set<EventDefinition> toDelete = CollectionsUtil.missingInFirstSet(newEventDefs, existingEventDefs);
         Set<EventDefinition> newOnes = CollectionsUtil.missingInFirstSet(existingEventDefs, newEventDefs);
         Set<EventDefinition> toUpdate = CollectionsUtil.intersection(newEventDefs, existingEventDefs);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Event definitions to be added: " + newOnes);
+            log.debug("Event defininitions to be updated: " + toUpdate);
+            log.debug("Event definitions to be removed: " + toDelete);
+        }
 
         // update existing ones
         for (EventDefinition eDef : existingEventDefs) {

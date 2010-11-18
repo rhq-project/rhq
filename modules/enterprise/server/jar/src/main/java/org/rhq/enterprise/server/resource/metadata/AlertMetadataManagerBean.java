@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -17,6 +19,8 @@ import java.util.List;
 @Stateless
 public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
 
+    private static final Log log = LogFactory.getLog(AlertMetadataManagerBean.class);
+
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionMgr;
 
@@ -25,6 +29,8 @@ public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
 
     @Override
     public void deleteAlertTemplates(Subject subject, ResourceType resourceType) {
+        log.debug("Deleting alert templates for " + resourceType);
+
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.addFilterAlertTemplateResourceTypeId(resourceType.getId());
         List<AlertDefinition> templates = alertDefinitionMgr.findAlertDefinitionsByCriteria(subject, criteria);

@@ -35,6 +35,8 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
     @Override
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
+        log.debug("Updating bundle type and package types for " + existingType);
+
         // set the bundle type if one is defined
         BundleType newBundleType = newType.getBundleType();
         if (newBundleType != null) {
@@ -44,13 +46,22 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
                 newBundleType.setId(existingBundleType.getId());
                 newBundleType = entityMgr.merge(newBundleType);
             }
+            if (log.isDebugEnabled()) {
+                log.debug("Updating bundle type to " + newBundleType);
+            }
             existingType.setBundleType(newBundleType);
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Removing bundle type");
+            }
             existingType.setBundleType(null);
         }
 
         // Easy case: If there are no package definitions in the new type, null out any in the existing and return
         if (newType.getPackageTypes().isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Removing all package types for " + existingType);
+            }
             for (PackageType packageType : existingType.getPackageTypes()) {
                 entityMgr.remove(packageType);
             }
@@ -62,6 +73,10 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
         // Easy case: If the existing type did not have any package definitions, simply use the new type defs and return
         if (existingType.getPackageTypes().isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug(existingType + " previously did not define any package types. Adding " +
+                        newType.getPackageTypes());
+            }
             for (PackageType newPackageType : newType.getPackageTypes()) {
                 newPackageType.setResourceType(existingType);
                 entityMgr.persist(newPackageType);
@@ -91,6 +106,10 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         List<PackageType> mergedPackageTypes = new ArrayList<PackageType>(existingType.getPackageTypes());
         mergedPackageTypes.retainAll(newType.getPackageTypes());
 
+        if (log.isDebugEnabled()) {
+            log.debug("Updating package types: " + mergedPackageTypes);
+        }
+
         for (PackageType mergedPackageType : mergedPackageTypes) {
             updatePackageConfigurations(mergedPackageType,
                     newPackageTypeDefinitions.get(mergedPackageType.getName()));
@@ -101,6 +120,10 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         // Persist all new definitions
         List<PackageType> newPackageTypes = new ArrayList<PackageType>(newType.getPackageTypes());
         newPackageTypes.removeAll(existingType.getPackageTypes());
+
+        if (log.isDebugEnabled()) {
+            log.debug("Adding package types: " + newPackageTypes);
+        }
 
         for (PackageType newPackageType : newPackageTypes) {
             newPackageType.setResourceType(existingType);
@@ -157,6 +180,8 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
     @Override
     public void deleteMetadata(Subject subject, ResourceType resourceType) {
+        log.debug("Deleting bundle type and bundles for " + resourceType);
+
         // Currently PackageType deletion is handled via a cascading delete when the
         // owning ResourceType is deleted.
         try {

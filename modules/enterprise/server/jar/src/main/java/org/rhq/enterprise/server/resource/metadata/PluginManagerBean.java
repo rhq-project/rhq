@@ -227,12 +227,22 @@ public class PluginManagerBean implements PluginManagerLocal {
         }
 
         List<Plugin> plugins = getAllPluginsById(pluginIds);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Preparing to delete " + plugins);
+        }
+
         for (Plugin plugin : plugins) {
             if (plugin.getStatus().equals(PluginStatusType.INSTALLED)) {
+                long startTime = System.currentTimeMillis();
                 List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
                 Plugin managedPlugin = entityManager.merge(plugin);
                 inventoryMgr.markTypesDeleted(resourceTypes);
                 managedPlugin.setStatus(PluginStatusType.DELETED);
+                long endTime = System.currentTimeMillis();
+                log.debug("Deleted " + plugin + " in " + (endTime - startTime) + " ms");
+            } else {
+                log.debug("Skipping " + plugin + ". It is already deleted.");
             }
         }
     }
@@ -278,6 +288,8 @@ public class PluginManagerBean implements PluginManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void registerPlugin(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
         boolean forceUpdate) throws Exception {
+        log.debug("Registering " + plugin);
+        long startTime = System.currentTimeMillis();
 
         boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
             pluginFile, forceUpdate);
@@ -285,6 +297,9 @@ public class PluginManagerBean implements PluginManagerLocal {
         if (typesUpdated) {
             resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
         }
+
+        long endTime = System.currentTimeMillis();
+        log.debug("Finished registering " + plugin + " in " + (endTime - startTime) + " ms");
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

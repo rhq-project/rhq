@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -25,6 +27,8 @@ import java.util.List;
 @Stateless
 public class PluginConfigurationMetadataManagerBean implements PluginConfigurationMetadataManagerLocal {
 
+    private static Log log = LogFactory.getLog(PluginConfigurationMetadataManagerBean.class);
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
 
@@ -39,14 +43,24 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
 
     @Override
     public void updatePluginConfigurationDefinition(ResourceType existingType, ResourceType newType) {
+        if (log.isDebugEnabled()) {
+            log.debug("Updating plugin configuration definition for " + existingType);
+        }
         ConfigurationDefinition existingConfigurationDefinition = existingType.getPluginConfigurationDefinition();
         if (newType.getPluginConfigurationDefinition() != null) {
             // all new
             if (existingConfigurationDefinition == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug(existingType + " currently does not have a plugin configuration definition. Adding " +
+                            "new plugin configuration.");
+                }
                 entityMgr.persist(newType.getPluginConfigurationDefinition());
                 existingType.setPluginConfigurationDefinition(newType.getPluginConfigurationDefinition());
             } else // update the configuration
             {
+                if (log.isDebugEnabled()) {
+                    log.debug("Updating plugin configuration definition for " + existingType);
+                }
                 ConfigurationDefinitionUpdateReport updateReport = configurationMetadataMgr
                     .updateConfigurationDefinition(newType.getPluginConfigurationDefinition(),
                         existingConfigurationDefinition);
@@ -66,6 +80,9 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
         } else {
             // resourceType.getPlu... is null -> remove the existing config
             if (existingConfigurationDefinition != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Removing plugin configuration definition for " + existingType);
+                }
                 existingType.setPluginConfigurationDefinition(null);
                 entityMgr.remove(existingConfigurationDefinition);
             }

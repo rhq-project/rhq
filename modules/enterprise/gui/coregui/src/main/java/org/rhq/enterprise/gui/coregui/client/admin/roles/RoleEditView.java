@@ -81,8 +81,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
-        UserPermissionsManager.getInstance().loadGlobalPermissions(
-            new PermissionsLoadedListener() {
+        UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
             public void onPermissionsLoaded(Set<Permission> globalPermissions) {
                 RoleEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
                 checkIfLdapConfigured();
@@ -98,7 +97,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to determine if LDAP configured - assuming not.", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
                 RoleEditView.this.isLdapConfigured = false;
                 fetchAvailableLdapGroups();
             }
@@ -109,23 +108,21 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         final boolean isReadOnly = (!this.hasManageSecurityPermission);
         if (this.isLdapConfigured) {
             final Set<LdapGroup> availableLdapGroups = null;
-            GWTServiceLookup.getLdapService().findAvailableGroups(
-                new AsyncCallback<Set<Map<String, String>>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to retrieve available LDAP groups - assuming none.",
-                            caught);
-                        Set<LdapGroup> availableLdapGroups = Collections.emptySet();
-                        init(isReadOnly);
-                    }
+            GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroups(), caught);
+                    Set<LdapGroup> availableLdapGroups = Collections.emptySet();
+                    init(isReadOnly);
+                }
 
-                    public void onSuccess(Set<Map<String, String>> result) {
-                        // Get assigned LDAP groups.
-                        Set<LdapGroup> availableLdapGroups = RoleLdapGroupSelector.convertToCollection(result);
-                        // Update record with both objects.
-                        //record.setAttribute("ldapGroupsAvailable", availableGroups);
-                        init(isReadOnly);
-                    }
-                });
+                public void onSuccess(Set<Map<String, String>> result) {
+                    // Get assigned LDAP groups.
+                    Set<LdapGroup> availableLdapGroups = RoleLdapGroupSelector.convertToCollection(result);
+                    // Update record with both objects.
+                    //record.setAttribute("ldapGroupsAvailable", availableGroups);
+                    init(isReadOnly);
+                }
+            });
         } else {
             // LDAP not configured - we won't display an LDAP group selector.
             // TODO: Should we display a message stating that LDAP is not configured with a link to Admin Settings view?
@@ -140,7 +137,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     }
 
     @Override
-    protected void editRecord(Record record) {        
+    protected void editRecord(Record record) {
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
         // other users' assigned roles.
         Subject whoami = UserSessionManager.getSessionSubject();
@@ -184,9 +181,11 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 });
                 this.ldapGroupsItem.setCanvas(this.ldapGroupSelector);
             } else {
-                Label label = new Label("<b>NOTE:</b> The LDAP security integration is not configured. To configure " +
-                                        "it, go to <a href='#Administration/Configuration/SystemSettings'>System " +
-                                        "Settings</a>.");
+                Label label = new Label("<b>"
+                    + MSG.common_msg_emphasizedNotePrefix()
+                    + "</b> "
+                    + MSG.view_adminRoles_noLdap("href='#Administration/Configuration/SystemSettings'", MSG
+                        .view_adminConfig_systemSettings()));
                 label.setWidth100();
                 label.setPadding(6);
                 this.ldapGroupsItem.setCanvas(label);
@@ -205,34 +204,35 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     protected List<FormItem> createFormItems(boolean newUser) {
         List<FormItem> items = new ArrayList<FormItem>();
 
-        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, "Name");
+        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, MSG.common_title_name());
         items.add(nameItem);
 
-        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, "Description");
+        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
         descriptionItem.setColSpan(getForm().getNumCols());
         descriptionItem.setWidth("*");
         items.add(descriptionItem);
 
-        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", "Permissions", this);
+        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", MSG
+            .view_adminRoles_perms(), this);
         permissionEditorItem.setShowTitle(false);
         permissionEditorItem.setColSpan(getForm().getNumCols());
         items.add(permissionEditorItem);
 
-        resourceGroupsItem = new CanvasItem(RolesDataSource.Field.RESOURCE_GROUPS, "Assigned Resource Groups");
+        resourceGroupsItem = new CanvasItem(RolesDataSource.Field.RESOURCE_GROUPS, MSG.view_adminRoles_assignedGroups());
         resourceGroupsItem.setShowTitle(false);
         resourceGroupsItem.setTitleOrientation(TitleOrientation.TOP);
         resourceGroupsItem.setColSpan(getForm().getNumCols());
         resourceGroupsItem.setCanvas(new Canvas());
         items.add(resourceGroupsItem);
 
-        subjectsItem = new CanvasItem(RolesDataSource.Field.SUBJECTS, "Assigned Subjects");
+        subjectsItem = new CanvasItem(RolesDataSource.Field.SUBJECTS, MSG.view_adminRoles_assignedSubjects());
         subjectsItem.setShowTitle(false);
         subjectsItem.setTitleOrientation(TitleOrientation.TOP);
         subjectsItem.setColSpan(getForm().getNumCols());
         subjectsItem.setCanvas(new Canvas());
         items.add(subjectsItem);
 
-        ldapGroupsItem = new CanvasItem(RolesDataSource.Field.LDAP_GROUPS, "LDAP Groups");
+        ldapGroupsItem = new CanvasItem(RolesDataSource.Field.LDAP_GROUPS, MSG.view_adminRoles_ldapGroups());
         ldapGroupsItem.setShowTitle(false);
         ldapGroupsItem.setTitleOrientation(TitleOrientation.TOP);
         ldapGroupsItem.setColSpan(getForm().getNumCols());
@@ -267,5 +267,5 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         this.subjectSelector.reset();
         this.ldapGroupSelector.reset();
     }
-        
+
 }

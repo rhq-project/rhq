@@ -99,12 +99,12 @@ public class RolesView extends TableSection implements BookmarkableView {
 
     @Override
     protected String getDataTypeName() {
-        return "role";
+        return MSG.common_label_role();
     }
 
     @Override
     protected String getDataTypeNamePlural() {
-        return "roles";
+        return MSG.common_label_roles();
     }
 
 }

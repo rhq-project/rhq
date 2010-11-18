@@ -33,12 +33,15 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
  */
 public class PermissionEditorView extends CanvasItem {
+    private static Messages MSG = CoreGUI.getMessages();
 
     private Set<Permission> selectedPermissions = EnumSet.noneOf(Permission.class);
 
@@ -60,16 +63,16 @@ public class PermissionEditorView extends CanvasItem {
 
         List<FormItem> items = new ArrayList<FormItem>();
 
-        HeaderItem globalPermsHeader = new HeaderItem("globalPermissions", "Global Permissions");
-        globalPermsHeader.setValue("Global Permissions");
+        HeaderItem globalPermsHeader = new HeaderItem("globalPermissions", MSG.view_adminRoles_globalPerms());
+        globalPermsHeader.setValue(MSG.view_adminRoles_globalPerms());
         items.add(globalPermsHeader);
         for (Permission permission : Permission.GLOBAL_ALL) {
-            CheckboxItem checkboxItem = new CheckboxItem(permission.name(), permission.name());            
+            CheckboxItem checkboxItem = new CheckboxItem(permission.name(), permission.name());
             items.add(checkboxItem);
         }
 
-        HeaderItem resourcePermsHeader = new HeaderItem("resourcePermissions", "Resource Permissions");
-        resourcePermsHeader.setValue("Resource Permissions");
+        HeaderItem resourcePermsHeader = new HeaderItem("resourcePermissions", MSG.view_adminRoles_resourcePerms());
+        resourcePermsHeader.setValue(MSG.view_adminRoles_resourcePerms());
         items.add(resourcePermsHeader);
         for (Permission permission : Permission.RESOURCE_ALL) {
             CheckboxItem checkboxItem = new CheckboxItem(permission.name(), permission.name());
@@ -110,5 +113,5 @@ public class PermissionEditorView extends CanvasItem {
     public Set<Permission> getPermissions() {
         return selectedPermissions;
     }
-    
+
 }

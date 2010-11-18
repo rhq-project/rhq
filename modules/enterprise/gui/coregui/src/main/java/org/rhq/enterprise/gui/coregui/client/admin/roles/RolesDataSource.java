@@ -98,10 +98,11 @@ public class RolesDataSource extends RPCDataSource<Role> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField nameField = new DataSourceTextField(Field.NAME, "Name", 100, true);
+        DataSourceTextField nameField = new DataSourceTextField(Field.NAME, MSG.common_title_name(), 100, true);
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField(Field.DESCRIPTION, "Description", 100, false);
+        DataSourceTextField descriptionField = new DataSourceTextField(Field.DESCRIPTION, MSG
+            .common_title_description(), 100, false);
         fields.add(descriptionField);
 
         return fields;
@@ -113,7 +114,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
-                sendFailureResponse(request, response, "Failed to fetch role(s).", caught);
+                sendFailureResponse(request, response, MSG.view_adminRoles_failRoles(), caught);
             }
 
             public void onSuccess(PageList<Role> result) {
@@ -130,12 +131,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
         roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
                 Map<String, String> errorMessages = new HashMap<String, String>();
-                errorMessages.put(Field.NAME, "A role named [" + rolename + "] already exists.");
+                errorMessages.put(Field.NAME, MSG.view_adminRoles_roleExists(rolename));
                 sendValidationErrorResponse(request, response, errorMessages);
             }
 
             public void onSuccess(Role addedRole) {
-                sendSuccessResponse(request, response, addedRole, new Message("Role [" + rolename + "] added."));
+                sendSuccessResponse(request, response, addedRole, new Message(MSG.view_adminRoles_roleAdded(rolename)));
             }
         });
 
@@ -143,17 +144,18 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
     @Override
     protected void executeUpdate(Record recordToUpdate, Record oldRecord, final DSRequest request,
-                                 final DSResponse response) {
+        final DSResponse response) {
         Role roleToUpdate = copyValues(recordToUpdate);
 
         final String rolename = roleToUpdate.getName();
         roleService.updateRole(roleToUpdate, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                sendFailureResponse(request, response, "Failed to update role [" + rolename + "].", caught);
+                sendFailureResponse(request, response, MSG.view_adminRoles_roleUpdateFailed(rolename), caught);
             }
 
             public void onSuccess(Role updatedRole) {
-                sendSuccessResponse(request, response, updatedRole, new Message("Role [" + rolename + "] updated."));
+                sendSuccessResponse(request, response, updatedRole, new Message(MSG
+                    .view_adminRoles_roleUpdated(rolename)));
             }
         });
     }
@@ -165,12 +167,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
         final String rolename = roleToRemove.getName();
         roleService.removeRoles(new int[] { roleToRemove.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                sendFailureResponse(request, response, "Failed to delete role [" + rolename + "].", caught);
+                sendFailureResponse(request, response, MSG.view_adminRoles_roleDeleteFailed(rolename), caught);
             }
 
             public void onSuccess(Void result) {
-                sendSuccessResponse(request, response, roleToRemove, new Message("Role [" + roleToRemove.getName()
-                    + "] deleted."));
+                sendSuccessResponse(request, response, roleToRemove, new Message(MSG
+                    .view_adminRoles_roleDeleted(rolename)));
             }
         });
 
@@ -200,7 +202,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
         targetRecord.setAttribute(Field.NAME, sourceRole.getName());
         targetRecord.setAttribute(Field.DESCRIPTION, sourceRole.getDescription());
 
-        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(sourceRole.getResourceGroups());
+        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
+            sourceRole.getResourceGroups());
         targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
         // First split the set of permissions into two subsets - one for global perms and one for resource perms.

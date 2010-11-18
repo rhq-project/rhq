@@ -35,12 +35,10 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
-import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -51,8 +49,10 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -62,6 +62,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public abstract class RPCDataSource<T> extends DataSource {
+
+    protected static final Messages MSG = CoreGUI.getMessages();
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
 
@@ -93,7 +95,10 @@ public abstract class RPCDataSource<T> extends DataSource {
     @Override
     protected Object transformRequest(DSRequest request) {
         try {
-            DSResponse response = createResponse(request);
+            DSResponse response = new DSResponse();
+            response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
+            // Assume success as the default.
+            response.setStatus(0);
 
             switch (request.getOperationType()) {
             case FETCH:
@@ -109,14 +114,16 @@ public abstract class RPCDataSource<T> extends DataSource {
                 executeUpdate(updatedRecord, oldRecord, request, response);
                 break;
             case REMOVE:
-                executeRemove(request, response);
+                ListGridRecord deletedRecord = getDataObject(request);
+                executeRemove(deletedRecord, request, response);
                 break;
             default:
                 super.transformRequest(request);
                 break;
             }
         } catch (Throwable t) {
-            CoreGUI.getErrorHandler().handleError("Failure in datasource [" + request.getOperationType() + "]", t);
+            CoreGUI.getErrorHandler().handleError(
+                MSG.dataSource_rpc_error_transformRequestFailure(request.getOperationType().name()), t);
             return null;
         }
         return request.getData();
@@ -124,7 +131,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     private Record getUpdatedRecord(DSRequest request, Record oldRecord) {
         // Get changed values.
-        JavaScriptObject data = request.getData ();
+        JavaScriptObject data = request.getData();
         // Apply changes.
         JSOHelper.apply(data, oldRecord.getJsObj());
         return new ListGridRecord(data);
@@ -149,17 +156,18 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
-                request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
-                
+
         initializeSorting(pageControl, request);
-        
+
         return pageControl;
     }
 
     private void initializeSorting(PageControl pageControl, DSRequest request) {
-        SortSpecifier[] sortSpecifiers = request.getSortBy();
+        // TODO: Uncomment this once the bug in request.getSortBy() is fixed.
+        /*SortSpecifier[] sortSpecifiers = request.getSortBy();
         if (sortSpecifiers != null) {
             for (SortSpecifier sortSpecifier : sortSpecifiers) {
                 PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
@@ -167,15 +175,98 @@ public abstract class RPCDataSource<T> extends DataSource {
                 String columnName = sortSpecifier.getField();
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
+        }*/
+
+        String sortBy = request.getAttribute("sortBy");
+        if (sortBy != null) {
+            String[] sorts = sortBy.split(",");
+            for (String sort : sorts) {
+                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
+                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
+                pageControl.addDefaultOrderingField(columnName, ordering);
+            }
         }
     }
 
-    protected void populateSuccessResponse(PageList<T> result, DSResponse response) {
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject) {
+        sendSuccessResponse(request, response, dataObject, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record) {
+        sendSuccessResponse(request, response, record, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message) {
+        sendSuccessResponse(request, response, dataObject, message, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message) {
+        sendSuccessResponse(request, response, record, message, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message,
+        String viewPath) {
+        Record record = copyValues(dataObject);
+        sendSuccessResponse(request, response, record, message, viewPath);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message,
+        String viewPath) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        Record[] records = buildRecords(result);
+        response.setData(new Record[] { record });
+        processResponse(request.getRequestId(), response);
+        if (viewPath != null) {
+            CoreGUI.goToView(viewPath, message);
+        } else if (message != null) {
+            CoreGUI.getMessageCenter().notify(message);
+        }
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, PageList<T> dataObjects) {
+        Record[] records = buildRecords(dataObjects);
+        PageList<Record> recordsPageList = new PageList<Record>(dataObjects.getPageControl());
+        recordsPageList.setTotalSize(dataObjects.getTotalSize());
+        recordsPageList.setUnbounded(dataObjects.isUnbounded());
+        recordsPageList.addAll(Arrays.asList(records));
+        sendSuccessResponseRecords(request, response, recordsPageList);
+    }
+
+    protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        Record[] recordsArray = new Record[records.size()];
+        for (int i = 0, recordsSize = records.size(); i < recordsSize; i++) {
+            Record record = records.get(i);
+            recordsArray[i] = record;
+        }
+        response.setData(recordsArray);
+        // For paging to work, we have to specify size of full result set.
+        int totalRows = (records.isUnbounded()) ? records.size() : records.getTotalSize();
+        response.setTotalRows(totalRows);
+        processResponse(request.getRequestId(), response);
+    }
+
+    protected void sendFailureResponse(DSRequest request, DSResponse response, String message, Throwable caught) {
+        CoreGUI.getErrorHandler().handleError(message, caught);
+        response.setStatus(RPCResponse.STATUS_FAILURE);
+        processResponse(request.getRequestId(), response);
+    }
+
+    protected void sendValidationErrorResponse(DSRequest request, DSResponse response, Map<String, String> errorMessages) {
+        response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
+        response.setErrors(errorMessages);
+        processResponse(request.getRequestId(), response);
+    }
+
+    /**
+     * @deprecated use {@link #sendSuccessResponseRecords(DSRequest, DSResponse, PageList)} instead
+     */
+    @Deprecated
+    protected void populateSuccessResponse(PageList<T> dataObjects, DSResponse response) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        Record[] records = buildRecords(dataObjects);
         response.setData(records);
         // For paging to work, we have to specify size of full result set.
-        int totalRows = (result.isUnbounded()) ? records.length : result.getTotalSize();
+        int totalRows = (dataObjects.isUnbounded()) ? records.length : dataObjects.getTotalSize();
         response.setTotalRows(totalRows);
     }
 
@@ -262,46 +353,38 @@ public abstract class RPCDataSource<T> extends DataSource {
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>
      * should be called when operation completes (either successful or failure).
      *
+     * @param recordToRemove
      * @param request  <code>DSRequest</code> being processed. <code>request.getData ()</code>
      *                 contains record should be removed.
      * @param response <code>DSResponse</code>. <code>setData (list)</code> should be called on
-     *                 successful execution of this method. Array should contain single element representing
-     *                 removed row. <code>setStatus (&lt;0)</code> should be called on failure.
+    *                 successful execution of this method. Array should contain single element representing
      */
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        throw new UnsupportedOperationException("This dataSource does not support removal.");
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support removals.");
     }
 
     /**
      * TODO
      *
-     * @param newRecord
+     * @param recordToAdd
      * @param request
      * @param response
      */
-    protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
-        throw new UnsupportedOperationException("This dataSource does not support addition.");
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support additions.");
     }
 
     /**
      * TODO
      *
-     * @param updatedRecord
+     * @param editedRecord
      * @param oldRecord
      * @param request
      * @param response
      */
-    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
-                                 final DSResponse response) {
+    protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
+        final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
-    }
-
-    private DSResponse createResponse(DSRequest request) {
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Assume success as the default.
-        response.setStatus(0);
-        return response;
     }
 
     /**
@@ -321,7 +404,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         addFields(Arrays.asList(fields));
     }
 
-
     @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
         Log.debug("Fetching array " + paramName + " (" + type + ")");
@@ -338,7 +420,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             resultArray = (S[]) new Integer[intermediates.length];
             int index = 0;
             for (int next : intermediates) {
-                resultArray[index++] = (S) (Integer) next;
+                resultArray[index++] = (S) Integer.valueOf(next);
             }
         } else if (type == String.class) {
             String[] intermediates = criteria.getAttributeAsStringArray(paramName);
@@ -353,12 +435,12 @@ public abstract class RPCDataSource<T> extends DataSource {
             for (String next : intermediates) {
                 buffer.add((S) Enum.valueOf((Class<? extends Enum>) type, next));
             }
-            resultArray = buffer.toArray((S[]) getEnumArray(type, buffer.size()));
+            resultArray = buffer.toArray(getEnumArray(type, buffer.size()));
         } else {
-            throw new IllegalArgumentException("No support for passing array filters of type " + type);
+            throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedArrayFilterType(type.getName()));
         }
 
-        com.allen_sauer.gwt.log.client.Log.debug("Result array = " + resultArray);
+        Log.debug("Result array = " + Arrays.toString(resultArray));
 
         return resultArray;
     }
@@ -372,8 +454,7 @@ public abstract class RPCDataSource<T> extends DataSource {
         } else if (genericEnumType == EventSeverity.class) {
             return (S[]) new EventSeverity[size];
         } else {
-            throw new IllegalArgumentException("Please add an appropriate code block for enum " + genericEnumType
-                + " to RPCDataSource.getEnumArray(Class)");
+            throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }
     }
 
@@ -407,7 +488,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     protected DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
-                                                Boolean required) {
+        Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(maxLength);
         textField.setRequired(required);
@@ -425,12 +506,11 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setLength(Boolean.FALSE.toString().length());
         textField.setRequired(required);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        valueMap.put(Boolean.TRUE.toString(), "yes");
-        valueMap.put(Boolean.FALSE.toString(), "no");
+        valueMap.put(Boolean.TRUE.toString(), MSG.dataSource_rpc_yes());
+        valueMap.put(Boolean.FALSE.toString(), MSG.dataSource_rpc_no());
         textField.setValueMap(valueMap);
         return textField;
     }
-
 
     /** Quick method to determine if current user is still logged in.
      *  
@@ -439,4 +519,5 @@ public abstract class RPCDataSource<T> extends DataSource {
     protected boolean userStillLoggedIn() {
         return UserSessionManager.isLoggedIn();
     }
+
 }

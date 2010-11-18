@@ -100,7 +100,7 @@ public class PermissionEditorView extends CanvasItem {
                         selectedPermissions.remove(p);
                     }
                 }
-                roleEditView.updateButtons();
+                roleEditView.onItemChanged();
             }
         });
 

@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
  */
 public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = "Message";
+    public static final String KEY = MSG.view_portlet_message_title();
 
     public MessagePortlet(String locatorId) {
         super(locatorId);
@@ -53,19 +53,20 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
         if (contents != null) {
             setContents(contents);
         } else {
-            setContents("<i>Message not yet configured, click the settings button to setup this portlet.");
+            setContents("<i>" + MSG.view_portlet_message_unconfigured());
         }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet can display an HTML message on the dashboard.");
+        return new HTMLFlow(MSG.view_portlet_message_help());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition("MessagePortlet Configuration",
-            "The configuration settings for the message portlet.");
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_message_config_title(), MSG
+            .view_portlet_message_config_title_desc());
 
-        definition.put(new PropertyDefinitionSimple("message", "Message", true, PropertySimpleType.LONG_STRING));
+        definition.put(new PropertyDefinitionSimple("message", MSG.view_portlet_message_title(), true,
+            PropertySimpleType.LONG_STRING));
 
         return definition;
     }

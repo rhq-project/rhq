@@ -27,6 +27,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
  * @author Ian Springer
  */
 public class StringUtility {
+    
     public static String pluralize(String singularNoun) {
         String pluralNoun;
         if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey")

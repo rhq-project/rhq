@@ -93,7 +93,8 @@
             <scope>provided</scope>
             <!-- by rhq.ear -->
         </dependency>
-         
+
+        
         <!-- =============== 3rd Party Deps =============== -->
 
         <dependency>
@@ -456,6 +457,7 @@
 
         <!--  Change the runTarget to not have single quotes. The quotes work for linux but not win -->
         <profile>
+            <id>windows</id>
             <activation>
                <os>
                   <family>Windows</family>
@@ -464,6 +466,22 @@
             <properties>
                <coreGuiRunTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</coreGuiRunTarget>
             </properties>         
+        </profile>
+
+        <profile>
+            <id>msg</id>
+            <build>
+                <plugins>
+                  <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                       <includes>
+                           <include>org/rhq/enterprise/gui/coregui/client/Messages.java</include>
+                       </includes>
+                    </configuration>
+                  </plugin>
+                </plugins>
+              </build>
         </profile>
         
     </profiles>

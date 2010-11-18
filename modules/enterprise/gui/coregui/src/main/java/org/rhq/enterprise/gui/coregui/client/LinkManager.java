@@ -45,6 +45,10 @@ public class LinkManager {
         }
     }
 
+    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Inventory/Connection Settings History";
+    }
+
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
             return "#Inventory/Groups/DynaGroup%20Manager/" + groupDefinitionId;

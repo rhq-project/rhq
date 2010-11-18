@@ -25,7 +25,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -57,7 +56,8 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField resourceGroupIdField = new DataSourceIntegerField(
-            MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID, "Resource Group Id");
+            MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID, MSG
+                .dataSource_schedules_field_resourceGroupId());
         resourceGroupIdField.setHidden(true);
         fields.add(resourceGroupIdField);
 
@@ -87,22 +87,24 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
     @Override
     protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
-        final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
+
         this.measurementService.enableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to enable collection of metric" + s + " " + measurementDefinitionDisplayNames
-                            + " for Resource group with id [" + resourceGroupId + "].", throwable);
+                        MSG.dataSource_schedules_enableFailure_group(String.valueOf(measurementDefinitionIds.length),
+                            String.valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Enabled collection of selected metric" + s + ".", "Enabled collection of metric"
-                            + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
-                            + resourceGroupId + "].", Message.Severity.Info));
+                        new Message(MSG.dataSource_schedules_enableSuccessful_concise(String
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_enableSuccessful_full_group(String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -110,23 +112,25 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
 
     @Override
     protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-        int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
-        final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
+        final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
+
         this.measurementService.disableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to disable collection of metric" + s + " " + measurementDefinitionDisplayNames
-                            + " for Resource group with id [" + resourceGroupId + "].", throwable);
+                        MSG.dataSource_schedules_disableFailure_group(String.valueOf(measurementDefinitionIds.length),
+                            String.valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Disabled collection of selected metric" + s + ".", "Disabled collection of metric"
-                            + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
-                            + resourceGroupId + "].", Message.Severity.Info));
+                        new Message(MSG.dataSource_schedules_disableSuccessful_concise(String
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_disableSuccessful_full_group(String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -134,26 +138,28 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
 
     @Override
     protected void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-        int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
+        final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
-        final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
+
         this.measurementService.updateSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
             collectionInterval, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to set collection interval to " + (collectionInterval / 1000) + " seconds for metric"
-                            + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
-                            + resourceGroupId + "].", throwable);
+                        MSG.dataSource_schedules_updateFailure_group(String.valueOf(measurementDefinitionIds.length),
+                            String.valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString(), String
+                                .valueOf(collectionInterval / 1000)), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
+                    String collIntervalStr = String.valueOf(collectionInterval / 1000);
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Updated collection intervals of selected metric" + s + ".",
-                            "Collection interval for metric" + s + " " + measurementDefinitionDisplayNames
-                                + " for Resource group with id [" + resourceGroupId + "] set to "
-                                + (collectionInterval / 1000) + " seconds.", Message.Severity.Info));
+                        new Message(MSG.dataSource_schedules_updateSuccessful_concise(collIntervalStr, String
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_updateSuccessful_full_group(collIntervalStr, String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });

@@ -101,12 +101,12 @@ public class UserPreferences {
 
         UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, value, oldValue);
         for (UserPreferenceChangeListener listener : changeListeners) {
-            listener.onPreferrenceChange(event);
+            listener.onPreferenceChange(event);
         }
     }
 
     public void store(AsyncCallback<Subject> callback) {
-        this.subjectService.updateSubject(this.subject, callback);
+        this.subjectService.updateSubject(this.subject, null, callback);
     }
 
     public Configuration getConfiguration() {

@@ -55,14 +55,16 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
         switch (childType.getCreationDataType()) {
 
         case CONTENT: {
-            String archPrompt = packageType.isSupportsArchitecture() ? "Package Architecture" : null;
+            String archPrompt = packageType.isSupportsArchitecture() ? MSG.widget_resourceFactoryWizard_archPrompt()
+                : null;
 
             ConfigurationDefinition deployTimeConfigDef = packageType.getDeploymentConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(deployTimeConfigDef);
             Map<String, ConfigurationTemplate> templates = deployTimeConfigDef.getTemplates();
 
-            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, null, "Package Version",
-                archPrompt, "Deployment Time Configuration Templates", templates));
+            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, null, MSG
+                .widget_resourceFactoryWizard_versionPrompt(), archPrompt, MSG
+                .widget_resourceFactoryWizard_contentTemplatePrompt(), templates));
 
             steps.add(new ResourceFactoryPackageStep(ResourceFactoryCreateWizard.this));
 
@@ -78,8 +80,9 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             ConfigurationDefinition resourceConfigDef = getChildType().getResourceConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(resourceConfigDef);
             Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
-            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, "New Resource Name",
-                "Resource Configuration Templates", templates));
+            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
+                .widget_resourceFactoryWizard_namePrompt(), MSG.widget_resourceFactoryWizard_configTemplatePrompt(),
+                templates));
 
             steps.add(new ResourceFactoryConfigurationStep(ResourceFactoryCreateWizard.this));
 
@@ -92,11 +95,11 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
     }
 
     public String getWindowTitle() {
-        return "Resource Create Wizard";
+        return MSG.widget_resourceFactoryWizard_createWizardWindowTitle();
     }
 
     public String getTitle() {
-        return "Create New Resource of Type: " + getChildType().getName();
+        return MSG.widget_resourceFactoryWizard_createWizardTitle(getChildType().getName());
     }
 
     public String getSubtitle() {
@@ -115,21 +118,21 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             Integer packageVersionId = this.getNewResourcePackageVersionId();
 
             if (null == packageVersionId) {
-                CoreGUI.getErrorHandler().handleError("Failed to create new resource, no PackageVersion");
+                CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute1());
                 getView().closeDialog();
             }
 
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, (String) null,
                 deployTimeConfiguration, packageVersionId, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create new resource", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
                         getView().closeDialog();
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Submitted request to create new resource of type [" + getChildType().getName()
-                                + "]", Message.Severity.Info));
+                            new Message(MSG.widget_resourceFactoryWizard_createSubmitType(getChildType().getName()),
+                                Message.Severity.Info));
                         getView().closeDialog();
                     }
                 });
@@ -144,13 +147,13 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, newResourceName,
                 resourceConfiguration, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create new resource", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
                         getView().closeDialog();
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Submitted request to create new resource [" + newResourceName + "]",
+                            new Message(MSG.widget_resourceFactoryWizard_createSubmit(newResourceName),
                                 Message.Severity.Info));
                         getView().closeDialog();
                     }
@@ -192,7 +195,7 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                             new AsyncCallback<PackageType>() {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
-                                        "Failed to get backing package type for new resource", caught);
+                                        MSG.widget_resourceFactoryWizard_failedToGetType(), caught);
                                 }
 
                                 public void onSuccess(PackageType result) {
@@ -225,8 +228,8 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             GWTServiceLookup.getContentService().deletePackageVersion(this.newResourcePackageVersionId,
                 new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            "Failed to delete PackageVersion in CreateResource Cancel.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_failedToDeleteVersion(),
+                            caught);
                     }
 
                     public void onSuccess(Void ignore) {

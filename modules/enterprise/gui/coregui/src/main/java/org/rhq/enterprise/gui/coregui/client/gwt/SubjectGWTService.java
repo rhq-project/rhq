@@ -20,23 +20,15 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * @author Greg Hinkle
- * @see org.rhq.enterprise.server.auth.SubjectManagerRemote
+ * @see org.rhq.enterprise.server.auth.SubjectManagerLocal
  */
 public interface SubjectGWTService extends RemoteService {
-
-    /**
-     * Change the password for a user.
-     *
-     * @param username The user whose password will be changed
-     * @param password The new password for the user
-     */
-    void changePassword(String username, String password);
 
     /**
      * Creates a new principal (username and password) in the internal database. The password will be encoded before
@@ -90,9 +82,11 @@ public interface SubjectGWTService extends RemoteService {
      * the subject's configuration.
      *
      * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
+     * @param newPassword if non-null, a new password to be set on the user's associated Principal
+     *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
-    Subject updateSubject(Subject subjectToModify);
+    Subject updateSubject(Subject subjectToModify, String newPassword);
 
     /**
      * Queries subjects using current logged in user.
@@ -103,14 +97,24 @@ public interface SubjectGWTService extends RemoteService {
     PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
 
     /**
-     * Checks the subject passed in for LDAP processing, to optionally
-     * i)perform registration of new RHQ LDAP user
-     * ii)handles case insentive username matches.
-     * iii)update ldap user->role ldap assignments
+     * Checks the subject passed in for LDAP processing, to optionally:
+     *   i) perform registration of new RHQ LDAP user
+     *   ii) handles case insentive username matches.
+     *   iii) update ldap user->role ldap assignments
      *
-     * @param criteria details for the search
-     * @return PageList<Subject> matching criteria.
+     * @param subjectToModify the subject
+     * @param password the LDAP password
      */
     Subject processSubjectForLdap(Subject subjectToModify, String password);
 
+    /**
+     * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
+     * exists and is authenticated via JDBC. An LDAP user will not have a {@link Principal} because it is authenticated
+     * via the LDAP server, not from the database.
+     *
+     * @param  username the user whose existence is to be checked
+     *
+     * @return <code>true</code> if the user exists and has a {@link Principal}, <code>false</code> otherwise
+     */
+    boolean isUserWithPrincipal(String username);
 }

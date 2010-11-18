@@ -25,17 +25,19 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+
 public enum ResourceGroupDataSourceField {
 
-    NAME("name", "Name"),
+    NAME("name", CoreGUI.getMessages().common_title_name()),
 
-    DESCRIPTION("description", "Description"),
+    DESCRIPTION("description", CoreGUI.getMessages().common_title_description()),
 
-    TYPE("typeName", "Type"),
+    TYPE("typeName", CoreGUI.getMessages().common_title_type()),
 
-    PLUGIN("pluginName", "Plugin"),
+    PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),
 
-    CATEGORY("groupCategory", "Category");
+    CATEGORY("groupCategory", CoreGUI.getMessages().common_title_category());
 
     /**
      * Corresponds to a property name of Resource

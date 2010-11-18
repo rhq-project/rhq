@@ -36,16 +36,19 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
  * @author Greg Hinkle
  */
 public class WizardView extends VLayout {
+    static private final Messages MSG = CoreGUI.getMessages();
 
-    static private final String CANCEL = "Cancel";
-    static private final String NEXT = "Next";
-    static private final String PREVIOUS = "Previous";
+    static private final String CANCEL = MSG.common_button_cancel();
+    static private final String NEXT = MSG.common_button_next();
+    static private final String PREVIOUS = MSG.common_button_previous();
 
     private Window wizardWindow;
     private Wizard wizard;
@@ -222,9 +225,9 @@ public class WizardView extends VLayout {
 
         boolean last = (stepIndex == (wizardSteps.size() - 1));
         if (last) {
-            nextButton.setTitle("Finish");
+            nextButton.setTitle(MSG.common_button_finish());
         } else {
-            nextButton.setTitle("Next");
+            nextButton.setTitle(MSG.common_button_next());
         }
 
         for (IButton button : customButtons) {

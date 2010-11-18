@@ -262,16 +262,16 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
             addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
                 @Override
-                public void executeAction(ListGridRecord[] selection) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);
                 }
             });
 
             addTableAction(this.extendLocatorId("delete"), "Delete",
-                "Are you sure you want to delete the selected alert notifications?",
-                new AbstractTableAction(TableActionEnablement.ANY) {
+                "Are you sure you want to delete the selected alert notifications?", new AbstractTableAction(
+                    TableActionEnablement.ANY) {
                     @Override
-                    public void executeAction(ListGridRecord[] selection) {
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         for (ListGridRecord record : selection) {
                             AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
                             notifications.remove(notif);

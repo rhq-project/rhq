@@ -20,12 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.util;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
 public enum WidgetsField {
 
-    UNLIMITED("unlimited", "Unlimited");
+    UNLIMITED("unlimited", CoreGUI.getMessages().util_widgetsField_unlimited());
 
     //    DESCRIPTION("description", "Description"),
     //

@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -55,6 +57,9 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  * @author Ian Springer
  */
 public class ResourceTreeDatasource extends DataSource {
+
+    Messages MSG = CoreGUI.getMessages();
+
     private List<Resource> initialData;
     private List<Resource> lockedData;
 
@@ -68,16 +73,17 @@ public class ResourceTreeDatasource extends DataSource {
         this.initialData = initialData;
         this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
 
-        DataSourceField idDataField = new DataSourceTextField("id", "ID");
+        DataSourceField idDataField = new DataSourceTextField("id", MSG.common_title_id());
         idDataField.setPrimaryKey(true);
 
-        DataSourceTextField nameDataField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameDataField = new DataSourceTextField("name", MSG.common_title_name());
         nameDataField.setCanEdit(false);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionDataField = new DataSourceTextField("description", MSG
+            .common_title_description());
         descriptionDataField.setCanEdit(false);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG.common_title_id_parent());
         parentIdField.setForeignKey("id");
 
         this.setDropExtraFields(false);
@@ -115,7 +121,7 @@ public class ResourceTreeDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         //final long start = System.currentTimeMillis();
 
-        String parentResourceId = request.getCriteria().getAttribute("parentId");
+        final String parentResourceId = request.getCriteria().getAttribute("parentId");
         //com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
@@ -124,7 +130,7 @@ public class ResourceTreeDatasource extends DataSource {
             // If this gets called more than once it's a problem. Don't load initial data more than once.
             // Subsequent fetches should be due to parent node tree expansion
             if (null != this.initialData) {
-                com.allen_sauer.gwt.log.client.Log.debug("ResourceTreeDatasource: Loading initial data...");
+                Log.debug("ResourceTreeDatasource: Loading initial data...");
 
                 processIncomingData(this.initialData, response, requestId);
                 response.setStatus(DSResponse.STATUS_SUCCESS);
@@ -135,14 +141,13 @@ public class ResourceTreeDatasource extends DataSource {
             }
 
         } else {
-            com.allen_sauer.gwt.log.client.Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId
-                + "]...");
+            Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load resource data for tree", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(requestId, response);
                 }
@@ -204,7 +209,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         for (ResourceTreeNode resourceNode : resourceNodes) {
             if (allNodeIds.contains(resourceNode.getID())) {
-                com.allen_sauer.gwt.log.client.Log.debug("Duplicate ResourceTreeNode - Skipping: " + resourceNode);
+                Log.debug("Duplicate ResourceTreeNode - Skipping: " + resourceNode);
                 continue;
             }
 

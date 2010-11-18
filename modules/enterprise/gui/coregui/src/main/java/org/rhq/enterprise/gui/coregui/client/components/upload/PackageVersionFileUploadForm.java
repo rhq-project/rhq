@@ -96,7 +96,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
         try {
             id = Integer.parseInt(packageVersionIdString);
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Bad package version file upload results", e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile(), e);
         }
         return id;
     }

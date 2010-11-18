@@ -149,7 +149,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
     protected Integer getId(ListGridRecord record) {
         Integer id = (record != null) ? record.getAttributeAsInt("id") : 0;
         if (id == null) {
-            String msg = "Table [" + this.getClass() + "] record is missing 'id' attribute - please report this bug.";
+            String msg = MSG.view_tableSection_error_noId(this.getClass().toString());
             CoreGUI.getErrorHandler().handleError(msg);
             throw new IllegalStateException(msg);
         }
@@ -181,8 +181,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
         if (id > 0) {
             History.newItem(basePath + "/" + id);
         } else {
-            String msg = "Can not show detail for [" + this.getClass() + "]. Illegal 'id': " + id
-                + " Please report this bug";
+            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), Integer.toString(id));
             CoreGUI.getErrorHandler().handleError(msg);
             throw new IllegalArgumentException(msg);
         }
@@ -199,13 +198,14 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     @Override
     public void renderView(ViewPath viewPath) {
-        basePath = viewPath.getPathToCurrent();
+        this.basePath = viewPath.getPathToCurrent();
 
         if (!viewPath.isEnd()) {
             int id = Integer.parseInt(viewPath.getCurrent().getPath());
-            detailsView = getDetailsView(id);
-            if (detailsView instanceof BookmarkableView) {
-                ((BookmarkableView) detailsView).renderView(viewPath);
+            this.detailsView = getDetailsView(id);
+            if (this.detailsView instanceof BookmarkableView) {
+                viewPath.next();
+                ((BookmarkableView) this.detailsView).renderView(viewPath);
             }
 
             switchToDetailsView();
@@ -268,11 +268,12 @@ public abstract class TableSection extends Table implements BookmarkableView {
         detailsView.setWidth100();
         detailsView.setHeight100();
 
-        boolean isEditable = (detailsView instanceof DetailsView && ((DetailsView)detailsView).isEditable());
+        boolean isEditable = (detailsView instanceof DetailsView && ((DetailsView) detailsView).isEditable());
         if (!isEditable) {
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", basePath);
+            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+                basePath);
             detailsHolder.addMember(backButton);
             VLayout verticalSpacer = new VLayout();
             verticalSpacer.setHeight(8);

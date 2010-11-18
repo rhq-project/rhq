@@ -60,6 +60,6 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Edit Configuration";
+        return MSG.widget_resourceFactoryWizard_editConfigStepName();
     }
 }

@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.Set;
+
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -33,6 +35,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -54,10 +57,15 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * @author Joseph Marques
  */
 public class UserSessionManager {
+    private static final Messages MSG = CoreGUI.getMessages();
+
     public static int SESSION_TIMEOUT = 29 * 60 * 1000; // 29 mins, just shorter than the 30-min web session timeout
     private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
 
-    public static final String SESSION_NAME = "RHQ_Sesssion";
+    public static final String SESSION_NAME = "RHQ_Session";
+    private static final UserPermissionsManager USER_PERMISSIONS_MANAGER = UserPermissionsManager.getInstance();
+
+    private static final String LOCATOR_ID = "SessionManagerLogin";
 
     private static Subject sessionSubject;
     private static UserPreferences userPreferences;
@@ -74,7 +82,7 @@ public class UserSessionManager {
         public void run() {
             Log.info("Session timer expired.");
             sessionState = State.IS_LOGGED_OUT;
-            new LoginView().showLoginDialog(); // log user out, show login dialog
+            new LoginView(LOCATOR_ID).showLoginDialog(); // log user out, show login dialog
         }
     };
     private static Timer logoutTimer = new Timer() {
@@ -152,7 +160,7 @@ public class UserSessionManager {
                                 Log
                                     .trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
                                 sessionState = State.IS_LOGGED_OUT;
-                                new LoginView().showLoginDialog();
+                                new LoginView(LOCATOR_ID).showLoginDialog();
                                 return;
                             }
 
@@ -181,8 +189,8 @@ public class UserSessionManager {
                                         if (results.size() == 0) {//no case insensitive matches found, launch registration
                                             Log.trace("Proceeding with registration for ldap user '" + user + "'.");
                                             sessionState = State.IS_REGISTERING;
-                                            new LoginView().showRegistrationDialog(subject.getName(), sessionId,
-                                                password, callback);
+                                            new LoginView(LOCATOR_ID).showRegistrationDialog(subject.getName(),
+                                                sessionId, password, callback);
                                             return;
                                         } else {//launch case sensitive code handling
                                             Subject locatedSubject = results.get(0);
@@ -200,7 +208,7 @@ public class UserSessionManager {
                                                         Log.debug("Failed to complete ldap processing for subject:"
                                                             + caught.getMessage());
                                                         //TODO: pass message to login dialog.
-                                                        new LoginView().showLoginDialog();
+                                                        new LoginView(LOCATOR_ID).showLoginDialog();
                                                         return;
                                                     }
 
@@ -228,11 +236,11 @@ public class UserSessionManager {
                             GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
                                 new AsyncCallback<PageList<Subject>>() {
                                     public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            "UserSessionManager: Failed to load user's subject", caught);
+                                        CoreGUI.getErrorHandler().handleError(MSG.util_userSession_loadFailSubject(),
+                                            caught);
                                         Log.info("Failed to load user's subject");
                                         //TODO: pass message to login ui.
-                                        new LoginView().showLoginDialog();
+                                        new LoginView(LOCATOR_ID).showLoginDialog();
                                         return;
                                     }
 
@@ -256,7 +264,7 @@ public class UserSessionManager {
 
                                                 public void onSuccess(Subject result) {
                                                     Log.trace("Succesfully processed subject '"
-                                                        + validSessionSubject.getName() + "' for ldap.");
+                                                        + validSessionSubject.getName() + "' for LDAP.");
                                                     return;
                                                 }
                                             });
@@ -273,7 +281,7 @@ public class UserSessionManager {
                         }//end of server side session check;
                     } else {//invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
-                        new LoginView().showLoginDialog();
+                        new LoginView(LOCATOR_ID).showLoginDialog();
                         return;
                     }
                 }
@@ -304,6 +312,7 @@ public class UserSessionManager {
             public void onSuccess(Subject result) {
                 // will build UI if necessary, then fires history event
                 sessionState = State.IS_LOGGED_IN;
+
                 // subject and session may have been updated during this login request
                 if (sessionSubject.getSessionId() != result.getSessionId()) {//update
                     Log.trace("A new subject and session were returned. Updating sessionSubject.");
@@ -312,7 +321,13 @@ public class UserSessionManager {
                     saveSessionId(String.valueOf(sessionSubject.getSessionId()));
                 }
 
-                CoreGUI.get().buildCoreUI();
+                // Kick off async load of the user's global permissions.
+                USER_PERMISSIONS_MANAGER.loadGlobalPermissions(new PermissionsLoadedListener() {
+                    public void onPermissionsLoaded(Set<Permission> permissions) {
+                        // Once the permissions have been loaded, build the GUI.
+                        CoreGUI.get().buildCoreUI();
+                    }
+                });
             }
 
             public void onFailure(Throwable caught) {
@@ -359,6 +374,8 @@ public class UserSessionManager {
         Log.info("Destroying session timer...");
         sessionTimer.cancel();
 
+        USER_PERMISSIONS_MANAGER.clearCache();
+
         // log out the web session on the server-side in a delayed fashion,
         // allowing enough time to pass to let in-flight requests complete
         logoutTimer.schedule(LOGOUT_DELAY);
@@ -370,15 +387,16 @@ public class UserSessionManager {
                 GWTServiceLookup.getSubjectService().logout(UserSessionManager.getSessionSubject(),
                     new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.util_userSession_logoutFail(), caught);
                         }
 
                         public void onSuccess(Void result) {
+                            Log.trace("Logged out.");
                         }
                     });
             }
         } catch (Throwable caught) {
-            CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
+            CoreGUI.getErrorHandler().handleError(MSG.util_userSession_logoutFail(), caught);
         }
     }
 

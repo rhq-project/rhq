@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -38,11 +39,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public class UsersView extends TableSection {
-    public static final String VIEW_ID = "Users";
-    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/" + AdministrationView.SECTION_SECURITY_VIEW_ID + "/"
-                            + VIEW_ID;
 
-    private static final String TITLE = "Users";
+    public static final ViewName VIEW_ID = new ViewName("Users", MSG.view_adminSecurity_users());
+    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
+        + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
     private static final int ID_OVERLORD = 1;
     private static final int ID_RHQADMIN = 2;
@@ -52,7 +52,7 @@ public class UsersView extends TableSection {
     private static Message message;
 
     public UsersView(String locatorId) {
-        super(locatorId, TITLE);
+        super(locatorId, MSG.view_adminSecurity_users());
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
 
@@ -72,10 +72,12 @@ public class UsersView extends TableSection {
     @Override
     protected void configureTable() {
         getListGrid().setUseAllDataSourceFields(false);
-        
+
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
 
-        ListGridField hasPrincipalField = new ListGridField(UsersDataSource.Field.HAS_PRINCIPAL, 90);
+        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
+
+        ListGridField ldapField = new ListGridField(UsersDataSource.Field.LDAP, 90);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
 
@@ -83,12 +85,11 @@ public class UsersView extends TableSection {
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
 
-        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
+        setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
 
-        setListGridFields(nameField, hasPrincipalField, firstNameField, lastNameField, departmentField, activeField);
-        
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Are you sure you want to delete # users?", new TableAction() {
+        // TODO: fix msg
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+            new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     if (count == 0) {
@@ -105,13 +106,14 @@ public class UsersView extends TableSection {
                     return true;
                 }
 
-                public void executeAction(ListGridRecord[] selection) {
-                    getListGrid().removeSelectedData();
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteSelectedRecords();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction(TableActionEnablement.ALWAYS) {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
@@ -121,7 +123,14 @@ public class UsersView extends TableSection {
         return new UserEditView(extendLocatorId("Detail"), subjectId);
     }
 
-    static void setMessage(Message message) {
-        UsersView.message = message;
+    @Override
+    protected String getDataTypeName() {
+        return "user";
     }
+
+    @Override
+    protected String getDataTypeNamePlural() {
+        return "users";
+    }
+
 }

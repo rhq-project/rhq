@@ -26,6 +26,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -37,16 +38,14 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  * @author Ian Springer
  */
 public abstract class AbstractMeasurementDataTraitListDetailView extends Table {
-    private static final String[] EXCLUDED_FIELD_NAMES = new String[] {
-            MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME
-    };
+    private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME };
 
     private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
-            //new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
+    //new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
     };
 
     public AbstractMeasurementDataTraitListDetailView(String locatorId, String title,
-                                                      AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
+        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
         super(locatorId, title, criteria, SORT_SPECIFIERS, EXCLUDED_FIELD_NAMES);
         setDataSource(dataSource);
     }
@@ -80,7 +79,7 @@ public abstract class AbstractMeasurementDataTraitListDetailView extends Table {
             // Now that the table data has been loaded, set the title to include the trait name.
             ListGridRecord record = getListGrid().getRecord(0);
             String displayName = record.getAttributeAsString(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
-            String title = "Value History for Trait '" + displayName + "'";
+            String title = MSG.view_metric_viewTraitHistory(displayName);
             setTitle(title);
         }
     }

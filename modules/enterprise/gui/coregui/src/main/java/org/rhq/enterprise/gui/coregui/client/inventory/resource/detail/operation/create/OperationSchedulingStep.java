@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.TimeFormatter;
@@ -70,51 +72,54 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
             //            form.setColWidths("15%", "35%", "15%", "*");
             form.setValidateOnChange(true);
 
-            final RadioGroupItem start = new RadioGroupItem("start", "Start");
+            final RadioGroupItem start = new RadioGroupItem("start",
+                MSG.view_operationCreateWizard_schedulingStep_name());
             start.setColSpan(3);
             start.setValueMap(enumValueMap(ExecutionSchedule.Start.class)); // "Immediately", "Future"
             start.setRedrawOnChange(true);
             start.setValue("Immediately");
 
             HeaderItem scheduleHeader = new HeaderItem("scheduleHeader");
-            scheduleHeader.setValue("Schedule");
+            scheduleHeader.setValue(MSG.view_operationCreateWizard_schedulingStep_label_schedule());
             scheduleHeader.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
                     return !"Immediately".equals(form.getValueAsString("start"));
                 }
             });
 
-            RadioGroupItem recurr = new RadioGroupItem("recurr", "Recurrence");
+            RadioGroupItem recurr = new RadioGroupItem("recurr",
+                MSG.view_operationCreateWizard_schedulingStep_label_recurrence());
             recurr.setValueMap(enumValueMap(ExecutionSchedule.Recurr.class)); // "Once", "EveryNMinutes", "Hourly", "Daily", "Weekly", "Monthly");
             recurr.setRedrawOnChange(true);
-            recurr.setValue("Once");
+            recurr.setValue(ExecutionSchedule.Recurr.Once.name());
             recurr.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"));
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"));
                 }
             });
 
-            CanvasItem onceForm = new CanvasItem("once", "Run At");
+            CanvasItem onceForm = new CanvasItem("once", MSG.view_operationCreateWizard_schedulingStep_label_onceAt());
             onceForm.setShowTitle(false);
             onceForm.setCanvas(getOnceForm());
             onceForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
                         && ExecutionSchedule.Recurr.Once.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
-            CanvasItem everyNMinuteForm = new CanvasItem("everyNMinutesForm", "NMinutes");
+            CanvasItem everyNMinuteForm = new CanvasItem("everyNMinutesForm",
+                MSG.view_operationCreateWizard_schedulingStep_label_everyNMinutes());
             everyNMinuteForm.setShowTitle(false);
             everyNMinuteForm.setCanvas(getEveryNMinutesForm());
             everyNMinuteForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
                         && ExecutionSchedule.Recurr.EveryNMinutes.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
-            CanvasItem hourlyForm = new CanvasItem("hourlyForm", "Hourly");
+            CanvasItem hourlyForm = new CanvasItem("hourlyForm", MSG.view_operationCreateWizard_schedulingStep_label_hourly());
             hourlyForm.setShowTitle(false);
             hourlyForm.setCanvas(getHourlyForm());
             hourlyForm.setShowIfCondition(new FormItemIfFunction() {
@@ -124,73 +129,74 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
                 }
             });
 
-            CanvasItem dailyForm = new CanvasItem("daily", "Days");
+            CanvasItem dailyForm = new CanvasItem("daily", MSG.view_operationCreateWizard_schedulingStep_label_daily());
             dailyForm.setShowTitle(false);
             dailyForm.setCanvas(getDailyForm());
             dailyForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
-                        && "Daily".equals(form.getValueAsString("recurr"));
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
+                        && ExecutionSchedule.Recurr.Daily.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
-            CanvasItem weeklyForm = new CanvasItem("weekly", "Weekly");
+            CanvasItem weeklyForm = new CanvasItem("weekly", MSG.view_operationCreateWizard_schedulingStep_label_weekly());
             weeklyForm.setShowTitle(false);
             weeklyForm.setCanvas(getWeeklyForm());
             weeklyForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
-                        && "Weekly".equals(form.getValueAsString("recurr"));
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
+                        && ExecutionSchedule.Recurr.Weekly.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
-            CanvasItem monthlyForm = new CanvasItem("monthly", "Monthly");
+            CanvasItem monthlyForm = new CanvasItem("monthly", MSG.view_operationCreateWizard_schedulingStep_label_monthly());
             monthlyForm.setShowTitle(false);
             monthlyForm.setCanvas(getMonthlyForm());
             monthlyForm.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
-                        && "Monthly".equals(form.getValueAsString("recurr"));
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
+                        && ExecutionSchedule.Recurr.Monthly.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
             HeaderItem rangeHeader = new HeaderItem("timePeriod");
-            rangeHeader.setValue("Time Period");
+            rangeHeader.setValue(MSG.view_operationCreateWizard_schedulingStep_label_timePeriod());
             rangeHeader.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
-                        && !"Once".equals(form.getValueAsString("recurr"));
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
+                        && !ExecutionSchedule.Recurr.Once.name().equals(form.getValueAsString("recurr"));
                 }
             });
 
-            DateItem startDate = new DateItem("startDate", "Start Date");
+            DateItem startDate = new DateItem("startDate", MSG.view_operationCreateWizard_schedulingStep_label_startDate());
             startDate.setStartRow(true);
             startDate.setStartDate(new Date());
             startDate.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
                         && !"Once".equals(form.getValueAsString("recurr"));
                 }
             });
 
-            final RadioGroupItem end = new RadioGroupItem("endType", "Recurrence End");
+            final RadioGroupItem end = new RadioGroupItem("endType", MSG.view_operationCreateWizard_schedulingStep_label_endDate());
             end.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
                         && !"Once".equals(form.getValueAsString("recurr"));
                 }
             });
             end.setStartRow(true);
+            // TODO: i18n
             end.setValueMap("Never", "End On");
             end.setRedrawOnChange(true);
             end.setValue("Never");
 
-            DateItem endDate = new DateItem("endDate", "End Date");
+            DateItem endDate = new DateItem("endDate", MSG.view_operationCreateWizard_schedulingStep_label_endDate());
             endDate.setStartRow(true);
             endDate.setStartDate(new Date());
             endDate.setShowIfCondition(new FormItemIfFunction() {
                 public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                    return !"Immediately".equals(form.getValueAsString("start"))
+                    return !ExecutionSchedule.Start.Immediately.name().equals(form.getValueAsString("start"))
                         && !"Once".equals(form.getValueAsString("recurr"))
                         && !"Never".equals(form.getValueAsString("endType"));
                 }
@@ -203,7 +209,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
             });
 
             StaticTextItem messageItem = new StaticTextItem("message");
-            messageItem.setValue("Will execute immediately");
+            messageItem.setValue(MSG.view_operationCreateWizard_schedulingStep_label_willExecuteImmediately());
             messageItem.setStartRow(true);
             messageItem.setColSpan(3);
             messageItem.setShowTitle(false);
@@ -223,16 +229,16 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
         form.setValuesManager(valuesManager);
         form.setPadding(10);
         form.setIsGroup(true);
-        form.setGroupTitle("Once At");
+        form.setGroupTitle(MSG.view_operationCreateWizard_schedulingStep_label_onceAt());
         form.addItemChangedHandler(this);
 
         form.setWrapItemTitles(false);
         form.setNumCols(2);
 
-        DateItem startDate = new DateItem("onceStartDate", "Date");
+        DateItem startDate = new DateItem("onceStartDate", MSG.view_operationCreateWizard_schedulingStep_label_startDate());
         startDate.setValue(new Date());
 
-        TimeItem startTime = new TimeItem("onceStartDate", "Time");
+        TimeItem startTime = new TimeItem("onceStartDate", MSG.view_operationCreateWizard_schedulingStep_label_startDate());
         startTime.setValue(new Date());
         startTime.setDisplayFormat(TimeFormatter.TOSHORTPADDEDTIME);
         startTime.setUseMask(true);
@@ -245,7 +251,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
         form.setValuesManager(valuesManager);
         form.setPadding(10);
         form.setIsGroup(true);
-        form.setGroupTitle("Every N Minutes");
+        form.setGroupTitle(MSG.view_operationCreateWizard_schedulingStep_label_everyNMinutes());
         form.addItemChangedHandler(this);
 
         form.setWrapItemTitles(false);
@@ -253,7 +259,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
 
         IntegerItem everyNMinutes = new IntegerItem();
         everyNMinutes.setName("minuteInterval");
-        everyNMinutes.setTitle("Minute Interval");
+        everyNMinutes.setTitle(MSG.view_operationCreateWizard_schedulingStep_label_minuteInterval());
         everyNMinutes.setValue(60);
 
         form.setItems(everyNMinutes);
@@ -265,7 +271,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
         form.setValuesManager(valuesManager);
         form.setPadding(10);
         form.setIsGroup(true);
-        form.setGroupTitle("Hourly At");
+        form.setGroupTitle(MSG.view_operationCreateWizard_schedulingStep_label_hourly());
         form.addItemChangedHandler(this);
 
         form.setWrapItemTitles(false);
@@ -273,7 +279,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
 
         IntegerItem minuteOfHour = new IntegerItem();
         minuteOfHour.setName("minuteOfHour");
-        minuteOfHour.setTitle("Minute of Hour");
+        minuteOfHour.setTitle(MSG.view_operationCreateWizard_schedulingStep_label_minuteOfHour());
         minuteOfHour.setValue(5);
 
         form.setItems(minuteOfHour);
@@ -286,10 +292,10 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
         form.setPadding(10);
         form.setWrapItemTitles(false);
         form.setIsGroup(true);
-        form.setGroupTitle("Daily At");
+        form.setGroupTitle(MSG.view_operationCreateWizard_schedulingStep_label_daily());
         form.addItemChangedHandler(this);
 
-        TimeItem timeOfDay = new TimeItem("timeOfDay", "Time Of Day");
+        TimeItem timeOfDay = new TimeItem("timeOfDay", MSG.view_operationCreateWizard_schedulingStep_label_timeOfDay());
         timeOfDay.setValue(new Date());
         timeOfDay.setDisplayFormat(TimeFormatter.TOSHORTPADDEDTIME);
         timeOfDay.setUseMask(true);
@@ -303,21 +309,25 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
         form.setValuesManager(valuesManager);
         form.setPadding(10);
         form.setIsGroup(true);
-        form.setGroupTitle("Weekly On");
+        form.setGroupTitle(MSG.view_operationCreateWizard_schedulingStep_label_weekly());
         form.addItemChangedHandler(this);
 
         form.setWrapItemTitles(false);
 
-        TimeItem timeOfDay = new TimeItem("timeOfDay", "Time Of Day");
+        TimeItem timeOfDay = new TimeItem("dayOfWeek", MSG.view_operationCreateWizard_schedulingStep_label_dayOfWeek());
         timeOfDay.setValue(new Date());
         timeOfDay.setDisplayFormat(TimeFormatter.TOSHORTPADDEDTIME);
         timeOfDay.setUseMask(true);
 
-        String[] days = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+        ExecutionSchedule.DayOfWeek[] daysOfWeek = ExecutionSchedule.DayOfWeek.values();
+        List<String> dayList = new ArrayList<String>();
+        for (ExecutionSchedule.DayOfWeek dayOfWeek : daysOfWeek) {
+            dayList.add(dayOfWeek.name());
+        }
         FormItem[] items = new FormItem[8];
         items[0] = timeOfDay;
         int i = 1;
-        for (String day : days) {
+        for (String day : dayList) {
             CheckboxItem dayItem = new CheckboxItem(day);
             dayItem.setShowTitle(false);
             items[i++] = dayItem;
@@ -332,15 +342,15 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
         form.setPadding(10);
         form.setWrapItemTitles(false);
         form.setIsGroup(true);
-        form.setGroupTitle("Monthly On");
+        form.setGroupTitle(MSG.view_operationCreateWizard_schedulingStep_label_monthly());
         form.addItemChangedHandler(this);
 
         IntegerItem dayItem = new IntegerItem();
         dayItem.setName("dayOfMonth");
-        dayItem.setTitle("Day of Month");
+        dayItem.setTitle(MSG.view_operationCreateWizard_schedulingStep_label_dayOfMonth());
         dayItem.setValue(1);
 
-        TimeItem timeOfDay = new TimeItem("timeOfDay", "Time Of Day");
+        TimeItem timeOfDay = new TimeItem("timeOfDay", MSG.view_operationCreateWizard_schedulingStep_label_timeOfDay());
         timeOfDay.setValue(new Date());
         timeOfDay.setDisplayFormat(TimeFormatter.TOSHORTPADDEDTIME);
         timeOfDay.setUseMask(true);
@@ -354,7 +364,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
     }
 
     public String getName() {
-        return "Schedule";
+        return MSG.view_operationCreateWizard_schedulingStep_name();
     }
 
     public void onItemChanged(ItemChangedEvent itemChangeEvent) {
@@ -404,4 +414,5 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
     public ExecutionSchedule getExecutionSchedule() {
         return executionSchedule;
     }
+
 }

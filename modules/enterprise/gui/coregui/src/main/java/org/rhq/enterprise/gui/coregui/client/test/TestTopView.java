@@ -28,10 +28,12 @@ import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLe
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -40,28 +42,31 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
  * @author Ian Springer
  */
 public class TestTopView extends AbstractSectionedLeftNavigationView {
-    public static final String VIEW_ID = "Test";
+    public static final ViewName VIEW_ID = new ViewName("Test");
 
     // view IDs for Inventory section
-    private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
+    private static final ViewName INVENTORY_SECTION_VIEW_ID = new ViewName("Inventory");
 
-    private static final String PAGE_RESOURCE_SELECTOR = "ResourceSelector";
-    private static final String PAGE_TYPE_TREE = "TypeTree";
+    private static final ViewName PAGE_RESOURCE_SELECTOR = new ViewName("ResourceSelector");
+    private static final ViewName PAGE_TYPE_TREE = new ViewName("TypeTree");
 
     // view IDs for Configuration section
-    private static final String CONFIGURATION_SECTION_VIEW_ID = "Configuration";
+    private static final ViewName CONFIGURATION_SECTION_VIEW_ID = new ViewName("Configuration");
 
-    private static final String PAGE_CONFIG_EDITOR = "ConfigEditor";
-    private static final String PAGE_GROUP_CONFIG_EDITOR = "GroupConfigEditor";
+    private static final ViewName PAGE_CONFIG_EDITOR = new ViewName("ConfigEditor");
+    private static final ViewName PAGE_GROUP_CONFIG_EDITOR = new ViewName("GroupConfigEditor");
+
+    // view IDs for Misc section
+    private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
+    private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
-        super(VIEW_ID);
+        super(VIEW_ID.getName());
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>Test</h1>\n"
-            + "This section contains pages for testing various GUI components.";
+        String contents = "<h1>" + MSG.view_testTop_title() + "</h1>\n" + MSG.view_testTop_description();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
@@ -77,21 +82,22 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
         NavigationSection configurationSection = buildConfigurationSection();
         sections.add(configurationSection);
 
+        NavigationSection miscSection = buildMiscSection();
+        sections.add(miscSection);
+
         return sections;
     }
 
     private NavigationSection buildInventorySection() {
-        NavigationItem resourceSelectorItem = new NavigationItem(PAGE_RESOURCE_SELECTOR, null,
-            new ViewFactory() {
+        NavigationItem resourceSelectorItem = new NavigationItem(PAGE_RESOURCE_SELECTOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR));
+                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR.getName()));
             }
         });
 
-        NavigationItem typeTreeItem = new NavigationItem(PAGE_TYPE_TREE, null,
-            new ViewFactory() {
+        NavigationItem typeTreeItem = new NavigationItem(PAGE_TYPE_TREE, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceTypeTreeView(extendLocatorId(PAGE_TYPE_TREE));
+                return new ResourceTypeTreeView(extendLocatorId(PAGE_TYPE_TREE.getName()));
             }
         });
 
@@ -99,20 +105,28 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildConfigurationSection() {
-        NavigationItem configEditorItem = new NavigationItem(PAGE_CONFIG_EDITOR, null,
-            new ViewFactory() {
+        NavigationItem configEditorItem = new NavigationItem(PAGE_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestConfigurationView(extendLocatorId(PAGE_CONFIG_EDITOR));
+                return new TestConfigurationView(extendLocatorId(PAGE_CONFIG_EDITOR.getName()));
             }
         });
 
-        NavigationItem groupConfigEditorItem = new NavigationItem(PAGE_GROUP_CONFIG_EDITOR, null,
-            new ViewFactory() {
+        NavigationItem groupConfigEditorItem = new NavigationItem(PAGE_GROUP_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestGroupConfigurationView(extendLocatorId(PAGE_GROUP_CONFIG_EDITOR));
+                return new TestGroupConfigurationView(extendLocatorId(PAGE_GROUP_CONFIG_EDITOR.getName()));
             }
         });
 
         return new NavigationSection(CONFIGURATION_SECTION_VIEW_ID, configEditorItem, groupConfigEditorItem);
+    }
+
+    private NavigationSection buildMiscSection() {
+        NavigationItem pluralizationItem = new NavigationItem(PAGE_PLURALIZATION_TEST, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST.getName()));
+            }
+        });
+
+        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem);
     }
 }

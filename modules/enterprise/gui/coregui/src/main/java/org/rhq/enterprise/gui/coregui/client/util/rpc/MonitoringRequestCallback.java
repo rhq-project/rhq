@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.rpc;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
@@ -27,13 +28,18 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class MonitoringRequestCallback implements RequestCallback {
-    @SuppressWarnings("unused")
+
+    private static final Messages MSG = CoreGUI.getMessages();
+
     private int id;
     private String name;
     private long start = System.currentTimeMillis();
@@ -42,27 +48,27 @@ public class MonitoringRequestCallback implements RequestCallback {
 
     private RequestCallback callback;
 
-    public MonitoringRequestCallback(String name, RequestCallback callback) {
+    public MonitoringRequestCallback(int callId, String name, RequestCallback callback) {
         this.name = name;
-        id = RPCManager.getInstance().register(this);
+        this.id = callId;
         this.callback = callback;
     }
 
     public void onError(Request request, Throwable exception) {
+        Log.trace("MonitoringRequestCallback(" + this + "): onError " + exception.getMessage());
         RPCManager.getInstance().failCall(this);
         callback.onError(request, exception);
     }
 
     public void onResponseReceived(Request request, Response response) {
+        Log.trace("MonitoringRequestCallback(" + this + "): " + response.getStatusCode() + "/"
+            + response.getStatusText());
         if (STATUS_CODE_OK == response.getStatusCode()) {
             RPCManager.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
-            com.allen_sauer.gwt.log.client.Log.debug("MonitoringRequestCallback: OK");
         } else {
             RPCManager.getInstance().failCall(this);
             callback.onResponseReceived(request, response);
-            System.err.println("MonitoringRequestCallback: " + response.getStatusCode() + "/"
-                + response.getStatusText());
 
             // if we have a rich and coordinated client-side loggedIn state, do we need to check upon failure here?
             UserSessionManager.checkLoginStatus(Cookies.getCookie("username"), null, new AsyncCallback<Subject>() {
@@ -73,10 +79,14 @@ public class MonitoringRequestCallback implements RequestCallback {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    SC.say("Unable to determine login status - check Server status.");
+                    SC.say(MSG.util_monitoringRequestCallback_error_checkServerStatusFailure());
                 }
             });
         }
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getName() {
@@ -86,4 +96,9 @@ public class MonitoringRequestCallback implements RequestCallback {
     public long age() {
         return System.currentTimeMillis() - start;
     }
+
+    public String toString() {
+        return "MonitoringRequestCallback{id=" + id + ", name=" + name + ", age=" + age() + "}";
+    }
+
 }

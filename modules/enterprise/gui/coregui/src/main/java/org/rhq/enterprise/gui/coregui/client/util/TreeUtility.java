@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
  * @author Ian Springer
  */
 public class TreeUtility {
+
     public static void printTree(Tree tree) {
         TreeNode rootNode = tree.getRoot();
         printTreeNode(tree, rootNode);
@@ -66,4 +67,5 @@ public class TreeUtility {
 
     private TreeUtility() {
     }
+    
 }

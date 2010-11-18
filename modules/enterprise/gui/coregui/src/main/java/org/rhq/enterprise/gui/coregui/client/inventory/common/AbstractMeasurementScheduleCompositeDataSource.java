@@ -66,29 +66,29 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField idField = new DataSourceIntegerField(
-            MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, "Id");
+            MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, MSG.common_title_id());
         idField.setPrimaryKey(true);
         idField.setHidden(true);
         fields.add(idField);
 
         DataSourceTextField nameField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME,
-            "Metric");
+            MSG.common_title_metric());
         fields.add(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField(
-            MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, "Description");
+            MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField typeField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE,
-            "Type");
+        DataSourceTextField typeField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE, MSG
+            .common_title_type());
         fields.add(typeField);
 
         DataSourceBooleanField enabledField = new DataSourceBooleanField(
-            MeasurementScheduleCriteria.SORT_FIELD_ENABLED, "Enabled?");
+            MeasurementScheduleCriteria.SORT_FIELD_ENABLED, MSG.common_title_enabled());
         fields.add(enabledField);
 
         DataSourceIntegerField intervalField = new DataSourceIntegerField(
-            MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, "Collection Interval");
+            MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, MSG.view_inventory_collectionInterval());
         fields.add(intervalField);
 
         return fields;

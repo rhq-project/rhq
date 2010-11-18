@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
@@ -226,10 +225,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         return record;
     }
 
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        ListGridRecord record = new ListGridRecord(data);
-        Window.alert(String.valueOf(record.getAttributeAsInt("id")));
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {        
+        // TODO
+        Window.alert(String.valueOf(recordToRemove.getAttributeAsInt("id")));
     }
 
     public AlertGWTServiceAsync getAlertService() {

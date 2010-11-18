@@ -94,7 +94,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
         table.addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final Window winModal = new LocatableWindow(ConditionsEditor.this
                     .extendLocatorId("newConditionEditorWindow"));
                 winModal.setTitle("Add Condition");
@@ -126,17 +126,17 @@ public class ConditionsEditor extends LocatableVLayout {
                 winModal.show();
             }
         });
-        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?",
-            new AbstractTableAction(TableActionEnablement.ANY) {
-                @Override
-                public void executeAction(ListGridRecord[] selection) {
-                    for (ListGridRecord record : selection) {
-                        AlertCondition cond = dataSource.copyValues(record);
-                        conditions.remove(cond);
-                    }
-                    table.refresh();
+        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?", new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                for (ListGridRecord record : selection) {
+                    AlertCondition cond = dataSource.copyValues(record);
+                    conditions.remove(cond);
                 }
-            });
+                table.refresh();
+            }
+        });
 
         addMember(table);
     }

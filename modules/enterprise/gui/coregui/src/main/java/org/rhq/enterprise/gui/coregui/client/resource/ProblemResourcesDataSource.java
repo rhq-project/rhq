@@ -28,8 +28,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -49,10 +47,12 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Simeon Pinder
  */
 public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationReport<ProblemResourceComposite>> {
-    public static final String resource = "resource";
-    public static final String location = "location";
-    public static final String alerts = "alerts";
-    public static final String available = "available";
+
+    public static final String FIELD_RESOURCE = "resource";
+    public static final String FIELD_LOCATION = "location";
+    public static final String FIELD_ALERTS = "alerts";
+    public static final String FIELD_AVAILABLE = "available";
+
     private Portlet portlet = null;
     private long oldestDate = -1;
     //configure elements
@@ -65,9 +65,6 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
      */
     public ProblemResourcesDataSource(Portlet problemResourcesPortlet) {
         this.portlet = problemResourcesPortlet;
-        setClientOnly(false);
-        setDataProtocol(DSProtocol.CLIENTCUSTOM);
-        setDataFormat(DSDataFormat.CUSTOM);
 
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
@@ -77,40 +74,24 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(resource, "Resource");
+        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE,
+            MSG.dataSource_problemResources_field_resource());
         resourceField.setPrimaryKey(true);
         fields.add(resourceField);
 
-        DataSourceTextField locationField = new DataSourceTextField(location, "Location");
+        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION,
+            MSG.dataSource_problemResources_field_location());
         fields.add(locationField);
 
-        DataSourceTextField alertsField = new DataSourceTextField(alerts, "Alerts");
+        DataSourceTextField alertsField = new DataSourceTextField(FIELD_ALERTS,
+            MSG.dataSource_problemResources_field_alerts());
         fields.add(alertsField);
 
-        DataSourceImageField availabilityField = new DataSourceImageField(available, "Current Availability");
+        DataSourceImageField availabilityField = new DataSourceImageField(FIELD_AVAILABLE,
+            MSG.dataSource_problemResources_field_available());
         fields.add(availabilityField);
 
         return fields;
-    }
-
-    /* Intercept DSRequest object to pipe into custom fetch request.
-     * (non-Javadoc)
-     * @see com.smartgwt.client.data.DataSource#transformRequest(com.smartgwt.client.data.DSRequest)
-     */
-    protected Object transformRequest(DSRequest request) {
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Assume success
-        response.setStatus(0);
-        switch (request.getOperationType()) {
-        case FETCH:
-            executeFetch(request, response);
-            break;
-        default:
-            break;
-        }
-
-        return request.getData();
     }
 
     /** Fetch the ProblemResource data, and populate the response object appropriately.
@@ -143,7 +124,7 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
                 new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
 
                     public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load resources with alerts/unavailability.",
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_problemResources_error_fetchFailure(),
                             throwable);
                     }
 
@@ -184,18 +165,18 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
             for (DisambiguationReport<ProblemResourceComposite> report : list) {
                 ListGridRecord record = new ListGridRecord();
                 //disambiguated Resource name, decorated with html anchors to problem resources 
-                record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                     report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
                         .getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents(), true));
+                record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //alert cnt.
-                record.setAttribute(alerts, report.getOriginal().getNumAlerts());
+                record.setAttribute(FIELD_ALERTS, report.getOriginal().getNumAlerts());
                 //populate availability icon
                 if (report.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
-                    record.setAttribute(available, "/images/icons/availability_red_16.png");
+                    record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_red_16.png");
                 } else {
-                    record.setAttribute(available, "/images/icons/availability_green_16.png");
+                    record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_green_16.png");
                 }
 
                 dataValues[indx++] = record;
@@ -207,14 +188,14 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     @Override
     public ListGridRecord copyValues(DisambiguationReport<ProblemResourceComposite> from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
-        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
-        record.setAttribute(alerts, from.getOriginal().getNumAlerts());
+        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+            from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(from.getParents(), true));
+        record.setAttribute(FIELD_ALERTS, from.getOriginal().getNumAlerts());
         if (from.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
-            record.setAttribute(available, "/images/icons/availability_red_16.png");
+            record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_red_16.png");
         } else {
-            record.setAttribute(available, "/images/icons/availability_green_16.png");
+            record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_green_16.png");
         }
 
         record.setAttribute("entity", from);

@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 /**
- * TODO
+ * Renders the specified descendant view.
  *
  * @author Ian Springer
  */

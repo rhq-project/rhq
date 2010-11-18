@@ -1,5 +1,3 @@
-package org.rhq.enterprise.gui.coregui.client.util;
-
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2010 Red Hat, Inc.
@@ -18,6 +16,8 @@ package org.rhq.enterprise.gui.coregui.client.util;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+package org.rhq.enterprise.gui.coregui.client.util;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +25,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 
 public class MeasurementUtility {
 
-    private static DateTimeFormat formatter = DateTimeFormat.getFormat("MMM d, hh:mm a");
-    private static DateTimeFormat formatterYear = DateTimeFormat.getFormat("MMM d, yyyy hh:mm a");
+    private static final DateTimeFormat FORMATTER = DateTimeFormat.getFormat("MMM d, hh:mm a");
+    private static final DateTimeFormat FORMATTER_YEAR = DateTimeFormat.getFormat("MMM d, yyyy hh:mm a");
 
     //Time constants
     public static final int UNIT_COLLECTION_POINTS = 1;
@@ -43,16 +43,15 @@ public class MeasurementUtility {
     public static final long WEEKS = 604800000;
 
     /**
-     * five minutes in millisecond increments
+     * one year in milliseconds
      */
-    public static final long FIVE_MINUTES = 300000;
     public static final long ONE_YEAR = WEEKS * 52;
 
     /**
      * Method calculateTimeFrame
      * <p/>
-     * Returns a two element<code>List</code> of <code>Long</code> objects representing the begin and end times (in
-     * milliseconds since the epoch) of the timeframe. Returns null instead if the time unit is indicated as
+     * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
+     * milliseconds since the epoch) of the time frame. Returns null instead if the time unit is indicated as
      * <code>UNIT_COLLECTION_POINTS</code>. Ported to GWT from MeasurementUtils(i:server side dep
      * ii:old DateFormat doesn't play well with GWT).
      *
@@ -103,7 +102,7 @@ public class MeasurementUtility {
      * @return DateTimeFormat
      */
     public static DateTimeFormat getDateTimeFormatter() {
-        return formatter;
+        return FORMATTER;
     }
 
     /**Utility to return shared DateTimeFormat("MMM d, yyyy hh:mm a");
@@ -111,7 +110,7 @@ public class MeasurementUtility {
      * @return DateTimeFormat
      */
     public static DateTimeFormat getDateTimeYearFormatter() {
-        return formatterYear;
+        return FORMATTER_YEAR;
     }
 
 }

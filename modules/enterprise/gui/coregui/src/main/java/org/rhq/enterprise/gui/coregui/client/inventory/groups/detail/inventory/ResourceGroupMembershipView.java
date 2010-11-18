@@ -65,7 +65,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
 
         toolStrip.addMember(new LayoutSpacer());
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -106,19 +106,23 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         GWTServiceLookup.getResourceGroupService().setAssignedResources(this.resourceGroup.getId(), resourceIds, true,
             new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
+                    CoreGUI.getErrorHandler()
+                        .handleError(
+                            MSG.view_group_membership_saveFailure(ResourceGroupMembershipView.this.resourceGroup
+                                .getName()), caught);
                 }
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Group membership updated for ["
-                            + ResourceGroupMembershipView.this.resourceGroup.getName() + "]", Message.Severity.Info));
+                        new Message(MSG
+                            .view_group_membership_saveSuccessful(ResourceGroupMembershipView.this.resourceGroup
+                                .getName()), Message.Severity.Info));
                     CoreGUI.refresh();
                 }
             });
     }
 
-    private int[] getSelectedResourceIds() {        
+    private int[] getSelectedResourceIds() {
         Set<Integer> selectedIds = this.selector.getSelection();
         int[] selection = new int[selectedIds.size()];
         int i = 0;

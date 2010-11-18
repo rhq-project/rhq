@@ -20,35 +20,19 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
-import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.*;
+import org.rhq.core.domain.resource.ProcessScan;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceSubCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
@@ -59,14 +43,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.*;
-import javax.sql.DataSource;
-import javax.swing.*;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.*;
 
 /**
@@ -85,9 +61,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-
-    @EJB
-    private ConfigurationMetadataManagerLocal configurationMetadataManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -118,6 +91,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private AlertMetadataManagerLocal alertMetadataMgr;
+
+    @EJB
+    private ResourceConfigurationMetadataManagerLocal resourceConfigMetadataMgr;
+
+    @EJB
+    private PluginConfigurationMetadataManagerLocal pluginConfigMetadataMgr;
 
     public void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
         // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
@@ -391,10 +370,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // child types which may still be referencing these sub categories
 
         // Update the rest of these related resources
-        updatePluginConfiguration(resourceType, existingType);
+        pluginConfigMetadataMgr.updatePluginConfigurationDefinition(existingType, resourceType);
         entityManager.flush();
 
-        updateResourceConfiguration(resourceType, existingType);
+        resourceConfigMetadataMgr.updateResourceConfigurationDefinition(existingType, resourceType);
 
         measurementMetadataMgr.updateMetadata(existingType, resourceType);
         contentMetadataMgr.updateMetadata(existingType, resourceType);
@@ -598,74 +577,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return result;
     }
 
-    /**
-     * Update the stuff below a <plugin-configuration>
-     */
-    private void updatePluginConfiguration(ResourceType resourceType, ResourceType existingType) {
-        ConfigurationDefinition existingConfigurationDefinition = existingType.getPluginConfigurationDefinition();
-        if (resourceType.getPluginConfigurationDefinition() != null) {
-            // all new
-            if (existingConfigurationDefinition == null) {
-                entityManager.persist(resourceType.getPluginConfigurationDefinition());
-                existingType.setPluginConfigurationDefinition(resourceType.getPluginConfigurationDefinition());
-            } else // update the configuration
-            {
-                ConfigurationDefinitionUpdateReport updateReport = configurationMetadataManager
-                    .updateConfigurationDefinition(resourceType.getPluginConfigurationDefinition(),
-                        existingConfigurationDefinition);
-
-                if (updateReport.getNewPropertyDefinitions().size() > 0 ||
-                    updateReport.getUpdatedPropertyDefinitions().size() > 0) {
-                    Subject overlord = subjectManager.getOverlord();
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterResourceTypeId(existingType.getId());
-                    List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
-
-                    for (Resource resource : resources) {
-                        updateResourcePluginConfiguration(resource, updateReport);
-                    }
-                }
-            }
-        } else {
-            // resourceType.getPlu... is null -> remove the existing config
-            if (existingConfigurationDefinition != null) {
-                existingType.setPluginConfigurationDefinition(null);
-                entityManager.remove(existingConfigurationDefinition);
-            }
-        }
-    }
-
-    private void updateResourcePluginConfiguration(Resource resource, ConfigurationDefinitionUpdateReport updateReport) {
-        Configuration pluginConfiguration = resource.getPluginConfiguration();
-        boolean modified = false;
-        int numberOfProperties = pluginConfiguration.getProperties().size();
-        ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
-        Configuration templateConfiguration = template.getConfiguration();
-
-        for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
-            if (propertyDef.isRequired()) {
-                Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                pluginConfiguration.put(templateProperty.deepCopy(false));
-                modified = true;
-            }
-        }
-
-        for (PropertyDefinition propertyDef : updateReport.getUpdatedPropertyDefinitions()) {
-            if (propertyDef.isRequired()) {
-                String propertyValue = pluginConfiguration.getSimpleValue(propertyDef.getName(), null);
-                if (propertyValue == null) {
-                    Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                    pluginConfiguration.put(templateProperty.deepCopy(false));
-                    modified = true;
-                }
-            }
-        }
-
-//        if (pluginConfiguration.getProperties().size() > numberOfProperties) {
-        if (modified) {
-            resource.setMtime(new Date().getTime());
-        }
-    }
 
     /**
      * Update the set of process scans for a given resource type
@@ -854,29 +765,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
             // for any remaining children of this subCat, see if any of their children should be removed
             removeChildSubCategories(existingSubCat.getChildSubCategories(), newChildSubCategories);
-        }
-    }
-
-    /**
-     * deals with the content of <resource-configuration>
-     */
-    private void updateResourceConfiguration(ResourceType newType, ResourceType existingType) {
-        ConfigurationDefinition newResourceConfigurationDefinition = newType.getResourceConfigurationDefinition();
-        if (newResourceConfigurationDefinition != null) {
-            if (existingType.getResourceConfigurationDefinition() == null) // everything new
-            {
-                entityManager.persist(newResourceConfigurationDefinition);
-                existingType.setResourceConfigurationDefinition(newResourceConfigurationDefinition);
-            } else {
-                ConfigurationDefinition existingDefinition = existingType.getResourceConfigurationDefinition();
-                configurationMetadataManager.updateConfigurationDefinition(newResourceConfigurationDefinition,
-                    existingDefinition);
-            }
-        } else // newDefinition == null
-        {
-            if (existingType.getResourceConfigurationDefinition() != null) {
-                existingType.setResourceConfigurationDefinition(null);
-            }
         }
     }
 

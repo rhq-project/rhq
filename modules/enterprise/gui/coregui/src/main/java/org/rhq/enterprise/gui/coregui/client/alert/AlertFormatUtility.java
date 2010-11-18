@@ -28,6 +28,8 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * The methods in this class are ported from AlertDefUtil from portal-war and MeasurementFormatter from
@@ -37,6 +39,8 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
  * @author John Mazzitelli
  */
 public class AlertFormatUtility {
+    static Messages MSG = CoreGUI.getMessages();
+
     private AlertFormatUtility() {
     }
 
@@ -46,10 +50,13 @@ public class AlertFormatUtility {
         AlertConditionCategory category = condition.getCategory();
         switch (category) {
         case AVAILABILITY: {
-            str.append("Availability Change");
+            str.append(MSG.view_alert_common_tab_conditions_type_availability());
             str.append(" [");
-            str.append("Going").append(' '); // to reinforce this is on the state transition
-            str.append(condition.getOption());
+            if ("up".equalsIgnoreCase(condition.getOption())) {
+                str.append(MSG.view_alert_common_tab_conditions_type_availability_up());
+            } else {
+                str.append(MSG.view_alert_common_tab_conditions_type_availability_down());
+            }
             str.append("]");
             break;
         }
@@ -59,7 +66,7 @@ public class AlertFormatUtility {
             String formatted = MeasurementConverterClient.format(value, units, true);
 
             if (condition.getOption() == null) {
-                str.append("Metric Value Exceeds Threshold");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_threshold());
                 str.append(" [");
                 str.append(condition.getName());
                 str.append(" ");
@@ -72,7 +79,7 @@ public class AlertFormatUtility {
                 // the name of the metric is only obtainable by querying for the name from the meas def ID
                 // but since most times (all the time?) there is only one calltime metric per resource,
                 // not showing the metric name probably isn't detrimental
-                str.append("Calltime Value Exceeds Threshold");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_threshold());
                 str.append(" [");
                 str.append(condition.getOption()); // MIN, MAX, AVG (never null)
                 str.append(" ");
@@ -82,7 +89,7 @@ public class AlertFormatUtility {
                 str.append("]");
                 if (condition.getName() != null && condition.getName().length() > 0) {
                     str.append(" ");
-                    str.append("with call destination matching");
+                    str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_destination());
                     str.append(" '");
                     str.append(condition.getName());
                     str.append("'");
@@ -91,7 +98,7 @@ public class AlertFormatUtility {
             break;
         }
         case BASELINE: {
-            str.append("Metric Value Exceeds Baseline");
+            str.append(MSG.view_alert_common_tab_conditions_type_metric_baseline());
             str.append(" [");
             str.append(condition.getName());
             str.append(" ");
@@ -103,14 +110,14 @@ public class AlertFormatUtility {
             String formatted = MeasurementConverterClient.format(value, units, true);
             str.append(formatted);
 
-            str.append(" ").append("of").append(" ");
+            str.append(" ").append(MSG.view_alert_common_tab_conditions_type_metric_baseline_verb()).append(" ");
             str.append(condition.getOption());
             str.append("]");
             break;
         }
         case CHANGE: {
             if (condition.getOption() == null) {
-                str.append("Metric Value Change");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_change());
                 str.append(" [");
                 str.append(condition.getName());
                 str.append("]");
@@ -119,13 +126,13 @@ public class AlertFormatUtility {
                 // the name of the metric is only obtainable by querying for the name from the meas def ID
                 // but since most times (all the time?) there is only one calltime metric per resource,
                 // not showing the metric name probably isn't detrimental
-                str.append("Calltime Value Changes");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_change());
                 str.append(" [");
                 str.append(condition.getOption()); // MIN, MAX, AVG (never null)
                 str.append(" ");
                 str.append(getCalltimeChangeComparator(condition.getComparator())); // LO, HI, CH
                 str.append(" ");
-                str.append("by at least");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_change_verb());
                 str.append(" ");
 
                 double value = condition.getThreshold();
@@ -136,7 +143,7 @@ public class AlertFormatUtility {
                 str.append("]");
                 if (condition.getName() != null && condition.getName().length() > 0) {
                     str.append(" ");
-                    str.append("with call destination matching");
+                    str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_destination());
                     str.append(" '");
                     str.append(condition.getName());
                     str.append("'");
@@ -145,35 +152,35 @@ public class AlertFormatUtility {
             break;
         }
         case TRAIT: {
-            str.append("Trait Change");
+            str.append(MSG.view_alert_common_tab_conditions_type_metric_trait_change());
             str.append(" [");
             str.append(condition.getName());
             str.append("]");
             break;
         }
         case CONTROL: {
-            str.append("Operation Execution");
+            str.append(MSG.view_alert_common_tab_conditions_type_metric_operation());
             str.append(" [");
             str.append(condition.getName());
             str.append("] ");
-            str.append("with result status");
+            str.append(MSG.view_alert_common_tab_conditions_type_metric_status());
             str.append(" [");
             str.append(condition.getOption());
             str.append("]");
             break;
         }
         case RESOURCE_CONFIG: {
-            str.append("Resource Configuration Change");
+            str.append(MSG.view_alert_common_tab_conditions_type_metric_resource_configuration());
             break;
         }
         case EVENT: {
-            str.append("Event Detection");
+            str.append(MSG.view_alert_common_tab_conditions_type_metric_event());
             str.append(" [");
             str.append(condition.getName());
             str.append("]");
             if (condition.getOption() != null && condition.getOption().length() > 0) {
                 str.append(" ");
-                str.append("matching");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_event_matching());
                 str.append(" '");
                 str.append(condition.getOption());
                 str.append("'");
@@ -181,7 +188,7 @@ public class AlertFormatUtility {
             break;
         }
         default: {
-            str.append("BAD CATEGORY: ").append(category.name());
+            str.append(MSG.view_alert_common_tab_conditions_type_invalid(category.name()));
             break;
         }
         }
@@ -190,11 +197,11 @@ public class AlertFormatUtility {
 
     private static String getCalltimeChangeComparator(String comparator) {
         if ("HI".equals(comparator)) {
-            return "Grows";
+            return MSG.view_alert_common_tab_conditions_type_metric_calltime_delta_grows();
         } else if ("LO".equals(comparator)) {
-            return "Shrinks";
+            return MSG.view_alert_common_tab_conditions_type_metric_calltime_delta_shrinks();
         } else { // CH
-            return "Changes";
+            return MSG.view_alert_common_tab_conditions_type_metric_calltime_delta_other();
         }
     }
 
@@ -203,17 +210,16 @@ public class AlertFormatUtility {
         AlertDefinition recoveryAlertDefinition = alert.getRecoveryAlertDefinition();
         if (recoveryAlertDefinition != null && recoveryAlertDefinition.getId() != 0) {
             int resourceId = alert.getAlertDefinition().getResource().getId();
-            recoveryInfo = "Triggered '<a href=\"/alerts/Config.do?mode=viewRoles&id=" + resourceId + "&ad="
-                + recoveryAlertDefinition.getId() + "\">" + recoveryAlertDefinition.getName()
-                + "</a>' to be re-enabled.";
+            String otherAlertDef = "<a href=\"/alerts/Config.do?mode=viewRoles&id=" + resourceId + "&ad="
+                + recoveryAlertDefinition.getId() + "\">" + recoveryAlertDefinition.getName() + "</a>";
+            recoveryInfo = MSG.view_alert_common_tab_conditions_recovery_enabled(otherAlertDef);
         } else if (alert.getWillRecover()) {
-            recoveryInfo = "This alert caused its alert definition to be disabled.";
+            recoveryInfo = MSG.view_alert_common_tab_conditions_recovery_disabled();
         } else {
-            recoveryInfo = "N/A";
+            recoveryInfo = MSG.common_val_na();
         }
         return recoveryInfo;
     }
-
     /* THIS IS THE OLD CODE - IT HAS LOTS OF TODOs AND DIDN'T FULLY WORK
 
     public static String formatAlertConditionForDisplay(AlertCondition condition) {

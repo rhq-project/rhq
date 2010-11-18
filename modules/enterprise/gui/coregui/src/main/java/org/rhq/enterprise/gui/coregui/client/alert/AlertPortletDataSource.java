@@ -92,7 +92,7 @@ public class AlertPortletDataSource extends AlertDataSource {
             getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

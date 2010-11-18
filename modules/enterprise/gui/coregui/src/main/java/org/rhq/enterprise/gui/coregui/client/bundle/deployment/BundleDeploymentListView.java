@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 public class BundleDeploymentListView extends Table {
 
     public BundleDeploymentListView(String locatorId, Criteria criteria) {
-        super(locatorId, "Bundle Deployments", criteria);
+        super(locatorId, MSG.view_bundle_bundleDeployments(), criteria);
         setDataSource(new BundleDeploymentDataSource());
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }

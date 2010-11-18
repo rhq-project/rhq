@@ -72,7 +72,6 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -557,7 +556,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                listGridIdField = new ListGridField(FIELD_ID, "ID", 55);
+                listGridIdField = new ListGridField(FIELD_ID, MSG.common_title_id(), 55);
                 // Override the DataSource id field metadata for consistent display across all Tables.
                 listGridIdField.setType(ListGridFieldType.INTEGER);
                 listGridIdField.setCanEdit(false);
@@ -677,8 +676,9 @@ public class Table extends LocatableHLayout implements RefreshableView {
                     recordNames.add(name);
                 }
 
-                Message message = new Message(MSG.widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()),
-                    MSG.widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
+                Message message = new Message(MSG
+                    .widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()), MSG
+                    .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
                         getDataTypeNamePlural(), recordNames.toString()));
                 CoreGUI.getMessageCenter().notify(message);
             }
@@ -700,7 +700,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
     protected String getDeleteConfirmMessage() {
         return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
     }
-
 
     // -------------- Inner utility classes ------------- //
 

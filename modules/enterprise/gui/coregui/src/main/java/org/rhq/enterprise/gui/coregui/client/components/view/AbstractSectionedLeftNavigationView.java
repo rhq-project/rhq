@@ -137,6 +137,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
 
     private void addSection(final TreeGrid treeGrid) {
         final String sectionName = treeGrid.getTree().getRoot().getName();
+        final String sectionTitle = treeGrid.getTree().getRoot().getTitle();
         this.treeGrids.put(sectionName, treeGrid);
 
         treeGrid.addCellClickHandler(new CellClickHandler() {
@@ -154,7 +155,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             }
         });
 
-        SectionStackSection section = new SectionStackSection(sectionName);
+        SectionStackSection section = new SectionStackSection(sectionTitle);
         section.setExpanded(true);
         section.addItem(treeGrid);
 

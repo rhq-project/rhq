@@ -46,15 +46,20 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 public class RemoteDownloader implements PackageDownloader {
 
     private ResourceContext<?> resourceContext;
+    private boolean resourceExists;
     private ProfileServiceConnection profileServiceConnection;
     private static final Log LOG = LogFactory.getLog(RemoteDownloader.class);
 
     /**
-     * @param resourceContext
+     * @param resourceContext the resource context if the resource exists or
+     * the parent resource context if the resource doesn't exist yet 
+     * @param resourceExists this tells the downloader which API to use. This has to go
+     * hand in hand with the resourceContext that is being provided.
      * @param profileServiceConnection
      */
-    public RemoteDownloader(ResourceContext<?> resourceContext, ProfileServiceConnection profileServiceConnection) {
-        this.resourceContext = resourceContext;
+    public RemoteDownloader(ResourceContext<?> resourceContext, boolean resourceExists, ProfileServiceConnection profileServiceConnection) {
+        this.resourceContext = resourceContext;        
+        this.resourceExists = resourceExists;
         this.profileServiceConnection = profileServiceConnection;
     }
 
@@ -77,8 +82,13 @@ public class RemoteDownloader implements PackageDownloader {
             os = new BufferedOutputStream(new FileOutputStream(contentCopy));
             ContentContext contentContext = resourceContext.getContentContext();
             ContentServices contentServices = contentContext.getContentServices();
-            contentServices.downloadPackageBitsForChildResource(contentContext, resourceType.getName(), key, os);
-        
+            
+            if (resourceExists) {
+                contentServices.downloadPackageBits(contentContext, key, os, true);
+            } else {
+                contentServices.downloadPackageBitsForChildResource(contentContext, resourceType.getName(), key, os);
+            }
+            
             return contentCopy;
         } catch (IOException e) {
             throw new IllegalStateException("Failed to copy the deployed archive to destination.", e);

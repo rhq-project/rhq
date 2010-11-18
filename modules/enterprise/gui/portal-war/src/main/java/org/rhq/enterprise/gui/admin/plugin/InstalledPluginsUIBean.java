@@ -69,11 +69,16 @@ public class InstalledPluginsUIBean {
     }
 
     public Collection<Plugin> getInstalledAgentPlugins() {
-
         hasPermission();
-        List<Plugin> plugins = pluginMgr.getPlugins();
-        plugins = sort(plugins);
-        return plugins;
+        List<Plugin> plugins;
+
+        InstalledPluginsSessionUIBean session = FacesContextUtility.getManagedBean(InstalledPluginsSessionUIBean.class);
+        if (session.isShowAllAgentPlugins()) {
+            plugins = pluginMgr.getPlugins();
+        } else {
+            plugins = pluginMgr.getInstalledPlugins();
+        }
+        return sort(plugins);
     }
 
     public Collection<ServerPlugin> getInstalledServerPlugins() {
@@ -345,6 +350,29 @@ public class InstalledPluginsUIBean {
             processException("Failed to undeploy server plugins", e);
         }
         return;
+    }
+
+    public void purgeAgentPlugins() {
+        try {
+            List<Plugin> selectedPlugins = getSelectedAgentPlugins();
+
+            if (selectedPlugins.isEmpty()) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                        "No plugins were selected. Nothing to purge");
+                return;
+            }
+
+            List<String> pluginNames = new ArrayList<String>();
+            for (Plugin plugin : selectedPlugins) {
+                pluginNames.add(plugin.getName());
+            }
+
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            pluginMgr.purgePlugins(subject, getIds(getSelectedAgentPlugins()));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Purged server plugins: " + pluginNames);
+        } catch (Exception e) {
+            processException("Failed to purge agent plugins", e);
+        }
     }
 
     private List<Integer> getIds(List<? extends AbstractPlugin> plugins) {

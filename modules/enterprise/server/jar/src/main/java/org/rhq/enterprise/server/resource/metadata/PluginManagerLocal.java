@@ -24,14 +24,26 @@ public interface PluginManagerLocal {
     Plugin getPlugin(String name);
 
     /**
+     * @return A list of all plugins deployed in the server, including deleted plugins
+     */
+    List<Plugin> getPlugins();
+
+    /**
      * Returns the list of all plugins deployed in the server.
      *
      * @return list of plugins deployed
      */
-    List<Plugin> getPlugins();
+    List<Plugin> getInstalledPlugins();
 
     List<Plugin> findAllDeletedPlugins();
 
+    /**
+     * Returns a list of plugins with the specified ids. Both installed and deleted plugins will be included in the
+     * results.
+     *
+     * @param pluginIds The ids of the plugins to fetch
+     * @return A list of plugins with the specified ids
+     */
     List<Plugin> getAllPluginsById(List<Integer> pluginIds);
 
     List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory);
@@ -40,7 +52,20 @@ public interface PluginManagerLocal {
 
     void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
+    /**
+     * This method puts the plugin into a <i>deleted</i> state and removes the plugin JAR file from the file system. It
+     * does not remove the plugin from the database. This method does not purge the plugin from the database in order
+     * to support HA deployments. In a HA deployment, if server A handles the request to delete the plugin and if it
+     * purges the plugin from the database, server B might see the plugin on the file system and not in the database.
+     * Server B would then proceed to try and re-install the plugin, not knowing it was deleted.
+     *
+     * @param subject The user performing the deletion
+     * @param pluginIds The ids of the plugins to be deleted
+     * @throws Exception if an error occurs
+     */
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
 

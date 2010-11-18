@@ -15,7 +15,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
@@ -33,7 +32,6 @@ import javax.sql.DataSource;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -77,8 +75,24 @@ public class PluginManagerBean implements PluginManagerLocal {
         return plugin;
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
+    public void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        deletePlugins(subject, pluginIds);
+
+        for (Integer id : pluginIds) {
+            Plugin plugin = entityManager.find(Plugin.class, id);
+            log.info("Purging [" + plugin + "] from the database");
+            entityManager.remove(plugin);
+        }
+    }
+
+    @Override
     public List<Plugin> getPlugins() {
+        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL).getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Plugin> getInstalledPlugins() {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
     }
@@ -115,7 +129,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         // we need to make sure that if a plugin is enabled, all of its dependencies are enabled
         PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
-        List<Plugin> allPlugins = getPlugins();
+        List<Plugin> allPlugins = getInstalledPlugins();
         Set<String> pluginsThatNeedToBeEnabled = new HashSet<String>();
 
         for (Integer pluginId : pluginIds) {
@@ -153,7 +167,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         // we need to make sure that if a plugin is disabled, no other plugins that depend on it are enabled
         PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
-        List<Plugin> allPlugins = getPlugins();
+        List<Plugin> allPlugins = getInstalledPlugins();
         Set<String> pluginsThatNeedToBeDisabled = new HashSet<String>();
 
         for (Integer pluginId : pluginIds) {
@@ -190,12 +204,12 @@ public class PluginManagerBean implements PluginManagerLocal {
         }
 
         PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
-        List<Plugin> allPlugins = getPlugins();
+        List<Plugin> allPlugins = getInstalledPlugins();
         Set<String> pluginsToDelete = new HashSet<String>();
 
         for (Integer pluginId : pluginIds) {
             Plugin plugin = getPluginFromListById(allPlugins, pluginId.intValue());
-            if (plugin != null) {
+            if (plugin != null && plugin.getStatus().equals(PluginStatusType.INSTALLED)) {
                 Collection<String> dependentNames = graph.getAllDependents(plugin.getName());
                 for (String dependentName : dependentNames) {
                     Plugin dependentPlugin = getPluginFromListByName(allPlugins, dependentName);
@@ -214,10 +228,12 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         List<Plugin> plugins = getAllPluginsById(pluginIds);
         for (Plugin plugin : plugins) {
-            List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
-            Plugin managedPlugin = entityManager.merge(plugin);
-            inventoryMgr.markTypesDeleted(resourceTypes);
-            managedPlugin.setStatus(PluginStatusType.DELETED);
+            if (plugin.getStatus().equals(PluginStatusType.INSTALLED)) {
+                List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
+                Plugin managedPlugin = entityManager.merge(plugin);
+                inventoryMgr.markTypesDeleted(resourceTypes);
+                managedPlugin.setStatus(PluginStatusType.DELETED);
+            }
         }
     }
 
@@ -268,11 +284,6 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         if (typesUpdated) {
             resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
-
-//            Set<ResourceType> removedTypes = new HashSet<ResourceType>();
-//            resourceMetadataManager.getPluginTypes(subject, plugin.getName(), new HashSet<ResourceType>(),
-//                    removedTypes, PLUGIN_METADATA_MANAGER);
-//            inventoryMgr.markTypesDeleted(new ArrayList<ResourceType>(removedTypes));
         }
     }
 

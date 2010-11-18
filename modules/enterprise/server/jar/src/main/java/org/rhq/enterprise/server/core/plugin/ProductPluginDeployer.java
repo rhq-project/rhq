@@ -430,7 +430,7 @@ public class ProductPluginDeployer {
     /*
     private List<String> getRegisteredPluginNames() {
         ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
-        Collection<Plugin> plugins = metadataManager.getPlugins();
+        Collection<Plugin> plugins = metadataManager.getInstalledPlugins();
         List<String> pluginNames = new ArrayList<String>();
 
         for (Plugin plugin : plugins) {

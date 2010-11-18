@@ -59,6 +59,10 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private DynamicCallbackForm recipeForm;
     private RadioGroupWithComponentsItem radioGroup;
 
+    private final String URL_OPTION = MSG.view_bundle_createWizard_urlOption();
+    private final String UPLOAD_OPTION = MSG.view_bundle_createWizard_uploadOption();
+    private final String RECIPE_OPTION = MSG.view_bundle_createWizard_recipeOption();
+
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
@@ -66,13 +70,13 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     public Canvas getCanvas() {
         if (mainCanvasForm == null) {
             LinkedHashMap<String, DynamicForm> radioItems = new LinkedHashMap<String, DynamicForm>();
-            radioItems.put("URL", createUrlForm());
-            radioItems.put("Upload", createUploadForm());
-            radioItems.put("Recipe", createRecipeForm());
+            radioItems.put(URL_OPTION, createUrlForm());
+            radioItems.put(UPLOAD_OPTION, createUploadForm());
+            radioItems.put(RECIPE_OPTION, createRecipeForm());
 
             mainCanvasForm = new DynamicForm();
-            radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", "Bundle Distribution", radioItems,
-                mainCanvasForm);
+            radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", MSG
+                .view_bundle_createWizard_bundleDistro(), radioItems, mainCanvasForm);
             radioGroup.setShowTitle(false);
 
             mainCanvasForm.setItems(radioGroup);
@@ -91,24 +95,23 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         wizard.getView().hideMessage();
 
         if (uploadDistroForm.isUploadInProgress()) {
-            handleUploadError("Upload is in progress... This can take several minutes for large distribution files.",
-                false);
+            handleUploadError(MSG.view_bundle_createWizard_uploadInProgress(), false);
             return false;
         }
 
         if (wizard.getBundleVersion() == null) {
             String selected = radioGroup.getSelected();
 
-            if ("URL".equals(selected)) {
+            if (URL_OPTION.equals(selected)) {
                 processUrl();
-            } else if ("Upload".equals(selected)) {
+            } else if (UPLOAD_OPTION.equals(selected)) {
                 uploadDistroForm.submitForm();
                 // on certain errors the form may never be submitted, report these errors outside submit handlers
                 handleUploadError(uploadDistroForm.getUploadError(), false);
-            } else if ("Recipe".equals(selected)) {
+            } else if (RECIPE_OPTION.equals(selected)) {
                 processRecipe();
             } else {
-                wizard.getView().showMessage("You must choose one option for creating your Bundle!");
+                wizard.getView().showMessage(MSG.view_bundle_createWizard_youMustChooseOne());
                 return false;
             }
             return false;
@@ -121,11 +124,11 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Provide A Bundle Distribution";
+        return MSG.view_bundle_createWizard_uploadStepName();
     }
 
     private DynamicForm createUrlForm() {
-        urlTextItem = new TextItem("url", "URL");
+        urlTextItem = new TextItem("url", URL_OPTION);
         urlTextItem.setRequired(false);
         urlTextItem.setShowTitle(false);
         urlTextItem.setWidth(400);
@@ -158,7 +161,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         recipeForm.setShowInlineErrors(false);
 
         final LinkItem showUpload = new LinkItem("recipeUploadLink");
-        showUpload.setValue("Click To Upload A Recipe File");
+        showUpload.setValue(MSG.view_bundle_createWizard_clickToUploadRecipe());
         showUpload.setShowTitle(false);
 
         final CanvasItem upload = new CanvasItem("recipeUploadCanvas");
@@ -204,7 +207,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
+                    new Message(MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
                         Message.Severity.Info));
                 wizard.setBundleVersion(result);
                 setButtonsDisableMode(false);
@@ -213,7 +216,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
             public void onFailure(Throwable caught) {
                 wizard.getView().showMessage(caught.getMessage());
-                CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                 wizard.setBundleVersion(null);
                 setButtonsDisableMode(false);
             }
@@ -231,7 +234,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 public void onSuccess(PageList<BundleVersion> result) {
                     BundleVersion bv = result.get(0);
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Created bundle [" + bv.getName() + "] version [" + bv.getVersion() + "]",
+                        new Message(MSG.view_bundle_createWizard_createSuccessful(bv.getName(), bv.getVersion()),
                             Message.Severity.Info));
                     wizard.setBundleVersion(bv);
                     setButtonsDisableMode(false);
@@ -240,7 +243,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
                 public void onFailure(Throwable caught) {
                     wizard.getView().showMessage(caught.getMessage());
-                    CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                     wizard.setBundleVersion(null);
                     setButtonsDisableMode(false);
                 }
@@ -259,7 +262,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Created bundle [" + result.getName() + "] version [" + result.getVersion() + "]",
+                    new Message(MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
                         Message.Severity.Info));
                 wizard.setBundleVersion(result);
                 setButtonsDisableMode(false);
@@ -268,7 +271,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
             public void onFailure(Throwable caught) {
                 wizard.getView().showMessage(caught.getMessage());
-                CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                 wizard.setBundleVersion(null);
                 wizard.setRecipe("");
                 setButtonsDisableMode(false);
@@ -290,7 +293,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
         if (sendToMessageCenter) {
             CoreGUI.getMessageCenter().notify(
-                new Message("Failed to upload bundle distribution file. " + errorMessage, Severity.Error));
+                new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile() + ": " + errorMessage,
+                    Severity.Error));
         }
     }
 }

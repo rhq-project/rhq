@@ -150,7 +150,7 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
         ProfileServiceConnection profileServiceConnection = this.component.getConnection();
 
         PackageDownloader downloader = runningEmbedded() ? new LocalDownloader() : new RemoteDownloader(
-            component.getResourceContext(), profileServiceConnection);
+            component.getResourceContext(), false, profileServiceConnection);
 
         if (ScriptComponent.TYPE_NAME.equals(resourceType.getName())) {
             String jbossHome = component.getResourceContext().getPluginConfiguration()

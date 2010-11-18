@@ -22,6 +22,8 @@ package org.rhq.plugins.jbossas5.deploy;
 import java.io.File;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
@@ -97,4 +99,56 @@ public class ScriptDeployer implements Deployer {
         }
     }
 
+    public DeployIndividualPackageResponse update(ResourcePackageDetails existingPackage, ResourceType resourceType) {
+        File script = null;
+        DeployIndividualPackageResponse response = new DeployIndividualPackageResponse(existingPackage.getKey());
+        
+        try {
+            
+            ResourcePackageDetails details = existingPackage;
+            script = downloader.prepareArchive(details.getKey(), resourceType);
+
+            String targetFileName = script.getName();
+
+            Configuration deploymentConfig = details.getDeploymentTimeConfiguration();
+            if (deploymentConfig != null) {
+                targetFileName = deploymentConfig.getSimpleValue(PROP_TARGET_FILE_NAME, targetFileName);
+            }
+
+            File target = new File(binDir, targetFileName);
+
+            if (!ScriptFileFinder.getScriptFileFilter(systemInfo).accept(target)) {
+                response.setResult(ContentResponseResult.FAILURE);
+                response.setErrorMessage("The supplied filename has a wrong extension. One of: "
+                    + ScriptFileFinder.getSupportedFileExtensions(systemInfo) + " was expected.");
+
+                return response;
+            }
+
+            if (!target.exists()) {
+                response.setResult(ContentResponseResult.FAILURE);
+                response.setErrorMessage("A file called '" + targetFileName
+                    + "' already exists in the server bin directory.");
+
+                return response;
+            }
+
+            FileUtil.copyFile(script, target);
+            //this should be the case, but let's just make sure the script is executable.
+            target.setExecutable(true, false);
+
+            response.setResult(ContentResponseResult.SUCCESS);
+            
+            return response;
+        } catch (Exception e) {
+            response.setErrorMessage(e.getMessage());
+            response.setResult(ContentResponseResult.FAILURE);
+            
+            return response;
+        } finally {
+            if (script != null) {
+                downloader.destroyArchive(script);
+            }
+        }
+    }
 }

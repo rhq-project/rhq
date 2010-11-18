@@ -52,9 +52,9 @@ public class BundleSelector extends AbstractSelector<Bundle> {
     protected DynamicForm getAvailableFilterForm() {
         DynamicForm availableFilterForm = new DynamicForm();
         availableFilterForm.setNumCols(4);
-        final TextItem search = new TextItem("search", "Search");
+        final TextItem search = new TextItem("search", MSG.common_button_search());
 
-        final SelectItem bundleTypeSelect = new SelectItem("bundleType", "Bundle Type");
+        final SelectItem bundleTypeSelect = new SelectItem("bundleType", MSG.view_bundle_bundleType());
         bundleService.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to load Bundle data", caught);

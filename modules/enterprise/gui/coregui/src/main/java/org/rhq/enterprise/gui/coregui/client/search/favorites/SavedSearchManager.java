@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
@@ -33,7 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
-import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 /**
  * @author Joseph Marques
@@ -79,7 +79,7 @@ public class SavedSearchManager {
             searchService.createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
 
                 public void onFailure(Throwable caught) {
-                    SearchLogger.debug("Error: created saved search [" + name + "] with pattern [" + pattern + "]: "
+                    Log.debug("Error: created saved search [" + name + "] with pattern [" + pattern + "]: "
                         + caught.getMessage());
                 }
 
@@ -93,7 +93,7 @@ public class SavedSearchManager {
             searchService.updateSavedSearch(savedSearch, new AsyncCallback<Void>() {
 
                 public void onFailure(Throwable caught) {
-                    SearchLogger.debug("Error: updating saved search [" + name + "] with pattern [" + pattern + "]: "
+                    Log.debug("Error: updating saved search [" + name + "] with pattern [" + pattern + "]: "
                         + caught.getMessage());
                 }
 
@@ -122,7 +122,7 @@ public class SavedSearchManager {
         searchService.deleteSavedSearch(savedSearch.getId(), new AsyncCallback<Void>() {
 
             public void onFailure(Throwable caught) {
-                SearchLogger.debug("Error: removing saved search [" + name + "]: " + caught.getMessage());
+                Log.debug("Error: removing saved search [" + name + "]: " + caught.getMessage());
             }
 
             public void onSuccess(Void result) {
@@ -142,7 +142,7 @@ public class SavedSearchManager {
 
             public void onFailure(Throwable caught) {
                 savedSearch.setName(oldName); // revive old name because server-side change failed
-                SearchLogger.debug("Error: renaming saved search from [" + oldName + "] to [" + newName + "]: "
+                Log.debug("Error: renaming saved search from [" + oldName + "] to [" + newName + "]: "
                     + caught.getMessage());
             }
 
@@ -182,7 +182,7 @@ public class SavedSearchManager {
 
             public void onFailure(Throwable caught) {
                 try {
-                    SearchLogger.debug("Error: loading saved searches: " + caught.getMessage());
+                    Log.debug("Error: loading saved searches: " + caught.getMessage());
                 } finally {
                     searchBar.onSavedSearchManagerLoaded();
                 }

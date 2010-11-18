@@ -1,6 +1,15 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
+import com.google.gwt.core.client.GWT;
+
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
+/**
+ * TODO
+ */
 public interface Locatable {
+
+    Messages MSG = GWT.create(Messages.class);
 
     /**
      * Returns the locatorId.  This can be useful for constructing more granular locatorIds. For example, if
@@ -9,7 +18,7 @@ public interface Locatable {
      * 
      * @return the locatorId
      */
-    public String getLocatorId();
+    String getLocatorId();
 
     /** 
      * Extends this widget's original locatorId with an extension. This can be useful for constructing more 
@@ -22,5 +31,6 @@ public interface Locatable {
      *
      * @return the new, extended locatorId
      */
-    public String extendLocatorId(String extension);
+    String extendLocatorId(String extension);
+
 }

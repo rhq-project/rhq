@@ -57,14 +57,14 @@ public class EventCompositeHistoryView extends TableSection {
     private boolean hasWriteAccess;
 
     public static EventCompositeHistoryView get(String locatorId, ResourceGroupComposite composite) {
-        String tableTitle = "Group Event History";
+        String tableTitle = MSG.view_inventory_eventHistory_groupEventHistory();
         EntityContext context = EntityContext.forGroup(composite.getResourceGroup().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isEvent();
         return new EventCompositeHistoryView(locatorId, tableTitle, context, hasWriteAccess);
     }
 
     public static EventCompositeHistoryView get(String locatorId, ResourceComposite composite) {
-        String tableTitle = "Resource Event History";
+        String tableTitle = MSG.view_inventory_eventHistory_resourceEventHistory();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isEvent();
         return new EventCompositeHistoryView(locatorId, tableTitle, context, hasWriteAccess);
@@ -87,24 +87,25 @@ public class EventCompositeHistoryView extends TableSection {
 
     @Override
     protected void configureTableFilters() {
-        final TextItem sourceFilter = new TextItem("source", "Source Filter");
-        final TextItem detailsFilter = new TextItem("details", "Details Filter");
-        final EnumSelectItem severityFilter = new EnumSelectItem("severities", "Severity Filter", EventSeverity.class);
+        final TextItem sourceFilter = new TextItem("source", MSG.view_inventory_eventHistory_sourceFilter());
+        final TextItem detailsFilter = new TextItem("details", MSG.view_inventory_eventHistory_detailsFilter());
+        final EnumSelectItem severityFilter = new EnumSelectItem("severities", MSG
+            .view_inventory_eventHistory_severityFilter(), EventSeverity.class);
 
         setFilterFormItems(sourceFilter, detailsFilter, severityFilter);
     }
 
     @Override
     protected void configureTable() {
-        ListGridField timestampField = new ListGridField("timestamp", "Timestamp", 125);
-        ListGridField severityField = new ListGridField("severity", "Severity", 75);
+        ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp(), 125);
+        ListGridField severityField = new ListGridField("severity", MSG.view_inventory_eventHistory_severity(), 75);
         severityField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return Canvas.imgHTML("subsystems/event/" + o + "_16.png", 16, 16) + o;
             }
         });
-        ListGridField detailsField = new ListGridField("details-highlight", "Details");
-        ListGridField sourceField = new ListGridField("source", "Source Location", 275);
+        ListGridField detailsField = new ListGridField("details-highlight", MSG.view_inventory_eventHistory_details());
+        ListGridField sourceField = new ListGridField("source", MSG.view_inventory_eventHistory_sourceLocation(), 275);
         sourceField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String sourceLocation = (String) o;
@@ -122,21 +123,23 @@ public class EventCompositeHistoryView extends TableSection {
     }
 
     private void setupTableInteractions() {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
-        addTableAction("deleteButton", "Delete",
-            "Are You Sure?", new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection) {
+        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
+            : TableActionEnablement.NEVER;
+        addTableAction("deleteButton", MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+            new AbstractTableAction(singleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     deleteButtonPressed(selection);
                 }
             });
 
-        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
-        addTableAction("purgeAllButton", "Purge All", "Are You Sure?",
+        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
+            : TableActionEnablement.NEVER;
+        addTableAction("purgeAllButton", MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection) {
-                purgeButtonPressed();
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    purgeButtonPressed();
+                }
+            });
     }
 
     private void deleteButtonPressed(ListGridRecord[] selection) {
@@ -148,15 +151,15 @@ public class EventCompositeHistoryView extends TableSection {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Successfully deleted " + result + " events for " + context.toShortString(),
-                        Severity.Info));
+                    new Message(MSG.view_inventory_eventHistory_deleteSuccessful(result.toString(), context
+                        .toShortString()), Severity.Info));
                 refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    "Failed to delete selected events for " + context.toShortString(), caught);
+                    MSG.view_inventory_eventHistory_deleteFailed(context.toShortString()), caught);
             }
         });
     }
@@ -166,14 +169,15 @@ public class EventCompositeHistoryView extends TableSection {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Successfully purged " + result + " events for " + context.toShortString(),
-                        Severity.Info));
+                    new Message(MSG.view_inventory_eventHistory_purgeSuccessful(result.toString(), context
+                        .toShortString()), Severity.Info));
                 refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to purge events for " + context.toShortString(), caught);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_inventory_eventHistory_purgeFailed(context.toShortString()), caught);
             }
         });
     }

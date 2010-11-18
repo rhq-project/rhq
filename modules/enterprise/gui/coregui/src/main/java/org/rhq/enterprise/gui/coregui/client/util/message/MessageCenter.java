@@ -28,6 +28,7 @@ import com.allen_sauer.gwt.log.client.Log;
  * @author Greg Hinkle
  */
 public class MessageCenter {
+
     private LinkedList<Message> messages = new LinkedList<Message>();
     private List<MessageListener> listeners = new ArrayList<MessageListener>();
 
@@ -64,7 +65,7 @@ public class MessageCenter {
     }
 
     private void log(Message message) {
-        String formattedMessage = "On " + message.getFired() + " MessageCenter received " + message.getConciseMessage();
+        String formattedMessage = "On " + message.getFired() + ", MessageCenter received " + message.getConciseMessage();
         if (message.severity == Message.Severity.Info) {
             Log.info(formattedMessage);
         } else if (message.severity == Message.Severity.Warning) {
@@ -77,4 +78,5 @@ public class MessageCenter {
             Log.debug(formattedMessage);
         }
     }
+    
 }

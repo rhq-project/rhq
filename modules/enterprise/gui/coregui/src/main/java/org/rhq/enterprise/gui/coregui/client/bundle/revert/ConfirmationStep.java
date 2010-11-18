@@ -52,7 +52,7 @@ public class ConfirmationStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Revert Deployment Confirmation";
+        return MSG.view_bundle_revertWizard_confirmStep_name();
     }
 
     public Canvas getCanvas() {
@@ -70,8 +70,8 @@ public class ConfirmationStep extends AbstractWizardStep {
                     public void onSuccess(PageList<BundleDeployment> liveDeployments) {
                         if (1 != liveDeployments.size()) {
                             nextPage = false;
-                            String message = "No live deployment found for destination [" + wizard.getDestination()
-                                + "]";
+                            String message = MSG.view_bundle_revertWizard_confirmStep_noLiveDeployment(wizard
+                                .getDestination().toString());
                             wizard.getView().showMessage(message);
                             CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
                         }
@@ -79,9 +79,8 @@ public class ConfirmationStep extends AbstractWizardStep {
                         wizard.setPreviousDeployment(wizard.getLiveDeployment().getReplacedBundleDeployment());
                         if (null == wizard.getPreviousDeployment()) {
                             nextPage = false;
-                            String message = "Live deployment [" + wizard.getLiveDeployment()
-                                + "] can not be reverted. There is no prior deployment for the destination ["
-                                + wizard.getDestination() + "]";
+                            String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(wizard
+                                .getLiveDeployment().toString(), wizard.getDestination().toString());
                             wizard.getView().showMessage(message);
                             CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
                         }
@@ -91,7 +90,8 @@ public class ConfirmationStep extends AbstractWizardStep {
 
                     public void onFailure(Throwable caught) {
                         nextPage = false;
-                        String message = "Failed to find live deployment, can not revert: " + caught.getMessage();
+                        String message = MSG.view_bundle_revertWizard_confirmStep_failedToFindLiveDeployment() + ": "
+                            + caught.getMessage();
                         wizard.getView().showMessage(message);
                         CoreGUI.getErrorHandler().handleError(message, caught);
                     }
@@ -107,7 +107,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         BundleDeployment prev = this.wizard.getPreviousDeployment();
 
         Label liveHeader = new Label();
-        liveHeader.setContents("<b>Live Deployment:<b>");
+        liveHeader.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_liveDeployment() + ":<b>");
         liveHeader.setHeight(10);
         liveHeader.setWidth100();
         layout.addMember(liveHeader);
@@ -115,20 +115,20 @@ public class ConfirmationStep extends AbstractWizardStep {
         DynamicForm liveForm = new DynamicForm();
         liveForm.setNumCols(2);
 
-        StaticTextItem liveNameItem = new StaticTextItem("liveName", "Name");
+        StaticTextItem liveNameItem = new StaticTextItem("liveName", MSG.common_title_name());
         liveNameItem.setTitleAlign(Alignment.LEFT);
         liveNameItem.setAlign(Alignment.LEFT);
         liveNameItem.setWrap(false);
         liveNameItem.setValue(live.getName());
         liveNameItem.setLeft(20);
 
-        StaticTextItem liveDescItem = new StaticTextItem("liveDesc", "Description");
+        StaticTextItem liveDescItem = new StaticTextItem("liveDesc", MSG.common_title_description());
         liveDescItem.setTitleAlign(Alignment.LEFT);
         liveDescItem.setAlign(Alignment.LEFT);
         liveDescItem.setWrap(false);
-        liveDescItem.setValue((null != live.getName()) ? live.getName() : "none");
+        liveDescItem.setValue((null != live.getName()) ? live.getName() : MSG.common_val_none());
 
-        StaticTextItem liveVersionItem = new StaticTextItem("liveVersion", "Bundle Version");
+        StaticTextItem liveVersionItem = new StaticTextItem("liveVersion", MSG.view_bundle_bundleVersion());
         liveVersionItem.setTitleAlign(Alignment.LEFT);
         liveVersionItem.setAlign(Alignment.LEFT);
         liveVersionItem.setWrap(false);
@@ -138,7 +138,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         layout.addMember(liveForm);
 
         Label prevHeader = new Label();
-        prevHeader.setContents("<b>Previous Deployment:</b>");
+        prevHeader.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_prevDeployment() + ":<b>");
         prevHeader.setHeight(20);
         prevHeader.setWidth100();
         layout.addMember(prevHeader);
@@ -146,24 +146,23 @@ public class ConfirmationStep extends AbstractWizardStep {
         DynamicForm prevForm = new DynamicForm();
         prevForm.setNumCols(2);
 
-        StaticTextItem prevNameItem = new StaticTextItem("prevName", "Name");
+        StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
         prevNameItem.setTitleAlign(Alignment.LEFT);
         prevNameItem.setAlign(Alignment.LEFT);
         prevNameItem.setWrap(false);
         prevNameItem.setValue(prev.getName());
 
-        StaticTextItem prevDescItem = new StaticTextItem("prevDesc", "Description");
+        StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
         prevDescItem.setTitleAlign(Alignment.LEFT);
         prevDescItem.setAlign(Alignment.LEFT);
         prevDescItem.setWrap(false);
-        prevDescItem.setValue((null != prev.getName()) ? prev.getName() : "none");
+        prevDescItem.setValue((null != prev.getName()) ? prev.getName() : MSG.common_val_none());
 
         prevForm.setItems(prevNameItem, prevDescItem);
         layout.addMember(prevForm);
 
         Label confirmation = new Label();
-        confirmation
-            .setContents("<b>Reverting Live Deployment to Previous Deployment. Click \'Next\' to continue...</b>");
+        confirmation.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_confirmation() + "</b>");
         confirmation.setMargin(20);
         confirmation.setWidth100();
         layout.addMember(confirmation);

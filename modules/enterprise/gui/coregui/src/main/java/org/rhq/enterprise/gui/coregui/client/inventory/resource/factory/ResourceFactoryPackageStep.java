@@ -80,8 +80,7 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
         wizard.getView().hideMessage();
 
         if (form.isUploadInProgress()) {
-            handleUploadError("Upload is in progress... This can take several minutes for large distribution files.",
-                false);
+            handleUploadError(MSG.widget_resourceFactoryWizard_uploadInProgress(), false);
             return false;
         }
 
@@ -96,7 +95,7 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Upload Resource Content File";
+        return MSG.widget_resourceFactoryWizard_uploadFileStepName();
     }
 
     private void handleUploadError(String errorMessage, boolean sendToMessageCenter) {
@@ -107,7 +106,8 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
         }
 
         if (sendToMessageCenter) {
-            CoreGUI.getMessageCenter().notify(new Message("Failed to upload file. " + errorMessage, Severity.Error));
+            CoreGUI.getMessageCenter().notify(
+                new Message(MSG.widget_resourceFactoryWizard_uploadFailure() + ": " + errorMessage, Severity.Error));
         }
     }
 

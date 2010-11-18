@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLe
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -47,14 +48,14 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
  * @author Ian Springer
  */
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
-    public static final String VIEW_ID = "Reports";
+    public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
 
-    private static final String SUBSYSTEMS_SECTION_VIEW_ID = "Subsystems";
-    private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
+    private static final ViewName SUBSYSTEMS_SECTION_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
+    private static final ViewName INVENTORY_SECTION_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     public ReportTopView() {
         // This is a top level view, so our locator id can simply be our view id.
-        super(VIEW_ID);
+        super(VIEW_ID.getName());
     }
 
     @Override
@@ -72,7 +73,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected HTMLFlow defaultView() {
-        String contents = "<h1>Reports</h1>\n" + "This section provides access to global reports.";
+        String contents = "<h1>" + MSG.view_reportsTop_title() + "</h1>\n" + MSG.view_reportsTop_description();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
@@ -81,65 +82,64 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSubsystemsSection() {
         NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Cloud_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new TaggedView(extendLocatorId("Tag"));
+                return new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName()));
             }
         });
 
         NavigationItem suspectMetricsItem = new NavigationItem(MeasurementOOBView.VIEW_ID,
             "subsystems/monitor/Monitor_failed_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new MeasurementOOBView(extendLocatorId("SuspectMetrics"));
-            }
-        });
+                public Canvas createView() {
+                    return new MeasurementOOBView(extendLocatorId(MeasurementOOBView.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem recentConfigurationChangesItem = new NavigationItem(ConfigurationHistoryView.VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new ConfigurationHistoryView(extendLocatorId("ConfigHistory"));
-            }
-        });
+                public Canvas createView() {
+                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new OperationHistoryView(extendLocatorId("RecentOps"));
-            }
-        });
+                public Canvas createView() {
+                    return new OperationHistoryView(extendLocatorId(OperationHistoryView.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new AlertHistoryView(extendLocatorId("RecentAlerts"));
-            }
-        });
+                public Canvas createView() {
+                    return new AlertHistoryView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()));
+                }
+            });
 
-        NavigationItem alertDefinitionsItem = new NavigationItem("AlertDefinitions",
+        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions"),
             "subsystems/alert/Alerts_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return null; // TODO: mazz
-            }
-        });
+                public Canvas createView() {
+                    return null; // TODO: mazz
+                }
+            });
 
         return new NavigationSection(SUBSYSTEMS_SECTION_VIEW_ID, tagItem, suspectMetricsItem,
             recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);
     }
 
     private NavigationSection buildInventorySection() {
-        NavigationItem
-            inventorySummaryItem = new NavigationItem("InventorySummary", "subsystems/inventory/Inventory_16.png",
-            new ViewFactory() {
+        NavigationItem inventorySummaryItem = new NavigationItem(new ViewName("InventorySummary", MSG
+            .common_title_inventorySummary()), "subsystems/inventory/Inventory_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId("InventorySummary"),
                     "/rhq/admin/report/resourceInstallReport-body.xhtml");
             }
         });
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID, "types/Platform_up_16.png",
-            new ViewFactory() {
-            public Canvas createView() {
-                return new PlatformPortletView(extendLocatorId("Platforms"));
-            }
-        });
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID,
+            "types/Platform_up_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new PlatformPortletView(extendLocatorId(PlatformPortletView.VIEW_ID.getName()));
+                }
+            });
 
         return new NavigationSection(INVENTORY_SECTION_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }

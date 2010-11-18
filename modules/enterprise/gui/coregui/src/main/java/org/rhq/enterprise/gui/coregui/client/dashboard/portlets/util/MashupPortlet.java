@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
  */
 public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = "Mashup";
+    public static final String KEY = MSG.common_title_mashup();
 
     public MashupPortlet(String locatorId) {
         super(locatorId);
@@ -58,19 +58,20 @@ public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePort
         if (url != null) {
             setContentsURL(url);
         } else {
-            setContents("<i>Page address not yet configured, click the settings button to setup this portlet.");
+            setContents("<i>" + MSG.view_portlet_mashup_unconfigured());
         }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet can include a web page via an HTTP request into an iframe on the dashboard.");
+        return new HTMLFlow(MSG.view_portlet_mashup_help());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition("MashupPorlet Configuration",
-            "The configuration settings for the mashup portlet.");
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_mashup_config_title(), MSG
+            .view_portlet_mashup_config_title_desc());
 
-        definition.put(new PropertyDefinitionSimple("address", "Web Address", true, PropertySimpleType.STRING));
+        definition.put(new PropertyDefinitionSimple("address", MSG.common_title_web_address(), true,
+            PropertySimpleType.STRING));
 
         return definition;
     }

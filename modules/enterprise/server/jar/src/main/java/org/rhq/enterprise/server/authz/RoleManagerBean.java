@@ -52,8 +52,8 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
- * This bean provides functionality to manipulate the security rules. That is, adding/modifying/deleting roles and their
- * associated subjects and permissions are performed by this manager.
+ * This bean provides functionality to manipulate the security {@link Role role}s. That is, adding/modifying/deleting
+ * roles and their associated subjects and permissions is performed by this manager.
  *
  * @author John Mazzitelli
  */
@@ -557,6 +557,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                     throw new IllegalArgumentException("Tried to remove subject[" + subjectId + "] from role[" + roleId
                         + "], but subject was not found");
                 }
+                if (doomedSubject.getFsystem() || (authorizationManager.isSystemSuperuser(doomedSubject))) {
+                    throw new PermissionException("You cannot remove user[" + doomedSubject.getName()
+                        + "] from role[" + roleId + "] - roles are fixed for this user");
+                }
                 role.removeSubject(doomedSubject);
             }
         }
@@ -652,7 +656,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
 
         CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

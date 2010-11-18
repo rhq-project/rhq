@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
- * The search bar, which provides the ability to search for Resource or Resource groups.
+ * The search bar, which provides the ability to search for Resources or Resource groups.
  *
  * @author Greg Hinkle
  * @author Joseph Marques
@@ -62,8 +62,8 @@ public class SearchBarPane extends LocatableHLayout {
     }
 
     public enum SearchType {
-        RESOURCE("Resources"), //
-        GROUP("Resource Groups");
+        RESOURCE(MSG.view_searchBar_resources()), //
+        GROUP(MSG.view_searchBar_resourceGroups());
 
         private String displayName;
 
@@ -94,7 +94,7 @@ public class SearchBarPane extends LocatableHLayout {
         form.setNumCols(6);
         form.setColWidths("120", "140", "400");
 
-        final SelectItem searchType = new SelectItem("searchType", "Search");
+        final SelectItem searchType = new SelectItem("searchType", MSG.view_searchBar_search());
         String[] valueMap = SearchType.getValueMap();
         searchType.setValueMap(valueMap);
         searchType.setValue(valueMap[0]);
@@ -109,7 +109,7 @@ public class SearchBarPane extends LocatableHLayout {
         ComboBoxItem resourceSearch = getResourceComboBox();
         ComboBoxItem groupSearch = getGroupComboBox();
 
-        ButtonItem search = new ButtonItem("Search", "Search");
+        ButtonItem search = new ButtonItem("Search", MSG.common_button_search());
         search.setStartRow(false);
         search.setEndRow(false);
         search.setShowTitle(false);
@@ -182,7 +182,7 @@ public class SearchBarPane extends LocatableHLayout {
                 Integer id = (Integer) changedEvent.getValue();
                 comboBox.setValue("");
 
-                String link = null;
+                String link;
                 if (searchType == SearchType.RESOURCE) {
                     link = LinkManager.getResourceLink(id);
                 } else if (searchType == SearchType.GROUP) {

@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  */
 public class SchedulesView extends AbstractMeasurementScheduleListView {
 
-    private static final String TITLE = "Metric Collection Schedules";
+    private static final String TITLE = MSG.view_resource_monitor_schedules_title();
 
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID };
 

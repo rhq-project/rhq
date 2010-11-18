@@ -50,15 +50,15 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
 
     private static final String UNITS_SECONDS = "s";
     private static final String UNITS_MINUTES = "m";
-    private static final String UNITS_HOURS   = "h";
+    private static final String UNITS_HOURS = "h";
 
     // Maps values to labels for the units select list.
     private static final LinkedHashMap<String, String> VALUE_MAP = new LinkedHashMap<String, String>();
     static {
         // TODO: Internationalize the values in this map.
-        VALUE_MAP.put(UNITS_SECONDS, "second(s)");
-        VALUE_MAP.put(UNITS_MINUTES, "minute(s)");
-        VALUE_MAP.put(UNITS_HOURS, "hour(s)");
+        VALUE_MAP.put(UNITS_SECONDS, MSG.common_label_seconds());
+        VALUE_MAP.put(UNITS_MINUTES, MSG.common_label_minutes());
+        VALUE_MAP.put(UNITS_HOURS, MSG.common_label_hours());
     }
 
     private AbstractMeasurementScheduleListView schedulesView;
@@ -82,7 +82,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         this.form.setNumCols(3);
         IntegerItem intervalItem = new IntegerItem();
         intervalItem.setName(ITEM_INTERVAL);
-        intervalItem.setTitle("Collection Interval");
+        intervalItem.setTitle(MSG.view_inventory_collectionInterval());
         IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
         intervalItem.setValidators(integerRangeValidator);
@@ -124,7 +124,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     }
 
     private Long getInterval() {
-        IntegerItem item = (IntegerItem)this.form.getItem(ITEM_INTERVAL);
+        IntegerItem item = (IntegerItem) this.form.getItem(ITEM_INTERVAL);
         if (item.getValue() == null || !item.validate()) {
             return null;
         }

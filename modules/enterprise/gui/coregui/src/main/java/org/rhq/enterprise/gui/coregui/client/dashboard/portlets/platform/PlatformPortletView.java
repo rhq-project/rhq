@@ -46,6 +46,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
@@ -59,13 +60,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Greg Hinkle
  */
 public class PlatformPortletView extends LocatableListGrid implements Portlet {
-    public static final String VIEW_ID = "CpuAndMemoryUtilization";
+    public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
 
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
-    public static final String KEY = "Platforms Summary";
+    public static final String KEY = MSG.view_portlet_platform_title();
 
     public PlatformPortletView(String locatorId) {
         super(locatorId);
@@ -97,7 +98,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
         // TODO GH: Find a way to pass resource type criteria lookups through the type cache
         typeService.findResourceTypesByCriteria(typeCriteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Couldn't load type data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_portlet_platform_type_error_1(), caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {
@@ -109,7 +110,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
 
     private void buildUI() {
 
-        ListGridField nameField = new ListGridField("name", "Name", 250);
+        ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
@@ -133,7 +134,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
         measurementService.findLiveData(resource.getId(), pmd.getDefinitionIds(),
             new AsyncCallback<Set<MeasurementData>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load platform metrics", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_portlet_platform_type_error_1(), caught);
                 }
 
                 public void onSuccess(Set<MeasurementData> result) {
@@ -198,7 +199,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays information about platforms in inventory.");
+        return new HTMLFlow(MSG.view_portlet_platform_help_msg());
     }
 
     public DynamicForm getCustomSettingsForm() {

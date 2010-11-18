@@ -54,20 +54,21 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
+        DataSourceTextField latestVersionField = new DataSourceTextField("version", MSG.common_title_version());
         fields.add(latestVersionField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", "File Count");
+        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", MSG
+            .view_bundle_bundleFiles());
         fields.add(deploymentCountField);
 
         return fields;
@@ -100,7 +101,7 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
 
         bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle version data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundleVersion_loadFailure(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -116,18 +117,7 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
 
     @Override
     public BundleVersion copyValues(Record from) {
-        // can't I just get the "object" attribute and return it???
-        Integer idAttrib = from.getAttributeAsInt("id");
-        String nameAttrib = from.getAttribute("name");
-        String descriptionAttrib = from.getAttribute("description");
-        String versionAttrib = from.getAttribute("version");
-
-        BundleVersion bv = new BundleVersion();
-        bv.setId(idAttrib.intValue());
-        bv.setName(nameAttrib);
-        bv.setDescription(descriptionAttrib);
-        bv.setVersion(versionAttrib);
-        return bv;
+        return (BundleVersion) from.getAttributeAsObject("object");
     }
 
     @Override

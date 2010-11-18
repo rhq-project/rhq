@@ -94,7 +94,7 @@ public class PluginManager implements ContainerService {
     /**
      * Finds all plugins using the plugin finder defined in the
      * {@link #setConfiguration(PluginContainerConfiguration) plugin container configuration} and
-     * {@link #loadPlugin(URL, ClassLoader) loads} each plugin found.
+     * {@link #loadPlugin(java.net.URL, ClassLoader, org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor) loads} each plugin found.
      *
      * @see ContainerService#initialize()
      */
@@ -118,6 +118,8 @@ public class PluginManager implements ContainerService {
 
         // build our empty class loader manager - we use it to create and manage our plugin's classloaders
         Map<String, URL> pluginNamesUrls = new HashMap<String, URL>();
+        // Save descriptors for later use, so we don't need to parse them twice.
+        Map<URL, PluginDescriptor> descriptors = new HashMap<URL, PluginDescriptor>();
         PluginDependencyGraph graph = new PluginDependencyGraph();
         boolean createResourceCL = configuration.isCreateResourceClassloaders();
         this.classLoaderManager = new ClassLoaderManager(pluginNamesUrls, graph, rootCL, tmpDir, createResourceCL);
@@ -134,6 +136,7 @@ public class PluginManager implements ContainerService {
                         if (!disabledPlugins.contains(descriptor.getName())) {
                             AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
                             pluginNamesUrls.put(descriptor.getName(), url);
+                            descriptors.put(url, descriptor);
                         } else {
                             log.info("Not loading disabled plugin: " + url);
                         }
@@ -153,7 +156,8 @@ public class PluginManager implements ContainerService {
 
                     try {
                         ClassLoader pluginClassLoader = this.classLoaderManager.obtainPluginClassLoader(nextPlugin);
-                        loadPlugin(pluginUrl, pluginClassLoader);
+                        PluginDescriptor descriptor = descriptors.get(pluginUrl);
+                        loadPlugin(pluginUrl, pluginClassLoader, descriptor);
                     } catch (Throwable t) {
                         // for some reason, the plugin failed to load - it will be ignored, its depending plugins will also fail later
                         log.error("Plugin [" + nextPlugin + "] at [" + pluginUrl
@@ -165,7 +169,7 @@ public class PluginManager implements ContainerService {
             } else {
                 // TODO (ips, 10/21/10): I don't think this block of code is needed any longer. I am commenting it for
                 //                       now, but it should eventually be deleted.
-                // Loading a null plugin loads the plugin using the current classloader (for unit test testing) 
+                // Loading a null plugin loads the plugin using the current classloader (for unit test testing)
                 //log.info("Loading the null plugin which uses non-isolated classloader");
                 //loadPlugin(null, thisClassLoader);
             }
@@ -283,7 +287,7 @@ public class PluginManager implements ContainerService {
 
     /**
      * Returns the manager of all classloaders created for the plugin manager.
-     * 
+     *
      * @return the classloader manager for all plugins
      */
     public ClassLoaderManager getClassLoaderManager() {
@@ -303,19 +307,19 @@ public class PluginManager implements ContainerService {
      * This will create a {@link PluginEnvironment} for the plugin at the given URL. The plugin's descriptor is parsed.
      * Once this method returns, the plugin's components are ready to be created and used.
      *
+     *
      * @param  pluginUrl   the new plugin's jar location
      * @param  classLoader the new plugin's classloader
-     *
+     * @param pluginDescriptor THe already parsed plugin descriptor for this plugin
      * @throws PluginContainerException if the plugin fails to load
      */
-    private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws PluginContainerException {
+    private void loadPlugin(URL pluginUrl, ClassLoader classLoader, PluginDescriptor pluginDescriptor) throws PluginContainerException {
 
         if (log.isDebugEnabled()) {
             log.debug("Loading plugin from [" + pluginUrl + "] in classloader [" + classLoader + "]...");
         }
 
         PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader);
-        PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();
         PluginEnvironment pluginEnvironment = new PluginEnvironment(pluginDescriptor.getName(), pluginDescriptorLoader);
         String pluginName = pluginEnvironment.getPluginName();
 

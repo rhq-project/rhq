@@ -121,13 +121,13 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         TreeNode[] treeNodes = new TreeNode[navigationItems.size()];
         for (int i = 0, navigationItemsSize = navigationItems.size(); i < navigationItemsSize; i++) {
             NavigationItem item = navigationItems.get(i);
-            final TreeNode treeNode = new EnhancedTreeNode(item.getName());
+            final TreeNode treeNode = new EnhancedTreeNode(item.getName(), item.getTitle());
             treeNode.setIcon(item.getIcon());
             treeNode.setEnabled(item.isEnabled());
             treeNodes[i] = treeNode;
         }
 
-        TreeNode rootNode = new EnhancedTreeNode(navigationSection.getName(), treeNodes);
+        TreeNode rootNode = new EnhancedTreeNode(navigationSection.getName(), navigationSection.getTitle(), treeNodes);
         Tree tree = new Tree();
         tree.setRoot(rootNode);
         treeGrid.setData(tree);
@@ -239,8 +239,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
                 if (node != null) {
                     treeGrid.selectSingleRecord(node);
                 } else {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Unknown page name '" + pageName + "' for section '" + sectionName + "' - URL is invalid.");
+                    CoreGUI.getErrorHandler().handleError(MSG.view_leftNav_unknownPage(pageName, sectionName));
                 }
             }
         }

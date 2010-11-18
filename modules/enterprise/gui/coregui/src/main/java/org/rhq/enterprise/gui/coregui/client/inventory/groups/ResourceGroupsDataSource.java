@@ -72,7 +72,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 20);
         idDataField.setPrimaryKey(true);
         fields.add(idDataField);
 

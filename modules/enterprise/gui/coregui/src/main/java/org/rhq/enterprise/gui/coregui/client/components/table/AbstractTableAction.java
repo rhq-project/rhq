@@ -39,26 +39,26 @@ public abstract class AbstractTableAction implements TableAction {
         int count = selection.length;
         boolean enabled;
         switch (this.enablement) {
-            case NEVER:
-                enabled = false;
-                break;
-            case SINGLE:
-                enabled = (count == 1);
-                break;
-            case MULTIPLE:
-                enabled = (count > 1);
-                break;
-            case ANY:
-                enabled = (count >= 1);
-                break;
-            case ALWAYS:
-                enabled = true;
-                break;
-            default:
-                throw new IllegalStateException("Unsupported SelectionEnablement: " + enablement.name());
+        case NEVER:
+            enabled = false;
+            break;
+        case SINGLE:
+            enabled = (count == 1);
+            break;
+        case MULTIPLE:
+            enabled = (count > 1);
+            break;
+        case ANY:
+            enabled = (count >= 1);
+            break;
+        case ALWAYS:
+            enabled = true;
+            break;
+        default:
+            throw new IllegalStateException("Unsupported SelectionEnablement: " + enablement.name());
         }
         return enabled;
     }
 
-    public abstract void executeAction(ListGridRecord[] selection);
+    public abstract void executeAction(ListGridRecord[] selection, Object actionValue);
 }

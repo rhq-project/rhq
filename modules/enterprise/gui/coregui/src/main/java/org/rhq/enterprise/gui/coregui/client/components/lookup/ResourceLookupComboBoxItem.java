@@ -27,12 +27,15 @@ import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceLookupComboBoxItem extends ComboBoxItem {
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public ResourceLookupComboBoxItem(String name, String title) {
         super(name, title);
@@ -42,12 +45,12 @@ public class ResourceLookupComboBoxItem extends ComboBoxItem {
 
         setOptionDataSource(new ResourceDatasource());
 
-        ListGridField nameField = new ListGridField("name", "Name", 250);
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 60);
-        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 250);
+        ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
+        ListGridField typeNameField = new ListGridField("typeName", MSG.common_title_type(), 130);
+        ListGridField pluginNameField = new ListGridField("pluginName", MSG.common_title_plugin(), 100);
+        ListGridField categoryField = new ListGridField("category", MSG.common_title_category(), 60);
+        ListGridField availabilityField = new ListGridField("currentAvailability", MSG.common_title_availability(), 55);
         availabilityField.setAlign(Alignment.CENTER);
 
         setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
@@ -57,7 +60,6 @@ public class ResourceLookupComboBoxItem extends ComboBoxItem {
         setPickListWidth(800);
         setTextMatchStyle(TextMatchStyle.SUBSTRING);
         setCompleteOnTab(true);
-        
 
     }
 }

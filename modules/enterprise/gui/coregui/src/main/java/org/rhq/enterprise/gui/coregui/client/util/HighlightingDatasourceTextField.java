@@ -44,4 +44,5 @@ public class HighlightingDatasourceTextField extends DataSourceTextField {
     public HighlightingDatasourceTextField(String name) {
         super(name);
     }
+    
 }

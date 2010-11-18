@@ -26,13 +26,14 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceGroupTopView extends LocatableHLayout implements BookmarkableView {
-    public static final String VIEW_ID = "ResourceGroup";
+    public static final ViewName VIEW_ID = new ViewName("ResourceGroup", MSG.common_title_resource_group());
 
     private Canvas contentCanvas;
     private ResourceGroupTreeView treeView;
@@ -50,7 +51,7 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         setHeight100();
 
         treeView = new ResourceGroupTreeView(extendLocatorId("Tree"));
-        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"), ResourceGroupTopView.VIEW_ID);
+        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"), ResourceGroupTopView.VIEW_ID.getName());
         addMember(treeView);
 
         contentCanvas = new Canvas();

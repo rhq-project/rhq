@@ -63,7 +63,7 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
 
         setNumCols(4);
 
-        textFile = new UploadItem("textFile", "Upload File");
+        textFile = new UploadItem("textFile", MSG.view_upload_prompt_2());
         textFile.setEndRow(false);
 
         uploadButton = new ButtonItem("Upload");
@@ -105,10 +105,10 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
             FormItemIcon loadedIcon = new FormItemIcon();
             if (ok) {
                 loadedIcon.setSrc("/images/icons/availability_green_16.png");
-                CoreGUI.getMessageCenter().notify(new Message("Uploaded file successfully", Severity.Info));
+                CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_success(), Severity.Info));
             } else {
                 loadedIcon.setSrc("/images/icons/availability_red_16.png");
-                CoreGUI.getMessageCenter().notify(new Message("File upload failed", Severity.Error));
+                CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_error_file(), Severity.Error));
             }
             loadedIcon.setWidth(16);
             loadedIcon.setHeight(16);

@@ -48,7 +48,7 @@ public class BundlesListView extends Table {
     }
 
     public BundlesListView(String locatorId, Criteria criteria) {
-        super(locatorId, "Bundles", criteria);
+        super(locatorId, MSG.view_bundle_bundles(), criteria);
         setHeaderIcon("subsystems/bundle/Bundle_24.png");
         setDataSource(new BundlesWithLatestVersionDataSource());
     }
@@ -70,15 +70,15 @@ public class BundlesListView extends Table {
         getListGrid().getField("latestVersion").setWidth("25%");
         getListGrid().getField("versionsCount").setWidth("*");
 
-        addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 new BundleCreateWizard().startWizard();
             }
         });
 
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Delete the selected bundles?", new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selections) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+            new AbstractTableAction(TableActionEnablement.ANY) {
+                public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                     for (ListGridRecord selection : selections) {
                         BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
@@ -86,12 +86,13 @@ public class BundlesListView extends Table {
                         bundleManager.deleteBundle(object.getBundleId(), new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(
-                                    "Failed to delete bundle [" + object.getBundleName() + "]", caught);
+                                    MSG.view_bundle_list_deleteFailure(object.getBundleName()), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Deleted bundle [" + object.getBundleName() + "]", Severity.Info));
+                                    new Message(MSG.view_bundle_list_deleteSuccessful(object.getBundleName()),
+                                        Severity.Info));
 
                                 CoreGUI.refresh();
                             }
@@ -102,8 +103,8 @@ public class BundlesListView extends Table {
 
         // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
         // select the bundle.
-        addTableAction(extendLocatorId("Deploy"), "Deploy", null, new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("Deploy"), MSG.view_bundle_deploy(), null, new AbstractTableAction() {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 if (selection.length == 0) {
                     new BundleDeployWizard().startWizard();
                     return;
@@ -116,14 +117,14 @@ public class BundlesListView extends Table {
                 BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
                 bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            "Failed to load bundle to deploy [" + object.getBundleName() + "]", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_loadFailure(object.getBundleName()),
+                            caught);
                     }
 
                     public void onSuccess(PageList<Bundle> result) {
                         if (result == null || result.size() != 1) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Failed to get single bundle to deploy [" + object.getBundleName() + "]",
+                                new Message(MSG.view_bundle_list_singleLoadFailure(object.getBundleName()),
                                     Severity.Error));
                             return;
                         }

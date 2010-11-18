@@ -27,7 +27,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -62,14 +66,21 @@ import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
  * @author Greg Hinkle
@@ -78,6 +89,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 public class Table extends LocatableHLayout implements RefreshableView {
 
     private static final String FIELD_ID = "id";
+    private static final String FIELD_NAME = "name";
 
     private VLayout contents;
 
@@ -296,29 +308,62 @@ public class Table extends LocatableHLayout implements RefreshableView {
                 footer.removeMembers(footer.getMembers());
 
                 for (final TableActionInfo tableAction : tableActions) {
-                    IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
-                    button.setDisabled(true);
-                    button.addClickHandler(new ClickHandler() {
-                        public void onClick(ClickEvent clickEvent) {
-                            if (tableAction.confirmMessage != null) {
 
-                                String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                    .getSelection().length));
+                    if (null == tableAction.getValueMap()) {
+                        // button action
+                        IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                        button.setDisabled(true);
+                        button.setOverflow(Overflow.VISIBLE);
+                        button.addClickHandler(new ClickHandler() {
+                            public void onClick(ClickEvent clickEvent) {
+                                if (tableAction.confirmMessage != null) {
 
-                                SC.ask(message, new BooleanCallback() {
-                                    public void execute(Boolean confirmed) {
-                                        if (confirmed) {
-                                            tableAction.action.executeAction(listGrid.getSelection());
+                                    String message = tableAction.confirmMessage.replaceAll("\\#", String
+                                        .valueOf(listGrid.getSelection().length));
+
+                                    SC.ask(message, new BooleanCallback() {
+                                        public void execute(Boolean confirmed) {
+                                            if (confirmed) {
+                                                tableAction.action.executeAction(listGrid.getSelection(), null);
+                                            }
                                         }
-                                    }
-                                });
-                            } else {
-                                tableAction.action.executeAction(listGrid.getSelection());
+                                    });
+                                } else {
+                                    tableAction.action.executeAction(listGrid.getSelection(), null);
+                                }
                             }
+                        });
+
+                        tableAction.actionCanvas = button;
+                        footer.addMember(button);
+
+                    } else {
+                        // menu action
+                        LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
+                        final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
+                        for (final String key : menuEntries.keySet()) {
+                            MenuItem item = new MenuItem(key);
+                            item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+
+                                @Override
+                                public void onClick(MenuItemClickEvent event) {
+                                    tableAction.getAction()
+                                        .executeAction(listGrid.getSelection(), menuEntries.get(key));
+                                }
+                            });
+                            menu.addItem(item);
                         }
-                    });
-                    tableAction.actionButton = button;
-                    footer.addMember(button);
+
+                        IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction
+                            .getTitle(), menu);
+                        menuButton.setDisabled(true);
+                        // this makes it pretty tight, but maybe better than the default, which is pretty wide
+                        menuButton.setAutoFit(true);
+                        menuButton.setOverflow(Overflow.VISIBLE);
+
+                        tableAction.actionCanvas = menuButton;
+                        footer.addMember(menuButton);
+                    }
                 }
 
                 for (Canvas extraWidgetCanvas : extraWidgets) {
@@ -540,12 +585,16 @@ public class Table extends LocatableHLayout implements RefreshableView {
     }
 
     public void addTableAction(String locatorId, String title, TableAction tableAction) {
-        this.addTableAction(locatorId, title, null, tableAction);
+        this.addTableAction(locatorId, title, null, null, tableAction);
     }
 
     public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
-        TableActionInfo info = new TableActionInfo(locatorId, title, tableAction);
-        info.confirmMessage = confirmation;
+        this.addTableAction(locatorId, title, confirmation, null, tableAction);
+    }
+
+    public void addTableAction(String locatorId, String title, String confirmation,
+        LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
+        TableActionInfo info = new TableActionInfo(locatorId, title, confirmation, valueMap, tableAction);
         tableActions.add(info);
     }
 
@@ -601,10 +650,10 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
-                if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this
-                    boolean enabled = (!this.tableActionDisableOverride &&
-                        tableAction.action.isEnabled(this.listGrid.getSelection()));
-                    tableAction.actionButton.setDisabled(!enabled);
+                if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
+                    boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
+                        .getSelection()));
+                    tableAction.actionCanvas.setDisabled(!enabled);
                 }
             }
             for (Canvas extraWidget : extraWidgets) {
@@ -617,6 +666,41 @@ public class Table extends LocatableHLayout implements RefreshableView {
             }
         }
     }
+
+    protected void deleteSelectedRecords() {
+        getListGrid().removeSelectedData(new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                Record[] deletedRecords = response.getData();
+                List<String> recordNames = new ArrayList<String>(deletedRecords.length);
+                for (Record deletedRecord : deletedRecords) {
+                    String name = deletedRecord.getAttribute(getTitleFieldName());
+                    recordNames.add(name);
+                }
+
+                Message message = new Message(MSG.widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()),
+                    MSG.widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
+                        getDataTypeNamePlural(), recordNames.toString()));
+                CoreGUI.getMessageCenter().notify(message);
+            }
+        }, null);
+    }
+
+    protected String getDataTypeName() {
+        return "item";
+    }
+
+    protected String getDataTypeNamePlural() {
+        return "items";
+    }
+
+    protected String getTitleFieldName() {
+        return FIELD_NAME;
+    }
+
+    protected String getDeleteConfirmMessage() {
+        return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
+    }
+
 
     // -------------- Inner utility classes ------------- //
 
@@ -676,16 +760,19 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     }
 
-    private static class TableActionInfo {
+    public static class TableActionInfo {
         private String locatorId;
         private String title;
-        private TableAction action;
         private String confirmMessage;
-        private IButton actionButton;
+        private LinkedHashMap<String, ? extends Object> valueMap;
+        private TableAction action;
+        private Canvas actionCanvas;
 
-        protected TableActionInfo(String locatorId, String title, TableAction action) {
+        protected TableActionInfo(String locatorId, String title, String confirmMessage,
+            LinkedHashMap<String, ? extends Object> valueMap, TableAction action) {
             this.locatorId = locatorId;
             this.title = title;
+            this.valueMap = valueMap;
             this.action = action;
         }
 
@@ -697,21 +784,30 @@ public class Table extends LocatableHLayout implements RefreshableView {
             return title;
         }
 
-        public IButton getActionButton() {
-            return actionButton;
-        }
-
-        String getConfirmMessage() {
+        public String getConfirmMessage() {
             return confirmMessage;
         }
 
-        void setConfirmMessage(String confirmMessage) {
-            this.confirmMessage = confirmMessage;
+        public LinkedHashMap<String, ? extends Object> getValueMap() {
+            return valueMap;
         }
 
-        void setActionButton(IButton actionButton) {
-            this.actionButton = actionButton;
+        public Canvas getActionCanvas() {
+            return actionCanvas;
         }
+
+        public void setActionCanvas(Canvas actionCanvas) {
+            this.actionCanvas = actionCanvas;
+        }
+
+        public TableAction getAction() {
+            return action;
+        }
+
+        public void setAction(TableAction action) {
+            this.action = action;
+        }
+
     }
 
     public boolean isShowFooterRefresh() {

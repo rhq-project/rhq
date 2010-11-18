@@ -26,6 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -35,8 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * @author Ian Springer
  */
 public class RolesView extends TableSection implements BookmarkableView {
-    public static final String VIEW_ID = "Roles";
-    
+    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
+
     private static final int ID_SUPERUSER = 1;
     private static final int ID_ALL_RESOURCES = 2;
 
@@ -44,7 +45,7 @@ public class RolesView extends TableSection implements BookmarkableView {
     private static final String HEADER_ICON = "global/Role_16.png";
 
     public RolesView(String locatorId) {
-        super(locatorId, "Roles");
+        super(locatorId, MSG.view_adminSecurity_roles());
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
@@ -57,12 +58,12 @@ public class RolesView extends TableSection implements BookmarkableView {
 
         ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
 
-        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 550);
-                
+        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 600);
+
         setListGridFields(nameField, descriptionField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Are you sure you want to delete # roles?", new TableAction() {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+            new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     if (count == 0) {
@@ -70,7 +71,7 @@ public class RolesView extends TableSection implements BookmarkableView {
                     }
 
                     for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt("id");
+                        int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
                         if (id == ID_SUPERUSER || id == ID_ALL_RESOURCES) {
                             // The superuser and all-resources roles cannot be deleted.
                             return false;
@@ -79,22 +80,31 @@ public class RolesView extends TableSection implements BookmarkableView {
                     return true;
                 }
 
-                public void executeAction(ListGridRecord[] selection) {
-                    getListGrid().removeSelectedData();
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteSelectedRecords();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
-        RoleEditView editor = new RoleEditView(extendLocatorId("Detail"));
-
-        return editor;
+    public Canvas getDetailsView(int roleId) {
+        return new RoleEditView(extendLocatorId("Detail"), roleId);
     }
+
+    @Override
+    protected String getDataTypeName() {
+        return "role";
+    }
+
+    @Override
+    protected String getDataTypeNamePlural() {
+        return "roles";
+    }
+
 }

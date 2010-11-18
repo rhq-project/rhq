@@ -55,20 +55,22 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceLinkField linkField = new DataSourceLinkField("link", "Name");
+        DataSourceLinkField linkField = new DataSourceLinkField("link", MSG.common_title_name());
         fields.add(linkField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("latestVersion", "Latest Version");
+        DataSourceTextField latestVersionField = new DataSourceTextField("latestVersion", MSG
+            .view_bundle_latestVersion());
         fields.add(latestVersionField);
 
-        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("versionsCount", "Versions Count");
+        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("versionsCount", MSG
+            .view_bundle_list_versionsCount());
         fields.add(deploymentCountField);
 
         return fields;
@@ -94,7 +96,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
         bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load bundle-with-latest-version data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_loadWithLatestFailure(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

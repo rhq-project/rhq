@@ -73,20 +73,25 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         this.isReadOnly = readOnly;
         this.isNewRecord = isNewRecord;
 
+        // Layout Settings
         setWidth(800);
         setPadding(13);
-
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths(150, 220, 150, 220);
+        setColWidths("20%", "30%", "20%", "30%");
         setWrapItemTitles(false);
 
+        // Other Display Settings
         setHiliteRequiredFields(true);
         setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
 
+        // DataSource Settings
+        setAutoFetchData(true);
+
+        // Validation Settings
+        setValidateOnChange(!isNewRecord);
         setStopOnError(false);
 
-        setValidateOnChange(!isNewRecord);
     }
 
     @Override
@@ -111,15 +116,15 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
                     if (item instanceof BooleanItem) {
                         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-                        valueMap.put(Boolean.TRUE.toString(), "yes");
-                        valueMap.put(Boolean.FALSE.toString(), "no");
+                        valueMap.put("true", MSG.common_val_yes());
+                        valueMap.put("false", MSG.common_val_no());
                         staticItem.setValueMap(valueMap);
                     }
 
                     itemsList.add(staticItem);
                 }
             } else if (item instanceof TogglableTextItem) {
-                final TogglableTextItem togglableTextItem = (TogglableTextItem)item;
+                final TogglableTextItem togglableTextItem = (TogglableTextItem) item;
                 togglableTextItemNames.add(togglableTextItem.getName());
 
                 final StaticTextItem staticTextItem = new StaticTextItem(getStaticTextItemName(togglableTextItem
@@ -193,20 +198,22 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             }
         }
 
-        if (!this.isNewRecord && !hasIdField && getDataSource() != null && getField("id") != null &&
-            CoreGUI.isDebugMode()) {
-            StaticTextItem idItem = new StaticTextItem("id", "ID");
+        if (!this.isNewRecord && !hasIdField && getDataSource() != null && getField("id") != null
+            && CoreGUI.isDebugMode()) {
+            StaticTextItem idItem = new StaticTextItem("id", MSG.common_title_id());
             itemsList.add(0, idItem);
         }
 
         for (FormItem item : itemsList) {
-            item.setWidth(210);
             if (this.isNewRecord && !(item instanceof StaticTextItem)) {
                 item.setValidateOnChange(true);
             }
+
+            item.setWidth("*"); // this causes a JavaScript exception ...  :-(
+            item.setWidth(240);
         }
 
-        super.setFields((FormItem[])itemsList.toArray(new FormItem[itemsList.size()]));
+        super.setFields((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));
 
         // SmartGWT annoyingly barfs if getValue() is called on a form item before it's been added to a form, so
         // we wait until after we've added all of the items to the form to set the values of the static items we
@@ -222,7 +229,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     }
 
     private void updateValue(StaticTextItem staticTextItem, TogglableTextItem textItem) {
-        String value = (String)textItem.getValue();
+        String value = (String) textItem.getValue();
         staticTextItem.setValue(value);
         staticTextItem.setAttribute("editing", false);
         for (ValueUpdatedHandler handler : textItem.getValueUpdatedHandlers()) {

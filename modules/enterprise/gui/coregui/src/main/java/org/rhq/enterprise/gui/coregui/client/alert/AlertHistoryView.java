@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -57,8 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class AlertHistoryView extends TableSection {
     // TODO: Create a subclass for the subsystem view.
-    public static final String SUBSYSTEM_VIEW_ID = "RecentAlerts";
-    private static final String SUBSYSTEM_VIEW_TITLE = "Recent Alerts";
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts());
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
@@ -67,7 +67,7 @@ public class AlertHistoryView extends TableSection {
 
     // for subsystem views
     public AlertHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_TITLE, EntityContext.forSubsystemView(), false);
+        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
     protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
@@ -128,30 +128,32 @@ public class AlertHistoryView extends TableSection {
     }
 
     private void setupTableInteractions() {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
-        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
+        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
+            : TableActionEnablement.NEVER;
+        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
+            : TableActionEnablement.NEVER;
 
-        addTableAction("DeleteAlert", "Delete",
-            "Delete the selected alert(s)?", new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection) {
-                    delete(selection);
-                }
-            });
-        addTableAction("DeleteAll", "Delete All", "Delete all alerts from this source?",
-            new AbstractTableAction(multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction("DeleteAlert", "Delete", "Delete the selected alert(s)?", new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
+        addTableAction("DeleteAll", "Delete All", "Delete all alerts from this source?", new AbstractTableAction(
+            multipleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteAll();
             }
         });
-        addTableAction("AcknowledgeAlert", "Ack",
-            "Ack the selected alert(s)?", new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection) {
-                    acknowledge(selection);
-                }
-            });
-        addTableAction("AcknowledgeAll", "Ack All", "Ack all alerts from this source?",
-            new AbstractTableAction(multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction("AcknowledgeAlert", "Ack", "Ack the selected alert(s)?", new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                acknowledge(selection);
+            }
+        });
+        addTableAction("AcknowledgeAll", "Ack All", "Ack all alerts from this source?", new AbstractTableAction(
+            multipleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 acknowledgeAll();
             }
         });

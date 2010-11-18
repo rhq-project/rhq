@@ -65,7 +65,7 @@ public class TagCloudView extends LocatableVLayout {
         GWTServiceLookup.getTagService().findTagReportCompositesByCriteria(new TagCriteria(),
             new AsyncCallback<PageList<TagReportComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tagCloud_error_fetchFailure(), caught);
                 }
 
                 public void onSuccess(PageList<TagReportComposite> result) {
@@ -83,7 +83,7 @@ public class TagCloudView extends LocatableVLayout {
         this.tags = tags;
 
         if (!simple) {
-            addMember(new HeaderLabel("Tag Cloud"));
+            addMember(new HeaderLabel(MSG.view_tagCloud_title()));
         }
 
         long max = 0;
@@ -110,16 +110,17 @@ public class TagCloudView extends LocatableVLayout {
 
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
 
-            buf.append("<a href=\"#Reports/Inventory/Tag Cloud/" + tag.getTag().toString() + "\" style=\"font-size: "
-                + font + "pt; margin: 8px;\"");
+            buf.append("<a href=\"#Reports/Inventory/Tag Cloud/").append(tag.getTag()).append("\" style=\"font-size: ")
+                .append(font).append("pt; margin: 8px;\"");
 
-            buf.append(" title=\"Tag used " + tag.getTotal() + " times\"");
+            buf.append(" title=\"").append(MSG.view_tagCloud_error_tagUsedCount(String.valueOf(tag.getTotal())))
+                .append("\"");
 
             if (tag.getTag().toString().equals(selectedTag)) {
                 buf.append(" class=\"selectedTag\"");
             }
 
-            buf.append(">" + tag.getTag().toString() + "</a> ");
+            buf.append(">").append(tag.getTag()).append("</a> ");
         }
 
         HTMLFlow flow = new HTMLFlow(buf.toString());

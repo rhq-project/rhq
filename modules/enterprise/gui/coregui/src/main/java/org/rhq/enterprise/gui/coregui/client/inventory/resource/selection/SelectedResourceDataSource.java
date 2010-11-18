@@ -20,8 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
 import java.util.ArrayList;
 
-import com.smartgwt.client.widgets.events.DropEvent;
-import com.smartgwt.client.widgets.events.DropHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
@@ -36,10 +34,8 @@ public class SelectedResourceDataSource extends ResourceDatasource {
 
     private ArrayList<Integer> selection;
 
-
     ListGrid availableGrid;
     ListGrid assignedGrid;
-
 
     public SelectedResourceDataSource(ArrayList<Integer> selection, ListGrid availableGrid, ListGrid assignedGrid) {
         this.selection = selection;
@@ -48,7 +44,6 @@ public class SelectedResourceDataSource extends ResourceDatasource {
         }
         this.availableGrid = availableGrid;
         this.assignedGrid = assignedGrid;
-
 
         assignedGrid.addRecordDropHandler(new RecordDropHandler() {
             public void onRecordDrop(RecordDropEvent recordDropEvent) {
@@ -62,12 +57,4 @@ public class SelectedResourceDataSource extends ResourceDatasource {
             }
         });
     }
-
-
-
-
-
-
-
-
 }

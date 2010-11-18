@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import java.util.List;
 
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -41,7 +40,7 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField resourceIdField = new DataSourceIntegerField(
-            MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, "Resource Id");
+            MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, MSG.common_title_resource_id());
         resourceIdField.setHidden(true);
         fields.add(0, resourceIdField);
 

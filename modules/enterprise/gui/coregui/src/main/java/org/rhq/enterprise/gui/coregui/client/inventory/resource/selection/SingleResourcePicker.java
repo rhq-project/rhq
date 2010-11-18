@@ -33,7 +33,7 @@ public class SingleResourcePicker extends ResourcePicker {
 
     @Override
     protected String getDefaultTitle() {
-        return "Select a Resource";
+        return MSG.widget_resourceSelector_selectResource();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class SingleResourcePicker extends ResourcePicker {
         Set<Integer> selection = getResourceSelector().getSelection();
 
         if (selection == null || selection.size() != 1) {
-            showWarningMessage("Please select a Resource.");
+            showWarningMessage(MSG.widget_resourceSelector_pleaseSelectResource());
         } else {
             if (handler.ok(selection)) {
                 markForDestroy();

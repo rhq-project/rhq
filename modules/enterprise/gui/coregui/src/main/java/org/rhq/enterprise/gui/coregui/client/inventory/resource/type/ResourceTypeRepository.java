@@ -93,7 +93,7 @@ public class ResourceTypeRepository {
             return;
         }
 
-        long start = System.currentTimeMillis();
+        //long start = System.currentTimeMillis();
 
         Set<Integer> types = new HashSet<Integer>();
         for (Resource res : resources) {
@@ -126,7 +126,7 @@ public class ResourceTypeRepository {
             return;
         }
 
-        long start = System.currentTimeMillis();
+        // long start = System.currentTimeMillis();
 
         Set<Integer> types = new HashSet<Integer>();
         for (ResourceGroup group : groups) {
@@ -301,7 +301,7 @@ public class ResourceTypeRepository {
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
                                 default:
-                                    System.err.println("ERROR: metadataType " + metadataType.name()
+                                    Log.error("ERROR: metadataType " + metadataType.name()
                                         + " not merged into cached ResourceType.");
                                 }
                             }

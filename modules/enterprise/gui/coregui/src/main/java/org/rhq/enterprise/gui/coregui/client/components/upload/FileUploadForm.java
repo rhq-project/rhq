@@ -139,21 +139,21 @@ public class FileUploadForm extends DynamicCallbackForm {
         setUploadError(null);
 
         if (uploadInProgress) {
-            String message = "Can not submit, upload is currently in progress";
+            String message = MSG.view_upload_inProgress();
             setUploadError(message);
             return;
         }
 
         Object value = fileUploadItem.getValue();
         if (value == null || value.toString().length() == 0) {
-            String message = "[" + name + "] Please select a file to upload";
+            String message = MSG.view_upload_prompt_1(name);
             icon.setIcons(iconRed);
             icon.setTooltip(message);
             setUploadError(message);
             // note - don't even submit this definite failure            
         } else {
             icon.setIcons(iconLoading);
-            icon.setTooltip("Loading...");
+            icon.setTooltip(MSG.common_msg_loading());
             uploadInProgress = true;
             super.submitForm();
         }
@@ -179,7 +179,7 @@ public class FileUploadForm extends DynamicCallbackForm {
         fileUploadItem.setShowTitle(showNameLabel);
         onDrawItems.add(fileUploadItem);
 
-        uploadButton = new ButtonItem("Upload");
+        uploadButton = new ButtonItem(MSG.view_upload_upload());
         uploadButton.setVisible(this.showUploadButton);
         uploadButton.setStartRow(false);
         uploadButton.setEndRow(false);
@@ -196,16 +196,16 @@ public class FileUploadForm extends DynamicCallbackForm {
         if (uploadResult != null) {
             if (uploadResult.booleanValue()) {
                 icon.setIcons(iconGreen);
-                icon.setTooltip("File has already been uploaded");
+                icon.setTooltip(MSG.view_upload_alreadyUploaded());
             } else {
-                String message = "File upload has previously failed";
+                String message = MSG.view_upload_tooltip_2();
                 icon.setIcons(iconRed);
                 icon.setTooltip(message);
                 setUploadError(message);
             }
         } else {
             icon.setIcons(iconGrey);
-            icon.setTooltip("Select a file to upload, then click the 'Upload' button or 'Next'");
+            icon.setTooltip(MSG.view_upload_tooltip_1());
         }
         icon.setShowIcons(true);
         onDrawItems.add(icon);
@@ -222,9 +222,8 @@ public class FileUploadForm extends DynamicCallbackForm {
                 if (processSubmitCompleteResults(results)) {
                     uploadResult = Boolean.TRUE;
                     icon.setIcons(iconGreen);
-                    icon.setTooltip("Uploaded file successfully");
-                    CoreGUI.getMessageCenter()
-                        .notify(new Message("Uploaded file successfully", results, Severity.Info));
+                    icon.setTooltip(MSG.view_upload_success());
+                    CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_success(), results, Severity.Info));
                     icon.hide();
                     icon.show();
                 } else {
@@ -235,7 +234,7 @@ public class FileUploadForm extends DynamicCallbackForm {
                     setUploadError(cause);
                     icon.setTooltip(cause);
                     CoreGUI.getMessageCenter().notify(
-                        new Message("File [" + name + "] upload failed", results, Severity.Error));
+                        new Message(MSG.view_upload_error_fileName(name), results, Severity.Error));
                     icon.hide();
                     icon.show();
                 }
@@ -249,7 +248,7 @@ public class FileUploadForm extends DynamicCallbackForm {
                 uploadInProgress = false;
 
                 uploadResult = Boolean.FALSE;
-                String cause = "File [" + name + "] upload failed, check for invalid file path.";
+                String cause = MSG.view_upload_error_fileName_2(name);
                 icon.setIcons(iconRed);
                 icon.setTooltip(cause);
                 setUploadError(cause);
@@ -304,7 +303,7 @@ public class FileUploadForm extends DynamicCallbackForm {
                 begin = end + 1;
             }
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Unexpected file upload results: " + results, e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_results(results), e);
         }
 
         return files;

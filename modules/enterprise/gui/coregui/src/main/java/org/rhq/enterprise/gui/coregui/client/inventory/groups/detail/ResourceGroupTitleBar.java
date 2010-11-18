@@ -95,12 +95,14 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
                     GWTServiceLookup.getTagService().updateResourceGroupTags(group.getId(), tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update resource group tags", caught);
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_titleBar_common_updateTagsFailure(group.getName()), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Resource group tags updated", Message.Severity.Info));
+                                    new Message(MSG.view_titleBar_common_updateTagsSuccessful(group.getName()),
+                                        Message.Severity.Info));
                                 // update what is essentially our local cache
                                 group.setTags(tags);
                             }
@@ -126,7 +128,8 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Could not load resource tags", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_titleBar_common_loadTagsFailure(group.getName()),
+                        caught);
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {
@@ -163,7 +166,11 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
 
     private void updateFavoriteButton() {
         this.favoriteButton.setSrc(favorite ? FAV_ICON : NOT_FAV_ICON);
-        this.favoriteButton.setTooltip("Click to " + (favorite ? "remove" : "add") + " this group as a favorite.");
+        if (favorite) {
+            this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToRemoveFav());
+        } else {
+            this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToAddFav());
+        }
     }
 
     private Set<Integer> toggleFavoriteLocally() {
@@ -179,16 +186,24 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
 
     public class UpdateFavoritesCallback implements AsyncCallback<Subject> {
         public void onSuccess(Subject subject) {
-            CoreGUI.getMessageCenter().notify(
-                new Message((favorite ? "Added " : "Removed ") + " Group " + ResourceGroupTitleBar.this.group.getName()
-                    + " as a favorite.", Message.Severity.Info));
+            String m;
+            if (favorite) {
+                m = MSG.view_titleBar_common_addedFav(ResourceGroupTitleBar.this.group.getName());
+            } else {
+                m = MSG.view_titleBar_common_removedFav(ResourceGroupTitleBar.this.group.getName());
+            }
+            CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Info));
             updateFavoriteButton();
         }
 
         public void onFailure(Throwable throwable) {
-            CoreGUI.getMessageCenter().notify(
-                new Message("Failed to " + (favorite ? "add " : "remove ") + " Group "
-                    + ResourceGroupTitleBar.this.group.getName() + " as a favorite.", Message.Severity.Error));
+            String m;
+            if (favorite) {
+                m = MSG.view_titleBar_common_addedFavFailure(ResourceGroupTitleBar.this.group.getName());
+            } else {
+                m = MSG.view_titleBar_common_removedFavFailure(ResourceGroupTitleBar.this.group.getName());
+            }
+            CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Error));
             // Revert back to our original favorite status, since the server update failed.
             toggleFavoriteLocally();
         }

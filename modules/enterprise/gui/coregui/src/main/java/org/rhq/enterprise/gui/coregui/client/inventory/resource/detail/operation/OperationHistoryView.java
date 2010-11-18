@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -46,13 +47,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  * @author Greg Hinkle
  */
 public class OperationHistoryView extends TableSection {
-    public static final String VIEW_ID = "RecentOperations";
+    public static final ViewName VIEW_ID = new ViewName("RecentOperations", MSG.common_title_recent_operations());
 
     private ResourceComposite composite;
     private Resource resource;
 
     public OperationHistoryView(String locatorId) {
-        super(locatorId, "Operation History");
+        super(locatorId, VIEW_ID.getTitle());
         setWidth100();
         setHeight100();
 
@@ -61,8 +62,8 @@ public class OperationHistoryView extends TableSection {
     }
 
     public OperationHistoryView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, "Operation History", new Criteria("resourceId", String.valueOf(resourceComposite.getResource()
-            .getId())));
+        super(locatorId, VIEW_ID.getTitle(), new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID, String
+            .valueOf(resourceComposite.getResource().getId())));
         this.composite = resourceComposite;
         this.resource = resourceComposite.getResource();
 
@@ -73,10 +74,10 @@ public class OperationHistoryView extends TableSection {
     @Override
     protected void configureTable() {
 
-        getListGrid().getField("id").setWidth(40);
-        getListGrid().getField("operationName").setWidth("*");
-        getListGrid().getField("status").setWidth(100);
-        getListGrid().getField("status").setCellFormatter(new CellFormatter() {
+        getListGrid().getField(OperationHistoryDataSource.Field.ID).setWidth(40);
+        getListGrid().getField(OperationHistoryDataSource.Field.OPERATION_NAME).setWidth("*");
+        getListGrid().getField(OperationHistoryDataSource.Field.STATUS).setWidth(100);
+        getListGrid().getField(OperationHistoryDataSource.Field.STATUS).setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 OperationRequestStatus status = OperationRequestStatus.valueOf((String) o);
                 String icon = "";
@@ -99,18 +100,18 @@ public class OperationHistoryView extends TableSection {
             }
         });
 
-        getListGrid().getField("startedTime").setWidth(120);
+        getListGrid().getField(OperationHistoryDataSource.Field.STARTED_TIME).setWidth(120);
 
         if (this.resource == null) {
-            getListGrid().getField("resource").setWidth(300);
-            getListGrid().getField("resource").setCellFormatter(new CellFormatter() {
+            getListGrid().getField(OperationHistoryDataSource.Field.RESOURCE).setWidth(300);
+            getListGrid().getField(OperationHistoryDataSource.Field.RESOURCE).setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Resource res = (Resource) o;
                     return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
                 }
             });
         } else {
-            getListGrid().hideField("resource");
+            getListGrid().hideField(OperationHistoryDataSource.Field.RESOURCE);
         }
 
         if (resource != null && composite.getResourcePermission().isControl()) {
@@ -131,8 +132,8 @@ public class OperationHistoryView extends TableSection {
                     }
                 });
 
-            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), "Run Operation",
-                operationMenu);
+            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), MSG
+                .view_operationHistoryList_button_runOperation(), operationMenu);
             operationsButton.setShowMenuBelow(false);
             operationsButton.setAutoFit(true);
             addExtraWidget(operationsButton);

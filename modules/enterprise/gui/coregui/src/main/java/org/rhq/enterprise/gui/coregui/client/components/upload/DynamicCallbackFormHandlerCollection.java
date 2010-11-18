@@ -1,9 +1,6 @@
-
 package org.rhq.enterprise.gui.coregui.client.components.upload;
 
 import java.util.ArrayList;
-
-import com.google.gwt.user.client.ui.FormSubmitCompleteEvent;
 
 /**
  * Helper class for widgets that accept
@@ -14,21 +11,21 @@ import com.google.gwt.user.client.ui.FormSubmitCompleteEvent;
 @SuppressWarnings("serial")
 public class DynamicCallbackFormHandlerCollection extends ArrayList<DynamicFormHandler> {
 
-	/**
-	 * Fires a {@link DynamicFormHandler#onSubmitComplete(DynamicFormSubmitCompleteEvent)}
+    /**
+     * Fires a {@link DynamicFormHandler#onSubmitComplete(DynamicFormSubmitCompleteEvent)}
      * on all handlers in the collection.
-	 *
-	 * @param sender
-	 *            the object sending the event
-	 * @param results
-	 *            the results of the form submission
-	 */
-	public void fireOnComplete(DynamicCallbackForm sender, String results) {
-		DynamicFormSubmitCompleteEvent event =  new DynamicFormSubmitCompleteEvent(sender, results);
+     *
+     * @param sender
+     *            the object sending the event
+     * @param results
+     *            the results of the form submission
+     */
+    public void fireOnComplete(DynamicCallbackForm sender, String results) {
+        DynamicFormSubmitCompleteEvent event = new DynamicFormSubmitCompleteEvent(sender, results);
 
-		for (DynamicFormHandler handler : this) {
-			handler.onSubmitComplete(event);
-		}
-	}
+        for (DynamicFormHandler handler : this) {
+            handler.onSubmitComplete(event);
+        }
+    }
 
 }

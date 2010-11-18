@@ -43,7 +43,7 @@ public class BackButton extends LocatableStretchImgButton {
         setTitle("<b>" + title + "</b>");
         addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                History.newItem(anchor);
+                History.newItem((anchor.startsWith("#")) ? anchor.substring(1) : anchor);
             }
         });
         setAutoFit(true);

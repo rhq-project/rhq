@@ -73,7 +73,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 50);
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
@@ -105,7 +105,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch group composite data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

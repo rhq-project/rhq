@@ -23,20 +23,16 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.LayoutPolicy;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * This is a window for displaying portlet settings. The window contains a form which in turn will contain the
@@ -49,7 +45,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
  * @author John Sanda
  */
 public class PortletHelpWindow extends Window {
-
+    private static Messages MSG = CoreGUI.getMessages();
     private DashboardPortlet storedPortlet;
     private Portlet view;
 
@@ -57,11 +53,9 @@ public class PortletHelpWindow extends Window {
         this.storedPortlet = storedPortlet;
         this.view = view;
 
-
-
-        setTitle(storedPortlet.getName() + " Help");
+        setTitle(storedPortlet.getName() + " " + MSG.view_menuBar_help());
         setOverflow(Overflow.VISIBLE);
-//        setAutoSize(true);
+        //        setAutoSize(true);
 
         setHeight(400);
         setWidth(400);
@@ -71,7 +65,6 @@ public class PortletHelpWindow extends Window {
         setDismissOnEscape(true);
         setDismissOnOutsideClick(true);
     }
-
 
     @Override
     protected void onInit() {
@@ -89,9 +82,8 @@ public class PortletHelpWindow extends Window {
         if (c != null) {
             layout.addMember(c);
         } else {
-            layout.addMember(new Label("No help available for this portlet"));
+            layout.addMember(new Label(MSG.view_portlet_generic_help()));
         }
-
 
         addItem(layout);
 

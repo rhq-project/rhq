@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.util.List;
+
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -142,11 +144,25 @@ public interface ResourceFactoryManagerRemote {
      * not only to JON, but in general. It is up to the plugin to determine how to complete the delete, but a deleted
      * resource will no longer be returned from resource discoveries.
      *
-     * @param subject    user requesting the creation
+     * @param subject    user requesting the deletion. must have resource delete perm on the resource.
      * @param resourceId resource being deleted
      */
     @WebMethod
     DeleteResourceHistory deleteResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
+
+    /**
+     * Deletes physical resources from the agent machine. After this call, the resource will no longer be accessible
+     * not only to JON, but in general. It is up to the plugin to determine how to complete the delete, but a deleted
+     * resource will no longer be returned from resource discoveries.
+     *
+     * @param subject    user requesting the deletion. must have resource delete perm on the resources.
+     * @param resourceIds the resources being deleted
+     */
+    @WebMethod
+    List<DeleteResourceHistory> deleteResources( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceIds") int[] resourceIds);
+
 }

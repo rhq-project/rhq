@@ -18,19 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.rpc;
 
-import com.smartgwt.client.widgets.Img;
-
 import java.util.HashSet;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.smartgwt.client.widgets.Img;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class RPCManager {
 
-    private static final RPCManager INSTANCE = new RPCManager();
+    private static final Messages MSG = CoreGUI.getMessages();
 
-    private int nextCallId = 0;
+    private static final RPCManager INSTANCE = new RPCManager();
+    private static int nextCallId = 0;
 
     private Set<MonitoringRequestCallback> inProgress = new HashSet<MonitoringRequestCallback>();
 
@@ -41,28 +47,34 @@ public class RPCManager {
         activityIndicator.setZIndex(10000);
         activityIndicator.setLeft(10);
         activityIndicator.setTop(40);
-        activityIndicator.hide();
         activityIndicator.draw();
+    }
+
+    public static int nextCallId() {
+        return nextCallId++;
     }
 
     public static RPCManager getInstance() {
         return INSTANCE;
     }
 
-    public int register(MonitoringRequestCallback callback) {
+    public void register(MonitoringRequestCallback callback) {
+        Log.debug("RPC register: " + callback);
+
         inProgress.add(callback);
         refresh();
-        return nextCallId++;
     }
 
     public void failCall(MonitoringRequestCallback callback) {
-        //System.err.println("RPC [" + callback.getName() + "] failed in [" + callback.age() + "] ms.");
+        Log.trace("RPC failure: " + callback);
+
         inProgress.remove(callback);
         refresh();
     }
 
     public void succeedCall(MonitoringRequestCallback callback) {
-        com.allen_sauer.gwt.log.client.Log.debug("RPC [" + callback.getName() + "] succeeded in [" + callback.age() + "] ms.");
+        Log.trace("RPC success: " + callback);
+
         inProgress.remove(callback);
         refresh();
     }
@@ -72,13 +84,16 @@ public class RPCManager {
     }
 
     public void refresh() {
+        Log.trace("RPC queue depth is " + getQueueDepth());
         if (getQueueDepth() > 0) {
             activityIndicator.show();
 
-            StringBuilder buf = new StringBuilder().append("<b>").append(inProgress.size()).append(" active requests</b>");
-            for (MonitoringRequestCallback cb : inProgress) {
+            int numberOfActiveRequests = inProgress.size();
+            String message = MSG.util_rpcManager_activeRequests(String.valueOf(numberOfActiveRequests));
+            StringBuilder buf = new StringBuilder().append("<b>").append(message).append("</b>");
+            for (MonitoringRequestCallback callback : inProgress) {
                 buf.append("<br/>");
-                buf.append(cb.getName());
+                buf.append(callback);
             }
 
             activityIndicator.setTooltip(buf.toString());
@@ -86,4 +101,5 @@ public class RPCManager {
             activityIndicator.hide();
         }
     }
+
 }

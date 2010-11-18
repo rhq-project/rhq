@@ -41,7 +41,7 @@ public class BundleVersionListView extends Table {
     }
 
     public BundleVersionListView(String locatorId, Criteria criteria) {
-        super(locatorId, "Bundle Versions", criteria);
+        super(locatorId, MSG.view_bundle_bundleVersions(), criteria);
         setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
         BundleVersionDataSource bundleVersionsDataSource = new BundleVersionDataSource();
         setDataSource(bundleVersionsDataSource);

@@ -65,6 +65,17 @@ public interface PluginManagerLocal {
      */
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
+    /**
+     * Permanently removes the plugins with the specified ids from the database. This operation first calls
+     * {@link #deletePlugins(Subject, List)} as a safeguard to ensure that the plugins are first deleted. In a HA
+     * deployment however, you should wait at least 5 minutes after deleting a plugin before purging it. Five minutes
+     * is the default interval of the agent plugin scanner. This should be sufficient time for servers in the cluster
+     * to delete the plugin from the file system.
+     *
+     * @param subject The user purging the plugin
+     * @param pluginIds The ids of the plugins to be purged
+     * @throws Exception if an error occurs
+     */
     void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;

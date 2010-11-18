@@ -55,7 +55,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "New Destination";
+        return MSG.view_bundle_deployWizard_getDestStep();
     }
 
     public Canvas getCanvas() {
@@ -66,7 +66,7 @@ public class GetDestinationStep extends AbstractWizardStep {
             this.valForm.setNumCols(2);
             this.valForm.setColWidths("50%", "*");
 
-            final TextItem nameTextItem = new TextItem("name", "Destination Name");
+            final TextItem nameTextItem = new TextItem("name", MSG.view_bundle_deployWizard_getDest_name());
             nameTextItem.setWidth(300);
             nameTextItem.setRequired(true);
             nameTextItem.addChangedHandler(new ChangedHandler() {
@@ -80,7 +80,8 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", "Destination Description");
+            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
+                .view_bundle_deployWizard_getDest_desc());
             descriptionTextAreaItem.setWidth(300);
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -92,8 +93,8 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            final TextItem deployDirTextItem = new TextItem("deployDir",
-                "Root Deployment Directory (on destination platforms)");
+            final TextItem deployDirTextItem = new TextItem("deployDir", MSG
+                .view_bundle_deployWizard_getDest_deployDir());
             deployDirTextItem.setWidth(300);
             deployDirTextItem.setRequired(true);
             deployDirTextItem.addChangedHandler(new ChangedHandler() {
@@ -106,11 +107,11 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            this.selector = new SinglePlatformResourceGroupSelector("group", "Resource Group");
+            this.selector = new SinglePlatformResourceGroupSelector("group", MSG.common_title_resource_group());
             this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
-            validator.setErrorMessage("You must select a valid resource group from the drop down");
+            validator.setErrorMessage(MSG.view_bundle_deployWizard_error_8());
             this.selector.setValidators(validator);
 
             this.valForm.setItems(nameTextItem, descriptionTextAreaItem, deployDirTextItem, selector);
@@ -145,7 +146,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to delete new destination in nextPage: " + caught.getMessage(), caught);
+                            MSG.view_bundle_deployWizard_error_9(caught.getMessage()), caught);
                         // try anyway and potentially fail again from there 
                         createDestination();
                     }
@@ -168,14 +169,14 @@ public class GetDestinationStep extends AbstractWizardStep {
                     wizard.setDestination(result);
                     wizard.setNewDestination(true);
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Created destination [" + result.getName() + "] description ["
-                            + result.getDescription() + "]", Severity.Info));
+                        new Message(MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(), result
+                            .getDescription()), Severity.Info));
                     createInProgress = false;
                     wizard.getView().incrementStep();
                 }
 
                 public void onFailure(Throwable caught) {
-                    String message = "Failed to create destination, it may already exist. (Note, for an existing destination deploy from the Destination view)";
+                    String message = MSG.view_bundle_deployWizard_error_10();
                     wizard.getView().showMessage(message);
                     CoreGUI.getErrorHandler().handleError(message + ": " + caught.getMessage(), caught);
                     createInProgress = false;

@@ -1032,8 +1032,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
 
-    //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    //    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
+    // not currently needed, but could be added if we find a need to get deployment info via the resource
+    // bulk delete (already being done)
+    // @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
+    // private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
     @ManyToMany(mappedBy = "resources", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;

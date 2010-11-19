@@ -283,7 +283,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
         }
 
-        // since we delete the resource asychronously now, we need to make sure we remove things that would cause
+        // since we delete the resource asynchronously now, we need to make sure we remove things that would cause
         // system side effects after markForDeletion completed but before the resource was actually removed from the DB
         Subject overlord = subjectManager.getOverlord();
 

@@ -79,6 +79,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private VLayout bottomLayout;
     private String dataTypeName;
     private String listViewPath;
+    private boolean wasInvalid;
 
     public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
                                 String headerIcon) {
@@ -246,15 +247,19 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             this.saveButton.setDisabled(!isValid);
             this.resetButton.setDisabled(false);
             if (!isValid) {
+                this.wasInvalid = true;
                 Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
                     + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
                     Message.Option.Sticky, Message.Option.Transient));
                 CoreGUI.getMessageCenter().notify(message);
             } else {
-                Message message = new Message("All fields now have valid values. This " + this.dataTypeName
-                    + " can now be saved.", Message.Severity.Info, EnumSet.of(Message.Option.Sticky,
-                    Message.Option.Transient));
-                CoreGUI.getMessageCenter().notify(message);
+                if (this.wasInvalid) {
+                    Message message = new Message("All fields now have valid values. This " + this.dataTypeName
+                        + " can now be saved.", Message.Severity.Info, EnumSet.of(Message.Option.Sticky,
+                        Message.Option.Transient));
+                    CoreGUI.getMessageCenter().notify(message);
+                    this.wasInvalid = false;
+                }
             }
         }
     }

@@ -60,8 +60,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         public static final String NAME = "name";
         public static final String DESCRIPTION = "description";
         public static final String RESOURCE_GROUPS = "resourceGroups";
-        public static final String GLOBAL_PERMISSIONS = "globalPermissions";
-        public static final String RESOURCE_PERMISSIONS = "resourcePermissions";
+        public static final String PERMISSIONS = "permissions";
         public static final String SUBJECTS = "subjects";
         public static final String LDAP_GROUPS = "ldapGroups";
     }
@@ -116,11 +115,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
         DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, "Resource Groups");
         fields.add(resourceGroupsField);
 
-        DataSourceField globalPermissionsField = new DataSourceField(Field.GLOBAL_PERMISSIONS, FieldType.ANY, "Global Permissions");
-        fields.add(globalPermissionsField);
-
-        DataSourceField resourcePermissionsField = new DataSourceField(Field.RESOURCE_PERMISSIONS, FieldType.ANY, "Resource Permissions");
-        fields.add(resourcePermissionsField);
+        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
+        //fields.add(permissionsField);
 
         DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
         fields.add(subjectsField);
@@ -208,9 +204,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
         to.setName(from.getAttributeAsString(Field.NAME));
         to.setDescription(from.getAttributeAsString(Field.DESCRIPTION));
 
+        Record[] permissionRecords = from.getAttributeAsRecordArray(Field.PERMISSIONS);
+        Set<Permission> permissions = toPermissionSet(permissionRecords);
+        to.setPermissions(permissions);
+
         // TODO
         /*to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
-        to.setPermissions((Set<Permission>) from.getAttributeAsObject(Field.GLOBAL_PERMISSIONS));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.SUBJECTS));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.LDAP_GROUPS));*/
 
@@ -228,23 +227,9 @@ public class RolesDataSource extends RPCDataSource<Role> {
             sourceRole.getResourceGroups());
         targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
-        // First split the set of permissions into two subsets - one for global perms and one for resource perms.
         Set<Permission> permissions = sourceRole.getPermissions();
-        Set<Permission> globalPermissions = new HashSet<Permission>();
-        Set<Permission> resourcePermissions = new HashSet<Permission>();
-        for (Permission permission : permissions) {
-            if (permission.getTarget() == Permission.Target.GLOBAL) {
-                globalPermissions.add(permission);
-            } else {
-                resourcePermissions.add(permission);
-            }
-        }
-
-        ListGridRecord[] globalPermissionRecords = toRecordArray(globalPermissions);
-        targetRecord.setAttribute(Field.GLOBAL_PERMISSIONS, globalPermissionRecords);
-
-        ListGridRecord[] resourcePermissionRecords = toRecordArray(resourcePermissions);
-        targetRecord.setAttribute(Field.RESOURCE_PERMISSIONS, resourcePermissionRecords);
+        ListGridRecord[] permissionRecords = toRecordArray(permissions);
+        targetRecord.setAttribute(Field.PERMISSIONS, permissionRecords);
 
         ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(sourceRole.getSubjects());
         targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
@@ -252,15 +237,25 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return targetRecord;
     }
 
-    private static ListGridRecord[] toRecordArray(Set<Permission> globalPermissions) {
-        ListGridRecord[] globalPermissionRecords = new ListGridRecord[globalPermissions.size()];
-        for (Permission permission : globalPermissions) {
-            ListGridRecord globalPermissionRecord = new ListGridRecord();
-            globalPermissionRecord.setAttribute("name", permission.name());
-            globalPermissionRecord.setAttribute("displayName", permission.name()); // TODO
-            globalPermissionRecord.setAttribute("description", ""); // TODO
+    public static Set<Permission> toPermissionSet(Record[] permissionRecords) {
+        Set<Permission> permissions = new HashSet<Permission>();
+        for (Record permissionRecord : permissionRecords) {
+            String permissionName = permissionRecord.getAttribute("name");
+            Permission permission = Permission.valueOf(permissionName);
+            permissions.add(permission);
         }
-        return globalPermissionRecords;
+        return permissions;
+    }
+
+    public static ListGridRecord[] toRecordArray(Set<Permission> permissions) {
+        ListGridRecord[] permissionRecords = new ListGridRecord[permissions.size()];
+        int index = 0;
+        for (Permission permission : permissions) {
+            ListGridRecord permissionRecord = new ListGridRecord();
+            permissionRecord.setAttribute("name", permission.name());
+            permissionRecords[index++] = permissionRecord;
+        }
+        return permissionRecords;
     }
 
     private RoleCriteria getFetchCriteria(DSRequest request) {

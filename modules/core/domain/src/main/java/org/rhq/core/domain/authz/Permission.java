@@ -49,10 +49,10 @@ public enum Permission {
         "can C/R/U/D all resources, groups and can import auto-discovered resources"), // 1
 
     /**
-     * can modify the JON Server configuration and perform any server-related functionality
+     * can modify the RHQ Server configuration and perform any server-related functionality
      */
     MANAGE_SETTINGS(Target.GLOBAL, "Manage Settings",
-        "can modify the JON Server configuration and perform any server-related functionality"), // 2
+        "can modify the RHQ Server configuration and perform any server-related functionality"), // 2
 
     /* ========= Resource Permissions ========= */
 

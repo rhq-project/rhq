@@ -109,7 +109,7 @@ public class SearchBarPane extends LocatableHLayout {
         ComboBoxItem resourceSearch = getResourceComboBox();
         ComboBoxItem groupSearch = getGroupComboBox();
 
-        ButtonItem search = new ButtonItem("Search", MSG.common_title_search());
+        ButtonItem search = new ButtonItem("Search", MSG.common_button_search());
         search.setStartRow(false);
         search.setEndRow(false);
         search.setShowTitle(false);

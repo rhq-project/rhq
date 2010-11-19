@@ -87,8 +87,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table<DS extends RPCDataSource> extends LocatableHLayout
-    implements RefreshableView {
+public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
@@ -326,8 +325,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout
                     public void onClick(ClickEvent clickEvent) {
                         if (tableAction.confirmMessage != null) {
 
-                            String message = tableAction.confirmMessage.replaceAll("\\#", String
-                                .valueOf(listGrid.getSelection().length));
+                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                .getSelection().length));
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
@@ -355,15 +354,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout
 
                         @Override
                         public void onClick(MenuItemClickEvent event) {
-                            tableAction.getAction()
-                                .executeAction(listGrid.getSelection(), menuEntries.get(key));
+                            tableAction.getAction().executeAction(listGrid.getSelection(), menuEntries.get(key));
                         }
                     });
                     menu.addItem(item);
                 }
 
-                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction
-                    .getTitle(), menu);
+                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle(),
+                    menu);
                 menuButton.setDisabled(true);
                 // this makes it pretty tight, but maybe better than the default, which is pretty wide
                 menuButton.setAutoFit(true);
@@ -381,7 +379,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout
         footer.addMember(new LayoutSpacer());
 
         if (isShowFooterRefresh()) {
-            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
+            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     listGrid.invalidateCache();
@@ -666,7 +664,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout
                 }
             }
             if (getTableInfo() != null) {
-                getTableInfo().setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+                getTableInfo().setContents(
+                    MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
             }
         }
     }

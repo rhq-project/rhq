@@ -47,9 +47,10 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
     }
 
     @Override
-    protected void configureTable() {
+    protected void configureTable() {        
         super.configureTable();
-        addExtraWidget(new UpdateExistingSchedulesWidget(this));
+
+        addExtraWidget(new UpdateExistingSchedulesWidget(this));        
     }
 
     public boolean isUpdateExistingSchedules() {

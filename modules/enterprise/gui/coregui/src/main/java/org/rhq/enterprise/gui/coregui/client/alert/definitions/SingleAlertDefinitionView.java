@@ -65,25 +65,28 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
         tabSet.setHeight100();
 
-        Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), "General Properties");
+        Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), MSG
+            .view_alert_common_tab_general());
         generalProperties = new GeneralPropertiesAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
 
-        Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), "Conditions");
+        Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), MSG
+            .view_alert_common_tab_conditions());
         conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefView.getResourceType(),
             alertDefinition);
         conditionsTab.setPane(conditions);
 
-        Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), "Notifications");
+        Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), MSG
+            .view_alert_common_tab_notifications());
         notifications = new NotificationsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         notificationsTab.setPane(notifications);
 
-        Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), "Recovery");
+        Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), MSG.view_alert_common_tab_recovery());
         recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefView.getAlertDefinitionDataSource(),
             alertDefinition);
         recoveryTab.setPane(recovery);
 
-        Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), "Dampening");
+        Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), MSG.view_alert_common_tab_dampening());
         dampening = new DampeningAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         dampeningTab.setPane(dampening);
 
@@ -92,9 +95,9 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         final HLayout buttons = new HLayout();
         buttons.setMembersMargin(20);
 
-        editButton = new LocatableButton(this.extendLocatorId("Edit"), "Edit");
-        saveButton = new LocatableButton(this.extendLocatorId("Save"), "Save");
-        cancelButton = new LocatableButton(this.extendLocatorId("Cancel"), "Cancel");
+        editButton = new LocatableButton(this.extendLocatorId("Edit"), MSG.common_button_edit());
+        saveButton = new LocatableButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        cancelButton = new LocatableButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
 
         editButton.show();
         saveButton.hide();

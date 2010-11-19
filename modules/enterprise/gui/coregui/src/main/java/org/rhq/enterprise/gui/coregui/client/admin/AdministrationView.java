@@ -87,9 +87,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     protected HTMLFlow defaultView() {
-        String contents = "<h1>Administration</h1>\n"
-            + "From this section, the RHQ global settings can be administered. This includes configuring \n"
-            + "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and various other stuff.";
+        String contents = "<h1>" + MSG.view_admin_administration() + "</h1>\n" + MSG.view_admin_landing();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;

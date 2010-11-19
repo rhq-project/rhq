@@ -72,7 +72,6 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -83,10 +82,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
+ * A tabular view of set of data records from an {@link RPCDataSource}.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
@@ -115,12 +116,13 @@ public class Table extends LocatableHLayout implements RefreshableView {
     private boolean autoFetchData;
     private boolean flexRowDisplay = true;
 
-    private RPCDataSource dataSource;
+    private DS dataSource;
 
     private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
+    private ToolStrip footer;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -233,17 +235,13 @@ public class Table extends LocatableHLayout implements RefreshableView {
             }
 
             // Title
-            title = new HTMLFlow();
-            setTableTitle(tableTitle);
+            this.title = new HTMLFlow();
+            setTableTitle(this.tableTitle);
 
             if (showHeader) {
                 titleLayout = new HLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
-            }
-
-            // Add components to the view
-            if (showHeader) {
                 contents.addMember(titleLayout, 0);
             }
 
@@ -254,7 +252,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             contents.addMember(listGrid);
 
             // Footer
-            ToolStrip footer = new ToolStrip();
+            this.footer = new ToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -287,123 +285,136 @@ public class Table extends LocatableHLayout implements RefreshableView {
             getTableInfo().setWrap(false);
 
             if (showHeader) {
-
-                for (String headerIcon : headerIcons) {
-                    Img img = new Img(headerIcon, 24, 24);
-                    img.setPadding(4);
-                    titleLayout.addMember(img);
-                }
-
-                titleLayout.addMember(title);
-
-                if (titleComponent != null) {
-                    titleLayout.addMember(new LayoutSpacer());
-                    titleLayout.addMember(titleComponent);
-                }
-
+                drawHeader();
             }
 
             if (showFooter) {
-
-                footer.removeMembers(footer.getMembers());
-
-                for (final TableActionInfo tableAction : tableActions) {
-
-                    if (null == tableAction.getValueMap()) {
-                        // button action
-                        IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
-                        button.setDisabled(true);
-                        button.setOverflow(Overflow.VISIBLE);
-                        button.addClickHandler(new ClickHandler() {
-                            public void onClick(ClickEvent clickEvent) {
-                                if (tableAction.confirmMessage != null) {
-
-                                    String message = tableAction.confirmMessage.replaceAll("\\#", String
-                                        .valueOf(listGrid.getSelection().length));
-
-                                    SC.ask(message, new BooleanCallback() {
-                                        public void execute(Boolean confirmed) {
-                                            if (confirmed) {
-                                                tableAction.action.executeAction(listGrid.getSelection(), null);
-                                            }
-                                        }
-                                    });
-                                } else {
-                                    tableAction.action.executeAction(listGrid.getSelection(), null);
-                                }
-                            }
-                        });
-
-                        tableAction.actionCanvas = button;
-                        footer.addMember(button);
-
-                    } else {
-                        // menu action
-                        LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
-                        final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
-                        for (final String key : menuEntries.keySet()) {
-                            MenuItem item = new MenuItem(key);
-                            item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-
-                                @Override
-                                public void onClick(MenuItemClickEvent event) {
-                                    tableAction.getAction()
-                                        .executeAction(listGrid.getSelection(), menuEntries.get(key));
-                                }
-                            });
-                            menu.addItem(item);
-                        }
-
-                        IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction
-                            .getTitle(), menu);
-                        menuButton.setDisabled(true);
-                        // this makes it pretty tight, but maybe better than the default, which is pretty wide
-                        menuButton.setAutoFit(true);
-                        menuButton.setOverflow(Overflow.VISIBLE);
-
-                        tableAction.actionCanvas = menuButton;
-                        footer.addMember(menuButton);
-                    }
-                }
-
-                for (Canvas extraWidgetCanvas : extraWidgets) {
-                    footer.addMember(extraWidgetCanvas);
-                }
-
-                footer.addMember(new LayoutSpacer());
-
-                if (isShowFooterRefresh()) {
-                    IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
-                    refreshButton.addClickHandler(new ClickHandler() {
-                        public void onClick(ClickEvent clickEvent) {
-                            listGrid.invalidateCache();
-                        }
-                    });
-                    footer.addMember(refreshButton);
-                }
-
-                footer.addMember(tableInfo);
-
-                // Manages enable/disable buttons for the grid
-                listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                    public void onSelectionChanged(SelectionEvent selectionEvent) {
-                        refreshTableInfo();
-                    }
-                });
-
-                listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-                    public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                        refreshTableInfo();
-                        fieldSizes.clear();
-                    }
-                });
-
-                // Ensure buttons are initially set correctly.
-                refreshTableInfo();
+                drawFooter();
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
         }
+    }
+
+    private void drawHeader() {
+        for (String headerIcon : headerIcons) {
+            Img img = new Img(headerIcon, 24, 24);
+            img.setPadding(4);
+            titleLayout.addMember(img);
+        }
+
+        titleLayout.addMember(title);
+
+        if (titleComponent != null) {
+            titleLayout.addMember(new LayoutSpacer());
+            titleLayout.addMember(titleComponent);
+        }
+    }
+
+    private void drawFooter() {
+        footer.removeMembers(footer.getMembers());
+
+        for (final TableActionInfo tableAction : tableActions) {
+
+            if (null == tableAction.getValueMap()) {
+                // button action
+                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                button.setDisabled(true);
+                button.setOverflow(Overflow.VISIBLE);
+                button.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        if (tableAction.confirmMessage != null) {
+
+                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                .getSelection().length));
+
+                            SC.ask(message, new BooleanCallback() {
+                                public void execute(Boolean confirmed) {
+                                    if (confirmed) {
+                                        tableAction.action.executeAction(listGrid.getSelection(), null);
+                                    }
+                                }
+                            });
+                        } else {
+                            tableAction.action.executeAction(listGrid.getSelection(), null);
+                        }
+                    }
+                });
+
+                tableAction.actionCanvas = button;
+                footer.addMember(button);
+
+            } else {
+                // menu action
+                LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
+                final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
+                for (final String key : menuEntries.keySet()) {
+                    MenuItem item = new MenuItem(key);
+                    item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+
+                        @Override
+                        public void onClick(MenuItemClickEvent event) {
+                            tableAction.getAction().executeAction(listGrid.getSelection(), menuEntries.get(key));
+                        }
+                    });
+                    menu.addItem(item);
+                }
+
+                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle(),
+                    menu);
+                menuButton.setDisabled(true);
+                // this makes it pretty tight, but maybe better than the default, which is pretty wide
+                menuButton.setAutoFit(true);
+                menuButton.setOverflow(Overflow.VISIBLE);
+
+                tableAction.actionCanvas = menuButton;
+                footer.addMember(menuButton);
+            }
+        }
+
+        for (Canvas extraWidgetCanvas : extraWidgets) {
+            footer.addMember(extraWidgetCanvas);
+        }
+
+        footer.addMember(new LayoutSpacer());
+
+        if (isShowFooterRefresh()) {
+            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+            refreshButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    listGrid.invalidateCache();
+                }
+            });
+            footer.addMember(refreshButton);
+        }
+
+        footer.addMember(tableInfo);
+
+        // Manages enable/disable buttons for the grid
+        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                refreshTableInfo();
+            }
+        });
+
+        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                refreshTableInfo();
+                fieldSizes.clear();
+            }
+        });
+
+        // Ensure buttons are initially set correctly.
+        refreshTableInfo();
+    }
+
+    /**
+     * Subclasses can use this as a chance to configure the list grid after it has been
+     * created but before it has been drawn to the DOM. This is also the proper place to add table
+     * actions so that they're rendered in the footer.
+     */
+    protected void configureTable() {
+        return;
     }
 
     public void setFilterFormItems(FormItem... formItems) {
@@ -415,15 +426,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
      * the table that displays their data.
      */
     protected void configureTableFilters() {
-
-    }
-
-    /**
-     * Overriding components can use this as a chance to configure the list grid after it has been
-     * created but before it has been drawn to the DOM. This is also the proper place to add table
-     * actions so that they're rendered in the footer.
-     */
-    protected void configureTable() {
 
     }
 
@@ -500,11 +502,11 @@ public class Table extends LocatableHLayout implements RefreshableView {
         title.markForRedraw();
     }
 
-    public RPCDataSource getDataSource() {
+    public DS getDataSource() {
         return dataSource;
     }
 
-    public void setDataSource(RPCDataSource dataSource) {
+    public void setDataSource(DS dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -557,7 +559,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                listGridIdField = new ListGridField(FIELD_ID, "ID", 55);
+                listGridIdField = new ListGridField(FIELD_ID, MSG.common_title_id(), 55);
                 // Override the DataSource id field metadata for consistent display across all Tables.
                 listGridIdField.setType(ListGridFieldType.INTEGER);
                 listGridIdField.setCanEdit(false);
@@ -662,7 +664,8 @@ public class Table extends LocatableHLayout implements RefreshableView {
                 }
             }
             if (getTableInfo() != null) {
-                getTableInfo().setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+                getTableInfo().setContents(
+                    MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
             }
         }
     }
@@ -677,8 +680,9 @@ public class Table extends LocatableHLayout implements RefreshableView {
                     recordNames.add(name);
                 }
 
-                Message message = new Message(MSG.widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()),
-                    MSG.widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
+                Message message = new Message(MSG
+                    .widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()), MSG
+                    .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
                         getDataTypeNamePlural(), recordNames.toString()));
                 CoreGUI.getMessageCenter().notify(message);
             }
@@ -700,7 +704,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
     protected String getDeleteConfirmMessage() {
         return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
     }
-
 
     // -------------- Inner utility classes ------------- //
 
@@ -772,6 +775,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             LinkedHashMap<String, ? extends Object> valueMap, TableAction action) {
             this.locatorId = locatorId;
             this.title = title;
+            this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
         }

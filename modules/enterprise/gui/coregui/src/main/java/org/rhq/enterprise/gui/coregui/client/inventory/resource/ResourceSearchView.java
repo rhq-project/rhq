@@ -114,7 +114,6 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-
         ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 40);
         iconField.setType(ListGridFieldType.IMAGE);
         iconField.setImageURLPrefix("types/");
@@ -184,6 +183,8 @@ public class ResourceSearchView extends Table {
                 }
             }
         });*/
+
+
     }
 
     //    /** Defines the double click handler action for ResourceSearch.  This means that on double

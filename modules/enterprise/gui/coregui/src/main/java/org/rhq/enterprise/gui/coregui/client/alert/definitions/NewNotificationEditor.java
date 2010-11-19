@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
@@ -53,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class NewNotificationEditor extends LocatableDynamicForm {
 
     private final AlertDefinition alertDefinition; // the definition we are adding the notification to
-    private final ArrayList<AlertNotification> notifications; // if we are creating a new notification, it gets added to this list
+    private final List<AlertNotification> notifications; // if we are creating a new notification, it gets added to this list
     private final AlertNotification notificationToEdit; // the notification that this editor is editing (may be null)
     private final Runnable closeFunction; // this is called after a button is pressed and the editor should close 
 
@@ -61,7 +62,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     private CanvasItem senderCanvasItem;
 
     public NewNotificationEditor(String locatorId, AlertDefinition alertDefinition,
-        ArrayList<AlertNotification> notifs, AlertNotification notifToEdit, Runnable closeFunc) {
+        List<AlertNotification> notifs, AlertNotification notifToEdit, Runnable closeFunc) {
 
         super(locatorId);
         this.alertDefinition = alertDefinition;
@@ -81,7 +82,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         senderCanvasItem.setShowTitle(false);
         senderCanvasItem.setColSpan(2);
 
-        notificationSenderSelectItem = new SelectItem("notificationSender", "Notification Sender");
+        notificationSenderSelectItem = new SelectItem("notificationSender", MSG
+            .view_alert_definition_notification_editor_sender());
         notificationSenderSelectItem.setDefaultToFirstOption(true);
         notificationSenderSelectItem.setWrapTitle(false);
         notificationSenderSelectItem.setRedrawOnChange(true);
@@ -115,13 +117,15 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                         switchToAlertSender(result[0]);
                         senderCanvasItem.show();
                     } else {
-                        CoreGUI.getErrorHandler().handleError("No alert senders available");
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_editor_none_available());
                     }
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot get alert senders", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_editor_loadFailed(),
+                        caught);
                 }
             });
         }
@@ -142,7 +146,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         spacer2.setColSpan(2);
         spacer2.setHeight(5);
 
-        ButtonItem ok = new ButtonItem("okButtonItem", "OK");
+        ButtonItem ok = new ButtonItem("okButtonItem", MSG.common_button_ok());
         ok.setEndRow(false);
         ok.setAlign(Alignment.RIGHT);
         ok.addClickHandler(new ClickHandler() {
@@ -159,7 +163,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             }
         });
 
-        ButtonItem cancel = new ButtonItem("cancelButtonItem", "Cancel");
+        ButtonItem cancel = new ButtonItem("cancelButtonItem", MSG.common_button_cancel());
         cancel.setStartRow(false);
         cancel.setAlign(Alignment.LEFT);
         cancel.addClickHandler(new ClickHandler() {

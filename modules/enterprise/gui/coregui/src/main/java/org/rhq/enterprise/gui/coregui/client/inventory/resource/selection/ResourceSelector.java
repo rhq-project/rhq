@@ -67,7 +67,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
             availableFilterForm.setNumCols(6);
             availableFilterForm.setWidth("75%");
-            final TextItem search = new TextItem("search", MSG.common_label_search());
+            final TextItem search = new TextItem("search", MSG.common_title_search());
             final SelectItem categorySelect;
 
             typeSelectItem = new IPickTreeItem("type", MSG.common_title_type());

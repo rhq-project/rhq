@@ -71,9 +71,9 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         grid.setWidth100();
         grid.setHeight100();
 
-        ListGridField action = new ListGridField("action", "Action");
-        ListGridField message = new ListGridField("info", "Info");
-        ListGridField status = new ListGridField("status", "status");
+        ListGridField action = new ListGridField("action", MSG.view_bundle_deploy_action());
+        ListGridField message = new ListGridField("info", MSG.common_title_info());
+        ListGridField status = new ListGridField("status", MSG.common_title_status());
 
         HashMap<String, String> icons = new HashMap<String, String>();
         icons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
@@ -89,7 +89,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         grid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
         grid.setDetailField("message");
 
-        ListGridField details = new ListGridField("attachment", "Details");
+        ListGridField details = new ListGridField("attachment", MSG.common_title_details());
         details.setWidth(50);
         details.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -112,23 +112,23 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
 
         DynamicForm form = new DynamicForm();
 
-        StaticTextItem action = new StaticTextItem("action", "Action");
-        StaticTextItem info = new StaticTextItem("info", "Info");
-        StaticTextItem category = new StaticTextItem("category", "Category");
-        StaticTextItem message = new StaticTextItem("message", "Message");
+        StaticTextItem action = new StaticTextItem("action", MSG.view_bundle_deploy_action());
+        StaticTextItem info = new StaticTextItem("info", MSG.common_title_info());
+        StaticTextItem category = new StaticTextItem("category", MSG.common_title_category());
+        StaticTextItem message = new StaticTextItem("message", MSG.common_title_message());
 
-        AutoFitTextAreaItem detail = new AutoFitTextAreaItem("attachement", "Detail");
+        AutoFitTextAreaItem detail = new AutoFitTextAreaItem("attachement", MSG.common_title_details());
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setColSpan(2);
 
-        ButtonItem close = new ButtonItem("close", "Close");
+        ButtonItem close = new ButtonItem("close", MSG.common_button_close());
 
         form.setItems(action, info, category, message, detail, close);
 
         form.editRecord(record);
 
         final Window window = new Window();
-        window.setTitle("Install Details");
+        window.setTitle(MSG.view_bundle_deploy_installDetails());
         window.setWidth(800);
         window.setHeight(600);
         window.setIsModal(true);
@@ -149,12 +149,9 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
         for (BundleResourceDeploymentHistory step : resourceDeployment.getBundleResourceDeploymentHistories()) {
-
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("id", step.getId());
-
             record.setAttribute("action", step.getAction());
-
             record.setAttribute("info", step.getInfo());
 
             if (step.getCategory() != null) {
@@ -162,11 +159,8 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
             }
 
             record.setAttribute("message", step.getMessage());
-
             record.setAttribute("attachment", step.getAttachment());
-
             record.setAttribute("status", step.getStatus().name());
-
             records.add(record);
         }
 

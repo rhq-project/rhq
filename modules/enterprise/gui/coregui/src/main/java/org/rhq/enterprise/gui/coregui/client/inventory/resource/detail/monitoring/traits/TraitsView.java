@@ -42,6 +42,11 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         return new TraitsDetailView(extendLocatorId("Detail"), this.resourceId, definitionId);
     }
 
+    @Override
+    protected void configureTable() {
+
+    }
+
     private static Criteria createCriteria(int resourceId) {
         Criteria criteria = new Criteria();
 

@@ -82,7 +82,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
 
                 public void onFailure(Throwable caught) {
                     wizard.setAllBundleFilesStatus(null);
-                    CoreGUI.getErrorHandler().handleError("Cannot obtain bundle file information from server", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_loadBundleFileFailure(), caught);
                 }
             });
 
@@ -100,8 +100,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
 
         for (BundleFileUploadForm uploadForm : this.uploadForms) {
             if (uploadForm.isUploadInProgress()) {
-                handleUploadError("[" + uploadForm.getName()
-                    + "] Upload is in progress... This can take several minutes for large files.", false);
+                handleUploadError("[" + uploadForm.getName() + "] " + MSG.view_bundle_createWizard_uploadInProgress(),
+                    false);
                 return false;
             }
         }
@@ -110,7 +110,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Upload Bundle Files";
+        return MSG.view_bundle_createWizard_uploadStepName();
     }
 
     private boolean isFinished() {
@@ -125,8 +125,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
         boolean needToUpload = false;
         for (BundleFileUploadForm uploadForm : this.uploadForms) {
             if (uploadForm.isUploadInProgress()) {
-                handleUploadError("[" + uploadForm.getName()
-                    + "] Upload is in progress... This can take several minutes for large files.", false);
+                handleUploadError("[" + uploadForm.getName() + "] " + MSG.view_bundle_createWizard_uploadInProgress(),
+                    false);
                 needToUpload = true;
             } else if (uploadForm.getUploadResult() == null) {
                 needToUpload = true;
@@ -160,7 +160,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
         }
 
         if (noFilesNeedToBeUploaded) {
-            HeaderLabel label = new HeaderLabel("No additional files need to be uploaded for this bundle");
+            HeaderLabel label = new HeaderLabel(MSG.view_bundle_createWizard_noAdditionalFilesNeeded());
             label.setWidth100();
             mainLayout.addMember(label);
             uploadForms = null;
@@ -192,7 +192,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
             uploadForm.addFormHandler(new DynamicFormHandler() {
                 public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                     String results = event.getResults();
-                    if (!results.contains("Failed to upload bundle file")) {
+                    if (!results.contains("Failed to upload bundle file")) { // this is looking for an error message coming from the server, its not i18n'ed
                         allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
                     } else {
                         allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
@@ -204,7 +204,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
             uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
                 public void onFormSubmitFailed(FormSubmitFailedEvent event) {
                     allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
-                    CoreGUI.getMessageCenter().notify(new Message("Failed to upload file", Message.Severity.Error));
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_bundle_createWizard_failedToUploadFile(), Message.Severity.Error));
                 }
             });
 
@@ -225,7 +226,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
 
         if (sendToMessageCenter) {
             CoreGUI.getMessageCenter().notify(
-                new Message("Failed to upload bundle distribution file. " + errorMessage, Severity.Error));
+                new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile() + ": " + errorMessage,
+                    Severity.Error));
         }
     }
 

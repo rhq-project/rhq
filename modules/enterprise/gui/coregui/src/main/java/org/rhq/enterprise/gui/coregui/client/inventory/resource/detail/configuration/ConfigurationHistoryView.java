@@ -75,8 +75,6 @@ public class ConfigurationHistoryView extends TableSection {
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
         ListGridField idField = new ListGridField(ConfigurationHistoryDataSource.Field.ID, 60);
@@ -153,6 +151,7 @@ public class ConfigurationHistoryView extends TableSection {
                 showDetails(record);
             }
         });
+
 
     }
 

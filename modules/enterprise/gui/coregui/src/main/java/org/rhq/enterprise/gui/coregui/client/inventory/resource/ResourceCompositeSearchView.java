@@ -50,9 +50,6 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void configureTable() {
-
-        super.configureTable();
-
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
             .view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
 
@@ -138,6 +135,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
         }
 
+        super.configureTable();
     }
 
     public ResourceComposite getParentResourceComposite() {

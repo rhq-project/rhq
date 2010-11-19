@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.BooleanItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
 import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
@@ -56,6 +57,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  * @author Ian Springer
  */
 public class EnhancedDynamicForm extends LocatableDynamicForm {
+
+    private static final String FIELD_ID = "id";
+
     private boolean isReadOnly;
     private boolean isNewRecord;
 
@@ -85,13 +89,12 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         setHiliteRequiredFields(true);
         setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
 
-        // DataSource Settings
-        setAutoFetchData(true);
+        // DataSource Settings        
+        setUseAllDataSourceFields(false);
 
         // Validation Settings
         setValidateOnChange(!isNewRecord);
         setStopOnError(false);
-
     }
 
     @Override
@@ -102,7 +105,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         List<String> togglableTextItemNames = new ArrayList<String>();
         boolean hasIdField = false;
         for (FormItem item : items) {
-            if (item.getName().equals("id")) {
+            if (item.getName().equals(FIELD_ID)) {
                 hasIdField = true;
             }
             if (this.isReadOnly) {
@@ -198,9 +201,14 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             }
         }
 
-        if (!this.isNewRecord && !hasIdField && getDataSource() != null && getField("id") != null
-            && CoreGUI.isDebugMode()) {
-            StaticTextItem idItem = new StaticTextItem("id", MSG.common_title_id());
+        // If the dataSource has an "id" field, make sure the form does too.
+        if (!hasIdField && getDataSource() != null && getDataSource().getField(FIELD_ID) != null) {
+            FormItem idItem;
+            if (this.isNewRecord || !CoreGUI.isDebugMode()) {
+                idItem = new HiddenItem(FIELD_ID);
+            } else {
+                idItem = new StaticTextItem(FIELD_ID, MSG.common_title_id());
+            }
             itemsList.add(0, idItem);
         }
 
@@ -209,7 +217,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 item.setValidateOnChange(true);
             }
 
-            item.setWidth("*"); // this causes a JavaScript exception ...  :-(
+            //item.setWidth("*"); // this causes a JavaScript exception ...  :-(
             item.setWidth(240);
         }
 
@@ -237,4 +245,5 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
         markForRedraw();
     }
+
 }

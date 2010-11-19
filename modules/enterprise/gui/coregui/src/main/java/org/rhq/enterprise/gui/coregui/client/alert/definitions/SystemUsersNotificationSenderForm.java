@@ -79,13 +79,14 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Cannot determine current users - starting empty",
-                                caught);
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_alert_definition_notification_user_editor_loadFailed(), caught);
                             createNewSelector(null);
                         }
                     });
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot use current users - starting empty", e);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_alert_definition_notification_user_editor_restoreFailed(), e);
                 createNewSelector(null);
             }
         } else {
@@ -111,7 +112,8 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
                 return true;
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot save the selected users", e);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_user_editor_saveFailed(),
+                    e);
                 return false;
             }
         }

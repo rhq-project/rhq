@@ -48,7 +48,7 @@ public class BundleFileUploadForm extends FileUploadForm {
         List<FormItem> onDrawItems = super.getOnDrawItems();
 
         HiddenItem bundleVersionIdField = new HiddenItem("bundleVersionId");
-        bundleVersionIdField.setValue(this.bundleVersion.getId());
+        bundleVersionIdField.setDefaultValue(this.bundleVersion.getId());
 
         onDrawItems.add(bundleVersionIdField);
         return onDrawItems;

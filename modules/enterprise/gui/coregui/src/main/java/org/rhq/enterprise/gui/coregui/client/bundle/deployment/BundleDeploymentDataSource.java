@@ -60,23 +60,24 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id", "ID");
+        DataSourceIntegerField id = new DataSourceIntegerField("id", MSG.common_title_id());
         id.setPrimaryKey(true);
         fields.add(id);
 
-        DataSourceTextField name = new DataSourceTextField("name", "Deployment Name");
+        DataSourceTextField name = new DataSourceTextField("name", MSG.view_bundle_deploy_name());
         fields.add(name);
 
-        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersionVersion", "Bundle Version");
+        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersionVersion", MSG
+            .view_bundle_bundleVersion());
         fields.add(bundleVersion);
 
-        DataSourceTextField description = new DataSourceTextField("description", "Description");
+        DataSourceTextField description = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(description);
 
-        DataSourceTextField status = new DataSourceTextField("status", "Status");
+        DataSourceTextField status = new DataSourceTextField("status", MSG.common_title_status());
         fields.add(status);
 
-        DataSourceDateTimeField created = new DataSourceDateTimeField("deploymentTime", "Deployment Time");
+        DataSourceDateTimeField created = new DataSourceDateTimeField("deploymentTime", MSG.view_bundle_deploy_time());
         fields.add(created);
 
         return fields;
@@ -114,7 +115,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
 
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle deployments", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
             }
 
             public void onSuccess(PageList<BundleDeployment> result) {

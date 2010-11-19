@@ -80,36 +80,37 @@ public class AlertHistoryView extends TableSection {
 
     @Override
     protected void configureTableFilters() {
-        final EnumSelectItem priorityFilter = new EnumSelectItem("severities", "Priority Filter", AlertPriority.class);
+        final EnumSelectItem priorityFilter = new EnumSelectItem("severities", MSG.view_alerts_table_filter_priority(),
+            AlertPriority.class);
 
         setFilterFormItems(priorityFilter);
     }
 
     @Override
     protected void configureTable() {
-        ListGridField ctimeField = new ListGridField("ctime", "Creation Time", 100);
+        ListGridField ctimeField = new ListGridField("ctime", MSG.view_alerts_field_created_time(), 100);
         ctimeField.setCellFormatter(new TimestampCellFormatter());
 
-        ListGridField nameField = new ListGridField("name", "Name", 100);
-        ListGridField conditionTextField = new ListGridField("conditionText", "Details");
-        ListGridField priorityField = new ListGridField("priority", "Priority", 50);
+        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name(), 100);
+        ListGridField conditionTextField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
+        ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority(), 50);
 
-        ListGridField statusField = new ListGridField("status", "Status", 175);
+        ListGridField statusField = new ListGridField("status", 175);
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String ackTime = listGridRecord.getAttribute("acknowledgeTime");
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
                 if (ackSubject == null) {
-                    return "Not Yet Acknowledged";
+                    return MSG.view_alerts_field_ack_status_empty();
                 } else {
                     String formattedTime = TimestampCellFormatter.DATE_TIME_FORMAT.format(new Date(Long
                         .parseLong(ackTime)));
-                    return " Acknowledged on " + formattedTime + "<br/>by " + ackSubject;
+                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
                 }
             }
         });
 
-        ListGridField resourceNameField = new ListGridField("resourceName", "Resource", 125);
+        ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource(), 125);
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
@@ -125,6 +126,8 @@ public class AlertHistoryView extends TableSection {
         }
 
         setupTableInteractions();
+
+
     }
 
     private void setupTableInteractions() {
@@ -133,30 +136,30 @@ public class AlertHistoryView extends TableSection {
         TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
             : TableActionEnablement.NEVER;
 
-        addTableAction("DeleteAlert", "Delete", "Delete the selected alert(s)?", new AbstractTableAction(
-            singleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                delete(selection);
-            }
-        });
-        addTableAction("DeleteAll", "Delete All", "Delete all alerts from this source?", new AbstractTableAction(
-            multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteAll();
-            }
-        });
-        addTableAction("AcknowledgeAlert", "Ack", "Ack the selected alert(s)?", new AbstractTableAction(
-            singleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                acknowledge(selection);
-            }
-        });
-        addTableAction("AcknowledgeAll", "Ack All", "Ack all alerts from this source?", new AbstractTableAction(
-            multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                acknowledgeAll();
-            }
-        });
+        addTableAction("DeleteAlert", MSG.common_button_delete(), MSG.view_alerts_delete_confirm(),
+            new AbstractTableAction(singleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    delete(selection);
+                }
+            });
+        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
+            new AbstractTableAction(multipleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteAll();
+                }
+            });
+        addTableAction("AcknowledgeAlert", MSG.common_button_ack(), MSG.view_alerts_ack_confirm(),
+            new AbstractTableAction(singleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    acknowledge(selection);
+                }
+            });
+        addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(),
+            new AbstractTableAction(multipleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    acknowledgeAll();
+                }
+            });
     }
 
     void delete(ListGridRecord[] records) {
@@ -170,13 +173,13 @@ public class AlertHistoryView extends TableSection {
         GWTServiceLookup.getAlertService().deleteAlerts(alertIds, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted [" + resultCount + "] alerts", Message.Severity.Info));
+                    new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(
-                    "Failed to delete alerts with id's: " + Arrays.toString(alertIds), caught);
+                CoreGUI.getErrorHandler()
+                    .handleError(MSG.view_alerts_delete_failure(Arrays.toString(alertIds)), caught);
             }
         });
     }
@@ -185,12 +188,12 @@ public class AlertHistoryView extends TableSection {
         GWTServiceLookup.getAlertService().deleteAlertsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted [" + resultCount + "] alerts", Message.Severity.Info));
+                    new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete all alerts from this source", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_delete_failure_all(), caught);
             }
         });
     }
@@ -206,13 +209,12 @@ public class AlertHistoryView extends TableSection {
         GWTServiceLookup.getAlertService().acknowledgeAlerts(alertIds, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Acknowledged [" + resultCount + "] alerts", Message.Severity.Info));
+                    new Message(MSG.view_alerts_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(
-                    "Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_ack_failure(Arrays.toString(alertIds)), caught);
             }
         });
     }
@@ -221,12 +223,12 @@ public class AlertHistoryView extends TableSection {
         GWTServiceLookup.getAlertService().acknowledgeAlertsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Acknowledged [" + resultCount + "] alerts", Message.Severity.Info));
+                    new Message(MSG.view_alerts_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to acknowledged all alerts from this source", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_ack_failure_all(), caught);
             }
         });
     }

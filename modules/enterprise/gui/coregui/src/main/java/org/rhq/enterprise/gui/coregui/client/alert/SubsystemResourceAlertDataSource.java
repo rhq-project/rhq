@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+
 import org.rhq.core.domain.criteria.AlertCriteria;
 
 /**
@@ -38,7 +39,8 @@ public class SubsystemResourceAlertDataSource extends AlertDataSource {
         DataSourceField[] updatedFields = new DataSourceField[fields.length + 1];
 
         // TODO: Replace 'Resource Id' column with 'Resource Name' and 'Resource Lineage' columns.
-        DataSourceField resourceIdField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_RESOURCE_ID, "Resource Id");
+        DataSourceField resourceIdField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_RESOURCE_ID, MSG
+            .common_title_resource_id());
         updatedFields[0] = resourceIdField;
 
         System.arraycopy(fields, 0, updatedFields, 1, fields.length);

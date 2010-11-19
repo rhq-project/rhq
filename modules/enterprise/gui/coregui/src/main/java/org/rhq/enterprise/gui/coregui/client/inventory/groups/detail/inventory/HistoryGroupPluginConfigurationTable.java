@@ -200,6 +200,8 @@ public class HistoryGroupPluginConfigurationTable extends Table {
                     + "/" + selection[0].getAttribute("id") + "/Members");
             }
         });
+
+
     }
 
     private String getStatusHtmlString(Record record) {

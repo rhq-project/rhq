@@ -45,32 +45,32 @@ public class BundleSummaryStep extends AbstractWizardStep {
         form.setNumCols(2);
         form.setMargin(20);
 
-        StaticTextItem bundleTypeLabel = new StaticTextItem("bundleType", "Type");
+        StaticTextItem bundleTypeLabel = new StaticTextItem("bundleType", MSG.view_bundle_bundleType());
         bundleTypeLabel.setTitleAlign(Alignment.LEFT);
         bundleTypeLabel.setAlign(Alignment.LEFT);
         bundleTypeLabel.setWrap(false);
         bundleTypeLabel.setValue(wizard.getBundleVersion().getBundle().getBundleType().getName());
 
-        StaticTextItem nameLabel = new StaticTextItem("name", "Name");
+        StaticTextItem nameLabel = new StaticTextItem("name", MSG.common_title_name());
         nameLabel.setTitleAlign(Alignment.LEFT);
         nameLabel.setAlign(Alignment.LEFT);
         nameLabel.setWrap(false);
         nameLabel.setValue(wizard.getBundleVersion().getBundle().getName());
 
-        StaticTextItem versionLabel = new StaticTextItem("Version");
+        StaticTextItem versionLabel = new StaticTextItem("Version", MSG.common_title_version());
         versionLabel.setTitleAlign(Alignment.LEFT);
         versionLabel.setTitleAlign(Alignment.LEFT);
         versionLabel.setAlign(Alignment.LEFT);
         versionLabel.setWrap(false);
         versionLabel.setValue(wizard.getBundleVersion().getVersion());
 
-        StaticTextItem descriptionLabel = new StaticTextItem("Description");
+        StaticTextItem descriptionLabel = new StaticTextItem("Description", MSG.common_title_description());
         descriptionLabel.setTitleAlign(Alignment.LEFT);
         descriptionLabel.setAlign(Alignment.LEFT);
         descriptionLabel.setWrap(false);
         descriptionLabel.setValue(wizard.getBundleVersion().getBundle().getDescription());
 
-        StaticTextItem filesLabel = new StaticTextItem("Files");
+        StaticTextItem filesLabel = new StaticTextItem("Files", MSG.view_bundle_files());
         filesLabel.setTitleVAlign(VerticalAlignment.TOP);
         filesLabel.setTitleAlign(Alignment.LEFT);
         filesLabel.setAlign(Alignment.LEFT);
@@ -93,6 +93,6 @@ public class BundleSummaryStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Summary";
+        return MSG.common_title_summary();
     }
 }

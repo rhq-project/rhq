@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import java.util.Set;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -35,11 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class RolesView extends TableSection implements BookmarkableView {
+public class RolesView extends TableSection<RolesDataSource> implements BookmarkableView {
+    
     public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
-
-    private static final int ID_SUPERUSER = 1;
-    private static final int ID_ALL_RESOURCES = 2;
 
     // TODO: We need a 24x24 version of the Role icon.
     private static final String HEADER_ICON = "global/Role_16.png";
@@ -72,7 +74,7 @@ public class RolesView extends TableSection implements BookmarkableView {
 
                     for (ListGridRecord record : selection) {
                         int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
-                        if (id == ID_SUPERUSER || id == ID_ALL_RESOURCES) {
+                        if (id == RolesDataSource.ID_SUPERUSER || id == RolesDataSource.ID_ALL_RESOURCES) {
                             // The superuser and all-resources roles cannot be deleted.
                             return false;
                         }
@@ -85,7 +87,17 @@ public class RolesView extends TableSection implements BookmarkableView {
                 }
             });
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
+            private boolean[] hasManageSecurityPermission = new boolean[] {false};
+            public boolean isEnabled(ListGridRecord[] selection) {
+                UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
+                    public void onPermissionsLoaded(Set<Permission> globalPermissions) {
+                        hasManageSecurityPermission[0] = globalPermissions.contains(Permission.MANAGE_SECURITY);
+                    }
+                });
+                return hasManageSecurityPermission[0];
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
@@ -99,12 +111,12 @@ public class RolesView extends TableSection implements BookmarkableView {
 
     @Override
     protected String getDataTypeName() {
-        return "role";
+        return MSG.common_label_role();
     }
 
     @Override
     protected String getDataTypeNamePlural() {
-        return "roles";
+        return MSG.common_label_roles();
     }
 
 }

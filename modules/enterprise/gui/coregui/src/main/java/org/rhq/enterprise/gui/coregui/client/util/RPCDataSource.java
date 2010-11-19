@@ -482,7 +482,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             }
         }
 
-        Log.debug("Result = " + result);
+        Log.debug("Result: " + paramName + "=[" + result + "]");
 
         return result;
     }

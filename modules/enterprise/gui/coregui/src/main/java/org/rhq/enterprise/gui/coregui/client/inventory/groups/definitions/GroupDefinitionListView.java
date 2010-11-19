@@ -57,7 +57,6 @@ public class GroupDefinitionListView extends TableSection {
 
     @Override
     protected void configureTable() {
-
         ListGridField idField = new ListGridField("id", MSG.common_title_id(), 50);
         ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 150);
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
@@ -144,6 +143,8 @@ public class GroupDefinitionListView extends TableSection {
                 });
             }
         });
+
+
     }
 
     @Override

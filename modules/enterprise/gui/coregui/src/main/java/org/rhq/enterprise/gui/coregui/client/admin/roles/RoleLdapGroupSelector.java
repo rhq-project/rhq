@@ -87,7 +87,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         availableFilterForm.setWidth100();
         availableFilterForm.setNumCols(2);
 
-        final TextItem search = new TextItem("search", "Search");
+        final TextItem search = new TextItem("search", MSG.common_title_search());
         availableFilterForm.setItems(search, new SpacerItem());
 
         return availableFilterForm;
@@ -112,7 +112,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                                     new AsyncCallback<PageList<LdapGroup>>() {
                                         public void onFailure(Throwable throwable) {
                                             CoreGUI.getErrorHandler().handleError(
-                                                "Failed to load LdapGroups available for role.", throwable);
+                                                MSG.view_adminRoles_failLdapGroupsRole(), throwable);
                                         }
 
                                         public void onSuccess(PageList<LdapGroup> currentlyAssignedLdapGroups) {
@@ -174,9 +174,6 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
 
     public class LdapGroupsDataSource extends RPCDataSource<PageList<LdapGroup>> {
 
-        public static final String LDAP_NOT_CONFIGURED_EMPTY_MESSAGE = "(LDAP not configured. 'Administrator'->System Settings to change)";
-        public static final String EMPTY_MESSAGE = "No items to show";
-
         public LdapGroupsDataSource() {
             DataSourceTextField nameField = new DataSourceTextField(name, name);
             nameField.setPrimaryKey(true);
@@ -215,7 +212,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
 
         @Override
         public PageList<LdapGroup> copyValues(Record from) {
-            throw new UnsupportedOperationException("Ldap Group data is read only");
+            throw new UnsupportedOperationException(MSG.view_adminRoles_ldapGroupsReadOnly());
         }
 
         @Override
@@ -232,13 +229,13 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                     @Override
                     public void onSuccess(Boolean ldapConfigured) {
                         if (ldapConfigured) {
-                            availableGrid.setEmptyMessage(EMPTY_MESSAGE);
+                            availableGrid.setEmptyMessage(MSG.view_adminRoles_noItems());
                             GWTServiceLookup.getLdapService().findAvailableGroups(
                                 new AsyncCallback<Set<Map<String, String>>>() {
 
                                     public void onFailure(Throwable throwable) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            "Failed to load LdapGroups available for role.", throwable);
+                                        CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsRole(),
+                                            throwable);
                                     }
 
                                     public void onSuccess(Set<Map<String, String>> locatedGroups) {
@@ -260,9 +257,12 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                                     }
                                 });//end of findAvailableGroups
                         } else {//ldap not configured
-                            Log.debug("(LDAP not currently enabled. " + EMPTY_MESSAGE);
+                            Log.debug("(LDAP not currently enabled. " + MSG.view_adminRoles_noItems());
                             response.setTotalRows(0);
-                            availableGrid.setEmptyMessage(LDAP_NOT_CONFIGURED_EMPTY_MESSAGE);
+                            String message = "("
+                                + MSG.view_adminRoles_noLdap("href='#Administration/Configuration/SystemSettings'", MSG
+                                    .view_adminConfig_systemSettings()) + ")";
+                            availableGrid.setEmptyMessage(message);
                             processResponse(request.getRequestId(), response);
                         }
                     }//end onSuccess
@@ -366,8 +366,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                 new AsyncCallback<PageList<LdapGroup>>() {
 
                     public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load LdapGroups available for role.",
-                            throwable);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsRole(), throwable);
                     }
 
                     public void onSuccess(PageList<LdapGroup> currentlyAssignedLdapGroups) {

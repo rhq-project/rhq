@@ -76,28 +76,36 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceDateField ctimeField = new DataSourceDateField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
+        DataSourceDateField ctimeField = new DataSourceDateField(AlertCriteria.SORT_FIELD_CTIME, MSG
+            .view_alerts_field_created_time());
         addField(ctimeField);
 
-        DataSourceIntegerField ackTimeField = new DataSourceIntegerField("acknowledgeTime", "Ack Time");
+        DataSourceIntegerField ackTimeField = new DataSourceIntegerField("acknowledgeTime", MSG
+            .view_alerts_field_ack_time());
         addField(ackTimeField);
 
-        DataSourceTextField ackSubjectField = new DataSourceTextField("acknowledgingSubject", "Ack Subject");
+        DataSourceTextField ackSubjectField = new DataSourceTextField("acknowledgingSubject", MSG
+            .view_alerts_field_ack_subject());
         addField(ackSubjectField);
 
-        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name");
+        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, MSG
+            .view_alerts_field_name());
         addField(nameField);
 
-        DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
+        DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", MSG
+            .view_alerts_field_condition_text());
         addField(conditionTextField);
 
-        DataSourceTextField conditionValueField = new DataSourceTextField("conditionValue", "Condition Value");
+        DataSourceTextField conditionValueField = new DataSourceTextField("conditionValue", MSG
+            .view_alerts_field_condition_value());
         addField(conditionValueField);
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("resourceName", "Resource");
+        DataSourceTextField resourceNameField = new DataSourceTextField("resourceName", MSG
+            .view_alerts_field_resource());
         addField(resourceNameField);
 
-        DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, "Priority", 15);
+        DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, MSG
+            .view_alerts_field_priority(), 15);
         addField(priorityField);
 
         return fields;
@@ -113,14 +121,14 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
 
                 public void onSuccess(PageList<Alert> result) {
                     long fetchTime = System.currentTimeMillis() - start;
-                    com.allen_sauer.gwt.log.client.Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                    Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
                     response.setData(buildRecords(result));
                     // For paging to work, we have to specify size of full result set.
                     response.setTotalRows(result.getTotalSize());
@@ -171,7 +179,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         String conditionText;
         String conditionValue;
         if (conditionLogs.size() > 1) {
-            conditionText = "Multiple Conditions";
+            conditionText = MSG.view_alerts_field_condition_text_many();
             conditionValue = "--";
         } else if (conditionLogs.size() == 1) {
             AlertConditionLog conditionLog = conditionLogs.iterator().next();
@@ -183,7 +191,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                     .getMeasurementDefinition().getUnits(), true);
             }
         } else {
-            conditionText = "No Conditions";
+            conditionText = MSG.view_alerts_field_condition_text_none();
             conditionValue = "--";
         }
         record.setAttribute("conditionText", conditionText);
@@ -225,7 +233,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         return record;
     }
 
-    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {        
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
         // TODO
         Window.alert(String.valueOf(recordToRemove.getAttributeAsInt("id")));
     }

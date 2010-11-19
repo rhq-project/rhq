@@ -206,7 +206,7 @@ public class LoginView extends LocatableCanvas {
 
             VLayout column = new VLayout();
             HeaderItem header = new HeaderItem();
-            header.setValue(MSG.view_login_welcome());
+            header.setValue(MSG.view_login_welcomeMsg());
             //build ui elements for registration screen
             first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
             {

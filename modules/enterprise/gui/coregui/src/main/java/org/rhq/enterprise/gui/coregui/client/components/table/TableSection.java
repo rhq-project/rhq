@@ -26,6 +26,7 @@ import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -38,12 +39,13 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class TableSection extends Table implements BookmarkableView {
+public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> implements BookmarkableView {
 
     private VLayout detailsHolder;
     private Canvas detailsView;
@@ -85,9 +87,10 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super.onInit();
 
         detailsHolder = new VLayout();
+        detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
-        detailsHolder.setMargin(5);
+        detailsHolder.setMargin(4);
         detailsHolder.hide();
 
         addMember(detailsHolder);

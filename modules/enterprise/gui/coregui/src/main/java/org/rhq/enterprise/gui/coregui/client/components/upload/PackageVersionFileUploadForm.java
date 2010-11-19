@@ -68,7 +68,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
 
         if (null != archId) {
             HiddenItem archIdField = new HiddenItem("archId");
-            archIdField.setValue(archId);
+            archIdField.setDefaultValue(archId);
             onDrawItems.add(archIdField);
         }
 

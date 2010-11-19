@@ -547,4 +547,26 @@ public class AgentManagerBean implements AgentManagerLocal {
         Long backfilledCount = (Long) query.getSingleResult();
         return backfilledCount != 0L;
     }
+
+    @ExcludeDefaultInterceptors
+    public Boolean pingAgentByResourceId(Subject subject, int resourceId) {
+        Boolean pingResults = Boolean.FALSE;
+        Agent agent;
+
+        try {
+            //insert call to method doing logged in check and view resources perm check as method calld from GWT*Service
+            agent = getAgentByResourceId(subject, resourceId);
+
+            //now ping
+            AgentClient client = getAgentClient(agent);
+            pingResults = client.ping(5000L);
+
+        } catch (NoResultException e) {
+            log.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            agent = null;
+        }
+
+        return pingResults;
+    }
+
 }

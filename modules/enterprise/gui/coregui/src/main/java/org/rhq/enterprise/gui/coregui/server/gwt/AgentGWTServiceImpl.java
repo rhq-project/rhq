@@ -37,9 +37,20 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     @Override
     public Agent getAgentForResource(int resourceId) {
         try {
-            //TODO: this needs security that was not handled before. No AgentManagerRemote... ??
+            //security handled in AgentManagerBean. requires View_Resource. 
             return SerialUtility.prepare(agentManager.getAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.getAgentForResource");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    @Override
+    public Boolean pingAgentForResource(int resourceId) {
+        try {
+            //security handled in AgentManagerBean. requires View_Resource. 
+            return SerialUtility.prepare(agentManager.pingAgentByResourceId(getSessionSubject(), resourceId),
+                "AgentService.pingAgentForResource");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

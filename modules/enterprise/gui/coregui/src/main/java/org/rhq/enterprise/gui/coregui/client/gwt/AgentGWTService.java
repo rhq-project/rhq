@@ -29,4 +29,6 @@ public interface AgentGWTService extends RemoteService {
 
     Agent getAgentForResource(int resourceId);
 
+    Boolean pingAgentForResource(int resourceId);
+
 }

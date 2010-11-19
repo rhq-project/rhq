@@ -20,15 +20,20 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -40,6 +45,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
@@ -49,6 +55,8 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewForm;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -65,6 +73,7 @@ public class ResourceTitleBar extends LocatableVLayout {
     private LocatableHLayout top;
     //represents normally closed region of Resource details[to verbosely describe resource across all tabs]
     private LocatableHLayout details;
+    private static String COMPONENT_ERROR_COUNT_MSG = MSG.common_title_component_errors();
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
 
@@ -128,7 +137,8 @@ public class ResourceTitleBar extends LocatableVLayout {
                     GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update resource tags", caught);
+                                CoreGUI.getErrorHandler()
+                                    .handleError(MSG.view_resource_title_tagUpdateFailed(), caught);
                             }
 
                             public void onSuccess(Void result) {
@@ -144,33 +154,93 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         loadTags(tagEditorView);
 
+        //creating link to put in resource title bar
         pluginErrors = new LinkItem("plugin-errors");
         pluginErrors.setTitle("");
-        pluginErrors.setLinkTitle("Component errors (0)");
-        pluginErrors.setPrompt("Managed component errors exist. Click for details");
-        //        pluginErrors.addClickHandler(new ClickHandler() {  
-        //            public void onClick(ClickEvent event) {  
-        //                SC.say("Hello World");  
-        //            }  
-        //        });  
+        pluginErrors.setLinkTitle(COMPONENT_ERROR_COUNT_MSG + " (0)");
+        GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
+            new AsyncCallback<List<ResourceError>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
+                            .getId())), caught);
+                }
+
+                public void onSuccess(List<ResourceError> result) {
+                    if (result.isEmpty()) {
+                        pluginErrors.setLinkTitle(COMPONENT_ERROR_COUNT_MSG + " (" + result.size() + ")");
+                    } else {
+                        pluginErrors.setLinkTitle("<font color='red'>" + COMPONENT_ERROR_COUNT_MSG + " ("
+                            + result.size() + ")</font>");
+                    }
+                    markForRedraw();
+                }
+            });
+
+        //define tool tip
+        pluginErrors.setPrompt(MSG.view_resource_title_component_errors_tooltip());
+
+        //define click action to pop open detailed view of Component plugin errors
+        pluginErrors.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            @Override
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
+                final Window winModal = new Window();
+                winModal.setWidth("70%");
+                winModal.setHeight("70%");
+                winModal.setTitle(MSG.common_title_component_errors() + ":");
+                winModal.setShowMinimizeButton(false);
+                winModal.setIsModal(true);
+                winModal.setShowModalMask(true);
+                winModal.setShowCloseButton(true);
+                winModal.centerInPage();
+                winModal.addCloseClickHandler(new CloseClickHandler() {
+                    @Override
+                    public void onCloseClick(CloseClientEvent event) {
+                        winModal.destroy();
+                    }
+                });
+
+                LocatableVLayout form = new LocatableVLayout(extendLocatorId("_Modal_Form"));
+                form.setAlign(VerticalAlignment.CENTER);
+                form.setLayoutMargin(20);
+                form.setWidth100();
+                form.setHeight("40%");
+                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), MSG
+                    .view_summaryOverview_header_detectedErrors(), null, null,
+                    new String[] { ResourceErrorsDataSource.Field.DETAIL });
+                errorsGrid.setWidth100();
+                errorsGrid.setHeight("400");
+
+                Resource resource = resourceComposite.getResource();
+                ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
+
+                errorsGrid.setShowFooter(false);
+                errorsGrid.setDataSource(errors);
+                form.addMember(errorsGrid);
+                winModal.addChild(form);
+
+                winModal.show();
+            }
+        });
 
         //top information
         top.addMember(badge);
         top.addMember(title);
         top.addMember(tagEditorView);
-        DynamicForm wrap = new DynamicForm();
-        wrap.setFields(pluginErrors);
-        top.addMember(wrap);
+        DynamicForm wrappedPluginErrors = new DynamicForm();
+        wrappedPluginErrors.setFields(pluginErrors);
+        top.addMember(wrappedPluginErrors);
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
 
         //detail information
         //checkbox
         final CheckboxItem displayMore = new CheckboxItem();
-        final String moreDetails = "Show more...";
+        final String moreDetails = MSG.common_title_show_more();
         displayMore.setName("resourceDetails");
         displayMore.setTitle(moreDetails);
         displayMore.setWidth(120);
+        //conditionally expand more details section.
         displayMore.addChangeHandler(new ChangeHandler() {
             public void onChange(ChangeEvent event) {
                 Boolean displayMoreDetails = (Boolean) event.getValue();
@@ -183,6 +253,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             }
         });
 
+        //wrap checkbox for inclusion in details form.
         LocatableDynamicForm wrappedCheckbox = new LocatableDynamicForm(extendLocatorId("Title_Bar_Checkbox"));
         wrappedCheckbox.setFields(displayMore);
         detailsForm = new LocatableHLayout(extendLocatorId("_Resource_Details"));
@@ -190,16 +261,19 @@ public class ResourceTitleBar extends LocatableVLayout {
         detailsForm.setHeight(10);
         detailsForm.setAlign(Alignment.LEFT);
         detailsForm.addMember(wrappedCheckbox);
+
         detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite);
         detailsFormSummary.setWidth100();
         detailsFormSummary.setPadding(0);
         detailsFormSummary.setMargin(0);
         detailsFormSummary.setLayoutAlign(Alignment.LEFT);
+
         //condense details for display
         detailsFormSummary.setHeaderEnabled(false);
         detailsFormSummary.setDisplayCondensed(true);
         detailsFormSummary.hide();
         detailsForm.addMember(detailsFormSummary);
+
         SpacerItem widthSpace = new SpacerItem();
         widthSpace.setWidth(40);
         DynamicForm wrappedSpacer = new DynamicForm();

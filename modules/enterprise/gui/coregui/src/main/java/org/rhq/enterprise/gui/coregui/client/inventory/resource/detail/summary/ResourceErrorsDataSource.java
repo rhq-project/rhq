@@ -66,10 +66,10 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        fields.add(new DataSourceTextField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary()));
-        fields.add(new DataSourceTextField(Field.DETAIL, MSG.dataSource_resourceErrors_field_detail()));
         fields.add(new DataSourceEnumField(Field.ERROR_TYPE, MSG.dataSource_resourceErrors_field_errorType()));
         fields.add(new DataSourceDateTimeField(Field.TIME_OCCURED, MSG.dataSource_resourceErrors_field_timeOccured()));
+        fields.add(new DataSourceTextField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary()));
+        fields.add(new DataSourceTextField(Field.DETAIL, MSG.dataSource_resourceErrors_field_detail()));
 
         return fields;
     }
@@ -82,8 +82,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         resourceService.findResourceErrors(resourceId, new AsyncCallback<List<ResourceError>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceId)),
-                    caught);
+                    MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceId)), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

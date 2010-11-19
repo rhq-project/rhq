@@ -278,4 +278,14 @@ public interface AgentManagerLocal {
      */
     boolean isAgentBackfilled(int agentId);
 
+    /**
+     * Returns <code>true</code> indicating successful ping of agent. Exposed so server could
+     * initiate N requests so gwt clients wont face Single Origin Policy issues.  
+     *
+     * @param  agentId the id of the agent
+     *
+     * @return <code>true</code> if the agent was successfully pinged.
+     */
+    Boolean pingAgentByResourceId(Subject subject, int resourceId);
+
 }

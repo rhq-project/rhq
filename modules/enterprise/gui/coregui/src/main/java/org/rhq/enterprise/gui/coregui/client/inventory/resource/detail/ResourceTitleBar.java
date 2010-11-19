@@ -284,6 +284,8 @@ public class ResourceTitleBar extends LocatableVLayout {
         //order the components
         addMember(top);
         addMember(details);
+        top.markForRedraw();
+        details.markForRedraw();
     }
 
     private void loadTags(final TagEditorView tagEditorView) {

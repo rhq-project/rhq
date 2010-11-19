@@ -74,7 +74,7 @@ public class OverviewView extends LocatableVLayout {
             setWidth("80%");
             final List<FormItem> formItems = new ArrayList<FormItem>();
             HeaderItem headerItem = new HeaderItem("header", MSG.view_inventory_summary_agent_title());
-            headerItem.setValue("Agent Managing this Resource");
+            headerItem.setValue(MSG.view_inventory_summary_agent_title());
             formItems.add(headerItem);
             //populate remaining details
             GWTServiceLookup.getAgentService().getAgentForResource(id, new AsyncCallback<Agent>() {

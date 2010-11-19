@@ -49,7 +49,6 @@ public class BundleVersionListView extends Table {
 
     @Override
     protected void configureTable() {
-
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
@@ -65,6 +64,7 @@ public class BundleVersionListView extends Table {
 
         getListGrid().setSelectionType(SelectionStyle.NONE);
         getListGrid().setSelectionAppearance(SelectionAppearance.ROW_STYLE);
+
 
     }
 }

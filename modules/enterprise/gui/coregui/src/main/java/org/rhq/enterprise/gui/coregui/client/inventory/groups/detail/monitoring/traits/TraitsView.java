@@ -54,6 +54,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         ListGridField resourceNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME);
         resourceNameField.setWidth("20%");
         resourceNameField.setCanGroupBy(true);
+
+
     }
 
     @Override

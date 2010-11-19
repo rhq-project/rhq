@@ -66,6 +66,10 @@ public class RolesDataSource extends RPCDataSource<Role> {
         public static final String LDAP_GROUPS = "ldapGroups";
     }
 
+    public static abstract class CriteriaField {
+        public static final String SUBJECT_ID = "subjectId";
+    }
+
     public static final int ID_SUPERUSER = 1;
     public static final int ID_ALL_RESOURCES = 2;
 
@@ -102,11 +106,11 @@ public class RolesDataSource extends RPCDataSource<Role> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField nameField = new DataSourceTextField(Field.NAME, MSG.common_title_name(), 100, true);
+        DataSourceTextField nameField = createTextField(Field.NAME, MSG.common_title_name(), 3, 100, true);
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField(Field.DESCRIPTION, MSG
-            .common_title_description(), 100, false);
+        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, MSG.common_title_description(), null,
+            100, false);
         fields.add(descriptionField);
 
         DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, "Resource Groups");
@@ -128,7 +132,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-
         RoleCriteria criteria = getFetchCriteria(request);
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
@@ -267,8 +270,10 @@ public class RolesDataSource extends RPCDataSource<Role> {
         criteria.setPageControl(getPageControl(request));
 
         // Filtering
-        criteria.addFilterId(getFilter(request, Field.ID, Integer.class));
-        Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
+        Integer id = getFilter(request, Field.ID, Integer.class);
+        criteria.addFilterId(id);
+
+        Integer subjectId = request.getCriteria().getAttributeAsInt(CriteriaField.SUBJECT_ID);
         if (subjectId != null) {
             criteria.addFilterSubjectId(subjectId);
         }
@@ -282,4 +287,5 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         return criteria;
     }
+    
 }

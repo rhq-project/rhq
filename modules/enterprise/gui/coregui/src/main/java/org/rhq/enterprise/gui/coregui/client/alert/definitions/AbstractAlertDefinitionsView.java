@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * 
  * @author John Mazzitelli
  */
-public abstract class AbstractAlertDefinitionsView extends TableSection {
+public abstract class AbstractAlertDefinitionsView extends TableSection<AbstractAlertDefinitionsDataSource> {
 
     public AbstractAlertDefinitionsView(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
@@ -51,7 +51,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
     @Override
     protected void configureTable() {
-
         ListGrid listGrid = getListGrid();
 
         AbstractAlertDefinitionsDataSource ds = getAlertDefinitionDataSource();
@@ -98,6 +97,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
                 refresh();
             }
         });
+
+
     }
 
     @Override
@@ -123,10 +124,10 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             newAlertDef.setDeleted(false);
             newAlertDef.setEnabled(true);
             newAlertDef.setPriority(AlertPriority.MEDIUM);
-            newAlertDef.setParentId(Integer.valueOf(0));
+            newAlertDef.setParentId(0);
             newAlertDef.setConditionExpression(BooleanExpression.ANY);
             newAlertDef.setWillRecover(false);
-            newAlertDef.setRecoveryId(Integer.valueOf(0));
+            newAlertDef.setRecoveryId(0);
             newAlertDef.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
             newAlertDef.setNotifyFiltered(false);
             newAlertDef.setControlFiltered(false);

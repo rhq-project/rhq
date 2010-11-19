@@ -45,7 +45,6 @@ public class BundleDeploymentListView extends Table {
 
     @Override
     protected void configureTable() {
-
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
@@ -76,6 +75,7 @@ public class BundleDeploymentListView extends Table {
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setWidth(80);
+
 
     }
 }

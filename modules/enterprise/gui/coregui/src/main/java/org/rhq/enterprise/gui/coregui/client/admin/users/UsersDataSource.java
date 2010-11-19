@@ -30,6 +30,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
@@ -152,6 +153,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MSG.dataSource_users_field_factive(),
             true);
         fields.add(enabledField);
+
+        DataSourceField rolesField = new DataSourceField(Field.ROLES, FieldType.ANY, "Roles");
+        fields.add(rolesField);
 
         return fields;
     }

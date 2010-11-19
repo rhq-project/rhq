@@ -120,6 +120,8 @@ public class EventCompositeHistoryView extends TableSection {
         setListGridFields(timestampField, severityField, detailsField, sourceField);
 
         setupTableInteractions();
+
+
     }
 
     private void setupTableInteractions() {

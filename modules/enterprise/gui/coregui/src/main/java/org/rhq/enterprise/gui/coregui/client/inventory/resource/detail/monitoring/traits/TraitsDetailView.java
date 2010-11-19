@@ -41,4 +41,11 @@ public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView
 
         return criteria;
     }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+
+        
+    }
 }

@@ -99,6 +99,8 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setWrapCells(true);
             addExtraWidget(new TimeRange(this.getLocatorId(), this));
         }
+
+
     }
 
     @Override
@@ -268,7 +270,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
                 timeRange = new String[] { MeasurementUtility.getDateTimeFormatter().format(new Date(begin)),
                     MeasurementUtility.getDateTimeFormatter().format(new Date(end)) };
             }
-            for (Canvas extraWidget : extraWidgets) {
+            for (Object extraWidget : extraWidgets) {
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(getListGrid());
                 }

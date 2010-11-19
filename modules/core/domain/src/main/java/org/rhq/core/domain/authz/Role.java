@@ -95,7 +95,7 @@ public class Role implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ROLE_ID_SEQ")
     @Id
-    private Integer id;
+    private int id;
 
     @Column(name = "NAME", nullable = false)
     private String name;
@@ -133,11 +133,11 @@ public class Role implements Serializable {
         this.name = name;
     }
 
-    public Integer getId() {
+    public int getId() {
         return this.id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -296,7 +296,7 @@ public class Role implements Serializable {
 
     @Override
     public String toString() {
-        return "org.rhq.core.domain.authz.Role[id=" + id + ", name=" + name + "]";
+        return "Role[id=" + this.id + ", name=" + this.name + ", permissions=" + this.permissions + "]";
     }
 
     @Override

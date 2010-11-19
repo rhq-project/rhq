@@ -75,5 +75,6 @@ public class BundleDestinationListView extends Table {
         status.setValueIconHeight(11);
         status.setWidth(80);
 
+
     }
 }

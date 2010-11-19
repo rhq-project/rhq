@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
@@ -53,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class NewNotificationEditor extends LocatableDynamicForm {
 
     private final AlertDefinition alertDefinition; // the definition we are adding the notification to
-    private final ArrayList<AlertNotification> notifications; // if we are creating a new notification, it gets added to this list
+    private final List<AlertNotification> notifications; // if we are creating a new notification, it gets added to this list
     private final AlertNotification notificationToEdit; // the notification that this editor is editing (may be null)
     private final Runnable closeFunction; // this is called after a button is pressed and the editor should close 
 
@@ -61,7 +62,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     private CanvasItem senderCanvasItem;
 
     public NewNotificationEditor(String locatorId, AlertDefinition alertDefinition,
-        ArrayList<AlertNotification> notifs, AlertNotification notifToEdit, Runnable closeFunc) {
+        List<AlertNotification> notifs, AlertNotification notifToEdit, Runnable closeFunc) {
 
         super(locatorId);
         this.alertDefinition = alertDefinition;

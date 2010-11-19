@@ -79,12 +79,6 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         });
     }
 
-    protected Record createNewRecord() {
-        Subject newSubject = new Subject();
-        newSubject.setFactive(true);
-        return getDataSource().copyValues(newSubject, false);
-    }
-
     @Override
     protected void editRecord(Record record) {
         // Don't allow the rhqadmin account to be disabled.
@@ -115,6 +109,15 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         }
 
         super.editRecord(record);
+    }
+
+    @Override
+    protected void editNewRecord() {
+        super.editNewRecord();
+
+        // Make sure the new user is enabled by default.
+        FormItem enabledField = getForm().getField(UsersDataSource.Field.FACTIVE);
+        enabledField.setValue(Boolean.TRUE.toString());
     }
 
     //
@@ -193,7 +196,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     @Override
     protected void save() {
-        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getSelection();
+        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getRecords();
         getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
         super.save();
     }

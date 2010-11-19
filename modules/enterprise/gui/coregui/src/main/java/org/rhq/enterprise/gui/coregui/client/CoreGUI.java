@@ -63,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
+
     // This must come first to ensure proper I18N class loading for dev mode
     private static final Messages MSG = GWT.create(Messages.class);
 

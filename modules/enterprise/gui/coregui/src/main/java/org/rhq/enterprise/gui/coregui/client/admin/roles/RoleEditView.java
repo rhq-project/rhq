@@ -130,11 +130,6 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         }
     }
 
-    protected Record createNewRecord() {
-        Role newRole = new Role();
-        return getDataSource().copyValues(newRole);
-    }
-
     @Override
     protected void editRecord(Record record) {
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
@@ -246,14 +241,15 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         // Grab the currently assigned sets from each of the selectors and stick them into the corresponding canvas
         // items on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
         // to the datasource's add or update methods .
-        ListGridRecord[] groupRecords = this.groupSelector.getAssignedGrid().getSelection();
+        // TODO: Uncomment and fix the below lines.
+        /*ListGridRecord[] groupRecords = this.groupSelector.getAssignedGrid().getRecords();
         getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, groupRecords);
 
-        ListGridRecord[] subjectRecords = this.subjectSelector.getAssignedGrid().getSelection();
+        ListGridRecord[] subjectRecords = this.subjectSelector.getAssignedGrid().getRecords();
         getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
 
-        ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getSelection();
-        getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);
+        ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getRecords();
+        getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);*/
 
         // Submit the form values to the datasource.
         super.save();

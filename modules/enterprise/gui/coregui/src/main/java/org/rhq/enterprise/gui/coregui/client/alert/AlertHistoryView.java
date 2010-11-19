@@ -126,6 +126,8 @@ public class AlertHistoryView extends TableSection {
         }
 
         setupTableInteractions();
+
+
     }
 
     private void setupTableInteractions() {

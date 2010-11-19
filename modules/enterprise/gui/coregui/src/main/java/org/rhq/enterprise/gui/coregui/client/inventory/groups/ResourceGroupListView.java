@@ -138,6 +138,8 @@ public class ResourceGroupListView extends Table {
                 CoreGUI.goToView("ResourceGroup/" + event.getRecord().getAttribute("id"));
             }
         });
+
+        
     }
 
     // -------- Static Utility loaders ------------

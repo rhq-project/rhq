@@ -168,6 +168,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             listGrid.setFields(fieldResource, fieldDateCreated, fieldLastUpdated, fieldUser, fieldStatus);
 
             listGrid.setLinkTextProperty("resourceName");
+
+
         }
 
         private String getStatusHtmlString(Record record) {

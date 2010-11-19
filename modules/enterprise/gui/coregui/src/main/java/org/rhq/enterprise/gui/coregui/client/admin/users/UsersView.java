@@ -18,11 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -30,13 +39,15 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
- * A table that lists all users and provides the ability to view details of or delete those users and to create new
- * users.
+ * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
+ * users. For the logged in user to view or edit a user other than themselves, they must possess the
+ * {@link Permission#MANAGE_SECURITY MANAGE_SECURITY} permission. Furthermore, a user without MANAGE_SECURITY cannot
+ * update their assigned roles. 
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class UsersView extends TableSection {
+public class UsersView extends TableSection<UsersDataSource> {
 
     public static final ViewName VIEW_ID = new ViewName("Users", MSG.view_adminSecurity_users());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
@@ -55,52 +66,90 @@ public class UsersView extends TableSection {
 
     @Override
     protected void configureTable() {
-        getListGrid().setUseAllDataSourceFields(false);
+        List<ListGridField> fields = createFields();
+        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
+
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+            createDeleteAction());
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
+    }
+
+    private List<ListGridField> createFields() {
+        List<ListGridField> fields = new ArrayList<ListGridField>();
 
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
+        fields.add(nameField);
 
         ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
+        fields.add(activeField);
 
         ListGridField ldapField = new ListGridField(UsersDataSource.Field.LDAP, 90);
+        fields.add(ldapField);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
+        fields.add(firstNameField);
 
         ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 150);
+        fields.add(lastNameField);
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
+        fields.add(departmentField);
 
-        setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
-
-        // TODO: fix msg
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    if (count == 0) {
-                        return false;
-                    }
-
-                    for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt(UsersDataSource.Field.ID);
-                        if (id == UsersDataSource.ID_OVERLORD || id == UsersDataSource.ID_RHQADMIN) {
-                            // The superuser and rhqadmin users cannot be deleted.
-                            return false;
+        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
+        if (globalPermissions.contains(Permission.MANAGE_SECURITY)) {
+            ListGridField rolesField = new ListGridField(UsersDataSource.Field.ROLES, 250);
+            rolesField.setCellFormatter(new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {                    
+                    Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
+                    StringBuilder formattedValue = new StringBuilder();
+                    for (int i = 0; i < roleRecords.length; i++) {
+                        Record roleRecord = roleRecords[i];
+                        String roleName = roleRecord.getAttribute(RolesDataSource.Field.NAME);
+                        formattedValue.append(roleName);
+                        if (i != (roleRecords.length - 1)) {
+                            formattedValue.append(", ");
                         }
                     }
-                    return true;
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteSelectedRecords();
+                    return formattedValue.toString();
                 }
             });
+            fields.add(rolesField);
+        }
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction(
+        return fields;
+    }
+
+    private TableAction createDeleteAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                if (count == 0) {
+                    return false;
+                }
+
+                for (ListGridRecord record : selection) {
+                    int id = record.getAttributeAsInt(UsersDataSource.Field.ID);
+                    if (id == UsersDataSource.ID_OVERLORD || id == UsersDataSource.ID_RHQADMIN) {
+                        // The superuser and rhqadmin users cannot be deleted.
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        };
+    }
+
+    private AbstractTableAction createNewAction() {
+        return new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
-        });
+        };
     }
 
     public Canvas getDetailsView(int subjectId) {

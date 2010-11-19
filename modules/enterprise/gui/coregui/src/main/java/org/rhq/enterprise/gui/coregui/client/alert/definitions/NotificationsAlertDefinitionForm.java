@@ -62,7 +62,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private static final String FIELD_CONFIGURATION = "configuration";
 
     private AlertDefinition alertDefinition;
-    private ArrayList<AlertNotification> notifications;
+    private List<AlertNotification> notifications;
 
     private boolean formBuilt = false;
 
@@ -233,7 +233,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         }
     }
 
-    private class NotificationTable extends Table {
+    private class NotificationTable extends Table<NotificationDataSource> {
         public NotificationTable(String locatorId) {
             super(locatorId);
             setShowHeader(false);
@@ -258,7 +258,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                     ListGrid listGrid = (ListGrid) event.getSource();
                     ListGridRecord[] selectedRows = listGrid.getSelection();
                     if (selectedRows != null && selectedRows.length == 1) {
-                        AlertNotification notif = ((NotificationDataSource) getDataSource())
+                        AlertNotification notif = (getDataSource())
                             .copyValues(selectedRows[0]);
                         popupNotificationEditor(notif);
                     }
@@ -278,7 +278,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     for (ListGridRecord record : selection) {
-                        AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
+                        AlertNotification notif = (getDataSource()).copyValues(record);
                         notifications.remove(notif);
                     }
                     table.refresh();

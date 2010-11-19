@@ -57,8 +57,6 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection 
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         ListGrid listGrid = getListGrid();
         listGrid.setSelectionType(SelectionStyle.SINGLE);
 

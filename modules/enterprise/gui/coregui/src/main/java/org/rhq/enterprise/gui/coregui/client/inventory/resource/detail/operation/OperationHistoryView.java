@@ -73,7 +73,6 @@ public class OperationHistoryView extends TableSection {
 
     @Override
     protected void configureTable() {
-
         getListGrid().getField(OperationHistoryDataSource.Field.ID).setWidth(40);
         getListGrid().getField(OperationHistoryDataSource.Field.OPERATION_NAME).setWidth("*");
         getListGrid().getField(OperationHistoryDataSource.Field.STATUS).setWidth(100);
@@ -138,6 +137,7 @@ public class OperationHistoryView extends TableSection {
             operationsButton.setAutoFit(true);
             addExtraWidget(operationsButton);
         }
+
 
     }
 

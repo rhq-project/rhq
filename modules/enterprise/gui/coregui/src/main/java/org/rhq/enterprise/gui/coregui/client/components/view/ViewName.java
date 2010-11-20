@@ -2,6 +2,12 @@ package org.rhq.enterprise.gui.coregui.client.components.view;
 
 import org.rhq.core.domain.util.StringUtils;
 
+/**
+ * A simple class that ties a private name to a displayed title.  The title may very well change with locale but
+ * the name will stay constant.  It's useful any time a viewable item does not itself provide for a name.
+ * 
+ * @author Jay Shaughnessy
+ */
 public class ViewName {
 
     private String name;

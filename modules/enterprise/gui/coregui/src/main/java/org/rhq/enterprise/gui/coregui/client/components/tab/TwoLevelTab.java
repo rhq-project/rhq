@@ -20,16 +20,17 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
-public class TwoLevelTab extends LocatableTab {
+public class TwoLevelTab extends NamedTab {
     private SubTabLayout layout;
 
-    public TwoLevelTab(String locatorId, String title, String icon) {
-        super(locatorId, title, icon);
+    public TwoLevelTab(String locatorId, ViewName viewName, String icon) {
+        super(locatorId, viewName, icon);
 
         layout = new SubTabLayout(locatorId);
     }
@@ -56,8 +57,8 @@ public class TwoLevelTab extends LocatableTab {
         }
     }
 
-    public SubTab getSubTabByTitle(String title) {
-        return this.layout.getSubTabByTitle(title);
+    public SubTab getSubTabByName(String name) {
+        return this.layout.getSubTabByName(name);
     }
 
     public SubTab getSubTabByLocatorId(String locatorId) {

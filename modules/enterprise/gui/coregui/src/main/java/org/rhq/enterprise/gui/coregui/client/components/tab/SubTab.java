@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 
@@ -31,23 +32,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
  */
 public class SubTab implements Locatable {
     private String locatorId;
-    private String title;
+    private ViewName viewName;
     private Canvas canvas;
     private LocatableButton button;
 
-    public SubTab(String locatorId, String title, Canvas canvas) {
+    public SubTab(String locatorId, ViewName viewName, Canvas canvas) {
         this.locatorId = locatorId;
-        this.title = title;
+        this.viewName = viewName;
         this.canvas = canvas;
         this.button = null;
     }
 
     public String getLocatorId() {
         return locatorId;
-    }
-
-    public String getTitle() {
-        return title;
     }
 
     public Canvas getCanvas() {
@@ -66,6 +63,18 @@ public class SubTab implements Locatable {
         this.button = button;
     }
 
+    public ViewName getViewName() {
+        return viewName;
+    }
+
+    public String getName() {
+        return viewName.getName();
+    }
+
+    public String getTitle() {
+        return viewName.getTitle();
+    }
+
     @Override
     public String extendLocatorId(String extension) {
         return this.locatorId + "_" + extension;
@@ -73,6 +82,7 @@ public class SubTab implements Locatable {
 
     @Override
     public String toString() {
-        return "SubTab[title=" + this.title + ", locatorId=" + this.locatorId + "]";
+        return "SubTab[title=" + this.viewName.getTitle() + ", name=" + this.viewName.getName() + ", locatorId="
+            + this.locatorId + "]";
     }
 }

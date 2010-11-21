@@ -19,6 +19,8 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.Date;
@@ -42,10 +44,13 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
     private ResourceManagerLocal resourceMgr;
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updatePluginConfigurationDefinition(ResourceType existingType, ResourceType newType) {
         if (log.isDebugEnabled()) {
             log.debug("Updating plugin configuration definition for " + existingType);
         }
+
+        existingType = entityMgr.find(ResourceType.class, existingType.getId());
         ConfigurationDefinition existingConfigurationDefinition = existingType.getPluginConfigurationDefinition();
         if (newType.getPluginConfigurationDefinition() != null) {
             // all new

@@ -8,6 +8,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.HashSet;
@@ -23,8 +25,11 @@ public class OperationMetadataManagerBean implements OperationMetadataManagerLoc
     private EntityManager entityMgr;
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
         log.debug("Updating operation definitions for " + existingType);
+
+        existingType = entityMgr.find(ResourceType.class, existingType.getId());
 
         Set<OperationDefinition> existingDefinitions = existingType.getOperationDefinitions();
         Set<OperationDefinition> newDefinitions = newType.getOperationDefinitions();

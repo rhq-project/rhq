@@ -375,8 +375,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // child types which may still be referencing these sub categories
 
         // Update the rest of these related resources
+        long startTime = System.currentTimeMillis();
         pluginConfigMetadataMgr.updatePluginConfigurationDefinition(existingType, resourceType);
-        entityManager.flush();
+        long endTime = System.currentTimeMillis();
+        log.debug("Updated plugin configuration definition for ResourceType[" + toConciseString(existingType) +
+                "] in " + (endTime - startTime) + " ms");
 
         resourceConfigMetadataMgr.updateResourceConfigurationDefinition(existingType, resourceType);
 

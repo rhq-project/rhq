@@ -28,7 +28,7 @@
 
    <dependencies>
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
          <version>${project.version}</version>         
       </dependency>   
@@ -106,7 +106,7 @@
                            <property name="project.groupId" value="${project.groupId}" />
                            <property name="project.version" value="${project.version}" />
                            <property name="settings.localRepository" value="${settings.localRepository}" />
-                           <property name="rhq-remoting-ws.version" value="${version}" />
+                           <property name="rhq-remoting-ws.version" value="${project.version}" />
                            <property name="commons-logging.version" value="${commons-logging.version}" />
                            <property name="opencsv.version" value="${opencsv.version}" />
                            <property name="concurrent.version" value="${concurrent.version}" />

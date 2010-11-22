@@ -113,7 +113,7 @@
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                            <property name="quartz.version" value="${quartz.version}" />
                            <property name="ant.contrib.version" value="${ant.contrib.version}" />
-                           <property name="webservice.version" value="${version}" />
+                           <property name="webservice.version" value="${project.version}" />
                         </ant>
                      </tasks>
                   </configuration>
@@ -129,7 +129,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
-               <classesDirectory>${project.build.directory}/rhq-remoting-webservices-${version}
+               <classesDirectory>${project.build.directory}/rhq-remoting-webservices-${project.version}
                </classesDirectory>
 
                <includes>
@@ -205,7 +205,7 @@
                            </systemProperties>
                            <additionalClasspathElements>
                               <additionalClasspathElement>
-                                 ${project.build.directory}/rhq-remoting-webservices-${version}.jar
+                                 ${project.build.directory}/rhq-remoting-webservices-${project.version}.jar
                               </additionalClasspathElement>
                            </additionalClasspathElements>
                         </configuration>

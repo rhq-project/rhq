@@ -12,10 +12,10 @@
 
    <dependencies>
       <dependency>
-         <groupId>${groupId}</groupId>
-	 <artifactId>rhq-remoting-client-api</artifactId>
-	 <version>${version}</version>
-	 <exclusions>
+         <groupId>${project.groupId}</groupId>
+	     <artifactId>rhq-remoting-client-api</artifactId>
+    	 <version>${project.version}</version>
+	   <exclusions>
            <exclusion>
 	     <groupId>com.google.gwt</groupId>
 	     <artifactId>gwt-user</artifactId>

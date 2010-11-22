@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Tag", MSG.view_tags_tags());
+    public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags());
 
     private TagCloudView tagCloudView;
 

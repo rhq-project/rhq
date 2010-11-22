@@ -236,6 +236,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
+        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
@@ -297,7 +298,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
             .extendLocatorId("GroupsView"), resource.getId()), true, true);
 
-        Set<Permission> globalPermissions = this.resourceComposite.getResourcePermission().getPermissions();
         enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
             resourceId) : null;

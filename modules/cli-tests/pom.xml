@@ -22,9 +22,9 @@
 
    <dependencies>
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-cli</artifactId>
-         <version>${version}</version>
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>

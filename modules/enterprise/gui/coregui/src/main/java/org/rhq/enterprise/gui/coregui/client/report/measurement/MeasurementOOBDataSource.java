@@ -34,12 +34,12 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**

@@ -20,13 +20,16 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.domain.measurement;
+package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gwt.i18n.client.NumberFormat;
 
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.MeasurementUnits.Family;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;

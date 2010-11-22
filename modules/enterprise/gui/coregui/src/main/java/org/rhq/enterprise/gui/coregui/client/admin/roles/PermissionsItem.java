@@ -52,8 +52,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 
 /**
- * A complex form item for editing the set of RHQ {@link Permission permission}s associated with an RHQ
- * {@link Role role}.
+ * A complex form item for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role
+ * role}.
  *
  * @author Ian Springer
  */
@@ -201,65 +201,65 @@ public class PermissionsItem extends CanvasItem {
 
         ListGridRecord record = createResourcePermissionRecord("Inventory", "subsystems/inventory/Inventory",
             Permission.VIEW_RESOURCE,
-            "view Resource properties (name, description, version, etc.), connection settings, and connection settings history (IMPLIED)",
+            "(IMPLIED) view Resource properties (name, description, version, etc.), connection settings, and connection settings history",
             Permission.MODIFY_RESOURCE,
             "update Resource name, version, description, and connection settings; delete connection settings history items");
         records.add(record);
 
         record = createResourcePermissionRecord("Manage Measurements", "subsystems/monitor/Monitor",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view metric data and collection schedules",
             Permission.MANAGE_MEASUREMENTS,
-            "TODO");
+            "update metric collection schedules");
         records.add(record);
 
         record = createResourcePermissionRecord("Manage Alerts", "subsystems/alert/Alerts",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view alert definitions and alert history",
             Permission.MANAGE_ALERTS,
-            "TODO");
+            "create, update, and delete alert definitions; acknowledge and delete alert history items");
         records.add(record);
 
         record = createResourcePermissionRecord("Configure", "subsystems/configure/Configure",
             Permission.CONFIGURE_READ,
-            "TODO",
+            "view Resource configuration and Resource configuration revision history",
             Permission.CONFIGURE_WRITE,
-            "TODO");
+            "update Resource configuration; delete Resource configuration revision history items");
         records.add(record);
 
         record = createResourcePermissionRecord("Control", "subsystems/control/Operation",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view available operations and operation execution history",
             Permission.CONTROL,
-            "TODO");
+            "execute operations; delete operation execution history items");
         records.add(record);
 
         record = createResourcePermissionRecord("Manage Events", "subsystems/event/Events",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view events",
             Permission.MANAGE_EVENTS,
-            "TODO");
+            "delete events");
         records.add(record);
 
         record = createResourcePermissionRecord("Manage Content", "subsystems/content/Content",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view installed and available packages; view package installation history",
             Permission.MANAGE_CONTENT,
-            "TODO");
+            "subscribe to content sources; install and uninstall packages");
         records.add(record);
 
         record = createResourcePermissionRecord("Create Child Resources", "subsystems/inventory/Inventory",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view child creation history",
             Permission.CREATE_CHILD_RESOURCES,
-            "TODO");
+            "create new child Resources (for child Resources of types that are creatable)");
         records.add(record);
 
         record = createResourcePermissionRecord("Delete Child Resources", "subsystems/inventory/Inventory",
             Permission.VIEW_RESOURCE,
-            "TODO (IMPLIED)",
+            "(IMPLIED) view child deletion history",
             Permission.DELETE_RESOURCE,
-            "TODO");
+            "delete child Resources (for child Resources of types that are deletable)");
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));

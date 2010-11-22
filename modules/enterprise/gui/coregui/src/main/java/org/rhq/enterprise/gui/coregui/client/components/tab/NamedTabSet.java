@@ -42,4 +42,14 @@ public class NamedTabSet extends LocatableTabSet {
         return null;
     }
 
+    public NamedTab getTabByTitle(String title) {
+        NamedTab[] tabs = getTabs();
+        for (NamedTab tab : tabs) {
+            if (tab.getTitle().equals(title)) {
+                return tab;
+            }
+        }
+        return null;
+    }
+
 }

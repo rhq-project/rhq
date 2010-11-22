@@ -100,8 +100,6 @@ public class ResourceGroupListView extends Table {
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        idField.setAutoFitWidth(true);
-
         nameField.setWidth("50%");
         descriptionField.setWidth("50%");
         typeNameField.setWidth(75);
@@ -114,7 +112,7 @@ public class ResourceGroupListView extends Table {
         availabilityDescendantsField.setAutoFitWidth(true);
         availabilityDescendantsField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
-        setListGridFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+        setListGridFields(false, idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),

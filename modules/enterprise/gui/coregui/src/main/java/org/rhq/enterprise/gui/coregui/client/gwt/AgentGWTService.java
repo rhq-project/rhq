@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,31 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.cloud;
+package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import java.util.List;
+import com.google.gwt.user.client.rpc.RemoteService;
 
-import javax.ejb.Local;
-
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Agent;
 
 /**
- * @author Joseph Marques
+ * @author Simeon Pinder
  */
-@Local
-public interface StatusManagerLocal {
+public interface AgentGWTService extends RemoteService {
 
-    List<Integer> getAndClearAgentsWithStatusForServer(String serverName);
+    Agent getAgentForResource(int resourceId);
 
-    void markGlobalCache();
+    Boolean pingAgentForResource(int resourceId);
 
-    void updateByResource(Subject subject, int resourceId);
-
-    void updateByAlertDefinition(Subject subject, int alertDefinitionId);
-
-    void updateByMeasurementBaseline(int baselineId);
-
-    void updateByAgent(int agentId);
-
-    void updateByAutoBaselineCalculationJob();
 }

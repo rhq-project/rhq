@@ -30,6 +30,7 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.BooleanItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
@@ -109,7 +110,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 hasIdField = true;
             }
             if (this.isReadOnly) {
-                if (item instanceof StaticTextItem) {
+                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem)) {
                     itemsList.add(item);
                 } else {
                     StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());

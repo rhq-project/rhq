@@ -59,7 +59,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     private static final String HEADER_ICON = "global/Role_16.png";
 
-    private PermissionEditorView permissionEditorItem;
+    private PermissionsItem permissionsItem;
 
     private CanvasItem resourceGroupsItem;
     private ResourceGroupSelector groupSelector;
@@ -104,7 +104,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     }
 
     private void fetchAvailableLdapGroups() {
-        final boolean isReadOnly = (!this.hasManageSecurityPermission);
+        final boolean isReadOnly = (!this.hasManageSecurityPermission ||
+            (getRecordId() == RolesDataSource.ID_SUPERUSER) || 
+            (getRecordId() == RolesDataSource.ID_ALL_RESOURCES));
         if (this.isLdapConfigured) {
             final Set<LdapGroup> availableLdapGroups = null;
             GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
@@ -183,13 +185,10 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 label.setWidth100();
                 label.setPadding(6);
                 this.ldapGroupsItem.setCanvas(label);
-            }
-
-            // TODO: Fix this.
-            //Set<Permission> permissions = (Set<Permission>) record.getAttributeAsObject(RolesDataSource.Field.PERMISSIONS);
-            Set<Permission> permissions = Collections.emptySet();
-            this.permissionEditorItem.setPermissions(permissions);
+            }            
         }
+
+        this.permissionsItem.redraw();
 
         super.editRecord(record);
     }
@@ -206,11 +205,10 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         descriptionItem.setWidth("*");
         items.add(descriptionItem);
 
-        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", MSG
-            .view_adminRoles_perms(), this);
-        permissionEditorItem.setShowTitle(false);
-        permissionEditorItem.setColSpan(getForm().getNumCols());
-        items.add(permissionEditorItem);
+        permissionsItem = new PermissionsItem(this);
+        permissionsItem.setShowTitle(false);
+        permissionsItem.setColSpan(getForm().getNumCols());
+        items.add(permissionsItem);
 
         resourceGroupsItem = new CanvasItem(RolesDataSource.Field.RESOURCE_GROUPS, MSG.view_adminRoles_assignedGroups());
         resourceGroupsItem.setShowTitle(false);
@@ -251,6 +249,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getRecords();
         getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);*/
 
+        //permissionsItem.getPermissions();
         // Submit the form values to the datasource.
         super.save();
     }

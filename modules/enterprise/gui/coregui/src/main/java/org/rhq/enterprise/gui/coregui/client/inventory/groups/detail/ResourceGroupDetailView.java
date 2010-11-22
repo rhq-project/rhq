@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
@@ -101,8 +102,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab configHistory;
     private SubTab eventHistory;
 
-    private String currentTab;
-    private String currentSubTab;
+    private String currentTabName;
+    private String currentSubTabName;
 
     public ResourceGroupDetailView(String locatorId, String baseViewPath) {
         super(locatorId, baseViewPath);
@@ -118,14 +119,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         // if moving from membership subtab then re-load the detail view as the membership and
         // group type may have changed.        
-        if ((null != this.groupId) && this.inventoryTab.getTitle().equals(currentTab)
-            && this.inventoryMembership.getTitle().equals(currentSubTab)) {
+        if ((null != this.groupId) && this.inventoryTab.getName().equals(currentTabName)
+            && this.inventoryMembership.getName().equals(currentSubTabName)) {
 
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.getBaseViewPath() + "/" + getSelectedItemId() + tabPath;
 
-            this.currentTab = null;
-            this.currentSubTab = null;
+            this.currentTabName = null;
+            this.currentSubTabName = null;
             this.groupId = null;
 
             CoreGUI.goToView(path);
@@ -143,62 +144,76 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     protected List<TwoLevelTab> createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
-        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), MSG.view_tabs_common_summary(),
-            "/images/icons/Service_up_16.png");
-        summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), MSG.view_tabs_common_overview(), null);
-        summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), MSG.view_tabs_common_timeline(), null);
+        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), new ViewName("Summary", MSG
+            .view_tabs_common_summary()), "/images/icons/Service_up_16.png");
+        summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), new ViewName("Overview", MSG
+            .view_tabs_common_overview()), null);
+        summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline", MSG
+            .view_tabs_common_timeline()), null);
         summaryTab.registerSubTabs(summaryOverview, summaryTimeline);
         tabs.add(summaryTab);
 
-        monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), MSG.view_tabs_common_monitoring(),
-            "/images/icons/Monitor_grey_16.png");
-        monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), MSG.view_tabs_common_graphs(), null);
-        monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), MSG.view_tabs_common_tables(), null);
-        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), MSG.view_tabs_common_traits(), null);
+        monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), new ViewName("Monitoring", MSG
+            .view_tabs_common_monitoring()), "/images/icons/Monitor_grey_16.png");
+        monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), new ViewName("Graphs", MSG
+            .view_tabs_common_graphs()), null);
+        monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables", MSG
+            .view_tabs_common_tables()), null);
+        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), new ViewName("Traits", MSG
+            .view_tabs_common_traits()), null);
 
-        monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), MSG.view_tabs_common_schedules(), null);
-        monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), MSG.view_tabs_common_calltime(), null);
+        monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), new ViewName("Schedules", MSG
+            .view_tabs_common_schedules()), null);
+        monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime", MSG
+            .view_tabs_common_calltime()), null);
         monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
-        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), MSG.view_tabs_common_inventory(),
-            "/images/icons/Inventory_grey_16.png");
-        inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), MSG.view_tabs_common_members(), null);
-        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), MSG
-            .view_tabs_common_connectionSettings(), null);
-        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnectionSettingsHistory"), MSG
-            .view_tabs_common_connectionSettingsHistory(), null);
-        inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), "Membership", null); // TODO this will merge with Members
+        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
+            .view_tabs_common_inventory()), "/images/icons/Inventory_grey_16.png");
+        inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), new ViewName("Members", MSG
+            .view_tabs_common_members()), null);
+        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
+            "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
+        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnectionSettingsHistory"), new ViewName(
+            "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
+        inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), new ViewName("Membership", MSG
+            .view_tabs_common_membership()), null); // TODO this will merge with Members
         inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryConnHistory,
             this.inventoryMembership);
         tabs.add(inventoryTab);
 
-        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), MSG.view_tabs_common_operations(),
-            "/images/icons/Operation_grey_16.png");
-        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
-        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), MSG.view_tabs_common_scheduled(), null);
+        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
+            .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
+        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
+        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), new ViewName("Scheduled", MSG
+            .view_tabs_common_scheduled()), null);
         operationsTab.registerSubTabs(this.opHistory, this.opSched);
         tabs.add(operationsTab);
 
-        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), MSG.view_tabs_common_alerts(),
-            "/images/icons/Alert_grey_16.png");
-        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
-        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), MSG.view_tabs_common_definitions(), null);
+        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
+            .view_tabs_common_alerts()), "/images/icons/Alert_grey_16.png");
+        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
+        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
+            .view_tabs_common_definitions()), null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
         tabs.add(alertsTab);
 
-        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), MSG
-            .view_tabs_common_configuration(), "/images/icons/Configure_grey_16.png");
-        this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), MSG.view_tabs_common_current(),
-            null);
-        this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), MSG.view_tabs_common_history(),
-            null);
+        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
+            MSG.view_tabs_common_configuration()), "/images/icons/Configure_grey_16.png");
+        this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), new ViewName("Current", MSG
+            .view_tabs_common_current()), null);
+        this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
-        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), MSG.view_tabs_common_events(),
-            "/images/icons/Events_grey_16.png");
-        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), MSG.view_tabs_common_history(), null);
+        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events", MSG
+            .view_tabs_common_events()), "/images/icons/Events_grey_16.png");
+        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
 
@@ -394,9 +409,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     @Override
-    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
-        currentTab = tabTitle;
-        currentSubTab = subtabTitle;
-        super.selectTab(tabTitle, subtabTitle, viewPath);
+    public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
+        currentTabName = tabName;
+        currentSubTabName = subtabName;
+        super.selectTab(tabName, subtabName, viewPath);
     }
 }

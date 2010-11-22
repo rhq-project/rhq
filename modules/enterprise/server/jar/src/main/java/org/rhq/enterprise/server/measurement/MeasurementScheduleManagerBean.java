@@ -303,7 +303,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         boolean updateSchedules) {
 
-        modifyDefaultCollectionIntervalForMeasurementDefinitions(measurementDefinitionIds, -1, updateSchedules);
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, -1, updateSchedules);
         return;
     }
 
@@ -338,7 +338,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
-        modifyDefaultCollectionIntervalForMeasurementDefinitions(measurementDefinitionIds, collectionInterval,
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, collectionInterval,
             updateExistingSchedules);
     }
 
@@ -347,6 +347,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
      * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
      * inventory in the future.
+     * @param subject 
      *
      * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated
      * @param collectionInterval if > 0, enable the metric with this value as the the new collection
@@ -356,7 +357,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *                           interval allowed
      * @param updateExistingSchedules if true, existing Resource schedules for metrics of this type should also be updated
      */
-    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(
+    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
 
         if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
@@ -370,8 +371,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         for (int batchIndex = 0; (batchIndex < measurementDefinitionIds.length); batchIndex += 1000) {
             int[] batchIdArray = ArrayUtils.copyOfRange(measurementDefinitionIds, batchIndex, batchIndex + 1000);
 
-            modifyDefaultCollectionIntervalForMeasurementDefinitions(batchIdArray, enable,
-                collectionInterval, updateExistingSchedules);
+            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enable, collectionInterval,
+                updateExistingSchedules);
         }
     }
 
@@ -384,6 +385,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * <strong>Only the 3-param modifyDefaultCollectionIntervalForMeasurementDefinitions method should call this method,
      * since it will batch the metric defs specified by the user to ensure no more than 1000 metric defs are passed to
      * this method.</strong>
+     * @param subject 
      *
      * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated; the size of
      *                                 this array must be <= 1000
@@ -396,7 +398,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param updateExistingSchedules if true, existing Resource schedules for metrics of this type should also be updated
      */
     @SuppressWarnings("unchecked")
-    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(
+    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, boolean enable, long collectionInterval, boolean updateExistingSchedules) {
 
         // this method has been rewritten to ensure that the Hibernate cache is not utilized in an
@@ -494,7 +496,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
                 // The number of Agents is manageable, so we can work with entities here
                 for (Integer resourceId : reqMap.keySet()) {
-                    Agent agent = agentManager.getAgentByResourceId(resourceId);
+                    Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
 
                     Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
                     if (agentUpdate == null) {
@@ -1156,7 +1158,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
-        modifyDefaultCollectionIntervalForMeasurementDefinitions(measurementDefinitionIds, 0, true);
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, 0, true);
     }
 
     /**
@@ -1181,7 +1183,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         updateSchedulesForContext(subject, EntityContext.forResource(resourceId), measurementDefinitionIds,
             collectionInterval);
     }
-    
+
     public void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
@@ -1201,29 +1203,27 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         // check authorization up front, so that criteria-based queries can run without authz checks
         switch (context.type) {
-            case Resource:
-                if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view measurement schedules for resource[id=" +
-                        context.resourceId
-                        + "]");
-                }
-                break;
-            case ResourceGroup:
-                if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view measurement schedules for resourceGroup[id="
-                        + context.groupId + "]");
-                }
-                break;
-            case AutoGroup:
-                if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) ==
-                    false) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
-                        + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
-                }
-                break;
+        case Resource:
+            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for resource[id=" + context.resourceId
+                    + "]");
+            }
+            break;
+        case ResourceGroup:
+            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for resourceGroup[id="
+                    + context.groupId + "]");
+            }
+            break;
+        case AutoGroup:
+            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
+            break;
         }
 
         PageList<MeasurementDefinition> definitions;
@@ -1246,16 +1246,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
             //criteria.addFilterDefinitionIds(measurementDefinitionIds);
             switch (context.type) {
-                case Resource:
-                    criteria.addFilterResourceId(context.resourceId);
-                    break;
-                case ResourceGroup:
-                    criteria.addFilterResourceGroupId(context.groupId);
-                    break;
-                case AutoGroup:
-                    criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
-                    criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
-                    break;
+            case Resource:
+                criteria.addFilterResourceId(context.resourceId);
+                break;
+            case ResourceGroup:
+                criteria.addFilterResourceGroupId(context.groupId);
+                break;
+            case AutoGroup:
+                criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+                criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+                break;
             }
             criteria.setPageControl(pc); // for primary return list, use passed PageControl
 

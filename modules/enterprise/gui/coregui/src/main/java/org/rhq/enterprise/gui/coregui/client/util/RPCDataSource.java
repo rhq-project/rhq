@@ -506,8 +506,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setLength(Boolean.FALSE.toString().length());
         textField.setRequired(required);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        valueMap.put(Boolean.TRUE.toString(), MSG.dataSource_rpc_yes());
-        valueMap.put(Boolean.FALSE.toString(), MSG.dataSource_rpc_no());
+        valueMap.put(Boolean.TRUE.toString(), MSG.common_val_yes_lower());
+        valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());        
         textField.setValueMap(valueMap);
         return textField;
     }

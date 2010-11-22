@@ -28,6 +28,8 @@ import java.util.List;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
@@ -114,12 +116,12 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions"),
-            "subsystems/alert/Alerts_16.png", new ViewFactory() {
-                public Canvas createView() {
-                    return null; // TODO: mazz
-                }
-            });
+        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
+            .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceTypeTreeView(extendLocatorId(AdministrationView.PAGE_TEMPLATES_VIEW_ID.getName()));
+            }
+        });
 
         return new NavigationSection(SUBSYSTEMS_SECTION_VIEW_ID, tagItem, suspectMetricsItem,
             recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);

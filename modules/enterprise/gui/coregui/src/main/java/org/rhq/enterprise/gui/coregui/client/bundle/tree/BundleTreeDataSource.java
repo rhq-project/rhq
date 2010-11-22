@@ -188,7 +188,7 @@ public class BundleTreeDataSource extends RPCDataSource {
                 TreeNode deploymentsNode = new TreeNode(MSG.view_bundle_destinations());
                 deploymentsNode.setID(bundle.getId() + "_destinations");
                 deploymentsNode.setParentID(String.valueOf(bundle.getId()));
-                deploymentsNode.setName(MSG.view_bundle_versions());
+                deploymentsNode.setName(MSG.view_bundle_destinations());
                 records.add(deploymentsNode);
             }
         }

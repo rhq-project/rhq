@@ -14,12 +14,16 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
 public class BooleanCellFormatter implements CellFormatter {
     private static final Messages MSG = CoreGUI.getMessages();
 
+    private static String RED = "/images/icons/availability_red_16.png";
+    private static String GREEN = "/images/icons/availability_green_16.png";
+    private static String GREY = "/images/icons/availability_grey_16.png";
+
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
         String result;
         if (value == null) {
-            result = "";
+            result = "<img src=\"" + GREY + "\"/>";
         } else if (value instanceof Boolean) {
-            result = ((Boolean) value) ? MSG.common_val_yes_lower() : MSG.common_val_no_lower();
+            result = ((Boolean) value) ? "<img src=\"" + GREEN + "\"/>" : "<img src=\"" + RED + "\"/>";
         } else {
             throw new IllegalArgumentException("value parameter is not a Boolean.");
         }

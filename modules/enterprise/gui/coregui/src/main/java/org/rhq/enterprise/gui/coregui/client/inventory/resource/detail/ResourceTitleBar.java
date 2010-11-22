@@ -32,8 +32,6 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -185,20 +183,14 @@ public class ResourceTitleBar extends LocatableVLayout {
             @Override
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
                 final Window winModal = new Window();
-                winModal.setWidth("70%");
-                winModal.setHeight("70%");
-                winModal.setTitle(MSG.common_title_component_errors() + ":");
                 winModal.setShowMinimizeButton(false);
-                winModal.setIsModal(true);
                 winModal.setShowModalMask(true);
                 winModal.setShowCloseButton(true);
+                winModal.setWidth("70%");
+                winModal.setHeight("70%");
+                winModal.setIsModal(true);
                 winModal.centerInPage();
-                winModal.addCloseClickHandler(new CloseClickHandler() {
-                    @Override
-                    public void onCloseClick(CloseClientEvent event) {
-                        winModal.destroy();
-                    }
-                });
+                winModal.setTitle(MSG.common_title_component_errors() + ":");
 
                 LocatableVLayout form = new LocatableVLayout(extendLocatorId("_Modal_Form"));
                 form.setAlign(VerticalAlignment.CENTER);
@@ -217,7 +209,7 @@ public class ResourceTitleBar extends LocatableVLayout {
                 errorsGrid.setShowFooter(false);
                 errorsGrid.setDataSource(errors);
                 form.addMember(errorsGrid);
-                winModal.addChild(form);
+                winModal.addItem(form);
 
                 winModal.show();
             }

@@ -6,7 +6,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 public class ResourceErrorsView extends Table {
     public ResourceErrorsView(String locatorId, String string, Criteria criteria, Object object, String[] strings) {
-        super(locatorId, MSG.view_bundle_bundles(), criteria);
+        super(locatorId, MSG.common_title_component_errors(), criteria);
     }
 
     /** Set order and width of table display

@@ -118,7 +118,7 @@ public class TagEditorView extends LocatableLayout {
         if (!vertical)
             layout.setMembersMargin(8);
 
-        HTMLFlow title = new HTMLFlow("<b>" + MSG.view_tags_title() + "</b>");
+        HTMLFlow title = new HTMLFlow("<b>" + MSG.view_tags_tags() + ":</b>");
         title.setAutoWidth();
         layout.addMember(title);
 

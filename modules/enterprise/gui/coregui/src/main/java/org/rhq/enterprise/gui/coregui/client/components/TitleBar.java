@@ -19,37 +19,55 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import com.google.gwt.user.client.Window;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * A title bar to be displayed at the top of a content view - contains a label and/or an icon.
  *
  * @author Ian Springer
  */
-public class TitleBar extends VLayout {
+public class TitleBar extends LocatableToolStrip {
     private Label label;
 
-    public TitleBar() {
-        this(null, null);
+    public TitleBar(Locatable parent) {
+        this(parent, null, null);
     }
 
-    public TitleBar(String title) {
-        this(title, null);
+    public TitleBar(Locatable parent, String title) {
+        this(parent, title, null);
     }
 
-    public TitleBar(String title, String icon) {
+    public TitleBar(Locatable parent, String title, String icon) {
+        super(parent.extendLocatorId("TitleBar"));
+
         setWidth100();
         setHeight(35);
 
+        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
+        vLayout.setAlign(VerticalAlignment.CENTER);
+        vLayout.setLayoutMargin(5);
+
+        LocatableHLayout hLayout = new LocatableHLayout(vLayout.extendLocatorId("HLayout"));
+        vLayout.addMember(hLayout);
+
         this.label = new Label();
+        this.label.setWidth("*");
         this.label.setIcon(icon);
         this.label.setIconWidth(24);
         this.label.setIconHeight(24);
         this.label.setAutoHeight();
+        hLayout.addMember(this.label);
 
         setVisible(false);
-        addMember(this.label);
+        addMember(vLayout);
+
         setTitle(title);
     }
 
@@ -69,9 +87,19 @@ public class TitleBar extends VLayout {
     }
 
     private void refresh(String title) {
-        String contents = "<span class='HeaderLabel'>" + title + "</span>";
-        this.label.setContents(contents);
         setVisible(title != null);
-        //markForRedraw();
+
+        String contents;
+        String windowTitle;
+        if (title == null) {
+            contents = null;
+            windowTitle = "RHQ";
+        } else {
+            contents = "<span class='HeaderLabel'>" + title + "</span>";
+            windowTitle = "RHQ: " + title;
+        }
+        this.label.setContents(contents);
+        Window.setTitle(windowTitle);
     }
+    
 }

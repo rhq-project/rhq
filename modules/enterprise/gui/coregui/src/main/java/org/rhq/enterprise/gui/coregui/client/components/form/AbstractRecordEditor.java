@@ -32,6 +32,8 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -40,7 +42,6 @@ import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -48,9 +49,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
+import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -70,16 +74,13 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     private int recordId;
     private TitleBar titleBar;
-    private VLayout editCanvas;
     private EnhancedDynamicForm form;
     private DS dataSource;
-    private IButton saveButton;
-    private IButton resetButton;
     private boolean isReadOnly;
-    private VLayout bottomLayout;
     private String dataTypeName;
     private String listViewPath;
     private boolean wasInvalid;
+    private ButtonBar buttonBar;
 
     public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
                                 String headerIcon) {
@@ -88,15 +89,14 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         this.recordId = recordId;
         this.dataTypeName = capitalize(dataTypeName);
 
-        // Set properties for this VLayout.
-        setOverflow(Overflow.AUTO);
-        setPadding(7);
+        setLayoutMargin(0);
+        setMembersMargin(16);
 
         // Display a "Loading..." label at the top of the view to keep the user informed.
         addMember(LOADING_LABEL);
 
         // Add title bar. We'll set the actual title later.
-        this.titleBar = new TitleBar(null, headerIcon);
+        this.titleBar = new TitleBar(this, null, headerIcon);
         this.titleBar.hide();
         addMember(this.titleBar);
     }
@@ -126,9 +126,16 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             CoreGUI.goToView(getListViewPath(), message);
         } else {
             this.isReadOnly = isReadOnly;
-            this.editCanvas = buildEditor();
-            this.editCanvas.hide();
-            addMember(this.editCanvas);
+
+            VLayout contentPane = buildContentPane();
+            contentPane.hide();
+            addMember(contentPane);
+
+            this.buttonBar = buildButtonBar();
+            if (buttonBar != null) {
+                buttonBar.hide();
+                addMember(buttonBar);
+            }
 
             if (this.recordId == ID_NEW) {
                 editNewRecord();
@@ -141,75 +148,42 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         }
     }
 
-    private VLayout buildEditor() {
-        VLayout editorVLayout = new VLayout();
+    protected VLayout buildContentPane() {
+        VLayout contentPane = new VLayout();
+        contentPane.setWidth100();
+        contentPane.setHeight100();
+        contentPane.setOverflow(Overflow.AUTO);
+        //contentPane.setPadding(7);
 
+        this.form = buildForm();
+        contentPane.addMember(this.form);
+
+        return contentPane;
+    }
+
+    protected ButtonBar buildButtonBar() {
+        if (this.isReadOnly) {
+            return null;
+        }
+
+        return new ButtonBar();
+    }
+
+    protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        this.form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewRecord);
-        this.form.setDataSource(this.dataSource);
+        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewRecord);
+        form.setDataSource(this.dataSource);
 
-        List<FormItem> items = createFormItems(isNewRecord);
-        this.form.setItems(items.toArray(new FormItem[items.size()]));
+        List<FormItem> items = createFormItems(form);
+        form.setItems(items.toArray(new FormItem[items.size()]));
 
-        this.form.addItemChangedHandler(new ItemChangedHandler() {
+        form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent event) {
                 AbstractRecordEditor.this.onItemChanged();
             }
         });
 
-        editorVLayout.addMember(this.form);
-
-        this.bottomLayout = new VLayout();
-        editorVLayout.addMember(this.bottomLayout);
-
-        if (!this.isReadOnly) {
-            VLayout verticalSpacer = new VLayout();
-            verticalSpacer.setHeight(12);
-            editorVLayout.addMember(verticalSpacer);
-
-            HLayout buttonLayout = createButtons();
-
-            editorVLayout.addMember(buttonLayout);
-        }
-
-        return editorVLayout;
-    }
-
-    private HLayout createButtons() {
-        HLayout buttonLayout = new HLayout(10);
-
-        saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
-        saveButton.setDisabled(true);
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                save();
-            }
-        });
-
-        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MSG.common_button_reset());
-        resetButton.setDisabled(true);
-        resetButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                reset();
-                resetButton.disable();
-            }
-        });
-
-        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
-        cancelButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                History.back();
-            }
-        });
-
-        buttonLayout.addMember(saveButton);
-        buttonLayout.addMember(resetButton);
-        buttonLayout.addMember(cancelButton);
-        return buttonLayout;
-    }
-
-    public VLayout getBottomLayout() {
-        return bottomLayout;
+        return form;
     }
 
     public EnhancedDynamicForm getForm() {
@@ -232,7 +206,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return listViewPath;
     }
 
-    protected abstract List<FormItem> createFormItems(boolean newRecord);
+    protected abstract List<FormItem> createFormItems(EnhancedDynamicForm form);
 
     /**
      * This method should be called whenever any editable item on the page is changed. It will enable the Reset button
@@ -244,8 +218,19 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
         // If we're in editable mode, update the button enablement.
         if (!this.isReadOnly) {
-            this.saveButton.setDisabled(!isValid);
-            this.resetButton.setDisabled(false);
+            IButton saveButton = this.buttonBar.getSaveButton();
+            boolean saveButtonWasDisabled = saveButton.isDisabled();
+            saveButton.setDisabled(!isValid);
+            if (saveButtonWasDisabled != !saveButton.isDisabled()) {
+                 CanvasUtility.blink(saveButton);
+            }
+
+            IButton resetButton = this.buttonBar.getResetButton();
+            if (resetButton.isDisabled()) {
+                resetButton.setDisabled(false);
+                CanvasUtility.blink(resetButton);
+            }
+
             if (!isValid) {
                 this.wasInvalid = true;
                 Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
@@ -378,9 +363,13 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     }
 
     private void displayForm() {
-        LOADING_LABEL.hide();
-        this.titleBar.show();
-        this.editCanvas.show();
+        removeMember(LOADING_LABEL);
+        LOADING_LABEL.destroy();
+
+        for (Canvas member : getMembers()) {
+            member.show();
+        }
+
         markForRedraw();
     }
 
@@ -427,6 +416,69 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(ID_NEW)) + itemTitle.substring(1);
+    }
+
+    protected class ButtonBar extends LocatableToolStrip {
+
+        private IButton saveButton;
+        private IButton resetButton;
+        private IButton cancelButton;
+
+        ButtonBar() {
+            super(AbstractRecordEditor.this.extendLocatorId("ButtonBar"));
+
+            setWidth100();
+            setHeight(35);
+
+            LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
+            vLayout.setAlign(VerticalAlignment.CENTER);
+            vLayout.setLayoutMargin(4);
+
+            LocatableHLayout hLayout = new LocatableHLayout(vLayout.extendLocatorId("HLayout"));
+            hLayout.setMembersMargin(10);
+            vLayout.addMember(hLayout);
+
+            saveButton = new LocatableIButton(extendLocatorId("Save"), MSG.common_button_save());
+            saveButton.setDisabled(true);
+            saveButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    save();
+                }
+            });
+            hLayout.addMember(saveButton);
+
+            resetButton = new LocatableIButton(extendLocatorId("Reset"), MSG.common_button_reset());
+            resetButton.setDisabled(true);
+            resetButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    reset();
+                    resetButton.disable();
+                }
+            });
+            hLayout.addMember(resetButton);
+
+            cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    History.back();
+                }
+            });
+            hLayout.addMember(cancelButton);
+
+            addMember(vLayout);
+        }
+
+        public IButton getCancelButton() {
+            return cancelButton;
+        }
+
+        public IButton getResetButton() {
+            return resetButton;
+        }
+
+        public IButton getSaveButton() {
+            return saveButton;
+        }
     }
     
 }

@@ -24,8 +24,9 @@ import java.util.Set;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 
@@ -55,6 +57,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private static final String HEADER_ICON = "global/User_24.png";
     private static final int SUBJECT_ID_RHQADMIN = 2;
 
+    private CanvasItem rolesItem;
     private SubjectRoleSelector roleSelector;
 
     private boolean hasManageSecurityPermission;
@@ -112,7 +115,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
                     onItemChanged();
                 }
             });
-            getBottomLayout().addMember(roleSelector);
+            this.rolesItem.setCanvas(this.roleSelector);
         }
     }
 
@@ -129,11 +132,11 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     }
 
     @Override
-    protected List<FormItem> createFormItems(boolean newUser) {
+    protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
-        if (newUser) {
+        if (form.isNewRecord()) {
             TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
             items.add(nameItem);
         } else {
@@ -185,8 +188,12 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         activeItem.setVertical(false);
         items.add(activeItem);
 
-        HiddenItem rolesItem = new HiddenItem(UsersDataSource.Field.ROLES);
-        items.add(rolesItem);
+        this.rolesItem = new CanvasItem(UsersDataSource.Field.ROLES);
+        this.rolesItem.setShowTitle(false);
+        this.rolesItem.setColSpan(form.getNumCols());
+        this.rolesItem.setCanvas(new Canvas());
+        items.add(this.rolesItem);
+
         return items;
     }
 

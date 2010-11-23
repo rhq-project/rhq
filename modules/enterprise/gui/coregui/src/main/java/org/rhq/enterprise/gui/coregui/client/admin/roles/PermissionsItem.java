@@ -29,6 +29,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.core.RefDataClass;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.JSOHelper;
@@ -133,8 +134,8 @@ public class PermissionsItem extends CanvasItem {
     }
 
     private ListGrid createGlobalPermissionsGrid() {
-        ListGrid grid = new ListGrid();
-        grid.setHeight(115);
+        ListGrid grid = createPermissionsGrid();
+
         // TODO: Add table title.
 
         ListGridField iconField = new ListGridField("icon", "&nbsp;", 40);
@@ -178,8 +179,7 @@ public class PermissionsItem extends CanvasItem {
     }
 
     private ListGrid createResourcePermissionsGrid() {
-        ListGrid grid = new ListGrid();
-        grid.setHeight(290);
+        ListGrid grid = createPermissionsGrid();
         // TODO: Add table title.
 
         ListGridField iconField = new ListGridField("icon", "&nbsp;", 40);
@@ -276,6 +276,16 @@ public class PermissionsItem extends CanvasItem {
         return grid;
     }
 
+    private ListGrid createPermissionsGrid() {
+        ListGrid grid = new ListGrid();
+
+        grid.setAutoFitData(Autofit.BOTH);
+        grid.setWrapCells(true);
+        grid.setFixedRecordHeights(false);        
+
+        return grid;
+    }
+    
     private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid) {
         final ListGridField authorizedField = new ListGridField(name, title, 65);
 

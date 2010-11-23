@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -193,7 +194,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                     + MSG.view_adminRoles_noLdap("href='#Administration/Configuration/SystemSettings'", MSG
                         .view_adminConfig_systemSettings()));
                 label.setWidth100();
-                label.setPadding(6);
+                label.setHeight(20);
+                label.setPadding(5);
                 this.ldapGroupsItem.setCanvas(label);
             }            
         }
@@ -202,40 +204,40 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     }
 
     @Override
-    protected List<FormItem> createFormItems(boolean newRole) {
+    protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
 
         TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, MSG.common_title_name());
         items.add(nameItem);
 
         TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
-        descriptionItem.setColSpan(getForm().getNumCols());
+        descriptionItem.setColSpan(form.getNumCols());
         descriptionItem.setWidth("*");
         items.add(descriptionItem);
 
         permissionsItem = new PermissionsItem(this);
         permissionsItem.setShowTitle(false);
-        permissionsItem.setColSpan(getForm().getNumCols());
+        permissionsItem.setColSpan(form.getNumCols());
         items.add(permissionsItem);
 
         resourceGroupsItem = new CanvasItem(RolesDataSource.Field.RESOURCE_GROUPS, MSG.view_adminRoles_assignedGroups());
         resourceGroupsItem.setShowTitle(false);
         resourceGroupsItem.setTitleOrientation(TitleOrientation.TOP);
-        resourceGroupsItem.setColSpan(getForm().getNumCols());
+        resourceGroupsItem.setColSpan(form.getNumCols());
         resourceGroupsItem.setCanvas(new Canvas());
         items.add(resourceGroupsItem);
 
         subjectsItem = new CanvasItem(RolesDataSource.Field.SUBJECTS, MSG.view_adminRoles_assignedSubjects());
         subjectsItem.setShowTitle(false);
         subjectsItem.setTitleOrientation(TitleOrientation.TOP);
-        subjectsItem.setColSpan(getForm().getNumCols());
+        subjectsItem.setColSpan(form.getNumCols());
         subjectsItem.setCanvas(new Canvas());
         items.add(subjectsItem);
 
         ldapGroupsItem = new CanvasItem(RolesDataSource.Field.LDAP_GROUPS, MSG.view_adminRoles_ldapGroups());
         ldapGroupsItem.setShowTitle(false);
         ldapGroupsItem.setTitleOrientation(TitleOrientation.TOP);
-        ldapGroupsItem.setColSpan(getForm().getNumCols());
+        ldapGroupsItem.setColSpan(form.getNumCols());
         ldapGroupsItem.setCanvas(new Canvas());
         items.add(ldapGroupsItem);
 

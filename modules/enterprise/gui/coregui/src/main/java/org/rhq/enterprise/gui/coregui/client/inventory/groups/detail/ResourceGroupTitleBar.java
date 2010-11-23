@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -43,22 +45,26 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceGroupTitleBar extends LocatableHLayout {
+public class ResourceGroupTitleBar extends LocatableVLayout {
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
 
     private ResourceGroup group;
+    private ResourceGroupComposite groupComposite;
 
+    private Img expandCollapseArrow;
     private Img badge;
     private Img favoriteButton;
     private HTMLFlow title;
     private Img availabilityImage;
     private boolean favorite;
+    private GeneralProperties generalProperties;
 
     public ResourceGroupTitleBar(String locatorId) {
         super(locatorId);
@@ -73,6 +79,9 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
             child.destroy();
         }
 
+        final LocatableHLayout hlayout = new LocatableHLayout(extendLocatorId("hlayout"));
+        addMember(hlayout);
+
         this.title = new HTMLFlow();
         this.title.setWidth("*");
 
@@ -86,6 +95,46 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
                 UserSessionManager.getUserPreferences().setFavoriteResources(favorites, new UpdateFavoritesCallback());
             }
         });
+
+        expandCollapseArrow = new Img("[SKIN]/ListGrid/row_collapsed.png", 16, 16);
+        expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(this.group.getId());
+        GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                @Override
+                public void onSuccess(PageList<ResourceGroupComposite> result) {
+                    if (result == null || result.size() != 1) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to get general info on group [" + group.getName() + "]");
+                        return;
+                    }
+                    generalProperties = new GeneralProperties(extendLocatorId("genProps"), result.get(0));
+                    generalProperties.setVisible(false);
+                    ResourceGroupTitleBar.this.addMember(generalProperties);
+                    expandCollapseArrow.addClickHandler(new ClickHandler() {
+                        private boolean collapsed = true;
+
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            collapsed = !collapsed;
+                            if (collapsed) {
+                                expandCollapseArrow.setSrc("[SKIN]/ListGrid/row_collapsed.png");
+                                generalProperties.hide();
+                            } else {
+                                expandCollapseArrow.setSrc("[SKIN]/ListGrid/row_expanded.png");
+                                generalProperties.show();
+                            }
+                            ResourceGroupTitleBar.this.markForRedraw();
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot load group properties info", caught);
+                }
+            });
 
         badge = new Img("types/Service_up_24.png", 24, 24);
 
@@ -112,11 +161,12 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
 
         loadTags(tagEditorView);
 
-        addMember(badge);
-        addMember(title);
-        addMember(tagEditorView);
-        addMember(availabilityImage);
-        addMember(favoriteButton);
+        hlayout.addMember(expandCollapseArrow);
+        hlayout.addMember(badge);
+        hlayout.addMember(title);
+        hlayout.addMember(tagEditorView);
+        hlayout.addMember(availabilityImage);
+        hlayout.addMember(favoriteButton);
     }
 
     private void loadTags(final TagEditorView tagEditorView) {

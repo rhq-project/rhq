@@ -222,7 +222,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
-        return SelectionStyle.SIMPLE;
+        return SelectionStyle.MULTIPLE;
     }
 
     @Override

@@ -171,6 +171,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         ResourceGroupTreeView.this.rootGroupId = rootResourceGroup.getId();
                         TreeNode fakeRoot = new TreeNode("fakeRootNode");
                         TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
+                        String icon = "types/Group_up_16.png";
+                        rootNode.setIcon(icon);
                         rootNode.setID(String.valueOf(rootResourceGroup.getId())); //getClusterKey().toString());
                         fakeRoot.setChildren(new TreeNode[] { rootNode });
                         Tree tree = new Tree();

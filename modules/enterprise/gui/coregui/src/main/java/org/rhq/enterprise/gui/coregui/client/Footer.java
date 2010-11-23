@@ -56,20 +56,21 @@ public class Footer extends LocatableToolStrip {
     protected void onDraw() {
         super.onDraw();
 
-        final UserSessionState userSessionState = new UserSessionState("UserSessionState");
+        //final UserSessionState userSessionState = new UserSessionState("UserSessionState");
         final MessageCenterView recentMessage = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         recentMessage.setWidth("*");
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
 
-        addMember(userSessionState);
+        //addMember(userSessionState);
+        //addMember(new ToolStripSeparator());
+        addMember(favoritesButton);
         addMember(new ToolStripSeparator());
         addMember(recentMessage);
-        addMember(new ToolStripSeparator());
-        addMember(favoritesButton);
+
         addMember(alertsMessage);
 
-        userSessionState.schedule(15000);
+        //userSessionState.schedule(15000);
         alertsMessage.schedule(60000);
     }
 
@@ -110,22 +111,22 @@ public class Footer extends LocatableToolStrip {
         }
     }
 
-    public static class UserSessionState extends RefreshableLabel {
-        public UserSessionState(String locatorId) {
-            super(locatorId);
-            setWrap(false);
-            setMargin(5);
-            setValign(VerticalAlignment.CENTER);
-        }
-
-        public void refreshLoggedIn() {
-            setContents(MSG.view_core_loggedInAs(UserSessionManager.getSessionSubject().getName()));
-        }
-
-        public void refreshLoggedOut() {
-            setContents(MSG.view_core_loggedOut());
-        }
-    }
+    //    public static class UserSessionState extends RefreshableLabel {
+    //        public UserSessionState(String locatorId) {
+    //            super(locatorId);
+    //            setWrap(false);
+    //            setMargin(5);
+    //            setValign(VerticalAlignment.CENTER);
+    //        }
+    //
+    //        public void refreshLoggedIn() {
+    //            setContents(MSG.view_core_loggedInAs(UserSessionManager.getSessionSubject().getName()));
+    //        }
+    //
+    //        public void refreshLoggedOut() {
+    //            setContents(MSG.view_core_loggedOut());
+    //        }
+    //    }
 
     public static class AlertsMessage extends RefreshableLabel {
         public AlertsMessage(String locatorId) {

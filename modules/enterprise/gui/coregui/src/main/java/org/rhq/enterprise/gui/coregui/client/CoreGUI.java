@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
@@ -192,18 +193,22 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
-        if (breadcrumbName.equals(AdministrationView.VIEW_ID.getName())) {
-            canvas = new AdministrationView();
+        if (breadcrumbName.equals(DashboardsView.VIEW_ID.getName())) {
+            canvas = new DashboardsView(breadcrumbName);
         } else if (breadcrumbName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
         } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID.getName())) {
             canvas = new ResourceTopView(breadcrumbName);
         } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
             canvas = new ResourceGroupTopView(breadcrumbName);
-        } else if (breadcrumbName.equals(DashboardsView.VIEW_ID.getName())) {
-            canvas = new DashboardsView(breadcrumbName);
+        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID.getName())) {
+            canvas = new ReportTopView();
         } else if (breadcrumbName.equals(BundleTopView.VIEW_ID.getName())) {
             canvas = new BundleTopView(breadcrumbName);
+        } else if (breadcrumbName.equals(AdministrationView.VIEW_ID.getName())) {
+            canvas = new AdministrationView();
+        } else if (breadcrumbName.equals(HelpView.VIEW_ID.getName())) {
+            canvas = new HelpView();
         } else if (breadcrumbName.equals("LogOut")) {
             // TODO: don't make LogOut a history event, just perform the logout action by responding to click event
             LoginView logoutView = new LoginView("Login");
@@ -214,8 +219,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new TaggedView(breadcrumbName);
         } else if (breadcrumbName.equals("Subsystems")) {
             canvas = new AlertHistoryView("Alert");
-        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID.getName())) {
-            canvas = new ReportTopView();
         } else if (breadcrumbName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
         } else {

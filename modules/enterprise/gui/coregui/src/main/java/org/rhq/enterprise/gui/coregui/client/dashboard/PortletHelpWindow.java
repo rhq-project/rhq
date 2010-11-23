@@ -53,7 +53,7 @@ public class PortletHelpWindow extends Window {
         this.storedPortlet = storedPortlet;
         this.view = view;
 
-        setTitle(storedPortlet.getName() + " " + MSG.view_menuBar_help());
+        setTitle(storedPortlet.getName() + " " + MSG.common_title_help());
         setOverflow(Overflow.VISIBLE);
         //        setAutoSize(true);
 

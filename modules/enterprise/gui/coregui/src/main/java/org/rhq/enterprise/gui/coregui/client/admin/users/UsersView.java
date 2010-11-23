@@ -32,9 +32,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
@@ -143,9 +141,13 @@ public class UsersView extends TableSection<UsersDataSource> {
         };
     }
 
-    private AbstractTableAction createNewAction() {
-        return new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
+    private TableAction createNewAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
+                return globalPermissions.contains(Permission.MANAGE_SECURITY);
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }

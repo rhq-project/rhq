@@ -232,7 +232,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return listViewPath;
     }
 
-    protected abstract List<FormItem> createFormItems(boolean newUser);
+    protected abstract List<FormItem> createFormItems(boolean newRecord);
 
     /**
      * This method should be called whenever any editable item on the page is changed. It will enable the Reset button
@@ -323,8 +323,29 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         });
     }
 
-    @SuppressWarnings("unchecked")
-    protected void editRecord(Record record) {
+    protected void editNewRecord() {
+        // Update the view title.
+        this.titleBar.setTitle("New " + this.dataTypeName);
+
+        // Create a new record.
+        Record record = createNewRecord();
+
+        // And populate the form with it.
+        this.form.editRecord(record);
+        this.form.setSaveOperationType(DSOperationType.ADD);
+
+        // But make sure the value of the "id" field is set to "0", since a value of null could cause the dataSource's
+        // copyValues(Record) impl to choke.
+        FormItem idItem = this.form.getItem(FIELD_ID);
+        if (idItem != null) {
+            idItem.setDefaultValue(ID_NEW);
+            idItem.hide();
+        }
+
+        editRecord(record);
+    }
+
+    protected void editExistingRecord(Record record) {
         // Update the view title.
         String recordName = record.getAttribute(getTitleFieldName());
         String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
@@ -337,22 +358,23 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         // Perform up front validation for existing records.
         // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.
         this.form.validate();
+
+        editRecord(record);
     }
 
-    protected void editNewRecord() {
-        // Update the view title.
-        this.titleBar.setTitle("New " + this.dataTypeName);
+    /**
+     * Initialize the editor with the data from the passed record. This method will be called for both new records
+     * (after the record has been created by {@link #createNewRecord()}) and existing records (after the record has
+     * been fetched by {@link #fetchExistingRecord(int)}.
+     *
+     * @param record the record
+     */
+    protected void editRecord(Record record) {
+    }
 
-        // Clear the form
-        this.form.editNewRecord();
-
-        // But make sure the value of the "id" field is set to "0", since a value of null could cause the dataSource's
-        // copyValues(Record) impl to choke.
-        FormItem idItem = this.form.getItem(FIELD_ID);
-        if (idItem != null) {
-            idItem.setDefaultValue(ID_NEW);
-            idItem.hide();
-        }
+    // Subclasses will generally want to override this.
+    protected Record createNewRecord() {
+        return new ListGridRecord();
     }
 
     private void displayForm() {
@@ -376,7 +398,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                         throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
                     }
                     Record record = records[0];
-                    editRecord(record);
+                    editExistingRecord(record);
 
                     // Now that all the widgets have been created and initialized, make everything visible.
                     displayForm();

@@ -63,6 +63,10 @@
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed 
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
+        
+        <!-- Set the default locale for the GUI. Currently supported locales are "default" (for English) or "de" (for
+             German). -->
+        <gwt.locale>default</gwt.locale>
     </properties>
 
 

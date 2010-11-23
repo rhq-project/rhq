@@ -126,7 +126,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         passwordVerifyField.setValidators(passwordsEqualValidator);
         fields.add(passwordVerifyField);
 
-
         DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME,
             MSG.dataSource_users_field_firstName(), null, 100, true);
         fields.add(firstNameField);
@@ -204,31 +203,19 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     @Override
     protected void executeAdd(final Record recordToAdd, final DSRequest request, final DSResponse response) {
         final Subject newSubject = copyValues(recordToAdd);
-
-        final String username = newSubject.getName();
-        subjectService.createSubject(newSubject, new AsyncCallback<Subject>() {
+        String password = recordToAdd.getAttribute(Field.PASSWORD);
+                
+        subjectService.createSubject(newSubject, password, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
                 // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
                 Map<String, String> errorMessages = new HashMap<String, String>();
-                errorMessages.put(Field.NAME, "A user named [" + username + "] already exists.");
+                errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
                 sendValidationErrorResponse(request, response, errorMessages);
             }
 
             public void onSuccess(final Subject createdSubject) {
-                String password = recordToAdd.getAttribute(Field.PASSWORD);
-                subjectService.createPrincipal(newSubject.getName(), password, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        String message = "Subject created, but failed to create principal.";
-                        sendFailureResponse(request, response, message, caught);
-                    }
-
-                    public void onSuccess(Void nothing) {
-                        Record createdUserRecord = copyValues(createdSubject, false);
-                        sendSuccessResponse(request, response, createdUserRecord);
-                    }
-                });
-
-                // TODO: Update roles (currently requires separate SLSB call).
+                Record createdUserRecord = copyValues(createdSubject, false);
+                sendSuccessResponse(request, response, createdUserRecord);
             }
         });
     }

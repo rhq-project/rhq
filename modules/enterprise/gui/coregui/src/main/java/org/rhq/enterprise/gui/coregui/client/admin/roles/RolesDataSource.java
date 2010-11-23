@@ -34,9 +34,11 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
@@ -208,10 +210,18 @@ public class RolesDataSource extends RPCDataSource<Role> {
         Set<Permission> permissions = toPermissionSet(permissionRecords);
         to.setPermissions(permissions);
 
+        Record[] resourceGroupRecords = from.getAttributeAsRecordArray(Field.RESOURCE_GROUPS);
+        Set<ResourceGroup> resourceGroups =
+            ResourceGroupsDataSource.getInstance().buildDataObjects(resourceGroupRecords);
+        to.setResourceGroups(resourceGroups);
+
+        Record[] subjectRecords = from.getAttributeAsRecordArray(Field.SUBJECTS);
+        Set<Subject> subjects = UsersDataSource.getInstance().buildDataObjects(subjectRecords);
+        to.setSubjects(subjects);
+
+        Record[] ldapGroupRecords = from.getAttributeAsRecordArray(Field.LDAP_GROUPS);
         // TODO
-        /*to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
-        to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.SUBJECTS));
-        to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.LDAP_GROUPS));*/
+        to.setLdapGroups(null);
 
         return to;
     }
@@ -223,16 +233,20 @@ public class RolesDataSource extends RPCDataSource<Role> {
         targetRecord.setAttribute(Field.NAME, sourceRole.getName());
         targetRecord.setAttribute(Field.DESCRIPTION, sourceRole.getDescription());
 
-        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
-            sourceRole.getResourceGroups());
-        targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
-
         Set<Permission> permissions = sourceRole.getPermissions();
         ListGridRecord[] permissionRecords = toRecordArray(permissions);
         targetRecord.setAttribute(Field.PERMISSIONS, permissionRecords);
 
+        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
+            sourceRole.getResourceGroups());
+        targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
+
         ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(sourceRole.getSubjects());
         targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
+
+        // TODO
+        ListGridRecord[] ldapGroupRecords = null;
+        targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
 
         return targetRecord;
     }

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,9 +64,9 @@ public class PermissionsItem extends CanvasItem {
     private static Messages MSG = CoreGUI.getMessages();
 
     private Set<Permission> selectedPermissions;
-
     private RoleEditView roleEditView;
     private boolean isReadOnly;
+    private Object originalValue;
 
     public PermissionsItem(RoleEditView roleEditView) {
         super(RolesDataSource.Field.PERMISSIONS, "Permissions");
@@ -88,6 +89,11 @@ public class PermissionsItem extends CanvasItem {
             setCanvas(permissionsEditor);
         }
         return permissionsEditor;
+    }
+
+    public void reset() {
+        //setValue(this.originalValue);
+        redraw();
     }
 
     @Override
@@ -114,11 +120,14 @@ public class PermissionsItem extends CanvasItem {
             record.setAttribute("writeAuthorized", this.selectedPermissions.contains(writePermission));
         }
 
-        super.redraw();
+        getCanvas().markForRedraw();
     }
 
     private Set<Permission> getValueAsPermissionSet() {
         Object nativeArray = getValue();
+        if (this.originalValue == null) {
+            this.originalValue = nativeArray;
+        }
         ListGridRecord[] permissionRecords = convertToListGridRecordArray((JavaScriptObject)nativeArray);
         return RolesDataSource.toPermissionSet(permissionRecords);
     }
@@ -316,14 +325,37 @@ public class PermissionsItem extends CanvasItem {
     }
 
     private void updatePermissions(Boolean authorized, Permission permission) {
+        boolean redrawRequired = false;
         if (authorized) {
             this.selectedPermissions.add(permission);
+            if (permission == Permission.MANAGE_SECURITY) {
+                // MANAGE_SECURITY implies all other perms.
+                this.selectedPermissions.addAll(EnumSet.allOf(Permission.class));
+                redrawRequired = true;
+            } else if (permission == Permission.MANAGE_INVENTORY) {
+                // MANAGE_INVENTORY implies all Resource perms.
+                this.selectedPermissions.addAll(Permission.RESOURCE_ALL);
+                redrawRequired = true;
+            } else if (permission == Permission.CONFIGURE_WRITE) {
+                // CONFIGURE_WRITE implies CONFIGURE_READ.
+                this.selectedPermissions.add(Permission.CONFIGURE_READ);
+                redrawRequired = true;
+            }            
         } else {
             this.selectedPermissions.remove(permission);
+            if (permission == Permission.CONFIGURE_READ) {
+                // Lack of CONFIGURE_READ implies lack of CONFIGURE_WRITE.
+                this.selectedPermissions.remove(Permission.CONFIGURE_WRITE);
+                redrawRequired = true;
+            }
         }
-
+        
         ListGridRecord[] permissionRecords = RolesDataSource.toRecordArray(this.selectedPermissions);
         getForm().setValue(getName(), permissionRecords);
+
+        if (redrawRequired) {
+            redraw();
+        }
     }
 
     private ListGridRecord createGlobalPermissionRecord(String displayName, String icon, Permission globalPermission,

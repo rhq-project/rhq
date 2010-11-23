@@ -37,7 +37,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -67,20 +66,28 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
-        UserPermissionsManager.getInstance().loadGlobalPermissions(
-            new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
-                Subject sessionSubject = UserSessionManager.getSessionSubject();
-                boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-                UserEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
-                boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
-                init(isReadOnly);
-            }
-        });
+
+        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
+        UserEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
+        boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
+        init(isReadOnly);
+    }
+
+    @Override
+    protected Record createNewRecord() {
+        Subject subject = new Subject();
+        subject.setFactive(true);
+        @SuppressWarnings({"UnnecessaryLocalVariable"}) 
+        Record userRecord = UsersDataSource.getInstance().copyValues(subject, false);
+        return userRecord;
     }
 
     @Override
     protected void editRecord(Record record) {
+        super.editRecord(record);
+        
         // Don't allow the rhqadmin account to be disabled.
         if (getRecordId() == SUBJECT_ID_RHQADMIN) {
             FormItem activeField = getForm().getField(UsersDataSource.Field.FACTIVE);
@@ -107,17 +114,6 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             });
             getBottomLayout().addMember(roleSelector);
         }
-
-        super.editRecord(record);
-    }
-
-    @Override
-    protected void editNewRecord() {
-        super.editNewRecord();
-
-        // Make sure the new user is enabled by default.
-        FormItem enabledField = getForm().getField(UsersDataSource.Field.FACTIVE);
-        enabledField.setValue(Boolean.TRUE.toString());
     }
 
     //
@@ -198,6 +194,8 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     protected void save() {
         ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getRecords();
         getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
+
+        // Submit the form values to the datasource.
         super.save();
     }
 

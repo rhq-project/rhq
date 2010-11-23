@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -182,6 +183,25 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return entityManager.merge(subjectToModify);
     }
 
+    @Override
+    public Subject createSubject(Subject whoami, Subject subjectToCreate, String password)
+        throws SubjectException, EntityExistsException {
+        // Make sure there's not an existing subject with the same name.
+        if (getSubjectByName(subjectToCreate.getName()) != null) {
+            throw new EntityExistsException("A user named [" + subjectToCreate.getName() + "] already exists.");
+        }
+
+        if (subjectToCreate.getFsystem()) {
+            throw new SubjectException("Cannot create new system subjects: " + subjectToCreate.getName());
+        }
+
+        entityManager.persist(subjectToCreate);
+
+        createPrincipal(whoami, subjectToCreate.getName(), password);
+
+        return subjectToCreate;
+    }
+
     public Subject updateSubject(Subject whoami, Subject subjectToModify, String newPassword) {
         // let a user change his own details
         Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(whoami);
@@ -280,7 +300,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Subject createSubject(Subject whoami, Subject subject) throws SubjectException {
-        // Make sure there's not already a system subject with that name
+        // Make sure there's not an existing subject with the same name.
         if (getSubjectByName(subject.getName()) != null) {
             throw new SubjectException("A user named [" + subject.getName() + "] already exists.");
         }

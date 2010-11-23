@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -526,14 +527,28 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
          * automagically give all permissions to users that are explicitly given the MANAGE_SECURITY permission
          */
         if (role.getPermissions().contains(Permission.MANAGE_SECURITY)) {
-            role.getPermissions().addAll(Arrays.asList(Permission.values()));
+            role.getPermissions().addAll(EnumSet.allOf(Permission.class));
+        }
+
+        /*
+         * similarly, MANAGE_INVENTORY implies all Resource perms
+         */
+        if (role.getPermissions().contains(Permission.MANAGE_INVENTORY)) {
+            role.getPermissions().addAll(Permission.RESOURCE_ALL);
         }
 
         /*
          * write-access implies read-access
          */
-        if ((role.getPermissions().contains(Permission.CONFIGURE_WRITE))) {
+        if (role.getPermissions().contains(Permission.CONFIGURE_WRITE)) {
             role.getPermissions().add(Permission.CONFIGURE_READ);
+        }
+
+        /*
+         * and lack of read-access implies lack of write-access
+         */
+        if (!role.getPermissions().contains(Permission.CONFIGURE_READ)) {
+            role.getPermissions().remove(Permission.CONFIGURE_WRITE);
         }
     }
 

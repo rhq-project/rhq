@@ -92,48 +92,58 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
             public void onSuccess(Boolean isLdapConfigured) {
                 RoleEditView.this.isLdapConfigured = isLdapConfigured;
-                fetchAvailableLdapGroups();
+                if (RoleEditView.this.isLdapConfigured) {
+                    fetchAvailableLdapGroups();
+                } else {
+                    init();
+                }
             }
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
                 RoleEditView.this.isLdapConfigured = false;
-                fetchAvailableLdapGroups();
+                init();
             }
         });
     }
 
     private void fetchAvailableLdapGroups() {
-        final boolean isReadOnly = (!this.hasManageSecurityPermission ||
-            (getRecordId() == RolesDataSource.ID_SUPERUSER) || 
-            (getRecordId() == RolesDataSource.ID_ALL_RESOURCES));
-        if (this.isLdapConfigured) {
-            final Set<LdapGroup> availableLdapGroups = null;
-            GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroups(), caught);
-                    Set<LdapGroup> availableLdapGroups = Collections.emptySet();
-                    init(isReadOnly);
-                }
+        final Set<LdapGroup> availableLdapGroups = null;
+        GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroups(), caught);
+                Set<LdapGroup> availableLdapGroups = Collections.emptySet();
+                init();
+            }
 
-                public void onSuccess(Set<Map<String, String>> result) {
-                    // Get assigned LDAP groups.
-                    Set<LdapGroup> availableLdapGroups = RoleLdapGroupSelector.convertToCollection(result);
-                    // Update record with both objects.
-                    //record.setAttribute("ldapGroupsAvailable", availableGroups);
-                    init(isReadOnly);
-                }
-            });
-        } else {
-            // LDAP not configured - we won't display an LDAP group selector.
-            // TODO: Should we display a message stating that LDAP is not configured with a link to Admin Settings view?
-            Set<LdapGroup> availableLdapGroups = Collections.emptySet();
-            init(isReadOnly);
-        }
+            public void onSuccess(Set<Map<String, String>> result) {
+                // Get assigned LDAP groups.
+                Set<LdapGroup> availableLdapGroups = RoleLdapGroupSelector.convertToCollection(result);
+                // Update record with both objects.
+                //record.setAttribute("ldapGroupsAvailable", availableGroups);
+                init();
+            }
+        });
+    }
+
+    private void init() {
+        final boolean isReadOnly = (!this.hasManageSecurityPermission ||
+            (getRecordId() == RolesDataSource.ID_SUPERUSER) ||
+            (getRecordId() == RolesDataSource.ID_ALL_RESOURCES));
+        init(isReadOnly);
     }
 
     @Override
+    protected Record createNewRecord() {
+        Role role = new Role();
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        Record roleRecord = RolesDataSource.getInstance().copyValues(role);
+        return roleRecord;
+    }
+
     protected void editRecord(Record record) {
+        super.editRecord(record);
+
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
         // other users' assigned roles.
         Subject whoami = UserSessionManager.getSessionSubject();
@@ -189,12 +199,10 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         }
 
         this.permissionsItem.redraw();
-
-        super.editRecord(record);
     }
 
     @Override
-    protected List<FormItem> createFormItems(boolean newUser) {
+    protected List<FormItem> createFormItems(boolean newRole) {
         List<FormItem> items = new ArrayList<FormItem>();
 
         TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, MSG.common_title_name());
@@ -239,27 +247,31 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         // Grab the currently assigned sets from each of the selectors and stick them into the corresponding canvas
         // items on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
         // to the datasource's add or update methods .
-        // TODO: Uncomment and fix the below lines.
-        /*ListGridRecord[] groupRecords = this.groupSelector.getAssignedGrid().getRecords();
+        ListGridRecord[] groupRecords = this.groupSelector.getAssignedGrid().getRecords();
         getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, groupRecords);
 
         ListGridRecord[] subjectRecords = this.subjectSelector.getAssignedGrid().getRecords();
         getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
 
-        ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getRecords();
-        getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);*/
+        if (this.ldapGroupSelector != null) {
+            ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getRecords();
+            getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);
+        }
 
-        //permissionsItem.getPermissions();
         // Submit the form values to the datasource.
         super.save();
     }
 
     @Override
     protected void reset() {
-        super.reset();
+        super.reset();        
+
+        this.permissionsItem.reset();
         this.groupSelector.reset();
         this.subjectSelector.reset();
-        this.ldapGroupSelector.reset();
+        if (this.ldapGroupSelector != null) {
+            this.ldapGroupSelector.reset();
+        }
     }
 
 }

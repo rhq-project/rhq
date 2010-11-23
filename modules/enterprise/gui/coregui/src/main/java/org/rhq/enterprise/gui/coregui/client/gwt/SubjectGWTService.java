@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import javax.persistence.EntityExistsException;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SubjectException;
 
 /**
  * @see org.rhq.enterprise.server.auth.SubjectManagerLocal
@@ -48,6 +51,17 @@ public interface SubjectGWTService extends RemoteService {
      * @return the newly persisted {@link Subject}
      */
     Subject createSubject(Subject subjectToCreate);
+
+    /**
+     * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
+     * password.
+     *
+     * @param subjectToCreate the subject to be created (which will never be the same as <code>subject</code>)
+     * @param password the password for the principal to be created for the new user
+     *
+     * @return the persisted subject
+     */
+    Subject createSubject(Subject subjectToCreate, String password);
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with

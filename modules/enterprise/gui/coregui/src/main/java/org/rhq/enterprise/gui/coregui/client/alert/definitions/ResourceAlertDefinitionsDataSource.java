@@ -37,6 +37,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 
 /**
  * @author John Mazzitelli
@@ -66,10 +67,9 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
             record.setLinkText("");
             record.setAttribute(FIELD_READONLY, MSG.common_val_na());
         } else {
-            // TODO: fix the URLs so they point to the new GWT pages when they are implemented
             if (parentId != null && parentId.intValue() != 0) {
-                record.setAttribute(FIELD_PARENT, "/alerts/Config.do?mode=viewRoles&type="
-                    + this.resource.getResourceType().getId() + "&from=" + from.getId() + "&ad=" + parentId);
+                record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesLink() + "/Alert/"
+                    + this.resource.getResourceType().getId());
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
                 record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()

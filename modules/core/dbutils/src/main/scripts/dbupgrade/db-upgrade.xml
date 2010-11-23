@@ -3007,63 +3007,12 @@
             </schemaSpec>
 
             <schemaSpec version="2.88">
-                <!-- the customizable dashboard storage system -->
-
-                <schema-createSequence name="RHQ_DASHBOARD_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
-                    <statement desc="Creating table RHQ_DASHBOARD">
-                        CREATE TABLE RHQ_DASHBOARD ( ID INTEGER PRIMARY KEY )
+                    <statement desc="Add end time index on call time data to speed up purges">
+                        CREATE INDEX RHQ_CT_DA_VA_END_TIM_IDX ON RHQ_CALLTIME_DATA_VALUE (end_time)
                     </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_DASHBOARD" column="ID" nullable="FALSE"/>
-                <schema-addColumn   table="RHQ_DASHBOARD" column="NAME" columnType="VARCHAR2" precision="200"/>
-                <schema-alterColumn table="RHQ_DASHBOARD" column="NAME" nullable="FALSE"/>
-                <schema-addColumn   table="RHQ_DASHBOARD" column="SUBJECT_ID" columnType="INTEGER"/>
-                <schema-addColumn   table="RHQ_DASHBOARD" column="SHARED" columnType="BOOLEAN"/>
-                <schema-alterColumn table="RHQ_DASHBOARD" column="SHARED" nullable="FALSE"/>
-                <schema-addColumn   table="RHQ_DASHBOARD" column="CONFIGURATION_ID" columnType="INTEGER"/>
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_DASHBOARD
-                        ADD CONSTRAINT RHQ_DASHBOARD_CONFIG_ID_FK
-                        FOREIGN KEY ( CONFIGURATION_ID )
-                        REFERENCES RHQ_CONFIG ( ID )
-                    </statement>
-                </schema-directSQL>
-
-                <schema-createSequence name="RHQ_DASHBOARD_PORTLET_ID_SEQ" initial="10001"/>
-                <schema-directSQL>
-                    <statement desc="Creating table RHQ_DASHBOARD_PORTLET">
-                        CREATE TABLE RHQ_DASHBOARD_PORTLET ( ID INTEGER PRIMARY KEY )
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="ID" nullable="FALSE"/>
-
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="NAME" columnType="VARCHAR2" precision="200"/>
-                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="NAME" nullable="FALSE"/>
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="PORTLET_KEY" columnType="VARCHAR2"
-                                                                  precision="200"/>
-                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="PORTLET_KEY" nullable="FALSE"/>
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="COL" columnType="INTEGER"/>
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="COL_INDEX" columnType="INTEGER"/>
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="HEIGHT" columnType="INTEGER"/>
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="CONFIGURATION_ID" columnType="INTEGER"/>
-                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="DASHBOARD_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="DASHBOARD_ID" nullable="FALSE"/>
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_DASHBOARD_PORTLET
-                        ADD CONSTRAINT RHQ_DP_CONFIGURATION_ID_FK
-                        FOREIGN KEY ( CONFIGURATION_ID )
-                        REFERENCES RHQ_CONFIG ( ID )
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement>
-                        ALTER TABLE RHQ_DASHBOARD_PORTLET
-                        ADD CONSTRAINT RHQ_DP_DASHBOARD_ID_FK
-                        FOREIGN KEY ( DASHBOARD_ID )
-                        REFERENCES RHQ_DASHBOARD ( ID )
+                    <statement desc="Add index on measurement definition numeric type">
+                        CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -3123,17 +3072,6 @@
             </schemaSpec>
 
             <schemaSpec version="2.91">
-                <schema-directSQL>
-                    <statement desc="Add end time index on call time data to speed up purges">
-                        CREATE INDEX RHQ_CT_DA_VA_END_TIM_IDX ON RHQ_CALLTIME_DATA_VALUE (end_time)
-                    </statement>
-                    <statement desc="Add index on measurement definition numeric type">
-                        CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
-
-            <schemaSpec version="2.92">
                 <!-- if some role previously had CONFIGURE perm (now called CONFIGURE_WRITE), give it the implied perm
                      CONFIGURE_READ so users don't experience an unexpected permission restriction after upgrade -->
                 <schema-directSQL>
@@ -3146,8 +3084,8 @@
                 </schema-directSQL>
             </schemaSpec>
 
-            <!-- BZ 622491 - 2.93.x - modifiedBy should only be username, not a subject ID and should be size 100 -->
-            <schemaSpec version="2.93.1">
+            <!-- BZ 622491 - 2.92.x - modifiedBy should only be username, not a subject ID and should be size 100 -->
+            <schemaSpec version="2.92.1">
                 <!-- first do the RHQ_RESOURCE_GROUP table -->
                 <schema-addColumn table="RHQ_RESOURCE_GROUP" column="MODIFIED_BY_VARCHAR" columnType="VARCHAR2" precision="100"/>
                 <schema-directSQL>
@@ -3167,7 +3105,7 @@
                 </schema-directSQL>
             </schemaSpec>
 
-            <schemaSpec version="2.93.2">
+            <schemaSpec version="2.92.2">
                 <!-- second do the RHQ_RESOURCE table -->
                 <schema-addColumn table="RHQ_RESOURCE" column="MODIFIED_BY_VARCHAR" columnType="VARCHAR2" precision="100"/>
                 <schema-directSQL>
@@ -3187,9 +3125,71 @@
                 </schema-directSQL>
             </schemaSpec>
 
-            <schemaSpec version="2.93.3">
+            <schemaSpec version="2.92.3">
                 <!-- third, maintain consistency across data model - everywhere else, SUBJECT_NAME is of size 100, make this one 100 too -->
                 <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="100" />
+            </schemaSpec>
+
+            <schemaSpec version="2.93">
+                <!-- the customizable dashboard storage system -->
+
+                <schema-createSequence name="RHQ_DASHBOARD_ID_SEQ" initial="10001"/>
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DASHBOARD">
+                        CREATE TABLE RHQ_DASHBOARD ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="ID" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="NAME" columnType="VARCHAR2" precision="200"/>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="NAME" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="SUBJECT_ID" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="SHARED" columnType="BOOLEAN"/>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="SHARED" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="CONFIGURATION_ID" columnType="INTEGER"/>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DASHBOARD_CONFIG_ID_FK
+                        FOREIGN KEY ( CONFIGURATION_ID )
+                        REFERENCES RHQ_CONFIG ( ID )
+                    </statement>
+                </schema-directSQL>
+
+                <schema-createSequence name="RHQ_DASHBOARD_PORTLET_ID_SEQ" initial="10001"/>
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DASHBOARD_PORTLET">
+                        CREATE TABLE RHQ_DASHBOARD_PORTLET ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="ID" nullable="FALSE"/>
+
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="NAME" columnType="VARCHAR2" precision="200"/>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="NAME" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="PORTLET_KEY" columnType="VARCHAR2"
+                                                                  precision="200"/>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="PORTLET_KEY" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="COL" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="COL_INDEX" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="HEIGHT" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="CONFIGURATION_ID" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="DASHBOARD_ID" columnType="INTEGER"/>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="DASHBOARD_ID" nullable="FALSE"/>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_DASHBOARD_PORTLET
+                        ADD CONSTRAINT RHQ_DP_CONFIGURATION_ID_FK
+                        FOREIGN KEY ( CONFIGURATION_ID )
+                        REFERENCES RHQ_CONFIG ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_DASHBOARD_PORTLET
+                        ADD CONSTRAINT RHQ_DP_DASHBOARD_ID_FK
+                        FOREIGN KEY ( DASHBOARD_ID )
+                        REFERENCES RHQ_DASHBOARD ( ID )
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.94">

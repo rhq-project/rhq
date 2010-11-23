@@ -46,7 +46,7 @@ public class LinkManager {
     }
 
     public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
-        return getResourceGroupLink(groupId) + "/Inventory/Connection Settings History";
+        return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {

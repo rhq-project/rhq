@@ -96,6 +96,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             }
 
             String resourceKey = createResourceKey(serverName, hosts);
+            String resourceName = resourceKey; //this'll get overridden below if we find a better value using the address variable
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
@@ -104,7 +105,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 String scheme = address.scheme;
                 String hostToPing = address.host;
                 int portToPing = address.port;
-                if (address.isPortWildcard()) {
+                if (address.isPortWildcard() || !address.isPortDefined()) {
                     Address serverAddress = serverComponent.getAddressUtility().getMainServerSampleAddress(tree, hostToPing, 0);
                     if (serverAddress != null) {
                         portToPing = serverAddress.port;
@@ -132,21 +133,14 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
                 pluginConfiguration.put(urlProp);
                 
-            }
-            
-            if (address != null) {
                 File rtLogFile = new File(logsDir, address.host + address.port + RT_LOG_FILE_NAME_SUFFIX);
-    
+                
                 PropertySimple rtLogProp = new PropertySimple(
                     ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
                 pluginConfiguration.put(rtLogProp);
-            }
-            
-            String resourceName;
-            if (serverName != null) {
-                resourceName = address.host + ":" + address.port;
-            } else {
-                resourceName = resourceKey;
+
+                //redefine the resourcename using the virtual host sample address
+                resourceName = address.toString(false);
             }
 
             //BZ 612189 - remove this once we have resource upgrade
@@ -320,7 +314,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             return ret;
         } catch (Exception e) {
-            log.warn("Error while trying to contact SNMP of the apache server " + discoveryContext.getParentResourceContext().getResourceKey(), e);
+            log.debug("Error while trying to contact SNMP of the apache server " + discoveryContext.getParentResourceContext().getResourceKey(), e);
             return null;
         }
     }

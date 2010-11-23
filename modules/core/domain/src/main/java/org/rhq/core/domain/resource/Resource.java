@@ -60,7 +60,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -911,9 +910,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Column(name = "ITIME")
     private Long itime = System.currentTimeMillis(); // time inventory status changed
 
-    @JoinColumn(name = "MODIFIED_BY")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Subject modifiedBy;
+    @Column(name = "MODIFIED_BY")
+    private String modifiedBy;
 
     @Column(name = "LOCATION")
     private String location;
@@ -1229,11 +1227,11 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.mtime = System.currentTimeMillis();
     }
 
-    public Subject getModifiedBy() {
+    public String getModifiedBy() {
         return this.modifiedBy;
     }
 
-    public void setModifiedBy(Subject modifiedBy) {
+    public void setModifiedBy(String modifiedBy) {
         this.modifiedBy = modifiedBy;
     }
 

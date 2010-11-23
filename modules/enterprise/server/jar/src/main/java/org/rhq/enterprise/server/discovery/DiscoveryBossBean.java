@@ -370,7 +370,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             Resource parentResource = this.resourceManager.getResourceById(creator, resource.getParentResource()
                 .getId());
             resource.setAgent(parentResource.getAgent());
-            resource.setModifiedBy(creator);
+            resource.setModifiedBy(creator.getName());
 
             // Manually added resources are auto-committed.
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
@@ -746,7 +746,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         resource.setItime(System.currentTimeMillis());
-        resource.setModifiedBy(subjectManager.getOverlord());
+        resource.setModifiedBy(subjectManager.getOverlord().getName());
         for (Resource childResource : resource.getChildResources()) {
             initAutoDiscoveredResource(childResource, resource);
         }

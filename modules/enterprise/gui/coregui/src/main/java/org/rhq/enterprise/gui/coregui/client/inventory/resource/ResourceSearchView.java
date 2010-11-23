@@ -114,7 +114,6 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-
         ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 40);
         iconField.setType(ListGridFieldType.IMAGE);
         iconField.setImageURLPrefix("types/");
@@ -163,6 +162,9 @@ public class ResourceSearchView extends Table {
             }
         });
 
+        //        //load double click handler for this table
+        //        configureDoubleClickHandler();
+
         /*searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
                 if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
@@ -181,7 +183,23 @@ public class ResourceSearchView extends Table {
                 }
             }
         });*/
+
+
     }
+
+    //    /** Defines the double click handler action for ResourceSearch.  This means that on double
+    //     * click a (Resource-relative) url, specifically Summary/Overview is what will happen
+    //     * with this action. Override in subclasses to define alternate behavior.
+    //     */
+    //    protected void configureDoubleClickHandler() {
+    //        //adding cell double click handler
+    //        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
+    //            @Override
+    //            public void onCellDoubleClick(CellDoubleClickEvent event) {
+    //                CoreGUI.goToView("Resource/" + event.getRecord().getAttribute("id") + "/Summary/Overview");
+    //            }
+    //        });
+    //    }
 
     public int getMatches() {
         return this.getListGrid().getTotalRows();

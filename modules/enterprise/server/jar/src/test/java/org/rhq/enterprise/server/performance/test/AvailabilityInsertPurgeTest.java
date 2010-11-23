@@ -25,6 +25,12 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
@@ -48,22 +54,16 @@ import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
 import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 
-import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
-
 /**
  * Performance test the availabilities subsystem
  *
  * @author Heiko W. Rupp
  * @author Lukas Krejci
  */
-@Test(groups = "PERF" )
-@Listeners({ DatabaseSetupInterceptor.class })
-@PerformanceReporting(exporter=ExcelExporter.class)
-@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.101")
+@Test(groups = "PERF")
+@Listeners( { DatabaseSetupInterceptor.class })
+@PerformanceReporting(exporter = ExcelExporter.class)
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion = "2.101")
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     ResourceManagerLocal resourceManager;
@@ -74,8 +74,9 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     private static final int MILLIS_APART = 2000;
     private static final String ROUND__FORMAT = "Round %6d";
     private static final String PURGE__FORMAT = "Purge %6d";
-    private static final int[] ROUNDS = new int[]{1000,2000,3000,5000,10000};
-//    private static final int[] ROUNDS = new int[]{10,20};
+    private static final int[] ROUNDS = new int[] { 1000, 2000, 3000, 5000, 10000 };
+
+    //    private static final int[] ROUNDS = new int[]{10,20};
 
     @BeforeMethod
     public void beforeMethod(Method method) {
@@ -103,9 +104,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     @AfterMethod
     public void afterMethod(ITestResult result, Method meth) {
-        super.reportTimings(result,meth);
+        super.reportTimings(result, meth);
     }
-
 
     /**
      * Send availability reports to the server and measure timing.
@@ -123,15 +123,15 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
-        Agent agent = agentManager.getAgentByResourceId(res.getId());
+        Agent agent = agentManager.getAgentByResourceId(overlord, res.getId());
 
         q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
         Object o = q.getSingleResult();
-        Long l = (Long)o;
-        if (l!=0) {
+        Long l = (Long) o;
+        if (l != 0) {
             throw new IllegalStateException("Availabilities table is not empty");
         }
-        systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+        systemManager.vacuum(overlord, new String[] { "rhq_availability" });
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
@@ -151,38 +151,37 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             }
 
             // merge is over. Now lets purge in two steps
-            startTiming(String.format(PURGE__FORMAT,MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
-            startTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT, MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
             availabilityManager.purgeAvailabilities(t1);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
+            endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
-            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+            systemManager.vacuum(overlord, new String[] { "rhq_availability" });
 
         }
 
+        long timing1000 = getTiming(String.format(ROUND__FORMAT, 1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT, 2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT, 3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT, 5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT, 10000));
 
-        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
-        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
-        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
-        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
-        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+        assertLinear(timing1000, timing2000, 2, "Merge2");
+        assertLinear(timing1000, timing3000, 3, "Merge3");
+        assertLinear(timing1000, timing5000, 5, "Merge5");
+        assertLinear(timing1000, timing10000, 10, "Merge10");
 
-        assertLinear(timing1000,timing2000,2,"Merge2");
-        assertLinear(timing1000,timing3000,3,"Merge3");
-        assertLinear(timing1000,timing5000,5,"Merge5");
-        assertLinear(timing1000,timing10000,10,"Merge10");
+        long purge1000 = getTiming(String.format(PURGE__FORMAT, 1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT, 2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT, 3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT, 5000));
 
-        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
-        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
-        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
-        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
-
-        assertLinear(purge1000,purge2000,2,"Purge2");
-        assertLinear(purge1000,purge3000,3,"Purge3");
-        assertLinear(purge1000,purge5000,5,"Purge3");
+        assertLinear(purge1000, purge2000, 2, "Purge2");
+        assertLinear(purge1000, purge3000, 3, "Purge3");
+        assertLinear(purge1000, purge5000, 5, "Purge3");
 
     }
 
@@ -194,12 +193,11 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testRandom() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
-        Agent agent = agentManager.getAgentByResourceId(res.getId());
+        Agent agent = agentManager.getAgentByResourceId(overlord, res.getId());
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
@@ -209,7 +207,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
-                    int rand = (int) (Math.random()*2);
+                    int rand = (int) (Math.random() * 2);
                     AvailabilityType at = (rand == 1) ? AvailabilityType.UP : AvailabilityType.DOWN;
                     Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
@@ -220,39 +218,37 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             }
 
             // merge is over. Now lets purge in two steps
-            startTiming(String.format(PURGE__FORMAT,MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
-            startTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT, MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
             availabilityManager.purgeAvailabilities(t1);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
+            endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
-            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+            systemManager.vacuum(overlord, new String[] { "rhq_availability" });
 
         }
 
-        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
-        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
-        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
-        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
-        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+        long timing1000 = getTiming(String.format(ROUND__FORMAT, 1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT, 2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT, 3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT, 5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT, 10000));
 
+        assertLinear(timing1000, timing2000, 2, "Merge2");
+        assertLinear(timing1000, timing3000, 3, "Merge3");
+        assertLinear(timing1000, timing5000, 5, "Merge5");
+        assertLinear(timing1000, timing10000, 10, "Merge10");
 
-        assertLinear(timing1000,timing2000,2,"Merge2");
-        assertLinear(timing1000,timing3000,3,"Merge3");
-        assertLinear(timing1000,timing5000,5,"Merge5");
-        assertLinear(timing1000,timing10000,10,"Merge10");
+        long purge1000 = getTiming(String.format(PURGE__FORMAT, 1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT, 2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT, 3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT, 5000));
 
-
-        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
-        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
-        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
-        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
-
-        assertLinear(purge1000,purge2000,2,"Purge2");
-        assertLinear(purge1000,purge3000,3,"Purge3");
-        assertLinear(purge1000,purge5000,5,"Purge3");
+        assertLinear(purge1000, purge2000, 2, "Purge2");
+        assertLinear(purge1000, purge3000, 3, "Purge3");
+        assertLinear(purge1000, purge5000, 5, "Purge3");
 
     }
 
@@ -264,12 +260,11 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testAlwaysUp() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
-        Agent agent = agentManager.getAgentByResourceId(res.getId());
+        Agent agent = agentManager.getAgentByResourceId(overlord, res.getId());
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
@@ -279,7 +274,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
-                    AvailabilityType at =  AvailabilityType.UP;
+                    AvailabilityType at = AvailabilityType.UP;
                     Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }
@@ -289,40 +284,37 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             }
 
             // merge is over. Now lets purge in two steps
-            startTiming(String.format(PURGE__FORMAT,MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
-            startTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT, MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
             availabilityManager.purgeAvailabilities(t1);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
+            endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
-            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+            systemManager.vacuum(overlord, new String[] { "rhq_availability" });
 
         }
 
+        long timing1000 = getTiming(String.format(ROUND__FORMAT, 1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT, 2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT, 3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT, 5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT, 10000));
 
-        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
-        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
-        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
-        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
-        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+        assertLinear(timing1000, timing2000, 2, "Merge2");
+        assertLinear(timing1000, timing3000, 3, "Merge3");
+        assertLinear(timing1000, timing5000, 5, "Merge5");
+        assertLinear(timing1000, timing10000, 10, "Merge10");
 
+        long purge1000 = getTiming(String.format(PURGE__FORMAT, 1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT, 2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT, 3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT, 5000));
 
-        assertLinear(timing1000,timing2000,2,"Merge2");
-        assertLinear(timing1000,timing3000,3,"Merge3");
-        assertLinear(timing1000,timing5000,5,"Merge5");
-        assertLinear(timing1000,timing10000,10,"Merge10");
-
-
-        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
-        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
-        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
-        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
-
-        assertLinear(purge1000,purge2000,2,"Purge2");
-        assertLinear(purge1000,purge3000,3,"Purge3");
-        assertLinear(purge1000,purge5000,5,"Purge3");
+        assertLinear(purge1000, purge2000, 2, "Purge2");
+        assertLinear(purge1000, purge3000, 3, "Purge3");
+        assertLinear(purge1000, purge5000, 5, "Purge3");
 
     }
 
@@ -337,20 +329,19 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testAlternatingWithAlert() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
-        Agent agent = agentManager.getAgentByResourceId(res.getId());
+        Agent agent = agentManager.getAgentByResourceId(overlord, res.getId());
 
         q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
         Object o = q.getSingleResult();
-        Long l = (Long)o;
-        if (l!=0) {
+        Long l = (Long) o;
+        if (l != 0) {
             throw new IllegalStateException("Availabilities table is not empty");
         }
-        systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+        systemManager.vacuum(overlord, new String[] { "rhq_availability" });
 
         // Set up an alert definition on one resource
         AlertCondition goingDown = new AlertCondition();
@@ -364,7 +355,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         def.setPriority(AlertPriority.MEDIUM);
         def.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
         def.setRecoveryId(0);
-        alertDefinitionManager.createAlertDefinition(overlord,def,res.getId());
+        alertDefinitionManager.createAlertDefinition(overlord, def, res.getId());
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
@@ -384,38 +375,37 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             }
 
             // merge is over. Now lets purge in two steps
-            startTiming(String.format(PURGE__FORMAT,MULTI));
-            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
-            startTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI / 2) * MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT, MULTI));
+            startTiming(String.format(PURGE__FORMAT, MULTI));
             availabilityManager.purgeAvailabilities(t1);
-            endTiming(String.format(PURGE__FORMAT,MULTI));
+            endTiming(String.format(PURGE__FORMAT, MULTI));
             // Vacuum the db
             overlord = LookupUtil.getSubjectManager().getOverlord();
-            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+            systemManager.vacuum(overlord, new String[] { "rhq_availability" });
 
         }
 
+        long timing1000 = getTiming(String.format(ROUND__FORMAT, 1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT, 2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT, 3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT, 5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT, 10000));
 
-        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
-        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
-        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
-        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
-        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+        assertLinear(timing1000, timing2000, 2, "Merge2");
+        assertLinear(timing1000, timing3000, 3, "Merge3");
+        assertLinear(timing1000, timing5000, 5, "Merge5");
+        assertLinear(timing1000, timing10000, 10, "Merge10");
 
-        assertLinear(timing1000,timing2000,2,"Merge2");
-        assertLinear(timing1000,timing3000,3,"Merge3");
-        assertLinear(timing1000,timing5000,5,"Merge5");
-        assertLinear(timing1000,timing10000,10,"Merge10");
+        long purge1000 = getTiming(String.format(PURGE__FORMAT, 1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT, 2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT, 3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT, 5000));
 
-        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
-        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
-        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
-        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
-
-        assertLinear(purge1000,purge2000,2,"Purge2");
-        assertLinear(purge1000,purge3000,3,"Purge3");
-        assertLinear(purge1000,purge5000,5,"Purge3");
+        assertLinear(purge1000, purge2000, 2, "Purge2");
+        assertLinear(purge1000, purge3000, 3, "Purge3");
+        assertLinear(purge1000, purge5000, 5, "Purge3");
 
     }
 }

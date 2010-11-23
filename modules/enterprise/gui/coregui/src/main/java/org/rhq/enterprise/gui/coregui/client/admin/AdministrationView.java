@@ -60,7 +60,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
     private static final ViewName PAGE_SYSTEM_SETTINGS_VIEW_ID = new ViewName("SystemSettings", MSG
         .view_adminConfig_systemSettings());
-    private static final ViewName PAGE_TEMPLATES_VIEW_ID = new ViewName("Templates", MSG.view_adminConfig_templates());
+    public static final ViewName PAGE_TEMPLATES_VIEW_ID = new ViewName("Templates", MSG.view_adminConfig_templates());
     private static final ViewName PAGE_DOWNLOADS_VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads());
     private static final ViewName PAGE_LICENSE_VIEW_ID = new ViewName("License", MSG.view_adminConfig_license());
     private static final ViewName PAGE_PLUGINS_VIEW_ID = new ViewName("Plugins", MSG.view_adminConfig_plugins());
@@ -87,9 +87,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     protected HTMLFlow defaultView() {
-        String contents = "<h1>Administration</h1>\n"
-            + "From this section, the RHQ global settings can be administered. This includes configuring \n"
-            + "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and various other stuff.";
+        String contents = "<h1>" + MSG.view_admin_administration() + "</h1>\n" + MSG.view_admin_landing();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;

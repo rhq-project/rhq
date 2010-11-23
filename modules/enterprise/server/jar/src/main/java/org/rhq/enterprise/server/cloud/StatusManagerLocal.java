@@ -22,6 +22,8 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
+
 /**
  * @author Joseph Marques
  */
@@ -32,9 +34,9 @@ public interface StatusManagerLocal {
 
     void markGlobalCache();
 
-    void updateByResource(int resourceId);
+    void updateByResource(Subject subject, int resourceId);
 
-    void updateByAlertDefinition(int alertDefinitionId);
+    void updateByAlertDefinition(Subject subject, int alertDefinitionId);
 
     void updateByMeasurementBaseline(int baselineId);
 

@@ -42,7 +42,7 @@ public class BundleDestinationListView extends Table {
     }
 
     public BundleDestinationListView(String locatorId, Criteria criteria) {
-        super(locatorId, "Bundle Destinations", criteria);
+        super(locatorId, MSG.view_bundle_bundleDestinations(), criteria);
         setHeaderIcon("subsystems/bundle/BundleDestination_24.png");
         setDataSource(new BundleDestinationDataSource());
     }
@@ -74,6 +74,7 @@ public class BundleDestinationListView extends Table {
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setWidth(80);
+
 
     }
 }

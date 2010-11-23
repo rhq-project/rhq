@@ -20,6 +20,8 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * Convienence class that encapsulates the different configuration properties that a notification
@@ -28,6 +30,9 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author John Mazzitelli
  */
 public class ResourceOperationNotificationInfo {
+
+    static Messages MSG = CoreGUI.getMessages();
+
     public enum Constants {
         SELECTION_MODE("selection-mode"), // self, specific, relative
         SPECIFIC_RESOURCE_ID("selection-specific-resource-id"), // 
@@ -55,16 +60,16 @@ public class ResourceOperationNotificationInfo {
         public String getDisplayString() {
             switch (ordinal()) {
             case 0: {
-                return "This Resource";
+                return MSG.view_alert_definition_notification_operation_editor_mode_this();
             }
             case 1: {
-                return "Specific Resource";
+                return MSG.view_alert_definition_notification_operation_editor_mode_specific();
             }
             case 2: {
-                return "Relative Resource";
+                return MSG.view_alert_definition_notification_operation_editor_mode_relative();
             }
             default: {
-                return "UNKNOWN OPTION - THIS IS A BUG"; // should never happen
+                return MSG.view_alert_definition_notification_operation_editor_mode_unknown(); // should never happen
             }
             }
         }

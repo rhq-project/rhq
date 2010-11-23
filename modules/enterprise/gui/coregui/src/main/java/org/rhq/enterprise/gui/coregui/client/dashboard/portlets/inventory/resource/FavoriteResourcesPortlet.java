@@ -61,8 +61,6 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
@@ -85,6 +83,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             }
         });
 
+        super.configureTable();
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

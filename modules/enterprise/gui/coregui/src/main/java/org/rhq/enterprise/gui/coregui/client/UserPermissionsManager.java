@@ -84,6 +84,10 @@ public class UserPermissionsManager {
         }
     }
 
+    public Set<Permission> getGlobalPermissions() {
+        return this.globalPermissions;
+    }
+
     public void loadResourcePermissions(ResourceComposite currentResource,
         PermissionsLoadedListener permissionsLoadedListener) {
         if ((this.currentContext != Context.RESOURCE) || (this.currentId != currentResource.getResource().getId())) {
@@ -199,6 +203,7 @@ public class UserPermissionsManager {
     private void notifyGlobalPermissionsLoadedListener() {
         if (this.globalPermissionsLoadedListener != null) {
             this.globalPermissionsLoadedListener.onPermissionsLoaded(this.globalPermissions);
+            this.globalPermissionsLoadedListener = null;
         }
     }
 
@@ -243,6 +248,7 @@ public class UserPermissionsManager {
     private void notifyResourcePermissionsLoadedListener() {
         if (this.resourcePermissionsLoadedListener != null) {
             this.resourcePermissionsLoadedListener.onPermissionsLoaded(this.resourcePermissions);
+            this.resourcePermissionsLoadedListener = null;
         }
     }
 

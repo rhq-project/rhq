@@ -62,7 +62,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Select Deployment Bundle Version";
+        return MSG.view_bundle_deployWizard_selectVersionStep();
     }
 
     public Canvas getCanvas() {
@@ -143,8 +143,8 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                         new AsyncCallback<PageList<BundleDeployment>>() {
 
                             public void onSuccess(PageList<BundleDeployment> result) {
-                                radioGroupValues.put(LATEST_VERSION, "Latest Version  [ " + latestVersion.getVersion()
-                                    + " ]");
+                                radioGroupValues.put(LATEST_VERSION, MSG
+                                    .view_bundle_deployWizard_selectVersion_latest(latestVersion.getVersion()));
 
                                 if (!result.isEmpty()) {
                                     BundleDeployment liveDeployment = result.get(0);
@@ -154,11 +154,12 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                                     liveDeployment.setBundleVersion(bundleVersions.get(i));
                                     wizard.setLiveDeployment(liveDeployment);
                                     liveVersion = liveDeployment.getBundleVersion();
-                                    radioGroupValues.put(LIVE_VERSION, "Live Version  [ " + liveVersion.getVersion()
-                                        + " ]");
+                                    radioGroupValues.put(LIVE_VERSION, MSG
+                                        .view_bundle_deployWizard_selectVersion_live(liveVersion.getVersion()));
                                 }
 
-                                radioGroupValues.put(SELECT_VERSION, "Select Version from List:");
+                                radioGroupValues.put(SELECT_VERSION, MSG
+                                    .view_bundle_deployWizard_selectVersion_select());
                                 selectVersionItem.setValueMap(selectVersionValues);
                                 selectVersionItem.setValue(latestVersion.getVersion());
                                 selectVersionItem.redraw();
@@ -172,13 +173,13 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                             }
 
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to find defined deployments.", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_11(), caught);
                             }
                         });
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to find defined bundles.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_12(), caught);
                 }
             });
     }

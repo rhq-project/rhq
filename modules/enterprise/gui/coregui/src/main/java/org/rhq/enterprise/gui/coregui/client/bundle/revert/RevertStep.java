@@ -51,7 +51,7 @@ public class RevertStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Deploy Bundle to Destination Platforms";
+        return MSG.view_bundle_revertWizard_revertStep_name();
     }
 
     public Canvas getCanvas() {
@@ -66,7 +66,7 @@ public class RevertStep extends AbstractWizardStep {
             deployingImage.setWidth(50);
             deployingImage.setHeight(15);
 
-            final Label deployingMessage = new Label("Reverting...");
+            final Label deployingMessage = new Label(MSG.view_bundle_revertWizard_revertStep_reverting());
             deployingMessage.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
             canvas.addMember(deployingImage);
@@ -77,18 +77,19 @@ public class RevertStep extends AbstractWizardStep {
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
                         deployingImage.setSrc("/images/status_complete.gif");
-                        deployingMessage.setText("Revert Deployment Scheduled!");
+                        deployingMessage.setText(MSG.view_bundle_revertWizard_revertStep_scheduled());
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Scheduled revert bundle deployment [" + result.getName()
-                                + "] resource group [" + result.getDestination().getGroup() + "]", Severity.Info));
+                            new Message(MSG.view_bundle_revertWizard_revertStep_scheduledDetails(result.getName(),
+                                result.getDestination().getGroup().getName()), Severity.Info));
                         wizard.setDeployment(result);
                     }
 
                     public void onFailure(Throwable caught) {
                         deployingImage.setSrc("/images/status_error.gif");
-                        deployingMessage.setText("Failed to Schedule Revert Deployment!");
+                        deployingMessage.setText(MSG.view_bundle_revertWizard_revertStep_scheduledFailure());
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to schedule revert deployment: " + caught.getMessage(), caught);
+                            MSG.view_bundle_revertWizard_revertStep_scheduledFailure() + ": " + caught.getMessage(),
+                            caught);
                     }
                 });
         }

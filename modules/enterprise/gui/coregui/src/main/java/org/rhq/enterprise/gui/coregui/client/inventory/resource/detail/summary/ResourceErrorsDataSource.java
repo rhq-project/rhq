@@ -45,10 +45,12 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
 
-    public static final String SUMMARY_ID = "summary";
-    public static final String DETAIL_ID = "detail";
-    public static final String ERROR_TYPE_ID = "errorType";
-    public static final String TIME_OCCURED_ID = "timeOccured";
+    public static abstract class Field {
+        public static final String SUMMARY = "summary";
+        public static final String DETAIL = "detail";
+        public static final String ERROR_TYPE = "errorType";
+        public static final String TIME_OCCURED = "timeOccured";
+    }
 
     ResourceGWTServiceAsync resourceService;
     int resourceId;
@@ -64,10 +66,10 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        fields.add(new DataSourceTextField(SUMMARY_ID, "Summary"));
-        fields.add(new DataSourceTextField(DETAIL_ID, "Detailed Message"));
-        fields.add(new DataSourceEnumField(ERROR_TYPE_ID, "Error Type"));
-        fields.add(new DataSourceDateTimeField(TIME_OCCURED_ID, "Time"));
+        fields.add(new DataSourceEnumField(Field.ERROR_TYPE, MSG.dataSource_resourceErrors_field_errorType()));
+        fields.add(new DataSourceDateTimeField(Field.TIME_OCCURED, MSG.dataSource_resourceErrors_field_timeOccured()));
+        fields.add(new DataSourceTextField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary()));
+        fields.add(new DataSourceTextField(Field.DETAIL, MSG.dataSource_resourceErrors_field_detail()));
 
         return fields;
     }
@@ -80,7 +82,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         resourceService.findResourceErrors(resourceId, new AsyncCallback<List<ResourceError>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    "Failed to find resource errors for resource with id: " + resourceId, caught);
+                    MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceId)), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -88,7 +90,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
             public void onSuccess(List<ResourceError> result) {
                 response.setData(buildRecords(result));
                 processResponse(request.getRequestId(), response);
-            };
+            }
         });
     }
 
@@ -100,10 +102,10 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
     public ListGridRecord copyValues(ResourceError from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute(DETAIL_ID, from.getDetail());
-        record.setAttribute(ERROR_TYPE_ID, from.getErrorType().name());
-        record.setAttribute(SUMMARY_ID, from.getSummary());
-        record.setAttribute(TIME_OCCURED_ID, new Date(from.getTimeOccurred()));
+        record.setAttribute(Field.DETAIL, from.getDetail());
+        record.setAttribute(Field.ERROR_TYPE, from.getErrorType().name());
+        record.setAttribute(Field.SUMMARY, from.getSummary());
+        record.setAttribute(Field.TIME_OCCURED, new Date(from.getTimeOccurred()));
 
         return record;
     }

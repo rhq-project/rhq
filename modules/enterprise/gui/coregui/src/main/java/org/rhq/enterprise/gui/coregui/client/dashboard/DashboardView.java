@@ -121,9 +121,12 @@ public class DashboardView extends LocatableVLayout {
         nameItem.setValue(storedDashboard.getName());
         nameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
-                storedDashboard.setName((String) changedEvent.getValue());
-                save();
-                dashboardsView.updateNames();
+                String val = (String) changedEvent.getValue();
+                if (!(null == val || "".equals(val.trim()))) {
+                    storedDashboard.setName(val.trim());
+                    save();
+                    dashboardsView.updateNames();
+                }
             }
         });
 
@@ -199,7 +202,7 @@ public class DashboardView extends LocatableVLayout {
         picker.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 Object v = changedEvent.getValue();
-                com.allen_sauer.gwt.log.client.Log.info("color chagned to " + v);
+                com.allen_sauer.gwt.log.client.Log.info("color changed to " + v);
                 setBackgroundColor(String.valueOf(v));
                 storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, String.valueOf(v)));
                 save();
@@ -302,16 +305,20 @@ public class DashboardView extends LocatableVLayout {
     }
 
     public void delete() {
-        GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(), new AsyncCallback<Void>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("", caught);
-            }
+        if (null != this.storedDashboard && this.storedDashboard.getId() > 0) {
+            GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(),
+                new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("", caught);
+                    }
 
-            public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_dashboardManager_deleted(storedDashboard.getName()), Message.Severity.Info));
-            }
-        });
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_dashboardManager_deleted(storedDashboard.getName()),
+                                Message.Severity.Info));
+                    }
+                });
+        }
     }
 
     public void resize() {

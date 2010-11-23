@@ -141,11 +141,13 @@ public class LoginView extends LocatableCanvas {
 
             user.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
-                    if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                    if ((event.getCharacterValue() != null)
+                        && (((event.getCharacterValue() == KeyCodes.KEY_ENTER)) || (event.getCharacterValue() == KeyCodes.KEY_TAB))) {
                         password.focusInItem(); // Work around the form not getting auto-fill values until the field is focused
                     }
                 }
             });
+
             password.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
                     if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
@@ -159,7 +161,7 @@ public class LoginView extends LocatableCanvas {
             window = new Window();
             window.setWidth(400);
             window.setHeight(275);
-            window.setTitle("Welcome");
+            window.setTitle(MSG.common_title_welcome());
 
             // forced focused, static size, can't close / dismiss
             window.setIsModal(true);
@@ -204,7 +206,7 @@ public class LoginView extends LocatableCanvas {
 
             VLayout column = new VLayout();
             HeaderItem header = new HeaderItem();
-            header.setValue(MSG.view_login_welcome());
+            header.setValue(MSG.view_login_welcomeMsg());
             //build ui elements for registration screen
             first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
             {
@@ -249,7 +251,7 @@ public class LoginView extends LocatableCanvas {
             HStack row = new HStack();
             row.setMembersMargin(5);
             row.setAlign(VerticalAlignment.CENTER);
-            IButton okButton = new IButton("OK");
+            IButton okButton = new IButton(MSG.common_button_ok());
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     //F5 refresh check? If they've reloaded the form for some reason then bail.

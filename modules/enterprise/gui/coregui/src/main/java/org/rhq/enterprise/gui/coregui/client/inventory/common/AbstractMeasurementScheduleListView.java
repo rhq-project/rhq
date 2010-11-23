@@ -54,7 +54,6 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
     }
 
     protected void configureTable() {
-
         ListGrid listGrid = getListGrid();
 
         // Set widths and cell formatters on the fields.
@@ -82,6 +81,8 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
             }
         });
         addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this));
+
+
     }
 
     protected class CollectionEnabledCellFormatter extends BooleanCellFormatter {

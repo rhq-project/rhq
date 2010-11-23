@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * 
  * @author John Mazzitelli
  */
-public abstract class AbstractAlertDefinitionsView extends TableSection {
+public abstract class AbstractAlertDefinitionsView extends TableSection<AbstractAlertDefinitionsDataSource> {
 
     public AbstractAlertDefinitionsView(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
@@ -51,7 +51,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
     @Override
     protected void configureTable() {
-
         ListGrid listGrid = getListGrid();
 
         AbstractAlertDefinitionsDataSource ds = getAlertDefinitionDataSource();
@@ -68,7 +67,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
         boolean permitted = isAllowedToModifyAlertDefinitions();
 
         TableActionEnablement enablement = (permitted) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
-        addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction(enablement) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newButtonPressed(selection);
                 // I don't think you want this refresh, it will recreate the new alert detail 
@@ -77,24 +76,29 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
         });
 
         enablement = (permitted) ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
-        addTableAction(extendLocatorId("Enable"), "Enable", "Are You Sure?", new AbstractTableAction(enablement) {
+        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), MSG
+            .view_alert_definitions_enable_confirm(), new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 enableButtonPressed(selection);
                 refresh();
             }
         });
-        addTableAction(extendLocatorId("Disable"), "Disable", "Are You Sure?", new AbstractTableAction(enablement) {
+        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), MSG
+            .view_alert_definitions_disable_confirm(), new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 disableButtonPressed(selection);
                 refresh();
             }
         });
-        addTableAction(extendLocatorId("Delete"), "Delete", "Are You Sure?", new AbstractTableAction(enablement) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
+            .view_alert_definitions_delete_confirm(), new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteButtonPressed(selection);
                 refresh();
             }
         });
+
+
     }
 
     @Override
@@ -110,7 +114,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
     }
 
     @Override
-    public SingleAlertDefinitionView getDetailsView(int id) {
+    public SingleAlertDefinitionView getDetailsView(final int id) {
         final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
             .extendLocatorId("singleAlertDefinitionView"), this);
 
@@ -120,10 +124,10 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             newAlertDef.setDeleted(false);
             newAlertDef.setEnabled(true);
             newAlertDef.setPriority(AlertPriority.MEDIUM);
-            newAlertDef.setParentId(Integer.valueOf(0));
+            newAlertDef.setParentId(0);
             newAlertDef.setConditionExpression(BooleanExpression.ANY);
             newAlertDef.setWillRecover(false);
-            newAlertDef.setRecoveryId(Integer.valueOf(0));
+            newAlertDef.setRecoveryId(0);
             newAlertDef.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
             newAlertDef.setNotifyFiltered(false);
             newAlertDef.setControlFiltered(false);
@@ -138,7 +142,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<AlertDefinition>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load alert definition data", caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definitions_loadFailed_single(String.valueOf(id)), caught);
                     }
 
                     public void onSuccess(PageList<AlertDefinition> result) {

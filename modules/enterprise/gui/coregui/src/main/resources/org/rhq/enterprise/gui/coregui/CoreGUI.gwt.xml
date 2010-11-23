@@ -5,7 +5,7 @@
 
     <inherits name='com.google.gwt.user.User'/>
     <inherits name='com.google.gwt.i18n.I18N'/>
-    <inherits name='org.rhq.core.RHQDomain'/> 
+    <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
@@ -39,8 +39,8 @@
     2. In hosted mode, the windows are not automatically closed,
        although you can easily close them manually in the usual way
     -->
-    <!-- When enabled FireFox is hard to use due to excessive popup window generation 
-    
+    <!-- When enabled FireFox is hard to use due to excessive popup window generation
+
     <set-property name="log_WindowLogger" value="ENABLED" />
     -->
 
@@ -86,15 +86,18 @@
     -->
     <set-property name="user.agent" value="${gwt.userAgent}"/>
 
-    <!-- Support for locales ('en' need not be specified as long as @DefaultLocale annotates 
+    <!-- Support for locales ('en' need not be specified as long as @DefaultLocale annotates
          the Constants, ConstantsWithLookup, and Messages class).  Note, these other locales
          must have a file suffixed with _<locale>.properties in the same package/directory as
          the corresponding GWT i18n interface class resides.-->
     <!--<extend-property name="locale" values="de,fr"/>-->
 
+    <extend-property name="locale" values="de"/>
+
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
     <entry-point class='org.rhq.enterprise.gui.coregui.client.SearchGUI'/>
 
+    <servlet path="/AgentGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AgentGWTServiceImpl"/>
     <servlet path="/AlertGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl"/>
     <servlet path="/AlertDefinitionGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl"/>
     <servlet path="/AlertTemplateGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertTemplateGWTServiceImpl"/>

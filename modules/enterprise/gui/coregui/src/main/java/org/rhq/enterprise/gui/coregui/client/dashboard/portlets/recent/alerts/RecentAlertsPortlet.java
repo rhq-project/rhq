@@ -385,7 +385,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         // build resource selection drop down
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem alertResourcesComboBox = new SelectItem(ALERT_RANGE_RESOURCES_VALUE);
-        alertResourcesComboBox.setTitle("for");
+        alertResourcesComboBox.setTitle(MSG.common_val_for());
         alertResourcesComboBox.setHint("");
         alertResourcesComboBox.setType("selection");
         String[] acceptableResourceDisplayValues = { RESOURCES_ALL, RESOURCES_SELECTED };

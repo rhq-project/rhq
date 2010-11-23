@@ -22,8 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.Collection;
-
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -61,12 +59,12 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
 
     @Override
     protected String getItemTitle() {
-        return "user";
+        return MSG.common_title_user();
     }
 
     @Override
     protected String getItemIcon() {
         return ITEM_ICON;
     }
-    
+
 }

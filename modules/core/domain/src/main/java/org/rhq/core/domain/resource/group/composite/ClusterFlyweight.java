@@ -23,6 +23,7 @@
 package org.rhq.core.domain.resource.group.composite;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ public class ClusterFlyweight implements Serializable {
 
     private String name;
 
-    private List<ClusterFlyweight> children;
+    private List<ClusterFlyweight> children = new ArrayList<ClusterFlyweight>(0);
 
     private int members;
 
@@ -70,7 +71,7 @@ public class ClusterFlyweight implements Serializable {
     }
 
     public void setChildren(List<ClusterFlyweight> clusterKeyFlyweights) {
-        this.children = clusterKeyFlyweights;
+        this.children = (null != clusterKeyFlyweights) ? clusterKeyFlyweights : new ArrayList<ClusterFlyweight>(0);
     }
 
     public int getGroupId() {

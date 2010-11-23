@@ -94,7 +94,7 @@ public class SearchBarPane extends LocatableHLayout {
         form.setNumCols(6);
         form.setColWidths("120", "140", "400");
 
-        final SelectItem searchType = new SelectItem("searchType", MSG.view_searchBar_search());
+        final SelectItem searchType = new SelectItem("searchType", MSG.common_title_search());
         String[] valueMap = SearchType.getValueMap();
         searchType.setValueMap(valueMap);
         searchType.setValue(valueMap[0]);
@@ -160,10 +160,10 @@ public class SearchBarPane extends LocatableHLayout {
     }
 
     private ComboBoxItem getBaseComboBox(final SearchType searchType) {
-        final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
+        final ComboBoxItem comboBox = new ComboBoxItem("query", MSG.view_searchBar_query());
         comboBox.setWidth(400);
         comboBox.setShowTitle(false);
-        comboBox.setHint("search");
+        comboBox.setHint(MSG.common_title_search().toLowerCase());
         comboBox.setShowHintInField(true);
 
         comboBox.setPickListWidth(800);

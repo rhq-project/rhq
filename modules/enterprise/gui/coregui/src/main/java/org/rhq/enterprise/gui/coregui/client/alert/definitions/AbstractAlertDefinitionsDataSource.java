@@ -102,25 +102,26 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, "Name");
+        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.view_alerts_field_name());
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, MSG
+            .common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, "Created Time");
+        DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, MSG.view_alerts_field_created_time());
         ctimeField.setType(FieldType.DATETIME);
         fields.add(ctimeField);
 
-        DataSourceTextField mtimeField = new DataSourceTextField(FIELD_MTIME, "Modified Time");
+        DataSourceTextField mtimeField = new DataSourceTextField(FIELD_MTIME, MSG.view_alerts_field_modified_time());
         mtimeField.setType(FieldType.DATETIME);
         fields.add(mtimeField);
 
-        DataSourceTextField enabledField = new DataSourceTextField(FIELD_ENABLED, "Enabled");
+        DataSourceTextField enabledField = new DataSourceTextField(FIELD_ENABLED, MSG.view_alerts_field_enabled());
         enabledField.setType(FieldType.BOOLEAN);
         fields.add(enabledField);
 
-        DataSourceImageField priorityField = new DataSourceImageField(FIELD_PRIORITY, "Priority");
+        DataSourceImageField priorityField = new DataSourceImageField(FIELD_PRIORITY, MSG.view_alerts_field_priority());
         fields.add(priorityField);
 
         return fields;
@@ -132,7 +133,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
             new AsyncCallback<PageList<AlertDefinition>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load alert definition data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_loadFailed(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

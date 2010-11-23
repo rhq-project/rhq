@@ -53,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsCh
  */
 public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
-    private static final String DATA_TYPE_NAME = "user";
     private static final String HEADER_ICON = "global/User_24.png";
     private static final int SUBJECT_ID_RHQADMIN = 2;
 
@@ -62,7 +61,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private boolean hasManageSecurityPermission;
 
     public UserEditView(String locatorId, int subjectId) {
-        super(locatorId, new UsersDataSource(), subjectId, DATA_TYPE_NAME, HEADER_ICON);
+        super(locatorId, new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
     }
 
     @Override
@@ -78,12 +77,6 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
                 init(isReadOnly);
             }
         });
-    }
-
-    protected Record createNewRecord() {
-        Subject newSubject = new Subject();
-        newSubject.setFactive(true);
-        return getDataSource().copyValues(newSubject, false);
     }
 
     @Override
@@ -116,6 +109,15 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         }
 
         super.editRecord(record);
+    }
+
+    @Override
+    protected void editNewRecord() {
+        super.editNewRecord();
+
+        // Make sure the new user is enabled by default.
+        FormItem enabledField = getForm().getField(UsersDataSource.Field.FACTIVE);
+        enabledField.setValue(Boolean.TRUE.toString());
     }
 
     //
@@ -194,7 +196,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     @Override
     protected void save() {
-        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getSelection();
+        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getRecords();
         getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
         super.save();
     }
@@ -204,4 +206,5 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         super.reset();
         this.roleSelector.reset();
     }
+    
 }

@@ -64,7 +64,7 @@ public class SupportManagerBean implements SupportManagerLocal, SupportManagerRe
     public InputStream getSnapshotReportStream(Subject subject, int resourceId, String name, String description)
         throws Exception {
 
-        AgentClient agentClient = this.agentManager.getAgentClient(resourceId);
+        AgentClient agentClient = this.agentManager.getAgentClient(subject, resourceId);
         SupportAgentService supportService = agentClient.getSupportAgentService();
         InputStream snapshotStream = supportService.getSnapshotReport(resourceId, name, description);
 

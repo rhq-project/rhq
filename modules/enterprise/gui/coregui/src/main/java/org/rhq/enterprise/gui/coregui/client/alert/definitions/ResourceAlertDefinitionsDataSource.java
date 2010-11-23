@@ -64,17 +64,17 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         if ((parentId == null || parentId.intValue() == 0) && (groupAlertDefinition == null)) {
             record.setAttribute(FIELD_PARENT, "");
             record.setLinkText("");
-            record.setAttribute(FIELD_READONLY, "N/A");
+            record.setAttribute(FIELD_READONLY, MSG.common_val_na());
         } else {
             // TODO: fix the URLs so they point to the new GWT pages when they are implemented
             if (parentId != null && parentId.intValue() != 0) {
                 record.setAttribute(FIELD_PARENT, "/alerts/Config.do?mode=viewRoles&type="
                     + this.resource.getResourceType().getId() + "&from=" + from.getId() + "&ad=" + parentId);
-                record.setLinkText("View Template");
+                record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
                 record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()
                     + "/Alerts/Definitions/" + groupAlertDefinition.getId());
-                record.setLinkText("View Group Definition");
+                record.setLinkText(MSG.view_alert_definition_for_group());
             }
             record.setAttribute(FIELD_READONLY, readOnly);
         }
@@ -87,10 +87,10 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         List<DataSourceField> fields = super.addDataSourceFields();
 
         // add two more columns
-        DataSourceLinkField parentIdField = new DataSourceLinkField(FIELD_PARENT, "Parent");
+        DataSourceLinkField parentIdField = new DataSourceLinkField(FIELD_PARENT, MSG.view_alerts_field_parent());
         fields.add(parentIdField);
 
-        DataSourceTextField readOnlyField = new DataSourceTextField(FIELD_READONLY, "Read Only");
+        DataSourceTextField readOnlyField = new DataSourceTextField(FIELD_READONLY, MSG.view_alerts_field_protected());
         fields.add(readOnlyField);
 
         return fields;

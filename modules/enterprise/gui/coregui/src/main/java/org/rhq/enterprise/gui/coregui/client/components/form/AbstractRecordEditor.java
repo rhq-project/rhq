@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.components.form;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -61,8 +62,11 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     implements BookmarkableView, DetailsView {
 
     private static final Label LOADING_LABEL = new Label(MSG.widget_recordEditor_label_loading());
+
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
+
+    private static final int ID_NEW = 0;
 
     private int recordId;
     private TitleBar titleBar;
@@ -75,6 +79,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private VLayout bottomLayout;
     private String dataTypeName;
     private String listViewPath;
+    private boolean wasInvalid;
 
     public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
                                 String headerIcon) {
@@ -92,6 +97,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
         // Add title bar. We'll set the actual title later.
         this.titleBar = new TitleBar(null, headerIcon);
+        this.titleBar.hide();
         addMember(this.titleBar);
     }
 
@@ -113,27 +119,34 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      * @param isReadOnly whether or not the record editor should be in read-only mode
      */
     protected void init(boolean isReadOnly) {
-        this.isReadOnly = isReadOnly;
-        this.editCanvas = buildEditor();
-        this.editCanvas.hide();
-        addMember(this.editCanvas);
-
-        if (this.recordId == 0) {
-            editNewRecord();
+        if (this.recordId == ID_NEW && isReadOnly) {
+            Message message =
+                new Message("You do not have the permissions required to create a new " + this.dataTypeName + ".",
+                    Message.Severity.Error);
+            CoreGUI.goToView(getListViewPath(), message);
         } else {
-            fetchExistingRecord(this.recordId);
+            this.isReadOnly = isReadOnly;
+            this.editCanvas = buildEditor();
+            this.editCanvas.hide();
+            addMember(this.editCanvas);
+
+            if (this.recordId == ID_NEW) {
+                editNewRecord();
+
+                // Now that all the widgets have been created and initialized, make everything visible.
+                displayForm();
+            } else {
+                fetchExistingRecord(this.recordId);
+            }
         }
     }
 
     private VLayout buildEditor() {
         VLayout editorVLayout = new VLayout();
 
-        boolean isNewRecord = (this.recordId == 0);
+        boolean isNewRecord = (this.recordId == ID_NEW);
         this.form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewRecord);
         this.form.setDataSource(this.dataSource);
-        if (!isNewRecord) {
-            this.form.setInitialCriteria(new Criteria(FIELD_ID, String.valueOf(this.recordId)));
-        }
 
         List<FormItem> items = createFormItems(isNewRecord);
         this.form.setItems(items.toArray(new FormItem[items.size()]));
@@ -234,10 +247,19 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             this.saveButton.setDisabled(!isValid);
             this.resetButton.setDisabled(false);
             if (!isValid) {
+                this.wasInvalid = true;
                 Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
                     + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
                     Message.Option.Sticky, Message.Option.Transient));
                 CoreGUI.getMessageCenter().notify(message);
+            } else {
+                if (this.wasInvalid) {
+                    Message message = new Message("All fields now have valid values. This " + this.dataTypeName
+                        + " can now be saved.", Message.Severity.Info, EnumSet.of(Message.Option.Sticky,
+                        Message.Option.Transient));
+                    CoreGUI.getMessageCenter().notify(message);
+                    this.wasInvalid = false;
+                }
             }
         }
     }
@@ -252,16 +274,30 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 if (response.getStatus() == RPCResponse.STATUS_SUCCESS) {
                     Record[] data = response.getData();
                     Record record = data[0];
+
                     String id = record.getAttribute(FIELD_ID);
                     String name = record.getAttribute(getTitleFieldName());
+
                     Message message;
-                    DSOperationType operationType = request.getOperationType();
                     String conciseMessage;
                     String detailedMessage;
+                    DSOperationType operationType = request.getOperationType();
+                    if (Log.isDebugEnabled()) {
+                        Object dataObject = dataSource.copyValues(record);
+                        if (operationType == DSOperationType.ADD) {
+                            Log.debug("Created: " + dataObject);
+                        } else {
+                            Log.debug("Updated: " + dataObject);
+                        }
+                    }
                     switch (operationType) {
                         case ADD:
                             conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
                             detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
+                            if (CoreGUI.isDebugMode()) {
+                                conciseMessage += " (" + FIELD_ID + "=" + id + ")";
+                                detailedMessage += " (" + FIELD_ID + "=" + id + ")";
+                            }
                             break;
                         case UPDATE:
                             conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
@@ -271,37 +307,60 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                             throw new IllegalStateException(
                                 MSG.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
                     }
-                    if (CoreGUI.isDebugMode()) {
-                        conciseMessage += " (" + FIELD_ID + "=" + id + ")";
-                        detailedMessage += " (" + FIELD_ID + "=" + id + ")";
-                    }
+
                     message = new Message(conciseMessage, detailedMessage);
                     CoreGUI.goToView(getListViewPath(), message);
+                } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
+                    Message message = new Message("Operation failed - one or more fields have invalid values.",
+                        Message.Severity.Error);
+                    CoreGUI.getMessageCenter().notify(message);
+                } else {
+                    // assume failure
+                    Message message = new Message("Operation failed - an error occurred.", Message.Severity.Error);
+                    CoreGUI.getMessageCenter().notify(message);
                 }
             }
         });
     }
 
     @SuppressWarnings("unchecked")
-    protected void editRecord(final Record record) {
+    protected void editRecord(Record record) {
+        // Update the view title.
+        String recordName = record.getAttribute(getTitleFieldName());
+        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
+            MSG.widget_recordEditor_title_edit(this.dataTypeName, recordName);
+        this.titleBar.setTitle(title);
+
         // Load the data into the form.
         this.form.editRecord(record);
 
-        // Now that all the widgets have been created and initialized, make everything visible.
+        // Perform up front validation for existing records.
+        // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.
+        this.form.validate();
+    }
+
+    protected void editNewRecord() {
+        // Update the view title.
+        this.titleBar.setTitle("New " + this.dataTypeName);
+
+        // Clear the form
+        this.form.editNewRecord();
+
+        // But make sure the value of the "id" field is set to "0", since a value of null could cause the dataSource's
+        // copyValues(Record) impl to choke.
+        FormItem idItem = this.form.getItem(FIELD_ID);
+        if (idItem != null) {
+            idItem.setDefaultValue(ID_NEW);
+            idItem.hide();
+        }
+    }
+
+    private void displayForm() {
         LOADING_LABEL.hide();
+        this.titleBar.show();
         this.editCanvas.show();
         markForRedraw();
     }
-
-    private void editNewRecord() {
-        this.titleBar.setTitle("New " + this.dataTypeName);
-        Record record = createNewRecord();
-        editRecord(record);
-        // This tells form.saveData() to invoke executeAdd() on the dataSource.
-        this.form.setSaveOperationType(DSOperationType.ADD);
-    }
-
-    protected abstract Record createNewRecord();
 
     protected void fetchExistingRecord(final int recordId) {
         Criteria criteria = new Criteria();
@@ -317,25 +376,13 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                         throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
                     }
                     Record record = records[0];
-                    onExistingRecordFetched(record);
+                    editRecord(record);
+
+                    // Now that all the widgets have been created and initialized, make everything visible.
+                    displayForm();
                 }
             }
         });
-    }
-
-    protected void onExistingRecordFetched(Record record) {
-        editRecord(record);
-        // This tells form.saveData() to invoke executeUpdate() on the dataSource.
-        this.form.setSaveOperationType(DSOperationType.UPDATE);
-
-        // Perform up front validation for existing records.
-        // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.
-        this.form.validate();
-
-        String recordName = record.getAttribute(getTitleFieldName());
-        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
-            MSG.widget_recordEditor_title_edit(this.dataTypeName, recordName);
-        this.titleBar.setTitle(title);
     }
 
     protected String getTitleFieldName() {
@@ -349,7 +396,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected static ListGridRecord[] toListGridRecordArray(Record[] roleRecords) {
         ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
-        for (int i = 0, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
+        for (int i = ID_NEW, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
             Record roleRecord = roleRecords[i];
             roleListGridRecords[i] = (ListGridRecord)roleRecord;
         }
@@ -357,7 +404,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     }
     
     private static String capitalize(String itemTitle) {
-        return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
+        return Character.toUpperCase(itemTitle.charAt(ID_NEW)) + itemTitle.substring(1);
     }
     
 }

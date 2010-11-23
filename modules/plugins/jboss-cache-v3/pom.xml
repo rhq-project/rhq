@@ -57,7 +57,7 @@
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-5-plugin</artifactId>
-         <version>${version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope>
      </dependency>
 
@@ -80,15 +80,9 @@
        </dependency>
         
         <dependency>
-            <groupId>jboss.messaging</groupId>
-            <artifactId>jboss-messaging-client</artifactId>            
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.microcontainer</groupId>
-            <artifactId>jboss-kernel</artifactId>
-            <scope>test</scope>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-kernel</artifactId>
+          <scope>test</scope>
         </dependency>
         
         <dependency>

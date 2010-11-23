@@ -32,6 +32,7 @@ import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -110,8 +111,8 @@ public class TagCloudView extends LocatableVLayout {
 
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
 
-            buf.append("<a href=\"#Reports/Inventory/Tag Cloud/").append(tag.getTag()).append("\" style=\"font-size: ")
-                .append(font).append("pt; margin: 8px;\"");
+            buf.append("<a href=\"").append(LinkManager.getTagLink(tag.getTag().toString())).append(
+                "\" style=\"font-size: ").append(font).append("pt; margin: 8px;\"");
 
             buf.append(" title=\"").append(MSG.view_tagCloud_error_tagUsedCount(String.valueOf(tag.getTotal())))
                 .append("\"");

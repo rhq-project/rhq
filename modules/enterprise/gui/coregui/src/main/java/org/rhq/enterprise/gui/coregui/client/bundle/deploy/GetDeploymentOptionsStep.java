@@ -53,10 +53,10 @@ public class GetDeploymentOptionsStep extends AbstractWizardStep {
             form.setNumCols(2);
             form.setColWidths("50%", "*");
 
-            rgDeployTimeItem = new RadioGroupItem("deployTime", "Deployment Time");
+            rgDeployTimeItem = new RadioGroupItem("deployTime", MSG.view_bundle_deployWizard_getOptions_deployTime());
             LinkedHashMap<String, String> deployTimeValues = new LinkedHashMap<String, String>();
-            deployTimeValues.put(DEPLOY_NOW, "Deploy Now");
-            deployTimeValues.put(DEPLOY_LATER, "Deploy Later");
+            deployTimeValues.put(DEPLOY_NOW, MSG.view_bundle_deployWizard_getOptions_deployNow());
+            deployTimeValues.put(DEPLOY_LATER, MSG.view_bundle_deployWizard_getOptions_deployLater());
             rgDeployTimeItem.setRequired(true);
             rgDeployTimeItem.setValueMap(deployTimeValues);
             rgDeployTimeItem.setValue(DEPLOY_NOW);

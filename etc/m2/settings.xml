@@ -44,8 +44,8 @@
       <profile>
          <id>overrides</id>
          <properties>
-            <!-- NOTE: Add properties here that you always want set, to avoid    
-                       having to explicitly pass them on the command line. Note, 
+            <!-- NOTE: Add properties here that you always want set, to avoid
+                       having to explicitly pass them on the command line. Note,
                        you can still override the values set here via the command
                        line. -->
 
@@ -70,12 +70,12 @@
             <!-- Set the below properties to your fedorahosted.org username and
                  password (used to check in poms to RHQ git). -->
             <username>SET_ME</username>
-            <password>SET_ME</password>                        
+            <password>SET_ME</password>
          </properties>
 
          <repositories>
 
-            <!-- Oracle Driver 
+            <!-- Oracle Driver
                  To package the Oracle OJDBC driver set -Drhq.m2.repo.url.oracle and this repo definition will
                  be used to pick it up at build time. -->
             <repository>
@@ -107,7 +107,7 @@
             <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
-      
+
       <profile>
          <id>h2</id>
          <properties>
@@ -128,7 +128,7 @@
             <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
-      
+
       <profile>
          <id>sqlserver</id>
          <properties>
@@ -188,7 +188,7 @@
 
             <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/dev-container/
                  for your dev container, then set the below prop to the desired location. -->
-            <!--<rhq.containerDir>C:/home/bob/rhq-dev-container</rhq.containerDir>-->            
+            <!--<rhq.containerDir>C:/home/bob/rhq-dev-container</rhq.containerDir>-->
 
             <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the admin console WAR.
                  e.g.: C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production -->
@@ -196,18 +196,25 @@
             <!-- Set the below prop to the location to your dev JBAS 5.0 deploy location for the embedded console WAR.
                  e.g.: C:/opt/jboss-5.0.0.CR1/server/default -->
             <jbas5.configDir>SET_ME</jbas5.configDir>
+
+             <!-- set browser(s) to compile the qwt stuff for
+               ~~ See http://rhq-project.org/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
+               ~~ for details and browser versions
+               ~~ Possible engines are ie6,ie8,gecko,gecko1_8,safari,opera
+             -->
+             <gwt.userAgent>SET_ME</gwt.userAgent>
          </properties>
       </profile>
-      
+
       <profile>
          <id>publish</id>
-         <properties>           
+         <properties>
             <confluenceUrl>http://docs.example.com/confluence/</confluenceUrl>
             <confluenceSpace>DOCS</confluenceSpace>
             <confluenceUserName>SET_ME</confluenceUserName>
-            <confluencePassword>SET_ME</confluencePassword>            
-         </properties>                 
-      </profile>      
+            <confluencePassword>SET_ME</confluencePassword>
+         </properties>
+      </profile>
 
    </profiles>
 
@@ -229,22 +236,22 @@
    <servers>
 
     <server>
-      <id>jboss-developer-repository-group</id>     
-      <!-- jboss.org username and password --> 
+      <id>jboss-developer-repository-group</id>
+      <!-- jboss.org username and password -->
       <username>SET_ME</username>
       <password>SET_ME</password>
     </server>
 
     <server>
       <id>jboss-snapshots-repository</id>
-      <!-- jboss.org username and password --> 
+      <!-- jboss.org username and password -->
       <username>SET_ME</username>
       <password>SET_ME</password>
     </server>
 
     <server>
       <id>jboss-releases-repository</id>
-      <!-- jboss.org username and password --> 
+      <!-- jboss.org username and password -->
       <username>SET_ME</username>
       <password>SET_ME</password>
     </server>

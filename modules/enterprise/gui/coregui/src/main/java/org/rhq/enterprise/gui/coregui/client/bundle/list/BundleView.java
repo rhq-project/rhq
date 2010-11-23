@@ -99,7 +99,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        addMember(new BackButton(extendLocatorId("BackButton"), "Back to All Bundles", BundleTopView.VIEW_ID.getTitle()));
+        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID
+            .getTitle()));
 
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 
@@ -126,7 +127,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Tab createDestinationsTab() {
-        LocatableTab destinationsTab = new LocatableTab(extendLocatorId("Destinations"), "Destinations");
+        LocatableTab destinationsTab = new LocatableTab(extendLocatorId("Destinations"), MSG.view_bundle_destinations());
 
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundle.getId());
@@ -137,7 +138,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Tab createVersionsTab() {
-        LocatableTab versionsTab = new LocatableTab(extendLocatorId("Versions"), "Versions");
+        LocatableTab versionsTab = new LocatableTab(extendLocatorId("Versions"), MSG.view_bundle_versions());
 
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundleBeingViewed);
@@ -158,14 +159,15 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         form.setWrapItemTitles(false);
         form.setPadding(10);
 
-        StaticTextItem descriptionItem = new StaticTextItem("description", "Description");
+        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
         descriptionItem.setWrap(false);
         descriptionItem.setValue(bundle.getDescription());
 
-        StaticTextItem versionCountItem = new StaticTextItem("versionCount", "Version Count");
+        StaticTextItem versionCountItem = new StaticTextItem("versionCount", MSG.view_bundle_list_versionsCount());
         versionCountItem.setValue(bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
 
-        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount", "Destinations Count");
+        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount", MSG
+            .view_bundle_list_destinationsCount());
         destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
 
         form.setFields(descriptionItem, getTagItem(), getActionItem(), versionCountItem, destinationsCountItem);
@@ -181,12 +183,12 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                     GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update bundle's tags", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_tagUpdateFailure(), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Bundle tags updated", Message.Severity.Info));
+                                    new Message(MSG.view_bundle_list_tagUpdateSuccessful(), Message.Severity.Info));
                             }
                         });
                 }
@@ -204,24 +206,23 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     private CanvasItem getActionItem() {
         VLayout layout = new LocatableVLayout(form.extendLocatorId("Actions"), 10);
 
-        IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), "Delete");
+        IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), MSG.common_button_delete());
         deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.ask("Are you sure you want to delete this bundle?", new BooleanCallback() {
+                SC.ask(MSG.view_bundle_list_deleteConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
                             bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
-                                        "Failed to delete bundle [" + bundle.getName() + "]", caught);
+                                        MSG.view_bundle_list_deleteFailure(bundle.getName()), caught);
                                 }
 
                                 public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter()
-                                        .notify(
-                                            new Message("Deleted bundle [" + bundle.getName() + "]",
-                                                Message.Severity.Info));
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_list_deleteSuccessful(bundle.getName()),
+                                            Message.Severity.Info));
                                     History.newItem("Bundles"); // Bundle is deleted, go back to all bundles view
                                 }
                             });
@@ -231,7 +232,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             }
         });
 
-        IButton deployButton = new LocatableIButton(form.extendLocatorId("Deploy"), "Deploy");
+        IButton deployButton = new LocatableIButton(form.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -244,15 +245,13 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
                 bundleManager.findBundlesByCriteria(bc, new AsyncCallback<PageList<Bundle>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            "Failed to load bundle to deploy [" + bundle.getName() + "]", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_error1(bundle.getName()), caught);
                     }
 
                     public void onSuccess(PageList<Bundle> result) {
                         if (result == null || result.size() != 1) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Failed to get single bundle to deploy [" + bundle.getName() + "]",
-                                    Message.Severity.Error));
+                                new Message(MSG.view_bundle_list_error2(bundle.getName()), Message.Severity.Error));
                             return;
                         }
                         new BundleDeployWizard(result.get(0).getId()).startWizard();
@@ -290,7 +289,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria,
                     new AsyncCallback<PageList<Bundle>>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load bundle", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_error3(), caught);
                         }
 
                         public void onSuccess(PageList<Bundle> result) {

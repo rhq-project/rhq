@@ -72,13 +72,13 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
             bundleServer.deleteBundleVersion(bv.getId(), true, new AsyncCallback<Void>() {
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Canceled bundle [" + bv.getName() + "] version [" + bv.getVersion() + "]",
+                        new Message(MSG.view_bundle_createWizard_cancelSuccessful(bv.getName(), bv.getVersion()),
                             Severity.Info));
                 }
 
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to fully cancel - bundle may still exist in the database", caught);
+                        MSG.view_bundle_createWizard_cancelFailure(bv.getName(), bv.getVersion()), caught);
                 }
             });
         }

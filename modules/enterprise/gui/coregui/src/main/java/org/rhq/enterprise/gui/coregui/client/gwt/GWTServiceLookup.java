@@ -149,6 +149,10 @@ public class GWTServiceLookup {
         return secure(LdapGWTServiceAsync.Util.getInstance());
     }
 
+    public static AgentGWTServiceAsync getAgentService() {
+        return secure(AgentGWTServiceAsync.Util.getInstance());
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
         return (T) secure(sdt, -1);

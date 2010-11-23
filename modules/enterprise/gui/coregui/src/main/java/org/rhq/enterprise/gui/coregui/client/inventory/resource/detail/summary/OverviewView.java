@@ -18,20 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.HTMLPane;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.HeaderItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Resource Summary>Overview tab.
@@ -40,70 +43,120 @@ import com.smartgwt.client.widgets.grid.events.CellClickHandler;
  */
 public class OverviewView extends LocatableVLayout {
 
-    private Table errorsGrid;
-    
+    private StaticTextItem nameValue;
+    private StaticTextItem addressValue;
+    private StaticTextItem portValue;
+    private StaticTextItem agentStatus;
+    private FormItemIcon agentStatusIcon;
+    private StaticTextItem lastAvailReportValue;
+    private StaticTextItem endpointValue;
+
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
         OverviewForm form = new OverviewForm(extendLocatorId("form"), resourceComposite);
-        errorsGrid = new Table(extendLocatorId("errors"), "Detected errors", null, null, new String[] { ResourceErrorsDataSource.DETAIL_ID });
+        LocatableDynamicForm currentAgentInfo = new LocatableDynamicForm(extendLocatorId("Agent_Info"));
+        populateAgentInfo(resourceComposite.getResource().getId(), currentAgentInfo);
+        HTMLFlow separator = new HTMLFlow();
+        separator.setContents("<hr>");
 
-        Resource resource = resourceComposite.getResource();        
-        ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
-        
-        errorsGrid.setShowFooter(false);
-        errorsGrid.setDataSource(errors);
-        
-        form.setHeight("*");
-        errorsGrid.setHeight(200); //this should be just enough to fit the maximum of 3 rows in this table (there's at most 1 error per type)
-        
+        form.setHeight("200");
+        currentAgentInfo.setHeight(200);
+        setLeft("10%");
+
         addMember(form);
-        addMember(errorsGrid);
-     
+        addMember(separator);
+        addMember(currentAgentInfo);
     }
 
-    @Override 
+    private void populateAgentInfo(final int id, final LocatableDynamicForm currentAgentInfo) {
+        if (currentAgentInfo != null) {
+            setLeft("10%");
+            setWidth("80%");
+            final List<FormItem> formItems = new ArrayList<FormItem>();
+            HeaderItem headerItem = new HeaderItem("header", MSG.view_inventory_summary_agent_title());
+            headerItem.setValue(MSG.view_inventory_summary_agent_title());
+            formItems.add(headerItem);
+            //populate remaining details
+            GWTServiceLookup.getAgentService().getAgentForResource(id, new AsyncCallback<Agent>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_summary_agent_error1() + id + ".", caught);
+                }
+
+                @Override
+                public void onSuccess(Agent agent) {
+                    //name
+                    String name = "name";
+                    nameValue = new StaticTextItem(name, MSG.common_title_name());
+                    nameValue.setValue(agent.getName());
+                    formItems.add(nameValue);
+                    //address
+                    String address = "address";
+                    addressValue = new StaticTextItem(address, MSG.common_title_address());
+                    addressValue.setValue(agent.getAddress());
+                    formItems.add(addressValue);
+                    //port
+                    String port = "port";
+                    portValue = new StaticTextItem(port, MSG.common_title_port());
+                    portValue.setValue(agent.getPort());
+                    formItems.add(portValue);
+
+                    //agent-comm-status
+                    String agentComStatus = "agent-comm-status";
+                    agentStatusIcon = new FormItemIcon();
+                    agentStatusIcon.setSrc("resources/availability_grey_24.png");
+                    agentStatus = new StaticTextItem(agentComStatus, MSG.view_inventory_summary_agent_status_title());
+                    agentStatus.setIcons(agentStatusIcon);
+                    agentStatus.setWrapTitle(false);
+                    formItems.add(agentStatus);
+                    GWTServiceLookup.getAgentService().pingAgentForResource(id, new AsyncCallback<Boolean>() {
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_summary_agent_error2() + id + ".",
+                                caught);
+                        }
+
+                        @Override
+                        public void onSuccess(Boolean result) {
+                            //update icon with correct status
+                            agentStatusIcon.setSrc("resources/availability_" + (result ? "green" : "red") + "_24.png");
+                            currentAgentInfo.markForRedraw();
+                        }
+                    });
+
+                    //Last Received Avail report
+                    String lastAvailReport = "last-avail-report";
+                    lastAvailReportValue = new StaticTextItem(lastAvailReport, MSG
+                        .view_inventory_summary_agent_last_title());
+                    lastAvailReportValue.setWrapTitle(false);
+                    lastAvailReportValue.setValue(new Date(agent.getLastAvailabilityReport()));
+                    formItems.add(lastAvailReportValue);
+
+                    //Full Endpoint
+                    String fullEndpoint = "full-endpoint";
+                    endpointValue = new StaticTextItem(fullEndpoint, MSG.view_inventory_summary_agent_fullEnpoint());
+                    String remoteEndpoint = agent.getRemoteEndpoint();
+                    if (remoteEndpoint != null) {
+                        // some browsers (firefox in particular) won't wrap unless you put breaks in the string
+                        remoteEndpoint = remoteEndpoint.replaceAll("&", " &");
+                    } else {
+                        remoteEndpoint = MSG.view_inventory_summary_agent_fullEnpoint_err1();
+                    }
+                    endpointValue.setValue(remoteEndpoint);
+                    formItems.add(endpointValue);
+
+                    currentAgentInfo.setItems(formItems.toArray(new FormItem[formItems.size()]));
+                    currentAgentInfo.markForRedraw();
+                }
+            });
+
+            //final form population 
+            currentAgentInfo.setItems(formItems.toArray(new FormItem[formItems.size()]));
+        }
+    }
+
+    @Override
     public void onInit() {
         super.onInit();
-        initErrorsGrid();
     }
-    
-    private void initErrorsGrid() {        
-        errorsGrid.setTooltip("Click on the rows to see the error details.");
-        errorsGrid.getListGrid().addCellClickHandler(new CellClickHandler() {
-            public void onCellClick(CellClickEvent event) {
-                ListGridRecord record = event.getRecord();
-                final Window w = new Window();
-                w.setTitle("Error Details");
-                w.setIsModal(true);
-                w.setShowMinimizeButton(false);
-                w.setShowModalMask(true);
-                w.setWidth(640);
-                w.setHeight(480);
-                w.centerInPage();
-                w.setCanDragResize(true);
-                
-                LocatableVLayout layout = new LocatableVLayout(errorsGrid.extendLocatorId("dialogLayout"), 10);
-                layout.setDefaultLayoutAlign(Alignment.CENTER);
-                layout.setLayoutMargin(10);
-                
-                w.addItem(layout);
-                
-                HTMLPane details = new HTMLPane();                
-                details.setContents("<pre>" + record.getAttribute(ResourceErrorsDataSource.DETAIL_ID) + "</pre>");
-                layout.addMember(details);
-                
-                IButton ok = new IButton("Ok");
-                ok.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        w.destroy();
-                    }
-                });
-                
-                layout.addMember(ok);
-                
-                w.show();
-            }
-        });
-    }
-    
 }

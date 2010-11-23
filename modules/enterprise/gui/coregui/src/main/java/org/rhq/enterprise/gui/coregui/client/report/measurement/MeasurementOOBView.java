@@ -50,5 +50,8 @@ public class MeasurementOOBView extends Table {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
             }
         });
+
+
     }
+
 }

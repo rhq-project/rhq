@@ -25,8 +25,8 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 public class BundleCreateWizard extends AbstractBundleCreateWizard {
 
     public BundleCreateWizard() {
-        setWindowTitle("Bundle Creation Wizard");
-        setTitle("Create Bundle");
+        setWindowTitle(MSG.view_bundle_createWizard_windowTitle());
+        setTitle(MSG.view_bundle_createWizard_title());
 
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
         steps.add(new BundleUploadDistroFileStep(this));

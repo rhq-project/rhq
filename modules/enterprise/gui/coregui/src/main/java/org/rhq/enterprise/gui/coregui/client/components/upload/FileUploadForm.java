@@ -163,15 +163,15 @@ public class FileUploadForm extends DynamicCallbackForm {
         List<FormItem> onDrawItems = new ArrayList<FormItem>();
 
         HiddenItem sessionIdField = new HiddenItem("sessionid");
-        sessionIdField.setValue(UserSessionManager.getSessionSubject().getSessionId().intValue());
+        sessionIdField.setDefaultValue(UserSessionManager.getSessionSubject().getSessionId().intValue());
         onDrawItems.add(sessionIdField);
 
         HiddenItem nameField = new HiddenItem("name");
-        nameField.setValue(this.name);
+        nameField.setDefaultValue(this.name);
         onDrawItems.add(nameField);
 
         HiddenItem versionField = new HiddenItem("version");
-        versionField.setValue(version);
+        versionField.setDefaultValue(version);
         onDrawItems.add(versionField);
 
         fileUploadItem = new UploadItem("fileUploadItem", name);
@@ -264,7 +264,13 @@ public class FileUploadForm extends DynamicCallbackForm {
         super.onDraw();
 
         List<FormItem> onDrawItems = getOnDrawItems();
-        setNumCols(onDrawItems.size());
+        int numCols = 0;
+        for (FormItem fi : onDrawItems) {
+            if (!(fi instanceof HiddenItem)) {
+                ++numCols;
+            }
+        }
+        setNumCols(numCols);
         setItems(onDrawItems.toArray(new FormItem[onDrawItems.size()]));
 
         // push the form handler so it executes first if the form creator has also added a handler

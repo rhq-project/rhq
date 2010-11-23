@@ -86,63 +86,73 @@ public class ConditionsEditor extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        table = new Table(extendLocatorId("conditionsTable"));
-        table.setShowHeader(false);
-
-        final ConditionDataSource dataSource = new ConditionDataSource();
-        table.setDataSource(dataSource);
-
-        table.addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                final Window winModal = new LocatableWindow(ConditionsEditor.this
-                    .extendLocatorId("newConditionEditorWindow"));
-                winModal.setTitle("Add Condition");
-                winModal.setOverflow(Overflow.VISIBLE);
-                winModal.setShowMinimizeButton(false);
-                winModal.setIsModal(true);
-                winModal.setShowModalMask(true);
-                winModal.setAutoSize(true);
-                winModal.setAutoCenter(true);
-                //winModal.setShowResizer(true);
-                //winModal.setCanDragResize(true);
-                winModal.centerInPage();
-                winModal.addCloseClickHandler(new CloseClickHandler() {
-                    @Override
-                    public void onCloseClick(CloseClientEvent event) {
-                        winModal.markForDestroy();
-                    }
-                });
-
-                NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
-                    conditions, ConditionsEditor.this.resourceType, new Runnable() {
-                        @Override
-                        public void run() {
-                            winModal.markForDestroy();
-                            table.refresh();
-                        }
-                    });
-                winModal.addItem(newConditionEditor);
-                winModal.show();
-            }
-        });
-        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?", new AbstractTableAction(
-            TableActionEnablement.ANY) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                for (ListGridRecord record : selection) {
-                    AlertCondition cond = dataSource.copyValues(record);
-                    conditions.remove(cond);
-                }
-                table.refresh();
-            }
-        });
+        table = new ConditionsTable(extendLocatorId("conditionsTable"));
 
         addMember(table);
     }
 
     public void setEditable(boolean editable) {
         table.setTableActionDisableOverride(!editable);
+    }
+
+    private class ConditionsTable extends Table<ConditionDataSource> {
+        private ConditionsTable(String locatorId) {
+            super(locatorId);
+
+            setShowHeader(false);
+
+            final ConditionDataSource dataSource = new ConditionDataSource();
+            setDataSource(dataSource);
+        }
+
+        @Override
+        protected void configureTable() {
+            addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    final Window winModal = new LocatableWindow(ConditionsEditor.this
+                        .extendLocatorId("newConditionEditorWindow"));
+                    winModal.setTitle(MSG.view_alert_common_tab_conditions_modal_title());
+                    winModal.setOverflow(Overflow.VISIBLE);
+                    winModal.setShowMinimizeButton(false);
+                    winModal.setIsModal(true);
+                    winModal.setShowModalMask(true);
+                    winModal.setAutoSize(true);
+                    winModal.setAutoCenter(true);
+                    //winModal.setShowResizer(true);
+                    //winModal.setCanDragResize(true);
+                    winModal.centerInPage();
+                    winModal.addCloseClickHandler(new CloseClickHandler() {
+                        @Override
+                        public void onCloseClick(CloseClientEvent event) {
+                            winModal.markForDestroy();
+                        }
+                    });
+
+                    NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
+                        conditions, ConditionsEditor.this.resourceType, new Runnable() {
+                            @Override
+                            public void run() {
+                                winModal.markForDestroy();
+                                refresh();
+                            }
+                        });
+                    winModal.addItem(newConditionEditor);
+                    winModal.show();
+                }
+        });
+
+        table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+            .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                for (ListGridRecord record : selection) {
+                    AlertCondition cond = getDataSource().copyValues(record);
+                    conditions.remove(cond);
+                }
+                refresh();
+            }
+        });
+
+        }
     }
 
     private class ConditionDataSource extends RPCDataSource<AlertCondition> {
@@ -159,7 +169,8 @@ public class ConditionsEditor extends LocatableVLayout {
         protected List<DataSourceField> addDataSourceFields() {
             List<DataSourceField> fields = super.addDataSourceFields();
 
-            DataSourceTextField conditionField = new DataSourceTextField(FIELD_CONDITION, "Condition");
+            DataSourceTextField conditionField = new DataSourceTextField(FIELD_CONDITION, MSG
+                .view_alert_common_tab_conditions_text());
             fields.add(conditionField);
 
             return fields;

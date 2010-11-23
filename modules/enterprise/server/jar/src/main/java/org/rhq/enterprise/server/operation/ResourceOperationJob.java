@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import javax.ejb.EJBException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
@@ -36,8 +38,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import javax.ejb.EJBException;
 
 /**
  * A job that invokes an operation on a single resource.
@@ -105,8 +105,8 @@ public class ResourceOperationJob extends OperationJob {
 
             if (isResourceUncommitted(context.getJobDetail())) {
                 int resourceId = getResourceId(context.getJobDetail());
-                String msg = "The resource with id " + resourceId + " is not committed in inventory. It may have " +
-                    "been deleted from inventory. Canceling job.";
+                String msg = "The resource with id " + resourceId + " is not committed in inventory. It may have "
+                    + "been deleted from inventory. Canceling job.";
                 log.warn(msg);
                 throw new CancelJobException(msg, e);
             }
@@ -132,8 +132,7 @@ public class ResourceOperationJob extends OperationJob {
         try {
             Resource resource = resourceMgr.getResource(getOverlord(), resourceId);
             return isResourceUncommitted(resource);
-        }
-        catch (EJBException e) {
+        } catch (EJBException e) {
             if (e.getCausedByException() instanceof ResourceNotFoundException) {
                 return true;
             }
@@ -144,7 +143,6 @@ public class ResourceOperationJob extends OperationJob {
     private boolean isResourceUncommitted(Resource resource) {
         return resource == null || resource.getInventoryStatus() != InventoryStatus.COMMITTED;
     }
-
 
     /**
      * Actually invokes the operation by sending the command to the agent. This is package-scoped so the group job can
@@ -171,14 +169,14 @@ public class ResourceOperationJob extends OperationJob {
             Resource resource = schedule.getResource();
 
             if (isResourceUncommitted(resource)) {
-                String msg = "The resource with id " + resource.getId() + " is not committed in inventory. It may " +
-                    "have been deleted from inventory. Canceling job.";
+                String msg = "The resource with id " + resource.getId() + " is not committed in inventory. It may "
+                    + "have been deleted from inventory. Canceling job.";
                 log.warn(msg);
                 throw new CancelJobException(msg);
             }
 
             AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-            AgentClient agentClient = agentManager.getAgentClient(resource.getId());
+            AgentClient agentClient = agentManager.getAgentClient(schedule.getSubject(), resource.getId());
 
             agentClient.getOperationAgentService().invokeOperation(resourceHistory.getJobId().toString(),
                 resource.getId(), schedule.getOperationName(), schedule.getParameters());

@@ -175,27 +175,27 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     /**
      * Select the tab/subtab with the specified titles (e.g. "Monitoring", "Graphs").
      *
-     * @param tabTitle the title of the tab to select - if null, the default tab (the leftmost non-disabled one) will be selected
-     * @param subtabTitle the title of the subtab to select - if null, the default subtab (the leftmost non-disabled one) will be selected
+     * @param tabName the title of the tab to select - if null, the default tab (the leftmost non-disabled one) will be selected
+     * @param subtabName the title of the subtab to select - if null, the default subtab (the leftmost non-disabled one) will be selected
      * @param viewPath the view path, which may have additional view items to be rendered
      */
-    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
+    public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
         try {
-            TwoLevelTab tab = (tabTitle != null) ? this.tabSet.getTabByTitle(tabTitle) : this.tabSet.getDefaultTab();
+            TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : this.tabSet.getDefaultTab();
             if (tab == null || tab.getDisabled()) {
-                CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabTitle);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidTab(tabName));
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
                 tab = this.tabSet.getDefaultTab();
                 if (tab == null) {
                     throw new IllegalStateException("No default tab is defined.");
                 }
-                subtabTitle = null;
+                subtabName = null;
             }
             // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
 
-            SubTab subtab = (subtabTitle != null) ? tab.getSubTabByTitle(subtabTitle) : tab.getDefaultSubTab();
+            SubTab subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
             if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
-                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabTitle);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subtabName));
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
                 subtab = tab.getLayout().getDefaultSubTab();
             }
@@ -214,7 +214,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             this.tabSet.markForRedraw();
         } catch (Exception e) {
-            com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
+            com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
         }
     }
 

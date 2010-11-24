@@ -52,8 +52,8 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
     public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
 
-    private static final ViewName SUBSYSTEMS_SECTION_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
-    private static final ViewName INVENTORY_SECTION_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
+    public static final ViewName SECTION_SUBSYSTEMS_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
+    public static final ViewName SECTION_INVENTORY_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     public ReportTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -123,7 +123,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(SUBSYSTEMS_SECTION_VIEW_ID, tagItem, suspectMetricsItem,
+        return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
             recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);
     }
 
@@ -143,6 +143,6 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
+        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }
 }

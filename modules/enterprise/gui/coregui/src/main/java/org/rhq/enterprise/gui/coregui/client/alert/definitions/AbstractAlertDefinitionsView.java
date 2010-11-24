@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDampening;
@@ -56,6 +57,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         AbstractAlertDefinitionsDataSource ds = getAlertDefinitionDataSource();
         setDataSource(ds);
         listGrid.setDataSource(ds);
+        listGrid.setFields(ds.getListGridFields().toArray(new ListGridField[0]));
 
         Criteria criteria = getCriteria();
         listGrid.setCriteria(criteria);
@@ -97,7 +99,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
                 refresh();
             }
         });
-
 
     }
 

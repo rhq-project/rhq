@@ -31,10 +31,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.plugins.apache.ApachePluginLifecycleListener;
 import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
@@ -59,6 +60,8 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
     private final Pattern includePattern = Pattern.compile(INCLUDE_FILES_PATTERN);
     private final Pattern serverRootPattern = Pattern.compile(SERVER_ROOT_PATTERN);
 
+    private static final Log LOG = LogFactory.getLog(AugeasConfigurationApache.class);
+    
     private String serverRootPath;
     private AugeasModuleConfig module;
     private List<File> allConfigFiles;
@@ -101,19 +104,15 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
     }
 
     private void loadIncludes(String expression, List<String> foundIncludes) {       
-        try {
-            File file = new File(expression);
-            
+        try {           
             List<File> files = new ArrayList<File>();
 
-            if (!file.isAbsolute()) {      
-                File serverRootFile = new File(serverRootPath);
-                files =  Glob.match(serverRootFile, expression);
-            }else
-                files.add(file);
-            
+            File check = new File(expression);        
+            File root = new File(check.isAbsolute() ? Glob.rootPortion(expression) : serverRootPath);                     
+            files.addAll(Glob.match(root, expression));
+                       
            for (File fl : files){         
-            if (fl.exists()) {
+            if (fl.exists() && fl.isFile()) {
                 foundIncludes.add(fl.getAbsolutePath());
                 
                 FileInputStream fstream = new FileInputStream(fl);
@@ -142,8 +141,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
     }
 
     public void loadFiles() {
-        File root = new File(serverRootPath);
-
+       
         for (AugeasModuleConfig module : modules) {
             List<String> includeGlobs = module.getIncludedGlobs();
 
@@ -154,10 +152,10 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
             ArrayList<File> files = new ArrayList<File>();
 
             for (String incl : includeGlobs) {
-                if (incl.indexOf(File.separatorChar) == 0) {
-                    files.add(new File(incl));
-                } else
-                    files.addAll(Glob.match(root, incl));
+                File check = new File(incl);        
+                File root = new File(check.isAbsolute() ? Glob.rootPortion(incl) : serverRootPath);
+                         
+                files.addAll(Glob.match(root, incl));                                 
             }
 
             if (module.getExcludedGlobs() != null) {
@@ -167,33 +165,34 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
 
             for (File configFile : files) {
                 if (!configFile.isAbsolute()) {
-                    throw new IllegalStateException(
-                        "Configuration files inclusion patterns contain a non-absolute file.");
+                    LOG.warn("Configuration files inclusion patterns contain a non-absolute file: " + configFile);
+                    continue;
                 }
+                
                 if (!configFile.exists()) {
-                    throw new IllegalStateException(
-                        "Configuration files inclusion patterns refer to a non-existent file.");
+                    LOG.warn("Configuration files inclusion patterns refer to a non-existent file: " + configFile);
+                    continue;
                 }
+                
                 if (configFile.isDirectory()) {
-                    throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
+                    LOG.warn("Configuration files inclusion patterns refer to a directory: " + configFile);
+                    continue;
                 }
-                if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
+                
+                if (!module.getConfigFiles().contains(configFile.getAbsolutePath())) {
                     module.addConfigFile(configFile.getAbsolutePath());
+                }
             }
         }
     }
 
     private static List<File> getIncludeFiles(String serverRoot, List<String> foundIncludes) {
         List<File> ret = new ArrayList<File>();
-        File serverRootFile = new File(serverRoot);
         for (String path : foundIncludes) {
-            File check = new File(path);
-            if (check.isAbsolute()) {
-                ret.add(check);
-            } else {
-                for (File f : Glob.match(serverRootFile, path)) {
-                    ret.add(f);
-                }
+            File check = new File(path);                            
+            File root = new File(check.isAbsolute() ? Glob.rootPortion(path) : serverRoot);                     
+            for (File f :Glob.match(root, path)){
+                ret.add(f);
             }
         }
 

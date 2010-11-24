@@ -14,8 +14,10 @@
 <c:forEach var="i" begin="0" end="${numConditions - 1}">
 
 <tr>
-  <td width="20%" class="BlockLabel">
+  <logic:messagesPresent property="condition[${i}].trigger"><td width="20%" class="ErrorField" style="text-align: right"></logic:messagesPresent>
+  <logic:messagesNotPresent property="condition[${i}].trigger"><td width="20%" class="BlockLabel"></logic:messagesNotPresent>
     <b><fmt:message key="alert.config.props.CB.IfCondition"/></b>
+    <logic:messagesPresent property="condition[${i}].trigger"><br /><span class="ErrorFieldContent"><html:errors property="condition[${i}].trigger"/></span></logic:messagesPresent>
   </td>
 
 <c:if test="${showMetrics}" > <!-- begin conditional metric display logic -->

@@ -82,7 +82,7 @@ public enum HttpdAddressUtility {
                             address = getLocalhost(address.port);
                         }
                         
-                        updateWithServerName(address, ag, false);
+                        updateWithServerName(address, ag);
                         
                         return address;
                     }
@@ -106,7 +106,7 @@ public enum HttpdAddressUtility {
                             addr = getLocalhost(addr.port);
                         }
                         
-                        updateWithServerName(addr, ag, false);
+                        updateWithServerName(addr, ag);
                         
                         return addr;
                     }
@@ -217,21 +217,68 @@ public enum HttpdAddressUtility {
 
             Address o = (Address) other;
 
-            if (this.host == null) {
-                return o.host == null && this.port == o.port;
-            } else {
-                return this.host.equals(o.host) && this.port == o.port;
+            return safeEquals(host, o.host) && this.port == o.port;
+        }
+        
+        /**
+         * This differs from equals in the way that it considers wildcard values:
+         * <ul>
+         * <li>wildcard host matches any host
+         * <li>default host matches default host
+         * <li>wildcard port matches any port
+         * <li>undefined port matches undefined port
+         * </ul>
+         * The addresses match if both address and port match.
+         * 
+         * @param other the address to match
+         * @param whether to match the scheme as well
+         * @return true if the addresses match according to the rules described above, false otherwise
+         */
+        public boolean matches(Address other, boolean matchSchemes) {
+            if (matchSchemes && !safeEquals(scheme, other.scheme)) {
+                return false;
             }
+            
+            if (!WILDCARD.equals(host) && !WILDCARD.equals(other.host) && !safeEquals(host, other.host)) {
+                return false;
+            }
+            
+            if (PORT_WILDCARD_VALUE != port && PORT_WILDCARD_VALUE != other.port && port != other.port) {
+                return false;
+            }
+            
+            return true;
         }
         
         @Override
         public String toString() {
-            if (port == NO_PORT_SPECIFIED_VALUE) return scheme + "://" + host;
-            else {
-                String portSpec = port == PORT_WILDCARD_VALUE ? WILDCARD : String.valueOf(port);
-                
-                return scheme + "://" + host + ":" + portSpec;
+            return toString(true);
+        }
+        
+        public String toString(boolean includeScheme) {
+            StringBuilder bld = new StringBuilder();
+            
+            if (includeScheme) {
+                bld.append(scheme).append("://");
             }
+
+            bld.append(host);
+
+            if (port != NO_PORT_SPECIFIED_VALUE) {
+                bld.append(":");
+                
+                if (port == PORT_WILDCARD_VALUE) {
+                    bld.append(WILDCARD);
+                } else {
+                    bld.append(port);
+                }
+            }
+            
+            return bld.toString();
+        }
+        
+        private static boolean safeEquals(Object a, Object b) {
+            return a == null ? b == null : a.equals(b);
         }
     }
 
@@ -270,9 +317,9 @@ public enum HttpdAddressUtility {
                     return null;
                 addr.host = serverAddr.host;
             }
-
+            
             if (serverName != null) {
-                updateWithServerName(addr, serverName, true);
+                updateWithServerName(addr, serverName);
             }
 
             return addr;
@@ -351,7 +398,7 @@ public enum HttpdAddressUtility {
         }
     }
     
-    private static void updateWithServerName(Address address, ApacheDirectiveTree config, boolean updatePort) throws UnknownHostException {
+    private static void updateWithServerName(Address address, ApacheDirectiveTree config) throws UnknownHostException {
         //check if there is a ServerName directive
         List<ApacheDirective> serverNameNodes = config.search("/ServerName");
 
@@ -360,21 +407,46 @@ public enum HttpdAddressUtility {
         //be the case if the server listens on more than one interfaces.
         if (serverNameNodes.size() > 0) {
             String serverName = serverNameNodes.get(0).getValuesAsString();
-            updateWithServerName(address, serverName, updatePort);
+            updateWithServerName(address, serverName);
         }
     }
     
-    private static void updateWithServerName(Address address, String serverName, boolean updatePort) throws UnknownHostException {
-        Address serverAddr = Address.parse(serverName);
-        InetAddress addrFromServerName = InetAddress.getByName(serverAddr.host);
-        InetAddress addrFromAddress = InetAddress.getByName(address.host);
+    private static void updateWithServerName(Address address, String serverName) throws UnknownHostException {
+        //the configuration may be invalid and/or the hostname can be unresolvable.
+        //we try to match the address with the servername first by IP address
+        //but if that fails (i.e. the hostname couldn't be resolved to an IP)
+        //we try to simply match the hostnames themselves.
         
-        if (addrFromAddress.equals(addrFromServerName)) {
+        Address serverAddr = Address.parse(serverName);
+        String ipFromServerName = null;
+        String ipFromAddress = null;
+        String hostFromServerName = null;
+        String hostFromAddress = null;
+        boolean lookupFailed = false;
+
+        try {
+            InetAddress addrFromServerName = InetAddress.getByName(serverAddr.host);
+            ipFromServerName = addrFromServerName.getHostAddress();
+            hostFromServerName = addrFromServerName.getHostName();
+        } catch (UnknownHostException e) {
+            ipFromServerName = serverAddr.host;
+            hostFromServerName = serverAddr.host;
+            lookupFailed = true;
+        }
+        
+        try {
+            InetAddress addrFromAddress = InetAddress.getByName(address.host);
+            ipFromAddress = addrFromAddress.getHostAddress();
+            hostFromAddress = addrFromAddress.getHostName();
+        } catch (UnknownHostException e) {
+            ipFromAddress = address.host;
+            hostFromAddress = address.host;
+            lookupFailed = true;
+        }
+        
+        if (ipFromAddress.equals(ipFromServerName) || (lookupFailed && (hostFromAddress.equals(hostFromServerName)))) {
             address.scheme = serverAddr.scheme;
             address.host = serverAddr.host;
-            if (updatePort) {
-                address.port = serverAddr.port;
-            }
         }
     }
 }

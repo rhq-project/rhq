@@ -55,6 +55,8 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -396,6 +398,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ResourceError.QUERY_DELETE_BY_RESOURCES, //
             Event.DELETE_BY_RESOURCES, //
             EventSource.QUERY_DELETE_BY_RESOURCES, //
+            BundleResourceDeploymentHistory.QUERY_DELETE_BY_RESOURCES, // resource deployment history BEFORE resource deployment
+            BundleResourceDeployment.QUERY_DELETE_BY_RESOURCES, //
             PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, // steps BEFORE installed package history
             InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, // history BEFORE installed packages & content service requests
             InstalledPackage.QUERY_DELETE_BY_RESOURCES, //

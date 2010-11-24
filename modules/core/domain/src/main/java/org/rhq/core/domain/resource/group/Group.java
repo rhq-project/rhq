@@ -1,37 +1,35 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource.group;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+
 import org.jetbrains.annotations.NotNull;
-import org.rhq.core.domain.auth.Subject;
 
 /**
  * This is the abstract base class for groups containing either {@link org.rhq.core.domain.resource.Resource}s or groups
@@ -58,16 +56,14 @@ public abstract class Group implements Serializable {
     @Column(name = "MTIME")
     private Long mtime;
 
-    @JoinColumn(name = "MODIFIED_BY")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Subject modifiedBy;
+    @Column(name = "MODIFIED_BY")
+    private String modifiedBy;
 
     /* no-arg constructor required by EJB spec */
     protected Group() {
     }
 
-    public Group(@NotNull
-    String name) {
+    public Group(@NotNull String name) {
         this.name = name;
     }
 
@@ -76,8 +72,7 @@ public abstract class Group implements Serializable {
         return name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -113,11 +108,11 @@ public abstract class Group implements Serializable {
         this.mtime = mtime;
     }
 
-    public Subject getModifiedBy() {
+    public String getModifiedBy() {
         return modifiedBy;
     }
 
-    public void setModifiedBy(Subject modifiedBy) {
+    public void setModifiedBy(String modifiedBy) {
         this.modifiedBy = modifiedBy;
     }
 

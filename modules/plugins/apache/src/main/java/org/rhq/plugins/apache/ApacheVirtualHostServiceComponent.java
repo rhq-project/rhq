@@ -26,6 +26,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -384,24 +385,25 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
        
         //BZ 612189 - remove this once resource upgrade is in place
         HttpdAddressUtility.Address resourceKeyAddress = HttpdAddressUtility.Address.parse(resourceKey); 
+        
+        AugeasNode bestNode = null;
+        int bestMatch = 0;
         for(AugeasNode node : nodes) {
-            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
             List<AugeasNode> vhostAddressNodes = node.getChildByLabel("param");
             
-            String vhostServerName = serverNameNodes.isEmpty() ? null : serverNameNodes.get(0).getValue();
-            String vhostAddressDef = vhostAddressNodes.isEmpty() ? null : vhostAddressNodes.get(0).getValue();
-            
-            if (vhostAddressDef != null) {
-                HttpdAddressUtility.Address vhostAddress = HttpdAddressUtility.Address.parse(vhostAddressDef);
-                if (vhostServerName != null) {
-                    HttpdAddressUtility.Address vhostServerAddress = HttpdAddressUtility.Address.parse(vhostServerName);
-                    vhostAddress.host = vhostServerAddress.host;
-                }
-                
-                if (resourceKeyAddress.equals(vhostAddress)) {
-                    virtualHosts.add(node);
-                }
+            List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>();
+            for (AugeasNode vhostAddressNode : vhostAddressNodes) {
+                vhostAddresses.add(HttpdAddressUtility.Address.parse(vhostAddressNode.getValue()));
             }
+            
+            int matchRate = matchRate(vhostAddresses, resourceKeyAddress);
+            if (bestMatch < matchRate) {
+                bestNode = node;
+            }
+        }
+
+        if (bestNode != null) {
+            return bestNode;
         }
         
         //BZ 612189 - remove this once we have resource upgrade
@@ -411,24 +413,18 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             URI serverUri = new URI(serverUrl);
             String expectedResourceKey = serverUri.getHost() + ":" + serverUri.getPort();
             
-            if (expectedResourceKey.equals(resourceKey)) {
+            HttpdAddressUtility.Address expectedAddress = HttpdAddressUtility.Address.parse(expectedResourceKey);
+            HttpdAddressUtility.Address actualAddress = HttpdAddressUtility.Address.parse(resourceKey);
+            
+            if (matchRate(Collections.singletonList(expectedAddress), actualAddress) > 0) {
                 return tree.getRootNode();
             }
         } catch (URISyntaxException e) {
             log.warn("Failed to parse the server URL when trying to match the vhost with the main server.", e);
         }
         
-        if (virtualHosts.size() == 0) {
-            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
-
-        if (virtualHosts.size() > 1) {
-            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
-
-        return virtualHosts.get(0);
+        throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
+            + resourceKey);
     }
 
     /**

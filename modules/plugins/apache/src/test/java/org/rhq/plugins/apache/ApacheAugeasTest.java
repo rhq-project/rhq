@@ -3,6 +3,8 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.util.List;
 
+import net.augeas.Augeas;
+
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
@@ -119,5 +121,14 @@ public class ApacheAugeasTest {
 	         treeUpdate.save();
              //test if the updated augeas tree can be mapped to configuration stored at files in "loadconfig" temporary directory 
 	         testLoadConfig(treeUpdate, container);
+	  }
+	  
+	  public boolean isAugeasInstalled(){
+	      try {
+	        Augeas ag = new Augeas();
+	      }catch(Throwable e){
+	        return false;   
+	      }
+	      return true;
 	  }
 }

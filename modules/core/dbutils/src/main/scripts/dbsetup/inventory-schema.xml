@@ -95,7 +95,7 @@
         <column name="ITIME" type="LONG"/>
         <column name="RES_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
         <column name="PLUGIN_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
-        <column name="MODIFIED_BY" required="false" type="INTEGER"/>
+        <column name="MODIFIED_BY" required="false" size="100" type="VARCHAR2"/>
         <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
         <column name="PRODUCT_VERSION_ID" type="INTEGER" references="RHQ_PRD_VER"/>
@@ -160,8 +160,7 @@
         <!-- Compatible groups only -->
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
-        <column name="MODIFIED_BY" required="false" type="INTEGER"/>
-        <!-- TODO: Reorder to allow this references="RHQ_SUBJECT" -->
+        <column name="MODIFIED_BY" required="false" size="100" type="VARCHAR2"/>
         <column name="RECURSIVE" type="BOOLEAN"/>
 
         <column name="GROUP_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_GROUP_DEF"/>

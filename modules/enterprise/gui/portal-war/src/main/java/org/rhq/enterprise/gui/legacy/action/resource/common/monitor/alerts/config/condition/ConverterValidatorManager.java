@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition;
 
 import org.apache.struts.action.ActionErrors;
+import org.apache.struts.action.ActionMessage;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -99,7 +100,11 @@ public class ConverterValidatorManager {
     }
 
     public static boolean validate(ConditionBean bean, ActionErrors errors, int index) {
-        if (bean.getTrigger().equals(measurementConverter.getTriggerName())) {
+        if (bean.getTrigger() == null) {
+            ActionMessage err = new ActionMessage("alert.config.error.NoTriggerTypeSelected");
+            errors.add("condition[" + index + "].trigger", err);
+            return false;
+        } else if (bean.getTrigger().equals(measurementConverter.getTriggerName())) {
             return measurementConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(calltimeConverter.getTriggerName())) {
             return calltimeConverter.validate(bean, errors, index);

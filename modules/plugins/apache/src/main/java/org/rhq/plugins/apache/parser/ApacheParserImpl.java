@@ -24,7 +24,9 @@ public class ApacheParserImpl implements ApacheParser{
         if (directive.getName().equals(INCLUDE_DIRECTIVE)){
             List<File> files = getIncludeFiles(directive.getValuesAsString());
             for (File fl : files){
-              ApacheConfigReader.searchFile(fl.getAbsolutePath(), this);   
+                if (fl.exists() && fl.isFile()) {
+                    ApacheConfigReader.searchFile(fl.getAbsolutePath(), this);
+                }
             }
         }
         directive.setParentNode(stack.getLastDirective());

@@ -162,7 +162,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         long time = System.currentTimeMillis();
         group.setCtime(time);
         group.setMtime(time);
-        group.setModifiedBy(user);
+        group.setModifiedBy(user.getName());
 
         entityManager.persist(group);
 
@@ -191,7 +191,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         long time = System.currentTimeMillis();
         group.setMtime(time);
-        group.setModifiedBy(user);
+        group.setModifiedBy(user.getName());
 
         ResourceGroup newlyAttachedGroup = entityManager.merge(group);
         if (changeType == RecursivityChangeType.AddedRecursion) {
@@ -341,13 +341,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     private void initLazyFields(ResourceGroup group) {
-        /*
-         * initialize modifiedBy field, which is now a lazily- loaded relationship to speed up the GroupHub stuff
-         */
-        if (group.getModifiedBy() != null) {
-            group.getModifiedBy().getId();
-        }
-
         group.getAlertDefinitions().size();
     }
 
@@ -1347,7 +1340,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         } else {
             composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
         }
-        group.getModifiedBy().getFirstName();
 
         return composite;
     }

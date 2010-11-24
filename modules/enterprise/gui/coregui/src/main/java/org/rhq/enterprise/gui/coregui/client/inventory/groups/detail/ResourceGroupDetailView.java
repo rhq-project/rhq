@@ -279,10 +279,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, new HistoryGroupPluginConfigurationView(
             this.inventoryConnHistory.extendLocatorId("View"), this.groupComposite), facets
             .contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
-        enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        visible = !isAutoGroup();
+        enabled = visible && globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryMembership.extendLocatorId("View"), groupId)
             : null;
-        updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, true, enabled);
+        updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, visible, enabled);
 
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
@@ -347,14 +348,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Failed to load group composite for group with id " + groupId, caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_group_detail_failLoadComp(String.valueOf(groupId)),
+                        caught);
                 }
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result.isEmpty()) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to load group composite for group with id " + groupId);
+                            MSG.view_group_detail_failLoadComp(String.valueOf(groupId)));
                     } else {
                         groupComposite = result.get(0);
                         loadResourceType(groupComposite, viewPath);

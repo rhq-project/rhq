@@ -69,7 +69,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
     public ResourceGroupTitleBar(String locatorId, boolean isAutoGroup) {
         super(locatorId);
+
         this.isAutoGroup = isAutoGroup;
+
         setWidth100();
         setHeight(30);
         setPadding(5);
@@ -113,7 +115,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result == null || result.size() != 1) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to get general info on group [" + group.getName() + "]");
+                            MSG.view_titleBar_group_failInfo(group.getName(), String
+                                .valueOf(ResourceGroupTitleBar.this.group.getId())));
                         return;
                     }
                     generalProperties = new GeneralProperties(extendLocatorId("genProps"), result.get(0));
@@ -139,7 +142,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot load group properties info", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_titleBar_group_failInfo(group.getName(), String
+                            .valueOf(ResourceGroupTitleBar.this.group.getId())), caught);
                 }
             });
 

@@ -216,9 +216,9 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
             prioritySelection = new SelectItem("priority", MSG.view_alerts_field_priority());
             LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
-            priorities.put(AlertPriority.HIGH.name(), AlertPriority.HIGH.name());
-            priorities.put(AlertPriority.MEDIUM.name(), AlertPriority.MEDIUM.name());
-            priorities.put(AlertPriority.LOW.name(), AlertPriority.LOW.name());
+            priorities.put(AlertPriority.HIGH.name(), MSG.common_alert_high());
+            priorities.put(AlertPriority.MEDIUM.name(), MSG.common_alert_medium());
+            priorities.put(AlertPriority.LOW.name(), MSG.common_alert_low());
             LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>(3);
             priorityIcons.put(AlertPriority.HIGH.name(), "/images/icons/Flag_red_16.png");
             priorityIcons.put(AlertPriority.MEDIUM.name(), "/images/icons/Flag_yellow_16.png");

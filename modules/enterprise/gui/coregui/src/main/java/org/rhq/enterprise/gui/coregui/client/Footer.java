@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -132,26 +131,21 @@ public class Footer extends LocatableToolStrip {
             AlertCriteria alertCriteria = new AlertCriteria();
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8)); // last 8 hrs
 
-            //check for still logged in before submitting server side request
-            if (UserSessionManager.isLoggedIn()) {
-                GWTServiceLookup.getAlertService().findAlertCountByCriteria(alertCriteria, new AsyncCallback<Long>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
-                    }
+            GWTServiceLookup.getAlertService().findAlertCountByCriteria(alertCriteria, new AsyncCallback<Long>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
+                }
 
-                    public void onSuccess(Long result) {
-                        if (result == 0L) {
-                            setContents(MSG.view_core_recentAlerts("0"));
-                            setIcon("subsystems/alert/Alert_LOW_16.png");
-                        } else {
-                            setContents(MSG.view_core_recentAlerts(result.toString()));
-                            setIcon("subsystems/alert/Alert_HIGH_16.png");
-                        }
+                public void onSuccess(Long result) {
+                    if (result == 0L) {
+                        setContents(MSG.view_core_recentAlerts("0"));
+                        setIcon("subsystems/alert/Alert_LOW_16.png");
+                    } else {
+                        setContents(MSG.view_core_recentAlerts(result.toString()));
+                        setIcon("subsystems/alert/Alert_HIGH_16.png");
                     }
-                });
-            } else {//dump request
-                Log.debug("user not logged in. Not fetching any alerts now.");
-            }
+                }
+            });
         }
     }
 

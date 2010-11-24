@@ -67,7 +67,7 @@ public class ResourcePermission implements Serializable {
             this.permissions.add(Permission.MANAGE_MEASUREMENTS);
         }
         if (inventory) {
-            this.permissions.add(Permission.MANAGE_INVENTORY);
+            this.permissions.add(Permission.MODIFY_RESOURCE);
         }
         if (control) {
             this.permissions.add(Permission.CONTROL);
@@ -108,7 +108,7 @@ public class ResourcePermission implements Serializable {
     }
 
     public boolean isInventory() {
-        return this.permissions.contains(Permission.MANAGE_INVENTORY);
+        return this.permissions.contains(Permission.MODIFY_RESOURCE);
     }
 
     public boolean isControl() {

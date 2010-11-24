@@ -28,7 +28,6 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -37,6 +36,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
  * @author Greg Hinkle

@@ -38,7 +38,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
@@ -358,14 +357,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             "Failed to load group composite for group with id " + groupId);
                     } else {
                         groupComposite = result.get(0);
-                        // First load the user's permissions for the group.
-                        UserPermissionsManager.getInstance().loadGroupPermissions(groupComposite,
-                            new PermissionsLoadedListener() {
-                                public void onPermissionsLoaded(Set<Permission> permissions) {
-                                    // Next load the group's ResourceType.
-                                    loadResourceType(groupComposite, viewPath);
-                                }
-                            });
+                        loadResourceType(groupComposite, viewPath);
                     }
                 }
             });

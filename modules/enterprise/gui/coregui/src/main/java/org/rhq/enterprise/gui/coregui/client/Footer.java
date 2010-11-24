@@ -30,8 +30,10 @@ import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
@@ -47,9 +49,9 @@ public class Footer extends LocatableToolStrip {
         super(LOCATOR_ID);
         setHeight(30);
         setAlign(VerticalAlignment.CENTER);
-        //        setPadding(5);
         setWidth100();
-        setMembersMargin(15);
+        setMembersMargin(10);
+        setLayoutRightMargin(5);
     }
 
     @Override
@@ -57,18 +59,19 @@ public class Footer extends LocatableToolStrip {
         super.onDraw();
 
         //final UserSessionState userSessionState = new UserSessionState("UserSessionState");
-        final MessageCenterView recentMessage = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
-        recentMessage.setWidth("*");
+        final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
 
-        //addMember(userSessionState);
-        //addMember(new ToolStripSeparator());
-        addMember(favoritesButton);
+        addMember(messageCenter);
+
         addMember(new ToolStripSeparator());
-        addMember(recentMessage);
 
         addMember(alertsMessage);
+
+        addMember(new ToolStripSeparator());
+
+        addMember(favoritesButton);
 
         //userSessionState.schedule(15000);
         alertsMessage.schedule(60000);
@@ -140,7 +143,8 @@ public class Footer extends LocatableToolStrip {
 
             addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    History.newItem("Reports/Inventory/Recent Alerts");
+                    History.newItem(ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
+                        + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID);
                 }
             });
         }

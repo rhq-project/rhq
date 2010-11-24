@@ -160,28 +160,17 @@
                   <!-- ** WARs -->
 
                   <webModule>
+                     <groupId>org.rhq</groupId>
+                     <artifactId>rhq-coregui</artifactId>
+                     <bundleFileName>coregui.war</bundleFileName>
+                     <contextRoot>/coregui</contextRoot>
+                  </webModule>
+
+                  <webModule>
                      <groupId>${project.groupId}</groupId>
                      <artifactId>rhq-portal</artifactId>
                      <bundleFileName>rhq-portal.war</bundleFileName>
                      <contextRoot>/</contextRoot>
-                  </webModule>
-
-
-                   <webModule>
-                      <groupId>org.rhq</groupId>
-                      <artifactId>rhq-coregui</artifactId>
-                      <bundleFileName>coregui.war</bundleFileName>
-                      <contextRoot>/coregui</contextRoot>
-                   </webModule>
-
-
-                  <!--  included unless exclude.webdav property is set to true. -->
-                  <webModule>
-                     <groupId>${project.groupId}</groupId>
-                     <artifactId>rhq-webdav</artifactId>
-                     <excluded>${exclude-webdav}</excluded>
-                     <bundleFileName>rhq-webdav.war</bundleFileName>
-                     <contextRoot>/webdav</contextRoot>
                   </webModule>
 
                   <!--  used to expose content through http -->

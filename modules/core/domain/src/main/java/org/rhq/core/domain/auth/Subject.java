@@ -51,13 +51,12 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.Recordizable;
 
 /**
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries({
+@NamedQueries( {
     @NamedQuery(name = Subject.QUERY_FIND_BY_IDS, query = "" //
         + "SELECT s " //
         + "  FROM Subject s " //
@@ -201,7 +200,7 @@ import org.rhq.core.domain.util.Recordizable;
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
-public class Subject implements Serializable, Recordizable {
+public class Subject implements Serializable {
     public static final String QUERY_FIND_ALL = "Subject.findAll";
     public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Subject.findByName";

@@ -49,12 +49,6 @@
     -->
     <set-property name="log_DivLogger" value="DISABLED" />
 
-    <!--
-     <generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
-        <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
-     </generate-with>
-    -->
-
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>

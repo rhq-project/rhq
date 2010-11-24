@@ -22,8 +22,6 @@
  */
 package org.rhq.core.domain.auth;
 
-import org.rhq.core.domain.util.Recordizable;
-
 import java.io.Serializable;
 
 import javax.persistence.Column;
@@ -45,7 +43,7 @@ import javax.persistence.Table;
     @NamedQuery(name = Principal.QUERY_FIND_ALL_USERS, query = "SELECT m FROM Principal AS m") })
 @SequenceGenerator(name = "RHQ_PRINCIPAL_ID_SEQ", sequenceName = "RHQ_PRINCIPAL_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_PRINCIPAL")
-public class Principal implements Serializable, Recordizable {
+public class Principal implements Serializable {
     public static final String QUERY_FIND_BY_USERNAME = "Principal.findByUsername";
     public static final String QUERY_FIND_ALL_USERS = "Principal.findAllUsers";
 

@@ -109,8 +109,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         vl.setAlign(VerticalAlignment.CENTER);
         vl.addMember(recentEventsButton);
 
-        addMember(vl);
         addMember(new LayoutSpacer());
+        addMember(vl);
     }
 
     private void showDetails(Message message) {

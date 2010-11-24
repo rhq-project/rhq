@@ -22,13 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -86,11 +88,19 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         return sections;
     }
 
-    protected HTMLFlow defaultView() {
-        String contents = "<h1>" + MSG.view_admin_administration() + "</h1>\n" + MSG.view_admin_landing();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+    protected VLayout defaultView() {
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();        
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_admin_landing());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     private NavigationSection buildSecuritySection() {

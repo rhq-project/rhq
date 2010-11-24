@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
@@ -123,7 +124,9 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new AlertHistoryView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()));
+                    // TODO: how do we know if the user is able to ack the alerts? right now, I hardcode false to not allow it
+                    return new SubsystemResourceAlertView(
+                        extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), false);
                 }
             });
 

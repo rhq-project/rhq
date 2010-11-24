@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -29,10 +31,14 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceDateField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.Alert;
@@ -44,6 +50,8 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
@@ -52,11 +60,16 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Ian Springer
  * @author Joseph Marques
+ * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert> {
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     private EntityContext entityContext;
+
+    private static final String PRIORITY_ICON_HIGH = "/images/icons/Flag_red_16.png";
+    private static final String PRIORITY_ICON_MEDIUM = "/images/icons/Flag_yellow_16.png";
+    private static final String PRIORITY_ICON_LOW = "/images/icons/Flag_blue_16.png";
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -66,47 +79,95 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         super();
         this.entityContext = context;
 
-        // TODO: when these fields are added, AlertHistoryView breaks -- why?
-
-        //List<DataSourceField> fields = addDataSourceFields();
-        //addFields(fields);
+        addDataSourceFields();
     }
 
     @Override
     protected List<DataSourceField> addDataSourceFields() {
+        // for some reason, the client seems to crash if you don't specify any data source fields
+        // even though we know we defined override ListGridFields for all columns. Define at least one field here.
         List<DataSourceField> fields = super.addDataSourceFields();
+        fields.add(new DataSourceTextField("name", MSG.common_title_name()));
+        return fields;
+    }
 
-        DataSourceDateField ctimeField = new DataSourceDateField(AlertCriteria.SORT_FIELD_CTIME, MSG
+    /**
+     * The view that contains the list grid which will display this datasource's data will call this
+     * method to get the field information which is used to control the display of the data.
+     * 
+     * @return list grid fields used to display the datasource data
+     */
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+
+        ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
             .view_alerts_field_created_time());
-        addField(ctimeField);
+        ctimeField.setAutoFitWidth(true);
+        ctimeField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
+        ctimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(ctimeField);
 
-        DataSourceIntegerField ackTimeField = new DataSourceIntegerField("acknowledgeTime", MSG
-            .view_alerts_field_ack_time());
-        addField(ackTimeField);
+        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
+        nameField.setWidth("30%");
+        fields.add(nameField);
 
-        DataSourceTextField ackSubjectField = new DataSourceTextField("acknowledgingSubject", MSG
-            .view_alerts_field_ack_subject());
-        addField(ackSubjectField);
+        ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
+        conditionField.setWidth("*");
+        fields.add(conditionField);
 
-        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, MSG
-            .view_alerts_field_name());
-        addField(nameField);
+        ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
+        priorityField.setType(ListGridFieldType.IMAGE);
+        priorityField.setAutoFitWidth(true);
+        priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        priorityField.setAlign(Alignment.CENTER);
+        priorityField.setShowHover(true);
+        priorityField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String prio = record.getAttribute("priority");
+                if (PRIORITY_ICON_HIGH.equals(prio)) {
+                    return MSG.common_alert_high();
+                } else if (PRIORITY_ICON_MEDIUM.equals(prio)) {
+                    return MSG.common_alert_medium();
+                } else if (PRIORITY_ICON_LOW.equals(prio)) {
+                    return MSG.common_alert_low();
+                } else {
+                    return ""; // will never get here
+                }
+            }
+        });
+        fields.add(priorityField);
 
-        DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", MSG
-            .view_alerts_field_condition_text());
-        addField(conditionTextField);
+        ListGridField statusField = new ListGridField("status", MSG.common_title_status());
+        priorityField.setAutoFitWidth(true);
+        priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        statusField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String ackTime = listGridRecord.getAttribute("acknowledgeTime");
+                String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
+                if (ackSubject == null) {
+                    return MSG.view_alerts_field_ack_status_empty();
+                } else {
+                    String formattedTime = TimestampCellFormatter.DATE_TIME_FORMAT.format(new Date(Long
+                        .parseLong(ackTime)));
+                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
+                }
+            }
+        });
+        fields.add(statusField);
 
-        DataSourceTextField conditionValueField = new DataSourceTextField("conditionValue", MSG
-            .view_alerts_field_condition_value());
-        addField(conditionValueField);
-
-        DataSourceTextField resourceNameField = new DataSourceTextField("resourceName", MSG
-            .view_alerts_field_resource());
-        addField(resourceNameField);
-
-        DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, MSG
-            .view_alerts_field_priority(), 15);
-        addField(priorityField);
+        if (this.entityContext.type != EntityContext.Type.Resource) {
+            // TODO need to disambiguate this
+            ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource());
+            resourceNameField.setWidth("30%");
+            resourceNameField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
+                    return "<a href=\"" + LinkManager.getResourceLink(resourceId) + "\">" + o + "</a>";
+                }
+            });
+            fields.add(resourceNameField);
+        }
 
         return fields;
     }
@@ -149,6 +210,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         criteria.addFilterPriorities(getArrayFilter(request, "severities", AlertPriority.class));
         criteria.addFilterEntityContext(entityContext);
+        criteria.fetchConditionLogs(true);
 
         return criteria;
     }
@@ -173,7 +235,20 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
         record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());
-        record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
+        switch (from.getAlertDefinition().getPriority()) {
+        case HIGH: {
+            record.setAttribute("priority", PRIORITY_ICON_HIGH);
+            break;
+        }
+        case MEDIUM: {
+            record.setAttribute("priority", PRIORITY_ICON_MEDIUM);
+            break;
+        }
+        case LOW: {
+            record.setAttribute("priority", PRIORITY_ICON_LOW);
+            break;
+        }
+        }
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;

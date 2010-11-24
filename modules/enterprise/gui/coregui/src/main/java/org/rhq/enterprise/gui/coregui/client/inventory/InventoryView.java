@@ -26,13 +26,15 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -106,10 +108,18 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>" + MSG.common_title_inventory() + "</h1>\n" + MSG.view_inventory_sectionHelp();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_inventory_sectionHelp());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     @Override

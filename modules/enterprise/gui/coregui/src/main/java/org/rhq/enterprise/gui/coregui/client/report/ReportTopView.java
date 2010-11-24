@@ -26,12 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -50,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
  * @author Ian Springer
  */
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
+
     public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
 
     public static final ViewName SECTION_SUBSYSTEMS_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
@@ -74,11 +77,19 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
     @Override
-    protected HTMLFlow defaultView() {
-        String contents = "<h1>" + MSG.view_reportsTop_title() + "</h1>\n" + MSG.view_reportsTop_description();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+    protected VLayout defaultView() {
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_reportsTop_description());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     private NavigationSection buildSubsystemsSection() {
@@ -145,4 +156,5 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
         return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }
+
 }

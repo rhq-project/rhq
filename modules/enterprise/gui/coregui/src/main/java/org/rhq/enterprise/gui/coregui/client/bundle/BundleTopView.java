@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -40,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack
  * @author Greg Hinkle
  */
 public class BundleTopView extends LocatableHLayout implements BookmarkableView {
+
     public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles());
 
     private BundleTreeView bundleTreeView;
@@ -107,7 +109,7 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
         if (viewPath.isEnd()) {
             if (currentNextPath == null && bundlesListView != null) {
                 // refresh
-                com.allen_sauer.gwt.log.client.Log.info("Refreshing BundleTopView");
+                Log.info("Refreshing BundleTopView");
 
                 bundlesListView.refresh();
             } else {
@@ -127,4 +129,5 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
             }
         }
     }
+
 }

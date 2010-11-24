@@ -42,11 +42,11 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**

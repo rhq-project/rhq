@@ -38,8 +38,6 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
@@ -397,14 +395,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                         onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
-                        // First load the user's permissions for the Resource.
-                        UserPermissionsManager.getInstance().loadResourcePermissions(resourceComposite,
-                            new PermissionsLoadedListener() {
-                                public void onPermissionsLoaded(Set<Permission> permissions) {
-                                    // Next load the Resource's type.
-                                    loadResourceType(resourceComposite, viewPath);
-                                }
-                            });
+                        loadResourceType(resourceComposite, viewPath);
                     }
                 }
             });

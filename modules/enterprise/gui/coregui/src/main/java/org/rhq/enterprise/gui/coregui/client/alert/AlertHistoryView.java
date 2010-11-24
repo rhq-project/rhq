@@ -96,7 +96,7 @@ public class AlertHistoryView extends TableSection {
         ListGridField conditionTextField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority(), 50);
 
-        ListGridField statusField = new ListGridField("status", 175);
+        ListGridField statusField = new ListGridField("status", MSG.common_title_status(), 175);
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String ackTime = listGridRecord.getAttribute("acknowledgeTime");

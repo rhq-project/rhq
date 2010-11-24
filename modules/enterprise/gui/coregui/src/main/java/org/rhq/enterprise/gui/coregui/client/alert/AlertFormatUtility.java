@@ -26,10 +26,10 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
  * The methods in this class are ported from AlertDefUtil from portal-war and MeasurementFormatter from

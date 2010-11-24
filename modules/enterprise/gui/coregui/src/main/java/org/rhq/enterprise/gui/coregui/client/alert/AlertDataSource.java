@@ -85,9 +85,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         // for some reason, the client seems to crash if you don't specify any data source fields
-        // even though we know we defined override ListGridFields for all columns. Define at least one field here.
+        // even though we know we defined override ListGridFields for all columns.
         List<DataSourceField> fields = super.addDataSourceFields();
-        fields.add(new DataSourceTextField("name", MSG.common_title_name()));
+        fields.add(new DataSourceTextField("name"));
         return fields;
     }
 
@@ -112,7 +112,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
-        conditionField.setWidth("*");
+        conditionField.setWidth("40%");
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());

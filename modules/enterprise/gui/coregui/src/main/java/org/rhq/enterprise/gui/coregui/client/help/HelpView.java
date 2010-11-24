@@ -77,7 +77,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildDocSection() {
 
         NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_docAbout()),
-            "[SKIN]/actions/help.png", new ViewFactory() {
+            "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
                     AboutModalWindow aboutModalWindow = new AboutModalWindow();
                     aboutModalWindow.show();
@@ -86,14 +86,14 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
             });
 
         NavigationItem docItem = new NavigationItem(new ViewName("TOC", MSG.view_help_docToc()),
-            "[SKIN]/headerIcons/document.png", new ViewFactory() {
+            "[SKIN]/../headerIcons/document.png", new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId("TOC"), "http://www.rhq-project.org/display/JOPR2/Home");
                 }
             });
 
         NavigationItem faqItem = new NavigationItem(new ViewName("FAQ", MSG.view_help_docFaq()),
-            "[SKIN]/headerIcons/document.png", new ViewFactory() {
+            "[SKIN]/../headerIcons/document.png", new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId("FAQ"), "http://www.rhq-project.org/display/JOPR2/FAQ");
                 }
@@ -105,7 +105,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildTutorialSection() {
 
         NavigationItem searchItem = new NavigationItem(new ViewName("TutorialSearch", MSG.view_help_tutorialSearch()),
-            "[SKIN]/actions/help.png", new ViewFactory() {
+            "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId("TutorialSearch"),
                         "http://www.rhq-project.org/display/JOPR2/Search");
@@ -113,7 +113,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
             });
 
         NavigationItem dynaGroupItem = new NavigationItem(new ViewName("TutorialDynaGroup", MSG
-            .view_help_tutorialDynaGroup()), "[SKIN]/actions/help.png", new ViewFactory() {
+            .view_help_tutorialDynaGroup()), "[SKIN]/../actions/help.png", new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(
                     extendLocatorId("TutorialDynaGroup"),
@@ -122,7 +122,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         });
 
         NavigationItem demoAllItem = new NavigationItem(new ViewName("DemoAll", MSG.view_help_tutorialDemoAll()),
-            "[SKIN]/actions/help.png", new ViewFactory() {
+            "[SKIN]/../headerIcons/document.png", new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId("DemoAll"),
                         "http://www.rhq-project.org/display/JOPR2/Demos");
@@ -130,7 +130,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
             });
 
         NavigationItem demoBundleItem = new NavigationItem(new ViewName("DemoBundle", MSG
-            .view_help_tutorialDemoBundle()), "[SKIN]/actions/help.png", new ViewFactory() {
+            .view_help_tutorialDemoBundle()), "[SKIN]/../headerIcons/document.png", new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId("DemoBundle"),
                     "http://mazz.fedorapeople.org/demos/provisioning_beta/prov-beta.htm");

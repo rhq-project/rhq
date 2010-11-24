@@ -303,13 +303,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllDefaultCollections(Subject subject) {
         entityManager.createNamedQuery(MeasurementDefinition.DISABLE_ALL).executeUpdate();
     }
 
-    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllSchedules(Subject subject) {
         entityManager.createNamedQuery(MeasurementSchedule.DISABLE_ALL).executeUpdate();
@@ -430,7 +430,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 // Return only the data necessary to construct minimal objects ourselves. Using JPQL
                 // is ok, it just lets Hibernate do the heavy lifting for query generation.
                 queryString = "" //
-                    + "SELECT ms.id, ms.resource.id, ms.definition.name, ms.definition.dataType, ms.definition.numericType" //
+                    + "SELECT ms.id, ms.resource.id, ms.definition.name, ms.definition.dataType, ms.definition.rawNumericType" //
                     + " FROM  MeasurementSchedule ms" //
                     + " WHERE ms.definition.id IN ( :definitionIds )";
                 Query query = entityManager.createQuery(queryString);

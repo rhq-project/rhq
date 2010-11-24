@@ -57,6 +57,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
     private ResourceGroup group;
     private ResourceGroupComposite groupComposite;
+    boolean isAutoGroup;
 
     private Img expandCollapseArrow;
     private Img badge;
@@ -66,8 +67,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private boolean favorite;
     private GeneralProperties generalProperties;
 
-    public ResourceGroupTitleBar(String locatorId) {
+    public ResourceGroupTitleBar(String locatorId, boolean isAutoGroup) {
         super(locatorId);
+        this.isAutoGroup = isAutoGroup;
         setWidth100();
         setHeight(30);
         setPadding(5);
@@ -100,6 +102,11 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(this.group.getId());
+        // for autogroups we need to add more criteria
+        if (isAutoGroup) {
+            criteria.addFilterVisible(null);
+            criteria.addFilterPrivate(true);
+        }
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 @Override

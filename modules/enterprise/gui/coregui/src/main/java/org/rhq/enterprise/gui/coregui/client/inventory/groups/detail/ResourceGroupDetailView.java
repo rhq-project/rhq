@@ -137,7 +137,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     @Override
     protected ResourceGroupTitleBar createTitleBar() {
-        return new ResourceGroupTitleBar(getLocatorId());
+        return new ResourceGroupTitleBar(getLocatorId(), isAutoGroup());
     }
 
     protected List<TwoLevelTab> createTabs() {
@@ -339,7 +339,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         criteria.addFilterId(groupId);
 
         // for autogroups we need to add more criteria
-        if (AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath())) {
+        if (isAutoGroup()) {
             criteria.addFilterVisible(null);
             criteria.addFilterPrivate(true);
         }
@@ -361,6 +361,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     }
                 }
             });
+    }
+
+    private boolean isAutoGroup() {
+        return AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath());
     }
 
     private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {

@@ -169,6 +169,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
 
         if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
+            // request a redraw of the MenuBarItem to ensure the correct sessio info is displayed 
+            rootCanvas.getMember(0).markForRedraw();
+
             // go to default view if user doesn't specify a history token
             History.newItem(getDefaultView());
         } else {

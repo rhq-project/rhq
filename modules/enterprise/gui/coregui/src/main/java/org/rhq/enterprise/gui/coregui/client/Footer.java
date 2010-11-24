@@ -58,7 +58,6 @@ public class Footer extends LocatableToolStrip {
     protected void onDraw() {
         super.onDraw();
 
-        //final UserSessionState userSessionState = new UserSessionState("UserSessionState");
         final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
@@ -73,7 +72,6 @@ public class Footer extends LocatableToolStrip {
 
         addMember(favoritesButton);
 
-        //userSessionState.schedule(15000);
         alertsMessage.schedule(60000);
     }
 
@@ -113,23 +111,6 @@ public class Footer extends LocatableToolStrip {
             setIcon(null);
         }
     }
-
-    //    public static class UserSessionState extends RefreshableLabel {
-    //        public UserSessionState(String locatorId) {
-    //            super(locatorId);
-    //            setWrap(false);
-    //            setMargin(5);
-    //            setValign(VerticalAlignment.CENTER);
-    //        }
-    //
-    //        public void refreshLoggedIn() {
-    //            setContents(MSG.view_core_loggedInAs(UserSessionManager.getSessionSubject().getName()));
-    //        }
-    //
-    //        public void refreshLoggedOut() {
-    //            setContents(MSG.view_core_loggedOut());
-    //        }
-    //    }
 
     public static class AlertsMessage extends RefreshableLabel {
         public AlertsMessage(String locatorId) {

@@ -54,6 +54,7 @@ public class MenuBarView extends LocatableVLayout {
         BundleTopView.VIEW_ID, AdministrationView.VIEW_ID, HelpView.VIEW_ID };
 
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
+    private LocatableLabel userLabel;
 
     public MenuBarView(String locatorId) {
         super(locatorId);
@@ -76,6 +77,18 @@ public class MenuBarView extends LocatableVLayout {
         addMember(new SearchBarPane(this.extendLocatorId("Search")));
 
         markForRedraw();
+    }
+
+    // When redrawing, ensire the correct session infor is displayed
+    @Override
+    public void markForRedraw() {
+        String currentDisplayName = userLabel.getContents();
+        String currentUsername = UserSessionManager.getSessionSubject().getName();
+        if (!currentUsername.equals(currentDisplayName)) {
+            userLabel.setContents(currentUsername);
+        }
+
+        super.markForRedraw();
     }
 
     private Canvas getLogoSection() {
@@ -140,8 +153,7 @@ public class MenuBarView extends LocatableVLayout {
         layout.setMargin(10);
         layout.setAlign(Alignment.RIGHT);
 
-        LocatableLabel userLabel = new LocatableLabel(this.extendLocatorId("User"), UserSessionManager
-            .getSessionSubject().getName());
+        userLabel = new LocatableLabel(this.extendLocatorId("User"), UserSessionManager.getSessionSubject().getName());
         userLabel.setAutoWidth();
 
         LocatableLabel lineLabel = new LocatableLabel(this.extendLocatorId("Line"), " | ");

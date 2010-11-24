@@ -82,8 +82,9 @@ public class AlertHistoryView extends TableSection {
     protected void configureTableFilters() {
         final EnumSelectItem priorityFilter = new EnumSelectItem("severities", MSG.view_alerts_table_filter_priority(),
             AlertPriority.class);
-
-        setFilterFormItems(priorityFilter);
+        if (isShowFilterForm()) {
+            setFilterFormItems(priorityFilter);
+        }
     }
 
     @Override
@@ -126,7 +127,6 @@ public class AlertHistoryView extends TableSection {
         }
 
         setupTableInteractions();
-
 
     }
 

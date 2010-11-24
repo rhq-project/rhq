@@ -111,6 +111,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowHeader(false);
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
+        setShowFilterForm(false); //disable filter form for portlet
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

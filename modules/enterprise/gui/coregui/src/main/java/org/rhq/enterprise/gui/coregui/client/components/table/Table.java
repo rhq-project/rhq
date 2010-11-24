@@ -108,6 +108,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showHeader = true;
     private boolean showFooter = true;
     private boolean showFooterRefresh = true;
+    private boolean showFilterForm = true;
 
     private String tableTitle;
     private Criteria criteria;
@@ -828,5 +829,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public void setTableInfo(Label tableInfo) {
         this.tableInfo = tableInfo;
+    }
+
+    public boolean isShowFilterForm() {
+        return showFilterForm;
+    }
+
+    public void setShowFilterForm(boolean showFilterForm) {
+        this.showFilterForm = showFilterForm;
     }
 }

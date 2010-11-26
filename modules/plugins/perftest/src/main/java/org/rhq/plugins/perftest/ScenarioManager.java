@@ -61,6 +61,11 @@ import org.rhq.plugins.perftest.scenario.SimpleConfigurationGenerator;
 import org.rhq.plugins.perftest.scenario.SimpleContentGenerator;
 import org.rhq.plugins.perftest.scenario.SimpleNumericMeasurementGenerator;
 import org.rhq.plugins.perftest.scenario.SimpleResourceGenerator;
+import org.rhq.plugins.perftest.scenario.SimpleTraitMeasurementGenerator;
+import org.rhq.plugins.perftest.scenario.TraitGenerator;
+import org.rhq.plugins.perftest.trait.EmptyTraitFactory;
+import org.rhq.plugins.perftest.trait.SimpleTraitFactory;
+import org.rhq.plugins.perftest.trait.TraitFactory;
 
 /**
  * Loads performance testing scenarios and parses into usable components by the JON resource components.
@@ -94,6 +99,12 @@ public class ScenarioManager {
      */
     private static final EmptyCalltimeFactory EMPTY_CALLTIME_FACTORY = new EmptyCalltimeFactory();
 
+    /**
+     * Trait factory used when a scenario doesn't define any metrics for a particular resource type.
+     */
+    private static final TraitFactory EMPTY_TRAIT_FACTORY = new EmptyTraitFactory();
+
+
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(ScenarioManager.class);
@@ -115,6 +126,7 @@ public class ScenarioManager {
      */
     private Map<String, MeasurementFactory> measurementFactories = new HashMap<String, MeasurementFactory>();
     private Map<String, CalltimeFactory> calltimeFactories = new HashMap<String, CalltimeFactory>();
+    private Map<String, TraitFactory> traitFactories = new HashMap<String, TraitFactory>();
 
     /**
      * Mapping of resource type name to configuration factory to populate the plugin configuration for newly discovered
@@ -234,6 +246,28 @@ public class ScenarioManager {
         return calltimeFactory;
     }
 
+    public TraitFactory getTraitFactory(String resourceTypeName) {
+        TraitFactory traitFactory = traitFactories.get(resourceTypeName);
+
+        if (traitFactory == null) {
+            Resource resource = findResource(resourceTypeName);
+            if (resource == null) {
+                traitFactory = EMPTY_TRAIT_FACTORY;
+            } else {
+                JAXBElement<? extends TraitGenerator> element = resource.getTraitGenerator();
+                if (element == null) {
+                    traitFactory = EMPTY_TRAIT_FACTORY;
+                } else {
+                    TraitGenerator generator = element.getValue();
+                    traitFactory = createTraitFactory(generator);
+                }
+            }
+
+            traitFactories.put(resourceTypeName,traitFactory);
+        }
+        return traitFactory;
+    }
+
     /**
      * Returns the configuration factory defined in the scenario for creating plugin configurations for the specified
      * resource type.
@@ -346,6 +380,20 @@ public class ScenarioManager {
 
         return null;
     }
+
+    /**
+     * Creates an appropriate Traits factory based on the provided generator.
+     * @param generator read from the scenario
+     * @return TraitFactory instance
+     */
+    private TraitFactory createTraitFactory(TraitGenerator generator) {
+        if (generator instanceof SimpleTraitMeasurementGenerator) {
+            return new SimpleTraitFactory();
+        }
+
+        return null;
+    }
+
 
     /**
      * Creates the appropriate configuration factory instance based on the provided generator.

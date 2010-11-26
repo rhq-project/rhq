@@ -20,6 +20,7 @@
          <xs:element ref="perf:resourceGenerator" minOccurs="1" maxOccurs="1"/>
          <xs:element ref="perf:pluginConfigurationGenerator" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="perf:measurementGenerator" minOccurs="0" maxOccurs="1"/>
+         <xs:element ref="perf:traitGenerator" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="perf:calltimeGenerator" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="perf:contentGenerator" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
@@ -66,6 +67,18 @@
          <xs:extension base="perf:measurementGenerator"/>
       </xs:complexContent>
    </xs:complexType>
+
+
+    <xs:element name="traitGenerator" type="perf:traitGenerator" abstract="true"/>
+    <xs:complexType name="traitGenerator"/>
+    <xs:element name="simpleTraitMeasurementGenerator" type="perf:simpleTraitMeasurementGenerator"
+                substitutionGroup="perf:traitGenerator"/>
+    <xs:complexType name="simpleTraitMeasurementGenerator">
+       <xs:complexContent>
+          <xs:extension base="perf:traitGenerator"/>
+       </xs:complexContent>
+    </xs:complexType>
+
 
    <xs:element name="calltimeGenerator" type="perf:calltimeGenerator" abstract="true"/>
    <xs:complexType name="calltimeGenerator"/>

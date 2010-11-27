@@ -57,6 +57,12 @@
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
         <when-property-is name="user.agent" value="ie6"/>
     </replace-with>
+    
+    
+    <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
+        <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
+    </generate-with>
+    
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.

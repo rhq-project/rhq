@@ -123,35 +123,28 @@ public class ScheduledOperationsDataSource extends
             }
         }
 
-        if (userStillLoggedIn()) {
-            GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
-                new AsyncCallback<List<DisambiguationReport<ResourceOperationScheduleComposite>>>() {
+        GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
+            new AsyncCallback<List<DisambiguationReport<ResourceOperationScheduleComposite>>>() {
 
-                    public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_scheduledOperations_error_fetchFailure(),
-                            throwable);
+                public void onFailure(Throwable throwable) {
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_scheduledOperations_error_fetchFailure(),
+                        throwable);
+                }
+
+                public void onSuccess(List<DisambiguationReport<ResourceOperationScheduleComposite>> scheduledOpsList) {
+
+                    //translate DisambiguationReport into dataset entries
+                    response.setData(buildList(scheduledOpsList));
+                    //entry count
+                    if (null != scheduledOpsList) {
+                        response.setTotalRows(scheduledOpsList.size());
+                    } else {
+                        response.setTotalRows(0);
                     }
-
-                    public void onSuccess(
-                        List<DisambiguationReport<ResourceOperationScheduleComposite>> scheduledOpsList) {
-
-                        //translate DisambiguationReport into dataset entries
-                        response.setData(buildList(scheduledOpsList));
-                        //entry count
-                        if (null != scheduledOpsList) {
-                            response.setTotalRows(scheduledOpsList.size());
-                        } else {
-                            response.setTotalRows(0);
-                        }
-                        //pass off for processing
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
-        } else {
-            Log.debug("user not logged in. Not fetching scheduled operations.");
-            response.setTotalRows(0);
-            processResponse(request.getRequestId(), response);
-        }
+                    //pass off for processing
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
 
     /** Translates the DisambiguationReport of ProblemResourceComposites into specific

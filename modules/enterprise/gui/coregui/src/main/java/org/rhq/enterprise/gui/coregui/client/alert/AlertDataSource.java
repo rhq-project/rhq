@@ -177,31 +177,23 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         AlertCriteria criteria = getCriteria(request);
 
-        //check for still logged in before submitting server side request
-        if (userStillLoggedIn()) {
-            this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+        this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
-                    response.setStatus(RPCResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
-                public void onSuccess(PageList<Alert> result) {
-                    long fetchTime = System.currentTimeMillis() - start;
-                    Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                    response.setData(buildRecords(result));
-                    // For paging to work, we have to specify size of full result set.
-                    response.setTotalRows(result.getTotalSize());
-                    processResponse(request.getRequestId(), response);
-                }
-            });
-        } else {//dump request
-            response.setTotalRows(0);
-            processResponse(request.getRequestId(), response);
-            Log.debug("user not logged in. Not fetching any alerts now.");
-        }
-
+            public void onSuccess(PageList<Alert> result) {
+                long fetchTime = System.currentTimeMillis() - start;
+                Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                response.setData(buildRecords(result));
+                // For paging to work, we have to specify size of full result set.
+                response.setTotalRows(result.getTotalSize());
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
     protected AlertCriteria getCriteria(DSRequest request) {

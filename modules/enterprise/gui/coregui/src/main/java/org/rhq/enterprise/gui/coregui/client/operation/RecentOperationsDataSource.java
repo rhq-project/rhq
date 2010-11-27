@@ -129,36 +129,29 @@ public class RecentOperationsDataSource extends
             }
         }
 
-        if (userStillLoggedIn()) {//check session validity
-            GWTServiceLookup.getOperationService().findRecentCompletedOperations(pageSize,
-                new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
+        GWTServiceLookup.getOperationService().findRecentCompletedOperations(pageSize,
+            new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
 
-                    public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_recentOperations_error_fetchFailure(),
-                            throwable);
+                public void onFailure(Throwable throwable) {
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_recentOperations_error_fetchFailure(),
+                        throwable);
+                }
+
+                public void onSuccess(
+                    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> recentOperationsList) {
+
+                    //translate DisambiguationReport into dataset entries
+                    response.setData(buildList(recentOperationsList));
+                    //entry count
+                    if (null != recentOperationsList) {
+                        response.setTotalRows(recentOperationsList.size());
+                    } else {
+                        response.setTotalRows(0);
                     }
-
-                    public void onSuccess(
-                        List<DisambiguationReport<ResourceOperationLastCompletedComposite>> recentOperationsList) {
-
-                        //translate DisambiguationReport into dataset entries
-                        response.setData(buildList(recentOperationsList));
-                        //entry count
-                        if (null != recentOperationsList) {
-                            response.setTotalRows(recentOperationsList.size());
-                        } else {
-                            response.setTotalRows(0);
-                        }
-                        //pass off for processing
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
-        } else {
-            Log.debug("user not logged in. Not fetching recently completed operations.");
-            //answer datasource
-            response.setTotalRows(0);
-            processResponse(request.getRequestId(), response);
-        }
+                    //pass off for processing
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
 
     /** Translates the DisambiguationReport of ResourceOperationLastCompletedComposites into specific

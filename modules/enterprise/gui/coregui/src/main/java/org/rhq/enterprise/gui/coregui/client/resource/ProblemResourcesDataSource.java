@@ -119,34 +119,28 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
             }
         }
 
-        if (userStillLoggedIn()) {
-            GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
-                new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
+        GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
+            new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
 
-                    public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_problemResources_error_fetchFailure(),
-                            throwable);
+                public void onFailure(Throwable throwable) {
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_problemResources_error_fetchFailure(),
+                        throwable);
+                }
+
+                public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
+
+                    //translate DisambiguationReport into dataset entries
+                    response.setData(buildList(problemResourcesList));
+                    //entry count
+                    if (null != problemResourcesList) {
+                        response.setTotalRows(problemResourcesList.size());
+                    } else {
+                        response.setTotalRows(0);
                     }
-
-                    public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
-
-                        //translate DisambiguationReport into dataset entries
-                        response.setData(buildList(problemResourcesList));
-                        //entry count
-                        if (null != problemResourcesList) {
-                            response.setTotalRows(problemResourcesList.size());
-                        } else {
-                            response.setTotalRows(0);
-                        }
-                        //pass off for processing
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
-        } else {
-            Log.debug("user not logged in. Not fetching resources with alerts/unavailability.");
-            response.setTotalRows(0);
-            processResponse(request.getRequestId(), response);
-        }
+                    //pass off for processing
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
 
     /** Translates the DisambiguationReport of ProblemResourceComposites into specific

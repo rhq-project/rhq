@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +39,6 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
@@ -222,7 +222,24 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return new ResourceTitleBar(extendLocatorId("TitleBar"));
     }
 
-    protected void updateTabContent(ResourceComposite resourceComposite) {
+    protected void updateTabContent(final ResourceComposite resourceComposite) {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                updateTabContent(resourceComposite, result);
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
+                updateTabContent(resourceComposite, new HashSet<Permission>());
+            }
+        });
+    }
+
+    protected void updateTabContent(ResourceComposite resourceComposite, Set<Permission> globalPermissions) {
         boolean enabled;
         boolean visible;
         Canvas canvas;
@@ -235,7 +252,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
-        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 

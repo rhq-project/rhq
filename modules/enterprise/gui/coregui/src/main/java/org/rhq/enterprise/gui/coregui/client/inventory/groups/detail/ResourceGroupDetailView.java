@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +39,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
@@ -59,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Be able to view members as a resource list, or edit members via selector.  
@@ -219,7 +220,24 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
-    protected void updateTabContent(ResourceGroupComposite groupComposite) {
+    protected void updateTabContent(final ResourceGroupComposite groupComposite) {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                updateTabContent(groupComposite, result);
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
+                updateTabContent(groupComposite, new HashSet<Permission>());
+            }
+        });
+    }
+
+    protected void updateTabContent(ResourceGroupComposite groupComposite, Set<Permission> globalPermissions) {
         boolean enabled;
         boolean visible;
         Canvas canvas;
@@ -233,7 +251,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
-        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
         GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
         Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
 

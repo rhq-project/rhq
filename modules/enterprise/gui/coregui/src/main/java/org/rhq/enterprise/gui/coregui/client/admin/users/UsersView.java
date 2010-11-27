@@ -19,22 +19,23 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.smartgwt.client.data.Record;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -93,11 +94,13 @@ public class UsersView extends TableSection<UsersDataSource> {
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
         fields.add(departmentField);
 
-        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
-        if (globalPermissions.contains(Permission.MANAGE_SECURITY)) {
+        // TODO: instead of fetching roles, use a composite object that will pull the role count across the wire.
+        //       this count will not required permission checks at all. 
+
+        /*
             ListGridField rolesField = new ListGridField(UsersDataSource.Field.ROLES, 250);
             rolesField.setCellFormatter(new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {                    
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                     Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
                     StringBuilder formattedValue = new StringBuilder();
                     for (int i = 0; i < roleRecords.length; i++) {
@@ -112,7 +115,8 @@ public class UsersView extends TableSection<UsersDataSource> {
                 }
             });
             fields.add(rolesField);
-        }
+        
+        */
 
         return fields;
     }
@@ -143,9 +147,24 @@ public class UsersView extends TableSection<UsersDataSource> {
 
     private TableAction createNewAction() {
         return new TableAction() {
+            private boolean hasManageSecurity = false;
+
             public boolean isEnabled(ListGridRecord[] selection) {
-                Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
-                return globalPermissions.contains(Permission.MANAGE_SECURITY);
+                GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+                    new AsyncCallback<Set<Permission>>() {
+                        @Override
+                        public void onSuccess(Set<Permission> result) {
+                            hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                                    .of(Message.Option.BackgroundJobResult)));
+                        }
+                    });
+                return hasManageSecurity;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {

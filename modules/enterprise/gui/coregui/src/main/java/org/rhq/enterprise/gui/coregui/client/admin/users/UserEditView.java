@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,13 +40,15 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
@@ -70,19 +74,30 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
-        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
-        UserEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
-        Subject sessionSubject = UserSessionManager.getSessionSubject();
-        boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-        boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
-        init(isReadOnly);
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                UserEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
+                Subject sessionSubject = UserSessionManager.getSessionSubject();
+                boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
+                boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
+                init(isReadOnly);
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
+            }
+        });
     }
 
     @Override
     protected Record createNewRecord() {
         Subject subject = new Subject();
         subject.setFactive(true);
-        @SuppressWarnings({"UnnecessaryLocalVariable"}) 
+        @SuppressWarnings( { "UnnecessaryLocalVariable" })
         Record userRecord = UsersDataSource.getInstance().copyValues(subject, false);
         return userRecord;
     }
@@ -90,7 +105,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     @Override
     protected void editRecord(Record record) {
         super.editRecord(record);
-        
+
         // Don't allow the rhqadmin account to be disabled.
         if (getRecordId() == SUBJECT_ID_RHQADMIN) {
             FormItem activeField = getForm().getField(UsersDataSource.Field.FACTIVE);
@@ -128,7 +143,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     private boolean areRolesReadOnly(Record record) {
         boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);        
+        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
     }
 
     @Override
@@ -156,7 +171,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             items.add(passwordItem);
 
             final PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
-            final boolean[] initialPasswordChange = {true};
+            final boolean[] initialPasswordChange = { true };
             passwordItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     if (initialPasswordChange[0]) {
@@ -211,5 +226,5 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         super.reset();
         this.roleSelector.reset();
     }
-    
+
 }

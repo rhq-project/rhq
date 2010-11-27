@@ -18,19 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import java.util.EnumSet;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -40,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Ian Springer
  */
 public class RolesView extends TableSection<RolesDataSource> implements BookmarkableView {
-    
+
     public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
 
     // TODO: We need a 24x24 version of the Role icon.
@@ -88,14 +91,24 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
             });
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
-            private boolean[] hasManageSecurityPermission = new boolean[] {false};
+            private boolean hasManageSecurity = false;
+
             public boolean isEnabled(ListGridRecord[] selection) {
-                UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
-                    public void onPermissionsLoaded(Set<Permission> globalPermissions) {
-                        hasManageSecurityPermission[0] = globalPermissions.contains(Permission.MANAGE_SECURITY);
-                    }
-                });
-                return hasManageSecurityPermission[0];
+                GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+                    new AsyncCallback<Set<Permission>>() {
+                        @Override
+                        public void onSuccess(Set<Permission> result) {
+                            hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                                    .of(Message.Option.BackgroundJobResult)));
+                        }
+                    });
+                return hasManageSecurity;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {

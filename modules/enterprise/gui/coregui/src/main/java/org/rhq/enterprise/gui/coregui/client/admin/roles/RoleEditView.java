@@ -255,15 +255,19 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     protected void save() {
         // Grab the currently assigned sets from each of the selectors and stick them into the corresponding canvas
         // items on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
-        // to the datasource's add or update methods .
-        ListGridRecord[] groupRecords = this.groupSelector.getAssignedGrid().getRecords();
-        getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, groupRecords);
+        // to the datasource's add or update methods.
+        if (this.groupSelector != null) {
+            ListGridRecord[] groupRecords = this.groupSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, groupRecords);
+        }
 
-        ListGridRecord[] subjectRecords = this.subjectSelector.getAssignedGrid().getRecords();
-        getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
+        if (this.subjectSelector != null) {
+            ListGridRecord[] subjectRecords = this.subjectSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
+        }
 
         if (this.ldapGroupSelector != null) {
-            ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getRecords();
+            ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getSelectedRecords();
             getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);
         }
 
@@ -276,8 +280,13 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         super.reset();
 
         this.permissionsItem.reset();
-        this.groupSelector.reset();
-        this.subjectSelector.reset();
+
+        if (this.groupSelector != null) {
+            this.groupSelector.reset();
+        }
+        if (this.subjectSelector != null) {
+            this.subjectSelector.reset();
+        }
         if (this.ldapGroupSelector != null) {
             this.ldapGroupSelector.reset();
         }

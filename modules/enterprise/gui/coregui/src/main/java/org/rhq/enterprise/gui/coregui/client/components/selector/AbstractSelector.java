@@ -109,11 +109,13 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         this.hlayout = new HLayout();
         this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
+        this.assignedGrid.setEmptyMessage(MSG.common_msg_loading());
 
         if (this.isReadOnly) {
             this.assignedGrid.setSelectionType(SelectionStyle.NONE);
         } else {
             this.availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
+            this.availableGrid.setEmptyMessage(MSG.common_msg_loading());
         }
     }
 
@@ -122,12 +124,37 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     /**
-     * Returns the list of IDs for the records being transferred.
+     * Returns the set of currently selected {@link Record record}s.
+     *
+     * @return the set of currently selected {@link Record record}s
+     */
+    public ListGridRecord[] getSelectedRecords() {
+        return this.assignedGrid.getSelection();
+    }
+
+    /**
+     * Returns the set of currently selected {@link T item}s.
+     *
+     * @return the set of currently selected {@link T item}s
+     */
+    public Set<T> getSelectedItems() {
+        ListGridRecord[] selectedRecords = this.assignedGrid.getSelection();
+        return getDataSource().buildDataObjects(selectedRecords);
+    }
+
+    /**
+     * Returns the IDs of the currently selected items
      * 
-     * @return the list of IDs for the records being transferred
+     * @return the IDs of the currently selected items
      */
     public Set<Integer> getSelection() {
-        return selection;
+        ListGridRecord[] selectedRecords = this.assignedGrid.getSelection();
+        Set<Integer> ids = new HashSet<Integer>(selectedRecords.length);
+        for (ListGridRecord selectedRecord : selectedRecords) {
+            Integer id = selectedRecord.getAttributeAsInt(getSelectorKey());
+            ids.add(id);
+        }
+        return ids;
     }
 
     public Set<String> getSelectionAlternateIds() {
@@ -521,12 +548,12 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         availableGrid.markForRedraw();
     }
 
-    // TODO: Add reset() method.
-
+    @Deprecated
     public LocatableListGrid getAvailableGrid() {
         return availableGrid;
     }
 
+    @Deprecated
     public LocatableListGrid getAssignedGrid() {
         return assignedGrid;
     }

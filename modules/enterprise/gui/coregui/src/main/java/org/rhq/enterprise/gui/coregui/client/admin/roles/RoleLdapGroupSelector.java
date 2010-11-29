@@ -102,7 +102,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
             if (currentRoleId > -1) {
 
                 //add listener to AvailableGrid, to act after successfully populated.
-                getAvailableGrid().addDataArrivedHandler(new DataArrivedHandler() {
+                this.availableGrid.addDataArrivedHandler(new DataArrivedHandler() {
                     @Override
                     public void onDataArrived(DataArrivedEvent event) {
                         int currentRoleId = getCurrentRoleId();

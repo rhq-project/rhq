@@ -214,8 +214,13 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     @Override
     protected void save() {
-        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getRecords();
-        getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
+        // Grab the currently assigned roles from the selector and stick them into the corresponding canvas
+        // item on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
+        // to the datasource's add or update methods.
+        if (roleSelector != null) {
+            ListGridRecord[] roleRecords = this.roleSelector.getSelectedRecords();
+            getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
+        }
 
         // Submit the form values to the datasource.
         super.save();
@@ -224,7 +229,10 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     @Override
     protected void reset() {
         super.reset();
-        this.roleSelector.reset();
+
+        if (this.roleSelector != null) {
+            this.roleSelector.reset();
+        }
     }
 
 }

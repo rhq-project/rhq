@@ -16,13 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package com.google.gwt.user.rebind.rpc;
+package org.rhq.enterprise.gui.coregui.user.rebind.rpc;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
+import com.google.gwt.user.rebind.rpc.ProxyCreator;
 
 import org.rhq.enterprise.gui.coregui.client.util.rpc.TrackingRemoteServiceProxy;
+
 
 /**
  * Creates a customized client-side proxy for a {@link RemoteService} interface.

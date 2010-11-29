@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.user.rebind.rpc;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.user.rebind.rpc.ProxyCreator;
 import com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator;
-import com.google.gwt.user.rebind.rpc.TrackingProxyCreator;
+
 
 /**
  * A generator used to create remote service proxy wrappers that will inject additional management and monitoring

@@ -51,36 +51,36 @@ public class RemoteServiceStatistics {
         }
 
         public static class Summary {
-            private String serviceName;
-            private String methodName;
-            private int count;
-            private long slowest;
-            private long average;
-            private long fastest;
-            private long stddev;
+            public final String serviceName;
+            public final String methodName;
+            public final int count;
+            public final long slowest;
+            public final long average;
+            public final long fastest;
+            public final long stddev;
 
             private Summary(String serviceName, String methodName, List<Long> data) {
-                // remoteService format "{ServiceName}_Proxy.{MethodName}"
                 this.serviceName = serviceName;
                 this.methodName = methodName;
-
                 this.count = data.size();
 
                 if (!data.isEmpty()) {
                     int i = 0;
-                    long total = 0;
+                    long total = 0, slow = 0, fast = 0;
                     for (long next : data) {
                         if (i++ == 0) {
-                            total = slowest = fastest = next;
+                            total = slow = fast = next;
                         } else {
                             total += next;
-                            if (next > slowest) {
-                                slowest = next;
-                            } else if (next < fastest) {
-                                fastest = next;
+                            if (next > slow) {
+                                slow = next;
+                            } else if (next < fast) {
+                                fast = next;
                             }
                         }
                     }
+                    slowest = slow;
+                    fastest = fast;
                     double avg = (total) / (double) count;
 
                     double sumOfSquares = 0;
@@ -89,40 +89,14 @@ public class RemoteServiceStatistics {
                     }
                     stddev = (long) Math.pow(sumOfSquares / count, 0.5);
                     average = (long) avg;
+                } else {
+                    slowest = average = fastest = stddev = 0;
                 }
-            }
-
-            public String getServiceName() {
-                return serviceName;
-            }
-
-            public String getMethodName() {
-                return methodName;
-            }
-
-            public int getCount() {
-                return count;
-            }
-
-            public long getSlowest() {
-                return slowest;
-            }
-
-            public long getAverage() {
-                return average;
-            }
-
-            public long getFastest() {
-                return fastest;
-            }
-
-            public long getStddev() {
-                return stddev;
             }
 
             public String toString() {
                 StringBuilder builder = new StringBuilder();
-                builder.append("serviceName=").append(serviceName).append(',');
+                builder.append("serviceName=").append(serviceName).append('.');
                 builder.append("methodeName=").append(methodName).append(": ");
                 if (count < 1) {
                     builder.append("empty");

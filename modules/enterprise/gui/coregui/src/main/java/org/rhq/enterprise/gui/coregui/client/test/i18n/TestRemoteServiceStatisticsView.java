@@ -73,13 +73,13 @@ public class TestRemoteServiceStatisticsView extends Table {
 
     private ListGridRecord transform(Summary stat) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("serviceName", stat.getServiceName());
-        record.setAttribute("methodName", stat.getMethodName());
-        record.setAttribute("count", stat.getCount());
-        record.setAttribute("slowest", stat.getSlowest());
-        record.setAttribute("average", stat.getAverage());
-        record.setAttribute("fastest", stat.getFastest());
-        record.setAttribute("stddev", stat.getStddev());
+        record.setAttribute("serviceName", stat.serviceName);
+        record.setAttribute("methodName", stat.methodName);
+        record.setAttribute("count", stat.count);
+        record.setAttribute("slowest", stat.slowest);
+        record.setAttribute("average", stat.average);
+        record.setAttribute("fastest", stat.fastest);
+        record.setAttribute("stddev", stat.stddev);
         return record;
     }
 

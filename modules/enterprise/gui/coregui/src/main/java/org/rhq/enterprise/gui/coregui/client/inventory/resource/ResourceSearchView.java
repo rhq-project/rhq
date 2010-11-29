@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -124,9 +125,12 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 40);
+        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 26);
         iconField.setType(ListGridFieldType.IMAGE);
         iconField.setImageURLPrefix("types/");
+        iconField.setShowDefaultContextMenu(false);
+        iconField.setCanSort(false);
+        iconField.setTitle("&nbsp;");
 
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
@@ -143,6 +147,22 @@ public class ResourceSearchView extends Table {
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
 
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
+        categoryField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String categoryName = (String)value;
+                ResourceCategory category = ResourceCategory.valueOf(categoryName);
+                String displayName = "";
+                switch (category) {
+                    case PLATFORM:
+                        displayName = MSG.common_title_platform(); break;
+                    case SERVER:
+                        displayName = MSG.common_title_server(); break;
+                    case SERVICE:
+                        displayName = MSG.common_title_service(); break;
+                }
+                return displayName;
+            }
+        });
 
         ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
         availabilityField.setType(ListGridFieldType.IMAGE);

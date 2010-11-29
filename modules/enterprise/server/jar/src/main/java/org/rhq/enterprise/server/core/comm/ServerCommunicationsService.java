@@ -438,11 +438,13 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
             try {
                 ClientCommandSenderConfiguration sender_config = getSenderConfiguration(agent);
-                spool_file = new File(sender_config.dataDirectory, sender_config.commandSpoolFileName);
-                if (spool_file.exists()) {
-                    // first truncate it, in case Windows is locking it; then try to delete
-                    new FileOutputStream(spool_file, false).close();
-                    spool_file.delete();
+                if (sender_config.commandSpoolFileName != null) {
+	                spool_file = new File(sender_config.dataDirectory, sender_config.commandSpoolFileName);
+	                if (spool_file.exists()) {
+	                    // first truncate it, in case Windows is locking it; then try to delete
+	                    new FileOutputStream(spool_file, false).close();
+	                    spool_file.delete();
+	                }
                 }
             } catch (Exception e) {
                 LOG.warn("Failed to truncate/delete spool for deleted agent [" + agent + "]"

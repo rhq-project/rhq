@@ -23,99 +23,135 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
+
 /**
  * @author Joseph Marques
  */
 public class RemoteServiceStatistics {
 
-    public static class Stat {
+    public static class Record {
         private String serviceName;
         private String methodName;
-        private int count;
-        private long total;
-        private long latest;
-        private long slowest;
-        private long fastest;
+        private List<Long> data = new ArrayList<Long>();
 
-        protected Stat(String remoteService, long millis) {
+        private Record(String remoteService, long millis) {
             // remoteService format "{ServiceName}_Proxy.{MethodName}"
             this.serviceName = remoteService.substring(0, remoteService.indexOf("_Proxy"));
             this.methodName = remoteService.substring(remoteService.indexOf('.') + 1);
-            count = 1;
-            total = latest = slowest = fastest = millis;
+            this.data.add(millis);
         }
 
         private void record(long millis) {
-            count++;
-            total += millis;
-            latest = millis;
-            if (millis > slowest) {
-                slowest = millis;
-            } else if (millis < fastest) {
-                fastest = millis;
+            this.data.add(millis);
+        }
+
+        public Summary getSummary() {
+            return new Summary(serviceName, methodName, data);
+        }
+
+        public static class Summary {
+            private String serviceName;
+            private String methodName;
+            private int count;
+            private long slowest;
+            private long average;
+            private long fastest;
+            private long stddev;
+
+            private Summary(String serviceName, String methodName, List<Long> data) {
+                // remoteService format "{ServiceName}_Proxy.{MethodName}"
+                this.serviceName = serviceName;
+                this.methodName = methodName;
+
+                this.count = data.size();
+
+                if (!data.isEmpty()) {
+                    int i = 0;
+                    long total = 0;
+                    for (long next : data) {
+                        if (i++ == 0) {
+                            total = slowest = fastest = next;
+                        } else {
+                            total += next;
+                            if (next > slowest) {
+                                slowest = next;
+                            } else if (next < fastest) {
+                                fastest = next;
+                            }
+                        }
+                    }
+                    double avg = (total) / (double) count;
+
+                    double sumOfSquares = 0;
+                    for (long next : data) {
+                        sumOfSquares += Math.pow(next - avg, 2);
+                    }
+                    stddev = (long) Math.pow(sumOfSquares / count, 0.5);
+                    average = (long) avg;
+                }
             }
-        }
 
-        public String getServiceName() {
-            return serviceName;
-        }
-
-        public String getMethodName() {
-            return methodName;
-        }
-
-        public int getCount() {
-            return count;
-        }
-
-        public long getTotal() {
-            return total;
-        }
-
-        public long getLatest() {
-            return latest;
-        }
-
-        public long getSlowest() {
-            return slowest;
-        }
-
-        public long getFastest() {
-            return fastest;
-        }
-
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("serviceName=").append(serviceName).append(',');
-            builder.append("methodeName=").append(methodName).append(": ");
-            if (count < 1) {
-                builder.append("empty");
-            } else {
-                builder.append("count=").append(count).append(',');
-                builder.append("total=").append(total).append(',');
-                builder.append("avg=").append(total / count).append(',');
-                builder.append("latest=").append(latest).append(',');
-                builder.append("slowest=").append(slowest).append(',');
-                builder.append("fastest=").append(fastest);
+            public String getServiceName() {
+                return serviceName;
             }
-            return builder.toString();
+
+            public String getMethodName() {
+                return methodName;
+            }
+
+            public int getCount() {
+                return count;
+            }
+
+            public long getSlowest() {
+                return slowest;
+            }
+
+            public long getAverage() {
+                return average;
+            }
+
+            public long getFastest() {
+                return fastest;
+            }
+
+            public long getStddev() {
+                return stddev;
+            }
+
+            public String toString() {
+                StringBuilder builder = new StringBuilder();
+                builder.append("serviceName=").append(serviceName).append(',');
+                builder.append("methodeName=").append(methodName).append(": ");
+                if (count < 1) {
+                    builder.append("empty");
+                } else {
+                    builder.append("count=").append(count).append(',');
+                    builder.append("slowest=").append(slowest).append(',');
+                    builder.append("average=").append(average).append(',');
+                    builder.append("fastest=").append(fastest).append(',');
+                    builder.append("stddev=").append(stddev);
+                }
+                return builder.toString();
+            }
         }
 
     }
 
-    private static Map<String, Stat> statistics = new HashMap<String, Stat>();
+    private static Map<String, Record> statistics = new HashMap<String, Record>();
 
     private RemoteServiceStatistics() {
         // static access only
     }
 
     public static void record(String remoteService, long millis) {
-        Stat stat = statistics.get(remoteService);
-        if (stat == null) {
-            stat = new Stat(remoteService, millis);
-            statistics.put(remoteService, stat);
+        Record record = statistics.get(remoteService);
+        if (record == null) {
+            record = new Record(remoteService, millis);
+            statistics.put(remoteService, record);
         } else {
-            stat.record(millis);
+            record.record(millis);
         }
     }
 
@@ -125,11 +161,11 @@ public class RemoteServiceStatistics {
     }
 
     public static String print(String remoteService) {
-        Stat stat = statistics.get(remoteService);
-        if (stat == null) {
-            stat = new Stat(remoteService, 0);
+        Record record = statistics.get(remoteService);
+        if (record == null) {
+            record = new Record(remoteService, 0);
         }
-        return "RemoteServiceStatistics: " + remoteService + ": " + stat.toString();
+        return "RemoteServiceStatistics: " + remoteService + ": " + record.getSummary();
     }
 
     public static List<String> printAll() {
@@ -142,19 +178,19 @@ public class RemoteServiceStatistics {
         return stats;
     }
 
-    public static Stat get(String remoteService) {
-        Stat stat = statistics.get(remoteService);
+    public static Summary get(String remoteService) {
+        Record stat = statistics.get(remoteService);
         if (stat == null) {
-            stat = new Stat(remoteService, 0);
+            stat = new Record(remoteService, 0);
         }
-        return stat;
+        return stat.getSummary();
     }
 
-    public static List<Stat> getAll() {
-        List<Stat> stats = new ArrayList<Stat>();
+    public static List<Summary> getAll() {
+        List<Summary> stats = new ArrayList<Summary>();
 
         for (String remoteService : statistics.keySet()) {
-            stats.add(statistics.get(remoteService));
+            stats.add(get(remoteService));
         }
 
         return stats;

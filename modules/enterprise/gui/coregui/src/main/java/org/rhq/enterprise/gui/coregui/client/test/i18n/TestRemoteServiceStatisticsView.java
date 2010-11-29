@@ -28,7 +28,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics;
-import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Stat;
+import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
 
 /**
  * A view that gives a display of statistics for all remote services executed since the application was loaded.
@@ -50,22 +50,20 @@ public class TestRemoteServiceStatisticsView extends Table {
         ListGridField methodName = new ListGridField("methodName", "Method Name");
         ListGridField count = new ListGridField("count", "Count");
         count.setAlign(Alignment.CENTER);
-        ListGridField total = new ListGridField("total", "Total (ms)");
-        total.setAlign(Alignment.RIGHT);
-        ListGridField average = new ListGridField("average", "Average (ms)");
-        average.setAlign(Alignment.RIGHT);
-        ListGridField latest = new ListGridField("latest", "Latest (ms)");
-        latest.setAlign(Alignment.RIGHT);
         ListGridField slowest = new ListGridField("slowest", "Slowest (ms)");
         slowest.setAlign(Alignment.RIGHT);
+        ListGridField average = new ListGridField("average", "Average (ms)");
+        average.setAlign(Alignment.RIGHT);
         ListGridField fastest = new ListGridField("fastest", "Fastest (ms)");
         fastest.setAlign(Alignment.RIGHT);
+        ListGridField stddev = new ListGridField("stddev", "Std Dev");
+        stddev.setAlign(Alignment.RIGHT);
 
-        getListGrid().setFields(serviceName, methodName, count, total, average, latest, slowest, fastest);
+        getListGrid().setFields(serviceName, methodName, count, slowest, average, fastest, stddev);
         getListGrid().setRecords(transform(RemoteServiceStatistics.getAll()));
     }
 
-    private ListGridRecord[] transform(List<Stat> stats) {
+    private ListGridRecord[] transform(List<Summary> stats) {
         ListGridRecord[] results = new ListGridRecord[stats.size()];
         for (int i = 0; i < stats.size(); i++) {
             results[i] = transform(stats.get(i));
@@ -73,16 +71,15 @@ public class TestRemoteServiceStatisticsView extends Table {
         return results;
     }
 
-    private ListGridRecord transform(Stat stat) {
+    private ListGridRecord transform(Summary stat) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("serviceName", stat.getServiceName());
         record.setAttribute("methodName", stat.getMethodName());
         record.setAttribute("count", stat.getCount());
-        record.setAttribute("total", stat.getTotal());
-        record.setAttribute("average", stat.getTotal() / stat.getCount());
-        record.setAttribute("latest", stat.getLatest());
         record.setAttribute("slowest", stat.getSlowest());
+        record.setAttribute("average", stat.getAverage());
         record.setAttribute("fastest", stat.getFastest());
+        record.setAttribute("stddev", stat.getStddev());
         return record;
     }
 

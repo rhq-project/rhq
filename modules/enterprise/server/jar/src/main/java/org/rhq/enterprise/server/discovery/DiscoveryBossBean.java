@@ -115,7 +115,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Agent knownAgent = agentManager.getAgentByName(agent.getName());
         if (knownAgent == null) {
             throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName()
-                + "] sent an inventory report - that report will be ignored");
+                + "] sent an inventory report - that report will be ignored. " 
+                + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
+                + agent.getName() 
+                + "] was recently removed from the inventory. In any other case this is a bug.");
         }
 
         if (log.isDebugEnabled()) {

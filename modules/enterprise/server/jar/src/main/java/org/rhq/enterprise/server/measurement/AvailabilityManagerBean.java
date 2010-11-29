@@ -506,9 +506,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 return false;
             }
         } else {
-            log.error("Could not figure out which agent sent availability report.  This is a bug, please report it. "
+            log.error("Could not figure out which agent sent availability report. "
+                + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
+                + agentName
+                + "] was recently removed. In any other case this is a bug."
                 + report);
-        }
+      }
 
         return true; // everything is OK and things look to be in sync
     }

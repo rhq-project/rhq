@@ -3,6 +3,10 @@ package org.rhq.enterprise.gui.coregui.client;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 
 /**
@@ -15,8 +19,110 @@ import org.rhq.core.domain.resource.group.GroupCategory;
  *
  */
 public class ImageManager {
+
+    public static final String IMAGES_DIR = "images/";
+
     /**
-     * Returns the large group icon badged with availability icon. Avails is the
+     * All methods in this ImageManager class return image paths relative to the top
+     * {@link #IMAGES_DIR images directory}. If you need a full path to the image, including
+     * this top images directory name (for example, if you need to populate an explicit HTML
+     * img tag's src attribute) pass in an image path to this {@link #getFullImagePath(String)}
+     * method to obtain the full path.  The caller can optionall prepend {@link #IMAGES_DIR}
+     * to any path returned by ImageManager, which is all this method really does.
+     * 
+     * @param image a relative image path
+     * @return a full image path
+     */
+    public static String getFullImagePath(String image) {
+        return IMAGES_DIR + image;
+    }
+
+    public static String getResourceIcon(Resource resource) {
+        return getResourceIcon(resource, "16");
+    }
+
+    public static String getResourceLargeIcon(Resource resource) {
+        return getResourceIcon(resource, "24");
+    }
+
+    private static String getResourceIcon(Resource resource, String size) {
+        ResourceType type = resource.getResourceType();
+        ResourceCategory category;
+        if (type != null) {
+            category = type.getCategory();
+        } else {
+            category = ResourceCategory.SERVICE;
+        }
+
+        ResourceAvailability resourceAvail = resource.getCurrentAvailability();
+        Boolean avail;
+        if (resourceAvail != null) {
+            AvailabilityType availType = resourceAvail.getAvailabilityType();
+            if (availType != null) {
+                avail = Boolean.valueOf(availType == AvailabilityType.UP);
+            } else {
+                avail = null;
+            }
+        } else {
+            avail = null;
+        }
+        return getResourceIcon(category, avail, size);
+    }
+
+    public static String getResourceIcon(ResourceCategory category) {
+        return getResourceIcon(category, Boolean.TRUE);
+    }
+
+    public static String getResourceLargeIcon(ResourceCategory category) {
+        return getResourceLargeIcon(category, Boolean.TRUE);
+    }
+
+    public static String getResourceIcon(ResourceCategory category, Boolean avail) {
+        return getResourceIcon(category, avail, "16");
+    }
+
+    public static String getResourceLargeIcon(ResourceCategory category, Boolean avail) {
+        return getResourceIcon(category, avail, "24");
+    }
+
+    private static String getResourceIcon(ResourceCategory category, Boolean avail, String size) {
+        String categoryName = null;
+        String availName = null;
+
+        switch (category) {
+        case PLATFORM: {
+            categoryName = "Platform";
+            availName = (avail != null && avail.booleanValue()) ? "up" : "down";
+            break;
+        }
+        case SERVER: {
+            categoryName = "Server";
+            // only server icons have an explicit "unknown" icon, the others will be assumed down when null
+            availName = (avail != null) ? (avail.booleanValue() ? "up" : "down") : "unknown";
+            break;
+        }
+        case SERVICE: {
+            categoryName = "Service";
+            availName = (avail != null && avail.booleanValue()) ? "up" : "down";
+            break;
+        }
+        }
+
+        return "types/" + categoryName + "_" + availName + "_" + size + ".png";
+    }
+
+    public static String getGroupIcon(GroupCategory groupType) {
+        String category = groupType == GroupCategory.COMPATIBLE ? "Cluster" : "Group";
+        return "types/" + category + "_up_16.png";
+    }
+
+    public static String getGroupLargeIcon(GroupCategory groupType) {
+        String category = groupType == GroupCategory.COMPATIBLE ? "Cluster" : "Group";
+        return "types/" + category + "_up_24.png";
+    }
+
+    /**
+     * Returns the group icon badged with availability icon. Avails is the
      * percentage of resources in the group that are UP. If avails is 0, it is
      * red (no resources are available), if it is 1, it is green (all resources
      * are available), if it is between 0 and 1, it is yellow.
@@ -28,21 +134,29 @@ public class ImageManager {
      * @param avails percentage of resources that are UP
      * @return the group badge icon
      */
+    public static String getGroupIcon(GroupCategory groupType, Double avails) {
+        return getGroupIcon(groupType, avails, "16");
+    }
+
     public static String getGroupLargeIcon(GroupCategory groupType, Double avails) {
+        return getGroupIcon(groupType, avails, "24");
+    }
+
+    private static String getGroupIcon(GroupCategory groupType, Double avails, String size) {
         String category = groupType == GroupCategory.COMPATIBLE ? "Cluster" : "Group";
 
         if (avails == null) {
-            return "types/" + category + "_up_24.png";
+            return "types/" + category + "_up_" + size + ".png";
         }
 
         double val = avails.doubleValue();
 
         if (val == 0.0d) {
-            return "types/" + category + "_down_24.png";
+            return "types/" + category + "_down_" + size + ".png";
         } else if (val > 0.0d && val < 1.0d) {
-            return "types/" + category + "_warning_24.png";
+            return "types/" + category + "_warning_" + size + ".png";
         } else {
-            return "types/" + category + "_up_24.png";
+            return "types/" + category + "_up_" + size + ".png";
         }
     }
 
@@ -141,5 +255,9 @@ public class ImageManager {
         }
 
         return "subsystems/inventory/Connection_16.png";
+    }
+
+    public static String getLockedIcon() {
+        return "global/Locked_16.png";
     }
 }

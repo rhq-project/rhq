@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.tagging.Tag;
@@ -152,7 +153,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                 }
             });
 
-        badge = new Img("types/Service_up_24.png", 24, 24);
+        badge = new Img(ImageManager.getGroupLargeIcon(GroupCategory.MIXED), 24, 24);
 
         TagEditorView tagEditorView = new TagEditorView(extendLocatorId("Editor"), group.getTags(), false,
             new TagsChangedCallback() {

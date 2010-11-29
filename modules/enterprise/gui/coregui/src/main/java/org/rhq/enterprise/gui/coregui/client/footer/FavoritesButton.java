@@ -33,6 +33,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
@@ -92,13 +93,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                                     // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
                                     //       disambiguated Resource names.
                                     item.setTitle(resource.getName());
-
-                                    String category = resource.getResourceType().getCategory().getDisplayName();
-
-                                    String avail = (resource.getCurrentAvailability() != null && resource
-                                        .getCurrentAvailability().getAvailabilityType() != null) ? (resource
-                                        .getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-                                    item.setIcon("types/" + category + "_" + avail + "_16.png");
+                                    item.setIcon(ImageManager.getResourceIcon(resource));
                                 }
                                 favoritesMenu.setItems(items);
                                 favoritesMenu.showContextMenu();

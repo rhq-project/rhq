@@ -57,6 +57,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -485,7 +486,7 @@ public class NewResourceTreeView extends LocatableVLayout {
 
             Resource nr = ((ResourceTreeDatasource.ResourceTreeNode) node).getResource();
             String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
-            String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
+            String icon = ImageManager.getResourceIcon(nr.getResourceType().getCategory());
 
             viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
 

@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.tagging.Tag;
@@ -127,7 +128,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             }
         });
 
-        badge = new Img("types/Service_up_24.png", 24, 24);
+        badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
 
         TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
             new TagsChangedCallback() {
@@ -315,12 +316,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
                 .getCurrentAvailability().getAvailabilityType()));
 
-            String category = this.resource.getResourceType().getCategory().getDisplayName();
-
-            String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
-                .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
-                .toLowerCase()) : "down";
-            badge.setSrc("types/" + category + "_" + avail + "_24.png");
+            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource));
 
             markForRedraw();
         }

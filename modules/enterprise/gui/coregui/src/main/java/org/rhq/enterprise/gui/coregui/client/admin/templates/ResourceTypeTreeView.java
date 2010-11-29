@@ -431,14 +431,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             if (record instanceof TreeNode) {
                 if (record instanceof ResourceTypeTreeNodeBuilder.ResourceTypeTreeNode) {
                     String categoryName = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
-                    switch (ResourceCategory.valueOf(categoryName)) {
-                    case PLATFORM:
-                        return "types/Platform_up_16.png";
-                    case SERVER:
-                        return "types/Server_up_16.png";
-                    case SERVICE:
-                        return "types/Service_up_16.png";
-                    }
+                    return ImageManager.getResourceIcon(ResourceCategory.valueOf(categoryName));
                 }
             }
             return null;

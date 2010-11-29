@@ -8,6 +8,7 @@ import org.rhq.core.domain.plugin.Plugin
 import javax.ejb.EJBException
 import org.rhq.core.domain.plugin.PluginDeploymentType
 import org.rhq.core.domain.plugin.PluginStatusType
+import org.testng.annotations.BeforeGroups
 
 class PluginManagerBeanTest extends MetadataTest {
 
@@ -15,14 +16,13 @@ class PluginManagerBeanTest extends MetadataTest {
 
   PluginManagerLocal pluginMgr
 
-  @BeforeMethod
-  void initTest() {
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'])
+  void registerPlugins() {
     subjectMgr = LookupUtil.subjectManager
     pluginMgr = LookupUtil.pluginManager
-  }
 
-  @Test(groups = ['plugin.metadata'])
-  void registerPlugins() {
+    setupDB()
+
     def pluginDescriptor1 =
     """
     <plugin name="PluginManagerBeanTestPlugin1"
@@ -67,7 +67,7 @@ class PluginManagerBeanTest extends MetadataTest {
     createPlugin("test-plugin3", "1.0", pluginDescriptor3)
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['registerPlugins'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['registerPlugins'])
   void disablePlugin() {
     def plugin = getPlugin('PluginManagerBeanTestPlugin3')
 
@@ -77,7 +77,7 @@ class PluginManagerBeanTest extends MetadataTest {
     assertFalse 'Failed to disable plugin', plugin.enabled
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['registerPlugins'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['registerPlugins'])
   void doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled() {
     def plugin = getPlugin('PluginManagerBeanTestPlugin1')
     def exception = null
@@ -95,7 +95,7 @@ class PluginManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled'])
   void disablePluginAndDependentPlugins() {
     def plugin1 = getPlugin('PluginManagerBeanTestPlugin1')
     def plugin2 = getPlugin('PluginManagerBeanTestPlugin2')
@@ -109,7 +109,7 @@ class PluginManagerBeanTest extends MetadataTest {
     assertFalse 'Failed to disable plugin', plugin2.enabled
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['disablePluginAndDependentPlugins'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['disablePluginAndDependentPlugins'])
   void enablePlugins() {
     def plugin1 = getPlugin('PluginManagerBeanTestPlugin1')
     def plugin2 = getPlugin('PluginManagerBeanTestPlugin2')
@@ -123,7 +123,7 @@ class PluginManagerBeanTest extends MetadataTest {
     assertTrue 'Failed to enable plugin', plugin2.enabled
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['enablePlugins'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['enablePlugins'])
   void doNotDeletePluginIfDependentPluginIsNotAlsoDeleted() {
     def plugin = getPlugin('PluginManagerBeanTestPlugin1')
     def exception = null
@@ -141,7 +141,7 @@ class PluginManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['doNotDeletePluginIfDependentPluginIsNotAlsoDeleted'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['doNotDeletePluginIfDependentPluginIsNotAlsoDeleted'])
   void deletePlugins() {
     def plugin1 = getPlugin('PluginManagerBeanTestPlugin1')
     def plugin2 = getPlugin('PluginManagerBeanTestPlugin2')
@@ -155,7 +155,7 @@ class PluginManagerBeanTest extends MetadataTest {
     assertTrue 'Expected plugin status to be set to DELETED', plugin2.status == PluginStatusType.DELETED
   }
 
-  @Test(groups = ['plugin.metadata'], dependsOnMethods = ['deletePlugins'])
+  @Test(groups = ['plugin.metadata', 'PluginManagerBean'], dependsOnMethods = ['deletePlugins'])
   void purgePlugins() {
     def plugin1 = getPlugin('PluginManagerBeanTestPlugin1', 'Deleting a plugin should not remove it from the database')
     def plugin2 = getPlugin('PluginManagerBeanTestPlugin2', 'Deleting a plugin should not remove it from the database')

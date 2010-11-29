@@ -62,7 +62,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet {
 
     public static final String KEY = MSG.view_portlet_recentAlerts_title();
-    public static final String TITLE = KEY;
     //widget keys also used in form population
     public static final String ALERT_RANGE_DISPLAY_AMOUNT_VALUE = "alert-range-display-amount-value";
     public static final String ALERT_RANGE_PRIORITY_VALUE = "alert-range-priority-value";
@@ -512,7 +511,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
                 PropertySimple prop = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE);
 
                 //check to see if "Selected Resources" or "All Resources"
-                if (prop.getStringValue().equals(RESOURCES_SELECTED)) {
+                if (prop != null && RESOURCES_SELECTED.equals(prop.getStringValue())) {
                     //retrieve currentlyAssignedIds
                     Integer[] valuesToPersist = resourceSelector.getListGridValues();
                     resourceSelector.setCurrentlyAssignedIds(valuesToPersist);
@@ -631,11 +630,7 @@ class AlertResourceSelectorRegion {
                             }
                         }
                         //simulate 'add' button push.
-                        selector.addAvailableGridSelectionsToAssignedGrid();
-                        selector.getAssignedGrid().invalidateCache();
-                        selector.getAssignedGrid().markForRedraw();
-                    } else {//no selected resources found
-                        selector.getAvailableGrid().setEmptyMessage(MSG.common_msg_noItemsToShow());
+                        selector.addSelectedRows();                        
                     }
                 }
             });

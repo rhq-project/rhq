@@ -48,6 +48,7 @@ import com.smartgwt.client.widgets.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
@@ -71,10 +72,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public abstract class AbstractSelector<T> extends LocatableVLayout {
-    private static String SELECTOR_KEY = "id";
 
-    protected Set<Integer> selection = new HashSet<Integer>();
-    protected Set<String> selectionAlternateIds = new HashSet<String>();
+    private static String SELECTOR_KEY = "id";
 
     Set<AssignedItemsChangedHandler> assignedItemsChangedHandlers = new HashSet<AssignedItemsChangedHandler>();
 
@@ -155,10 +154,6 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             ids.add(id);
         }
         return ids;
-    }
-
-    public Set<String> getSelectionAlternateIds() {
-        return selectionAlternateIds;
     }
 
     protected abstract DynamicForm getAvailableFilterForm();
@@ -296,10 +291,15 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
                 availableRecords = new ArrayList<Record>();
                 Record[] allRecords = response.getData();
-                if (selection != null) {
+                if (initialSelection != null) {
+                    Set<Integer> selectedRecordIds = new HashSet<Integer>(initialSelection.length);
+                    for (Record record : initialSelection) {
+                        Integer id = record.getAttributeAsInt(getSelectorKey());
+                        selectedRecordIds.add(id);
+                    }
                     for (Record record : allRecords) {
-                        int id = record.getAttributeAsInt("id");
-                        if (!selection.contains(id)) {
+                        int id = record.getAttributeAsInt(getSelectorKey());
+                        if (!selectedRecordIds.contains(id)) {
                             availableRecords.add(record);
                         }
                     }
@@ -392,13 +392,6 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         // Load data.
         if (initialSelection != null) {
             assignedGrid.setData(initialSelection);
-            for (ListGridRecord record : initialSelection) {
-                if (getSelectorKey().equalsIgnoreCase("id")) {
-                    selection.add(record.getAttributeAsInt(getSelectorKey()));
-                } else {
-                    selectionAlternateIds.add(record.getAttributeAsString(getSelectorKey()));
-                }
-            }
         }
 
         if (!this.isReadOnly) {
@@ -440,7 +433,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     public void reset() {
-        select(initialSelection);
+        this.assignedGrid.setData(this.initialSelection);
+        populateAvailableGrid(getLatestCriteria(getAvailableFilterForm()));
     }
 
     public HandlerRegistration addAssignedItemsChangedHandler(final AssignedItemsChangedHandler handler) {
@@ -453,20 +447,27 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         };
     }
 
-    private void removeSelectedRows() {
-        availableGrid.transferSelectedData(assignedGrid);
-        deselect(assignedGrid.getSelection());
-        assignedGrid.removeSelectedData();
+    /**
+     * Moves the rows selected in the assigned grid to the available grid.
+     */
+    public void removeSelectedRows() {
+        moveSelectedData(this.assignedGrid, this.availableGrid);
         notifyAssignedItemsChangedHandlers();
         updateButtonEnablement();
     }
 
-    private void addSelectedRows() {
-        assignedGrid.transferSelectedData(availableGrid);
-        select(assignedGrid.getSelection());
-        availableGrid.removeSelectedData();
+    /**
+     * Moves the rows selected in the available grid to the assigned grid.
+     */
+    public void addSelectedRows() {
+        moveSelectedData(this.availableGrid, this.assignedGrid);
         notifyAssignedItemsChangedHandlers();
         updateButtonEnablement();
+    }
+
+    private void moveSelectedData(ListGrid sourceGrid, ListGrid targetGrid) {
+        targetGrid.transferSelectedData(sourceGrid);
+        sourceGrid.removeSelectedData();
     }
 
     protected String getItemName() {
@@ -512,40 +513,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         removeAllButton.setDisabled(assignedGrid.getDataAsRecordList().isEmpty());
     }
 
+    @Deprecated
     protected void select(ListGridRecord[] records) {
-        availableGrid.deselectAllRecords();
-        for (ListGridRecord record : records) {
-            if (getSelectorKey().equalsIgnoreCase("id")) {
-                selection.add(record.getAttributeAsInt(getSelectorKey()));
-            } else {
-                selectionAlternateIds.add(record.getAttributeAsString(getSelectorKey()));
-            }
-        }
-        assignedGrid.markForRedraw();
-    }
-
-    protected void deselect(ListGridRecord[] records) {
-        Set<Integer> toRemove = new HashSet<Integer>();
-        Set<String> toRemoveStringIds = new HashSet<String>();
-        if (getSelectorKey().equalsIgnoreCase("id")) {//integer id based
-            for (ListGridRecord record : records) {
-                toRemove.add(record.getAttributeAsInt(getSelectorKey()));
-            }
-            selection.removeAll(toRemove);
-
-            for (Integer id : toRemove) {
-                Record record = availableGrid.getDataAsRecordList().find(getSelectorKey(), id);
-                if (record != null) {
-                    ((ListGridRecord) record).setEnabled(true);
-                }
-            }
-        } else {//not using 'id' as selection criteria
-            for (ListGridRecord record : records) {
-                toRemoveStringIds.add(record.getAttributeAsString(getSelectorKey()));
-            }
-            selectionAlternateIds.removeAll(toRemoveStringIds);
-        }
-        availableGrid.markForRedraw();
     }
 
     @Deprecated

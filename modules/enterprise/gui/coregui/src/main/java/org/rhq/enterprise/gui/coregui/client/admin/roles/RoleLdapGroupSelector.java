@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  * @author Simeon Pinder
  */
 public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>> {
+
     public static final String id = "id";
     public static final String name = "name";
     public static final String description = "description";
@@ -124,7 +125,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                                                 if (loaded != null) {
                                                     ArrayList<Integer> located = new ArrayList<Integer>();
                                                     for (LdapGroup group : currentlyAssignedLdapGroups) {
-                                                        int index = loaded.findIndex(name, (String) group.getName());
+                                                        int index = loaded.findIndex(name, group.getName());
                                                         if (index > -1) {
                                                             group.setId(index);//overwrite RHQ Resource ID to match ldap fabricated id.
                                                             located.add(Integer.valueOf(index));
@@ -137,11 +138,8 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                                                     }
                                                     availableGrid.selectRecords(records);
                                                     //now simulate button push
-                                                    assignedGrid.transferSelectedData(availableGrid);
                                                     initialLdapSelectionsLoad = false;
-                                                    select(assignedGrid.getSelection());
-                                                    updateButtonEnablement();
-                                                    assignedGrid.deselectAllRecords();
+                                                    addSelectedRows();
                                                 }
                                             }
                                         }
@@ -386,9 +384,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                         }
                         getAssignedGrid().selectRecords(records);
                         //now simulate button push
-                        assignedGrid.transferSelectedData(availableGrid);
-                        select(assignedGrid.getSelection());
-                        updateButtonEnablement();
+                        addSelectedRows();
 
                         //entry count
                         if (null != currentlyAssignedLdapGroups) {
@@ -435,4 +431,5 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
     public int getCurrentRoleId() {
         return currentRoleId;
     }
+    
 }

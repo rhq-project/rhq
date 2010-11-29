@@ -26,6 +26,7 @@ package org.rhq.augeas.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.logging.Log;
@@ -129,7 +130,8 @@ public class Glob {
         globPattern = new File(globPattern).getAbsolutePath();
         File[] files = parentPath.listFiles(new GlobFilter(globPattern));
         if (files == null) {
-            throw new IllegalStateException("Could not list files in " + parentPath);
+            log.debug("Could list files in " + parentPath);
+            return Collections.emptyList();
         }
         return Arrays.asList(files);
     }

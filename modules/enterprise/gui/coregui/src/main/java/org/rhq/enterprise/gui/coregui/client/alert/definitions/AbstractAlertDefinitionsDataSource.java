@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -28,13 +29,20 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.FieldType;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -51,13 +59,78 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     protected static final String FIELD_MTIME = "mtime";
     protected static final String FIELD_ENABLED = "enabled";
     protected static final String FIELD_DELETED = "deleted";
-    protected static final String FIELD_PRIORITY = "priority"; // not the actual object; a string for the UI
+    protected static final String FIELD_PRIORITY = "priority"; // an image URL
     protected static final String FIELD_OBJECT = "_object"; // the actual AlertDefinition object
 
     public AbstractAlertDefinitionsDataSource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
+    }
+
+    /**
+     * The view that contains the list grid which will display this datasource's data will call this
+     * method to get the field information which is used to control the display of the data.
+     * 
+     * @return list grid fields used to display the datasource data
+     */
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+
+        ListGridField nameField = new ListGridField(FIELD_NAME, MSG.view_alerts_field_name());
+        nameField.setWidth("25%");
+        fields.add(nameField);
+
+        ListGridField descriptionField = new ListGridField(FIELD_DESCRIPTION, MSG.common_title_description());
+        descriptionField.setWidth("30%");
+        fields.add(descriptionField);
+
+        ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.view_alerts_field_created_time());
+        ctimeField.setType(ListGridFieldType.DATE);
+        ctimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        ctimeField.setWidth("15%");
+        fields.add(ctimeField);
+
+        ListGridField mtimeField = new ListGridField(FIELD_MTIME, MSG.view_alerts_field_modified_time());
+        mtimeField.setType(ListGridFieldType.DATE);
+        mtimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        mtimeField.setWidth("15%");
+        fields.add(mtimeField);
+
+        ListGridField enabledField = new ListGridField(FIELD_ENABLED, MSG.view_alerts_field_enabled());
+        enabledField.setType(ListGridFieldType.IMAGE);
+        enabledField.setAlign(Alignment.CENTER);
+        enabledField.setAutoFitWidth(true);
+        enabledField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        fields.add(enabledField);
+
+        ListGridField priorityField = new ListGridField(FIELD_PRIORITY, MSG.view_alerts_field_priority());
+        priorityField.setType(ListGridFieldType.IMAGE);
+        priorityField.setAutoFitWidth(true);
+        priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        priorityField.setAlign(Alignment.CENTER);
+        priorityField.setShowHover(true);
+        priorityField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                AlertDefinition alertDef = (AlertDefinition) record.getAttributeAsObject(FIELD_OBJECT);
+                switch (alertDef.getPriority()) {
+                case HIGH: {
+                    return MSG.common_alert_high();
+                }
+                case MEDIUM: {
+                    return MSG.common_alert_medium();
+                }
+                case LOW: {
+                    return MSG.common_alert_low();
+                }
+                }
+                return ""; // will never get here
+            }
+        });
+        fields.add(priorityField);
+
+        return fields;
     }
 
     @Override
@@ -74,22 +147,9 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
         record.setAttribute(FIELD_CTIME, new Date(from.getCtime()));
         record.setAttribute(FIELD_MTIME, new Date(from.getMtime()));
-        record.setAttribute(FIELD_ENABLED, from.getEnabled());
+        record.setAttribute(FIELD_ENABLED, ImageManager.getAvailabilityIcon(from.getEnabled()));
         record.setAttribute(FIELD_DELETED, from.getDeleted());
-        switch (from.getPriority()) {
-        case HIGH: {
-            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_red_16.png");
-            break;
-        }
-        case MEDIUM: {
-            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_yellow_16.png");
-            break;
-        }
-        case LOW: {
-            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_blue_16.png");
-            break;
-        }
-        }
+        record.setAttribute(FIELD_PRIORITY, ImageManager.getAlertIcon(from.getPriority()));
         record.setAttribute(FIELD_OBJECT, from);
         return record;
     }
@@ -117,8 +177,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         mtimeField.setType(FieldType.DATETIME);
         fields.add(mtimeField);
 
-        DataSourceTextField enabledField = new DataSourceTextField(FIELD_ENABLED, MSG.view_alerts_field_enabled());
-        enabledField.setType(FieldType.BOOLEAN);
+        DataSourceImageField enabledField = new DataSourceImageField(FIELD_ENABLED, MSG.view_alerts_field_enabled());
         fields.add(enabledField);
 
         DataSourceImageField priorityField = new DataSourceImageField(FIELD_PRIORITY, MSG.view_alerts_field_priority());

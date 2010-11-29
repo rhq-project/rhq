@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +41,6 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
@@ -50,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsCh
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A form for viewing and/or editing an RHQ {@link Role role}.
@@ -81,10 +81,18 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
-        UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
-                RoleEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                RoleEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
                 checkIfLdapConfigured();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
             }
         });
     }
@@ -128,16 +136,15 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     }
 
     private void init() {
-        final boolean isReadOnly = (!this.hasManageSecurityPermission ||
-            (getRecordId() == RolesDataSource.ID_SUPERUSER) ||
-            (getRecordId() == RolesDataSource.ID_ALL_RESOURCES));
+        final boolean isReadOnly = (!this.hasManageSecurityPermission
+            || (getRecordId() == RolesDataSource.ID_SUPERUSER) || (getRecordId() == RolesDataSource.ID_ALL_RESOURCES));
         init(isReadOnly);
     }
 
     @Override
     protected Record createNewRecord() {
         Role role = new Role();
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        @SuppressWarnings( { "UnnecessaryLocalVariable" })
         Record roleRecord = RolesDataSource.getInstance().copyValues(role);
         return roleRecord;
     }
@@ -197,7 +204,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 label.setHeight(20);
                 label.setPadding(5);
                 this.ldapGroupsItem.setCanvas(label);
-            }            
+            }
         }
 
         this.permissionsItem.redraw();
@@ -212,7 +219,6 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
         descriptionItem.setColSpan(form.getNumCols());
-        descriptionItem.setWidth("*");
         items.add(descriptionItem);
 
         permissionsItem = new PermissionsItem(this);
@@ -248,15 +254,19 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     protected void save() {
         // Grab the currently assigned sets from each of the selectors and stick them into the corresponding canvas
         // items on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
-        // to the datasource's add or update methods .
-        ListGridRecord[] groupRecords = this.groupSelector.getAssignedGrid().getRecords();
-        getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, groupRecords);
+        // to the datasource's add or update methods.
+        if (this.groupSelector != null) {
+            ListGridRecord[] groupRecords = this.groupSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, groupRecords);
+        }
 
-        ListGridRecord[] subjectRecords = this.subjectSelector.getAssignedGrid().getRecords();
-        getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
+        if (this.subjectSelector != null) {
+            ListGridRecord[] subjectRecords = this.subjectSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
+        }
 
         if (this.ldapGroupSelector != null) {
-            ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getAssignedGrid().getRecords();
+            ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getSelectedRecords();
             getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);
         }
 
@@ -266,11 +276,16 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     @Override
     protected void reset() {
-        super.reset();        
+        super.reset();
 
         this.permissionsItem.reset();
-        this.groupSelector.reset();
-        this.subjectSelector.reset();
+
+        if (this.groupSelector != null) {
+            this.groupSelector.reset();
+        }
+        if (this.subjectSelector != null) {
+            this.subjectSelector.reset();
+        }
         if (this.ldapGroupSelector != null) {
             this.ldapGroupSelector.reset();
         }

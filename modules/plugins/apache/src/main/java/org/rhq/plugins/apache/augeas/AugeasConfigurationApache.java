@@ -31,10 +31,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.plugins.apache.ApachePluginLifecycleListener;
 import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
@@ -59,6 +60,8 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
     private final Pattern includePattern = Pattern.compile(INCLUDE_FILES_PATTERN);
     private final Pattern serverRootPattern = Pattern.compile(SERVER_ROOT_PATTERN);
 
+    private static final Log LOG = LogFactory.getLog(AugeasConfigurationApache.class);
+    
     private String serverRootPath;
     private AugeasModuleConfig module;
     private List<File> allConfigFiles;
@@ -109,7 +112,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
             files.addAll(Glob.match(root, expression));
                        
            for (File fl : files){         
-            if (fl.exists()) {
+            if (fl.exists() && fl.isFile()) {
                 foundIncludes.add(fl.getAbsolutePath());
                 
                 FileInputStream fstream = new FileInputStream(fl);
@@ -162,18 +165,23 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
 
             for (File configFile : files) {
                 if (!configFile.isAbsolute()) {
-                    throw new IllegalStateException(
-                        "Configuration files inclusion patterns contain a non-absolute file.");
+                    LOG.warn("Configuration files inclusion patterns contain a non-absolute file: " + configFile);
+                    continue;
                 }
+                
                 if (!configFile.exists()) {
-                    throw new IllegalStateException(
-                        "Configuration files inclusion patterns refer to a non-existent file.");
+                    LOG.warn("Configuration files inclusion patterns refer to a non-existent file: " + configFile);
+                    continue;
                 }
+                
                 if (configFile.isDirectory()) {
-                    throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
+                    LOG.warn("Configuration files inclusion patterns refer to a directory: " + configFile);
+                    continue;
                 }
-                if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
+                
+                if (!module.getConfigFiles().contains(configFile.getAbsolutePath())) {
                     module.addConfigFile(configFile.getAbsolutePath());
+                }
             }
         }
     }

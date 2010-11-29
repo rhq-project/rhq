@@ -1054,4 +1054,18 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         return alerts;
     }
+
+    public long findAlertCountByCriteria(Subject subject, AlertCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "alertDefinition.resource", subject.getId());
+        }
+
+        Query countQuery = generator.getCountQuery(entityManager);
+        long count = (Long) countQuery.getSingleResult();
+
+        return count;
+    }
 }

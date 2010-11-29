@@ -19,16 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
-import org.rhq.enterprise.gui.coregui.client.util.rpc.RPCManager;
 
 /**
  * This lookup service retrieves each RPC service and sets a
@@ -193,51 +189,16 @@ public class GWTServiceLookup {
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
-                Log.debug("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
+                Log.debug("SessionRpcRequestBuilder is adding sessionId(" + sessionId + ") to request("
+                    + serviceEntryPoint + ")");
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
-                Log.error("SessionRpcRequestBuilder built without a value for " + UserSessionManager.SESSION_NAME);
+                Log.error("SessionRpcRequestBuilder missing sessionId for request(" + serviceEntryPoint + ") ");
             }
 
             return rb;
         }
 
-        @Override
-        protected void doFinish(RequestBuilder rb) {
-            super.doFinish(rb);
-
-            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
-            //       to add resilience to GWT service calls
-
-            int callId = RPCManager.nextCallId();
-            String callName = determineCallName();
-            RequestCallback original = rb.getCallback();
-
-            MonitoringRequestCallback monitoringCallback = new MonitoringRequestCallback(callId, callName, original);
-            rb.setCallback(monitoringCallback);
-
-            RPCManager.getInstance().register(monitoringCallback);
-        }
-
-        private String determineCallName() {
-            if (!GWT.isScript()) {
-                // expensive name calculation only in dev-mode
-                StackTraceElement[] stack = new Exception().getStackTrace();
-
-                // Skip the first two stack elements to get to the proxy calling
-                for (int i = 2; i < stack.length; i++) {
-                    StackTraceElement ste = stack[i];
-                    // e.g. "org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService_Proxy.findResourcesByCriteria(ResourceGWTService_Proxy.java:36)"
-                    if (ste.getClassName().startsWith("org.rhq.enterprise.gui.coregui.client.gwt")) {
-                        return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "."
-                            + ste.getMethodName();
-                    }
-                }
-                return "unknown";
-            } else {
-                return "production";
-            }
-        }
     }
 
 }

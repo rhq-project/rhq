@@ -40,8 +40,6 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
@@ -77,7 +75,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     private static RolesDataSource INSTANCE;
 
     private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
-    private Set<Permission> globalPermissions;
 
     public static RolesDataSource getInstance() {
         if (INSTANCE == null) {
@@ -90,12 +87,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
         super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
-
-        UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> permissions) {
-                RolesDataSource.this.globalPermissions = permissions;
-            }
-        });
     }
 
     @Override
@@ -114,7 +105,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
             100, false);
         fields.add(descriptionField);
 
-        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, "Resource Groups");
+        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY,
+            "Resource Groups");
         fields.add(resourceGroupsField);
 
         DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
@@ -211,8 +203,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
         to.setPermissions(permissions);
 
         Record[] resourceGroupRecords = from.getAttributeAsRecordArray(Field.RESOURCE_GROUPS);
-        Set<ResourceGroup> resourceGroups =
-            ResourceGroupsDataSource.getInstance().buildDataObjects(resourceGroupRecords);
+        Set<ResourceGroup> resourceGroups = ResourceGroupsDataSource.getInstance().buildDataObjects(
+            resourceGroupRecords);
         to.setResourceGroups(resourceGroups);
 
         Record[] subjectRecords = from.getAttributeAsRecordArray(Field.SUBJECTS);
@@ -289,12 +281,11 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         // Fetching
         criteria.fetchPermissions(true);
-        if (this.globalPermissions.contains(Permission.MANAGE_SECURITY)) {
-            criteria.fetchSubjects(true);
-            criteria.fetchResourceGroups(true);
-        }
+
+        // TODO: instead of fetching subjects and resource groups, use a composite object that will pull the subject
+        //       and resource group count across the wire.  these counts will not required permission checks at all. 
 
         return criteria;
     }
-    
+
 }

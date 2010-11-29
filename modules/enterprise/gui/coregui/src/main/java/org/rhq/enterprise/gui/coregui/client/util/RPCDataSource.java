@@ -50,7 +50,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -507,17 +506,9 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setRequired(required);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         valueMap.put(Boolean.TRUE.toString(), MSG.common_val_yes_lower());
-        valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());        
+        valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());
         textField.setValueMap(valueMap);
         return textField;
-    }
-
-    /** Quick method to determine if current user is still logged in.
-     *  
-     * @return boolean indication of logged in status.
-     */
-    protected boolean userStillLoggedIn() {
-        return UserSessionManager.isLoggedIn();
     }
 
 }

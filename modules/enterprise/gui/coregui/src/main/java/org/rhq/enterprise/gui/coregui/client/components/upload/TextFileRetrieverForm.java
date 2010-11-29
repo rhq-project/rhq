@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -104,10 +105,10 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         if (uploadButton != null) {
             FormItemIcon loadedIcon = new FormItemIcon();
             if (ok) {
-                loadedIcon.setSrc("/images/icons/availability_green_16.png");
+                loadedIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
                 CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_success(), Severity.Info));
             } else {
-                loadedIcon.setSrc("/images/icons/availability_red_16.png");
+                loadedIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
                 CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_error_file(), Severity.Error));
             }
             loadedIcon.setWidth(16);

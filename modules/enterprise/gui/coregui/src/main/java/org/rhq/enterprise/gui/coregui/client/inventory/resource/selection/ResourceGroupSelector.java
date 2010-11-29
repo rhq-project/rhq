@@ -79,7 +79,7 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     @Override
     protected String getItemTitle() {
-        return "group";
+        return MSG.common_title_groups();
     }
 
     //    protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {

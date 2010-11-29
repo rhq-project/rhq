@@ -30,6 +30,7 @@ import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 
 /**
  * @author Greg Hinkle
@@ -186,12 +187,13 @@ public class ResourceGroupComposite implements Serializable {
         StringBuilder results = new StringBuilder();
         results.append("<table width=\"120px\"><tr>");
         if (up == 0 && down == 0) {
-            results.append(getColumn(false, "<img src=\"/images/icons/availability_grey_16.png\" /> 0"));
+            results.append(getColumn(false, "<img src=\"" + ImageManager.getAvailabilityIcon(null) + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
         } else {
             if (up > 0) {
-                results.append(getColumn(false, " <img src=\"/images/icons/availability_green_16.png\" />", up));
+                results.append(getColumn(false, " <img src=\"" + ImageManager.getAvailabilityIcon(Boolean.TRUE)
+                    + "\" />", up));
             }
 
             if (up > 0 && down > 0) {
@@ -199,7 +201,8 @@ public class ResourceGroupComposite implements Serializable {
             }
 
             if (down > 0) {
-                results.append(getColumn(false, " <img src=\"/images/icons/availability_red_16.png\" />", down));
+                results.append(getColumn(false, " <img src=\"" + ImageManager.getAvailabilityIcon(Boolean.FALSE)
+                    + "\" />", down));
             } else {
                 results.append(getColumn(false,
                     "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));

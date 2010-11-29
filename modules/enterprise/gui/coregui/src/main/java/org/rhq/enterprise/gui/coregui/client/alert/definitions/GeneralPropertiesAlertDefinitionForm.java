@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -216,13 +217,13 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
             prioritySelection = new SelectItem("priority", MSG.view_alerts_field_priority());
             LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
-            priorities.put(AlertPriority.HIGH.name(), AlertPriority.HIGH.name());
-            priorities.put(AlertPriority.MEDIUM.name(), AlertPriority.MEDIUM.name());
-            priorities.put(AlertPriority.LOW.name(), AlertPriority.LOW.name());
+            priorities.put(AlertPriority.HIGH.name(), MSG.common_alert_high());
+            priorities.put(AlertPriority.MEDIUM.name(), MSG.common_alert_medium());
+            priorities.put(AlertPriority.LOW.name(), MSG.common_alert_low());
             LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>(3);
-            priorityIcons.put(AlertPriority.HIGH.name(), "/images/icons/Flag_red_16.png");
-            priorityIcons.put(AlertPriority.MEDIUM.name(), "/images/icons/Flag_yellow_16.png");
-            priorityIcons.put(AlertPriority.LOW.name(), "/images/icons/Flag_blue_16.png");
+            priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
+            priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
+            priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
             prioritySelection.setValueMap(priorities);
             prioritySelection.setValueIcons(priorityIcons);
             prioritySelection.setDefaultValue(AlertPriority.MEDIUM.name());

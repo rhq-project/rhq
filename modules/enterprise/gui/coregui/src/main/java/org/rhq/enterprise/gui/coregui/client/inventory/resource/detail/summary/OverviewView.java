@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -104,7 +105,7 @@ public class OverviewView extends LocatableVLayout {
                     //agent-comm-status
                     String agentComStatus = "agent-comm-status";
                     agentStatusIcon = new FormItemIcon();
-                    agentStatusIcon.setSrc("resources/availability_grey_24.png");
+                    agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(null));
                     agentStatus = new StaticTextItem(agentComStatus, MSG.view_inventory_summary_agent_status_title());
                     agentStatus.setIcons(agentStatusIcon);
                     agentStatus.setWrapTitle(false);
@@ -119,7 +120,7 @@ public class OverviewView extends LocatableVLayout {
                         @Override
                         public void onSuccess(Boolean result) {
                             //update icon with correct status
-                            agentStatusIcon.setSrc("resources/availability_" + (result ? "green" : "red") + "_24.png");
+                            agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(result));
                             currentAgentInfo.markForRedraw();
                         }
                     });

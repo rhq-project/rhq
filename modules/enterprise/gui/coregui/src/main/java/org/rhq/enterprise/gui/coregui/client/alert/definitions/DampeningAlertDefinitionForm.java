@@ -578,7 +578,7 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
     private String getTimeUnitsTitle(AlertDampening.TimeUnits units) {
         switch (units) {
         case MINUTES: {
-            return MSG.common_label_month();
+            return MSG.common_label_minutes();
         }
         case HOURS: {
             return MSG.common_label_hours();

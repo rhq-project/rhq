@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -27,9 +26,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
-import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -58,7 +55,6 @@ public class Footer extends LocatableToolStrip {
     protected void onDraw() {
         super.onDraw();
 
-        //final UserSessionState userSessionState = new UserSessionState("UserSessionState");
         final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
@@ -73,7 +69,6 @@ public class Footer extends LocatableToolStrip {
 
         addMember(favoritesButton);
 
-        //userSessionState.schedule(15000);
         alertsMessage.schedule(60000);
     }
 
@@ -114,23 +109,6 @@ public class Footer extends LocatableToolStrip {
         }
     }
 
-    //    public static class UserSessionState extends RefreshableLabel {
-    //        public UserSessionState(String locatorId) {
-    //            super(locatorId);
-    //            setWrap(false);
-    //            setMargin(5);
-    //            setValign(VerticalAlignment.CENTER);
-    //        }
-    //
-    //        public void refreshLoggedIn() {
-    //            setContents(MSG.view_core_loggedInAs(UserSessionManager.getSessionSubject().getName()));
-    //        }
-    //
-    //        public void refreshLoggedOut() {
-    //            setContents(MSG.view_core_loggedOut());
-    //        }
-    //    }
-
     public static class AlertsMessage extends RefreshableLabel {
         public AlertsMessage(String locatorId) {
             super(locatorId);
@@ -151,34 +129,23 @@ public class Footer extends LocatableToolStrip {
 
         public void refreshLoggedIn() {
             AlertCriteria alertCriteria = new AlertCriteria();
+            alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8)); // last 8 hrs
 
-            // only get one record from the first page, we only really care about the count
-            alertCriteria.setPaging(0, 1);
+            GWTServiceLookup.getAlertService().findAlertCountByCriteria(alertCriteria, new AsyncCallback<Long>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
+                }
 
-            // last eight hours
-            alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8));
-
-            //check for still logged in before submitting server side request
-            if (UserSessionManager.isLoggedIn()) {
-                GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
-                    new AsyncCallback<PageList<Alert>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
-                        }
-
-                        public void onSuccess(PageList<Alert> result) {
-                            if (result.isEmpty()) {
-                                setContents(MSG.view_core_recentAlerts("0"));
-                                setIcon("subsystems/alert/Alert_LOW_16.png");
-                            } else {
-                                setContents(MSG.view_core_recentAlerts(Integer.toString(result.getTotalSize())));
-                                setIcon("subsystems/alert/Alert_HIGH_16.png");
-                            }
-                        }
-                    });
-            } else {//dump request
-                Log.debug("user not logged in. Not fetching any alerts now.");
-            }
+                public void onSuccess(Long result) {
+                    if (result == 0L) {
+                        setContents(MSG.view_core_recentAlerts("0"));
+                        setIcon("subsystems/alert/Alert_LOW_16.png");
+                    } else {
+                        setContents(MSG.view_core_recentAlerts(result.toString()));
+                        setIcon("subsystems/alert/Alert_HIGH_16.png");
+                    }
+                }
+            });
         }
     }
 

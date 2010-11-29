@@ -59,7 +59,7 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
 
     @Override
     protected String getItemTitle() {
-        return MSG.common_title_user();
+        return MSG.common_title_users();
     }
 
     @Override

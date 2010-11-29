@@ -49,12 +49,6 @@
     -->
     <set-property name="log_DivLogger" value="DISABLED" />
 
-    <!--
-     <generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
-        <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
-     </generate-with>
-    -->
-
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
@@ -63,6 +57,12 @@
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
         <when-property-is name="user.agent" value="ie6"/>
     </replace-with>
+    
+    
+    <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
+        <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
+    </generate-with>
+    
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.

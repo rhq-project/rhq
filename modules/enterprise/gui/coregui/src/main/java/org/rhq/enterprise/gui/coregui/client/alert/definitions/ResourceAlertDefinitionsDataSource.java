@@ -23,6 +23,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,10 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -55,6 +60,26 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
     }
 
     @Override
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = super.getListGridFields();
+
+        // add two more columns
+        ListGridField parentIdField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
+        parentIdField.setType(ListGridFieldType.LINK);
+        parentIdField.setAutoFitWidth(true);
+        parentIdField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        fields.add(parentIdField);
+
+        ListGridField readOnlyField = new ListGridField(FIELD_READONLY, MSG.view_alerts_field_protected());
+        readOnlyField.setAutoFitWidth(true);
+        readOnlyField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        readOnlyField.setAlign(Alignment.CENTER);
+        fields.add(readOnlyField);
+
+        return fields;
+    }
+
+    @Override
     public ListGridRecord copyValues(AlertDefinition from) {
         ListGridRecord record = super.copyValues(from);
 
@@ -76,7 +101,7 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
                     + "/Alerts/Definitions/" + groupAlertDefinition.getId());
                 record.setLinkText(MSG.view_alert_definition_for_group());
             }
-            record.setAttribute(FIELD_READONLY, readOnly);
+            record.setAttribute(FIELD_READONLY, (readOnly) ? MSG.common_val_yes() : MSG.common_val_no());
         }
 
         return record;

@@ -32,12 +32,12 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -57,6 +57,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
     private ResourceGroup group;
     private ResourceGroupComposite groupComposite;
+    boolean isAutoGroup;
 
     private Img expandCollapseArrow;
     private Img badge;
@@ -66,8 +67,11 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private boolean favorite;
     private GeneralProperties generalProperties;
 
-    public ResourceGroupTitleBar(String locatorId) {
+    public ResourceGroupTitleBar(String locatorId, boolean isAutoGroup) {
         super(locatorId);
+
+        this.isAutoGroup = isAutoGroup;
+
         setWidth100();
         setHeight(30);
         setPadding(5);
@@ -85,7 +89,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.title = new HTMLFlow();
         this.title.setWidth("*");
 
-        this.availabilityImage = new Img("resources/availability_grey_24.png", 24, 24);
+        this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
         this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
 
@@ -100,16 +104,26 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(this.group.getId());
+        // for autogroups we need to add more criteria
+        if (isAutoGroup) {
+            criteria.addFilterVisible(null);
+            criteria.addFilterPrivate(true);
+        }
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 @Override
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result == null || result.size() != 1) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to get general info on group [" + group.getName() + "]");
+                            MSG.view_titleBar_group_failInfo(group.getName(), String
+                                .valueOf(ResourceGroupTitleBar.this.group.getId())));
                         return;
                     }
-                    generalProperties = new GeneralProperties(extendLocatorId("genProps"), result.get(0));
+
+                    ResourceGroupComposite resultComposite = result.get(0);
+                    setGroupIcons(resultComposite);
+
+                    generalProperties = new GeneralProperties(extendLocatorId("genProps"), resultComposite);
                     generalProperties.setVisible(false);
                     ResourceGroupTitleBar.this.addMember(generalProperties);
                     expandCollapseArrow.addClickHandler(new ClickHandler() {
@@ -132,7 +146,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot load group properties info", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_titleBar_group_failInfo(group.getName(), String
+                            .valueOf(ResourceGroupTitleBar.this.group.getId())), caught);
                 }
             });
 
@@ -190,8 +206,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
             });
     }
 
-    public void setGroup(ResourceGroup group) {
-        this.group = group;
+    public void setGroup(ResourceGroupComposite groupComposite) {
+        this.group = groupComposite.getResourceGroup();
         update();
 
         this.title.setContents("<span class=\"SectionHeader\">" + group.getName()
@@ -201,17 +217,14 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.favorite = favorites.contains(group.getId());
         updateFavoriteButton();
 
-        this.availabilityImage.setSrc("resources/availability_" + (true ? "green" : "red") + //todo
-            "_24.png");
-
-        String category = this.group.getGroupCategory() == GroupCategory.COMPATIBLE ? "Cluster" : "Group";
-
-        String avail = "up"; // todo
-        //                (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
-        //                ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-        badge.setSrc("types/" + category + "_" + avail + "_24.png");
-
+        setGroupIcons(groupComposite);
         markForRedraw();
+    }
+
+    private void setGroupIcons(ResourceGroupComposite groupComposite) {
+        Double avails = groupComposite.getExplicitAvail();
+        this.badge.setSrc(ImageManager.getGroupLargeIcon(this.group.getGroupCategory(), avails));
+        this.availabilityImage.setSrc(ImageManager.getAvailabilityGroupLargeIcon(avails));
     }
 
     private void updateFavoriteButton() {

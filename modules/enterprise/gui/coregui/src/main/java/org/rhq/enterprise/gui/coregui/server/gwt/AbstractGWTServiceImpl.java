@@ -53,6 +53,8 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         if (Log.isTraceEnabled()) {
             printHeaders(req);
         }
+
+        boolean continueProcessing = true;
         String sid = req.getHeader(UserSessionManager.SESSION_NAME);
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -60,18 +62,22 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
                 Subject subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
                 sessionSubject.set(subject);
             } catch (Exception e) {
-                Log.error("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
+                Log.debug("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
+                continueProcessing = false;
             }
         } else {
-            Log.error("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
+            Log.debug("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
+            continueProcessing = false;
         }
 
-        // TODO: only execute this if the session lookup was successful, otherwise fail in some deterministic fashion
-        //       alter callback handlers to capture expected failure and retry (at least once)
-        //      to add resilience to gwt service calls
-        long id = HibernatePerformanceMonitor.get().start();
-        super.service(req, resp);
-        HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
+        if (continueProcessing) {
+            // TODO: only execute this if the session lookup was successful, otherwise fail in some deterministic fashion
+            //       alter callback handlers to capture expected failure and retry (at least once)
+            //      to add resilience to gwt service calls
+            long id = HibernatePerformanceMonitor.get().start();
+            super.service(req, resp);
+            HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
+        }
     }
 
     @SuppressWarnings("unchecked")

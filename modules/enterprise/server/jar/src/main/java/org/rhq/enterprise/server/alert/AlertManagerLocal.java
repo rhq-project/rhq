@@ -85,6 +85,8 @@ public interface AlertManagerLocal {
 
     String prettyPrintAlertURL(Alert alert);
 
+    long findAlertCountByCriteria(Subject subject, AlertCriteria criteria);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

@@ -47,6 +47,11 @@ class MetadataTest extends AbstractEJB3Test {
     prepareScheduler()
   }
 
+  /**
+   * Need to delete rows from RHQ_PLUGINS because subsequent tests in server/jar would otherwise fail. Some tests
+   * look at what plugins are in the database, and then look for corresponding plugin files on the file system.
+   * MetadataTest however removes the generated plugin files during each test run.
+   */
   @AfterGroups(groups = ['plugin.metadata'])
   void removePluginsFromDB() {
     unprepareScheduler()

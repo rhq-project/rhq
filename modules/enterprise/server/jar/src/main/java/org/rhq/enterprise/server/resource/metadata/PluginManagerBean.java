@@ -303,7 +303,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor,
+    public boolean registerPluginTypes(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
         File pluginFile, boolean forceUpdate) throws Exception {
 
         // TODO GH: Consider how to remove features from plugins in updates without breaking everything
@@ -313,38 +313,38 @@ public class PluginManagerBean implements PluginManagerLocal {
         boolean typesUpdated = false;
 
         try {
-            existingPlugin = getPlugin(plugin.getName());
+            existingPlugin = getPlugin(newPlugin.getName());
         } catch (NoResultException nre) {
             newOrUpdated = true; // this is expected for new plugins
         }
 
         if (existingPlugin != null) {
-            Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
+            Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(newPlugin, existingPlugin);
             if (obsolete == existingPlugin) { // yes, use == for reference equality
                 newOrUpdated = true;
             }
-            plugin.setId(existingPlugin.getId());
-            plugin.setEnabled(existingPlugin.isEnabled());
+            newPlugin.setId(existingPlugin.getId());
+            newPlugin.setEnabled(existingPlugin.isEnabled());
         }
 
         // If this is a brand new plugin, it gets "updated" too.
         if (newOrUpdated) {
-            if (plugin.getDisplayName() == null) {
-                plugin.setDisplayName(plugin.getName());
+            if (newPlugin.getDisplayName() == null) {
+                newPlugin.setDisplayName(newPlugin.getName());
             }
 
-            plugin = updatePluginExceptContent(plugin);
+            newPlugin = updatePluginExceptContent(newPlugin);
             if (pluginFile != null) {
                 entityManager.flush();
-                streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
+                streamPluginFileContentToDatabase(newPlugin.getId(), pluginFile);
             }
-            log.debug("Updated plugin entity [" + plugin + "]");
+            log.debug("Updated plugin entity [" + newPlugin + "]");
         }
 
-        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(plugin.getName())) {
+        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPlugin.getName())) {
             Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
             if (rootResourceTypes == null) {
-                throw new Exception("Failed to load plugin [" + plugin.getName() + "].");
+                throw new Exception("Failed to load plugin [" + newPlugin.getName() + "].");
             }
             if (newOrUpdated || forceUpdate) {
                 // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to

@@ -41,13 +41,13 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -116,7 +116,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         this.title = new HTMLFlow();
         this.title.setWidth("*");
 
-        this.availabilityImage = new Img("resources/availability_grey_24.png", 24, 24);
+        this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
         this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
 
@@ -312,9 +312,8 @@ public class ResourceTitleBar extends LocatableVLayout {
             this.favorite = favorites.contains(resource.getId());
             updateFavoriteButton();
 
-            this.availabilityImage.setSrc("resources/availability_"
-                + (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red")
-                + "_24.png");
+            this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
+                .getCurrentAvailability().getAvailabilityType()));
 
             String category = this.resource.getResourceType().getCategory().getDisplayName();
 

@@ -50,6 +50,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
@@ -67,9 +68,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     private EntityContext entityContext;
 
-    private static final String PRIORITY_ICON_HIGH = "/images/icons/Flag_red_16.png";
-    private static final String PRIORITY_ICON_MEDIUM = "/images/icons/Flag_yellow_16.png";
-    private static final String PRIORITY_ICON_LOW = "/images/icons/Flag_blue_16.png";
+    private static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
+    private static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
+    private static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -227,20 +228,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
         record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());
-        switch (from.getAlertDefinition().getPriority()) {
-        case HIGH: {
-            record.setAttribute("priority", PRIORITY_ICON_HIGH);
-            break;
-        }
-        case MEDIUM: {
-            record.setAttribute("priority", PRIORITY_ICON_MEDIUM);
-            break;
-        }
-        case LOW: {
-            record.setAttribute("priority", PRIORITY_ICON_LOW);
-            break;
-        }
-        }
+        record.setAttribute("priority", ImageManager.getAlertIcon(from.getAlertDefinition().getPriority()));
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;

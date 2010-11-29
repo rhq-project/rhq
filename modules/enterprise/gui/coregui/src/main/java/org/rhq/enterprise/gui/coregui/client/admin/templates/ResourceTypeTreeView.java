@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -223,7 +224,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
         });
     }
 
-    private void editMetricTemplate(int resourceTypeId) {        
+    private void editMetricTemplate(int resourceTypeId) {
         Layout metricCanvas = getMetricTemplateCanvas();
         TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(extendLocatorId("MetricTemplate"),
             resourceTypeId);
@@ -307,7 +308,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 alertTemplateImg.setShowDown(false);
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
-                alertTemplateImg.setSrc("subsystems/alert/Edit_Alert.png");
+                alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
                 alertTemplateImg.setPrompt("Edit Alert Template");
                 alertTemplateImg.setHeight(16);
                 alertTemplateImg.setWidth(16);
@@ -403,7 +404,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 alertTemplateImg.setShowDown(false);
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
-                alertTemplateImg.setSrc("subsystems/alert/Edit_Alert.png");
+                alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
                 alertTemplateImg.setPrompt("Edit Alert Template");
                 alertTemplateImg.setHeight(16);
                 alertTemplateImg.setWidth(16);

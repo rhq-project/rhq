@@ -38,11 +38,11 @@ import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -208,10 +208,8 @@ public class RecentlyAddedResourceDS extends DataSource {
             setAttribute("parentId", parentId);
             setAttribute("name", resource.getName());
             setAttribute("timestamp", "");//String.valueOf(resource.getItime())); // Seems to be null
-            setAttribute(
-                "currentAvailability",
-                resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
-                    : "/images/icons/availability_red_16.png");
+            setAttribute("currentAvailability", ImageManager.getAvailabilityIconFromAvailType(resource
+                .getCurrentAvailability().getAvailabilityType()));
         }
 
         public Resource getResource() {

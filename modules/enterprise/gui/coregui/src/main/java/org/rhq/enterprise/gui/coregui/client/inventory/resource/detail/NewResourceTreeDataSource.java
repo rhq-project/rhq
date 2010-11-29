@@ -42,13 +42,13 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -334,10 +334,8 @@ public class NewResourceTreeDataSource extends DataSource {
 
             setAttribute("name", resource.getName());
             //            setAttribute("description", resource.getDescription());
-            setAttribute(
-                "currentAvailability",
-                resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
-                    : "/images/icons/availability_red_16.png");
+            setAttribute("currentAvailability", ImageManager.getAvailabilityIconFromAvailType(resource
+                .getCurrentAvailability().getAvailabilityType()));
 
             setIsFolder((resource.getResourceType().getChildResourceTypes() != null && !resource.getResourceType()
                 .getChildResourceTypes().isEmpty()));

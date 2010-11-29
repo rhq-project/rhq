@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.resource;
  */
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -30,10 +29,10 @@ import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -74,21 +73,21 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE,
-            MSG.dataSource_problemResources_field_resource());
+        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE, MSG
+            .dataSource_problemResources_field_resource());
         resourceField.setPrimaryKey(true);
         fields.add(resourceField);
 
-        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION,
-            MSG.dataSource_problemResources_field_location());
+        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION, MSG
+            .dataSource_problemResources_field_location());
         fields.add(locationField);
 
-        DataSourceTextField alertsField = new DataSourceTextField(FIELD_ALERTS,
-            MSG.dataSource_problemResources_field_alerts());
+        DataSourceTextField alertsField = new DataSourceTextField(FIELD_ALERTS, MSG
+            .dataSource_problemResources_field_alerts());
         fields.add(alertsField);
 
-        DataSourceImageField availabilityField = new DataSourceImageField(FIELD_AVAILABLE,
-            MSG.dataSource_problemResources_field_available());
+        DataSourceImageField availabilityField = new DataSourceImageField(FIELD_AVAILABLE, MSG
+            .dataSource_problemResources_field_available());
         fields.add(availabilityField);
 
         return fields;
@@ -159,19 +158,16 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
             for (DisambiguationReport<ProblemResourceComposite> report : list) {
                 ListGridRecord record = new ListGridRecord();
                 //disambiguated Resource name, decorated with html anchors to problem resources 
-                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-                    report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId(), true));
+                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(
+                    ReportDecorator.GWT_RESOURCE_URL, report.getResourceType(), report.getOriginal().getResourceName(),
+                    report.getOriginal().getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
                 record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //alert cnt.
                 record.setAttribute(FIELD_ALERTS, report.getOriginal().getNumAlerts());
                 //populate availability icon
-                if (report.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
-                    record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_red_16.png");
-                } else {
-                    record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_green_16.png");
-                }
+                record.setAttribute(FIELD_AVAILABLE, ImageManager.getAvailabilityIconFromAvailType(report.getOriginal()
+                    .getAvailabilityType()));
 
                 dataValues[indx++] = record;
             }
@@ -182,15 +178,12 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     @Override
     public ListGridRecord copyValues(DisambiguationReport<ProblemResourceComposite> from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-            from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
+            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
         record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(FIELD_ALERTS, from.getOriginal().getNumAlerts());
-        if (from.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
-            record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_red_16.png");
-        } else {
-            record.setAttribute(FIELD_AVAILABLE, "/images/icons/availability_green_16.png");
-        }
+        record.setAttribute(FIELD_AVAILABLE, ImageManager.getAvailabilityIconFromAvailType(from.getOriginal()
+            .getAvailabilityType()));
 
         record.setAttribute("entity", from);
         return record;

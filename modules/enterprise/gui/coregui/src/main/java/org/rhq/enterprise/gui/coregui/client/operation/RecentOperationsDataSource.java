@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.operation;
 import java.util.Date;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -35,6 +34,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -61,7 +61,7 @@ public class RecentOperationsDataSource extends
 
     //config attributes
     private boolean operationsRangeLastEnabled = false;
-    private int operationsRangeCompleted = -1;    
+    private int operationsRangeCompleted = -1;
 
     /** Build list of fields for the datasource and then adds them to it.
      */
@@ -76,25 +76,25 @@ public class RecentOperationsDataSource extends
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE,
-            MSG.dataSource_recentOperations_field_resource());
+        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE, MSG
+            .dataSource_recentOperations_field_resource());
         resourceField.setPrimaryKey(true);
         fields.add(resourceField);
 
-        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION,
-            MSG.dataSource_recentOperations_field_location(), 200);
+        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION, MSG
+            .dataSource_recentOperations_field_location(), 200);
         fields.add(locationField);
 
-        DataSourceTextField operationField = new DataSourceTextField(FIELD_OPERATION,
-            MSG.dataSource_recentOperations_field_operation());
+        DataSourceTextField operationField = new DataSourceTextField(FIELD_OPERATION, MSG
+            .dataSource_recentOperations_field_operation());
         fields.add(operationField);
 
-        DataSourceDateTimeField timeField = new DataSourceDateTimeField(FIELD_TIME,
-            MSG.dataSource_recentOperations_field_time());
+        DataSourceDateTimeField timeField = new DataSourceDateTimeField(FIELD_TIME, MSG
+            .dataSource_recentOperations_field_time());
         fields.add(timeField);
 
-        DataSourceTextField statusField = new DataSourceTextField(FIELD_STATUS,
-            MSG.dataSource_recentOperations_field_status());
+        DataSourceTextField statusField = new DataSourceTextField(FIELD_STATUS, MSG
+            .dataSource_recentOperations_field_status());
         fields.add(statusField);
 
         return fields;
@@ -170,9 +170,9 @@ public class RecentOperationsDataSource extends
             for (DisambiguationReport<ResourceOperationLastCompletedComposite> report : list) {
                 ListGridRecord record = new ListGridRecord();
                 //disambiguated Resource name, decorated with html anchors to problem resources 
-                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-                    report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId(), true));
+                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(
+                    ReportDecorator.GWT_RESOURCE_URL, report.getResourceType(), report.getOriginal().getResourceName(),
+                    report.getOriginal().getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
                 record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //operation name.
@@ -195,20 +195,24 @@ public class RecentOperationsDataSource extends
      */
     private String generateResourceOperationStatusLink(
         DisambiguationReport<ResourceOperationLastCompletedComposite> report) {
+
+        String iconLink;
+        if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.SUCCESS) == 0) {
+            iconLink = ImageManager.getAvailabilityIcon(Boolean.TRUE);
+        } else if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.FAILURE) == 0) {
+            iconLink = ImageManager.getAvailabilityIcon(Boolean.FALSE);
+        } else if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.CANCELED) == 0) {
+            iconLink = ImageManager.getAvailabilityYellowIcon();
+        } else {
+            iconLink = ImageManager.getAvailabilityIcon(null);
+        }
+
         //TODO: refactor this out for more general case
         String link = "<a href='" + "/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml?id="
             + report.getOriginal().getResourceId() + "&opId=" + report.getOriginal().getResourceId() + "'>";
         String img = "<img alt='" + report.getOriginal().getOperationStatus() + "' title='"
-            + report.getOriginal().getOperationStatus() + "' src='/images/icons/";
-        if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.SUCCESS) == 0) {
-            img += "availability_green_16.png'";
-        } else if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.FAILURE) == 0) {
-            img += "availability_red_16.png";
-        } else if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.CANCELED) == 0) {
-            img += "availability_yellow_16.png";
-        } else {
-            img += "availability_grey_16.png";
-        }
+            + report.getOriginal().getOperationStatus() + "' src='";
+        img += iconLink;
         link = link + img + "'></img></a>";
         return link;
     }
@@ -221,8 +225,8 @@ public class RecentOperationsDataSource extends
     @Override
     public ListGridRecord copyValues(DisambiguationReport<ResourceOperationLastCompletedComposite> from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-            from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
+            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
         record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(FIELD_OPERATION, from.getOriginal().getOperationName());
         record.setAttribute(FIELD_TIME, from.getOriginal().getOperationStartTime());

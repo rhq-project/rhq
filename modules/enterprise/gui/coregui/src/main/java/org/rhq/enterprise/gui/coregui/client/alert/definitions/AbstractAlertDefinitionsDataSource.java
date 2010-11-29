@@ -42,6 +42,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -146,26 +147,9 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
         record.setAttribute(FIELD_CTIME, new Date(from.getCtime()));
         record.setAttribute(FIELD_MTIME, new Date(from.getMtime()));
-        if (from.getEnabled()) {
-            record.setAttribute(FIELD_ENABLED, "/images/icons/availability_green_16.png");
-        } else {
-            record.setAttribute(FIELD_ENABLED, "/images/icons/availability_red_16.png");
-        }
+        record.setAttribute(FIELD_ENABLED, ImageManager.getAvailabilityIcon(from.getEnabled()));
         record.setAttribute(FIELD_DELETED, from.getDeleted());
-        switch (from.getPriority()) {
-        case HIGH: {
-            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_red_16.png");
-            break;
-        }
-        case MEDIUM: {
-            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_yellow_16.png");
-            break;
-        }
-        case LOW: {
-            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_blue_16.png");
-            break;
-        }
-        }
+        record.setAttribute(FIELD_PRIORITY, ImageManager.getAlertIcon(from.getPriority()));
         record.setAttribute(FIELD_OBJECT, from);
         return record;
     }

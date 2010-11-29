@@ -48,6 +48,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -92,10 +93,14 @@ public class HistoryGroupPluginConfigurationTable extends Table {
 
         fieldStatus.setType(ListGridFieldType.ICON);
         HashMap<String, String> statusIcons = new HashMap<String, String>(4);
-        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), "/images/icons/Connection_ok_16.png");
-        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), "/images/icons/Connection_failed_16.png");
-        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), "/images/icons/Connection_inprogress_16.png");
-        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), "/images/icons/Connection_16.png");
+        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
+            .getPluginConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
+            .getPluginConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
+            .getPluginConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
+            .getPluginConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
         fieldStatus.setValueIcons(statusIcons);
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
@@ -200,7 +205,6 @@ public class HistoryGroupPluginConfigurationTable extends Table {
                     + "/" + selection[0].getAttribute("id") + "/Members");
             }
         });
-
 
     }
 

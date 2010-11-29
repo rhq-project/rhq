@@ -89,11 +89,11 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
         int invocationCount, AsyncCallback<T> callback) {
 
         RequestCallback original = super.doCreateRequestCallback(responseReader, methodName, invocationCount, callback);
-        TrackingRequestCallback monitoringCallback = new TrackingRequestCallback(invocationCount, methodName, original);
+        TrackingRequestCallback trackingCallback = new TrackingRequestCallback(invocationCount, methodName, original);
 
-        RPCTracker.getInstance().register(monitoringCallback);
+        RPCTracker.getInstance().register(trackingCallback);
 
-        return monitoringCallback;
+        return trackingCallback;
     }
 
     @Override

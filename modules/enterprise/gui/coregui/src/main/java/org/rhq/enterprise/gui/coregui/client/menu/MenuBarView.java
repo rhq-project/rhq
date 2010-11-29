@@ -135,8 +135,8 @@ public class MenuBarView extends LocatableVLayout {
             }
 
             // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td id=\"").append(section).append("\" class=\"").append(styleClass).append(
-                "\" onclick=\"document.location='#").append(section).append("'\" >");
+            headerString.append("<td style=\"vertical-align:middle\" id=\"").append(section).append("\" class=\"")
+                .append(styleClass).append("\" onclick=\"document.location='#").append(section).append("'\" >");
             headerString.append(section.getTitle());
             headerString.append("</td>\n");
 

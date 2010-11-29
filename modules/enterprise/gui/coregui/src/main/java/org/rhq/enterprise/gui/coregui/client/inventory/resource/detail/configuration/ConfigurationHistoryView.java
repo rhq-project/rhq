@@ -31,6 +31,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -98,21 +99,7 @@ public class ConfigurationHistoryView extends TableSection {
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 ConfigurationUpdateStatus status = ConfigurationUpdateStatus.valueOf((String) o);
-                String icon = "";
-                switch (status) {
-                case INPROGRESS:
-                    break;
-                case SUCCESS:
-                    icon = "_ok";
-                    break;
-                case FAILURE:
-                    icon = "_failed";
-                    break;
-                case NOCHANGE:
-                    break;
-                }
-
-                return Canvas.imgHTML("subsystems/configure/Configure" + icon + "_16.png", 16, 16) + o;
+                return Canvas.imgHTML(ImageManager.getResourceConfigurationIcon(status), 16, 16);
             }
         });
         fields.add(statusField);
@@ -151,7 +138,6 @@ public class ConfigurationHistoryView extends TableSection {
                 showDetails(record);
             }
         });
-
 
     }
 

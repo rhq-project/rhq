@@ -257,6 +257,26 @@ public class ImageManager {
         return "subsystems/inventory/Connection_16.png";
     }
 
+    public static String getResourceConfigurationIcon(ConfigurationUpdateStatus updateStatus) {
+        if (updateStatus != null) {
+            switch (updateStatus) {
+            case SUCCESS: {
+                return "subsystems/configure/Configure_ok_16.png";
+            }
+            case FAILURE: {
+                return "subsystems/configure/Configure_failed_16.png";
+            }
+            case INPROGRESS: {
+                return "subsystems/inventory/Configure_inprogress_16.png";
+            }
+            case NOCHANGE:
+                return "subsystems/inventory/Configure_16.png";
+            }
+        }
+
+        return "subsystems/inventory/Configure_16.png";
+    }
+
     public static String getLockedIcon() {
         return "global/Locked_16.png";
     }

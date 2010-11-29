@@ -108,13 +108,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         this.hlayout = new HLayout();
         this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
-        this.assignedGrid.setEmptyMessage(MSG.common_msg_loading());
 
         if (this.isReadOnly) {
             this.assignedGrid.setSelectionType(SelectionStyle.NONE);
         } else {
             this.availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
-            this.availableGrid.setEmptyMessage(MSG.common_msg_loading());
         }
     }
 
@@ -128,7 +126,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
      * @return the set of currently selected {@link Record record}s
      */
     public ListGridRecord[] getSelectedRecords() {
-        return this.assignedGrid.getSelection();
+        return this.assignedGrid.getRecords();
     }
 
     /**
@@ -137,7 +135,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
      * @return the set of currently selected {@link T item}s
      */
     public Set<T> getSelectedItems() {
-        ListGridRecord[] selectedRecords = this.assignedGrid.getSelection();
+        ListGridRecord[] selectedRecords = this.assignedGrid.getRecords();
         return getDataSource().buildDataObjects(selectedRecords);
     }
 
@@ -147,7 +145,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
      * @return the IDs of the currently selected items
      */
     public Set<Integer> getSelection() {
-        ListGridRecord[] selectedRecords = this.assignedGrid.getSelection();
+        ListGridRecord[] selectedRecords = this.assignedGrid.getRecords();
         Set<Integer> ids = new HashSet<Integer>(selectedRecords.length);
         for (ListGridRecord selectedRecord : selectedRecords) {
             Integer id = selectedRecord.getAttributeAsInt(getSelectorKey());
@@ -215,6 +213,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             availableGrid.setTrackerImage(new ImgProperties(getItemIcon(), 16, 16));
         }
         availableGrid.setDragDataAction(DragDataAction.MOVE);
+        this.availableGrid.setLoadingMessage(MSG.common_msg_loading());
+        this.availableGrid.setEmptyMessage(MSG.common_msg_noItemsToShow());
 
         List<ListGridField> availableFields = new ArrayList<ListGridField>();
         String itemIcon = getItemIcon();
@@ -372,6 +372,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             assignedGrid.setTrackerImage(new ImgProperties(getItemIcon(), 16, 16));
         }
         assignedGrid.setCanAcceptDroppedRecords(true);
+        this.assignedGrid.setLoadingMessage(MSG.common_msg_loading());
+        this.assignedGrid.setEmptyMessage(MSG.common_msg_noItemsToShow());
 
         List<ListGridField> assignedFields = new ArrayList<ListGridField>();
         String itemIcon = getItemIcon();

@@ -24,7 +24,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -45,11 +44,23 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     private int resourceGroupId;
     private ResourceGroup resourceGroup;
     private ResourceGroupResourceSelector selector;
+    private ClickHandler saveButtonHandler;
 
     public ResourceGroupMembershipView(String locatorId, int resourceGroupId) {
         super(locatorId);
 
         this.resourceGroupId = resourceGroupId;
+    }
+
+    /**
+     * Allows an external component to hook into the save button. The given
+     * handler will be invoked when the save button is pressed. If <code>null</code>
+     * is given, then no external handler will be called.
+     * 
+     * @param saveButtonHandler
+     */
+    public void setSaveButtonHandler(ClickHandler saveButtonHandler) {
+        this.saveButtonHandler = saveButtonHandler;
     }
 
     @Override
@@ -62,13 +73,17 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
         IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
+                if (ResourceGroupMembershipView.this.saveButtonHandler != null) {
+                    ResourceGroupMembershipView.this.saveButtonHandler.onClick(clickEvent);
+                }
             }
         });
 
@@ -96,6 +111,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                             : null, false);
 
                     addMember(ResourceGroupMembershipView.this.selector);
+                    markForRedraw();
                 }
             });
     }

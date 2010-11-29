@@ -53,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventComposi
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.CurrentGroupPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
@@ -93,7 +92,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab inventoryMembers;
     private SubTab inventoryConn;
     private SubTab inventoryConnHistory;
-    private SubTab inventoryMembership;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -117,10 +115,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     @Override
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        // if moving from membership subtab then re-load the detail view as the membership and
+        // if moving from members subtab then re-load the detail view as the membership and
         // group type may have changed.        
         if ((null != this.groupId) && this.inventoryTab.getName().equals(currentTabName)
-            && this.inventoryMembership.getName().equals(currentSubTabName)) {
+            && this.inventoryMembers.getName().equals(currentSubTabName)) {
 
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.getBaseViewPath() + "/" + getSelectedItemId() + tabPath;
@@ -177,10 +175,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
         inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnectionSettingsHistory"), new ViewName(
             "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
-        inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), new ViewName("Membership", MSG
-            .view_tabs_common_membership()), null); // TODO this will merge with Members
-        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryConnHistory,
-            this.inventoryMembership);
+        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryConnHistory);
         tabs.add(inventoryTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
@@ -288,19 +283,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
 
         // Inventory tab is always visible and enabled.
+        enabled = !isAutoGroup() && globalPermissions.contains(Permission.MANAGE_INVENTORY); // true, then user can modify group membership
         updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryMembers
-            .extendLocatorId("View"), groupId), true, true);
+            .extendLocatorId("View"), groupId, enabled), true, true);
         updateSubTab(this.inventoryTab, this.inventoryConn, new CurrentGroupPluginConfigurationView(this.inventoryConn
             .extendLocatorId("View"), this.groupComposite), facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION),
             true);
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, new HistoryGroupPluginConfigurationView(
             this.inventoryConnHistory.extendLocatorId("View"), this.groupComposite), facets
             .contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
-        visible = !isAutoGroup();
-        enabled = visible && globalPermissions.contains(Permission.MANAGE_INVENTORY);
-        canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryMembership.extendLocatorId("View"), groupId)
-            : null;
-        updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, visible, enabled);
 
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {

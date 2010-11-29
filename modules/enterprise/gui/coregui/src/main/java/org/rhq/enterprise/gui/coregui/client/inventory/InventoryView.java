@@ -189,7 +189,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
                 // TODO (ips, 10/28/10): Should we include down platforms too?
                 return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS.getName()), criteria, MSG
-                    .view_inventory_downServers());
+                    .view_inventory_downServers(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
+                    Boolean.FALSE));
             }
         });
 
@@ -201,9 +202,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS,
             "types/GroupDefinition_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    // TODO: Do we have a 24x24 groupdef icon?
                     return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName()),
-                        "types/GroupDefinition_16.png");
+                        "types/GroupDefinition_24.png");
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 

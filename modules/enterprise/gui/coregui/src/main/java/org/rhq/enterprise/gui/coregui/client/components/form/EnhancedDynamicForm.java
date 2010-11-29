@@ -86,7 +86,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         //setPadding(13);
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths(100, 220, 100, 220);
+        setColWidths(100, 200, 100, 200);
         //setTitleWidth(100);
         setWrapItemTitles(false);
 
@@ -224,7 +224,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             }
 
             //item.setWidth("*"); // this causes a JavaScript exception ...  :-(
-            item.setWidth(199);
+            item.setWidth(195);
         }
 
         super.setFields((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));

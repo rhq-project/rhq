@@ -138,13 +138,7 @@ public class PermissionsItem extends CanvasItem {
 
         // TODO: Add table title.
 
-        ListGridField iconField = new ListGridField("icon", "&nbsp;", 40);
-        iconField.setShowDefaultContextMenu(false);
-        iconField.setAlign(Alignment.CENTER);
-        iconField.setType(ListGridFieldType.IMAGE);
-        iconField.setImageURLSuffix("_16.png");
-        iconField.setImageWidth(16);
-        iconField.setImageHeight(16);
+        ListGridField iconField = createIconField();
 
         ListGridField nameField = new ListGridField("name");
         nameField.setHidden(true);
@@ -182,13 +176,7 @@ public class PermissionsItem extends CanvasItem {
         ListGrid grid = createPermissionsGrid();
         // TODO: Add table title.
 
-        ListGridField iconField = new ListGridField("icon", "&nbsp;", 40);
-        iconField.setShowDefaultContextMenu(false);
-        iconField.setAlign(Alignment.CENTER);
-        iconField.setType(ListGridFieldType.IMAGE);
-        iconField.setImageURLSuffix("_16.png");
-        iconField.setImageWidth(16);
-        iconField.setImageHeight(16);
+        ListGridField iconField = createIconField();
 
         ListGridField readNameField = new ListGridField("readName");
         readNameField.setHidden(true);
@@ -274,6 +262,18 @@ public class PermissionsItem extends CanvasItem {
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
 
         return grid;
+    }
+
+    private ListGridField createIconField() {
+        ListGridField iconField = new ListGridField("icon", "&nbsp;", 28);
+        iconField.setShowDefaultContextMenu(false);
+        iconField.setCanSort(false);
+        iconField.setAlign(Alignment.CENTER);
+        iconField.setType(ListGridFieldType.IMAGE);
+        iconField.setImageURLSuffix("_16.png");
+        iconField.setImageWidth(16);
+        iconField.setImageHeight(16);
+        return iconField;
     }
 
     private ListGrid createPermissionsGrid() {

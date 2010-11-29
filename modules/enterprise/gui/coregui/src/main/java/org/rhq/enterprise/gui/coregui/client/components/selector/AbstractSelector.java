@@ -476,6 +476,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         return "name";
     }
 
+    /**
+     * Return the item title (i.e. display name), which should be plural and capitalized, e.g. "Resource Groups", "Roles".
+     *
+     * @return the item title (i.e. display name), which should be plural and capitalized, e.g. "Resource Groups", "Roles"
+     */
     protected abstract String getItemTitle();
 
     protected String getAvailableItemsGridTitle() {

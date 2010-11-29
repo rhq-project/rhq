@@ -22,6 +22,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+
 /**
  * @author Greg Hinkle
  */
@@ -54,6 +58,22 @@ public class LinkManager {
             return "#Inventory/Groups/DynaGroup%20Manager/" + groupDefinitionId;
         } else {
             return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
+        }
+    }
+
+    public static String getUserLink(int subjectId) {
+        if (GWT) {
+            return "#" + UsersView.VIEW_PATH + "/" + subjectId;
+        } else {
+            return "/admin/user/UserAdmin.do?mode=view&u=" + subjectId;
+        }
+    }
+
+    public static String getRoleLink(int roleId) {
+        if (GWT) {
+            return "#" + RolesView.VIEW_PATH + "/" + roleId;
+        } else {
+            return "/admin/role/RoleAdmin.do?mode=view&r=" + roleId;
         }
     }
 

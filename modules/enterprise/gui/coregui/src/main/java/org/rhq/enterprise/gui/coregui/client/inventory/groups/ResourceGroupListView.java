@@ -27,7 +27,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -75,7 +74,7 @@ public class ResourceGroupListView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String groupId = record.getAttribute("id");
@@ -84,35 +83,22 @@ public class ResourceGroupListView extends Table {
             }
         });
 
-        ListGridField idField = new ListGridField("id", MSG.common_title_id());
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
 
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
-            .view_inventory_groups_children());
+            .view_inventory_groups_children(), 70);
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
         ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", MSG
-            .view_inventory_groups_descendants());
+            .view_inventory_groups_descendants(), 70);
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        nameField.setWidth("50%");
-        descriptionField.setWidth("50%");
-        typeNameField.setWidth(75);
-        pluginNameField.setAutoFitWidth(true);
-        pluginNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-        categoryField.setAutoFitWidth(true);
-        categoryField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-        availabilityChildrenField.setAutoFitWidth(true);
-        availabilityChildrenField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-        availabilityDescendantsField.setAutoFitWidth(true);
-        availabilityDescendantsField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-
-        setListGridFields(false, idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+        setListGridFields(false, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),

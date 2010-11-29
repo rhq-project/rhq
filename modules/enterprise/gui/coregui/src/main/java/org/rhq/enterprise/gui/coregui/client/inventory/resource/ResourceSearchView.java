@@ -164,7 +164,7 @@ public class ResourceSearchView extends Table {
             }
         });
 
-        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
+        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
         availabilityField.setType(ListGridFieldType.IMAGE);
         availabilityField.setAlign(Alignment.CENTER);
 

@@ -167,7 +167,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
 
     @Override
     protected String getItemTitle() {
-        return "group";
+        return MSG.common_title_groups();
     }
 
     public class LdapGroupsDataSource extends RPCDataSource<PageList<LdapGroup>> {

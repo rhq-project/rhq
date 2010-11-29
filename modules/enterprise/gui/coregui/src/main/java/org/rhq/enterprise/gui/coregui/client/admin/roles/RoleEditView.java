@@ -219,7 +219,6 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
         descriptionItem.setColSpan(form.getNumCols());
-        descriptionItem.setWidth("*");
         items.add(descriptionItem);
 
         permissionsItem = new PermissionsItem(this);

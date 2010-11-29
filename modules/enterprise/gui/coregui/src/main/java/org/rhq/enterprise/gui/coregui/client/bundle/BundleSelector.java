@@ -96,6 +96,6 @@ public class BundleSelector extends AbstractSelector<Bundle> {
 
     @Override
     protected String getItemTitle() {
-        return "bundle";
+        return MSG.common_title_bundles();
     }
 }

@@ -18,13 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
@@ -34,6 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -48,6 +55,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     private String tabName;
     private String subTabName;
     private U titleBar;
+    protected Set<Permission> globalPermissions;
 
     public AbstractTwoLevelTabSetView(String locatorId, String baseViewPath) {
         super(locatorId);
@@ -142,6 +150,25 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     public void renderView(final ViewPath viewPath) {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                globalPermissions = result;
+                renderTabs(viewPath);
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
+                globalPermissions = new HashSet<Permission>();
+                renderTabs(viewPath);
+            }
+        });
+    }
+
+    private void renderTabs(final ViewPath viewPath) {
         // e.g. #Resource/10010/Summary/Overview
         //                ^ current path
         final int id = Integer.parseInt(viewPath.getCurrent().getPath());

@@ -20,6 +20,8 @@
    <property name="default.rhq.server.quartz.selectWithLockSQL" value="SELECT * FROM {0}LOCKS WHERE LOCK_NAME = ? FOR UPDATE" />
    <property name="default.rhq.server.quartz.lockHandlerClass" value="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore" />
 
+   <property name="rhq.sync.endpoint-address" value="false"/>
+
    <target name="set-predeploy-prop">
       <condition property="predeploy" value="true">
          <or>
@@ -604,6 +606,7 @@ rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 rhq.autoinstall.enabled=false
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
+rhq.sync.endpoint-address=${rhq.sync.endpoint-address}
 
 </echo>
 

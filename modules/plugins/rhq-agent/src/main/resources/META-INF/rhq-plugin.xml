@@ -6,868 +6,1138 @@
         description="Management and monitoring of the RHQ Agent"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
-        xmlns:c="urn:xmlns:rhq-configuration">
+        xmlns:c="urn:xmlns:rhq-configuration" xsi:schemaLocation="urn:xmlns:rhq-plugin ">
 
-   <depends plugin="JMX" />
+    <depends plugin="JMX"/>
 
-   <server name="RHQ Agent"
-           discovery="AgentDiscoveryComponent"
-           class="AgentServerComponent"
-           description="Management Agent"
-           singleton="true">
+    <server name="RHQ Agent"
+            discovery="AgentDiscoveryComponent"
+            class="AgentServerComponent"
+            description="Management Agent"
+            singleton="true">
 
-      <plugin-configuration>
-         <c:group name="event" displayName="Log Tracking">
-            <c:list-property name="logEventSources" description="The list of log files that can be tracked">
-               <c:map-property name="logEventSource">
-                  <c:simple-property name="logFilePath" type="file" summary="true"
-                                     description="The absolute path to the source log file."/>
-                  <c:simple-property name="enabled" type="boolean" summary="true"
-                                     description="A flag indicating whether or not this log source is currently
+        <plugin-configuration>
+            <c:group name="event" displayName="Log Tracking">
+                <c:list-property name="logEventSources" description="The list of log files that can be tracked">
+                    <c:map-property name="logEventSource">
+                        <c:simple-property name="logFilePath" type="file" summary="true"
+                                           description="The absolute path to the source log file."/>
+                        <c:simple-property name="enabled" type="boolean" summary="true"
+                                           description="A flag indicating whether or not this log source is currently
                                                   enabled (i.e. whether the associated log file should be tailed for
                                                   new entries)."/>
-                  <c:simple-property name="dateFormat" required="false"
-                                     description="The date format to use when parsing the dates in log entries. The
+                        <c:simple-property name="dateFormat" required="false"
+                                           description="The date format to use when parsing the dates in log entries. The
                                                   format must be in the syntax defined by the Java SimpleDateFormat
                                                   class. If not specified, the three date formats that are predefined
                                                   by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
-                  <c:simple-property name="includesPattern" required="false"
-                                     description="A regular expression against which a log entry's detail is matched
+                        <c:simple-property name="includesPattern" required="false"
+                                           description="A regular expression against which a log entry's detail is matched
                                                   to determine if an event should be fired for that entry. If not
                                                   specified, no filtering of log entries will be done based on their
                                                   detail."/>
-                  <c:simple-property name="minimumSeverity" required="false" default="error"
-                                     description="The minimum severity of log messages that should be collected for this
+                        <c:simple-property name="minimumSeverity" required="false" default="error"
+                                           description="The minimum severity of log messages that should be collected for this
                                                   source. If not specified, there is no minimum severity (i.e. all
                                                   log messages will be collected).">
-                     <c:property-options>
-                        <c:option name="debug" value="DEBUG"/>
-                        <c:option name="info"  value="INFO"/>
-                        <c:option name="warn"  value="WARN"/>
-                        <c:option name="error" value="ERROR" default="true"/>
-                        <c:option name="fatal" value="FATAL"/>
-                     </c:property-options>
-                  </c:simple-property>
-               </c:map-property>
-            </c:list-property>
-         </c:group>
-         <c:group name="snapshotReport" displayName="Snapshot Report" hiddenByDefault="true">
-            <c:simple-property name="snapshotConfigEnabled" type="boolean" default="true" description="If true, take a snapshot of the configuration"/>
-            <c:simple-property name="snapshotLogEnabled" type="boolean" default="true" description="If true, take a snapshot of the log files"/>
-            <c:simple-property name="snapshotDataEnabled" type="boolean" default="true" description="If true, take a snapshot of the data files"/>
-         </c:group>         
-         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-            <c:simple-property name="childJmxServerName" displayName="JVM Name" default="JVM" 
-                               readOnly="true" required="false" 
-                               description="The name of the child JVM resource."/>
-         </c:group>
-      </plugin-configuration>
-
-      <operation name="restart"
-                 displayName="Restart Agent"
-                 description="Shuts down the agent's comm layer and plugin container and starts them up again. This does *not* restart the agent's VM - use the launcher services to do that.">
-      </operation>
-
-      <operation name="shutdown"
-                 displayName="Shutdown Agent"
-                 description="Shuts down the agent's comm layer and plugin container.  If the agent is in daemon mode, the entire agent VM will exit">
-      </operation>
-
-      <operation name="restartPluginContainer"
-                 displayName="Restart Plugin Container"
-                 description="Recycles the plugin container.">
-      </operation>
-
-      <operation name="downloadLatestFailoverList"
-                 displayName="Download Latest Failover List"
-                 description="Tells the agent to download an updated server failover list. This will also check to make sure the agent is pointing to its primary server as found in the new failover list and, if not, will attempt to switch to the primary server now.">
-      </operation>
-
-      <operation name="updatePlugins"
-                 displayName="Update All Plugins"
-                 description="Tells the agent to update its plugins. This pulls new/updated plugins down from the RHQ Server">
-      </operation>
-
-      <operation name="retrieveAllPluginInfo"
-                 displayName="Get Info On All Plugins"
-                 description="Retrieves information on all deployed plugins.">
-         <results>
-            <c:list-property name="plugins">
-               <c:map-property name="plugin">
-                  <c:simple-property name="name" description="Name of the plugin" />
-                  <c:simple-property name="path" description="Full path to the plugin as seen by the agent" />
-                  <c:simple-property name="timestamp" description="Last time the plugin was updated" />
-                  <c:simple-property name="size" description="Size of the plugin file" />
-                  <c:simple-property name="md5" description="MD5 of the plugin file" />
-               </c:map-property>
-            </c:list-property>
-         </results>
-      </operation>
-
-      <operation name="retrievePluginInfo"
-                 displayName="Get Plugin Info"
-                 description="Retrieves information on a specific plugin.">
-         <parameters>
-            <c:simple-property name="pluginName" description="The name of the plugin whose info is to be retrieved"/>
-         </parameters>
-         <results>
-            <c:simple-property name="name" description="Name of the plugin" />
-            <c:simple-property name="path" description="Full path to the plugin as seen by the agent" />
-            <c:simple-property name="timestamp" description="Last time the plugin was updated" />
-            <c:simple-property name="size" description="Size of the plugin file" />
-            <c:simple-property name="md5" description="MD5 of the plugin file" />
-         </results>
-      </operation>
-
-      <operation name="executeAvailabilityScan"
-                 displayName="Execute Availability  Scan"
-                 description="Runs an availability scan and returns a report of its findings. An availability report tells you what resources are up or down. This operation will send the report to the server for processing, as well as return the results.">
-         <parameters>
-            <c:simple-property name="changesOnly" type="boolean" default="true" description="If true, this reports only those availabililities that have changed"/>
-         </parameters>
-         <results>
-            <c:simple-property name="agentName" type="string" description="The name of the agent that produced the report" />
-            <c:simple-property name="isChangesOnly" type="boolean" description="If true, only resources that have changed availability will be in the report" />
-            <c:list-property name="resourceAvailabilities">
-               <c:map-property name="resourceAvailability">
-                  <c:simple-property name="resourceId" type="integer" description="The unique ID of the resource whose availability is being reported" />
-                  <c:simple-property name="resourceName" type="string" description="The name of the resource whose availability is being reported" />
-                  <c:simple-property name="isAvailable" type="boolean" description="If true, the resource is UP, otherwise it is considered DOWN"/>
-               </c:map-property>
-            </c:list-property>
-         </results>
-      </operation>
-
-      <operation name="retrieveCurrentDateTime"
-                 displayName="Get Current Date/Time"
-                 description="Obtains the agent's current date/time.">
-         <parameters>
-            <c:simple-property name="timeZone" type="string" default="" required="false" description="A timezone identifier that will be used to format the date/time string. This can be either an abbreviation such as 'PST', a full name such as 'America/Los_Angeles', or a custom ID such as 'GMT-8:00'. If this is not specified, the agent's local time zone will be used. If the given time zone identifier is unknown, 'GMT' will be the default."/>
-         </parameters>
-         <results>
-            <c:simple-property name="dateTime" type="string" description="The agent's current date/time, formatted in the given time zone" />
-         </results>
-      </operation>
-
-      <operation name="setDebugMode"
-                 displayName="Set Debug Mode"
-                 description="Turns on or off debug mode, which causes the agent to emit verbose log messages.">
-         <parameters>
-            <c:simple-property name="enabled" type="boolean" required="true" description="Indicates if debug mode should be enabled or disabled"/>
-            <c:simple-property name="traceMessaging" type="boolean" default="false" required="true" description="Indicates if incoming and outgoing messages should be traced. This tracks the messaging between the agent and its server. This will be ignored and default to false if 'enabled' is false."/>
-         </parameters>
-      </operation>
-
-      <operation name="executePromptCommand"
-                 displayName="Execute Prompt Command"
-                 description="Executes an agent prompt command, just as if you invoked the command at the agent prompt in a console. Note that you must ensure the prompt command does not require additional input, since the agent will look for that input from another source (e.g. console keyboard).">
-         <parameters>
-            <c:simple-property name="command" type="string" default="" required="true" description="The prompt command to execute"/>
-         </parameters>
-         <results>
-            <c:simple-property name="output" type="longString" required="true" description="The results of the prompt command. This will typically be the output that you would have seen in the console, had this prompt command been executed directly on the agent console." />
-            <c:simple-property name="error" type="longString" required="false" description="If the prompt command execution had an error, this will be information on the error." />
-         </results>
-      </operation>
-
-      <metric property="Trait.SigarVersion"
-              displayName="SIGAR Version"
-              dataType="trait"
-              displayType="summary"
-              description="The version of the SIGAR (System Information Gatherer and Reporter) native library used by the Agent" />
-
-      <metric property="Trait.ReasonForLastRestart"
-              displayName="Reason For Last Restart"
-              dataType="trait"
-              displayType="summary"
-              description="Indicates what caused the last agent restart" />
-
-      <metric property="Trait.AgentHomeDirectory"
-              displayName="Agent Home Directory"
-              dataType="trait"
-              displayType="detail"
-              defaultInterval="86400000"
-              defaultOn="true"
-              description="The directory where the agent is installed" />
-
-      <metric property="NumberAgentRestarts"
-              displayName="Number of Agent Restarts"
-              description="Number of times the agent was restarted during the lifetime of its Java Virtual Machine"
-              defaultOn="true"
-              displayType="detail"
-              units="none"
-              category="availability"
-              measurementType="dynamic" />
-
-      <metric property="AgentServerClockDifference"
-              displayName="Agent-Server Clock Difference"
-              description="Number of milliseconds the agent's clock differs from its server's clock"
-              defaultInterval="1800000"
-              defaultOn="true"
-              displayType="summary"
-              units="milliseconds"
-              category="performance"
-              measurementType="dynamic" />
-
-      <metric property="Uptime"
-              displayName="Up Time"
-              description="Total number of seconds since the agent was started"
-              defaultOn="false"
-              units="seconds"
-              category="availability"
-              measurementType="dynamic" />  <!-- changed to dynamic to prevent generation of per Minute metric. -->
-
-      <metric property="NumberTotalCommandsReceived"
-              displayName="Total Number Of Commands Received"
-              description="Total number of messages this agent has received from the RHQ Server"
-              defaultOn="true"
-              displayType="summary"
-              category="throughput"
-              measurementType="trendsup" />
-
-      <metric property="NumberSuccessfulCommandsReceived"
-              displayName="Number of Commands Received Successfully"
-              description="Number of messages this agent has received from the RHQ Server and succesfully processed"
-              defaultOn="true"
-              category="throughput"
-              measurementType="trendsup" />
-
-      <metric property="NumberFailedCommandsReceived"
-              displayName="Number of Commands Received but Failed "
-              description="Number of messages this agent has received from the RHQ Server but failed to process"
-              defaultOn="true"
-              category="throughput"
-              measurementType="trendsup" />
-
-      <metric property="AverageExecutionTimeReceived"
-              displayName="Avg Execution Time Commands Received Successfully"
-              description="Average time it took to process incoming commands that are ultimately successful"
-              defaultOn="true"
-              displayType="summary"
-              category="performance"
-              measurementType="dynamic"
-              units="milliseconds" />
-
-      <metric property="AverageExecutionTimeSent"
-              displayName="Avg Execution Time Commands Sent Successfully"
-              description="Average time it took to send commands that are ultimately successful"
-              defaultOn="true"
-              displayType="summary"
-              category="performance"
-              measurementType="dynamic"
-              units="milliseconds" />
-
-      <metric property="NumberTotalCommandsSent"
-              displayName="Total Number of Commands Sent"
-              description="Total number of messages this agent has sent to the RHQ Server"
-              defaultOn="true"
-              displayType="summary"
-              category="throughput"
-              measurementType="trendsup" />
-
-      <metric property="NumberSuccessfulCommandsSent"
-              displayName="Number of Commands Successfully Sent"
-              description="Number of messages this agent has sent to the RHQ Server successfully"
-              defaultOn="true"
-              category="throughput"
-              measurementType="trendsup" />
-
-      <metric property="NumberFailedCommandsSent"
-              displayName="Number of Commands Sent but Failed"
-              description="Number of messages this agent has either tried, but failed, to send or were not processed succesfully by the RHQ Server"
-              defaultOn="true"
-              category="throughput"
-              measurementType="trendsup" />
-
-      <metric property="NumberCommandsActiveSent"
-              displayName="Number Of Active Commands Being Sent"
-              description="The number of messages this agent is currently sending"
-              defaultOn="true"
-              displayType="summary"
-              category="throughput"
-              measurementType="dynamic" />
-
-      <metric property="NumberCommandsInQueue"
-              displayName="Number of Commands In Queue"
-              description="Number of messages currently queued waiting to be sent to the RHQ Server"
-              defaultOn="true"
-              displayType="summary"
-              category="throughput"
-              measurementType="dynamic" />
-
-      <metric property="NumberCommandsSpooled"
-              displayName="Number of Commands Spooled To Disk"
-              description="Number of messages spooled to disk waiting to be sent to the RHQ Server"
-              defaultOn="true"
-              category="throughput"
-              measurementType="dynamic" />
-
-      <metric property="JVMFreeMemory"
-              displayName="JVM Free Memory"
-              description="The amount of free memory the agent JVM has in its heap"
-              defaultOn="true"
-              units="bytes"
-              category="performance"
-              measurementType="dynamic" />
-
-      <metric property="JVMTotalMemory"
-              displayName="JVM Total Memory"
-              description="The amount of total memory the agent JVM has in its heap"
-              defaultOn="true"
-              units="bytes"
-              category="performance"
-              measurementType="dynamic" />
-
-      <metric property="JVMActiveThreads"
-              displayName="JVM Active Threads"
-              description="The number of active threads currently running in the agent JVM"
-              defaultOn="true"
-              category="performance"
-              measurementType="dynamic" />
-
-      <event name="logEntry" description="a log message"/>
-
-      <resource-configuration>
-         <c:group name="general" displayName="General" hiddenByDefault="false">
-            <c:description>General configuration properties</c:description>
-            <c:simple-property name="rhq.agent.name" type="string" readOnly="true" required="true" displayName="Agent Name" description="The name that this agent is known as.  This is read-only - once assigned, it cannot change.">
-               <c:constraint>
-                  <c:regex-constraint expression=".{1,64}"/>
-               </c:constraint>
-            </c:simple-property>
-         </c:group>
-         <c:group name="plugincontainer" displayName="Plugin Container" hiddenByDefault="false">
-            <c:description>Plugin Container configuration properties</c:description>
-            <c:simple-property name="rhq.agent.plugins.directory" type="string" activationPolicy="restart" required="true" default="plugins" displayName="Plugins Directory" description="Location on the file system where the plugin jar files are stored"/>
-            <c:simple-property name="rhq.agent.plugins.server-discovery.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="10" displayName="Server Discovery Initial Delay" description="Startup delay before the first server discovery is run" />
-            <c:simple-property name="rhq.agent.plugins.server-discovery.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="900" displayName="Server Discovery Period" description="Time between server discoveries" />
-            <c:simple-property name="rhq.agent.plugins.service-discovery.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="20" displayName="Service Discovery Initial Delay" description="Startup delay before the first service discovery is run" />
-            <c:simple-property name="rhq.agent.plugins.service-discovery.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="86400" displayName="Service Discovery Period" description="Time between service discoveries" />
-            <c:simple-property name="rhq.agent.plugins.availability-scan.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="30" displayName="Availability Scan Initial Delay" description="Startup delay before the first availability scan is run" />
-            <c:simple-property name="rhq.agent.plugins.availability-scan.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="300" displayName="Availability Scan Period" description="Time between availability scans" />
-            <c:simple-property name="rhq.agent.plugins.measurement-collection.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="30" displayName="Measurement Collection Initial Delay" description="Startup delay before the first measurement collection is run" />
-            <c:simple-property name="rhq.agent.plugins.measurement-collection.threadpool-size" type="integer" activationPolicy="restart" required="false" default="5" displayName="Measurement Collection Threadpool Size" description="Number of concurrent measurement collections that can be run" />
-            <c:simple-property name="rhq.agent.plugins.operation-invocation-timeout-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="600" displayName="Operation Invocation Timeout" description="Time before an operation invocation is aborted" />
-            <c:simple-property name="rhq.agent.plugins.operation-invoker.threadpool-size" type="integer" activationPolicy="restart" required="false" default="5" displayName="Operation Invoker Threadpool Size" description="Number of concurrent operation invocations that can be run" />
-            <c:simple-property name="rhq.agent.plugins.content-discovery.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="30" displayName="Content Discovery Initial Delay" description="Startup delay before the first content discovery is run" />
-            <c:simple-property name="rhq.agent.plugins.content-discovery.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="10" displayName="Content Discovery Period" description="Time between content discoveries" />
-            <c:simple-property name="rhq.agent.plugins.content-discovery.threadpool-size" type="integer" activationPolicy="restart" required="false" default="10" displayName="Content Discovery Threadpool Size" description="Number of concurrent content discoveries that can be run" />
-            <c:simple-property name="rhq.agent.plugins.configuration-discovery.initial-delay-secs" type="integer" activationPolicy="restart" required="false" default="300" displayName="Configuration Change Detection Startup Delay" description="Time before configuration change detection starts in seconds" />
-            <c:simple-property name="rhq.agent.plugins.configuration-discovery.period-secs" type="integer" activationPolicy="restart" required="false" default="3600" displayName="Configuration Change Detection Interval" description="Time period for checking for configuration changes in seconds" />
-            <c:simple-property name="rhq.agent.plugins.event-sender.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="30" displayName="Event Sender Initial Delay" description="Defines the delay before the first event report gets sent to the server" />
-            <c:simple-property name="rhq.agent.plugins.event-sender.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="30" displayName="Event Sender Period" description="Defines how often event reports get sent to the server" />
-            <c:simple-property name="rhq.agent.plugins.event-report.max-per-source" type="integer" activationPolicy="restart" required="false" default="200" displayName="Event Report Max Per Source" description="Defines the maximum number of events for any given event source that can be placed in a single event report that is sent up to the server. If this number is larger than the max-total setting, then this setting is ignored" />
-            <c:simple-property name="rhq.agent.plugins.event-report.max-total" type="integer" activationPolicy="restart" required="false" default="400" displayName="Event Report Max Total" description="Defines the total maximum number of events that can be placed in a single event report that is sent up to the server" />
-            <c:simple-property name="rhq.agent.plugins.disabled" type="string" activationPolicy="restart" required="false" default="" displayName="Disabled Plugins" description="Defines the plugins that should be disabled and not loaded by the plugin container. This is a comma-separated list of plugin names." />
-         </c:group>
-         <c:group name="comm-endpoints" displayName="Communication Endpoints" hiddenByDefault="false">
-            <c:description>Communication settings that define the endpoints of this RHQ Agent and its RHQ Server</c:description>
-            <c:simple-property name="rhq.agent.server.transport" type="string" activationPolicy="restart" required="true" default="servlet" displayName="RHQ Server Transport Protocol" description="The transport protocol used to send commands to the RHQ Server. If you want secure communications, the RHQ Server must use an SSL-enabled transport">
-               <c:property-options>
-                  <c:option name="servlet"    value="servlet" default="true" />
-                  <c:option name="sslservlet" value="sslservlet" />
-                  <c:option name="socket"     value="socket" />
-                  <c:option name="sslsocket"  value="sslsocket" />
-                  <c:option name="http"       value="http" />
-                  <c:option name="https"      value="https" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.server.bind-address" type="string" activationPolicy="restart" required="true" default="127.0.0.1" displayName="RHQ Server IP Address" description="The RHQ Server address that it is bound to" />
-            <c:simple-property name="rhq.agent.server.bind-port" type="integer" activationPolicy="restart" required="true" default="7080" displayName="RHQ Server Port" description="The port that the RHQ Server is listening to">
-               <c:constraint>
-                  <c:integer-constraint minimum="1" maximum="65535"/>
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.server.transport-params" type="string" activationPolicy="restart" required="false" default="/jboss-remoting-servlet-invoker/ServerInvokerServlet" displayName="RHQ Server Transport Parameters" description="Custom set of transport parameters used when sending commands to the RHQ Server. Please see the documentation for more information on transport params." />
-            <c:simple-property name="rhq.communications.connector.transport" type="string" activationPolicy="restart" required="true" default="socket" displayName="Agent Transport Protocol" description="The transport protocol used to receive commands from the RHQ Server. e.g. socket, sslsocket. If you want secure communications, you must use an SSL-enabled transport">
-               <c:property-options>
-                  <c:option name="socket"    value="socket" default="true" />
-                  <c:option name="sslsocket" value="sslsocket" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.bind-address" type="string" activationPolicy="restart" required="false" default="" displayName="Agent IP Address" description="The address the agent binds to when listening for incoming commands from the RHQ Server" />
-            <c:simple-property name="rhq.communications.connector.bind-port" type="integer" activationPolicy="restart" required="true" default="16163" displayName="Agent Port" description="The port the agent listens to for incoming commands from the RHQ Server">
-               <c:constraint>
-                  <c:integer-constraint minimum="1" maximum="65535"/>
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.transport-params" type="string" activationPolicy="restart" required="false" default="numAcceptThreads=3&amp;maxPoolSize=303&amp;clientMaxPoolSize=304&amp;socketTimeout=60000&amp;enableTcpNoDelay=true&amp;backlog=200" displayName="Agent Transport Parameters" description="Custom set of transport parameters. Please see the documentation for more information on transport params." />
-         </c:group>
-         <c:group name="comm-security" displayName="Communication Security" hiddenByDefault="true">
-            <c:description>Settings that secure the communications between the RHQ Agent and RHQ Server</c:description>
-            <c:simple-property name="rhq.communications.connector.security.secure-socket-protocol"
-                               type="string" activationPolicy="restart" required="false" default="TLS" displayName="Incoming: Secure Socket Protocol">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="TLS"     value="TLS" default="true" />
-                  <c:option name="SSL_TLS" value="SSL_TLS" />
-                  <c:option name="SSL"     value="SSL" />
-                  <c:option name="SSLv3"   value="SSLv3" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.keystore.file"
-               type="string" activationPolicy="restart" required="false" default="data/keystore.dat" displayName="Incoming: Keystore File"  />
-            <c:simple-property name="rhq.communications.connector.security.keystore.algorithm"
-               type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Incoming: Keystore Algorithm" >
-               <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
-                  <c:option name="IbmX509" value="IbmX509" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.keystore.type"
-               type="string" activationPolicy="restart" required="false" default="JKS" displayName="Incoming: Keystore Type">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
-                  <c:option name="PKCS12" value="PKCS12" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.keystore.password"
-               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Incoming: Keystore Password"/>
-            <c:simple-property name="rhq.communications.connector.security.keystore.key-password"
-               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Incoming: Keystore Key Password" />
-            <c:simple-property name="rhq.communications.connector.security.keystore.alias"
-               type="string" activationPolicy="restart" required="false" default="rhq" displayName="Incoming: Keystore Alias " />
-            <c:simple-property name="rhq.communications.connector.security.truststore.file"
-               type="string" activationPolicy="restart" required="false" default="data/truststore.dat" displayName="Incoming: Truststore File"/>
-            <c:simple-property name="rhq.communications.connector.security.truststore.algorithm"
-               type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Incoming: Truststore Algorithm">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
-                  <c:option name="IbmX509" value="IbmX509" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.truststore.type"
-               type="string" activationPolicy="restart" required="false" default="JKS" displayName="Incoming: Truststore Type">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
-                  <c:option name="PKCS12" value="PKCS12" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.truststore.password"
-               type="password" activationPolicy="restart" required="false" default="" displayName="Incoming: Truststore Password"/>
-            <c:simple-property name="rhq.communications.connector.security.client-auth-mode"
-               type="string" activationPolicy="restart" required="false" default="none" displayName="Incoming: Client Authentication Mode"
-               description="Determines if the agent should authenticate a RHQ Server before accepting incoming commands from it">
-               <c:property-options>
-                  <c:option name="none" value="none" default="true" />
-                  <c:option name="want" value="want" />
-                  <c:option name="need" value="need" />
-               </c:property-options>
-            </c:simple-property>
-
-            <c:simple-property name="rhq.agent.client.security.secure-socket-protocol"
-               type="string" activationPolicy="restart" required="false" default="TLS" displayName="Outgoing: Secure Socket Protocol">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="TLS"     value="TLS" default="true" />
-                  <c:option name="SSL_TLS" value="SSL_TLS" />
-                  <c:option name="SSL"     value="SSL" />
-                  <c:option name="SSLv3"   value="SSLv3" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.keystore.file"
-               type="string" activationPolicy="restart" required="false" default="data/keystore.dat" displayName="Outgoing: Keystore File" />
-            <c:simple-property name="rhq.agent.client.security.keystore.algorithm"
-               type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Outgoing: Keystore Algorithm">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
-                  <c:option name="IbmX509" value="IbmX509" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.keystore.type"
-               type="string" activationPolicy="restart" required="false" default="JKS" displayName="Outgoing: Keystore Type">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
-                  <c:option name="PKCS12" value="PKCS12" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.keystore.password"
-               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Outgoing: Keystore Password"/>
-            <c:simple-property name="rhq.agent.client.security.keystore.key-password"
-               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Outgoing: Keystore Key Password"/>
-            <c:simple-property name="rhq.agent.client.security.keystore.alias"
-               type="string" activationPolicy="restart" required="false" default="rhq" displayName="Outgoing: Keystore Alias"/>
-            <c:simple-property name="rhq.agent.client.security.truststore.file"
-               type="string" activationPolicy="restart" required="false" default="data/truststore.dat" displayName="Outgoing: Truststore File"/>
-            <c:simple-property name="rhq.agent.client.security.truststore.algorithm"
-               type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Outgoing: Truststore Algorithm">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
-                  <c:option name="IbmX509" value="IbmX509" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.truststore.type"
-               type="string" activationPolicy="restart" required="false" default="JKS" displayName="Outgoing: Truststore Type">
-               <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
-                  <c:option name="PKCS12" value="PKCS12" />
-               </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.truststore.password"
-               type="password" activationPolicy="restart" required="false" default="" displayName="Outgoing: Truststore Password"/>
-            <c:simple-property name="rhq.agent.client.security.server-auth-mode-enabled"
-               type="boolean" activationPolicy="restart" required="false" default="false"
-               displayName="Outgoing: Authenticate Server?"
-               description="If true, then the agent must authenticate the RHQ Server before it can send it messages" />
-         </c:group>
-         <c:group name="auto-detection" displayName="Auto Detection" hiddenByDefault="true">
-            <c:description>Configures auto-detection mechanisms that allow the RHQ Agent to find the RHQ Server and vice versa</c:description>
-            <c:simple-property name="rhq.agent.client.server-polling-interval-msecs" type="integer" activationPolicy="restart" required="false" units="milliseconds" default="60000" displayName="RHQ Server Polling Interval" description="If this value is larger than 0, it indicates the agent should periodically poll the RHQ Server to make sure it's still up or (if it was down) see when it comes back up. The value is the number of milliseconds to wait in between polls">
-               <c:constraint>
-                  <c:integer-constraint minimum="0" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.server-auto-detection" required="false" type="boolean" activationPolicy="restart" default="false" displayName="Auto-Detect RHQ Server?" description="If true, the agent will use multicast detection to auto-detect the RHQ Server. If this is enabled, make sure you enable and configure the multicast detector" />
-            <c:simple-property name="rhq.communications.multicast-detector.enabled" required="false"  type="boolean" activationPolicy="restart" default="false" displayName="Multicast Detector Enabled?" description="The multicast detector must be enabled if you want the RHQ Agent to auto-detect the RHQ Server and vice versa. Disable this if your network does not support multicast traffic." />
-            <c:simple-property name="rhq.communications.multicast-detector.multicast-address" required="false" type="string" activationPolicy="restart" default="224.16.16.16" displayName="Multicast Detector Multicast Address" description="The address used by JBoss ON to broadcast detection messages. All RHQ Servers and RHQ Agents must be using the same address." />
-            <c:simple-property name="rhq.communications.multicast-detector.bind-address" required="false" type="string" activationPolicy="restart" default="0.0.0.0" displayName="Multicast Detector Bind Address" description="The address bound by the network interface" />
-            <c:simple-property name="rhq.communications.multicast-detector.port" required="false" type="integer" activationPolicy="restart" default="16162" displayName="Multicast Detector Port" description="The port that the detector is multicasting to">
-               <c:constraint>
-                  <c:integer-constraint minimum="1" maximum="65535" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.multicast-detector.heartbeat-time-delay" required="false" type="integer" activationPolicy="restart" units="milliseconds" default="1000" displayName="Multicast Detector Heartbeat" description="The number of milliseconds between heartbeat messages emitted by the multicast detector. This value must be less than the default time delay.">
-               <c:constraint>
-                  <c:integer-constraint minimum="500" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.multicast-detector.default-time-delay" required="false" type="integer" activationPolicy="restart" units="milliseconds" default="5000" displayName="Multicast Detector Time Delay" description="Amount of milliseconds that must pass without hearing a RHQ Server's heartbeat before assuming its down. This value must be greater than the heartbeat time delay.">
-               <c:constraint>
-                  <c:integer-constraint minimum="500" />
-               </c:constraint>
-            </c:simple-property>
-         </c:group>
-         <c:group name="sender" displayName="Client Sender" hiddenByDefault="true">
-            <c:description>Configures the client sender which is responsible for sending messages to the RHQ Server</c:description>
-            <c:simple-property name="rhq.agent.client.queue-size" required="false" type="integer" activationPolicy="restart" units="milliseconds" default="50000" displayName="Queue Size" description="Maximum number of commands that the agent can queue up for sending to the RHQ Server. Setting this to 0 makes the queue unbounded.">
-               <c:constraint>
-                  <c:integer-constraint minimum="0" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.max-concurrent" required="false" type="integer" activationPolicy="restart" default="5" displayName="Maximum Concurrency" description="Maximum number of commands that the agent can send to the RHQ Server at the same time.">
-               <c:constraint>
-                  <c:integer-constraint minimum="1" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.command-timeout-msecs" required="false" type="integer" activationPolicy="restart" units="milliseconds" default="600000" displayName="Timeout" description="The default time in milliseconds the agent will wait before aborting a command being sent">
-               <c:constraint>
-                  <c:integer-constraint minimum="0" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.retry-interval-msecs" required="false" type="integer" activationPolicy="restart" units="milliseconds" default="15000" displayName="Retry Interval" description="This is the minimum amount of time, in milliseconds, the agent will wait before trying to resend a guaranteed command that previously failed">
-               <c:constraint>
-                  <c:integer-constraint minimum="500" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.max-retries" required="false" type="integer" activationPolicy="restart" default="10" displayName="Max Retries" description="This is the maximum amount of times the agent will resend a guaranteed command that previously failed due to something other than a cannot-connect error">
-               <c:constraint>
-                  <c:integer-constraint minimum="0" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.send-throttling" required="false" type="string" activationPolicy="restart" default="100:1000" displayName="Send Throttling" description="Configures the send throttle. See the documentation for more information on send throttling">
-               <c:constraint>
-                  <c:regex-constraint expression="[0-9]+:[0-9]+" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.queue-throttling" required="false" type="string" activationPolicy="restart" default="200:2000" displayName="Queue Throttling" description="Configures the queue throttle. See the documentation for more information on queue throttling">
-               <c:constraint>
-                  <c:regex-constraint expression="[0-9]+:[0-9]+" />
-               </c:constraint>
-            </c:simple-property>
-         </c:group>
-         <c:group name="startup" displayName="Startup" hiddenByDefault="true">
-            <c:description>Configures what the agent does while it is starting up</c:description>
-            <c:simple-property name="rhq.agent.register-with-server-at-startup" required="false" type="boolean" activationPolicy="restart" default="false" displayName="Register with RHQ Server At Startup?" description="This will force the agent to register with the RHQ Server, even if it is already registered" />
-            <c:simple-property name="rhq.agent.wait-for-server-at-startup-msecs" required="false" type="integer" activationPolicy="restart" default="5000" displayName="Time To Wait For RHQ Server At Startup" description="This is the number of milliseconds the agent will wait for the RHQ Server to come up" />
-            <c:simple-property name="rhq.agent.update-plugins-at-startup" required="false" type="boolean" activationPolicy="restart" default="true" displayName="Update Plugins At Startup" description="This will force the agent to download plugin updates from the RHQ Server" />
-         </c:group>
-         <c:group name="agentupdate" displayName="Agent Auto-Update" hiddenByDefault="true">
-            <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean" activationPolicy="immediate" default="true" displayName="Enable Agent Update" description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself." />
-            <c:simple-property name="rhq.agent.agent-update.version-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Version URL" description="If defined, this will be the URL the agent uses when it needs to retrieve information about the latest available agent update binary.  If this is not defined, the agent will ask its server for the agent update binary version information." />
-            <c:simple-property name="rhq.agent.agent-update.download-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Download URL" description="If defined, this will be the URL the agent uses when it needs to download the latest available agent update binary.  If this is not defined, the agent will download the agent update binary from its server." />
-         </c:group>
-         <c:group name="misc" displayName="Miscellaneous Settings" hiddenByDefault="true">
-            <c:description>Settings that usually do not need to change under normal circumstances</c:description>
-            <c:simple-property name="rhq.agent.data-directory" required="false" type="string" activationPolicy="restart" default="data" displayName="Data Directory" description="Location where the agent can persist data to the file system" />
-            <c:simple-property name="rhq.agent.disable-native-system" required="false" type="boolean" activationPolicy="restart" default="false" displayName="Disable Native System" description="Disables the native system; agent will not use the native JNI libraries" />
-            <c:simple-property name="rhq.agent.primary-server-switchover-check-interval-msecs" required="false" type="integer" activationPolicy="restart" default="3600000" displayName="Primary Server Switchover Check Interval" description="The amount of milliseconds in between checking that the agent is connected to the primary server, as opposed to a failover server. The check is disabled if this is 0.">
-               <c:constraint>
-                  <c:integer-constraint minimum="0" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.communications.remote-stream-max-idle-time-msecs" required="false" type="integer" activationPolicy="restart" default="300000" displayName="Remote Stream Idle Timeout" description="The maximum amount of milliseconds an agent-hosted remote stream is allowed to remain idle before it will be closed." />
-            <c:simple-property name="rhq.agent.client.command-spool-file.name" required="false" type="string" activationPolicy="restart" default="command-spool.dat" displayName="Command Spool Filename" description="Defines the name of the command spool file.  This file must be located in the data directory (if one does not exist, it will be created)" />
-            <c:simple-property name="rhq.agent.client.command-spool-file.params" required="false" type="string" activationPolicy="restart" default="10000000:75" displayName="Command Spool File Parameters" description="Defines the maximum size the spool file is allowed to be and how it is to be purged.  See the documentation on the format of this value.">
-               <c:constraint>
-                  <c:regex-constraint expression="[1-9][0-9]{4,}:[0-9]{1,2}" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.client.command-spool-file.compressed" required="false" type="boolean" activationPolicy="restart" default="false" displayName="Compress Spool File?" description="If true, data in the spool file will be compressed. Note that this saves disk space at the expense of performance" />
-            <c:simple-property name="rhq.agent.vm-health-check.interval-msecs" required="false" type="integer" activationPolicy="restart" default="5000" displayName="VM Health Check Interval" description="The amount of milliseconds in between checking the health of the agent's Java Virtual Machine. The check is disabled if this is set to 0.">
-               <c:constraint>
-                  <c:integer-constraint minimum="0" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.vm-health-check.low-heap-mem-threshold" required="false" type="float" activationPolicy="restart" default="0.90" displayName="VM Health Check Low Heap Memory Threshold" description="The threshold percentage that must be crossed if the agent's VM health check is to consider the JVM with critically low memory. This value is a percentage of used heap memory out of the maximum heap size.">
-               <c:constraint>
-                  <c:float-constraint minimum="0.00" maximum="1.00" />
-               </c:constraint>
-            </c:simple-property>
-            <c:simple-property name="rhq.agent.vm-health-check.low-nonheap-mem-threshold" required="false" type="float" activationPolicy="restart" default="0.90" displayName="VM Health Check Low NonHeap Memory Threshold" description="The threshold percentage that must be crossed if the agent's VM health check is to consider the JVM with critically low memory. This value is a percentage of used non-heap memory out of the maximum non-heap size.">
-               <c:constraint>
-                  <c:float-constraint minimum="0.00" maximum="1.00" />
-               </c:constraint>
-            </c:simple-property>
-         </c:group>
-      </resource-configuration>
-
-      <server name="RHQ Agent JVM"
-              description="JVM of the Management Agent"
-              sourcePlugin="JMX"
-              sourceType="JMX Server"
-              discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"
-              class="org.rhq.plugins.jmx.JMXServerComponent"
-              singleton="true">
-      </server>
-
-      <service name="Measurement Subsystem"
-               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-               class="org.rhq.plugins.jmx.MBeanResourceComponent"
-               description="The measurement subsystem within an agent's plugin container"
-               singleton="true">
-
-         <plugin-configuration>
-            <c:simple-property name="objectName" default="rhq.pc:type=MeasurementManager"/>
-            <c:simple-property name="nameTemplate" default="Agent Measurement Subsystem"/>
-            <c:simple-property name="descriptionTemplate" default="information about this agent's measurement subsystem"/>
-         </plugin-configuration>
-
-         <metric property="CurrentlyScheduleMeasurements" displayType="summary"
-                 description="The total number of active measurement schedules currently being collected by this RHQ Agent"/>
-         <metric property="MeasurementsCollected" measurementType="trendsup" displayType="summary"
-                 description="The total number of measurements collected since this RHQ Agent was started"/>
-         <metric property="TotalTimeCollectingMeasurements" displayType="summary" units="milliseconds" measurementType="trendsup"
-                 description="The amount of time this RHQ Agent has spent collecting measurements since it was started"/>
-         <metric property="FailedCollections" displayType="summary" measurementType="trendsup"
-                 description="The number of individual measurement collections that have failed since this RHQ Agent was started"/>
-         <metric property="LateCollections" displayType="summary" measurementType="trendsup"
-                 description="The number of individual measurement collections that have fallen behind from their desired schedule"/>
-
-      </service>
-
-      <service name="Plugin Container"
-               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-               class="org.rhq.plugins.jmx.MBeanResourceComponent"
-               description="The plugin container itself, which hosts the plugins and manages their lifecycle"
-               singleton="true">
-
-         <plugin-configuration>
-            <c:simple-property name="objectName" default="rhq.pc:type=PluginContainer"/>
-            <c:simple-property name="nameTemplate" default="Agent Plugin Container"/>
-            <c:simple-property name="descriptionTemplate" default="information about this agent's plugin container"/>
-         </plugin-configuration>
-
-         <operation name="retrievePluginDependencyGraph"
-                    description="Get the list of plugins and show what plugins they depend on. The order of this list is the order in which the plugins are deployed.">
-            <results>
-               <c:list-property name="plugins" description="The plugins currently deployed and their dependencies. This list is in the order the plugins are deployed.">
-                  <c:map-property name="plugin">
-                     <c:simple-property name="name" description="Name of the plugin" />
-                     <c:simple-property name="dependencies" description="The list of dependent plugins that this plugin depends on" />
-                  </c:map-property>
-               </c:list-property>
-            </results>
-         </operation>
-
-         <operation name="retrievePluginClassLoaderInformation"
-                    displayName="Retrieve Plugin ClassLoader Information"
-                    description="Get information on all plugin classloaders. There is one plugin classloader for each deployed plugin.">
-            <results>
-               <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders" description="The number of plugin classloaders in the list" type="integer"/>
-               <c:list-property name="classloaders" displayName="ClassLoaders" description="Classloaders that have been created and are assigned to plugins">
-                  <c:map-property name="classloader">
-                     <c:simple-property name="pluginName" description="Name of the plugin that is assigned the classloader" />
-                     <c:simple-property name="classloaderInfo" displayName="ClassLoader Information" description="The information on the plugin classloader" />
-                  </c:map-property>
-               </c:list-property>
-            </results>
-         </operation>
-
-         <operation name="retrieveDiscoveryClassLoaderInformation"
-                    displayName="Retrieve Discovery ClassLoader Information"
-                    description="Get information on all discovery classloaders. These are created for discovery components that need to discover resources under a parent resource where that parent resource is from a different plugin than the discovery component.">
-            <results>
-               <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders" description="The number of discovery classloaders in the list" type="integer"/>
-               <c:list-property name="classloaders" displayName="ClassLoaders" description="Classloaders that have been created for discovery components">
-                  <c:map-property name="classloader">
-                     <c:simple-property name="id" description="A identifier consisting of the name of the plugin combined with the hashcode of the parent resource classloader" />
-                     <c:simple-property name="classloaderInfo" displayName="ClassLoader Information" description="The information on the discovery classloader" />
-                  </c:map-property>
-               </c:list-property>
-            </results>
-         </operation>
-
-         <operation name="retrieveAllResourceClassLoaderInformation"
-                    displayName="Retrieve ClassLoader Information For All Resources"
-                    description="Get information on classloaders for all resources. Depending on the number of resources being managed, this is potentially an expensive operation.">
-            <results>
-               <c:simple-property name="numberOfResources" description="The number of resource classloaders in the list. This is the number of resources currently being managed, not the total number of classloader instances that exist" type="integer"/>
-               <c:list-property name="classloaders" description="Classloaders that have been created and are assigned to resources">
-                  <c:map-property name="classloader">
-                     <c:simple-property name="resourceName" description="Name of the resource that is assigned the classloader" />
-                     <c:simple-property name="resourceId"   description="The ID of the resource that is assigned the classloader" />
-                     <c:simple-property name="resourceUuid" description="The UUID of the resource that is assigned the classloader" />
-                     <c:simple-property name="canonicalId" description="Canonical identification data of the resource that is assigned the classloader" />
-                     <c:simple-property name="classloaderInfo" description="The information on the resource classloader" />
-                  </c:map-property>
-               </c:list-property>
-            </results>
-         </operation>
-
-         <operation name="retrieveUniqueResourceClassLoaderInformation"
-                    displayName="Retrieve Unique Resource ClassLoader Information"
-                    description="Get information on all unique resource classloader instances that are created. Depending on the number of resources being managed, this is potentially an expensive operation.">
-            <results>
-               <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders" description="The number of resource classloader instances that have been created and are assigned to at least one resource" type="integer"/>
-               <c:list-property name="classloaders" description="Classloaders that have been created and are assigned to resources">
-                  <c:map-property name="classloader">
-                     <c:simple-property name="classloaderInfo" description="The information on the resource classloader instance" />
-                     <c:simple-property name="resourceCount" description="The number of resources that are currently assigned this resource classloader"/>
-                  </c:map-property>
-               </c:list-property>
-            </results>
-         </operation>
-
-         <metric property="NumberOfPluginClassLoaders"
-                 defaultOn="false"
-                 displayType="detail"
-                 defaultInterval="3600000"
-                 description="The total number of plugin classloaders currently created and actively managed."/>
-         <metric property="NumberOfDiscoveryClassLoaders"
-                 defaultOn="false"
-                 displayType="detail"
-                 defaultInterval="3600000"
-                 description="The total number of discovery classloaders currently created and actively managed."/>
-         <metric property="NumberOfResourceClassLoaders"
-                 displayType="summary"
-                 defaultInterval="600000"
-                 description="The total number of individual resource classloaders currently created and assigned to resources."/>
-
-      </service>
-
-      <service name="Environment Setup Script"
-               description="The agent startup script that sets up the agent environment"
-               discovery="AgentEnvironmentScriptDiscoveryComponent"
-               class="AgentEnvironmentScriptComponent"
-               singleton="true">
-         <plugin-configuration>
-            <c:simple-property name="Pathname" type="file" description="The full path to the script" required="true"/>
-         </plugin-configuration>
-         <resource-configuration>
-            <c:list-property name="environmentVariables" description="Environment variables that are set when starting the RHQ Agent JVM process">
-               <c:map-property name="environmentVariable">
-                  <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable"/>
-                  <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
-               </c:map-property>
-            </c:list-property>
-         </resource-configuration>
-      </service>
-
-      <service name="Launcher Script"
-               description="The script that can run the agent as a daemon service. The Environment Setup Script configures the behavior of this service."
-               discovery="AgentLauncherScriptDiscoveryComponent"
-               class="AgentLauncherScriptComponent"
-               singleton="true">
-
-         <plugin-configuration>
-            <c:simple-property name="Pathname" type="file" description="The full path to launcher script file" required="true"/>
-         </plugin-configuration>
-
-         <operation name="Restart" description="Restarts the agent VM.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
-         </operation>
-
-         <operation name="Stop" description="Stops the agent VM gracefully. This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
-         </operation>
-
-         <operation name="Kill" description="Performs a hard kill on the agent VM.  This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
-         </operation>
-
-         <operation name="Status" description="Gets the status of agent VM, if it was launched by the launcher script.">
-            <results>
-               <c:simple-property name="exitCode" type="integer" />
-               <c:simple-property name="output" type="longString" />
-            </results>
-         </operation>
-
-      </service>
-
-      <service name="Java Service Wrapper Launcher"
-               description="The Java Service Wrapper that can run the agent as a daemon service"
-               discovery="AgentJavaServiceWrapperDiscoveryComponent"
-               class="AgentJavaServiceWrapperComponent"
-               singleton="true">
-
-         <plugin-configuration>
-            <c:simple-property name="launcherScript" type="file" description="The full path to wrapper launcher script file" required="true"/>
-            <c:simple-property name="configurationFile" type="file" description="The full path to the configuration file" required="true"/>
-            <c:simple-property name="environmentFile" type="file" description="The full path to the environment setup file" required="false"/>
-            <c:simple-property name="includeFile" type="file" description="The full path to the include file" required="false"/>
-         </plugin-configuration>
-
-         <operation name="Install" description="Installs the Java Service Wrapper so it starts the agent at boot time">
-            <results>
-               <c:simple-property name="exitCode" type="integer"/>
-               <c:simple-property name="output" type="longString"/>
-            </results>
-         </operation>
-
-         <operation name="Restart" description="Restarts the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
-         </operation>
-
-         <operation name="Stop" description="Stops the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
-         </operation>
-
-         <operation name="Remove" description="Removes the Java Service Wrapper so it no longer starts the agent at boot time.  *NOTE* This will completely kill the agent VM process if it is running as this service. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
-         </operation>
-
-         <operation name="Status" description="Gets the status of the Java Service Wrapper">
-            <results>
-               <c:simple-property name="disabled" type="boolean" required="false" />
-               <c:simple-property name="requiresManualStart" type="boolean" required="false" />
-               <c:simple-property name="willAutomaticallyStart" type="boolean" required="false" />
-               <c:simple-property name="hasInteractiveConsole" type="boolean" required="false" />
-               <c:simple-property name="isRunning" type="boolean" required="false" />
-               <c:simple-property name="isInstalled" type="boolean" required="false" />
-               <c:simple-property name="exitCode" type="integer" />
-               <c:simple-property name="output" type="longString" />
-            </results>
-         </operation>
-
-         <resource-configuration>
-            <c:group name="mainConfiguration" >
-               <c:list-property name="mainConfigurationSettings" description="The main JSW configuration. This is read-only - to customize the configuration, add settings to the environment and/or includes." readOnly="true">
-                  <c:map-property name="mainConfigurationSetting" readOnly="true">
-                     <c:simple-property name="name" type="string" required="true" summary="true" readOnly="true" description="Name of the wrapper configuration setting"/>
-                     <c:simple-property name="value" type="string" required="true" summary="true" readOnly="true" description="Value of the wrapper configuration setting"/>
-                  </c:map-property>
-               </c:list-property>
+                            <c:property-options>
+                                <c:option name="debug" value="DEBUG"/>
+                                <c:option name="info" value="INFO"/>
+                                <c:option name="warn" value="WARN"/>
+                                <c:option name="error" value="ERROR" default="true"/>
+                                <c:option name="fatal" value="FATAL"/>
+                            </c:property-options>
+                        </c:simple-property>
+                    </c:map-property>
+                </c:list-property>
             </c:group>
-            <c:group name="environment" >
-               <c:list-property name="environmentSettings" description="Environment settings to further customize the JSW. These are set prior to applying the main configuration and include settings. Variables set here can be placed in the main config or includes using the %VAR% notation.">
-                  <c:map-property name="environmentSetting">
-                     <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable" />
-                     <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
-                  </c:map-property>
-               </c:list-property>
+            <c:group name="snapshotReport" displayName="Snapshot Report" hiddenByDefault="true">
+                <c:simple-property name="snapshotConfigEnabled" type="boolean" default="true"
+                                   description="If true, take a snapshot of the configuration"/>
+                <c:simple-property name="snapshotLogEnabled" type="boolean" default="true"
+                                   description="If true, take a snapshot of the log files"/>
+                <c:simple-property name="snapshotDataEnabled" type="boolean" default="true"
+                                   description="If true, take a snapshot of the data files"/>
             </c:group>
-            <c:group name="includes" >
-               <c:list-property name="includeSettings" description="Override settings that augment the existing JSW configuration. These are applied after the main configuration is set.">
-                  <c:map-property name="includeSetting">
-                     <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the wrapper override setting"/>
-                     <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the wrapper override setting"/>
-                  </c:map-property>
-               </c:list-property>
+            <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                <c:simple-property name="childJmxServerName" displayName="JVM Name" default="JVM"
+                                   readOnly="true" required="false"
+                                   description="The name of the child JVM resource."/>
             </c:group>
-         </resource-configuration>
-      </service>
-      
-   </server>
+        </plugin-configuration>
+
+        <operation name="switchToServer"
+                   description="Tell the agent to immediately switch to another server. The given server can be a simple
+                              hostname in which case, the current transport, port and transport parameters being used to
+                              talk to the current server will stay the same.  Otherwise, it will be assumed the server
+                              is a full endpoint URL.">
+            <parameters>
+                <c:simple-property name="server" description="A simple hostname or a full endpoint URL"
+                                   required="true"/>
+            </parameters>
+        </operation>
+
+        <operation name="restart"
+                   displayName="Restart Agent"
+                   description="Shuts down the agent's comm layer and plugin container and starts them up again. This does *not* restart the agent's VM - use the launcher services to do that.">
+        </operation>
+
+        <operation name="shutdown"
+                   displayName="Shutdown Agent"
+                   description="Shuts down the agent's comm layer and plugin container.  If the agent is in daemon mode, the entire agent VM will exit">
+        </operation>
+
+        <operation name="restartPluginContainer"
+                   displayName="Restart Plugin Container"
+                   description="Recycles the plugin container.">
+        </operation>
+
+        <operation name="downloadLatestFailoverList"
+                   displayName="Download Latest Failover List"
+                   description="Tells the agent to download an updated server failover list. This will also check to make sure the agent is pointing to its primary server as found in the new failover list and, if not, will attempt to switch to the primary server now.">
+        </operation>
+
+        <operation name="updatePlugins"
+                   displayName="Update All Plugins"
+                   description="Tells the agent to update its plugins. This pulls new/updated plugins down from the RHQ Server">
+        </operation>
+
+        <operation name="retrieveAllPluginInfo"
+                   displayName="Get Info On All Plugins"
+                   description="Retrieves information on all deployed plugins.">
+            <results>
+                <c:list-property name="plugins">
+                    <c:map-property name="plugin">
+                        <c:simple-property name="name" description="Name of the plugin"/>
+                        <c:simple-property name="path" description="Full path to the plugin as seen by the agent"/>
+                        <c:simple-property name="timestamp" description="Last time the plugin was updated"/>
+                        <c:simple-property name="size" description="Size of the plugin file"/>
+                        <c:simple-property name="md5" description="MD5 of the plugin file"/>
+                    </c:map-property>
+                </c:list-property>
+            </results>
+        </operation>
+
+        <operation name="retrievePluginInfo"
+                   displayName="Get Plugin Info"
+                   description="Retrieves information on a specific plugin.">
+            <parameters>
+                <c:simple-property name="pluginName"
+                                   description="The name of the plugin whose info is to be retrieved"/>
+            </parameters>
+            <results>
+                <c:simple-property name="name" description="Name of the plugin"/>
+                <c:simple-property name="path" description="Full path to the plugin as seen by the agent"/>
+                <c:simple-property name="timestamp" description="Last time the plugin was updated"/>
+                <c:simple-property name="size" description="Size of the plugin file"/>
+                <c:simple-property name="md5" description="MD5 of the plugin file"/>
+            </results>
+        </operation>
+
+        <operation name="executeAvailabilityScan"
+                   displayName="Execute Availability  Scan"
+                   description="Runs an availability scan and returns a report of its findings. An availability report tells you what resources are up or down. This operation will send the report to the server for processing, as well as return the results.">
+            <parameters>
+                <c:simple-property name="changesOnly" type="boolean" default="true"
+                                   description="If true, this reports only those availabililities that have changed"/>
+            </parameters>
+            <results>
+                <c:simple-property name="agentName" type="string"
+                                   description="The name of the agent that produced the report"/>
+                <c:simple-property name="isChangesOnly" type="boolean"
+                                   description="If true, only resources that have changed availability will be in the report"/>
+                <c:list-property name="resourceAvailabilities">
+                    <c:map-property name="resourceAvailability">
+                        <c:simple-property name="resourceId" type="integer"
+                                           description="The unique ID of the resource whose availability is being reported"/>
+                        <c:simple-property name="resourceName" type="string"
+                                           description="The name of the resource whose availability is being reported"/>
+                        <c:simple-property name="isAvailable" type="boolean"
+                                           description="If true, the resource is UP, otherwise it is considered DOWN"/>
+                    </c:map-property>
+                </c:list-property>
+            </results>
+        </operation>
+
+        <operation name="retrieveCurrentDateTime"
+                   displayName="Get Current Date/Time"
+                   description="Obtains the agent's current date/time.">
+            <parameters>
+                <c:simple-property name="timeZone" type="string" default="" required="false"
+                                   description="A timezone identifier that will be used to format the date/time string. This can be either an abbreviation such as 'PST', a full name such as 'America/Los_Angeles', or a custom ID such as 'GMT-8:00'. If this is not specified, the agent's local time zone will be used. If the given time zone identifier is unknown, 'GMT' will be the default."/>
+            </parameters>
+            <results>
+                <c:simple-property name="dateTime" type="string"
+                                   description="The agent's current date/time, formatted in the given time zone"/>
+            </results>
+        </operation>
+
+        <operation name="setDebugMode"
+                   displayName="Set Debug Mode"
+                   description="Turns on or off debug mode, which causes the agent to emit verbose log messages.">
+            <parameters>
+                <c:simple-property name="enabled" type="boolean" required="true"
+                                   description="Indicates if debug mode should be enabled or disabled"/>
+                <c:simple-property name="traceMessaging" type="boolean" default="false" required="true"
+                                   description="Indicates if incoming and outgoing messages should be traced. This tracks the messaging between the agent and its server. This will be ignored and default to false if 'enabled' is false."/>
+            </parameters>
+        </operation>
+
+        <operation name="executePromptCommand"
+                   displayName="Execute Prompt Command"
+                   description="Executes an agent prompt command, just as if you invoked the command at the agent prompt in a console. Note that you must ensure the prompt command does not require additional input, since the agent will look for that input from another source (e.g. console keyboard).">
+            <parameters>
+                <c:simple-property name="command" type="string" default="" required="true"
+                                   description="The prompt command to execute"/>
+            </parameters>
+            <results>
+                <c:simple-property name="output" type="longString" required="true"
+                                   description="The results of the prompt command. This will typically be the output that you would have seen in the console, had this prompt command been executed directly on the agent console."/>
+                <c:simple-property name="error" type="longString" required="false"
+                                   description="If the prompt command execution had an error, this will be information on the error."/>
+            </results>
+        </operation>
+
+        <metric property="Trait.SigarVersion"
+                displayName="SIGAR Version"
+                dataType="trait"
+                displayType="summary"
+                description="The version of the SIGAR (System Information Gatherer and Reporter) native library used by the Agent"/>
+
+        <metric property="Trait.ReasonForLastRestart"
+                displayName="Reason For Last Restart"
+                dataType="trait"
+                displayType="summary"
+                description="Indicates what caused the last agent restart"/>
+
+        <metric property="Trait.AgentHomeDirectory"
+                displayName="Agent Home Directory"
+                dataType="trait"
+                displayType="detail"
+                defaultInterval="86400000"
+                defaultOn="true"
+                description="The directory where the agent is installed"/>
+
+        <metric property="NumberAgentRestarts"
+                displayName="Number of Agent Restarts"
+                description="Number of times the agent was restarted during the lifetime of its Java Virtual Machine"
+                defaultOn="true"
+                displayType="detail"
+                units="none"
+                category="availability"
+                measurementType="dynamic"/>
+
+        <metric property="AgentServerClockDifference"
+                displayName="Agent-Server Clock Difference"
+                description="Number of milliseconds the agent's clock differs from its server's clock"
+                defaultInterval="1800000"
+                defaultOn="true"
+                displayType="summary"
+                units="milliseconds"
+                category="performance"
+                measurementType="dynamic"/>
+
+        <metric property="Uptime"
+                displayName="Up Time"
+                description="Total number of seconds since the agent was started"
+                defaultOn="false"
+                units="seconds"
+                category="availability"
+                measurementType="dynamic"/>
+        <!-- changed to dynamic to prevent generation of per Minute metric. -->
+
+        <metric property="NumberTotalCommandsReceived"
+                displayName="Total Number Of Commands Received"
+                description="Total number of messages this agent has received from the RHQ Server"
+                defaultOn="true"
+                displayType="summary"
+                category="throughput"
+                measurementType="trendsup"/>
+
+        <metric property="NumberSuccessfulCommandsReceived"
+                displayName="Number of Commands Received Successfully"
+                description="Number of messages this agent has received from the RHQ Server and succesfully processed"
+                defaultOn="true"
+                category="throughput"
+                measurementType="trendsup"/>
+
+        <metric property="NumberFailedCommandsReceived"
+                displayName="Number of Commands Received but Failed "
+                description="Number of messages this agent has received from the RHQ Server but failed to process"
+                defaultOn="true"
+                category="throughput"
+                measurementType="trendsup"/>
+
+        <metric property="AverageExecutionTimeReceived"
+                displayName="Avg Execution Time Commands Received Successfully"
+                description="Average time it took to process incoming commands that are ultimately successful"
+                defaultOn="true"
+                displayType="summary"
+                category="performance"
+                measurementType="dynamic"
+                units="milliseconds"/>
+
+        <metric property="AverageExecutionTimeSent"
+                displayName="Avg Execution Time Commands Sent Successfully"
+                description="Average time it took to send commands that are ultimately successful"
+                defaultOn="true"
+                displayType="summary"
+                category="performance"
+                measurementType="dynamic"
+                units="milliseconds"/>
+
+        <metric property="NumberTotalCommandsSent"
+                displayName="Total Number of Commands Sent"
+                description="Total number of messages this agent has sent to the RHQ Server"
+                defaultOn="true"
+                displayType="summary"
+                category="throughput"
+                measurementType="trendsup"/>
+
+        <metric property="NumberSuccessfulCommandsSent"
+                displayName="Number of Commands Successfully Sent"
+                description="Number of messages this agent has sent to the RHQ Server successfully"
+                defaultOn="true"
+                category="throughput"
+                measurementType="trendsup"/>
+
+        <metric property="NumberFailedCommandsSent"
+                displayName="Number of Commands Sent but Failed"
+                description="Number of messages this agent has either tried, but failed, to send or were not processed succesfully by the RHQ Server"
+                defaultOn="true"
+                category="throughput"
+                measurementType="trendsup"/>
+
+        <metric property="NumberCommandsActiveSent"
+                displayName="Number Of Active Commands Being Sent"
+                description="The number of messages this agent is currently sending"
+                defaultOn="true"
+                displayType="summary"
+                category="throughput"
+                measurementType="dynamic"/>
+
+        <metric property="NumberCommandsInQueue"
+                displayName="Number of Commands In Queue"
+                description="Number of messages currently queued waiting to be sent to the RHQ Server"
+                defaultOn="true"
+                displayType="summary"
+                category="throughput"
+                measurementType="dynamic"/>
+
+        <metric property="NumberCommandsSpooled"
+                displayName="Number of Commands Spooled To Disk"
+                description="Number of messages spooled to disk waiting to be sent to the RHQ Server"
+                defaultOn="true"
+                category="throughput"
+                measurementType="dynamic"/>
+
+        <metric property="JVMFreeMemory"
+                displayName="JVM Free Memory"
+                description="The amount of free memory the agent JVM has in its heap"
+                defaultOn="true"
+                units="bytes"
+                category="performance"
+                measurementType="dynamic"/>
+
+        <metric property="JVMTotalMemory"
+                displayName="JVM Total Memory"
+                description="The amount of total memory the agent JVM has in its heap"
+                defaultOn="true"
+                units="bytes"
+                category="performance"
+                measurementType="dynamic"/>
+
+        <metric property="JVMActiveThreads"
+                displayName="JVM Active Threads"
+                description="The number of active threads currently running in the agent JVM"
+                defaultOn="true"
+                category="performance"
+                measurementType="dynamic"/>
+
+        <event name="logEntry" description="a log message"/>
+
+        <resource-configuration>
+            <c:group name="general" displayName="General" hiddenByDefault="false">
+                <c:description>General configuration properties</c:description>
+                <c:simple-property name="rhq.agent.name" type="string" readOnly="true" required="true"
+                                   displayName="Agent Name"
+                                   description="The name that this agent is known as.  This is read-only - once assigned, it cannot change.">
+                    <c:constraint>
+                        <c:regex-constraint expression=".{1,64}"/>
+                    </c:constraint>
+                </c:simple-property>
+            </c:group>
+            <c:group name="plugincontainer" displayName="Plugin Container" hiddenByDefault="false">
+                <c:description>Plugin Container configuration properties</c:description>
+                <c:simple-property name="rhq.agent.plugins.directory" type="string" activationPolicy="restart"
+                                   required="true" default="plugins" displayName="Plugins Directory"
+                                   description="Location on the file system where the plugin jar files are stored"/>
+                <c:simple-property name="rhq.agent.plugins.server-discovery.initial-delay-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="10"
+                                   displayName="Server Discovery Initial Delay"
+                                   description="Startup delay before the first server discovery is run"/>
+                <c:simple-property name="rhq.agent.plugins.server-discovery.period-secs" type="integer" units="seconds"
+                                   activationPolicy="restart" required="false" default="900"
+                                   displayName="Server Discovery Period" description="Time between server discoveries"/>
+                <c:simple-property name="rhq.agent.plugins.service-discovery.initial-delay-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="20"
+                                   displayName="Service Discovery Initial Delay"
+                                   description="Startup delay before the first service discovery is run"/>
+                <c:simple-property name="rhq.agent.plugins.service-discovery.period-secs" type="integer" units="seconds"
+                                   activationPolicy="restart" required="false" default="86400"
+                                   displayName="Service Discovery Period"
+                                   description="Time between service discoveries"/>
+                <c:simple-property name="rhq.agent.plugins.availability-scan.initial-delay-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="30"
+                                   displayName="Availability Scan Initial Delay"
+                                   description="Startup delay before the first availability scan is run"/>
+                <c:simple-property name="rhq.agent.plugins.availability-scan.period-secs" type="integer" units="seconds"
+                                   activationPolicy="restart" required="false" default="300"
+                                   displayName="Availability Scan Period"
+                                   description="Time between availability scans"/>
+                <c:simple-property name="rhq.agent.plugins.measurement-collection.initial-delay-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="30"
+                                   displayName="Measurement Collection Initial Delay"
+                                   description="Startup delay before the first measurement collection is run"/>
+                <c:simple-property name="rhq.agent.plugins.measurement-collection.threadpool-size" type="integer"
+                                   activationPolicy="restart" required="false" default="5"
+                                   displayName="Measurement Collection Threadpool Size"
+                                   description="Number of concurrent measurement collections that can be run"/>
+                <c:simple-property name="rhq.agent.plugins.operation-invocation-timeout-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="600"
+                                   displayName="Operation Invocation Timeout"
+                                   description="Time before an operation invocation is aborted"/>
+                <c:simple-property name="rhq.agent.plugins.operation-invoker.threadpool-size" type="integer"
+                                   activationPolicy="restart" required="false" default="5"
+                                   displayName="Operation Invoker Threadpool Size"
+                                   description="Number of concurrent operation invocations that can be run"/>
+                <c:simple-property name="rhq.agent.plugins.content-discovery.initial-delay-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="30"
+                                   displayName="Content Discovery Initial Delay"
+                                   description="Startup delay before the first content discovery is run"/>
+                <c:simple-property name="rhq.agent.plugins.content-discovery.period-secs" type="integer" units="seconds"
+                                   activationPolicy="restart" required="false" default="10"
+                                   displayName="Content Discovery Period"
+                                   description="Time between content discoveries"/>
+                <c:simple-property name="rhq.agent.plugins.content-discovery.threadpool-size" type="integer"
+                                   activationPolicy="restart" required="false" default="10"
+                                   displayName="Content Discovery Threadpool Size"
+                                   description="Number of concurrent content discoveries that can be run"/>
+                <c:simple-property name="rhq.agent.plugins.configuration-discovery.initial-delay-secs" type="integer"
+                                   activationPolicy="restart" required="false" default="300"
+                                   displayName="Configuration Change Detection Startup Delay"
+                                   description="Time before configuration change detection starts in seconds"/>
+                <c:simple-property name="rhq.agent.plugins.configuration-discovery.period-secs" type="integer"
+                                   activationPolicy="restart" required="false" default="3600"
+                                   displayName="Configuration Change Detection Interval"
+                                   description="Time period for checking for configuration changes in seconds"/>
+                <c:simple-property name="rhq.agent.plugins.event-sender.initial-delay-secs" type="integer"
+                                   units="seconds" activationPolicy="restart" required="false" default="30"
+                                   displayName="Event Sender Initial Delay"
+                                   description="Defines the delay before the first event report gets sent to the server"/>
+                <c:simple-property name="rhq.agent.plugins.event-sender.period-secs" type="integer" units="seconds"
+                                   activationPolicy="restart" required="false" default="30"
+                                   displayName="Event Sender Period"
+                                   description="Defines how often event reports get sent to the server"/>
+                <c:simple-property name="rhq.agent.plugins.event-report.max-per-source" type="integer"
+                                   activationPolicy="restart" required="false" default="200"
+                                   displayName="Event Report Max Per Source"
+                                   description="Defines the maximum number of events for any given event source that can be placed in a single event report that is sent up to the server. If this number is larger than the max-total setting, then this setting is ignored"/>
+                <c:simple-property name="rhq.agent.plugins.event-report.max-total" type="integer"
+                                   activationPolicy="restart" required="false" default="400"
+                                   displayName="Event Report Max Total"
+                                   description="Defines the total maximum number of events that can be placed in a single event report that is sent up to the server"/>
+                <c:simple-property name="rhq.agent.plugins.disabled" type="string" activationPolicy="restart"
+                                   required="false" default="" displayName="Disabled Plugins"
+                                   description="Defines the plugins that should be disabled and not loaded by the plugin container. This is a comma-separated list of plugin names."/>
+            </c:group>
+            <c:group name="comm-endpoints" displayName="Communication Endpoints" hiddenByDefault="false">
+                <c:description>Communication settings that define the endpoints of this RHQ Agent and its RHQ Server
+                </c:description>
+                <c:simple-property name="rhq.agent.server.transport" type="string" activationPolicy="restart"
+                                   required="true" default="servlet" displayName="RHQ Server Transport Protocol"
+                                   description="The transport protocol used to send commands to the RHQ Server. If you want secure communications, the RHQ Server must use an SSL-enabled transport">
+                    <c:property-options>
+                        <c:option name="servlet" value="servlet" default="true"/>
+                        <c:option name="sslservlet" value="sslservlet"/>
+                        <c:option name="socket" value="socket"/>
+                        <c:option name="sslsocket" value="sslsocket"/>
+                        <c:option name="http" value="http"/>
+                        <c:option name="https" value="https"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.server.bind-address" type="string" activationPolicy="restart"
+                                   required="true" default="127.0.0.1" displayName="RHQ Server IP Address"
+                                   description="The RHQ Server address that it is bound to"/>
+                <c:simple-property name="rhq.agent.server.bind-port" type="integer" activationPolicy="restart"
+                                   required="true" default="7080" displayName="RHQ Server Port"
+                                   description="The port that the RHQ Server is listening to">
+                    <c:constraint>
+                        <c:integer-constraint minimum="1" maximum="65535"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.server.transport-params" type="string" activationPolicy="restart"
+                                   required="false" default="/jboss-remoting-servlet-invoker/ServerInvokerServlet"
+                                   displayName="RHQ Server Transport Parameters"
+                                   description="Custom set of transport parameters used when sending commands to the RHQ Server. Please see the documentation for more information on transport params."/>
+                <c:simple-property name="rhq.communications.connector.transport" type="string"
+                                   activationPolicy="restart" required="true" default="socket"
+                                   displayName="Agent Transport Protocol"
+                                   description="The transport protocol used to receive commands from the RHQ Server. e.g. socket, sslsocket. If you want secure communications, you must use an SSL-enabled transport">
+                    <c:property-options>
+                        <c:option name="socket" value="socket" default="true"/>
+                        <c:option name="sslsocket" value="sslsocket"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.bind-address" type="string"
+                                   activationPolicy="restart" required="false" default="" displayName="Agent IP Address"
+                                   description="The address the agent binds to when listening for incoming commands from the RHQ Server"/>
+                <c:simple-property name="rhq.communications.connector.bind-port" type="integer"
+                                   activationPolicy="restart" required="true" default="16163" displayName="Agent Port"
+                                   description="The port the agent listens to for incoming commands from the RHQ Server">
+                    <c:constraint>
+                        <c:integer-constraint minimum="1" maximum="65535"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.transport-params" type="string"
+                                   activationPolicy="restart" required="false"
+                                   default="numAcceptThreads=3&amp;maxPoolSize=303&amp;clientMaxPoolSize=304&amp;socketTimeout=60000&amp;enableTcpNoDelay=true&amp;backlog=200"
+                                   displayName="Agent Transport Parameters"
+                                   description="Custom set of transport parameters. Please see the documentation for more information on transport params."/>
+            </c:group>
+            <c:group name="comm-security" displayName="Communication Security" hiddenByDefault="true">
+                <c:description>Settings that secure the communications between the RHQ Agent and RHQ Server
+                </c:description>
+                <c:simple-property name="rhq.communications.connector.security.secure-socket-protocol"
+                                   type="string" activationPolicy="restart" required="false" default="TLS"
+                                   displayName="Incoming: Secure Socket Protocol">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="TLS" value="TLS" default="true"/>
+                        <c:option name="SSL_TLS" value="SSL_TLS"/>
+                        <c:option name="SSL" value="SSL"/>
+                        <c:option name="SSLv3" value="SSLv3"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.security.keystore.file"
+                                   type="string" activationPolicy="restart" required="false" default="data/keystore.dat"
+                                   displayName="Incoming: Keystore File"/>
+                <c:simple-property name="rhq.communications.connector.security.keystore.algorithm"
+                                   type="string" activationPolicy="restart" required="false" default="SunX509"
+                                   displayName="Incoming: Keystore Algorithm">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="SunX509" value="SunX509" default="true"/>
+                        <c:option name="IbmX509" value="IbmX509"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.security.keystore.type"
+                                   type="string" activationPolicy="restart" required="false" default="JKS"
+                                   displayName="Incoming: Keystore Type">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="JKS" value="JKS" default="true"/>
+                        <c:option name="PKCS12" value="PKCS12"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.security.keystore.password"
+                                   type="password" activationPolicy="restart" required="false" default="rhqpwd"
+                                   displayName="Incoming: Keystore Password"/>
+                <c:simple-property name="rhq.communications.connector.security.keystore.key-password"
+                                   type="password" activationPolicy="restart" required="false" default="rhqpwd"
+                                   displayName="Incoming: Keystore Key Password"/>
+                <c:simple-property name="rhq.communications.connector.security.keystore.alias"
+                                   type="string" activationPolicy="restart" required="false" default="rhq"
+                                   displayName="Incoming: Keystore Alias "/>
+                <c:simple-property name="rhq.communications.connector.security.truststore.file"
+                                   type="string" activationPolicy="restart" required="false"
+                                   default="data/truststore.dat" displayName="Incoming: Truststore File"/>
+                <c:simple-property name="rhq.communications.connector.security.truststore.algorithm"
+                                   type="string" activationPolicy="restart" required="false" default="SunX509"
+                                   displayName="Incoming: Truststore Algorithm">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="SunX509" value="SunX509" default="true"/>
+                        <c:option name="IbmX509" value="IbmX509"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.security.truststore.type"
+                                   type="string" activationPolicy="restart" required="false" default="JKS"
+                                   displayName="Incoming: Truststore Type">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="JKS" value="JKS" default="true"/>
+                        <c:option name="PKCS12" value="PKCS12"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.connector.security.truststore.password"
+                                   type="password" activationPolicy="restart" required="false" default=""
+                                   displayName="Incoming: Truststore Password"/>
+                <c:simple-property name="rhq.communications.connector.security.client-auth-mode"
+                                   type="string" activationPolicy="restart" required="false" default="none"
+                                   displayName="Incoming: Client Authentication Mode"
+                                   description="Determines if the agent should authenticate a RHQ Server before accepting incoming commands from it">
+                    <c:property-options>
+                        <c:option name="none" value="none" default="true"/>
+                        <c:option name="want" value="want"/>
+                        <c:option name="need" value="need"/>
+                    </c:property-options>
+                </c:simple-property>
+
+                <c:simple-property name="rhq.agent.client.security.secure-socket-protocol"
+                                   type="string" activationPolicy="restart" required="false" default="TLS"
+                                   displayName="Outgoing: Secure Socket Protocol">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="TLS" value="TLS" default="true"/>
+                        <c:option name="SSL_TLS" value="SSL_TLS"/>
+                        <c:option name="SSL" value="SSL"/>
+                        <c:option name="SSLv3" value="SSLv3"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.security.keystore.file"
+                                   type="string" activationPolicy="restart" required="false" default="data/keystore.dat"
+                                   displayName="Outgoing: Keystore File"/>
+                <c:simple-property name="rhq.agent.client.security.keystore.algorithm"
+                                   type="string" activationPolicy="restart" required="false" default="SunX509"
+                                   displayName="Outgoing: Keystore Algorithm">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="SunX509" value="SunX509" default="true"/>
+                        <c:option name="IbmX509" value="IbmX509"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.security.keystore.type"
+                                   type="string" activationPolicy="restart" required="false" default="JKS"
+                                   displayName="Outgoing: Keystore Type">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="JKS" value="JKS" default="true"/>
+                        <c:option name="PKCS12" value="PKCS12"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.security.keystore.password"
+                                   type="password" activationPolicy="restart" required="false" default="rhqpwd"
+                                   displayName="Outgoing: Keystore Password"/>
+                <c:simple-property name="rhq.agent.client.security.keystore.key-password"
+                                   type="password" activationPolicy="restart" required="false" default="rhqpwd"
+                                   displayName="Outgoing: Keystore Key Password"/>
+                <c:simple-property name="rhq.agent.client.security.keystore.alias"
+                                   type="string" activationPolicy="restart" required="false" default="rhq"
+                                   displayName="Outgoing: Keystore Alias"/>
+                <c:simple-property name="rhq.agent.client.security.truststore.file"
+                                   type="string" activationPolicy="restart" required="false"
+                                   default="data/truststore.dat" displayName="Outgoing: Truststore File"/>
+                <c:simple-property name="rhq.agent.client.security.truststore.algorithm"
+                                   type="string" activationPolicy="restart" required="false" default="SunX509"
+                                   displayName="Outgoing: Truststore Algorithm">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="SunX509" value="SunX509" default="true"/>
+                        <c:option name="IbmX509" value="IbmX509"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.security.truststore.type"
+                                   type="string" activationPolicy="restart" required="false" default="JKS"
+                                   displayName="Outgoing: Truststore Type">
+                    <c:property-options allowCustomValue="true">
+                        <c:option name="JKS" value="JKS" default="true"/>
+                        <c:option name="PKCS12" value="PKCS12"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.security.truststore.password"
+                                   type="password" activationPolicy="restart" required="false" default=""
+                                   displayName="Outgoing: Truststore Password"/>
+                <c:simple-property name="rhq.agent.client.security.server-auth-mode-enabled"
+                                   type="boolean" activationPolicy="restart" required="false" default="false"
+                                   displayName="Outgoing: Authenticate Server?"
+                                   description="If true, then the agent must authenticate the RHQ Server before it can send it messages"/>
+            </c:group>
+            <c:group name="auto-detection" displayName="Auto Detection" hiddenByDefault="true">
+                <c:description>Configures auto-detection mechanisms that allow the RHQ Agent to find the RHQ Server and
+                    vice versa
+                </c:description>
+                <c:simple-property name="rhq.agent.client.server-polling-interval-msecs" type="integer"
+                                   activationPolicy="restart" required="false" units="milliseconds" default="60000"
+                                   displayName="RHQ Server Polling Interval"
+                                   description="If this value is larger than 0, it indicates the agent should periodically poll the RHQ Server to make sure it's still up or (if it was down) see when it comes back up. The value is the number of milliseconds to wait in between polls">
+                    <c:constraint>
+                        <c:integer-constraint minimum="0"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.server-auto-detection" required="false" type="boolean"
+                                   activationPolicy="restart" default="false" displayName="Auto-Detect RHQ Server?"
+                                   description="If true, the agent will use multicast detection to auto-detect the RHQ Server. If this is enabled, make sure you enable and configure the multicast detector"/>
+                <c:simple-property name="rhq.communications.multicast-detector.enabled" required="false" type="boolean"
+                                   activationPolicy="restart" default="false" displayName="Multicast Detector Enabled?"
+                                   description="The multicast detector must be enabled if you want the RHQ Agent to auto-detect the RHQ Server and vice versa. Disable this if your network does not support multicast traffic."/>
+                <c:simple-property name="rhq.communications.multicast-detector.multicast-address" required="false"
+                                   type="string" activationPolicy="restart" default="224.16.16.16"
+                                   displayName="Multicast Detector Multicast Address"
+                                   description="The address used by JBoss ON to broadcast detection messages. All RHQ Servers and RHQ Agents must be using the same address."/>
+                <c:simple-property name="rhq.communications.multicast-detector.bind-address" required="false"
+                                   type="string" activationPolicy="restart" default="0.0.0.0"
+                                   displayName="Multicast Detector Bind Address"
+                                   description="The address bound by the network interface"/>
+                <c:simple-property name="rhq.communications.multicast-detector.port" required="false" type="integer"
+                                   activationPolicy="restart" default="16162" displayName="Multicast Detector Port"
+                                   description="The port that the detector is multicasting to">
+                    <c:constraint>
+                        <c:integer-constraint minimum="1" maximum="65535"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.multicast-detector.heartbeat-time-delay" required="false"
+                                   type="integer" activationPolicy="restart" units="milliseconds" default="1000"
+                                   displayName="Multicast Detector Heartbeat"
+                                   description="The number of milliseconds between heartbeat messages emitted by the multicast detector. This value must be less than the default time delay.">
+                    <c:constraint>
+                        <c:integer-constraint minimum="500"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.multicast-detector.default-time-delay" required="false"
+                                   type="integer" activationPolicy="restart" units="milliseconds" default="5000"
+                                   displayName="Multicast Detector Time Delay"
+                                   description="Amount of milliseconds that must pass without hearing a RHQ Server's heartbeat before assuming its down. This value must be greater than the heartbeat time delay.">
+                    <c:constraint>
+                        <c:integer-constraint minimum="500"/>
+                    </c:constraint>
+                </c:simple-property>
+            </c:group>
+            <c:group name="sender" displayName="Client Sender" hiddenByDefault="true">
+                <c:description>Configures the client sender which is responsible for sending messages to the RHQ Server
+                </c:description>
+                <c:simple-property name="rhq.agent.client.queue-size" required="false" type="integer"
+                                   activationPolicy="restart" units="milliseconds" default="50000"
+                                   displayName="Queue Size"
+                                   description="Maximum number of commands that the agent can queue up for sending to the RHQ Server. Setting this to 0 makes the queue unbounded.">
+                    <c:constraint>
+                        <c:integer-constraint minimum="0"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.max-concurrent" required="false" type="integer"
+                                   activationPolicy="restart" default="5" displayName="Maximum Concurrency"
+                                   description="Maximum number of commands that the agent can send to the RHQ Server at the same time.">
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.command-timeout-msecs" required="false" type="integer"
+                                   activationPolicy="restart" units="milliseconds" default="600000"
+                                   displayName="Timeout"
+                                   description="The default time in milliseconds the agent will wait before aborting a command being sent">
+                    <c:constraint>
+                        <c:integer-constraint minimum="0"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.retry-interval-msecs" required="false" type="integer"
+                                   activationPolicy="restart" units="milliseconds" default="15000"
+                                   displayName="Retry Interval"
+                                   description="This is the minimum amount of time, in milliseconds, the agent will wait before trying to resend a guaranteed command that previously failed">
+                    <c:constraint>
+                        <c:integer-constraint minimum="500"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.max-retries" required="false" type="integer"
+                                   activationPolicy="restart" default="10" displayName="Max Retries"
+                                   description="This is the maximum amount of times the agent will resend a guaranteed command that previously failed due to something other than a cannot-connect error">
+                    <c:constraint>
+                        <c:integer-constraint minimum="0"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.send-throttling" required="false" type="string"
+                                   activationPolicy="restart" default="100:1000" displayName="Send Throttling"
+                                   description="Configures the send throttle. See the documentation for more information on send throttling">
+                    <c:constraint>
+                        <c:regex-constraint expression="[0-9]+:[0-9]+"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.queue-throttling" required="false" type="string"
+                                   activationPolicy="restart" default="200:2000" displayName="Queue Throttling"
+                                   description="Configures the queue throttle. See the documentation for more information on queue throttling">
+                    <c:constraint>
+                        <c:regex-constraint expression="[0-9]+:[0-9]+"/>
+                    </c:constraint>
+                </c:simple-property>
+            </c:group>
+            <c:group name="startup" displayName="Startup" hiddenByDefault="true">
+                <c:description>Configures what the agent does while it is starting up</c:description>
+                <c:simple-property name="rhq.agent.register-with-server-at-startup" required="false" type="boolean"
+                                   activationPolicy="restart" default="false"
+                                   displayName="Register with RHQ Server At Startup?"
+                                   description="This will force the agent to register with the RHQ Server, even if it is already registered"/>
+                <c:simple-property name="rhq.agent.wait-for-server-at-startup-msecs" required="false" type="integer"
+                                   activationPolicy="restart" default="5000"
+                                   displayName="Time To Wait For RHQ Server At Startup"
+                                   description="This is the number of milliseconds the agent will wait for the RHQ Server to come up"/>
+                <c:simple-property name="rhq.agent.update-plugins-at-startup" required="false" type="boolean"
+                                   activationPolicy="restart" default="true" displayName="Update Plugins At Startup"
+                                   description="This will force the agent to download plugin updates from the RHQ Server"/>
+            </c:group>
+            <c:group name="agentupdate" displayName="Agent Auto-Update" hiddenByDefault="true">
+                <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean"
+                                   activationPolicy="immediate" default="true" displayName="Enable Agent Update"
+                                   description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself."/>
+                <c:simple-property name="rhq.agent.agent-update.version-url" required="false" type="string"
+                                   activationPolicy="immediate" displayName="Agent Update Binary Version URL"
+                                   description="If defined, this will be the URL the agent uses when it needs to retrieve information about the latest available agent update binary.  If this is not defined, the agent will ask its server for the agent update binary version information."/>
+                <c:simple-property name="rhq.agent.agent-update.download-url" required="false" type="string"
+                                   activationPolicy="immediate" displayName="Agent Update Binary Download URL"
+                                   description="If defined, this will be the URL the agent uses when it needs to download the latest available agent update binary.  If this is not defined, the agent will download the agent update binary from its server."/>
+            </c:group>
+            <c:group name="misc" displayName="Miscellaneous Settings" hiddenByDefault="true">
+                <c:description>Settings that usually do not need to change under normal circumstances</c:description>
+                <c:simple-property name="rhq.agent.data-directory" required="false" type="string"
+                                   activationPolicy="restart" default="data" displayName="Data Directory"
+                                   description="Location where the agent can persist data to the file system"/>
+                <c:simple-property name="rhq.agent.disable-native-system" required="false" type="boolean"
+                                   activationPolicy="restart" default="false" displayName="Disable Native System"
+                                   description="Disables the native system; agent will not use the native JNI libraries"/>
+                <c:simple-property name="rhq.agent.primary-server-switchover-check-interval-msecs" required="false"
+                                   type="integer" activationPolicy="restart" default="3600000"
+                                   displayName="Primary Server Switchover Check Interval"
+                                   description="The amount of milliseconds in between checking that the agent is connected to the primary server, as opposed to a failover server. The check is disabled if this is 0.">
+                    <c:constraint>
+                        <c:integer-constraint minimum="0"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.communications.remote-stream-max-idle-time-msecs" required="false"
+                                   type="integer" activationPolicy="restart" default="300000"
+                                   displayName="Remote Stream Idle Timeout"
+                                   description="The maximum amount of milliseconds an agent-hosted remote stream is allowed to remain idle before it will be closed."/>
+                <c:simple-property name="rhq.agent.client.command-spool-file.name" required="false" type="string"
+                                   activationPolicy="restart" default="command-spool.dat"
+                                   displayName="Command Spool Filename"
+                                   description="Defines the name of the command spool file.  This file must be located in the data directory (if one does not exist, it will be created)"/>
+                <c:simple-property name="rhq.agent.client.command-spool-file.params" required="false" type="string"
+                                   activationPolicy="restart" default="10000000:75"
+                                   displayName="Command Spool File Parameters"
+                                   description="Defines the maximum size the spool file is allowed to be and how it is to be purged.  See the documentation on the format of this value.">
+                    <c:constraint>
+                        <c:regex-constraint expression="[1-9][0-9]{4,}:[0-9]{1,2}"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.client.command-spool-file.compressed" required="false" type="boolean"
+                                   activationPolicy="restart" default="false" displayName="Compress Spool File?"
+                                   description="If true, data in the spool file will be compressed. Note that this saves disk space at the expense of performance"/>
+                <c:simple-property name="rhq.agent.vm-health-check.interval-msecs" required="false" type="integer"
+                                   activationPolicy="restart" default="5000" displayName="VM Health Check Interval"
+                                   description="The amount of milliseconds in between checking the health of the agent's Java Virtual Machine. The check is disabled if this is set to 0.">
+                    <c:constraint>
+                        <c:integer-constraint minimum="0"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.vm-health-check.low-heap-mem-threshold" required="false" type="float"
+                                   activationPolicy="restart" default="0.90"
+                                   displayName="VM Health Check Low Heap Memory Threshold"
+                                   description="The threshold percentage that must be crossed if the agent's VM health check is to consider the JVM with critically low memory. This value is a percentage of used heap memory out of the maximum heap size.">
+                    <c:constraint>
+                        <c:float-constraint minimum="0.00" maximum="1.00"/>
+                    </c:constraint>
+                </c:simple-property>
+                <c:simple-property name="rhq.agent.vm-health-check.low-nonheap-mem-threshold" required="false"
+                                   type="float" activationPolicy="restart" default="0.90"
+                                   displayName="VM Health Check Low NonHeap Memory Threshold"
+                                   description="The threshold percentage that must be crossed if the agent's VM health check is to consider the JVM with critically low memory. This value is a percentage of used non-heap memory out of the maximum non-heap size.">
+                    <c:constraint>
+                        <c:float-constraint minimum="0.00" maximum="1.00"/>
+                    </c:constraint>
+                </c:simple-property>
+            </c:group>
+        </resource-configuration>
+
+        <server name="RHQ Agent JVM"
+                description="JVM of the Management Agent"
+                sourcePlugin="JMX"
+                sourceType="JMX Server"
+                discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"
+                class="org.rhq.plugins.jmx.JMXServerComponent"
+                singleton="true">
+        </server>
+
+        <service name="Measurement Subsystem"
+                 discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jmx.MBeanResourceComponent"
+                 description="The measurement subsystem within an agent's plugin container"
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="rhq.pc:type=MeasurementManager"/>
+                <c:simple-property name="nameTemplate" default="Agent Measurement Subsystem"/>
+                <c:simple-property name="descriptionTemplate"
+                                   default="information about this agent's measurement subsystem"/>
+            </plugin-configuration>
+
+            <metric property="CurrentlyScheduleMeasurements" displayType="summary"
+                    description="The total number of active measurement schedules currently being collected by this RHQ Agent"/>
+            <metric property="MeasurementsCollected" measurementType="trendsup" displayType="summary"
+                    description="The total number of measurements collected since this RHQ Agent was started"/>
+            <metric property="TotalTimeCollectingMeasurements" displayType="summary" units="milliseconds"
+                    measurementType="trendsup"
+                    description="The amount of time this RHQ Agent has spent collecting measurements since it was started"/>
+            <metric property="FailedCollections" displayType="summary" measurementType="trendsup"
+                    description="The number of individual measurement collections that have failed since this RHQ Agent was started"/>
+            <metric property="LateCollections" displayType="summary" measurementType="trendsup"
+                    description="The number of individual measurement collections that have fallen behind from their desired schedule"/>
+
+        </service>
+
+        <service name="Plugin Container"
+                 discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jmx.MBeanResourceComponent"
+                 description="The plugin container itself, which hosts the plugins and manages their lifecycle"
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="objectName" default="rhq.pc:type=PluginContainer"/>
+                <c:simple-property name="nameTemplate" default="Agent Plugin Container"/>
+                <c:simple-property name="descriptionTemplate"
+                                   default="information about this agent's plugin container"/>
+            </plugin-configuration>
+
+            <operation name="retrievePluginDependencyGraph"
+                       description="Get the list of plugins and show what plugins they depend on. The order of this list is the order in which the plugins are deployed.">
+                <results>
+                    <c:list-property name="plugins"
+                                     description="The plugins currently deployed and their dependencies. This list is in the order the plugins are deployed.">
+                        <c:map-property name="plugin">
+                            <c:simple-property name="name" description="Name of the plugin"/>
+                            <c:simple-property name="dependencies"
+                                               description="The list of dependent plugins that this plugin depends on"/>
+                        </c:map-property>
+                    </c:list-property>
+                </results>
+            </operation>
+
+            <operation name="retrievePluginClassLoaderInformation"
+                       displayName="Retrieve Plugin ClassLoader Information"
+                       description="Get information on all plugin classloaders. There is one plugin classloader for each deployed plugin.">
+                <results>
+                    <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders"
+                                       description="The number of plugin classloaders in the list" type="integer"/>
+                    <c:list-property name="classloaders" displayName="ClassLoaders"
+                                     description="Classloaders that have been created and are assigned to plugins">
+                        <c:map-property name="classloader">
+                            <c:simple-property name="pluginName"
+                                               description="Name of the plugin that is assigned the classloader"/>
+                            <c:simple-property name="classloaderInfo" displayName="ClassLoader Information"
+                                               description="The information on the plugin classloader"/>
+                        </c:map-property>
+                    </c:list-property>
+                </results>
+            </operation>
+
+            <operation name="retrieveDiscoveryClassLoaderInformation"
+                       displayName="Retrieve Discovery ClassLoader Information"
+                       description="Get information on all discovery classloaders. These are created for discovery components that need to discover resources under a parent resource where that parent resource is from a different plugin than the discovery component.">
+                <results>
+                    <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders"
+                                       description="The number of discovery classloaders in the list" type="integer"/>
+                    <c:list-property name="classloaders" displayName="ClassLoaders"
+                                     description="Classloaders that have been created for discovery components">
+                        <c:map-property name="classloader">
+                            <c:simple-property name="id"
+                                               description="A identifier consisting of the name of the plugin combined with the hashcode of the parent resource classloader"/>
+                            <c:simple-property name="classloaderInfo" displayName="ClassLoader Information"
+                                               description="The information on the discovery classloader"/>
+                        </c:map-property>
+                    </c:list-property>
+                </results>
+            </operation>
+
+            <operation name="retrieveAllResourceClassLoaderInformation"
+                       displayName="Retrieve ClassLoader Information For All Resources"
+                       description="Get information on classloaders for all resources. Depending on the number of resources being managed, this is potentially an expensive operation.">
+                <results>
+                    <c:simple-property name="numberOfResources"
+                                       description="The number of resource classloaders in the list. This is the number of resources currently being managed, not the total number of classloader instances that exist"
+                                       type="integer"/>
+                    <c:list-property name="classloaders"
+                                     description="Classloaders that have been created and are assigned to resources">
+                        <c:map-property name="classloader">
+                            <c:simple-property name="resourceName"
+                                               description="Name of the resource that is assigned the classloader"/>
+                            <c:simple-property name="resourceId"
+                                               description="The ID of the resource that is assigned the classloader"/>
+                            <c:simple-property name="resourceUuid"
+                                               description="The UUID of the resource that is assigned the classloader"/>
+                            <c:simple-property name="canonicalId"
+                                               description="Canonical identification data of the resource that is assigned the classloader"/>
+                            <c:simple-property name="classloaderInfo"
+                                               description="The information on the resource classloader"/>
+                        </c:map-property>
+                    </c:list-property>
+                </results>
+            </operation>
+
+            <operation name="retrieveUniqueResourceClassLoaderInformation"
+                       displayName="Retrieve Unique Resource ClassLoader Information"
+                       description="Get information on all unique resource classloader instances that are created. Depending on the number of resources being managed, this is potentially an expensive operation.">
+                <results>
+                    <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders"
+                                       description="The number of resource classloader instances that have been created and are assigned to at least one resource"
+                                       type="integer"/>
+                    <c:list-property name="classloaders"
+                                     description="Classloaders that have been created and are assigned to resources">
+                        <c:map-property name="classloader">
+                            <c:simple-property name="classloaderInfo"
+                                               description="The information on the resource classloader instance"/>
+                            <c:simple-property name="resourceCount"
+                                               description="The number of resources that are currently assigned this resource classloader"/>
+                        </c:map-property>
+                    </c:list-property>
+                </results>
+            </operation>
+
+            <metric property="NumberOfPluginClassLoaders"
+                    defaultOn="false"
+                    displayType="detail"
+                    defaultInterval="3600000"
+                    description="The total number of plugin classloaders currently created and actively managed."/>
+            <metric property="NumberOfDiscoveryClassLoaders"
+                    defaultOn="false"
+                    displayType="detail"
+                    defaultInterval="3600000"
+                    description="The total number of discovery classloaders currently created and actively managed."/>
+            <metric property="NumberOfResourceClassLoaders"
+                    displayType="summary"
+                    defaultInterval="600000"
+                    description="The total number of individual resource classloaders currently created and assigned to resources."/>
+
+        </service>
+
+        <service name="Environment Setup Script"
+                 description="The agent startup script that sets up the agent environment"
+                 discovery="AgentEnvironmentScriptDiscoveryComponent"
+                 class="AgentEnvironmentScriptComponent"
+                 singleton="true">
+            <plugin-configuration>
+                <c:simple-property name="Pathname" type="file" description="The full path to the script"
+                                   required="true"/>
+            </plugin-configuration>
+            <resource-configuration>
+                <c:list-property name="environmentVariables"
+                                 description="Environment variables that are set when starting the RHQ Agent JVM process">
+                    <c:map-property name="environmentVariable">
+                        <c:simple-property name="name" type="string" required="true" summary="true"
+                                           description="Name of the environment variable"/>
+                        <c:simple-property name="value" type="string" required="true" summary="true"
+                                           description="Value of the environment variable"/>
+                    </c:map-property>
+                </c:list-property>
+            </resource-configuration>
+        </service>
+
+        <service name="Launcher Script"
+                 description="The script that can run the agent as a daemon service. The Environment Setup Script configures the behavior of this service."
+                 discovery="AgentLauncherScriptDiscoveryComponent"
+                 class="AgentLauncherScriptComponent"
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="Pathname" type="file" description="The full path to launcher script file"
+                                   required="true"/>
+            </plugin-configuration>
+
+            <operation name="Restart"
+                       description="Restarts the agent VM.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+            </operation>
+
+            <operation name="Stop"
+                       description="Stops the agent VM gracefully. This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+            </operation>
+
+            <operation name="Kill"
+                       description="Performs a hard kill on the agent VM.  This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+            </operation>
+
+            <operation name="Status"
+                       description="Gets the status of agent VM, if it was launched by the launcher script.">
+                <results>
+                    <c:simple-property name="exitCode" type="integer"/>
+                    <c:simple-property name="output" type="longString"/>
+                </results>
+            </operation>
+
+        </service>
+
+        <service name="Java Service Wrapper Launcher"
+                 description="The Java Service Wrapper that can run the agent as a daemon service"
+                 discovery="AgentJavaServiceWrapperDiscoveryComponent"
+                 class="AgentJavaServiceWrapperComponent"
+                 singleton="true">
+
+            <plugin-configuration>
+                <c:simple-property name="launcherScript" type="file"
+                                   description="The full path to wrapper launcher script file" required="true"/>
+                <c:simple-property name="configurationFile" type="file"
+                                   description="The full path to the configuration file" required="true"/>
+                <c:simple-property name="environmentFile" type="file"
+                                   description="The full path to the environment setup file" required="false"/>
+                <c:simple-property name="includeFile" type="file" description="The full path to the include file"
+                                   required="false"/>
+            </plugin-configuration>
+
+            <operation name="Install"
+                       description="Installs the Java Service Wrapper so it starts the agent at boot time">
+                <results>
+                    <c:simple-property name="exitCode" type="integer"/>
+                    <c:simple-property name="output" type="longString"/>
+                </results>
+            </operation>
+
+            <operation name="Restart"
+                       description="Restarts the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+            </operation>
+
+            <operation name="Stop"
+                       description="Stops the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+            </operation>
+
+            <operation name="Remove"
+                       description="Removes the Java Service Wrapper so it no longer starts the agent at boot time.  *NOTE* This will completely kill the agent VM process if it is running as this service. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+            </operation>
+
+            <operation name="Status" description="Gets the status of the Java Service Wrapper">
+                <results>
+                    <c:simple-property name="disabled" type="boolean" required="false"/>
+                    <c:simple-property name="requiresManualStart" type="boolean" required="false"/>
+                    <c:simple-property name="willAutomaticallyStart" type="boolean" required="false"/>
+                    <c:simple-property name="hasInteractiveConsole" type="boolean" required="false"/>
+                    <c:simple-property name="isRunning" type="boolean" required="false"/>
+                    <c:simple-property name="isInstalled" type="boolean" required="false"/>
+                    <c:simple-property name="exitCode" type="integer"/>
+                    <c:simple-property name="output" type="longString"/>
+                </results>
+            </operation>
+
+            <resource-configuration>
+                <c:group name="mainConfiguration">
+                    <c:list-property name="mainConfigurationSettings"
+                                     description="The main JSW configuration. This is read-only - to customize the configuration, add settings to the environment and/or includes."
+                                     readOnly="true">
+                        <c:map-property name="mainConfigurationSetting" readOnly="true">
+                            <c:simple-property name="name" type="string" required="true" summary="true" readOnly="true"
+                                               description="Name of the wrapper configuration setting"/>
+                            <c:simple-property name="value" type="string" required="true" summary="true" readOnly="true"
+                                               description="Value of the wrapper configuration setting"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+                <c:group name="environment">
+                    <c:list-property name="environmentSettings"
+                                     description="Environment settings to further customize the JSW. These are set prior to applying the main configuration and include settings. Variables set here can be placed in the main config or includes using the %VAR% notation.">
+                        <c:map-property name="environmentSetting">
+                            <c:simple-property name="name" type="string" required="true" summary="true"
+                                               description="Name of the environment variable"/>
+                            <c:simple-property name="value" type="string" required="true" summary="true"
+                                               description="Value of the environment variable"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+                <c:group name="includes">
+                    <c:list-property name="includeSettings"
+                                     description="Override settings that augment the existing JSW configuration. These are applied after the main configuration is set.">
+                        <c:map-property name="includeSetting">
+                            <c:simple-property name="name" type="string" required="true" summary="true"
+                                               description="Name of the wrapper override setting"/>
+                            <c:simple-property name="value" type="string" required="true" summary="true"
+                                               description="Value of the wrapper override setting"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+            </resource-configuration>
+        </service>
+
+    </server>
 </plugin>

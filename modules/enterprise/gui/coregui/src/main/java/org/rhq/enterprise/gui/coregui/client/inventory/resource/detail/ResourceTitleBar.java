@@ -101,9 +101,8 @@ public class ResourceTitleBar extends LocatableVLayout {
         //modify VLayout settings
         setWidth100();
         setHeight(30);
-        setPadding(0);
         setMembersMargin(0);
-        setLayoutMargin(0);
+        setPadding(5);
     }
 
     public void update() {

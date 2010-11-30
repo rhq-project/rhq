@@ -180,9 +180,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         hlayout.addMember(expandCollapseArrow);
         hlayout.addMember(badge);
         hlayout.addMember(title);
-        hlayout.addMember(tagEditorView);
         hlayout.addMember(availabilityImage);
         hlayout.addMember(favoriteButton);
+        addMember(tagEditorView);
     }
 
     private void loadTags(final TagEditorView tagEditorView) {

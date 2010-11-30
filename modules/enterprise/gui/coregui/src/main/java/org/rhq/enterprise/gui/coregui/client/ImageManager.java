@@ -3,6 +3,7 @@ package org.rhq.enterprise.gui.coregui.client;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 
 /**
@@ -141,5 +142,22 @@ public class ImageManager {
         }
 
         return "subsystems/inventory/Connection_16.png";
+    }
+
+    /**
+     * Given a Boolean to indicate if something is to be considered up or down, and a category[Cluster,Group,Platform,Server,Service] 
+     * the appropriate availability icon is returned. If the given Boolean is null, the availability will be considered down.
+     * 
+     * @param Type
+     * @return the [Type] icon
+     */
+    public static String getResourceTypeIcon(ResourceType resourceType, Boolean avail) {
+        return "types/" + ((resourceType == null) ? null : resourceType.getCategory().getDisplayName()) + "_"
+            + ((avail == null) ? "down" : (avail ? "up" : "down")) + "_16.png";
+    }
+
+    public static String getResourceTypeLargeIcon(ResourceType resourceType, Boolean avail) {
+        return "types/" + ((resourceType == null) ? null : resourceType.getCategory().getDisplayName()) + "_"
+            + ((avail == null) ? "down" : (avail ? "up" : "down")) + "_24.png";
     }
 }

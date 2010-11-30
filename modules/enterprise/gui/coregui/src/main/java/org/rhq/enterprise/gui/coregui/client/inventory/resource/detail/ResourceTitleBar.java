@@ -91,8 +91,8 @@ public class ResourceTitleBar extends LocatableVLayout {
         super(locatorId);
         //define two rows of content
         top = new LocatableHLayout(locatorId + "_Top");
-        top.setPadding(5);
-        top.setMembersMargin(5);
+        top.setPadding(0);
+        top.setMembersMargin(0);
         top.setHeight(30);
 
         details = new LocatableHLayout(locatorId + "_Details");
@@ -126,7 +126,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             }
         });
 
-        badge = new Img("types/Service_up_24.png", 24, 24);
+        badge = new Img(ImageManager.getResourceTypeLargeIcon(this.resource.getResourceType(), true), 24, 24);
 
         TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
             new TagsChangedCallback() {
@@ -309,7 +309,8 @@ public class ResourceTitleBar extends LocatableVLayout {
             String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
                 .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
                 .toLowerCase()) : "down";
-            badge.setSrc("types/" + category + "_" + avail + "_24.png");
+            Boolean isAvailable = (avail.equals("down") ? Boolean.FALSE : Boolean.TRUE);
+            badge.setSrc(ImageManager.getResourceTypeLargeIcon(this.resource.getResourceType(), isAvailable));
 
             markForRedraw();
         }

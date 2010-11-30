@@ -22,7 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 
@@ -55,7 +54,7 @@ public class LinkManager {
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroup%20Manager/" + groupDefinitionId;
+            return "#Inventory/Groups/DynaGroupDefinitions/" + groupDefinitionId;
         } else {
             return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
         }
@@ -163,7 +162,7 @@ public class LinkManager {
 
     public static String getHubGroupDefinitionsLink() {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroup Manager";
+            return "#Inventory/Groups/DynaGroupDefinitions";
         } else {
             return "/rhq/definition/group/list.xhtml";
         }

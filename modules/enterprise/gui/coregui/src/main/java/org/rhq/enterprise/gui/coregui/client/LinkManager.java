@@ -54,7 +54,7 @@ public class LinkManager {
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroupDefinitions/" + groupDefinitionId;
+            return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;
         } else {
             return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
         }
@@ -162,7 +162,7 @@ public class LinkManager {
 
     public static String getHubGroupDefinitionsLink() {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroupDefinitions";
+            return "#Inventory/Groups/DynagroupDefinitions";
         } else {
             return "/rhq/definition/group/list.xhtml";
         }

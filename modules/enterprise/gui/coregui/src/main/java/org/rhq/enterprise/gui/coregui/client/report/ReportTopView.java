@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
@@ -150,12 +152,12 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID,
-            "types/Platform_up_16.png", new ViewFactory() {
-                public Canvas createView() {
-                    return new PlatformPortletView(extendLocatorId(PlatformPortletView.VIEW_ID.getName()));
-                }
-            });
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID, ImageManager
+            .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
+            public Canvas createView() {
+                return new PlatformPortletView(extendLocatorId(PlatformPortletView.VIEW_ID.getName()));
+            }
+        });
 
         return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }

@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.tagging.Tag;
@@ -125,7 +126,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             }
         });
 
-        badge = new Img(ImageManager.getResourceTypeLargeIcon(this.resource.getResourceType(), true), 24, 24);
+        badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
 
         TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
             new TagsChangedCallback() {
@@ -303,13 +304,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
                 .getCurrentAvailability().getAvailabilityType()));
 
-            String category = this.resource.getResourceType().getCategory().getDisplayName();
-
-            String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
-                .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
-                .toLowerCase()) : "down";
-            Boolean isAvailable = (avail.equals("down") ? Boolean.FALSE : Boolean.TRUE);
-            badge.setSrc(ImageManager.getResourceTypeLargeIcon(this.resource.getResourceType(), isAvailable));
+            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource));
 
             markForRedraw();
         }

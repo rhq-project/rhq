@@ -89,12 +89,12 @@ public class ResourceGroupListView extends Table {
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
 
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
-            .view_inventory_groups_children(), 70);
+            .view_inventory_groups_children(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
         ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", MSG
-            .view_inventory_groups_descendants(), 70);
+            .view_inventory_groups_descendants(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 

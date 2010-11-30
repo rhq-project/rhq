@@ -69,6 +69,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -326,14 +327,14 @@ public class ResourceTreeView extends LocatableVLayout {
         if (node instanceof ResourceTreeNode) {
             Resource nr = ((ResourceTreeNode) node).getResource();
             String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
-            String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
+            String icon = ImageManager.getResourceIcon(nr.getResourceType().getCategory());
 
             viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
 
         } else if (node instanceof AutoGroupTreeNode) {
             String name = ((AutoGroupTreeNode) node).getBackingGroupName();
             String display = node.getName() + " <span class=\"subtitle\">" + name + "</span>";
-            String icon = "types/" + ((AutoGroupTreeNode) node).getResourceType().getCategory() + "_up_16.png";
+            String icon = ImageManager.getResourceIcon(((AutoGroupTreeNode) node).getResourceType().getCategory());
 
             viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
         }

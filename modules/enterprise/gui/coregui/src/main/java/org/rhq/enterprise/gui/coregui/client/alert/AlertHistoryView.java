@@ -20,11 +20,14 @@
 package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -32,7 +35,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -77,8 +80,22 @@ public class AlertHistoryView extends TableSection {
 
     @Override
     protected void configureTableFilters() {
-        final EnumSelectItem priorityFilter = new EnumSelectItem("severities", MSG.view_alerts_table_filter_priority(),
-            AlertPriority.class);
+        SelectItem priorityFilter = new SelectItem("severities", MSG.view_alerts_table_filter_priority());
+        priorityFilter.setMultiple(true);
+        priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
+
+        LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
+        priorities.put(AlertPriority.HIGH.name(), MSG.common_alert_high());
+        priorities.put(AlertPriority.MEDIUM.name(), MSG.common_alert_medium());
+        priorities.put(AlertPriority.LOW.name(), MSG.common_alert_low());
+        LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>(3);
+        priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
+        priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
+        priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
+        priorityFilter.setValueMap(priorities);
+        priorityFilter.setValueIcons(priorityIcons);
+        priorityFilter.setValues(AlertPriority.HIGH.name(), AlertPriority.MEDIUM.name(), AlertPriority.LOW.name());
+
         if (isShowFilterForm()) {
             setFilterFormItems(priorityFilter);
         }

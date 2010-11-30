@@ -4,7 +4,7 @@
   <parent>
     <artifactId>rhq-modules-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>3.0.2.EC2_B01-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>test-utils</artifactId>
   <name>RHQ Test Utils</name>

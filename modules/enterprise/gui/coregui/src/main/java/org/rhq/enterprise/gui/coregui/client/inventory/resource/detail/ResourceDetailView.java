@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceComposit
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -102,6 +103,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryConnHistory;
     private SubTab inventoryGroups;
     private SubTab inventoryGroupMembership;
+    private SubTab inventoryAgent;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -147,8 +149,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_groups()), null);
         inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), new ViewName(
             "GroupMembership", MSG.view_tabs_common_group_membership()), null);
+        inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
+            .view_tabs_common_agent()), null);
         inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
-            this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership);
+            this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership, this.inventoryAgent);
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
@@ -301,6 +305,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
             resourceId) : null;
         updateSubTab(this.inventoryTab, this.inventoryGroupMembership, canvas, true, enabled);
+
+        //Agent subtab
+        canvas = (enabled) ? new ResourceResourceAgentView(this.inventoryTab.extendLocatorId("AgentView"), resourceId)
+            : null;
+        updateSubTab(this.inventoryTab, this.inventoryAgent, canvas, true, enabled);
 
         // Operations Tab
         if (updateTab(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION), true)) {

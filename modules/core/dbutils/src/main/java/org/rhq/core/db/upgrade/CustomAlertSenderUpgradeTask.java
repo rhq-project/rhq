@@ -363,6 +363,25 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
             String insertPropertySQL = getInsertPropertySQL(propertyId, configId, propertyName, propertyValue);
             databaseType.executeSql(connection, insertPropertySQL);
         }
+        
+        //now we need to associate the plugin with its configuration
+        int pluginId = getPluginId("alert-snmp");
+        if (pluginId == 0) {
+            System.err.println("No 'alert-snmp' plugin found in the database. Creating a temporary one.");
+            
+            String pluginName = "alert-snmp";
+            String displayName = "Alert:SNMP-invalid";
+            String description = "This is an automatically generated invalid plugin used to associate the SNMP " 
+                + "configuration upgraded from the legacy tables. You should not really ever see this plugin "
+                + "deployed as it should be overwritten during the first server startup after the upgrade.";
+            String deploymentType = "SERVER";
+            String pluginDescriptorType = 
+                "org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType";
+            
+
+            pluginId = insertPluginEntry(pluginName, displayName, description, deploymentType, pluginDescriptorType);
+        }
+        setPluginConfiguration(pluginId, configId);
     }
 
     int getPluginConfigurationId(String pluginName) throws SQLException {
@@ -453,5 +472,50 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         return "INSERT INTO rhq_alert_notification ( id, alert_definition_id, sender_config_id, sender_name )" //
             + "      VALUES ( " + id + ", " + definitionId + ", " + configId + ", '" + sender + "' ) ";
     }
+    
+    private int getPluginId(String pluginName) throws SQLException {
+        String sql = ""
+            + "SELECT id "
+            + "FROM rhq_plugin " 
+            + "WHERE name = '" + pluginName + "'";
+        
+        List<Object[]> data = databaseType.executeSelectSql(connection, sql);
 
+        if (data == null || data.isEmpty()) {
+            return 0;
+        } else {
+            return (Integer) data.get(0)[0];
+        }
+    }
+
+    private void setPluginConfiguration(int pluginId, int configurationId) throws SQLException {
+        databaseType.executeSql(connection, 
+            "UPDATE rhq_plugin SET plugin_config_id = " + configurationId 
+            + " WHERE id = " + pluginId);
+    }
+    
+    private int insertPluginEntry(String pluginName, String displayName, String description, String deploymentType, String pluginDescriptorType) throws SQLException {
+        int pluginId = databaseType.getNextSequenceValue(connection, "rhq_plugin", "id");
+        
+        String sql = ""
+            + "INSERT INTO rhq_plugin(id, name, display_name, description, enabled, status, path, md5, ctime, mtime, deployment, ptype) "
+            + "VALUES(" 
+            + pluginId + ", " //id
+            + "'" + pluginName + "', " //name
+            + "'" + displayName + "', " //display_name
+            + "'" + description + "', " //description
+            + databaseType.getBooleanValue(true) + ", " //enabled
+            + "'INSTALLED', " //status
+            + "'invalid-path.jar', " //path
+            + "'0', " //md5
+            + NOW + ", " //ctime
+            + NOW + ", " //mtime
+            + "'" + deploymentType + "', " //deployment
+            + "'" + pluginDescriptorType + "'" //ptype
+            + ")";
+        
+        databaseType.executeSql(connection, sql);
+        
+        return pluginId;
+    }
 }

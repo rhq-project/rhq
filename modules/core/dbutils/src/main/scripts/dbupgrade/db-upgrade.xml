@@ -3258,10 +3258,14 @@
             <schemaSpec version="2.101">
                 <schema-addColumn table="RHQ_RESOURCE_TYPE" column="DELETED" columnType="BOOLEAN"/>
                 <schema-directSQL>
-                    <statement desc="Set deleted flag for existing resources types to false">
+                    <statement targetDBVendor="postgresql" desc="Set deleted flag for existing resources types to false">
                         UPDATE RHQ_RESOURCE_TYPE
                         SET DELETED = false
                     </statement>
+                	<statement targetDBVendor="oracle" desc="Set deleted flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE
+                        SET DELETED = 0
+                	</statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="DELETED" nullable="FALSE" />
             </schemaSpec>

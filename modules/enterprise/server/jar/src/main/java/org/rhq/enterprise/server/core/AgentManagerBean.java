@@ -362,9 +362,9 @@ public class AgentManagerBean implements AgentManagerLocal {
         try {
             //insert logged in check and view resources perm check as method calld from GWT*Service
             if ((subject != null)
-                && (!authorizationManager.hasResourcePermission(subject, Permission.VIEW_RESOURCE, resourceId))) {
+                && (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_INVENTORY, resourceId))) {
                 throw new PermissionException("Can not get agent details - " + subject + " lacks "
-                    + Permission.VIEW_RESOURCE + " for resource[id=" + resourceId + "]");
+                    + Permission.MANAGE_INVENTORY + " for resource[id=" + resourceId + "]");
             }
 
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);

@@ -78,11 +78,11 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
         ListGridField nameField = new ListGridField(FIELD_NAME, MSG.view_alerts_field_name());
-        nameField.setWidth("25%");
+        nameField.setWidth("20%");
         fields.add(nameField);
 
         ListGridField descriptionField = new ListGridField(FIELD_DESCRIPTION, MSG.common_title_description());
-        descriptionField.setWidth("30%");
+        descriptionField.setWidth("20%");
         fields.add(descriptionField);
 
         ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.view_alerts_field_created_time());
@@ -100,12 +100,14 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         ListGridField enabledField = new ListGridField(FIELD_ENABLED, MSG.view_alerts_field_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
+        enabledField.setWidth("5%");
         enabledField.setAutoFitWidth(true);
         enabledField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         fields.add(enabledField);
 
         ListGridField priorityField = new ListGridField(FIELD_PRIORITY, MSG.view_alerts_field_priority());
         priorityField.setType(ListGridFieldType.IMAGE);
+        priorityField.setWidth("5%");
         priorityField.setAutoFitWidth(true);
         priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         priorityField.setAlign(Alignment.CENTER);

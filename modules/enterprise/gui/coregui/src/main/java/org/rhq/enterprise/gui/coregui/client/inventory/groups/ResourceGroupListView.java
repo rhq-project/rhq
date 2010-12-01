@@ -53,6 +53,9 @@ public class ResourceGroupListView extends Table {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_groups_resourceGroups();
 
+    private boolean showDeleteButton = true;
+    private boolean showNewButton = true;
+
     public ResourceGroupListView(String locatorId) {
         this(locatorId, DEFAULT_TITLE);
     }
@@ -70,6 +73,14 @@ public class ResourceGroupListView extends Table {
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
+    }
+
+    public void setShowDeleteButton(boolean showDeleteButton) {
+        this.showDeleteButton = showDeleteButton;
+    }
+
+    public void setShowNewButton(boolean showNewButton) {
+        this.showNewButton = showNewButton;
     }
 
     @Override
@@ -101,36 +112,41 @@ public class ResourceGroupListView extends Table {
         setListGridFields(false, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                    int[] groupIds = new int[selections.length];
-                    int index = 0;
-                    for (ListGridRecord selection : selections) {
-                        groupIds[index++] = selection.getAttributeAsInt("id");
+        if (this.showDeleteButton) {
+            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+                new AbstractTableAction(TableActionEnablement.ANY) {
+                    public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                        int[] groupIds = new int[selections.length];
+                        int index = 0;
+                        for (ListGridRecord selection : selections) {
+                            groupIds[index++] = selection.getAttributeAsInt("id");
+                        }
+                        ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+
+                        resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
+                            }
+
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
+
+                                ResourceGroupListView.this.refresh();
+                            }
+                        });
                     }
-                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+                });
+        }
 
-                    resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
-                        }
-
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
-
-                            ResourceGroupListView.this.refresh();
-                        }
-                    });
+        if (this.showNewButton) {
+            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    new GroupCreateWizard(ResourceGroupListView.this).startWizard();
                 }
             });
+        }
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                new GroupCreateWizard(ResourceGroupListView.this).startWizard();
-            }
-        });
         //adding cell double click handler
         getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
             @Override

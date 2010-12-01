@@ -121,7 +121,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterGroupCategory(getFilter(request, CATEGORY.propertyName(), GroupCategory.class));
-        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Integer.class));
+        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
 

@@ -50,7 +50,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterAutoGroupParentResourceId; // requires overrides    
     private String filterPluginName; // requires overrides
     private GroupCategory filterGroupCategory;
-    private Integer filterDownMemberCount; // required overrides
+    private Long filterDownMemberCount; // required overrides
     private List<Integer> filterExplicitResourceIds; // requires overrides
     private List<Integer> filterImplicitResourceIds; // requires overrides
     private ResourceCategory filterExplicitResourceCategory; // requires overrides    
@@ -131,7 +131,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     /**
      * Only returns groups with at least this many downed implicit resource members
      */
-    public void addFilterDownMemberCount(Integer filterDownMemberCount) {
+    public void addFilterDownMemberCount(Long filterDownMemberCount) {
         this.filterDownMemberCount = filterDownMemberCount;
     }
 

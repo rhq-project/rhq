@@ -94,6 +94,28 @@ public class GroupDefinitionListView extends TableSection {
         getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), null, new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
+                groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_dynagroup_deleteSuccessfulSelection(String
+                                .valueOf(groupDefinitionIds.length)), Severity.Info));
+                        GroupDefinitionListView.this.refresh();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_deleteFailureSelection(), caught);
+                    }
+                });
+            }
+        });
+
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
@@ -121,30 +143,6 @@ public class GroupDefinitionListView extends TableSection {
                 });
             }
         });
-
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
-                groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_dynagroup_deleteSuccessfulSelection(String
-                                .valueOf(groupDefinitionIds.length)), Severity.Info));
-                        GroupDefinitionListView.this.refresh();
-                    }
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_deleteFailureSelection(), caught);
-                    }
-                });
-            }
-        });
-
-
     }
 
     @Override

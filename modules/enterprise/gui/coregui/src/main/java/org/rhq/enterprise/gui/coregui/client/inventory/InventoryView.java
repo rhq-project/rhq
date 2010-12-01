@@ -235,13 +235,13 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         });
 
         NavigationItem problemGroupsItem = new NavigationItem(PAGE_PROBLEM_GROUPS, ImageManager.getGroupIcon(
-            GroupCategory.COMPATIBLE, 0.0d), new ViewFactory() {
+            GroupCategory.MIXED, 0.0d), new ViewFactory() {
             public Canvas createView() {
-                // TODO: There is no underlying support for this criteria. Also, there should not be an active New
-                //       button on this page.
-                return new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()), new Criteria(
-                    "availability", "down"), PAGE_PROBLEM_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(
-                    GroupCategory.COMPATIBLE, 0.0d));
+                ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()),
+                    new Criteria("downMemberCount", "1"), PAGE_PROBLEM_GROUPS.getTitle(), ImageManager
+                        .getGroupLargeIcon(GroupCategory.MIXED, 0.0d));
+                view.setShowNewButton(false);
+                return view;
             }
         });
 

@@ -474,6 +474,8 @@ public abstract class RPCDataSource<T> extends DataSource {
                 result = (S) strValue;
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
+            } else if (type == Long.class) {
+                result = (S) Long.valueOf(strValue);
             } else if (type.isEnum()) {
                 result = (S) Enum.valueOf((Class<? extends Enum>) type, strValue);
             } else {

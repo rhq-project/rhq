@@ -71,6 +71,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         upgradeEmailNotifications();
         upgradeSNMPNotifications();
         upgradeOperationNotifications();
+        
+        upgradeSNMPPreferences();
     }
 
     private void upgradeSubjectNotificationLogs() throws SQLException {
@@ -281,6 +283,122 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         }
     }
 
+    /**
+     * Copy the system wide snmp preferences. This happens only on
+     * a fresh migration from pre RHQ3 and only if the user has
+     * actually changed the provided defaults.
+     */
+    private void upgradeSNMPPreferences() throws SQLException {
+        String oldPrefsSQL = "" //
+            + " SELECT property_key,property_value"
+            + " FROM RHQ_SYSTEM_CONFIG"
+            + " WHERE property_key LIKE 'SNMP%'";
+
+        String[] keyToProp = { //
+                "SNMP_AGENT_ADDRESS","agentAddress", //
+                "SNMP_AUTH_PASSPHRASE","authPassphrase", //
+                "SNMP_AUTH_PROTOCOL","authProtocol", //
+                "SNMP_COMMUNITY","community",//
+                "SNMP_CONTEXT_NAME","targetContext",//
+                "SNMP_ENGINE_ID","engineId",//
+                "SNMP_ENTERPRISE_OID","enterpriseOid",//
+                "SNMP_GENERIC_ID","genericId",//
+                "SNMP_PRIVACY_PROTOCOL","privacyProtocol",//
+                "SNMP_PRIV_PASSPHRASE","privacyPassphrase",//
+                "SNMP_SECURITY_NAME","securityName",//
+                "SNMP_SPECIFIC_ID","specificId",//
+                "SNMP_TRAP_OID","trapOid",//
+                "SNMP_VERSION","snmpVersion"
+        };
+
+        /*
+         * Check if there is already a config present.
+         * Only run the copy on a fresh upgrade from a pre RHQ 3 version.
+         */
+        int configId = getPluginConfigurationId("alert-snmp");
+        if (configId!=0) {
+            System.out.println("Already found a snmp configuration, not copying the old one over.");
+            return;
+        }
+
+        // Get the properties from the database
+        List<Object[]> data = databaseType.executeSelectSql(connection, oldPrefsSQL);
+
+        // check if the user actually did set up the snmp settings in the older version
+        // If not, don't bother, as the plugin will set up its defaults later on.
+        for (Object[] next : data) {
+            String key = (String) next[0];
+            if (key.equals("SNMP_VERSION")) {
+                String val = (String) next[1];
+                if (val==null || val.equals("")) {
+                    System.out.println("No SNMP config set in old db version, so not copying");
+                    return;
+                }
+            }
+        }
+
+        // We have work to do ...
+        configId = databaseType.getNextSequenceValue(connection, "rhq_config", "id");
+        String insertConfigSQL = getInsertConfigSQL(configId);
+        databaseType.executeSql(connection, insertConfigSQL);
+
+        for (Object[] next : data) {
+            // find property
+            String propertyName = null;
+            for (int i = 0 ; i< keyToProp.length ; i++) {
+                if (keyToProp[i].equals(next[0])) {
+                    propertyName = keyToProp[i+1];
+                    break;
+                }
+            }
+            if (propertyName==null) {
+                System.err.println("Input property " + next[0] + " is not encoded");
+                System.err.println("Not copying the SNMP preferences");
+
+            }
+
+            String propertyValue = (String) next[1];
+
+            int propertyId = databaseType.getNextSequenceValue(connection, "rhq_config_property", "id");
+            String insertPropertySQL = getInsertPropertySQL(propertyId, configId, propertyName, propertyValue);
+            databaseType.executeSql(connection, insertPropertySQL);
+        }
+        
+        //now we need to associate the plugin with its configuration
+        int pluginId = getPluginId("alert-snmp");
+        if (pluginId == 0) {
+            System.err.println("No 'alert-snmp' plugin found in the database. Creating a temporary one.");
+            
+            String pluginName = "alert-snmp";
+            String displayName = "Alert:SNMP-invalid";
+            String description = "This is an automatically generated invalid plugin used to associate the SNMP " 
+                + "configuration upgraded from the legacy tables. You should not really ever see this plugin "
+                + "deployed as it should be overwritten during the first server startup after the upgrade.";
+            String deploymentType = "SERVER";
+            String pluginDescriptorType = 
+                "org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType";
+            
+
+            pluginId = insertPluginEntry(pluginName, displayName, description, deploymentType, pluginDescriptorType);
+        }
+        setPluginConfiguration(pluginId, configId);
+    }
+
+    int getPluginConfigurationId(String pluginName) throws SQLException {
+        String getConfigIdSQL = "" //
+            + " SELECT plugin_config_id " //
+            + " FROM rhq_plugin"  //
+            + " WHERE name = '" + pluginName + "'";
+        List<Object[]> data = databaseType.executeSelectSql(connection, getConfigIdSQL);
+
+        if (data==null || data.size()==0)
+            return 0;
+        Object[] idos = data.get(0);
+        return (Integer)idos[0];
+
+    }
+
+
     private void persist(List<Object[]> data, String propertyName, String sender, String delimiter,
         boolean bufferWithDelimiter) throws SQLException {
         int definitionId = -1;
@@ -354,5 +472,50 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         return "INSERT INTO rhq_alert_notification ( id, alert_definition_id, sender_config_id, sender_name )" //
             + "      VALUES ( " + id + ", " + definitionId + ", " + configId + ", '" + sender + "' ) ";
     }
+    
+    private int getPluginId(String pluginName) throws SQLException {
+        String sql = ""
+            + "SELECT id "
+            + "FROM rhq_plugin " 
+            + "WHERE name = '" + pluginName + "'";
+        
+        List<Object[]> data = databaseType.executeSelectSql(connection, sql);
 
+        if (data == null || data.isEmpty()) {
+            return 0;
+        } else {
+            return (Integer) data.get(0)[0];
+        }
+    }
+
+    private void setPluginConfiguration(int pluginId, int configurationId) throws SQLException {
+        databaseType.executeSql(connection, 
+            "UPDATE rhq_plugin SET plugin_config_id = " + configurationId 
+            + " WHERE id = " + pluginId);
+    }
+    
+    private int insertPluginEntry(String pluginName, String displayName, String description, String deploymentType, String pluginDescriptorType) throws SQLException {
+        int pluginId = databaseType.getNextSequenceValue(connection, "rhq_plugin", "id");
+        
+        String sql = ""
+            + "INSERT INTO rhq_plugin(id, name, display_name, description, enabled, status, path, md5, ctime, mtime, deployment, ptype) "
+            + "VALUES(" 
+            + pluginId + ", " //id
+            + "'" + pluginName + "', " //name
+            + "'" + displayName + "', " //display_name
+            + "'" + description + "', " //description
+            + databaseType.getBooleanValue(true) + ", " //enabled
+            + "'INSTALLED', " //status
+            + "'invalid-path.jar', " //path
+            + "'0', " //md5
+            + NOW + ", " //ctime
+            + NOW + ", " //mtime
+            + "'" + deploymentType + "', " //deployment
+            + "'" + pluginDescriptorType + "'" //ptype
+            + ")";
+        
+        databaseType.executeSql(connection, sql);
+        
+        return pluginId;
+    }
 }

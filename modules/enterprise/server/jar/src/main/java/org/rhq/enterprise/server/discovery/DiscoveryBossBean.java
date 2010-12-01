@@ -426,10 +426,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         for (ResourceUpgradeRequest request : upgradeRequests) {
             Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
             if (existingResource != null) {
-                ResourceUpgradeResponse upgradedData = upgradeResource(existingResource, request,
-                    allowGenericPropertiesUpgrade);
-                if (upgradedData != null) {
-                    result.add(upgradedData);
+                try {
+                    ResourceUpgradeResponse upgradedData = upgradeResource(existingResource, request,
+                        allowGenericPropertiesUpgrade);
+                    if (upgradedData != null) {
+                        result.add(upgradedData);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to process upgrade request for resource " + existingResource + ".", e);
                 }
             }
         }

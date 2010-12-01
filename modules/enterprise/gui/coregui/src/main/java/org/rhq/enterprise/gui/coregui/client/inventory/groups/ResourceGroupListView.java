@@ -27,12 +27,14 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -85,7 +87,12 @@ public class ResourceGroupListView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
+        ListGridField idField = new ListGridField("id", MSG.common_title_id());
+        idField.setWidth("10");
+
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
+        nameField.setWidth("10%");
+
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String groupId = record.getAttribute("id");
@@ -95,9 +102,38 @@ public class ResourceGroupListView extends Table {
         });
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
+        descriptionField.setWidth("10%");
+
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
+        typeNameField.setWidth("1");
+        typeNameField.setAutoFitWidth(true);
+        typeNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
+        pluginNameField.setWidth("1");
+        pluginNameField.setAutoFitWidth(true);
+        pluginNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
+        categoryField.setWidth("1");
+        categoryField.setAutoFitWidth(true);
+        categoryField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        categoryField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String categoryName = (String) value;
+                GroupCategory category = GroupCategory.valueOf(categoryName);
+                String displayName = "";
+                switch (category) {
+                case COMPATIBLE:
+                    displayName = MSG.view_group_summary_compatible();
+                    break;
+                case MIXED:
+                    displayName = MSG.view_group_summary_mixed();
+                    break;
+                }
+                return displayName;
+            }
+        });
 
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
             .view_inventory_groups_children(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
@@ -109,7 +145,7 @@ public class ResourceGroupListView extends Table {
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        setListGridFields(false, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+        setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {

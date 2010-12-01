@@ -38,6 +38,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
@@ -83,6 +84,10 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return INSTANCE;
     }
 
+    public static boolean isSystemRoleId(int roleId) {
+        return (roleId == ID_SUPERUSER || roleId == ID_ALL_RESOURCES);
+    }
+
     public RolesDataSource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
@@ -110,6 +115,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         fields.add(resourceGroupsField);
 
         DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
+        // TODO (ips): add this back?
         //fields.add(permissionsField);
 
         DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
@@ -148,10 +154,9 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(Role addedRole) {
-                sendSuccessResponse(request, response, addedRole, new Message(MSG.view_adminRoles_roleAdded(rolename)));
+                sendSuccessResponse(request, response, addedRole);
             }
         });
-
     }
 
     @Override
@@ -166,8 +171,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(Role updatedRole) {
-                sendSuccessResponse(request, response, updatedRole, new Message(MSG
-                    .view_adminRoles_roleUpdated(rolename)));
+                sendSuccessResponse(request, response, updatedRole);
             }
         });
     }
@@ -212,13 +216,18 @@ public class RolesDataSource extends RPCDataSource<Role> {
         to.setSubjects(subjects);
 
         Record[] ldapGroupRecords = from.getAttributeAsRecordArray(Field.LDAP_GROUPS);
-        // TODO
-        to.setLdapGroups(null);
+        Set<LdapGroup> ldapGroups = new RoleLdapGroupSelector.LdapGroupsDataSource().buildDataObjects(ldapGroupRecords);
+        to.setLdapGroups(ldapGroups);
 
         return to;
     }
 
     public ListGridRecord copyValues(Role sourceRole) {
+        return copyValues(sourceRole, true);
+    }
+
+    @Override
+    public ListGridRecord copyValues(Role sourceRole, boolean cascade) {
         ListGridRecord targetRecord = new ListGridRecord();
 
         targetRecord.setAttribute(Field.ID, sourceRole.getId());
@@ -229,16 +238,21 @@ public class RolesDataSource extends RPCDataSource<Role> {
         ListGridRecord[] permissionRecords = toRecordArray(permissions);
         targetRecord.setAttribute(Field.PERMISSIONS, permissionRecords);
 
-        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
-            sourceRole.getResourceGroups());
-        targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
+        if (cascade) {
+            Set<ResourceGroup> resourceGroups = sourceRole.getResourceGroups();
+            ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
+                resourceGroups, false);
+            targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
-        ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(sourceRole.getSubjects());
-        targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
+            Set<Subject> subjects = sourceRole.getSubjects();
+            ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(subjects, false);
+            targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
 
-        // TODO
-        ListGridRecord[] ldapGroupRecords = null;
-        targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
+            Set<LdapGroup> ldapGroups = sourceRole.getLdapGroups();
+            ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource().buildRecords(
+                ldapGroups);
+            targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
+        }
 
         return targetRecord;
     }
@@ -281,6 +295,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         // Fetching
         criteria.fetchPermissions(true);
+        if (id != null) {
+            // If we're fetching a single Role, then fetch all the related Sets.
+            criteria.fetchSubjects(true);
+            criteria.fetchResourceGroups(true);
+            criteria.fetchLdapGroups(true);
+        }
 
         // TODO: instead of fetching subjects and resource groups, use a composite object that will pull the subject
         //       and resource group count across the wire.  these counts will not required permission checks at all. 

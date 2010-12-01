@@ -81,12 +81,12 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         // Layout Settings
-        setWidth(640);
+        //setWidth(640);
         //setWidth100();
         //setPadding(13);
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths(100, 200, 100, 200);
+        setColWidths(75, 200, 75, 200);
         //setTitleWidth(100);
         setWrapItemTitles(false);
 

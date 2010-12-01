@@ -409,10 +409,6 @@ public class Subject implements Serializable {
     }
 
     public java.util.Set<Role> getRoles() {
-        if (this.roles == null) {
-            this.roles = new HashSet<Role>();
-        }
-
         return this.roles;
     }
 
@@ -421,9 +417,16 @@ public class Subject implements Serializable {
     }
 
     public void addRole(Role role, boolean isLdap) {
-        getRoles().add(role);
+        if (this.roles == null) {
+            this.roles = new HashSet<Role>();
+        }
+
+        this.roles.add(role);
         if (isLdap) {
-            getLdapRoles().add(role);
+            if (this.ldapRoles == null) {
+                this.ldapRoles = new HashSet<Role>();
+            }
+            this.ldapRoles.add(role);
         }
     }
 
@@ -432,14 +435,12 @@ public class Subject implements Serializable {
     }
 
     public void removeRole(Role role) {
-        getRoles().remove(role);
+        if (this.roles != null) {
+            this.roles.remove(role);
+        }
     }
 
     public java.util.Set<Role> getLdapRoles() {
-        if (this.ldapRoles == null) {
-            this.ldapRoles = new HashSet<Role>();
-        }
-
         return this.ldapRoles;
     }
 
@@ -448,11 +449,13 @@ public class Subject implements Serializable {
     }
 
     public void addLdapRole(Role role) {
-        getLdapRoles().add(role);
+        addRole(role, true);
     }
 
     public void removeLdapRole(Role role) {
-        getLdapRoles().remove(role);
+        if (this.ldapRoles != null) {
+            this.ldapRoles.remove(role);
+        }
     }
 
     public List<ResourceGroup> getOwnedGroups() {

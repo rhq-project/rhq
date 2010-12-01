@@ -225,7 +225,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             availableFields.add(iconField);
         }
-        ListGridField nameField = new ListGridField(getItemName(), capitalize(getItemTitle()));
+        ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
         availableFields.add(nameField);
         availableGrid.setFields(availableFields.toArray(new ListGridField[availableFields.size()]));
 
@@ -291,14 +291,15 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
                 availableRecords = new ArrayList<Record>();
                 Record[] allRecords = response.getData();
-                if (initialSelection != null) {
-                    Set<Integer> selectedRecordIds = new HashSet<Integer>(initialSelection.length);
-                    for (Record record : initialSelection) {
-                        Integer id = record.getAttributeAsInt(getSelectorKey());
+                ListGridRecord[] assignedRecords = assignedGrid.getRecords();
+                if (assignedRecords != null && assignedRecords.length != 0) {
+                    Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
+                    for (Record record : assignedRecords) {
+                        String id = record.getAttribute(getSelectorKey());
                         selectedRecordIds.add(id);
                     }
                     for (Record record : allRecords) {
-                        int id = record.getAttributeAsInt(getSelectorKey());
+                        String id = record.getAttribute(getSelectorKey());
                         if (!selectedRecordIds.contains(id)) {
                             availableRecords.add(record);
                         }
@@ -384,7 +385,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             assignedFields.add(iconField);
         }
-        ListGridField nameField = new ListGridField(getItemName(), capitalize(getItemTitle()));
+        ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
         assignedFields.add(nameField);
         assignedGrid.setFields(assignedFields.toArray(new ListGridField[assignedFields.size()]));
 
@@ -472,7 +473,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         sourceGrid.removeSelectedData();
     }
 
-    protected String getItemName() {
+    protected String getNameField() {
         return "name";
     }
 

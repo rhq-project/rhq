@@ -19,10 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -38,11 +36,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
@@ -73,6 +71,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     private boolean hasManageSecurityPermission;
     private boolean isLdapConfigured;
+    private boolean isSystemRole;
 
     public RoleEditView(String locatorId, int roleId) {
         super(locatorId, new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
@@ -81,6 +80,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
+
+        this.isSystemRole = RolesDataSource.isSystemRoleId(getRecordId());
+
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onSuccess(Set<Permission> result) {
@@ -97,15 +99,16 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         });
     }
 
+    @Override
+    protected boolean isFormReadOnly() {
+        return (isReadOnly() || this.isSystemRole);
+    }
+
     private void checkIfLdapConfigured() {
         GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
             public void onSuccess(Boolean isLdapConfigured) {
                 RoleEditView.this.isLdapConfigured = isLdapConfigured;
-                if (RoleEditView.this.isLdapConfigured) {
-                    fetchAvailableLdapGroups();
-                } else {
-                    init();
-                }
+                init();
             }
 
             public void onFailure(Throwable caught) {
@@ -116,28 +119,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         });
     }
 
-    private void fetchAvailableLdapGroups() {
-        final Set<LdapGroup> availableLdapGroups = null;
-        GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroups(), caught);
-                Set<LdapGroup> availableLdapGroups = Collections.emptySet();
-                init();
-            }
-
-            public void onSuccess(Set<Map<String, String>> result) {
-                // Get assigned LDAP groups.
-                Set<LdapGroup> availableLdapGroups = RoleLdapGroupSelector.convertToCollection(result);
-                // Update record with both objects.
-                //record.setAttribute("ldapGroupsAvailable", availableGroups);
-                init();
-            }
-        });
-    }
-
     private void init() {
-        final boolean isReadOnly = (!this.hasManageSecurityPermission
-            || (getRecordId() == RolesDataSource.ID_SUPERUSER) || (getRecordId() == RolesDataSource.ID_ALL_RESOURCES));
+        final boolean isReadOnly = (!this.hasManageSecurityPermission);
         init(isReadOnly);
     }
 
@@ -154,27 +137,51 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
         // other users' assigned roles.
-        Subject whoami = UserSessionManager.getSessionSubject();
-        // TODO: Make call to Server to see if logged in user is a member of this role.
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        int sessionSubjectId = sessionSubject.getId();
+        Record[] subjectRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.SUBJECTS);
+        boolean isMemberOfRole = false;
+        for (Record subjectRecord : subjectRecords) {
+            int subjectId = subjectRecord.getAttributeAsInt(RolesDataSource.Field.ID);
+            if (subjectId == sessionSubjectId) {
+                isMemberOfRole = true;
+            }
+        }
 
-        if (this.hasManageSecurityPermission) {
+        if (this.hasManageSecurityPermission || isMemberOfRole) {
             // Create the selectors and add them to the corresponding canvas items on the form.
 
-            Record[] groupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.RESOURCE_GROUPS);
-            ListGridRecord[] groupListGridRecords = toListGridRecordArray(groupRecords);
-            //boolean areGroupsReadOnly = areGroupsReadOnly(record); // TODO
-            this.groupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"), groupListGridRecords);
-            this.groupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
-                public void onSelectionChanged(AssignedItemsChangedEvent event) {
-                    onItemChanged();
-                }
-            });
-            this.resourceGroupsItem.setCanvas(this.groupSelector);
+            if (!this.isSystemRole) {
+                Record[] groupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.RESOURCE_GROUPS);
+                ListGridRecord[] groupListGridRecords = toListGridRecordArray(groupRecords);
+                this.groupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"), groupListGridRecords,
+                    !this.hasManageSecurityPermission);
+                this.groupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+                    public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                        onItemChanged();
+                    }
+                });
+                this.resourceGroupsItem.setCanvas(this.groupSelector);
+            }
 
-            Record[] subjectRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.SUBJECTS);
             ListGridRecord[] subjectListGridRecords = toListGridRecordArray(subjectRecords);
-            //boolean areSubjectsReadOnly = areSubjectsReadOnly(record); // TODO
-            this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), subjectListGridRecords);
+            if (getRecordId() == RolesDataSource.ID_SUPERUSER) {
+                // If this is the superuser role, make sure the rhqadmin record is disabled, so it cannot be removed
+                // from the role, and filter the overlord record out, so users don't even know it exists.
+                List<ListGridRecord> filteredSubjectRecords = new ArrayList<ListGridRecord>();
+                for (ListGridRecord subjectListGridRecord : subjectListGridRecords) {
+                    int subjectId = subjectListGridRecord.getAttributeAsInt(UsersDataSource.Field.ID);
+                    if (subjectId == UsersDataSource.ID_RHQADMIN) {
+                        subjectListGridRecord.setEnabled(false);
+                    }
+                    if (subjectId != UsersDataSource.ID_OVERLORD) {
+                        filteredSubjectRecords.add(subjectListGridRecord);
+                    }
+                }
+                subjectListGridRecords = filteredSubjectRecords.toArray(new ListGridRecord[filteredSubjectRecords.size()]);
+            }
+            this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), subjectListGridRecords,
+                !this.hasManageSecurityPermission);
             this.subjectSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
                     onItemChanged();
@@ -185,9 +192,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             if (this.isLdapConfigured) {
                 Record[] ldapGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.LDAP_GROUPS);
                 ListGridRecord[] ldapGroupListGridRecords = toListGridRecordArray(ldapGroupRecords);
-                Integer roleId = record.getAttributeAsInt(RolesDataSource.Field.ID);
-                //boolean areLdapGroupsReadOnly = areLdapGroupsReadOnly(record); // TODO
-                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), roleId);
+                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), 
+                    ldapGroupListGridRecords, !this.hasManageSecurityPermission);
                 this.ldapGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                     public void onSelectionChanged(AssignedItemsChangedEvent event) {
                         onItemChanged();

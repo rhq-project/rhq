@@ -106,6 +106,8 @@ public class UserPreferences {
     }
 
     public void store(AsyncCallback<Subject> callback) {
+        this.subject.setRoles(null);
+        this.subject.setLdapRoles(null);
         this.subjectService.updateSubject(this.subject, null, callback);
     }
 

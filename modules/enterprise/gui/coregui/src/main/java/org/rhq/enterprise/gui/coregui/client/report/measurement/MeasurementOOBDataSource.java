@@ -106,14 +106,14 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     }
 
     @Override
-    public ListGridRecord[] buildRecords(Collection<MeasurementOOBComposite> list) {
-        for (MeasurementOOBComposite oob : list) {
+    public ListGridRecord[] buildRecords(Collection<MeasurementOOBComposite> dataObjects) {
+        for (MeasurementOOBComposite oob : dataObjects) {
             if (oob.getFactor() > maximumFactor) {
                 maximumFactor = oob.getFactor();
             }
         }
 
-        return super.buildRecords(list);
+        return super.buildRecords(dataObjects);
     }
 
     @Override

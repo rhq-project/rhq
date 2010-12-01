@@ -269,15 +269,19 @@ public abstract class RPCDataSource<T> extends DataSource {
         response.setTotalRows(totalRows);
     }
 
-    public ListGridRecord[] buildRecords(Collection<T> list) {
-        if (list == null) {
+    public ListGridRecord[] buildRecords(Collection<T> dataObjects) {
+        return buildRecords(dataObjects, true);
+    }
+
+    public ListGridRecord[] buildRecords(Collection<T> dataObjects, boolean cascade) {
+        if (dataObjects == null) {
             return null;
         }
 
-        ListGridRecord[] records = new ListGridRecord[list.size()];
+        ListGridRecord[] records = new ListGridRecord[dataObjects.size()];
         int i = 0;
-        for (T item : list) {
-            records[i++] = copyValues(item);
+        for (T item : dataObjects) {
+            records[i++] = copyValues(item, cascade);
         }
         return records;
     }
@@ -347,6 +351,10 @@ public abstract class RPCDataSource<T> extends DataSource {
     // TODO (ips): This really should return Records, rather than ListGridRecords, so the DataSource is not specific to
     //             ListGrids, but that will require a lot of refactoring at this point...
     public abstract ListGridRecord copyValues(T from);
+
+    public ListGridRecord copyValues(T from, boolean cascade) {
+        return copyValues(from);
+    }
 
     /**
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>

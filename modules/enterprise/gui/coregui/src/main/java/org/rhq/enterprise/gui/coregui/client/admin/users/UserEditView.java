@@ -98,7 +98,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         Subject subject = new Subject();
         subject.setFactive(true);
         @SuppressWarnings( { "UnnecessaryLocalVariable" })
-        Record userRecord = UsersDataSource.getInstance().copyValues(subject, false);
+        Record userRecord = UsersDataSource.getInstance().copyUserValues(subject, false);
         return userRecord;
     }
 

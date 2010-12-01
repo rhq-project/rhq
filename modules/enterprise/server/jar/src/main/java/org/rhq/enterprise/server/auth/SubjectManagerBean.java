@@ -217,47 +217,41 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 + "].");
         }
 
-        RoleCriteria subjectRolesCriteria = new RoleCriteria();
-        subjectRolesCriteria.addFilterSubjectId(subjectToModify.getId());
-        PageList<Role> currentRoles = roleManager.findRolesByCriteria(whoami, subjectRolesCriteria);
         Set<Role> newRoles = subjectToModify.getRoles();
-        if (newRoles == null) {
-            newRoles = Collections.emptySet();
+        if (newRoles != null) {
+            int[] newRoleIds = new int[newRoles.size()];
+            int i = 0;
+            for (Role role : newRoles) {
+                newRoleIds[i] = role.getId();
+            }
+            roleManager.setAssignedSubjectRoles(whoami, subjectToModify.getId(), newRoleIds);
         }
-        boolean rolesModified = !(currentRoles.containsAll(newRoles) && newRoles.containsAll(currentRoles));
 
-        RoleCriteria subjectLdapRolesCriteria = new RoleCriteria();
-        subjectLdapRolesCriteria.addFilterLdapSubjectId(subjectToModify.getId());
-        PageList<Role> currentLdapRoles = roleManager.findRolesByCriteria(whoami, subjectLdapRolesCriteria);
+        boolean ldapRolesModified = false;
         Set<Role> newLdapRoles = subjectToModify.getLdapRoles();
         if (newLdapRoles == null) {
             newLdapRoles = Collections.emptySet();
         }
-        boolean ldapRolesModified =
-            !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles.containsAll(currentLdapRoles));
+        if (newLdapRoles != null) {
+            RoleCriteria subjectLdapRolesCriteria = new RoleCriteria();
+            subjectLdapRolesCriteria.addFilterLdapSubjectId(subjectToModify.getId());
+            PageList<Role> currentLdapRoles = roleManager.findRolesByCriteria(whoami, subjectLdapRolesCriteria);
 
-        if (isSecurityManager) {
-            if (subjectToModifyIsSystemSuperuser) {
-                if (rolesModified) {
-                    throw new PermissionException("You cannot alter the roles for user [" + subjectToModify.getName()
-                            + "] - roles are fixed for this user");
-                }
+            ldapRolesModified =
+                !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles.containsAll(currentLdapRoles));
+        }
 
-                if (ldapRolesModified) {
-                    throw new PermissionException("You cannot alter the LDAP roles for user [" + subjectToModify.getName()
-                            + "] - LDAP roles are fixed for this user");
-                }
-            }
-        } else {
-            if (rolesModified) {
-                throw new PermissionException("You cannot change the roles assigned to [" + subjectToModify.getName()
-                    + "] - only a user with the MANAGE_SECURITY permission can do so.");
-            }
-
-            if (ldapRolesModified) {
+        boolean isUserWithPrincipal = isUserWithPrincipal(subjectToModify.getName());
+        if (ldapRolesModified) {
+            if (!isSecurityManager) {
                 throw new PermissionException("You cannot change the LDAP roles assigned to [" + subjectToModify.getName()
                     + "] - only a user with the MANAGE_SECURITY permission can do so.");
+            } else if (isUserWithPrincipal) {
+                throw new PermissionException("You cannot set LDAP roles on non-LDAP user [" + subjectToModify.getName()
+                            + "].");
             }
+
+            // TODO: Update LDAP roles.
         }
 
         if (newPassword != null) {

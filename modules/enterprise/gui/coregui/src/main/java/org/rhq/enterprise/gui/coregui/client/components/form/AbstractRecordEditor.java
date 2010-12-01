@@ -103,6 +103,9 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     @Override
     public void renderView(ViewPath viewPath) {
+        // TODO: The below line is temporary until TableSection.renderView() advances the view id pointer as it should.
+        viewPath.next();
+
         String parentViewPath = viewPath.getParentViewPath();
         if (!viewPath.isEnd()) {
             CoreGUI.getErrorHandler().handleError(MSG.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
@@ -171,7 +174,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewRecord);
+        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);
         form.setDataSource(this.dataSource);
 
         List<FormItem> items = createFormItems(form);
@@ -184,6 +187,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         });
 
         return form;
+    }
+
+    protected boolean isFormReadOnly() {
+        return this.isReadOnly;
     }
 
     public EnhancedDynamicForm getForm() {
@@ -300,7 +307,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                         Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 } else {
-                    // assume failure
+                    // assume failure                    
                     Message message = new Message("Operation failed - an error occurred.", Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 }

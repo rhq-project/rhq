@@ -188,7 +188,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
                         public void onSuccess(Boolean hasPrincipal) {
                             boolean isLdap = (!hasPrincipal);
-                            Record userRecord = copyValues(fetchedSubject, isLdap);
+                            Record userRecord = copyUserValues(fetchedSubject, isLdap);
                             userRecordsPageList.add(userRecord);
                             if (userRecordsPageList.size() == fetchedSubjects.size()) {
                                 sendSuccessResponseRecords(request, response, userRecordsPageList);
@@ -214,7 +214,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             }
 
             public void onSuccess(final Subject createdSubject) {
-                Record createdUserRecord = copyValues(createdSubject, false);
+                Record createdUserRecord = copyUserValues(createdSubject, false);
                 sendSuccessResponse(request, response, createdUserRecord);
             }
         });
@@ -281,7 +281,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return to;
     }
 
-    public Record copyValues(Subject subject, boolean isLdap) {
+    public Record copyUserValues(Subject subject, boolean isLdap) {
         ListGridRecord targetRecord = copyValues(subject);
 
         targetRecord.setAttribute(Field.LDAP, isLdap);
@@ -296,6 +296,11 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     public ListGridRecord copyValues(Subject from) {
+        return copyValues(from, true);
+    }
+
+    @Override
+    public ListGridRecord copyValues(Subject from, boolean cascade) {
         ListGridRecord to = new ListGridRecord();
 
         to.setAttribute(Field.ID, from.getId());
@@ -308,8 +313,10 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setAttribute(Field.PHONE_NUMBER, from.getPhoneNumber());
         to.setAttribute(Field.EMAIL_ADDRESS, from.getEmailAddress());
 
-        ListGridRecord[] roleRecords = RolesDataSource.getInstance().buildRecords(from.getRoles());
-        to.setAttribute(Field.ROLES, roleRecords);
+        if (cascade) {
+            ListGridRecord[] roleRecords = RolesDataSource.getInstance().buildRecords(from.getRoles(), false);
+            to.setAttribute(Field.ROLES, roleRecords);
+        }
 
         return to;
     }
@@ -321,13 +328,19 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         criteria.setPageControl(getPageControl(request));
 
         // Filtering
-        criteria.addFilterId(getFilter(request, Field.ID, Integer.class));
+        Integer subjectId = getFilter(request, Field.ID, Integer.class);
+        criteria.addFilterId(subjectId);
         // Always filter out the overlord - mortal users need not know the overlord even exists.
         criteria.addFilterFsystem(false);
 
         // Fetching
-        // Always fetch roles - even for the list view, we'll use them to display the role count.
-        criteria.fetchRoles(true);
+        if (subjectId != null) {
+            // If we're fetching a single Subject, then fetch the related Set of Roles.
+            criteria.fetchRoles(true);
+        }
+
+        // TODO: For the list view, use a composite object that will pull the role
+        //       count across the wire.  this count will not require permission checks at all.
 
         return criteria;
     }

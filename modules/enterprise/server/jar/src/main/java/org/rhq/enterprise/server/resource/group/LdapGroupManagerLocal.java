@@ -41,6 +41,8 @@ public interface LdapGroupManagerLocal {
 
     PageList<LdapGroup> findLdapGroups(PageControl pc);
 
+    void setLdapGroupsOnRole(Subject subject, int roleId, Set<LdapGroup> groups);
+
     void addLdapGroupsToRole(Subject subject, int roleId, List<String> groupIds);
 
     void removeLdapGroupsFromRole(Subject subject, int roleId, int[] groupIds);

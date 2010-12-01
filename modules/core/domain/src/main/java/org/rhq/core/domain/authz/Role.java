@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -42,18 +43,18 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a
  * role to zero or more {@link Subject}s. A role defines a set of {@link Permission}s that the assigned {@link Subject}s
- * are authorized for in order to operate on the given resources in the assigned
- * {@link org.rhq.core.domain.resource.group.ResourceGroup}s.
+ * are authorized for in order to operate on the Resources in the assigned {@link
+ * org.rhq.core.domain.resource.group.ResourceGroup}s.
  *
  * @author Greg Hinkle
  */
@@ -112,13 +113,13 @@ public class Role implements Serializable {
     @ManyToMany(mappedBy = "ldapRoles")
     private java.util.Set<Subject> ldapSubjects = new HashSet<Subject>();
 
-    @OneToMany(mappedBy = "role", cascade = javax.persistence.CascadeType.ALL)
+    @OneToMany(mappedBy = "role", cascade = { CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.REFRESH })
     private Set<LdapGroup> ldapGroups = new HashSet<LdapGroup>();
 
     @ManyToMany(mappedBy = "roles")
     private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
 
-    @Cascade( { CascadeType.ALL })
+    @Cascade( { org.hibernate.annotations.CascadeType.ALL })
     @CollectionOfElements(fetch = FetchType.EAGER)
     @Column(name = "operation")
     @JoinTable(name = "RHQ_PERMISSION", joinColumns = @JoinColumn(name = "ROLE_ID"))
@@ -202,7 +203,7 @@ public class Role implements Serializable {
         this.ldapGroups.add(ldapGroup);
     }
 
-    public boolean removeLdapGroup(LdapGroup ldapGroup) {
+    public boolean removeLdapGroup(LdapGroup ldapGroup) {        
         return this.ldapGroups.remove(ldapGroup);
     }
 
@@ -211,7 +212,15 @@ public class Role implements Serializable {
     }
 
     public void setSubjects(Set<Subject> subjects) {
-        this.subjects = subjects;
+        if (subjects == null) {
+            this.subjects = new HashSet<Subject>();
+        } else {
+            this.subjects = subjects;
+            for (Subject subject :subjects) {
+                subject.addRole(this);
+                this.subjects.add(subject);
+            }
+        }
     }
 
     public void addSubject(Subject subject) {
@@ -263,7 +272,15 @@ public class Role implements Serializable {
     }
 
     public void setResourceGroups(Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups) {
-        this.resourceGroups = resourceGroups;
+        if (resourceGroups == null) {
+            this.resourceGroups = new HashSet<ResourceGroup>();
+        } else {
+            this.resourceGroups = resourceGroups;
+            for (ResourceGroup resourceGroup : this.resourceGroups) {
+                resourceGroup.addRole(this);
+                this.resourceGroups.add(resourceGroup);
+            }
+        }
     }
 
     public void addResourceGroup(org.rhq.core.domain.resource.group.ResourceGroup resourceGroup) {

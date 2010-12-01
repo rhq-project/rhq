@@ -34,11 +34,9 @@ import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
-
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.ChangedEvent;
 import com.smartgwt.client.widgets.grid.events.ChangedHandler;
@@ -54,42 +52,52 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 
 /**
- * A complex form item for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role
+ * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role
  * role}.
  *
  * @author Ian Springer
  */
 // TODO: i18n
-public class PermissionsItem extends CanvasItem {
+public class PermissionsEditor extends LocatableVStack {
 
     private static Messages MSG = CoreGUI.getMessages();
 
+    private ListGrid globalPermissionsGrid;
+    private ListGrid resourcePermissionsGrid;
     private Set<Permission> selectedPermissions;
     private RoleEditView roleEditView;
     private boolean isReadOnly;
     private Object originalValue;
 
-    public PermissionsItem(RoleEditView roleEditView) {
-        super(RolesDataSource.Field.PERMISSIONS, "Permissions");
+    public PermissionsEditor(RoleEditView roleEditView, boolean isReadOnly) {
+        super(roleEditView.extendLocatorId("Permissions"));
 
-        this.selectedPermissions = new HashSet<Permission>();
         this.roleEditView = roleEditView;
-        this.isReadOnly = this.roleEditView.isReadOnly();
-    }
+        this.isReadOnly = isReadOnly;
+        this.selectedPermissions = new HashSet<Permission>();
 
-    @Override
-    protected PermissionsEditor createCanvas() {
-        return new PermissionsEditor();
-    }
+        setWidth100();
+        setHeight(500);
+        
+        VLayout spacer = createVerticalSpacer(13);
+        addMember(spacer);
 
-    @Override
-    public PermissionsEditor getCanvas() {
-        PermissionsEditor permissionsEditor = (PermissionsEditor)super.getCanvas();
-        if (permissionsEditor == null) {
-            permissionsEditor = createCanvas();
-            setCanvas(permissionsEditor);
-        }
-        return permissionsEditor;
+        Label globalPermissionsHeader = new Label("<h4>Global Permissions</h4>");
+        globalPermissionsHeader.setHeight(17);
+        addMember(globalPermissionsHeader);
+
+        this.globalPermissionsGrid = createGlobalPermissionsGrid();
+        addMember(this.globalPermissionsGrid);
+
+        spacer = createVerticalSpacer(13);
+        addMember(spacer);
+
+        Label resourcePermissionsHeader = new Label("<h4>Resource Permissions</h4>");
+        resourcePermissionsHeader.setHeight(17);
+        addMember(resourcePermissionsHeader);
+
+        this.resourcePermissionsGrid = createResourcePermissionsGrid();
+        addMember(this.resourcePermissionsGrid);
     }
 
     public void reset() {
@@ -103,14 +111,14 @@ public class PermissionsItem extends CanvasItem {
 
         // Update the value of the authorized fields in each row of the grids.
 
-        ListGridRecord[] globalPermissionRecords = getCanvas().getGlobalPermissionsGrid().getRecords();
+        ListGridRecord[] globalPermissionRecords = this.globalPermissionsGrid.getRecords();
         for (ListGridRecord record : globalPermissionRecords) {
             String permissionName = record.getAttribute("name");
             Permission permission = Permission.valueOf(permissionName);
             record.setAttribute("authorized", this.selectedPermissions.contains(permission));
         }
 
-        ListGridRecord[] resourcePermissionRecords = getCanvas().getResourcePermissionsGrid().getRecords();
+        ListGridRecord[] resourcePermissionRecords = this.resourcePermissionsGrid.getRecords();
         for (ListGridRecord record : resourcePermissionRecords) {
             String readPermissionName = record.getAttribute("readName");
             Permission readPermission = Permission.valueOf(readPermissionName);
@@ -121,11 +129,11 @@ public class PermissionsItem extends CanvasItem {
             record.setAttribute("writeAuthorized", this.selectedPermissions.contains(writePermission));
         }
 
-        getCanvas().markForRedraw();
+        markForRedraw();
     }
 
     private Set<Permission> getValueAsPermissionSet() {
-        Object nativeArray = getValue();
+        Object nativeArray = this.roleEditView.getForm().getValue(RolesDataSource.Field.PERMISSIONS);
         if (this.originalValue == null) {
             this.originalValue = nativeArray;
         }
@@ -325,7 +333,7 @@ public class PermissionsItem extends CanvasItem {
 
                         // Let our parent role editor know the permissions have been changed, so it can update the
                         // enablement of its Save and Reset buttons.
-                        PermissionsItem.this.roleEditView.onItemChanged();
+                        org.rhq.enterprise.gui.coregui.client.admin.roles.PermissionsEditor.this.roleEditView.onItemChanged();
                     }
                 }
             });            
@@ -361,7 +369,7 @@ public class PermissionsItem extends CanvasItem {
         }
         
         ListGridRecord[] permissionRecords = RolesDataSource.toRecordArray(this.selectedPermissions);
-        getForm().setValue(getName(), permissionRecords);
+        this.roleEditView.getForm().setValue(RolesDataSource.Field.PERMISSIONS, permissionRecords);
 
         if (redrawRequired) {
             redraw();
@@ -416,49 +424,10 @@ public class PermissionsItem extends CanvasItem {
         return records;
     }
 
-    class PermissionsEditor extends LocatableVStack {
-        private ListGrid globalPermissionsGrid;
-        private ListGrid resourcePermissionsGrid;
-
-        PermissionsEditor() {
-            super(roleEditView.extendLocatorId("Permissions"));
-            setWidth100();
-            setHeight(500);
-
-            VLayout spacer = createVerticalSpacer(13);
-            addMember(spacer);
-
-            Label globalPermissionsHeader = new Label("<h4>Global Permissions</h4>");
-            globalPermissionsHeader.setHeight(17);
-            addMember(globalPermissionsHeader);
-
-            this.globalPermissionsGrid = createGlobalPermissionsGrid();
-            addMember(this.globalPermissionsGrid);
-
-            spacer = createVerticalSpacer(13);
-            addMember(spacer);
-
-            Label resourcePermissionsHeader = new Label("<h4>Resource Permissions</h4>");
-            resourcePermissionsHeader.setHeight(17);            
-            addMember(resourcePermissionsHeader);
-
-            this.resourcePermissionsGrid = createResourcePermissionsGrid();
-            addMember(this.resourcePermissionsGrid);
-        }
-
-        private VLayout createVerticalSpacer(int height) {
-            VLayout spacer = new VLayout();
-            spacer.setHeight(height);
-            return spacer;
-        }
-
-        public ListGrid getGlobalPermissionsGrid() {
-            return this.globalPermissionsGrid;
-        }
-
-        public ListGrid getResourcePermissionsGrid() {
-            return this.resourcePermissionsGrid;
-        }
+    private VLayout createVerticalSpacer(int height) {
+        VLayout spacer = new VLayout();
+        spacer.setHeight(height);
+        return spacer;
     }
 
 }

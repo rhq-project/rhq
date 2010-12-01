@@ -397,8 +397,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             assignedGrid.setData(initialSelection);
         }
 
-        if (!this.isReadOnly) {
-            // Add event handlers.
+        if (this.isReadOnly) {
+            assignedGrid.setDisabled(true);
+        } else {
             assignedGrid.addDoubleClickHandler(new DoubleClickHandler() {
                 public void onDoubleClick(DoubleClickEvent event) {
                     removeSelectedRows();

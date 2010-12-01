@@ -151,14 +151,14 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         }
     }
 
-    protected VLayout buildContentPane() {
-        VLayout contentPane = new VLayout();
+    protected LocatableVLayout buildContentPane() {
+        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
         contentPane.setWidth100();
         contentPane.setHeight100();
         contentPane.setOverflow(Overflow.AUTO);
         //contentPane.setPadding(7);
 
-        this.form = buildForm();
+        this.form = buildForm();        
         contentPane.addMember(this.form);
 
         return contentPane;
@@ -174,43 +174,48 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);
+        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);        
         form.setDataSource(this.dataSource);
 
         List<FormItem> items = createFormItems(form);
-        form.setItems(items.toArray(new FormItem[items.size()]));
+        form.setFields(items.toArray(new FormItem[items.size()]));
 
         form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent event) {
                 AbstractRecordEditor.this.onItemChanged();
             }
         });
-
+                
         return form;
     }
+
 
     protected boolean isFormReadOnly() {
         return this.isReadOnly;
     }
 
+    public void setForm(EnhancedDynamicForm form) {
+        this.form = form;
+    }
+
     public EnhancedDynamicForm getForm() {
-        return form;
+        return this.form;
     }
 
     public DS getDataSource() {
-        return dataSource;
+        return this.dataSource;
     }
 
     public boolean isReadOnly() {
-        return isReadOnly;
+        return this.isReadOnly;
     }
 
     public int getRecordId() {
-        return recordId;
+        return this.recordId;
     }
 
     public String getListViewPath() {
-        return listViewPath;
+        return this.listViewPath;
     }
 
     protected abstract List<FormItem> createFormItems(EnhancedDynamicForm form);
@@ -220,8 +225,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      * and update the Save button's enablement based on whether or not all items on the form are valid.
      */
     public void onItemChanged() {
-        // TODO: We also need to validate complex fields - selectors, etc.
         boolean isValid = this.form.valuesAreValid(false);
+        //boolean isValid = this.valuesManager.validate();
 
         // If we're in editable mode, update the button enablement.
         if (!this.isReadOnly) {
@@ -257,7 +262,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     }
 
     protected void reset() {
-        this.form.reset();
+        this.form.resetValues();
     }
 
     protected void save() {

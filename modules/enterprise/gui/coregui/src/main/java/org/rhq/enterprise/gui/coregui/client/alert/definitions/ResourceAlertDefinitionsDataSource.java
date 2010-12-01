@@ -96,7 +96,7 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         } else {
             if (parentId != null && parentId.intValue() != 0) {
                 record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesLink() + "/Alert/"
-                    + this.resource.getResourceType().getId());
+                    + this.resource.getResourceType().getId() + "/" + parentId);
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
                 record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()

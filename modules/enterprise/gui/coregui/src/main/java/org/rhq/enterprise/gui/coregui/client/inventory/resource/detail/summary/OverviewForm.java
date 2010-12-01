@@ -296,7 +296,7 @@ public class OverviewForm extends EnhancedDynamicForm {
             + "</i>");
         Resource parentResource = resource.getParentResource();
         setValue("parent", parentResource != null ? ("<a href=\"#Resource/" + parentResource.getId() + "\">"
-            + parentResource.getName() + "</a>") : "<i>none</i>");
+            + parentResource.getName() + "</a>") : "<i>" + MSG.common_label_none() + "</i>");
     }
 
     public boolean isHeaderEnabled() {

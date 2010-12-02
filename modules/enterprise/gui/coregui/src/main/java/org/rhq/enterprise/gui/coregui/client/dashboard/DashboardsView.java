@@ -185,15 +185,15 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
+                tabCloseClickEvent.cancel();
                 final DashboardView dashboardView = (DashboardView) tabCloseClickEvent.getTab().getPane();
                 SC.ask(MSG.view_dashboards_confirm1() + " [" + tabCloseClickEvent.getTab().getTitle() + "]?",
                     new BooleanCallback() {
-                        public void execute(Boolean aBoolean) {
-                            if (aBoolean) {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
                                 History.newItem(VIEW_ID.getName());
-                            } else {
-                                tabCloseClickEvent.cancel();
                             }
                         }
                     });

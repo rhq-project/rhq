@@ -218,12 +218,17 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         Set<Role> newRoles = subjectToModify.getRoles();
         if (newRoles != null) {
-            int[] newRoleIds = new int[newRoles.size()];
-            int i = 0;
-            for (Role role : newRoles) {
-                newRoleIds[i] = role.getId();
+            Set<Role> currentRoles =
+                new HashSet<Role>(roleManager.findRolesBySubject(subjectToModify.getId(), 
+                    PageControl.getUnlimitedInstance()));
+            if (newRoles.containsAll(currentRoles) && currentRoles.containsAll(newRoles)) {
+                int[] newRoleIds = new int[newRoles.size()];
+                int i = 0;
+                for (Role role : newRoles) {
+                    newRoleIds[i] = role.getId();
+                }
+                roleManager.setAssignedSubjectRoles(whoami, subjectToModify.getId(), newRoleIds);
             }
-            roleManager.setAssignedSubjectRoles(whoami, subjectToModify.getId(), newRoleIds);
         }
 
         boolean ldapRolesModified = false;
@@ -847,7 +852,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 

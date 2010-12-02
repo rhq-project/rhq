@@ -22,7 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -43,15 +45,17 @@ public class MeasurementOOBView extends Table {
 
     @Override
     protected void configureTable() {
-        getListGrid().setAlternateRecordStyles(false);
-
-        getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
+        ListGrid grid = getListGrid();
+        grid.setAlternateRecordStyles(false);
+        grid.getField("resourceName").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
             }
         });
-
-
     }
 
+    @Override
+    protected SelectionStyle getDefaultSelectionStyle() {
+        return SelectionStyle.NONE;
+    }
 }

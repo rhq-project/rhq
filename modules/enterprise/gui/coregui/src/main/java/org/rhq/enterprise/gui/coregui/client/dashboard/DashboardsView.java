@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -162,6 +163,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         tabSet.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
                 NamedTab selectedTab = tabSet.getTabByTitle(tabSelectedEvent.getTab().getTitle());
+                Log.debug("onTabSelected(" + selectedTab.getTitle() + ")");
                 History.newItem("Dashboard/" + selectedTab.getName(), false);
                 selectedDashboardView = (DashboardView) tabSelectedEvent.getTab().getPane();
                 selectedDashboard = selectedDashboardView.getDashboard();

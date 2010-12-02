@@ -393,7 +393,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             // wrap in new HashSet to avoid ConcurrentModificationExceptions.
             Set<LdapGroup> currentLdapGroups = new HashSet<LdapGroup>(attachedRole.getLdapGroups());
             for (LdapGroup ldapGroup : currentLdapGroups) {
-                attachedRole.removeLdapGroup(ldapGroup);
+                if (!newLdapGroups.contains(ldapGroup)) {
+                    attachedRole.removeLdapGroup(ldapGroup);
+                    entityManager.remove(ldapGroup);
+                }
             }
 
             for (LdapGroup ldapGroup : newLdapGroups) {

@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class ResourceGroupListView extends Table {
+public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSource> {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_groups_resourceGroups();
 

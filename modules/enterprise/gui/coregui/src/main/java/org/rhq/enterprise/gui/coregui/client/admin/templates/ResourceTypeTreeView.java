@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
@@ -115,6 +116,10 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
     private Canvas getGridCanvas() {
         if (this.gridCanvas == null) {
             LocatableVLayout layout = new LocatableVLayout(extendLocatorId("gridLayout"));
+
+            TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_templates(), ImageManager.getMetricEditIcon());
+            titleBar.setExtraSpace(10);
+            layout.addMember(titleBar);
 
             SectionStack sectionStack = new SectionStack();
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
@@ -294,7 +299,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 metricTemplateImg.setShowDown(false);
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
-                metricTemplateImg.setSrc("subsystems/monitor/Edit_Metric.png");
+                metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
                 metricTemplateImg.setPrompt("Edit Metric Template");
                 metricTemplateImg.setHeight(16);
                 metricTemplateImg.setWidth(16);
@@ -390,7 +395,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 metricTemplateImg.setShowDown(false);
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
-                metricTemplateImg.setSrc("subsystems/monitor/Edit_Metric.png");
+                metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
                 metricTemplateImg.setPrompt("Edit Metric Template");
                 metricTemplateImg.setHeight(16);
                 metricTemplateImg.setWidth(16);

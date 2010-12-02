@@ -237,6 +237,10 @@ public class ImageManager {
         return "subsystems/alert/Edit_Alert.png";
     }
 
+    public static String getMetricEditIcon() {
+        return "subsystems/monitor/Edit_Metric.png";
+    }
+
     public static String getPluginConfigurationIcon(ConfigurationUpdateStatus updateStatus) {
         if (updateStatus != null) {
             switch (updateStatus) {

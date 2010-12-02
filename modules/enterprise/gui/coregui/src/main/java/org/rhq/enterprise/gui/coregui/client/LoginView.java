@@ -344,15 +344,14 @@ public class LoginView extends LocatableCanvas {
             });
             row.addMember(resetButton);
 
-            IButton logoutButton = new LocatableIButton(inputForm.extendLocatorId("Logout"), MSG.view_login_logout());
-            logoutButton.addClickHandler(new ClickHandler() {
+            IButton cancelButton = new LocatableIButton(inputForm.extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     UserSessionManager.logout();
                     resetLogin(LoginView.this.extendLocatorId("Reset"));
-                    return;
                 }
             });
-            row.addMember(logoutButton);
+            row.addMember(cancelButton);
             Label logoutLabel = new Label(MSG.view_login_registerLater());
             logoutLabel.setWrap(false);
             row.addMember(logoutLabel);

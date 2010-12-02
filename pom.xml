@@ -1015,7 +1015,9 @@
       <profile>
           <id>build-properties</id>
           <activation>
-              <activeByDefault>true</activeByDefault>
+              <file>
+                  <exists>.git</exists>
+              </file>
           </activation>
           <build>
               <plugins>
@@ -1100,6 +1102,57 @@
                       </execution>
                   </executions>
               </plugin>
+              </plugins>
+          </build>
+      </profile>
+
+      <profile>
+          <id>brew</id>
+          <activation>
+              <property>
+                  <name>rhq.build.number</name>
+              </property>
+          </activation>
+          <build>
+              <plugins>
+              <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                      <execution>
+                          <id>write-build-properties-file</id>
+                          <goals>
+                              <goal>run</goal>
+                          </goals>
+                          <phase>generate-sources</phase>
+                          <configuration>
+                              <tasks>
+                                  <tstamp>
+                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
+                                              timezone="GMT"/>
+                                  </tstamp>
+                                  <mkdir dir="target"/>
+                                  <echo file="target/build-time.properties" level="error">buildTime = ${maven.build.timestamp}</echo>
+                                  <echo file="target/build-number.properties" level="error">buildNumber = ${rhq.build.number}</echo>
+                              </tasks>
+                          </configuration>
+                      </execution>
+
+                      <execution>
+                          <id>echo-build-properties</id>
+                          <phase>compile</phase>
+                          <inherited>false</inherited>
+                          <goals>
+                              <goal>run</goal>
+                          </goals>
+                          <configuration>
+                              <tasks>
+                                  <echo level="debug">buildTime = ${maven.build.timestamp}</echo>
+                                  <echo level="debug">buildNumber = ${rhq.build.number}</echo>
+                              </tasks>
+                          </configuration>
+                      </execution>
+                  </executions>
+                </plugin>
               </plugins>
           </build>
       </profile>

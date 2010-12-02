@@ -93,7 +93,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         DataSourceTextField timestampField = new DataSourceTextField("ctime", MSG
             .view_autoDiscoveryQ_field_discoveryTime());
 
-        DataSourceTextField statusField = new DataSourceTextField("status", MSG
+        DataSourceTextField statusField = new DataSourceTextField("statusLabel", MSG
             .view_autoDiscoveryQ_field_inventoryStatus());
 
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField, descriptionField,
@@ -246,6 +246,23 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             setAttribute("description", resource.getDescription());
             setAttribute("ctime", new Date(resource.getCtime()));
             setAttribute("status", resource.getInventoryStatus().name());
+            switch (resource.getInventoryStatus()) {
+            case NEW:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_new());
+                break;
+            case COMMITTED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_committed());
+                break;
+            case IGNORED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_ignored());
+                break;
+            case DELETED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_deleted());
+                break;
+            case UNINVENTORIED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_uninventoried());
+                break;
+            }
         }
 
         public Resource getResource() {

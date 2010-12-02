@@ -139,7 +139,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         key = new TreeGridField("resourceKey");
         type = new TreeGridField("typeName");
         description = new TreeGridField("description");
-        status = new TreeGridField("status");
+        status = new TreeGridField("statusLabel");
         ctime = new TreeGridField("ctime");
 
         if (!simple) {

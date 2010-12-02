@@ -55,6 +55,8 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     // TODO: We need a 24x24 version of the Role icon.
     private static final String HEADER_ICON = "global/Role_16.png";
 
+    private boolean hasManageSecurity;
+
     public RolesView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_roles());
 
@@ -62,7 +64,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
     }
-
+    
     @Override
     protected void configureTable() {
         super.configureTable();
@@ -104,23 +106,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
             });
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
-            private boolean hasManageSecurity = false;
-
             public boolean isEnabled(ListGridRecord[] selection) {
-                GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-                    new AsyncCallback<Set<Permission>>() {
-                        @Override
-                        public void onSuccess(Set<Permission> result) {
-                            hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                                    .of(Message.Option.BackgroundJobResult)));
-                        }
-                    });
                 return hasManageSecurity;
             }
 
@@ -128,6 +114,28 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
                 newDetails();
             }
         });
+
+        fetchManageSecurityPermissionAsync();
+    }
+
+    private void fetchManageSecurityPermissionAsync() {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+            new AsyncCallback<Set<Permission>>() {
+
+                @Override
+                public void onSuccess(Set<Permission> result) {
+                    hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+                    refresh();
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    hasManageSecurity = false;
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                            .of(Message.Option.BackgroundJobResult)));
+                }
+            });
     }
 
     @Override

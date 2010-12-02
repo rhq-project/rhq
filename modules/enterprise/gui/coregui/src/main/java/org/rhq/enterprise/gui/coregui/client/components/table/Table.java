@@ -475,7 +475,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
-    public void refresh() {
+    public void refresh() {        
         if (null != this.listGrid) {
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();

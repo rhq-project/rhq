@@ -57,6 +57,8 @@ public class UsersView extends TableSection<UsersDataSource> {
 
     private static final String HEADER_ICON = "global/User_24.png";
 
+    private boolean hasManageSecurity;
+
     public UsersView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_users());
 
@@ -74,6 +76,28 @@ public class UsersView extends TableSection<UsersDataSource> {
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             createDeleteAction());
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
+
+        fetchManageSecurityPermissionAsync();
+    }
+
+    private void fetchManageSecurityPermissionAsync() {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+            new AsyncCallback<Set<Permission>>() {
+
+                @Override
+                public void onSuccess(Set<Permission> result) {
+                    hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+                    refresh();
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    hasManageSecurity = false;
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                            .of(Message.Option.BackgroundJobResult)));
+                }
+            });
     }
 
     private List<ListGridField> createFields() {
@@ -157,23 +181,7 @@ public class UsersView extends TableSection<UsersDataSource> {
 
     private TableAction createNewAction() {
         return new TableAction() {
-            private boolean hasManageSecurity = false;
-
             public boolean isEnabled(ListGridRecord[] selection) {
-                GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-                    new AsyncCallback<Set<Permission>>() {
-                        @Override
-                        public void onSuccess(Set<Permission> result) {
-                            hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                                    .of(Message.Option.BackgroundJobResult)));
-                        }
-                    });
                 return hasManageSecurity;
             }
 

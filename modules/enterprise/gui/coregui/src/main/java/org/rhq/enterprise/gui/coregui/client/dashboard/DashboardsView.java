@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -314,38 +313,33 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     public void renderView(ViewPath viewPath) {
-        //added to avoid NPE in gwt debug window. 
-        if (tabSet != null) {
-            NamedTab[] tabs = tabSet.getTabs();
+        NamedTab[] tabs = tabSet.getTabs();
 
-            // make sure we have at least a default dashboard tab
-            if (0 == tabs.length) {
-                List<Dashboard> defaultTabs = new ArrayList<Dashboard>(1);
-                defaultTabs.add(getDefaultDashboard());
-                updateDashboards(defaultTabs);
-                tabs = tabSet.getTabs();
-            }
+        // make sure we have at least a default dashboard tab
+        if (0 == tabs.length) {
+            List<Dashboard> defaultTabs = new ArrayList<Dashboard>(1);
+            defaultTabs.add(getDefaultDashboard());
+            updateDashboards(defaultTabs);
+            tabs = tabSet.getTabs();
+        }
 
-            // if nothing selected or pathtab does not exist, default to the first tab
-            NamedTab selectedTab = tabs[0];
-            selectedTabName = selectedTab.getName();
+        // if nothing selected or pathtab does not exist, default to the first tab
+        NamedTab selectedTab = tabs[0];
+        selectedTabName = selectedTab.getName();
 
-            if (!viewPath.isEnd()) {
-                String pathTabName = viewPath.getCurrent().getPath();
+        if (!viewPath.isEnd()) {
+            String pathTabName = viewPath.getCurrent().getPath();
 
-                for (NamedTab tab : tabSet.getTabs()) {
-                    if (tab.getName().equals(pathTabName)) {
-                        selectedTab = tab;
-                        selectedTabName = pathTabName;
-                        break;
-                    }
+            for (NamedTab tab : tabSet.getTabs()) {
+                if (tab.getName().equals(pathTabName)) {
+                    selectedTab = tab;
+                    selectedTabName = pathTabName;
+                    break;
                 }
             }
-
-            tabSet.selectTab(selectedTab);
-        } else {
-            Log.debug("While rendering DashboardsView, tabSet is null.");
         }
+
+        tabSet.selectTab(selectedTab);
     }
 
     public Dashboard getDashboard() {

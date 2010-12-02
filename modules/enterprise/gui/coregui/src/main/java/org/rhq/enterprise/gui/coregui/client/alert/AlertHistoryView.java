@@ -56,7 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Heiko W. Rupp
  * @author John Mazzitelli
  */
-public class AlertHistoryView extends TableSection {
+public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts());
 

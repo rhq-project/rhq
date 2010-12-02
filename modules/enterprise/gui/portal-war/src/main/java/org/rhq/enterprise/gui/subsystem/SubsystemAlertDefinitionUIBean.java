@@ -39,9 +39,9 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -160,14 +160,13 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
             }
 
             // delete resources first
-            alertDefinitionManager.removeAlertDefinitions(subject, resourceDefinitions
-                .toArray(new Integer[resourceDefinitions.size()]));
+            alertDefinitionManager.removeAlertDefinitions(subject, ArrayUtils.unwrapCollection(resourceDefinitions));
 
             // then delete templates and group alert defs, which are both tolerant of missing child definitions
-            groupAlertDefinitionManager.removeGroupAlertDefinitions(subject, groupDefinitions
-                .toArray(new Integer[groupDefinitions.size()]));
-            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
-                .size()]));
+            groupAlertDefinitionManager.removeGroupAlertDefinitions(subject,
+                groupDefinitions.toArray(new Integer[groupDefinitions.size()]));
+            alertTemplateManager.removeAlertTemplates(subject,
+                typeDefinitions.toArray(new Integer[typeDefinitions.size()]));
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected alert definitions.");
         } catch (Exception e) {
@@ -199,17 +198,17 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
             }
 
             // delete resources first
-            alertDefinitionManager.disableAlertDefinitions(subject, resourceDefinitions
-                .toArray(new Integer[resourceDefinitions.size()]));
+            alertDefinitionManager.disableAlertDefinitions(subject, ArrayUtils.unwrapCollection(resourceDefinitions));
+            //resourceDefinitions.toArray(new int[resourceDefinitions.size()]));
 
             // then delete templates and group alert defs, which are both tolerant of missing child definitions
-            groupAlertDefinitionManager.disableGroupAlertDefinitions(subject, groupDefinitions
-                .toArray(new Integer[groupDefinitions.size()]));
+            groupAlertDefinitionManager.disableGroupAlertDefinitions(subject,
+                groupDefinitions.toArray(new Integer[groupDefinitions.size()]));
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disable selected alert definitions.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to disable selected alert definitions.",
-                e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to disable selected alert definitions.", e);
         }
 
         return "success";
@@ -236,12 +235,11 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
             }
 
             // delete resources first
-            alertDefinitionManager.enableAlertDefinitions(subject, resourceDefinitions
-                .toArray(new Integer[resourceDefinitions.size()]));
+            alertDefinitionManager.enableAlertDefinitions(subject, ArrayUtils.unwrapCollection(resourceDefinitions));
 
             // then delete templates and group alert defs, which are both tolerant of missing child definitions
-            groupAlertDefinitionManager.enableGroupAlertDefinitions(subject, groupDefinitions
-                .toArray(new Integer[groupDefinitions.size()]));
+            groupAlertDefinitionManager.enableGroupAlertDefinitions(subject,
+                groupDefinitions.toArray(new Integer[groupDefinitions.size()]));
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enable selected alert definitions.");
         } catch (Exception e) {

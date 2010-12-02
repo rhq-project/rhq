@@ -64,7 +64,7 @@ public class PortletSettingsWindow extends LocatableWindow {
         this.parentWindow = parentWindow;
         this.storedPortlet = storedPortlet;
         this.view = view;
-        setTitle(storedPortlet.getName() + " Settings");
+        setTitle(storedPortlet.getName() + " " + MSG.common_title_settings());
         setOverflow(Overflow.VISIBLE);
         setMinWidth(400);
         setMinHeight(400);
@@ -90,13 +90,13 @@ public class PortletSettingsWindow extends LocatableWindow {
             final DynamicForm form = ((CustomSettingsPortlet) view).getCustomSettingsForm();
             layout.addMember(form);
 
-            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
+            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+            IButton save = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (form.validate()) {
@@ -125,13 +125,13 @@ public class PortletSettingsWindow extends LocatableWindow {
             editor.setHeight(400);
             layout.addMember(editor);
 
-            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
+            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+            IButton save = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_cancel());
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (editor.validate()) {
@@ -153,7 +153,7 @@ public class PortletSettingsWindow extends LocatableWindow {
             layout.addMember(buttons);
 
         } else {
-            layout.addMember(new Label("No settings available for this portlet"));
+            layout.addMember(new Label(MSG.view_portlet_generic_unconfigured()));
         }
 
         addItem(layout);

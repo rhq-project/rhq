@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -30,6 +31,8 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.ColorPickerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
+import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
@@ -53,7 +56,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class DashboardView extends LocatableVLayout {
-
     private DashboardsView dashboardsView;
     private Dashboard storedDashboard;
 
@@ -63,7 +65,7 @@ public class DashboardView extends LocatableVLayout {
     DynamicForm editForm;
     IMenuButton addPortlet;
 
-    HashSet<PortletWindow> portlets = new HashSet<PortletWindow>();
+    Set<PortletWindow> portlets = new HashSet<PortletWindow>();
 
     public DashboardView(String locatorId, DashboardsView dashboardsView, Dashboard storedDashboard) {
         super(locatorId);
@@ -117,21 +119,25 @@ public class DashboardView extends LocatableVLayout {
         editForm.setAutoWidth();
         editForm.setNumCols(9);
 
-        TextItem nameItem = new TextItem("name", "Dashboard Name");
+        TextItem nameItem = new TextItem("name", MSG.common_title_dashboard_name());
         nameItem.setValue(storedDashboard.getName());
-        nameItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent changedEvent) {
-                storedDashboard.setName((String) changedEvent.getValue());
-                save();
-                dashboardsView.updateNames();
+        nameItem.addBlurHandler(new BlurHandler() {
+            public void onBlur(BlurEvent blurEvent) {
+                String val = (String) blurEvent.getItem().getValue();
+                val = (null == val) ? "" : val.trim();
+                if (!("".equals(val) || val.equals(storedDashboard.getName()))) {
+                    storedDashboard.setName(val);
+                    save();
+                    dashboardsView.updateNames();
+                }
             }
         });
 
         final StaticTextItem numColItem = new StaticTextItem();
-        numColItem.setTitle("Columns");
+        numColItem.setTitle(MSG.common_title_columns());
         numColItem.setValue(storedDashboard.getColumns());
 
-        ButtonItem addColumn = new ButtonItem("addColumn", "Add Column");
+        ButtonItem addColumn = new ButtonItem("addColumn", MSG.common_title_add_column());
         //        addColumn.setIcon("silk/application_side_expand.png");
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
@@ -146,7 +152,7 @@ public class DashboardView extends LocatableVLayout {
             }
         });
 
-        ButtonItem removeColumn = new ButtonItem("removeColumn", "Remove Column");
+        ButtonItem removeColumn = new ButtonItem("removeColumn", MSG.common_title_remove_column());
         //        removeColumn.setIcon("silk/application_side_contract.png");
         removeColumn.setAutoFit(true);
         removeColumn.setStartRow(false);
@@ -173,7 +179,8 @@ public class DashboardView extends LocatableVLayout {
             addPorletMenu.addItem(new MenuItem(portletName));
         }
 
-        addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortal"), "Add Portlet", addPorletMenu);
+        addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortal"), MSG.common_title_add_portlet(),
+            addPorletMenu);
 
         //        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
         addPortlet.setIcon("[skin]/images/actions/add.png");
@@ -194,11 +201,11 @@ public class DashboardView extends LocatableVLayout {
 
         ColorPickerItem picker = new ColorPickerItem();
 
-        picker.setTitle("Background");
+        picker.setTitle(MSG.common_title_background());
         picker.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 Object v = changedEvent.getValue();
-                com.allen_sauer.gwt.log.client.Log.info("color chagned to " + v);
+                com.allen_sauer.gwt.log.client.Log.info("color changed to " + v);
                 setBackgroundColor(String.valueOf(v));
                 storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, String.valueOf(v)));
                 save();
@@ -277,12 +284,12 @@ public class DashboardView extends LocatableVLayout {
     public void save() {
         GWTServiceLookup.getDashboardService().storeDashboard(storedDashboard, new AsyncCallback<Dashboard>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to save dashboard to server", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboardManager_error(), caught);
             }
 
             public void onSuccess(Dashboard result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Saved dashboard " + result.getName() + " to server", Message.Severity.Info));
+                    new Message(MSG.view_dashboardManager_saved(result.getName()), Message.Severity.Info));
                 storedDashboard = result;
 
                 updateConfigs(result);
@@ -301,16 +308,20 @@ public class DashboardView extends LocatableVLayout {
     }
 
     public void delete() {
-        GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(), new AsyncCallback<Void>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("", caught);
-            }
+        if (null != this.storedDashboard && this.storedDashboard.getId() > 0) {
+            GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(),
+                new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("", caught);
+                    }
 
-            public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Successfully deleted dashboard " + storedDashboard.getName(), Message.Severity.Info));
-            }
-        });
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_dashboardManager_deleted(storedDashboard.getName()),
+                                Message.Severity.Info));
+                    }
+                });
+        }
     }
 
     public void resize() {

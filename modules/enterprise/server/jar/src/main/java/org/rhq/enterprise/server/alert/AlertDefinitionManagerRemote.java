@@ -48,17 +48,17 @@ public interface AlertDefinitionManagerRemote {
     @WebMethod
     int enableAlertDefinitions(// 
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionIds") Integer[] alertDefinitionIds);
+        @WebParam(name = "alertDefinitionIds") int[] alertDefinitionIds);
 
     @WebMethod
     int disableAlertDefinitions(// 
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionIds") Integer[] alertDefinitionIds);
+        @WebParam(name = "alertDefinitionIds") int[] alertDefinitionIds);
 
     @WebMethod
     int removeAlertDefinitions(// 
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionIds") Integer[] alertDefinitionIds);
+        @WebParam(name = "alertDefinitionIds") int[] alertDefinitionIds);
 
     @WebMethod
     String[] getAlertNotificationConfigurationPreview(//

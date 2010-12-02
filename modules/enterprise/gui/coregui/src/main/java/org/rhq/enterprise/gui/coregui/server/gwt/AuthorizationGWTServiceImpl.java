@@ -82,4 +82,5 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
 }

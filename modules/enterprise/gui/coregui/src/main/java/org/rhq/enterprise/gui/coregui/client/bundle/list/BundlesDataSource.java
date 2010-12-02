@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -41,19 +45,29 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundlesDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
-        addField(nameField);
+        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
+        fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
-        addField(descriptionField);
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
+        fields.add(descriptionField);
 
-        DataSourceTextField bundleTypeDataField = new DataSourceTextField("bundleType", "Bundle Type");
-        addField(bundleTypeDataField);
+        DataSourceTextField bundleTypeDataField = new DataSourceTextField("bundleType", MSG.view_bundle_bundleType());
+        fields.add(bundleTypeDataField);
+
+        return fields;
     }
 
     @Override
@@ -61,7 +75,6 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
         BundleCriteria criteria = new BundleCriteria();
         criteria.setPageControl(getPageControl(request));
-
 
         if (request.getCriteria().getValues().get("tagNamespace") != null) {
             criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
@@ -74,7 +87,6 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         if (request.getCriteria().getValues().get("tagName") != null) {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
-
 
         bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
             public void onFailure(Throwable caught) {
@@ -93,7 +105,7 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
     }
 
     @Override
-    public Bundle copyValues(ListGridRecord from) {
+    public Bundle copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 

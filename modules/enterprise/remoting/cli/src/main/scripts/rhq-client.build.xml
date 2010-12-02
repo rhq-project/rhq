@@ -63,7 +63,7 @@
       <copy file="${settings.localRepository}/javax/persistence/persistence-api/${persistence-api.version}/persistence-api-${persistence-api.version}.jar" tofile="${lib.home}/persistence-api-${persistence-api.version}.jar" verbose="true" />
       <copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" tofile="${lib.home}/${project.artifactId}-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true" />
-      <copy file="${settings.localRepository}/org/testng/testng/${testng.version}/testng-${testng.version}-jdk15.jar" tofile="${lib.home}/testng-${testng.version}-jdk15.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/testng/testng/${testng.version}/testng-${testng.version}.jar" tofile="${lib.home}/testng-${testng.version}.jar" verbose="true" />
    </target>
 
 </project>

@@ -28,7 +28,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.composite.EventComposite;
@@ -38,23 +37,25 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Joseph Marques
  */
-public class EventCompositeDetailsView extends VLayout implements BookmarkableView {
+public class EventCompositeDetailsView extends LocatableVLayout implements BookmarkableView {
 
     private int eventId;
     private ViewId viewId;
 
-    private static EventCompositeDetailsView INSTANCE = new EventCompositeDetailsView();
+    private static EventCompositeDetailsView INSTANCE = new EventCompositeDetailsView("eventCompositeDetailsView");
 
     public static EventCompositeDetailsView getInstance() {
         return INSTANCE;
     }
 
-    private EventCompositeDetailsView() {
+    private EventCompositeDetailsView(String id) {
         // access through the static singleton only
+        super(id);
     }
 
     private void show(int eventId) {
@@ -70,7 +71,7 @@ public class EventCompositeDetailsView extends VLayout implements BookmarkableVi
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failure loading event details", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_eventDetails_loadFailed(), caught);
                 }
             });
     }
@@ -81,7 +82,7 @@ public class EventCompositeDetailsView extends VLayout implements BookmarkableVi
         }
 
         if (this.viewId != null) {
-            viewId.getBreadcrumbs().get(0).setDisplayName("Details");
+            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_inventory_eventHistory_details());
             CoreGUI.refreshBreadCrumbTrail();
         }
 
@@ -89,19 +90,19 @@ public class EventCompositeDetailsView extends VLayout implements BookmarkableVi
         form.setWidth100();
         form.setHeight100();
 
-        StaticTextItem id = new StaticTextItem("id", "Id");
+        StaticTextItem id = new StaticTextItem("id", MSG.common_title_id());
         id.setValue(composite.getEventId());
 
-        StaticTextItem severity = new StaticTextItem("severity", "Severity");
+        StaticTextItem severity = new StaticTextItem("severity", MSG.view_inventory_eventHistory_severity());
         severity.setValue(composite.getSeverity().name());
 
-        StaticTextItem source = new StaticTextItem("source", "Source");
+        StaticTextItem source = new StaticTextItem("source", MSG.view_inventory_eventHistory_sourceLocation());
         source.setValue(composite.getSourceLocation());
 
-        StaticTextItem timestamp = new StaticTextItem("timestamp", "Timestamp");
+        StaticTextItem timestamp = new StaticTextItem("timestamp", MSG.view_inventory_eventHistory_timestamp());
         timestamp.setValue(composite.getTimestamp());
 
-        TextAreaItem detail = new TextAreaItem("details", "Details");
+        TextAreaItem detail = new TextAreaItem("details", MSG.view_inventory_eventHistory_details());
         detail.setValue(composite.getEventDetail());
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setColSpan(2);

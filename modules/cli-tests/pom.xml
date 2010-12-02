@@ -22,16 +22,15 @@
 
    <dependencies>
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-cli</artifactId>
-         <version>${version}</version>
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>5.8</version>
-         <classifier>jdk15</classifier>
+         <version>${testng.version}</version>
       </dependency>
 
       <dependency>
@@ -148,14 +147,12 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>    
-             <version>1.1</version>
+             <artifactId>maven-antrun-plugin</artifactId>        
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

@@ -411,8 +411,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                         result.append("Skipping existing repository group [").append(name).append("]").append('\n');
                     } else {
                         log.error("Error adding repository group [" + name + "]", e);
-                        result.append("Could not add repository group [").append(name).append(
-                            "]. See log for more information.").append('\n');
+                        result.append("Could not add repository group [").append(name)
+                            .append("]. See log for more information.").append('\n');
                     }
                 }
             }
@@ -422,8 +422,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             result
                 .append("There are no new repository groups since the last time this content source was synchronized.\n");
         } else {
-            result.append("Imported the following [").append(importedRepoGroups.size()).append(
-                "] repository group(s): ").append(importedRepoGroups).append('\n');
+            result.append("Imported the following [").append(importedRepoGroups.size())
+                .append("] repository group(s): ").append(importedRepoGroups).append('\n');
         }
 
         // Hold on to all current candidate repos for the content source. If any were not present in this
@@ -451,12 +451,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 } catch (Exception e) {
                     if (e instanceof RepoException
                         && ((RepoException) e).getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
-                        result.append("Skipping addition of existing repository [").append(createMe.getName()).append(
-                            "]").append('\n');
+                        result.append("Skipping addition of existing repository [").append(createMe.getName())
+                            .append("]").append('\n');
                     } else {
                         log.error("Error processing repository [" + createMe + "]", e);
-                        result.append("Could not add repository [").append(createMe.getName()).append(
-                            "]. See log for more information.").append('\n');
+                        result.append("Could not add repository [").append(createMe.getName())
+                            .append("]. See log for more information.").append('\n');
                     }
                 }
             }
@@ -473,8 +473,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                     removeRepoFromList(createMe.getName(), candidatesForThisProvider);
                 } catch (Exception e) {
                     log.error("Error processing repository [" + createMe + "]", e);
-                    result.append("Could not add repository [").append(createMe.getName()).append(
-                        "]. See log for more information.").append('\n');
+                    result.append("Could not add repository [").append(createMe.getName())
+                        .append("]. See log for more information.").append('\n');
                 }
             }
         }
@@ -482,8 +482,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         if (importedRepos.isEmpty()) {
             result.append("There are no new repositories since the last time this content source was synchronized.\n");
         } else {
-            result.append("Imported the following ").append(importedRepos.size()).append(" repository(s): ").append(
-                importedRepos).append('\n');
+            result.append("Imported the following ").append(importedRepos.size()).append(" repository(s): ")
+                .append(importedRepos).append('\n');
         }
 
         // Any repos that haven't been removed from candidatesForThisProvider were not returned in this
@@ -492,8 +492,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             for (Repo deleteMe : candidatesForThisProvider) {
                 deleteRepo(subject, deleteMe.getId());
             }
-            result.append("Deleted the following ").append(candidatesForThisProvider.size()).append(
-                " obsolete repository(s): ").append(candidatesForThisProvider).append('\n');
+            result.append("Deleted the following ").append(candidatesForThisProvider.size())
+                .append(" obsolete repository(s): ").append(candidatesForThisProvider).append('\n');
         }
     }
 
@@ -589,8 +589,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 RepoContentSource repoContentSourceMapping = repo.addContentSource(contentSource);
                 entityManager.persist(repoContentSourceMapping);
             }
-            Set<PackageVersion> alreadyAssociatedPackageVersions = new HashSet<PackageVersion>(repo
-                .getPackageVersions());
+            Set<PackageVersion> alreadyAssociatedPackageVersions = new HashSet<PackageVersion>(
+                repo.getPackageVersions());
 
             // Automatically associate all of the content source's package versions with this repo,
             // but *skip* over the ones that are already linked to this repo from a previous association.
@@ -1031,12 +1031,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
+    public int synchronizeRepos(Subject subject, int[] repoIds) throws Exception {
         int syncCount = 0;
 
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
 
-        for (Integer id : repoIds) {
+        for (int id : repoIds) {
             try {
                 Repo repo = getRepo(subject, id);
                 pc.syncRepoNow(repo);

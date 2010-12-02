@@ -63,8 +63,8 @@ public interface RoleManagerRemote {
      * @return The persisted role with the primary key populated
      */
     @WebMethod
-    Role createRole(
-        @WebParam(name = "subject") Subject subject,
+    Role createRole( //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "newRole") Role newRole);
 
     /**
@@ -75,9 +75,9 @@ public interface RoleManagerRemote {
      * @param roleIds The IDs of the roles to delete
      */
     @WebMethod
-    void deleteRoles(
-        @WebParam(name = "subject") Subject subject,
-        @WebParam(name = "roleIds") Integer[] roleIds);
+    void deleteRoles( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "roleIds") int[] roleIds);
 
     /**
      * Updates the given role, excluding the subjects and groups. This updates permissions, name, description, etc.
@@ -87,10 +87,9 @@ public interface RoleManagerRemote {
      * @return The updated role
      */
     @WebMethod
-    Role updateRole(
-        @WebParam(name = "subject") Subject subject,
-        @WebParam(name = "role") Role role
-    );
+    Role updateRole( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "role") Role role);
 
     /**
      * Get all roles assigned for a certain subject
@@ -172,7 +171,10 @@ public interface RoleManagerRemote {
      * @param roleIds
      */
     @WebMethod
-    void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds); 
+    void setAssignedSubjectRoles( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "subjectId") int subjectId, //
+        @WebParam(name = "roleIds") int[] roleIds);
 
     /**
      * Adds the given resource groups to the given role.
@@ -193,8 +195,7 @@ public interface RoleManagerRemote {
         @WebParam(name = "groupId") int groupId, //
         @WebParam(name = "roleIds") int[] roleIds);
 
-    void setAssignedResourceGroups(
-        @WebParam(name = "subject") Subject subject, //
+    void setAssignedResourceGroups(@WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
         @WebParam(name = "groupIds") int[] groupIds);
 

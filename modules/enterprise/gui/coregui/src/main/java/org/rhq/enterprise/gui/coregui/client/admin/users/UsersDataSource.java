@@ -19,41 +19,66 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
+import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * A DataSource for RHQ {@link Subject user}s.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UsersDataSource extends RPCDataSource<Subject> {
 
     private static UsersDataSource INSTANCE;
+    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
+    private static final String MASKED_PASSWORD_VALUE = "XXXXXXXX";
 
-    private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
+    public static abstract class Field {
+        public static final String ID = "id";
+        public static final String NAME = "name";
+        public static final String FIRST_NAME = "firstName";
+        public static final String LAST_NAME = "lastName";
+        public static final String FACTIVE = "factive";
+        public static final String FSYSTEM = "fsystem";
+        public static final String DEPARTMENT = "department";
+        public static final String PHONE_NUMBER = "phoneNumber";
+        public static final String EMAIL_ADDRESS = "emailAddress";
+        public static final String ROLES = "roles";
+
+        // auth-related fields
+        public static final String LDAP = "ldap";
+        public static final String PASSWORD = "password";
+        public static final String PASSWORD_VERIFY = "passwordVerify";
+    }
+
+    public static final int ID_OVERLORD = 1;
+    public static final int ID_RHQADMIN = 2;
+
+    private final SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
     public static UsersDataSource getInstance() {
         if (INSTANCE == null) {
@@ -63,193 +88,261 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     public UsersDataSource() {
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceField idDataField = new DataSourceIntegerField(Field.ID, "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
+        fields.add(idDataField);
 
-        DataSourceTextField usernameField = new DataSourceTextField("name", "User Name", 100, true);
+        DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100,
+            true);
+            
+        fields.add(usernameField);
 
-        DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
+        DataSourceTextField ldapField = createBooleanField(Field.LDAP, MSG.dataSource_users_field_ldap(), true);
+        ldapField.setCanEdit(false); // read-only
+        fields.add(ldapField);
 
-        DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name", 100, true);
+        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD,
+            MSG.dataSource_users_field_password(), 100, true);
+        LengthRangeValidator passwordValidator = new LengthRangeValidator();
+        passwordValidator.setMin(6);
+        passwordValidator.setMax(100);
+        passwordField.setValidators(passwordValidator);
+        fields.add(passwordField);
 
-        DataSourceTextField password = new DataSourceTextField("password", "Password", 100, false);
-        password.setType(FieldType.PASSWORD);
-
-        LengthRangeValidator passwordValdidator = new LengthRangeValidator();
-        passwordValdidator.setMin(6);
-        passwordValdidator.setErrorMessage("Password must be at least six characters");
-        password.setValidators(passwordValdidator);
-
-        DataSourceTextField passwordVerify = new DataSourceTextField("passwordVerify", "Verify", 100, false);
-        passwordVerify.setType(FieldType.PASSWORD);
-
+        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
+            MSG.dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
-        passwordsEqualValidator.setOtherField("password");
-        passwordsEqualValidator.setErrorMessage("Passwords do not match");
-        passwordVerify.setValidators(passwordsEqualValidator);
+        passwordsEqualValidator.setOtherField(Field.PASSWORD);
+        passwordsEqualValidator.setErrorMessage("Passwords do not match.");
+        passwordVerifyField.setValidators(passwordsEqualValidator);
+        fields.add(passwordVerifyField);
 
-        DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
+        DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME,
+            MSG.dataSource_users_field_firstName(), null, 100, true);
+        fields.add(firstNameField);
 
-        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15, false);
+        DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, MSG.dataSource_users_field_lastName(),
+            null, 100, true);
+        fields.add(lastNameField);
 
-        DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
+        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS,
+            MSG.dataSource_users_field_emailAddress(), null, 100, true);
+        fields.add(emailAddressField);
+        RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
+        emailAddressValidator.setErrorMessage("Invalid email address.");
+        emailAddressField.setValidators(emailAddressValidator);
 
-        DataSourceTextField enabled = new DataSourceTextField("factive", "Enabled");
-        enabled.setType(FieldType.BOOLEAN);
+        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER,
+            MSG.dataSource_users_field_phoneNumber(), null, 100, false);
+        fields.add(phoneNumberField);
 
-        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress,
-            department, enabled);
+        DataSourceTextField departmentField = createTextField(Field.DEPARTMENT,
+            MSG.dataSource_users_field_department(), null, 100, false);
+        fields.add(departmentField);
+
+        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MSG.dataSource_users_field_factive(),
+            true);
+        fields.add(enabledField);
+
+        DataSourceField rolesField = new DataSourceField(Field.ROLES, FieldType.ANY, "Roles");
+        fields.add(rolesField);
+
+        return fields;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        SubjectCriteria criteria = new SubjectCriteria();
-        criteria.setPageControl(getPageControl(request));
-        criteria.fetchRoles(true);
-
+        SubjectCriteria criteria = getFetchCriteria(request);
+                
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch users data", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
+                String message = "Failed to fetch user(s).";
+                sendFailureResponse(request, response, message, caught);
             }
 
-            public void onSuccess(PageList<Subject> result) {
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-                processResponse(request.getRequestId(), response);
-            }
-        });
-    }
-
-    @Override
-    protected void executeAdd(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Subject newSubject = copyValues(rec);
-
-        subjectService.createSubject(newSubject, new AsyncCallback<Subject>() {
-            public void onFailure(Throwable caught) {
-                // TODO better exceptions so we can set the right validation errors
-                Map<String, String> errors = new HashMap<String, String>();
-                errors.put("name", "A user with this name already exists.");
-                response.setErrors(errors);
-                //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
-                response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(final Subject result) {
-                String password = rec.getAttribute("password");
-                subjectService.createPrincipal(newSubject.getName(), password, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                            .handleError("Subject created, but failed to create principal", caught);
+            public void onSuccess(final PageList<Subject> fetchedSubjects) {
+                final PageList<Record> userRecordsPageList = new PageList<Record>(fetchedSubjects.getPageControl());
+                userRecordsPageList.setTotalSize(fetchedSubjects.getTotalSize());
+                userRecordsPageList.setUnbounded(fetchedSubjects.isUnbounded());
+                final boolean[] failed = {false};
+                for (int i = 0, fetchedSubjectsSize = fetchedSubjects.size(); i < fetchedSubjectsSize; i++) {
+                    if (failed[0]) {
+                        break;
                     }
-
-                    public void onSuccess(Void nothing) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Created User [" + newSubject.getName() + "]", Message.Severity.Info));
-                        response.setData(new Record[] { copyValues(result) });
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
-            }
-        });
-
-    }
-
-    @Override
-    protected void executeUpdate(final DSRequest request, final DSResponse response) {
-        final ListGridRecord record = getEditedRecord(request);
-        final Subject updatedSubject = copyValues(record);
-        subjectService.updateSubject(updatedSubject, new AsyncCallback<Subject>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to update subject", caught);
-            }
-
-            public void onSuccess(final Subject result) {
-
-                String password = record.getAttributeAsString("password");
-                if (password != null) {
-                    subjectService.changePassword(updatedSubject.getName(), password, new AsyncCallback<Void>() {
+                    final Subject fetchedSubject = fetchedSubjects.get(i);
+                    final String username = fetchedSubject.getName();
+                    subjectService.isUserWithPrincipal(username, new AsyncCallback<Boolean>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to update subject's password", caught);
+                            failed[0] = true;
+                            String message = "Failed to check if user [" + username + "] is an LDAP user.";
+                            sendFailureResponse(request, response, message, caught);
                         }
 
-                        public void onSuccess(Void nothing) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("User updated and password changed", Message.Severity.Info));
-                            response.setData(new Record[] { copyValues(result) });
-                            processResponse(request.getRequestId(), response);
-
+                        public void onSuccess(Boolean hasPrincipal) {
+                            boolean isLdap = (!hasPrincipal);
+                            Record userRecord = copyUserValues(fetchedSubject, isLdap);
+                            userRecordsPageList.add(userRecord);
+                            if (userRecordsPageList.size() == fetchedSubjects.size()) {
+                                sendSuccessResponseRecords(request, response, userRecordsPageList);
+                            }
                         }
                     });
-                } else {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("User [" + result.getName() + "] updated", Message.Severity.Info));
-                    response.setData(new Record[] { copyValues(result) });
-                    processResponse(request.getRequestId(), response);
-                }
+                }                                                
             }
         });
     }
 
     @Override
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Subject subjectToDelete = copyValues(rec);
-
-        subjectService.deleteSubjects(new int[] { subjectToDelete.getId() }, new AsyncCallback<Void>() {
+    protected void executeAdd(final Record recordToAdd, final DSRequest request, final DSResponse response) {
+        final Subject newSubject = copyValues(recordToAdd);
+        String password = recordToAdd.getAttribute(Field.PASSWORD);
+                
+        subjectService.createSubject(newSubject, password, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
+                // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
+                Map<String, String> errorMessages = new HashMap<String, String>();
+                errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
+                sendValidationErrorResponse(request, response, errorMessages);
+            }
+
+            public void onSuccess(final Subject createdSubject) {
+                Record createdUserRecord = copyUserValues(createdSubject, false);
+                sendSuccessResponse(request, response, createdUserRecord);
+            }
+        });
+    }
+
+    @Override
+    protected void executeUpdate(final Record editedUserRecord, Record oldUserRecord, final DSRequest request,
+                                 final DSResponse response) {
+        Subject editedSubject = copyValues(editedUserRecord);
+        final String username = editedSubject.getName();
+
+        final String editedPassword = editedUserRecord.getAttributeAsString(Field.PASSWORD);
+        boolean passwordWasEdited = !MASKED_PASSWORD_VALUE.equals(editedPassword);
+        String newPassword = (passwordWasEdited) ? editedPassword : null;
+
+        subjectService.updateSubject(editedSubject, newPassword, new AsyncCallback<Subject>() {
+            public void onFailure(Throwable caught) {
+                String message = "Failed to update user [" + username + "].";
+                sendFailureResponse(request, response, message, caught);
+            }
+
+            public void onSuccess(final Subject updatedSubject) {
+                sendSuccessResponse(request, response, editedUserRecord);
+            }
+        });
+    }
+
+    @Override
+    protected void executeRemove(final Record userRecordToRemove, final DSRequest request, final DSResponse response) {
+        final Subject subjectToRemove = copyValues(userRecordToRemove);
+
+        final String username = subjectToRemove.getName();
+        subjectService.deleteSubjects(new int[] { subjectToRemove.getId() }, new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                String message = "Failed to delete user [" + username + "].";
+                sendFailureResponse(request, response, message, caught);
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("User [" + subjectToDelete.getName() + "] removed", Message.Severity.Info));
-                response.setData(new Record[] { rec });
-                processResponse(request.getRequestId(), response);
+                Message message = new Message("User [" + username + "] deleted.");
+                sendSuccessResponse(request, response, subjectToRemove, message, UsersView.VIEW_PATH);
             }
         });
 
     }
 
     @SuppressWarnings("unchecked")
-    public Subject copyValues(ListGridRecord from) {
+    public Subject copyValues(Record from) {
         Subject to = new Subject();
-        to.setId(from.getAttributeAsInt("id"));
-        to.setName(from.getAttributeAsString("name"));
-        to.setFirstName(from.getAttributeAsString("firstName"));
-        to.setLastName(from.getAttributeAsString("lastName"));
-        to.setFactive(from.getAttributeAsBoolean("factive"));
-        to.setDepartment(from.getAttributeAsString("department"));
-        to.setPhoneNumber(from.getAttributeAsString("phoneNumber"));
-        to.setEmailAddress(from.getAttributeAsString("emailAddress"));
-        to.setFactive(from.getAttributeAsBoolean("factive"));
+        
+        to.setId(from.getAttributeAsInt(Field.ID));
+        to.setName(from.getAttributeAsString(Field.NAME));
+        to.setFirstName(from.getAttributeAsString(Field.FIRST_NAME));
+        to.setLastName(from.getAttributeAsString(Field.LAST_NAME));
+        to.setFactive(Boolean.valueOf(from.getAttributeAsString(Field.FACTIVE)));
+        to.setFsystem(Boolean.valueOf(from.getAttributeAsString(Field.FSYSTEM)));
+        to.setDepartment(from.getAttributeAsString(Field.DEPARTMENT));
+        to.setPhoneNumber(from.getAttributeAsString(Field.PHONE_NUMBER));
+        to.setEmailAddress(from.getAttributeAsString(Field.EMAIL_ADDRESS));
 
-        to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
+        Record[] roleRecords = from.getAttributeAsRecordArray(Field.ROLES);
+        to.setRoles(RolesDataSource.getInstance().buildDataObjects(roleRecords));
+
         return to;
     }
 
+    public Record copyUserValues(Subject subject, boolean isLdap) {
+        ListGridRecord targetRecord = copyValues(subject);
+
+        targetRecord.setAttribute(Field.LDAP, isLdap);
+
+        // Leave the password field blank if username is null (i.e. it's a new user).
+        if (subject.getName() != null) {
+            targetRecord.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
+            targetRecord.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);
+        }
+
+        return targetRecord;
+    }
+
     public ListGridRecord copyValues(Subject from) {
+        return copyValues(from, true);
+    }
+
+    @Override
+    public ListGridRecord copyValues(Subject from, boolean cascade) {
         ListGridRecord to = new ListGridRecord();
-        to.setAttribute("id", from.getId());
-        to.setAttribute("name", from.getName());
-        to.setAttribute("firstName", from.getFirstName());
-        to.setAttribute("lastName", from.getLastName());
-        to.setAttribute("factive", from.getFactive());
-        to.setAttribute("department", from.getDepartment());
-        to.setAttribute("phoneNumber", from.getPhoneNumber());
-        to.setAttribute("emailAddress", from.getEmailAddress());
-        to.setAttribute("factive", from.getFactive());
 
-        to.setAttribute("roles", from.getRoles());
+        to.setAttribute(Field.ID, from.getId());
+        to.setAttribute(Field.NAME, from.getName());
+        to.setAttribute(Field.FIRST_NAME, from.getFirstName());
+        to.setAttribute(Field.LAST_NAME, from.getLastName());
+        to.setAttribute(Field.FACTIVE, from.getFactive());
+        to.setAttribute(Field.FSYSTEM, from.getFsystem());
+        to.setAttribute(Field.DEPARTMENT, from.getDepartment());
+        to.setAttribute(Field.PHONE_NUMBER, from.getPhoneNumber());
+        to.setAttribute(Field.EMAIL_ADDRESS, from.getEmailAddress());
 
-        to.setAttribute("entity", from);
+        if (cascade) {
+            ListGridRecord[] roleRecords = RolesDataSource.getInstance().buildRecords(from.getRoles(), false);
+            to.setAttribute(Field.ROLES, roleRecords);
+        }
+
         return to;
+    }
+
+    protected SubjectCriteria getFetchCriteria(DSRequest request) {
+        SubjectCriteria criteria = new SubjectCriteria();
+
+        // Pagination
+        criteria.setPageControl(getPageControl(request));
+
+        // Filtering
+        Integer subjectId = getFilter(request, Field.ID, Integer.class);
+        criteria.addFilterId(subjectId);
+        // Always filter out the overlord - mortal users need not know the overlord even exists.
+        criteria.addFilterFsystem(false);
+
+        // Fetching
+        if (subjectId != null) {
+            // If we're fetching a single Subject, then fetch the related Set of Roles.
+            criteria.fetchRoles(true);
+        }
+
+        // TODO: For the list view, use a composite object that will pull the role
+        //       count across the wire.  this count will not require permission checks at all.
+
+        return criteria;
     }
 
 }

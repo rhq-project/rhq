@@ -18,269 +18,350 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * @author Greg Hinkle
+ * A form for viewing and/or editing an RHQ {@link Role role}.
+ *
+ * @author Ian Springer
  */
-public class RoleEditView extends LocatableVLayout implements BookmarkableView {
+public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implements BookmarkableView {
 
-    private Role role;
+    // TODO: Get 24x24 Role icon.
+    private static final String HEADER_ICON = "global/Role_16.png";
 
-    private Label message = new Label("Loading...");
+    private LocatableTab permissionsTab;
+    private PermissionsEditor permissionsEditor;
 
-    private VLayout editCanvas;
-    private DynamicForm form;
+    private LocatableTab resourceGroupsTab;
+    private ResourceGroupSelector resourceGroupSelector;
 
-    private PermissionEditorView permissionEditorItem;
-
-    private CanvasItem groupSelectorItem;
-    private ResourceGroupSelector groupSelector;
-
-    private CanvasItem subjectSelectorItem;
+    private LocatableTab subjectsTab;
     private RoleSubjectSelector subjectSelector;
 
-    private RolesDataSource dataSource;
+    private LocatableTab ldapGroupsTab;
+    private RoleLdapGroupSelector ldapGroupSelector;
 
-    public RoleEditView(String locatorId) {
-        super(locatorId);
+    private boolean hasManageSecurityPermission;
+    private boolean isLdapConfigured;
+    private boolean isSystemRole;
 
-        this.dataSource = RolesDataSource.getInstance();
-
-        this.setPadding(10);
-        setOverflow(Overflow.AUTO);
-
-        buildRoleEditor();
-        this.editCanvas.hide();
-
-        this.addMember(message);
-        this.addMember(editCanvas);
-    }
-
-    private Canvas buildRoleEditor() {
-        form = new LocatableDynamicForm(extendLocatorId(this.getLocatorId()));
-
-        form.setHiliteRequiredFields(true);
-        form.setRequiredTitleSuffix("* :");
-
-        form.setDataSource(this.dataSource);
-        form.setUseAllDataSourceFields(true);
-
-        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", "Permissions");
-        permissionEditorItem.setShowTitle(false);
-        permissionEditorItem.setColSpan(2);
-
-        groupSelectorItem = new CanvasItem("groupSelectionCanvas", "Assigned Resource Groups");
-        groupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
-        groupSelectorItem.setColSpan(2);
-
-        subjectSelectorItem = new CanvasItem("subjectSelectionCanvas", "Assigned Subjects");
-        subjectSelectorItem.setTitleOrientation(TitleOrientation.TOP);
-        subjectSelectorItem.setColSpan(2);
-
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                if (form.validate()) {
-                    save();
-                }
-            }
-        });
-
-        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
-        resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                form.reset();
-            }
-        });
-
-        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
-        cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                History.back();
-            }
-        });
-
-        HLayout buttonLayout = new HLayout(10);
-        buttonLayout.setAlign(Alignment.CENTER);
-        buttonLayout.addMember(saveButton);
-        buttonLayout.addMember(resetButton);
-        buttonLayout.addMember(cancelButton);
-
-        form.setItems(permissionEditorItem, groupSelectorItem, subjectSelectorItem);
-
-        this.editCanvas = new VLayout();
-
-        editCanvas.addMember(form);
-        editCanvas.addMember(buttonLayout);
-
-        return editCanvas;
-    }
-
-    public void save() {
-        final HashSet<Integer> groupSelection = this.groupSelector.getSelection();
-        final HashSet<Integer> userSelection = this.subjectSelector.getSelection();
-
-        // The form.saveData() call triggers either RolesDataSource.executeAdd() to create the new Role,
-        // or executeUpdate() if saving changes to an existing Role. On success we need to perform the
-        // subsequent user or group assignment, so set this callback on completion.         
-        form.saveData(new DSCallback() {
-            public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
-
-                int roleId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
-
-                int[] groupIds = new int[groupSelection.size()];
-                int i = 0;
-                for (Integer id : groupSelection) {
-                    groupIds[i++] = id;
-                }
-
-                GWTServiceLookup.getRoleService().setAssignedResourceGroups(roleId, groupIds,
-                    new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to save role group assignments.", caught);
-                        }
-
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Succesfully saved role group assignments.", Message.Severity.Info));
-                        }
-                    });
-
-                int[] subjectIds = new int[userSelection.size()];
-                i = 0;
-                for (Integer id : userSelection) {
-                    subjectIds[i++] = id;
-                }
-
-                GWTServiceLookup.getRoleService().setAssignedSubjects(roleId, subjectIds, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to save role user assignments.", caught);
-                        History.back();
-                    }
-
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Succesfully saved role user assignments.", Message.Severity.Info));
-                        History.back();
-                    }
-                });
-            }
-        });
-    }
-
-    @SuppressWarnings("unchecked")
-    public void editRecord(Record record) {
-        this.groupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"), (Set<ResourceGroup>) record
-            .getAttributeAsObject("resourceGroups"));
-        this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), (Set<Subject>) record
-            .getAttributeAsObject("subjects"));
-
-        this.groupSelectorItem.setCanvas(this.groupSelector);
-        this.subjectSelectorItem.setCanvas(this.subjectSelector);
-
-        Set<Permission> permissions = (Set<Permission>) record.getAttributeAsObject("permissions");
-        this.permissionEditorItem.setPermissions(permissions);
-
-        try {
-            form.editRecord(record);
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        message.hide();
-        editCanvas.show();
-        form.setSaveOperationType(DSOperationType.UPDATE);
-    }
-
-    private void editNewInternal() {
-        role = new Role();
-        ListGridRecord r = dataSource.copyValues(role);
-        editRecord(r);
-
-        // This tells form.saveData() to call RolesDataSource.executeAdd() on the new Role's ListGridRecord
-        form.setSaveOperationType(DSOperationType.ADD);
-    }
-
-    public static void editNew(String locatorId) {
-        RoleEditView editView = new RoleEditView(locatorId);
-        editView.editNewInternal();
-    }
-
-    private void editRole(int roleId, final ViewId current) {
-
-        final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
-
-        if (id > 0) {
-            RoleCriteria criteria = new RoleCriteria();
-            criteria.addFilterId(id);
-            criteria.fetchPermissions(true);
-            criteria.fetchResourceGroups(true);
-            criteria.fetchSubjects(true);
-
-            GWTServiceLookup.getRoleService().findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load role for editing", caught);
-                }
-
-                @Override
-                public void onSuccess(PageList<Role> result) {
-                    Role role = result.get(0);
-                    Record record = new RolesDataSource().copyValues(role);
-                    editRecord(record);
-
-                    current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
-                    CoreGUI.refreshBreadCrumbTrail();
-                }
-            });
-        } else {
-            editNewInternal();
-            current.getBreadcrumbs().get(0).setDisplayName("New Role");
-            CoreGUI.refreshBreadCrumbTrail();
-        }
+    public RoleEditView(String locatorId, int roleId) {
+        super(locatorId, new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
     }
 
     @Override
     public void renderView(ViewPath viewPath) {
-        int roleId = viewPath.getCurrentAsInt();
+        super.renderView(viewPath);
 
-        editRole(roleId, viewPath.getCurrent());
+        this.isSystemRole = RolesDataSource.isSystemRoleId(getRecordId());
+
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                RoleEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
+                checkIfLdapConfigured();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
+            }
+        });
     }
+
+    @Override
+    protected boolean isFormReadOnly() {
+        return (isReadOnly() || this.isSystemRole);
+    }
+
+    private void checkIfLdapConfigured() {
+        GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
+            public void onSuccess(Boolean isLdapConfigured) {
+                RoleEditView.this.isLdapConfigured = isLdapConfigured;
+                init();
+            }
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
+                RoleEditView.this.isLdapConfigured = false;
+                init();
+            }
+        });
+    }
+
+    private void init() {
+        final boolean isReadOnly = (!this.hasManageSecurityPermission);
+        init(isReadOnly);
+    }
+
+    @Override
+    protected LocatableVLayout buildContentPane() {
+        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
+        contentPane.setWidth100();
+        contentPane.setHeight100();
+        contentPane.setOverflow(Overflow.AUTO);
+
+        EnhancedDynamicForm form = buildForm();
+        setForm(form);
+
+        LocatableVLayout topPane = new LocatableVLayout(extendLocatorId("Top"));
+        topPane.setWidth100();
+        topPane.setHeight(80);
+        topPane.addMember(form);
+
+        contentPane.addMember(topPane);
+
+        LocatableTabSet tabSet = new LocatableTabSet(contentPane.extendLocatorId("TabSet"));
+        tabSet.setWidth100();
+        tabSet.setHeight100();
+
+        // TODO: Also add these tabs if the session subject is a member of the Role being viewed.
+        if (this.hasManageSecurityPermission) {
+            this.permissionsTab = buildPermissionsTab(tabSet);
+            tabSet.addTab(permissionsTab);
+
+            if (!this.isSystemRole) {
+                this.resourceGroupsTab = buildResourceGroupsTab(tabSet);
+                tabSet.addTab(resourceGroupsTab);
+            }
+
+            this.subjectsTab = buildSubjectsTab(tabSet);
+            tabSet.addTab(subjectsTab);
+
+            if (this.isLdapConfigured) {
+                this.ldapGroupsTab = buildLdapGroupsTab(tabSet);
+                tabSet.addTab(ldapGroupsTab);
+            }
+        }
+
+        contentPane.addMember(tabSet);
+
+        return contentPane;
+    }
+
+    private LocatableTab buildPermissionsTab(LocatableTabSet tabSet) {
+        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("Permissions"), MSG.common_title_permissions(),
+            "global/Locked_16.png");
+        // NOTE: We will overwrite the canvas with the permissions editor later after the Role has been fetched.
+        tab.setPane(new Canvas());
+
+        return tab;
+    }
+
+    private LocatableTab buildResourceGroupsTab(LocatableTabSet tabSet) {
+        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("ResourceGroups"),
+            MSG.common_title_resourceGroups(), ImageManager.getGroupIcon(GroupCategory.MIXED));
+        // NOTE: We will overwrite the canvas with a Selector later after the Role has been fetched.
+        tab.setPane(new Canvas());
+
+        return tab;
+    }
+
+    private LocatableTab buildSubjectsTab(LocatableTabSet tabSet) {
+        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("Users"), MSG.common_title_users(),
+            "global/User_16.png");
+        // NOTE: We will overwrite the canvas with a Selector later after the Role has been fetched.
+        tab.setPane(new Canvas());
+
+        return tab;
+    }
+
+    private LocatableTab buildLdapGroupsTab(LocatableTabSet tabSet) {
+        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("LdapGroups"), MSG.common_title_ldapGroups(),
+            "global/Role_16.png");
+        // NOTE: We will overwrite the canvas with a Selector later after the Role has been fetched.
+        tab.setPane(new Canvas());
+
+        return tab;
+    }
+
+    @Override
+    protected Record createNewRecord() {
+        Role role = new Role();
+        @SuppressWarnings( { "UnnecessaryLocalVariable" })
+        Record roleRecord = RolesDataSource.getInstance().copyValues(role);
+        return roleRecord;
+    }
+
+    protected void editRecord(Record record) {
+        super.editRecord(record);
+
+        // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
+        // other users' assigned roles.
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        int sessionSubjectId = sessionSubject.getId();
+        Record[] subjectRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.SUBJECTS);
+        boolean isMemberOfRole = false;
+        for (Record subjectRecord : subjectRecords) {
+            int subjectId = subjectRecord.getAttributeAsInt(RolesDataSource.Field.ID);
+            if (subjectId == sessionSubjectId) {
+                isMemberOfRole = true;
+            }
+        }
+
+        if (this.hasManageSecurityPermission || isMemberOfRole) {
+            // Create the permission editor and selectors and add them to the corresponding tabs.
+
+            this.permissionsEditor = new PermissionsEditor(this, !hasManageSecurityPermission ||
+                this.isSystemRole);
+            this.permissionsTab.setPane(permissionsEditor);
+
+            if (!this.isSystemRole) {
+                Record[] groupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.RESOURCE_GROUPS);
+                ListGridRecord[] groupListGridRecords = toListGridRecordArray(groupRecords);
+                this.resourceGroupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"), groupListGridRecords,
+                    !this.hasManageSecurityPermission);
+                this.resourceGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+                    public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                        onItemChanged();
+                    }
+                });
+                this.resourceGroupsTab.setPane(this.resourceGroupSelector);
+            }
+
+            ListGridRecord[] subjectListGridRecords = toListGridRecordArray(subjectRecords);
+            if (getRecordId() == RolesDataSource.ID_SUPERUSER) {
+                // If this is the superuser role, make sure the rhqadmin record is disabled, so it cannot be removed
+                // from the role, and filter the overlord record out, so users don't even know it exists.
+                List<ListGridRecord> filteredSubjectRecords = new ArrayList<ListGridRecord>();
+                for (ListGridRecord subjectListGridRecord : subjectListGridRecords) {
+                    int subjectId = subjectListGridRecord.getAttributeAsInt(UsersDataSource.Field.ID);
+                    if (subjectId == UsersDataSource.ID_RHQADMIN) {
+                        subjectListGridRecord.setEnabled(false);
+                    }
+                    if (subjectId != UsersDataSource.ID_OVERLORD) {
+                        filteredSubjectRecords.add(subjectListGridRecord);
+                    }
+                }
+                subjectListGridRecords = filteredSubjectRecords.toArray(new ListGridRecord[filteredSubjectRecords.size()]);
+            }
+            this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), subjectListGridRecords,
+                !this.hasManageSecurityPermission);
+            this.subjectSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+                public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                    onItemChanged();
+                }
+            });
+            this.subjectsTab.setPane(this.subjectSelector);
+
+            if (this.isLdapConfigured) {
+                Record[] ldapGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.LDAP_GROUPS);
+                ListGridRecord[] ldapGroupListGridRecords = toListGridRecordArray(ldapGroupRecords);
+                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), 
+                    ldapGroupListGridRecords, !this.hasManageSecurityPermission);
+                this.ldapGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+                    public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                        onItemChanged();
+                    }
+                });
+                this.ldapGroupsTab.setPane(this.ldapGroupSelector);
+            } else {
+                Label label = new Label("<b>"
+                    + MSG.common_msg_emphasizedNotePrefix()
+                    + "</b> "
+                    + MSG.view_adminRoles_noLdap("href='#Administration/Configuration/SystemSettings'", MSG
+                        .view_adminConfig_systemSettings()));
+                label.setWidth100();
+                label.setHeight(20);
+                label.setPadding(5);
+                this.ldapGroupsTab.setPane(label);
+            }
+        }
+
+        this.permissionsEditor.redraw();
+    }
+
+    @Override
+    protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
+        List<FormItem> items = new ArrayList<FormItem>();
+
+        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, MSG.common_title_name());
+        items.add(nameItem);
+
+        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
+        descriptionItem.setColSpan(form.getNumCols());
+        items.add(descriptionItem);
+
+        return items;
+    }
+
+    @Override
+    protected void save() {
+        // Grab the currently assigned sets from each of the selectors and stick them into the corresponding canvas
+        // items on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
+        // to the datasource's add or update methods.
+        if (this.resourceGroupSelector != null) {
+            ListGridRecord[] resourceGroupRecords = this.resourceGroupSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.RESOURCE_GROUPS, resourceGroupRecords);
+        }
+
+        if (this.subjectSelector != null) {
+            ListGridRecord[] subjectRecords = this.subjectSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.SUBJECTS, subjectRecords);
+        }
+
+        if (this.ldapGroupSelector != null) {
+            ListGridRecord[] ldapGroupRecords = this.ldapGroupSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);
+        }
+
+        // Submit the form values to the datasource.
+        super.save();
+    }
+
+    @Override
+    protected void reset() {
+        super.reset();
+
+        if (this.permissionsEditor != null) {
+            this.permissionsEditor.reset();
+        }
+
+        if (this.resourceGroupSelector != null) {
+            this.resourceGroupSelector.reset();
+        }
+        if (this.subjectSelector != null) {
+            this.subjectSelector.reset();
+        }
+        if (this.ldapGroupSelector != null) {
+            this.ldapGroupSelector.reset();
+        }
+    }
+
 }

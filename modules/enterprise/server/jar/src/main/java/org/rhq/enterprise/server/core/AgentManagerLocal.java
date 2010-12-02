@@ -82,7 +82,7 @@ public interface AgentManagerLocal {
      * @return an agent client that can be used to send commands to the JON agent that manages the resource
      */
     @NotNull
-    AgentClient getAgentClient(int resourceId);
+    AgentClient getAgentClient(Subject subject, int resourceId);
 
     /**
      * Returns a collection of all agents currently in inventory.
@@ -151,12 +151,13 @@ public interface AgentManagerLocal {
 
     /**
      * Given a resource ID, this will return the agent responsible for servicing that resource.
+     * @param subject 
      *
      * @param  resourceId
      *
      * @return the agent that services the resource, or <code>null</code> if the resource ID was invalid
      */
-    Agent getAgentByResourceId(int resourceId);
+    Agent getAgentByResourceId(Subject subject, int resourceId);
 
     /**
      * Given a resource ID, this will return the agent id responsible for servicing that resource.
@@ -276,5 +277,15 @@ public interface AgentManagerLocal {
      * @return <code>true</code> if the agent is a suspect agent and has been backfilled
      */
     boolean isAgentBackfilled(int agentId);
+
+    /**
+     * Returns <code>true</code> indicating successful ping of agent. Exposed so server could
+     * initiate N requests so gwt clients wont face Single Origin Policy issues.  
+     *
+     * @param  agentId the id of the agent
+     *
+     * @return <code>true</code> if the agent was successfully pinged.
+     */
+    Boolean pingAgentByResourceId(Subject subject, int resourceId);
 
 }

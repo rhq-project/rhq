@@ -106,7 +106,7 @@ public class EmailManagerBean implements EmailManagerLocal {
             mimeMessage.setSubject(messageSubject);
             mimeMessage.setContent(messageBody, "text/plain");
         } catch (MessagingException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customise this generated block
             return toAddresses;
         }
 
@@ -120,7 +120,8 @@ public class EmailManagerBean implements EmailManagerLocal {
                 InternetAddress recipient = new InternetAddress(toAddress);
                 Transport.send(mimeMessage, new InternetAddress[] { recipient });
             } catch (Exception e) {
-                LOG.error("Failed to send email [" + messageSubject + "] to recipient [" + toAddress + "]: " +  e.getMessage());
+                LOG.error("Failed to send email [" + messageSubject + "] to recipient [" + toAddress + "]: "
+                    + e.getMessage());
                 badAdresses.add(toAddress);
 
                 // Remember the first error - in case its due to a session initialization problem,
@@ -155,7 +156,7 @@ public class EmailManagerBean implements EmailManagerLocal {
         template = template.replaceAll(TEMPLATE_TOKEN_ALERT_NAME, cleanse(alertName, "?Unknown Alert?"));
 
         //if the priority enum for alerts changes in the future, we'll be safe
-        template = template.replaceAll(TEMPLATE_TOKEN_PRIORITY, cleanse(priority, "!! - Medium"));
+        template = template.replaceAll(TEMPLATE_TOKEN_PRIORITY, cleanse(priority, "Medium"));
 
         // better to be paranoid and on the safe side than risk it just to save one line of code
         template = template.replaceAll(TEMPLATE_TOKEN_TIMESTAMP, cleanse(timestamp, new Date().toString()));

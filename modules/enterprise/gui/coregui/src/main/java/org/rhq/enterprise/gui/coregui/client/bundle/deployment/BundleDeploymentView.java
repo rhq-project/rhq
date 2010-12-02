@@ -49,11 +49,13 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -95,7 +97,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-        addMember(new BackButton(extendLocatorId("BackButton"), "Back to Destination: "
+        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_deploy_backButton() + ": "
             + deployment.getDestination().getName(), "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/"
             + deployment.getDestination().getId()));
 
@@ -105,7 +107,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         form.setNumCols(4);
 
         LinkItem bundleName = new LinkItem("bundle");
-        bundleName.setTitle("Bundle");
+        bundleName.setTitle(MSG.view_bundle_bundle());
         bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
         bundleName.setLinkTitle(bundle.getName());
         bundleName.setTarget("_self");
@@ -118,13 +120,13 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                     GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update bundle deployment's tags",
-                                    caught);
+                                CoreGUI.getErrorHandler()
+                                    .handleError(MSG.view_bundle_deploy_tagUpdateFailure(), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Bundle Deployment Tags updated", Message.Severity.Info));
+                                    new Message(MSG.view_bundle_deploy_tagUpdateSuccessful(), Message.Severity.Info));
                             }
                         });
                 }
@@ -133,16 +135,16 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
-        StaticTextItem deployed = new StaticTextItem("deployed", "Deployed");
+        StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
         deployed.setValue(new Date(deployment.getCtime()));
 
         LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle("Group");
+        destinationGroup.setTitle(MSG.common_title_resource_group());
         destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
         destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
         destinationGroup.setTarget("_self");
 
-        StaticTextItem path = new StaticTextItem("path", "Path");
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
         form.setFields(bundleName, tagItem, deployed, destinationGroup, path);
@@ -158,14 +160,14 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     }
 
     private Table addMemberDeploymentsTable() {
-        Table table = new Table(extendLocatorId("Deployments"), "Deployment Machines");
+        Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
 
-        table.setTitleComponent(new HTMLFlow("Select a row to show install details."));
+        table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 
         ListGridField resourceIcon = new ListGridField("resourceAvailability", "");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put("UP", "types/Platform_up_16.png");
-        icons.put("DOWN", "types/Platform_down_16.png");
+        icons.put("UP", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
+        icons.put("DOWN", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
         resourceIcon.setCellFormatter(new CellFormatter() {
@@ -175,7 +177,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         });
         resourceIcon.setWidth(30);
 
-        ListGridField resource = new ListGridField("resource", "Platform");
+        ListGridField resource = new ListGridField("resource", MSG.common_title_platform());
         resource.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
@@ -183,8 +185,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
             }
         });
-        ListGridField resourceVersion = new ListGridField("resourceVersion", "Operating System");
-        ListGridField status = new ListGridField("status", "Status");
+        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.view_bundle_deploy_operatingSystem());
+        ListGridField status = new ListGridField("status", MSG.common_title_status());
         HashMap<String, String> statusIcons = new HashMap<String, String>();
         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
         statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
@@ -276,7 +278,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load budle version", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
             }
 
             public void onSuccess(PageList<BundleDeployment> result) {
@@ -287,7 +289,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                 bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
                 bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to find bundle", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadBundleFailure(), caught);
                     }
 
                     public void onSuccess(PageList<Bundle> result) {
@@ -305,7 +307,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                             new AsyncCallback<PageList<BundleResourceDeployment>>() {
 
                                 public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load deployment detail", caught);
+                                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
                                 }
 
                                 public void onSuccess(PageList<BundleResourceDeployment> result) {

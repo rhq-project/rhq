@@ -20,13 +20,12 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -49,7 +48,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPCDataSource<MeasurementScheduleComposite> {
+public abstract class AbstractMeasurementScheduleCompositeDataSource extends
+    RPCDataSource<MeasurementScheduleComposite> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementScheduleCompositeDataSource() {
@@ -57,37 +57,38 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPC
 
         setCanMultiSort(true);
 
-        List<DataSourceField> fields = createFields();
+        List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
 
-    protected List<DataSourceField> createFields() {
-        List<DataSourceField> fields = new ArrayList<DataSourceField>();
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID,
-                "Id");
+        DataSourceIntegerField idField = new DataSourceIntegerField(
+            MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, MSG.common_title_id());
         idField.setPrimaryKey(true);
         idField.setHidden(true);
         fields.add(idField);
 
         DataSourceTextField nameField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME,
-                "Metric");
+            MSG.common_title_metric());
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION,
-                "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField(
+            MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField typeField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE,
-                "Type");
+        DataSourceTextField typeField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE, MSG
+            .common_title_type());
         fields.add(typeField);
 
-        DataSourceBooleanField enabledField = new DataSourceBooleanField(MeasurementScheduleCriteria.SORT_FIELD_ENABLED,
-                "Enabled?");
+        DataSourceBooleanField enabledField = new DataSourceBooleanField(
+            MeasurementScheduleCriteria.SORT_FIELD_ENABLED, MSG.common_title_enabled());
         fields.add(enabledField);
 
-        DataSourceIntegerField intervalField = new DataSourceIntegerField(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL,
-                "Collection Interval");
+        DataSourceIntegerField intervalField = new DataSourceIntegerField(
+            MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, MSG.view_inventory_collectionInterval());
         fields.add(intervalField);
 
         return fields;
@@ -96,51 +97,28 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPC
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         final EntityContext entityContext = getEntityContext(request);
 
-        this.measurementService.getMeasurementScheduleCompositesByContext(entityContext, new AsyncCallback<PageList<MeasurementScheduleComposite>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch measurement schedules for context " + entityContext,
-                        caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<MeasurementScheduleComposite> result) {
-                response.setData(buildRecords(result));
-                // For paging to work, we have to specify size of full result set.
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
-            }
-        });
-    }
-
-    protected EntityContext getEntityContext(DSRequest request) {
-        EntityContext entityContext = null;
-
-        Criteria requestCriteria = request.getCriteria();
-        if (requestCriteria != null) {
-            Map values = requestCriteria.getValues();
-            for (Object key : values.keySet()) {
-                String fieldName = (String) key;
-                if (fieldName.equals(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID)) {
-                    Integer resourceId = (Integer) values.get(fieldName);
-                    entityContext = EntityContext.forResource(resourceId);
-                } else if (fieldName.equals(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID)) {
-                    Integer groupId = (Integer) values.get(fieldName);
-                    entityContext = EntityContext.forGroup(groupId);
+        this.measurementService.getMeasurementScheduleCompositesByContext(entityContext,
+            new AsyncCallback<PageList<MeasurementScheduleComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to fetch measurement schedules for context " + entityContext, caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
                 }
-                // TODO: Add support for other fields we need to filter by (e.g. resourceTypeId for metric templates).
-            }
-        }
 
-        if (entityContext == null) {
-            throw new IllegalStateException("No support criteria fields were found.");
-        }
-
-        return entityContext;
+                public void onSuccess(PageList<MeasurementScheduleComposite> result) {
+                    response.setData(buildRecords(result));
+                    // For paging to work, we have to specify size of full result set.
+                    response.setTotalRows(result.getTotalSize());
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
+
+    protected abstract EntityContext getEntityContext(DSRequest request);
 
     @Override
-    public MeasurementScheduleComposite copyValues(ListGridRecord from) {
+    public MeasurementScheduleComposite copyValues(Record from) {
         return null;
     }
 
@@ -150,15 +128,14 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPC
 
         MeasurementDefinition measurementDefinition = from.getMeasurementDefinition();
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, measurementDefinition.getId());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, measurementDefinition.getDisplayName());
+        record
+            .setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, measurementDefinition.getDisplayName());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, measurementDefinition.getDescription());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE,
-                measurementDefinition.getDataType().name().toLowerCase());
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE, measurementDefinition.getDataType()
+            .name().toLowerCase());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_ENABLED, from.getCollectionEnabled());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, from.getCollectionInterval());
 
-        // TODO: resourceId and resourceGroupId (in subclasses)
-        
         return record;
     }
 
@@ -166,27 +143,24 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPC
         int[] ids = getMeasurementDefinitionIds(measurementScheduleListView);
         List<String> displayNames = getMeasurementDefinitionDisplayNames(measurementScheduleListView);
         enableSchedules(measurementScheduleListView, ids, displayNames);
-        measurementScheduleListView.refresh();
     }
 
     protected abstract void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                            int[] measurementDefinitionIds, List<String> measurementDefinitionDisplayNames);
+        int[] measurementDefinitionIds, List<String> measurementDefinitionDisplayNames);
 
     public void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView) {
         int[] ids = getMeasurementDefinitionIds(measurementScheduleListView);
         List<String> displayNames = getMeasurementDefinitionDisplayNames(measurementScheduleListView);
         disableSchedules(measurementScheduleListView, ids, displayNames);
-        measurementScheduleListView.refresh();
     }
 
     protected abstract void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                             int[] measurementDefinitionIds, List<String> measurementDefinitionDisplayNames);
+        int[] measurementDefinitionIds, List<String> measurementDefinitionDisplayNames);
 
     public void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, long interval) {
         int[] ids = getMeasurementDefinitionIds(measurementScheduleListView);
         List<String> displayNames = getMeasurementDefinitionDisplayNames(measurementScheduleListView);
         updateSchedules(measurementScheduleListView, ids, displayNames, interval);
-        measurementScheduleListView.refresh();
     }
 
     private int[] getMeasurementDefinitionIds(AbstractMeasurementScheduleListView measurementScheduleListView) {
@@ -196,13 +170,15 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPC
         int[] measurementDefinitionIds = new int[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            Integer measurementDefinitionId = record.getAttributeAsInt(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID);
+            Integer measurementDefinitionId = record
+                .getAttributeAsInt(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID);
             measurementDefinitionIds[i] = measurementDefinitionId;
         }
         return measurementDefinitionIds;
     }
 
-    private List<String> getMeasurementDefinitionDisplayNames(AbstractMeasurementScheduleListView measurementScheduleListView) {
+    private List<String> getMeasurementDefinitionDisplayNames(
+        AbstractMeasurementScheduleListView measurementScheduleListView) {
         ListGrid listGrid = measurementScheduleListView.getListGrid();
         ListGridRecord[] records = listGrid.getSelection();
         List<String> displayNames = new ArrayList<String>(records.length);
@@ -214,5 +190,5 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPC
     }
 
     protected abstract void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-                                            final int[] measurementDefinitionIds, List<String> measurementDefinitionDisplayNames, final long interval);
+        final int[] measurementDefinitionIds, List<String> measurementDefinitionDisplayNames, final long interval);
 }

@@ -41,8 +41,8 @@ public class BundleRevertWizard extends AbstractBundleRevertWizard {
     }
 
     private List<WizardStep> init() {
-        setWindowTitle("Bundle Revert Wizard");
-        setTitle("Bundle Revert");
+        setWindowTitle(MSG.view_bundle_revertWizard_windowTitle());
+        setTitle(MSG.view_bundle_revertWizard_title());
 
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
         setSteps(steps);

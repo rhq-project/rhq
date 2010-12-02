@@ -22,12 +22,14 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 
 /**
  * @author Joseph Marques
  */
 public class SearchGUI implements EntryPoint {
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public static SearchGUI singleton = new SearchGUI();
     private SearchBar searchBar;
@@ -45,14 +47,14 @@ public class SearchGUI implements EntryPoint {
             return;
         }
 
-        UserSessionManager.checkLoginStatus(new AsyncCallback<Void>() {
+        UserSessionManager.checkLoginStatus(null, null, new AsyncCallback<Subject>() {
             @Override
             public void onFailure(Throwable caught) {
-                SC.say("Unable to determine login status, check server status");
+                SC.say(MSG.view_searchGUI_loginStatus());
             }
 
             @Override
-            public void onSuccess(Void result) {
+            public void onSuccess(Subject result) {
                 singleton.buildSearchGUI();
             }
         });

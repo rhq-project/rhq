@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.components.tagging;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.TagCriteria;
@@ -42,43 +43,42 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
-        TagCriteria criteria = new TagCriteria();
+        // TagCriteria criteria = new TagCriteria();
 
         String search = (String) request.getCriteria().getValues().get("tag");
         if (search != null) {
             // todo
-//            criteria.addFilter
+            //            criteria.addFilter
         }
 
-        GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(),
-                new AsyncCallback<PageList<Tag>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load tags",caught);
-                        response.setStatus(DSResponse.STATUS_FAILURE);
-                        processResponse(request.getRequestId(), response);
-                    }
+        GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(), new AsyncCallback<PageList<Tag>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_tags_error_1(), caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
-                    public void onSuccess(PageList<Tag> result) {
-                        response.setData(buildRecords(result));
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
+            public void onSuccess(PageList<Tag> result) {
+                response.setData(buildRecords(result));
+                processResponse(request.getRequestId(), response);
+            }
+        });
 
     }
 
     @Override
-    public Tag copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+    public Tag copyValues(Record from) {
+        return null; // TODO: Implement this method.
     }
 
     @Override
     public ListGridRecord copyValues(Tag from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id",from.getId());
-        record.setAttribute("namespace",from.getNamespace());
-        record.setAttribute("semantic",from.getSemantic());
-        record.setAttribute("name",from.getName());
-        record.setAttribute("tag",from.toString());
+        record.setAttribute("id", from.getId());
+        record.setAttribute("namespace", from.getNamespace());
+        record.setAttribute("semantic", from.getSemantic());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("tag", from.toString());
         return record;
     }
 }

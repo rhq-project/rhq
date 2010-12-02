@@ -45,11 +45,12 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -58,8 +59,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class RemoteAgentInstallView extends LocatableVLayout {
-    public static final String VIEW_ID = "RemoteAgentInstall";
-    
+    public static final ViewName VIEW_ID = new ViewName("RemoteAgentInstall", MSG
+        .view_adminTopology_remoteAgentInstall());
+
     private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService();
 
     private DynamicForm connectionForm;
@@ -100,41 +102,41 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         connectionForm.setMargin(20);
 
         HeaderItem connectionHeader = new HeaderItem();
-        connectionHeader.setValue("Connection Information");
+        connectionHeader.setDefaultValue(MSG.view_remoteAgentInstall_connInfo());
 
-        TextItem host = new TextItem("host", "Hostname");
+        TextItem host = new TextItem("host", MSG.common_title_host());
         host.setRequired(true);
         host.setWidth("100%");
-        host.setPrompt("The host where the agent is or will be installed");
+        host.setPrompt(MSG.view_remoteAgentInstall_promptHost());
         host.setColSpan(2);
 
-        TextItem port = new TextItem("port", "Port");
+        TextItem port = new TextItem("port", MSG.common_title_port());
         port.setRequired(false);
         port.setWidth("90");
-        port.setPrompt("The port the SSH server is listening to. If not specified, the default is 22");
+        port.setPrompt(MSG.view_remoteAgentInstall_promptPort());
         port.setColSpan(1);
 
-        TextItem username = new TextItem("username", "Username");
+        TextItem username = new TextItem("username", MSG.common_title_user());
         username.setRequired(true);
         username.setWidth("100%");
-        username.setPrompt("The name of the user whose credentials are passed to the host via SSH");
+        username.setPrompt(MSG.view_remoteAgentInstall_promptUser());
         username.setColSpan(2);
 
-        PasswordItem password = new PasswordItem("password", "Password");
+        PasswordItem password = new PasswordItem("password", MSG.common_title_password());
         password.setRequired(false);
         password.setWidth("100%");
-        password.setPrompt("The credentials that are used to authenticate the user on the host via SSH");
+        password.setPrompt(MSG.view_remoteAgentInstall_promptPassword());
         password.setColSpan(2);
 
-        TextItem agentInstallPath = new TextItem("agentInstallPath", "Agent Install Path");
+        TextItem agentInstallPath = new TextItem("agentInstallPath", MSG.view_remoteAgentInstall_installPath());
         agentInstallPath.setRequired(true);
         agentInstallPath.setWidth("100%");
-        agentInstallPath
-            .setPrompt("Where the agent is or will be installed. If you aren't sure where an agent is installed, enter a parent directory and click the 'Find Agent' button to scan that directory and below. If you enter an empty path, common locations are searched on the host for an agent install.");
+        agentInstallPath.setPrompt(MSG.view_remoteAgentInstall_promptInstallPath());
         agentInstallPath.setStartRow(true);
         agentInstallPath.setEndRow(false);
 
-        ButtonItem findAgentInstallPathButton = new ButtonItem("findAgentInstallPathButton", "Find Agent");
+        ButtonItem findAgentInstallPathButton = new ButtonItem("findAgentInstallPathButton", MSG
+            .view_remoteAgentInstall_buttonFindAgent());
         findAgentInstallPathButton.setStartRow(false);
         findAgentInstallPathButton.setEndRow(true);
         findAgentInstallPathButton.addClickHandler(new ClickHandler() {
@@ -145,15 +147,15 @@ public class RemoteAgentInstallView extends LocatableVLayout {
             }
         });
 
-        StaticTextItem agentStatus = new StaticTextItem("agentStatus", "Agent Status");
-        agentStatus.setDefaultValue("-Click Update Status Button-");
+        StaticTextItem agentStatus = new StaticTextItem("agentStatus", MSG.view_remoteAgentInstall_agentStatus());
+        agentStatus.setDefaultValue(MSG.view_remoteAgentInstall_agentStatusDefault());
         agentStatus.setRedrawOnChange(true);
         agentStatus.setRedrawOnChange(true);
         agentStatus.setWidth("100%");
         agentStatus.setStartRow(true);
         agentStatus.setEndRow(false);
 
-        ButtonItem statusCheckButton = new ButtonItem("updateStatus", "Update Status");
+        ButtonItem statusCheckButton = new ButtonItem("updateStatus", MSG.view_remoteAgentInstall_updateStatus());
         statusCheckButton.setStartRow(false);
         statusCheckButton.setEndRow(true);
         statusCheckButton.addClickHandler(new ClickHandler() {
@@ -178,13 +180,13 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         buttonsForm.setColWidths("10%", "30%", "30%", "30%");
 
         HeaderItem buttonsHeader = new HeaderItem();
-        buttonsHeader.setValue("Operations");
+        buttonsHeader.setDefaultValue(MSG.common_title_operations());
 
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setStartRow(true);
         spacerItem.setEndRow(false);
 
-        installButton = new ButtonItem("install", "Install Agent");
+        installButton = new ButtonItem("install", MSG.view_remoteAgentInstall_installAgent());
         installButton.setStartRow(false);
         installButton.setEndRow(false);
         installButton.setRedrawOnChange(true);
@@ -196,7 +198,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
             }
         });
 
-        startButton = new ButtonItem("start", "Start Agent");
+        startButton = new ButtonItem("start", MSG.view_remoteAgentInstall_startAgent());
         startButton.setStartRow(false);
         startButton.setEndRow(false);
         // startButton.setShowIfCondition(new FormItemIfFunction() {
@@ -212,7 +214,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
             }
         });
 
-        stopButton = new ButtonItem("stop", "Stop Agent");
+        stopButton = new ButtonItem("stop", MSG.view_remoteAgentInstall_stopAgent());
         stopButton.setStartRow(false);
         stopButton.setEndRow(true);
         stopButton.addClickHandler(new ClickHandler() {
@@ -235,7 +237,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         remoteInstallService.findAgentInstallPath(getRemoteAccessInfo(), parentPath, new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 disableButtons(false);
-                CoreGUI.getErrorHandler().handleError("Error occurred while trying to find agent install path", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_remoteAgentInstall_error_1(), caught);
             }
 
             public void onSuccess(String result) {
@@ -245,9 +247,9 @@ public class RemoteAgentInstallView extends LocatableVLayout {
                 } else {
                     String err;
                     if (parentPath == null || parentPath.length() == 0) {
-                        err = "Could not find an agent installed when looking in common locations";
+                        err = MSG.view_remoteAgentInstall_error_2();
                     } else {
-                        err = "Could not find an agent installed at or under [" + parentPath + "]";
+                        err = MSG.view_remoteAgentInstall_error_3(parentPath);
                     }
                     CoreGUI.getErrorHandler().handleError(err);
                 }
@@ -291,13 +293,13 @@ public class RemoteAgentInstallView extends LocatableVLayout {
             new AsyncCallback<AgentInstallInfo>() {
                 public void onFailure(Throwable caught) {
                     disableButtons(false);
-                    CoreGUI.getErrorHandler().handleError("Failed to install agent", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_remoteAgentInstall_error_4(), caught);
                 }
 
                 public void onSuccess(AgentInstallInfo result) {
                     disableButtons(false);
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Agent installation completed", Message.Severity.Info));
+                        new Message(MSG.view_remoteAgentInstall_success(), Message.Severity.Info));
 
                     for (Canvas child : agentInfoLayout.getChildren()) {
                         child.destroy();
@@ -314,12 +316,13 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         remoteInstallService.startAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 disableButtons(false);
-                CoreGUI.getErrorHandler().handleError("Failed to start agent", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_remoteAgentInstall_error_5(), caught);
             }
 
             public void onSuccess(String result) {
                 disableButtons(false);
-                CoreGUI.getMessageCenter().notify(new Message("Agent start results: " + result, Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_remoteAgentInstall_startAgentResults(result), Message.Severity.Info));
                 agentStatusCheck();
             }
         });
@@ -330,12 +333,13 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         remoteInstallService.stopAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 disableButtons(false);
-                CoreGUI.getErrorHandler().handleError("Failed to stop agent", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_remoteAgentInstall_error_6(), caught);
             }
 
             public void onSuccess(String result) {
                 disableButtons(false);
-                CoreGUI.getMessageCenter().notify(new Message("Agent stop results: " + result, Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_remoteAgentInstall_stopAgentResults(result), Message.Severity.Info));
                 agentStatusCheck();
             }
         });
@@ -348,18 +352,18 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         infoForm.setHeight100();
 
         HeaderItem infoHeader = new HeaderItem();
-        infoHeader.setValue("Agent Installation Information");
+        infoHeader.setValue(MSG.view_remoteAgentInstall_installInfo());
 
-        StaticTextItem version = new StaticTextItem("version", "Version");
+        StaticTextItem version = new StaticTextItem("version", MSG.common_title_version());
         version.setValue(info.getVersion());
 
-        StaticTextItem path = new StaticTextItem("path", "Path");
+        StaticTextItem path = new StaticTextItem("path", MSG.common_title_path());
         path.setValue(info.getPath());
 
-        StaticTextItem owner = new StaticTextItem("owner", "Owner");
+        StaticTextItem owner = new StaticTextItem("owner", MSG.view_remoteAgentInstall_owner());
         owner.setValue(info.getOwner());
 
-        StaticTextItem config = new StaticTextItem("config", "Configuration");
+        StaticTextItem config = new StaticTextItem("config", MSG.common_title_configuration());
         config.setValue(info.getConfigurationStartString());
 
         CanvasItem listCanvas = new CanvasItem();
@@ -383,10 +387,10 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         listGrid.setCanExpandRecords(true);
         listGrid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
         listGrid.setDetailField("result");
-        ListGridField step = new ListGridField("description", "Step");
-        ListGridField result = new ListGridField("result", "Result");
-        ListGridField resultCode = new ListGridField("resultCode", "Result Code", 90);
-        ListGridField duration = new ListGridField("duration", "Duration", 90);
+        ListGridField step = new ListGridField("description", MSG.view_remoteAgentInstall_step());
+        ListGridField result = new ListGridField("result", MSG.view_remoteAgentInstall_result());
+        ListGridField resultCode = new ListGridField("resultCode", MSG.view_remoteAgentInstall_resultCode(), 90);
+        ListGridField duration = new ListGridField("duration", MSG.common_title_duration(), 90);
         listGrid.setFields(step, result, resultCode, duration);
         listGrid.setData(getStepRecords(info));
 
@@ -407,7 +411,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
             rec.setAttribute("description", step.getDescription());
             String result = step.getResult();
             if (result == null || result.trim().length() == 0) {
-                result = "Result code=" + step.getResultCode();
+                result = MSG.view_remoteAgentInstall_resultCode() + "=" + step.getResultCode();
             }
             rec.setAttribute("result", result);
             rec.setAttribute("resultCode", "" + step.getResultCode());

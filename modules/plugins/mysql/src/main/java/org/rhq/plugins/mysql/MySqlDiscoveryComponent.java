@@ -31,7 +31,6 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,20 +39,22 @@ import java.util.Set;
 /**
  * @author Greg Hinkle
  * @author Ian Springer
+ * @author Steve Millidge
  */
 public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private static final Log log = LogFactory.getLog(MySqlDiscoveryComponent.class);
 
-    public static final String DRIVER_CONFIGURATION_PROPERTY = "driverClass";
     public static final String HOST_CONFIGURATION_PROPERTY = "host";
     public static final String PORT_CONFIGURATION_PROPERTY = "port";
     public static final String DB_CONFIGURATION_PROPERTY = "db";
     public static final String PRINCIPAL_CONFIGURATION_PROPERTY = "principal";
     public static final String CREDENTIALS_CONFIGURATION_PROPERTY = "credentials";
 
-    private static final String DEFAULT_RESOURCE_DESCRIPTION = "Mysql relational database server";
-
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Resource Discovery Started");
+        }
         Set<DiscoveredResourceDetails> servers = new LinkedHashSet<DiscoveredResourceDetails>();
 
         // Process any auto-discovered resources.
@@ -63,10 +64,7 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
 
             ProcessInfo procInfo = result.getProcessInfo();
 
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, context.getDefaultPluginConfiguration(), procInfo);
-            if (resourceDetails!=null) {
-                servers.add(resourceDetails);
-            }
+            servers.add(createResourceDetails(context,context.getDefaultPluginConfiguration(),procInfo));
         }
 
         return servers;
@@ -82,59 +80,53 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration, ProcessInfo processInfo) {
+        Configuration pluginConfiguration,
+        ProcessInfo processInfo) throws InvalidPluginConfigurationException {
 
-        String key = buildUrl(pluginConfiguration);
-        String db = pluginConfiguration.getSimple(DB_CONFIGURATION_PROPERTY).getStringValue();
-        String name = "MySql [" + db + "]";
+        MySqlConnectionInfo ci = buildConnectionInfo(pluginConfiguration);
+        Connection conn;
+        String version = "";
         try {
-            String version = getVersion(pluginConfiguration);
-            return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
-                DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
-        } catch (Exception e) {
-            log.warn("Getting details failed: " + e.getMessage());
-            if (e.getCause()!=null) {
-                log.warn("  caused by: " + e.getCause().getMessage());
-            }
-        }
-        return null;
-    }
-
-    protected static String buildUrl(Configuration config) {
-        String host = config.getSimple(HOST_CONFIGURATION_PROPERTY).getStringValue();
-        String port = config.getSimple(PORT_CONFIGURATION_PROPERTY).getStringValue();
-        String user = config.getSimple(PRINCIPAL_CONFIGURATION_PROPERTY).getStringValue();
-        String pass = config.getSimple(CREDENTIALS_CONFIGURATION_PROPERTY).getStringValue();
-        String url = "jdbc:mysql://" + host + "?user=" + user + "&password=" + pass;
-        return url;
-    }
-
-    protected static String getVersion(Configuration config) {
-        String version = null;
-        Connection conn = null;
-        try {
-            conn = buildConnection(config);
+            conn = MySqlConnectionManager.getConnectionManager().getConnection(ci);
             version = conn.getMetaData().getDatabaseProductVersion();
-        } catch (SQLException e) {
-            // TODO GH: How to put this back to the server while inventorying this resource in an unconfigured state
-            log.info("Exception detecting mysql instance version" + e.getMessage());
-        } finally {
-            JDBCUtil.safeClose(conn);
+        } catch (SQLException ex) {
+            // ignore so we can still add to the inventory even though we can't currently connect
         }
-        return version;
+       String key = new StringBuilder().append("MySql:")
+                .append(ci.getDb())
+                .append(":")
+                .append(ci.getHost())
+                .append(":")
+                .append(ci.getPort())
+                .append("-")
+                .append(ci.getUser()).toString();
+        String name = new StringBuilder().append("MySql [")
+                .append(ci.getDb())
+                .append("]").toString();
+
+        DiscoveredResourceDetails result = new DiscoveredResourceDetails(
+                discoveryContext.getResourceType(),
+                key,
+                name,
+                version,
+                "MySql Server",
+                pluginConfiguration,
+                processInfo);
+
+        if (log.isDebugEnabled()) {
+           log.debug("Discovered Database Server for MySQL Database " + ci.buildURL());
+        }
+        return result;
+
     }
 
-    public static Connection buildConnection(Configuration configuration) throws SQLException {
-        String driverClass = configuration.getSimple(DRIVER_CONFIGURATION_PROPERTY).getStringValue();
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException e) {
-            throw new InvalidPluginConfigurationException("Specified JDBC driver class (" + driverClass
-                + ") not found.");
-        }
-
-        String url = buildUrl(configuration);
-
-        return DriverManager.getConnection(url);
-    }
+    static MySqlConnectionInfo buildConnectionInfo(Configuration configuration) {
+        // build the Discovered Resource from the configuration
+        String host = configuration.getSimple(HOST_CONFIGURATION_PROPERTY).getStringValue();
+        String port = configuration.getSimple(PORT_CONFIGURATION_PROPERTY).getStringValue();
+        String user = configuration.getSimple(PRINCIPAL_CONFIGURATION_PROPERTY).getStringValue();
+        String pass = configuration.getSimple(CREDENTIALS_CONFIGURATION_PROPERTY).getStringValue();
+        String db   = configuration.getSimple(DB_CONFIGURATION_PROPERTY).getStringValue();
+        return new MySqlConnectionInfo(host, port, db, user, pass);
+   }
 }

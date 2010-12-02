@@ -336,48 +336,55 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
         String serverName = null;
         int pipeIdx = resourceKey.indexOf('|');
-        if (pipeIdx >= 0) {
+        //the resource key always contains the '|' so we're only checking for non-empty
+        //server names
+        if (pipeIdx > 0) {
             serverName = resourceKey.substring(0, pipeIdx);
         }
 
         String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
         List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
         List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-        boolean updated = false;
+
+        boolean matching = false;
 
         for (AugeasNode node : nodes) {
-               updated = false;
+            matching = false;
             List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
             String tempServerName = null;
 
             if (!(serverNameNodes.isEmpty())) {
                 tempServerName = serverNameNodes.get(0).getValue();
             }
-                if (tempServerName == null & serverName == null)
-                   updated = true;
-                if (tempServerName != null & serverName != null)
-                    if (tempServerName.equals(serverName)){
-                            updated = true;
-                     }
-                
-
-               if (updated){ 
-                    updated = false;
-                    List<AugeasNode> params = node.getChildByLabel("param");
-                    for (AugeasNode nd : params) {
-                        updated = false;
-                        for (String adr : addrs) {
-                            if (adr.equals(nd.getValue()))
-                                updated = true;
-                        }
-                        if (!updated)
-                            break;
-                      }
-
-                    if (updated) 
-                        virtualHosts.add(node);                    
+            if (tempServerName == null & serverName == null) {
+                matching = true;
+            }
+            
+            if (tempServerName != null & serverName != null) {
+                if (tempServerName.equals(serverName)) {
+                    matching = true;
                 }
-           }
+            }
+            
+            if (matching) {
+                List<AugeasNode> params = node.getChildByLabel("param");
+                for (AugeasNode nd : params) {
+                    matching = false;
+                    for (String adr : addrs) {
+                        if (adr.equals(nd.getValue())) {
+                            matching = true;
+                        }
+                    }
+                    if (!matching) {
+                        break;
+                    }
+                }
+
+                if (matching) {
+                    virtualHosts.add(node);
+                }
+            }
+        }
        
         if (virtualHosts.size() == 0) {
             throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
@@ -571,7 +578,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return snmpWwwServiceIndex;
     }
 
-    private static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
+    public static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
         for(HttpdAddressUtility.Address a : addresses) {
             if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
                 return 3;

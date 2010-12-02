@@ -1,5 +1,6 @@
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -83,20 +84,20 @@ public class AlertPortletDataSource extends AlertDataSource {
             criteria.addFilterResourceIds(getAlertFilterResourceIds());
         }
         if (getAlertPriorityIndex() > 0) {//add priority selection
-            criteria.addFilterPriority(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
+            criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
         }
 
         getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
-                com.allen_sauer.gwt.log.client.Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);

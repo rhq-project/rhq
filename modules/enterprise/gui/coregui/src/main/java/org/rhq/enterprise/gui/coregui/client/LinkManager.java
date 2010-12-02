@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+
 /**
  * @author Greg Hinkle
  */
@@ -45,11 +48,31 @@ public class LinkManager {
         }
     }
 
+    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    }
+
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroup%20Manager/" + groupDefinitionId;
+            return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;
         } else {
             return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
+        }
+    }
+
+    public static String getUserLink(int subjectId) {
+        if (GWT) {
+            return "#" + UsersView.VIEW_PATH + "/" + subjectId;
+        } else {
+            return "/admin/user/UserAdmin.do?mode=view&u=" + subjectId;
+        }
+    }
+
+    public static String getRoleLink(int roleId) {
+        if (GWT) {
+            return "#" + RolesView.VIEW_PATH + "/" + roleId;
+        } else {
+            return "/admin/role/RoleAdmin.do?mode=view&r=" + roleId;
         }
     }
 
@@ -139,7 +162,7 @@ public class LinkManager {
 
     public static String getHubGroupDefinitionsLink() {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroup Manager";
+            return "#Inventory/Groups/DynagroupDefinitions";
         } else {
             return "/rhq/definition/group/list.xhtml";
         }
@@ -278,6 +301,6 @@ public class LinkManager {
     }
 
     public static String getTagLink(String tag) {
-        return "#Reports/Inventory/Tag%20Cloud/" + tag;
+        return "#Reports/Subsystems/Tags/" + tag;
     }
 }

@@ -254,7 +254,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
 
         if (addToCache) {
-            notifyAlertConditionCacheManager("createAlertDefinition", alertDefinition, AlertDefinitionEvent.CREATED);
+            notifyAlertConditionCacheManager(subject, "createAlertDefinition", alertDefinition,
+                AlertDefinitionEvent.CREATED);
         }
 
         return alertDefinition.getId();
@@ -294,7 +295,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel = false;
 
@@ -309,7 +310,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 // alertTemplates and groupAlertDefinitions do not need to update the cache
                 isResourceLevel = (null != alertDefinition.getResource());
                 if (isResourceLevel) {
-                    notifyAlertConditionCacheManager("removeAlertDefinitions", alertDefinition,
+                    notifyAlertConditionCacheManager(subject, "removeAlertDefinitions", alertDefinition,
                         AlertDefinitionEvent.DELETED);
                 }
                 if (alertDefinition.getResourceGroup() != null) {
@@ -321,7 +322,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return modifiedCount;
     }
 
-    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel = false;
         for (int alertDefId : alertDefinitionIds) {
@@ -337,7 +338,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     // alertTemplates and groupAlertDefinitions do not need to update the cache
                     isResourceLevel = (null != alertDefinition.getResource());
                     if (isResourceLevel) {
-                        notifyAlertConditionCacheManager("enableAlertDefinitions", alertDefinition,
+                        notifyAlertConditionCacheManager(subject, "enableAlertDefinitions", alertDefinition,
                             AlertDefinitionEvent.ENABLED);
                     }
                 }
@@ -379,7 +380,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return (resultIds.size() == 1);
     }
 
-    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel;
         for (int alertDefId : alertDefinitionIds) {
@@ -395,7 +396,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     // alertTemplates and groupAlertDefinitions do not need to update the cache
                     isResourceLevel = (null != alertDefinition.getResource());
                     if (isResourceLevel) {
-                        notifyAlertConditionCacheManager("disableAlertDefinitions", alertDefinition,
+                        notifyAlertConditionCacheManager(subject, "disableAlertDefinitions", alertDefinition,
                             AlertDefinitionEvent.DISABLED);
                     }
                 }
@@ -423,7 +424,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
                 entityManager.persist(newAlertDefinition);
 
-                notifyAlertConditionCacheManager("copyAlertDefinitions", alertDefinition, AlertDefinitionEvent.CREATED);
+                notifyAlertConditionCacheManager(subject, "copyAlertDefinitions", alertDefinition,
+                    AlertDefinitionEvent.CREATED);
             }
         }
     }
@@ -499,7 +501,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {
                 LOG.debug("OldAlertCondition[ id=" + nextCondition.getId() + " ]");
             }
-            notifyAlertConditionCacheManager("updateAlertDefinition", oldAlertDefinition, AlertDefinitionEvent.DELETED);
+            notifyAlertConditionCacheManager(subject, "updateAlertDefinition", oldAlertDefinition,
+                AlertDefinitionEvent.DELETED);
         }
 
         /*
@@ -555,7 +558,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 for (AlertCondition nextCondition : newAlertDefinition.getConditions()) {
                     LOG.debug("NewAlertCondition[ id=" + nextCondition.getId() + " ]");
                 }
-                notifyAlertConditionCacheManager("updateAlertDefinition", newAlertDefinition,
+                notifyAlertConditionCacheManager(subject, "updateAlertDefinition", newAlertDefinition,
                     AlertDefinitionEvent.CREATED);
             }
         }
@@ -613,7 +616,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return;
     }
 
-    private void notifyAlertConditionCacheManager(String methodName, AlertDefinition alertDefinition,
+    private void notifyAlertConditionCacheManager(Subject subject, String methodName, AlertDefinition alertDefinition,
         AlertDefinitionEvent alertDefinitionEvent) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Invoking... " + methodName + " with AlertDefinitionEvent[" + alertDefinitionEvent + "]");
@@ -624,7 +627,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Invoking... agentStatusManager.updateByResource(" + resourceId + ")");
                 }
-                agentStatusManager.updateByResource(resourceId);
+                agentStatusManager.updateByResource(subject, resourceId);
             } else {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("notifyAlertConditionCacheManager skipping alert template or group alert definition");
@@ -634,7 +637,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Invoking... agentStatusManager.updateByAlertDefinition(" + alertDefinition.getId() + ")");
             }
-            agentStatusManager.updateByAlertDefinition(alertDefinition.getId());
+            agentStatusManager.updateByAlertDefinition(subject, alertDefinition.getId());
         }
     }
 

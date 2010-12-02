@@ -23,43 +23,30 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
 
 /**
+ * A set of permissions that apply to a particular Resource or ResourceGroup (i.e. {@link Permission}s where
+ * {@link Permission#getTarget()} is {@link Permission.Target#RESOURCE}
+ *
  * @author Joseph Marques
  * @author Greg Hinkle
  */
 public class ResourcePermission implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    private boolean measure;
-
-    private boolean inventory;
-
-    private boolean control;
-
-    private boolean alert;
-
-    private boolean event;
-
-    private boolean configureRead;
-
-    private boolean configureWrite;
-
-    private boolean content;
-
-    private boolean createChildResources;
-
-    private boolean deleteResource;
+    private Set<Permission> permissions;
 
     /**
      * All permissions
      */
     public ResourcePermission() {
-        this(true, true, true, true, true, true, true, true, true, true);
+        this.permissions = Permission.RESOURCE_ALL;
     }
 
     public ResourcePermission(//
@@ -73,84 +60,95 @@ public class ResourcePermission implements Serializable {
         boolean content, //
         boolean createChildResources,//
         boolean deleteResource) {
-        this.measure = measure;
-        this.inventory = inventory;
-        this.control = control;
-        this.alert = alert;
-        this.event = event;
-        this.configureRead = configureRead;
-        this.configureWrite = configureWrite;
-        this.content = content;
-        this.createChildResources = createChildResources;
-        this.deleteResource = deleteResource;
+
+        this.permissions = new HashSet<Permission>();
+
+        if (measure) {
+            this.permissions.add(Permission.MANAGE_MEASUREMENTS);
+        }
+        if (inventory) {
+            this.permissions.add(Permission.MODIFY_RESOURCE);
+        }
+        if (control) {
+            this.permissions.add(Permission.CONTROL);
+        }
+        if (alert) {
+            this.permissions.add(Permission.MANAGE_ALERTS);
+        }
+        if (event) {
+            this.permissions.add(Permission.MANAGE_EVENTS);
+        }
+        if (configureRead) {
+            this.permissions.add(Permission.CONFIGURE_READ);
+        }
+        if (configureWrite) {
+            this.permissions.add(Permission.CONFIGURE_WRITE);
+        }
+        if (content) {
+            this.permissions.add(Permission.MANAGE_CONTENT);
+        }
+        if (createChildResources) {
+            this.permissions.add(Permission.CREATE_CHILD_RESOURCES);
+        }
+        if (deleteResource) {
+            this.permissions.add(Permission.DELETE_RESOURCE);
+        }
     }
 
     public ResourcePermission(Set<Permission> permissions) {
-        this(permissions.contains(Permission.MANAGE_MEASUREMENTS),//
-            permissions.contains(Permission.MODIFY_RESOURCE),//
-            permissions.contains(Permission.CONTROL), //
-            permissions.contains(Permission.MANAGE_ALERTS), //
-            permissions.contains(Permission.MANAGE_EVENTS), //
-            permissions.contains(Permission.CONFIGURE_READ), //
-            permissions.contains(Permission.CONFIGURE_WRITE), //
-            permissions.contains(Permission.MANAGE_CONTENT), //
-            permissions.contains(Permission.CREATE_CHILD_RESOURCES),//
-            permissions.contains(Permission.DELETE_RESOURCE));
+        if (permissions instanceof EnumSet) {
+            throw new IllegalArgumentException("EnumSet is not allowed due to GWT Serialization issues");
+        }
+
+        this.permissions = permissions;
     }
 
     public boolean isMeasure() {
-        return measure;
+        return this.permissions.contains(Permission.MANAGE_MEASUREMENTS);
     }
 
     public boolean isInventory() {
-        return inventory;
+        return this.permissions.contains(Permission.MODIFY_RESOURCE);
     }
 
     public boolean isControl() {
-        return control;
+        return this.permissions.contains(Permission.CONTROL);
     }
 
     public boolean isAlert() {
-        return alert;
+        return this.permissions.contains(Permission.MANAGE_ALERTS);
     }
 
     public boolean isEvent() {
-        return event;
+        return this.permissions.contains(Permission.MANAGE_EVENTS);
     }
 
     public boolean isConfigureRead() {
-        return configureRead;
+        return this.permissions.contains(Permission.CONFIGURE_READ);
     }
 
     public boolean isConfigureWrite() {
-        return configureWrite;
+        return this.permissions.contains(Permission.CONFIGURE_WRITE);
     }
 
     public boolean isContent() {
-        return content;
+        return this.permissions.contains(Permission.MANAGE_CONTENT);
     }
 
     public boolean isCreateChildResources() {
-        return createChildResources;
+        return this.permissions.contains(Permission.CREATE_CHILD_RESOURCES);
     }
 
     public boolean isDeleteResource() {
-        return deleteResource;
+        return this.permissions.contains(Permission.DELETE_RESOURCE);
+    }
+
+    public Set<Permission> getPermissions() {
+        return permissions;
     }
 
     @Override
     public String toString() {
-        return "ResourcePermission=[" + //
-            "measure: " + measure + ", " + //
-            "inventory: " + inventory + ", " + //
-            "control: " + control + ", " + //
-            "alert: " + alert + ", " + // 
-            "event: " + event + ", " + //
-            "configure-read: " + configureRead + ", " + //
-            "configure-write: " + configureWrite + ", " + //
-            "content: " + content + ", " + //
-            "createChildResources: " + createChildResources + ", " + //
-            "deleteResource: " + deleteResource + //
-            "]";
+        return "ResourcePermission[" + this.permissions + "]";
     }
 }

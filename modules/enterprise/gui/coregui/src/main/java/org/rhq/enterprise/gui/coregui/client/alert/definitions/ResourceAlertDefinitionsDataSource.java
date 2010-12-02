@@ -23,18 +23,26 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 
 /**
  * @author John Mazzitelli
@@ -52,6 +60,28 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
     }
 
     @Override
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = super.getListGridFields();
+
+        // add two more columns
+        ListGridField parentIdField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
+        parentIdField.setType(ListGridFieldType.LINK);
+        parentIdField.setWidth("10%");
+        parentIdField.setAutoFitWidth(true);
+        parentIdField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        fields.add(parentIdField);
+
+        ListGridField readOnlyField = new ListGridField(FIELD_READONLY, MSG.view_alerts_field_protected());
+        readOnlyField.setWidth("5%");
+        readOnlyField.setAutoFitWidth(true);
+        readOnlyField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        readOnlyField.setAlign(Alignment.CENTER);
+        fields.add(readOnlyField);
+
+        return fields;
+    }
+
+    @Override
     public ListGridRecord copyValues(AlertDefinition from) {
         ListGridRecord record = super.copyValues(from);
 
@@ -62,35 +92,35 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         if ((parentId == null || parentId.intValue() == 0) && (groupAlertDefinition == null)) {
             record.setAttribute(FIELD_PARENT, "");
             record.setLinkText("");
-            record.setAttribute(FIELD_READONLY, "N/A");
+            record.setAttribute(FIELD_READONLY, MSG.common_val_na());
         } else {
-            // TODO: fix the URLs so they point to the new GWT pages when they are implemented
             if (parentId != null && parentId.intValue() != 0) {
-                record.setAttribute(FIELD_PARENT, "/alerts/Config.do?mode=viewRoles&type="
-                    + this.resource.getResourceType().getId() + "&from=" + from.getId() + "&ad=" + parentId);
-                record.setLinkText("View Template");
+                record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesLink() + "/Alert/"
+                    + this.resource.getResourceType().getId() + "/" + parentId);
+                record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
-                record.setAttribute(FIELD_PARENT, "/alerts/Config.do?mode=viewRoles&groupId="
-                    + groupAlertDefinition.getResourceGroup().getId() + "&from=" + from.getId() + "&ad="
-                    + groupAlertDefinition.getId());
-                record.setLinkText("View Group Definition");
+                record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()
+                    + "/Alerts/Definitions/" + groupAlertDefinition.getId());
+                record.setLinkText(MSG.view_alert_definition_for_group());
             }
-            record.setAttribute(FIELD_READONLY, readOnly);
+            record.setAttribute(FIELD_READONLY, (readOnly) ? MSG.common_val_yes() : MSG.common_val_no());
         }
 
         return record;
     }
 
     @Override
-    protected void setupFields() {
-        super.setupFields();
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         // add two more columns
-        DataSourceLinkField parentIdField = new DataSourceLinkField(FIELD_PARENT, "Parent");
-        addField(parentIdField);
+        DataSourceLinkField parentIdField = new DataSourceLinkField(FIELD_PARENT, MSG.view_alerts_field_parent());
+        fields.add(parentIdField);
 
-        DataSourceTextField readOnlyField = new DataSourceTextField(FIELD_READONLY, "Read Only");
-        addField(readOnlyField);
+        DataSourceTextField readOnlyField = new DataSourceTextField(FIELD_READONLY, MSG.view_alerts_field_protected());
+        fields.add(readOnlyField);
+
+        return fields;
     }
 
     @Override

@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue;
 
-import static org.rhq.enterprise.gui.coregui.client.util.WidgetsField.UNLIMITED;
-
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -46,11 +44,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  * @author Greg Hinkle
  */
 public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements CustomSettingsPortlet {
-
     //ui attributes/properties/indentifiers
-    public static final String KEY = "Discovery Queue";
+    public static final String KEY = MSG.view_portlet_autodiscovery_title();
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
-    private String unlimited = UNLIMITED.propertyName();
+    private String unlimited = MSG.common_label_unlimited();
     private String defaultValue = unlimited;
     //portlet settings and datasource elements
     private DashboardPortlet storedPortlet;
@@ -64,7 +61,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     protected void onInit() {
         super.onInit();
         //initialize the datasource to include Portlet instance
-        this.dataSource = new AutodiscoveryQueueDataSource();
+        this.dataSource = new AutodiscoveryQueueDataSource(getTreeGrid());
         if ((getTreeGrid() != null) && (getDataSource() != null)) {
             getTreeGrid().setDataSource(getDataSource());
         }
@@ -97,8 +94,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet offers the ability to import newly discovered resources into the inventory "
-            + "for monitoring and management or to ingnore them from further action.");
+        return new HTMLFlow(MSG.view_portlet_autodiscovery_help_msg());
     }
 
     /** Build custom for to dispaly the Portlet Configuration settings.
@@ -111,7 +107,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         //horizontal display component
         LocatableHLayout row = new LocatableHLayout(extendLocatorId("auto-discovery.configuration"));
         BlurbItem label = new BlurbItem(form.extendLocatorId("discovery-platform-count-label"));
-        label.setValue("Number of platforms to display");
+        label.setValue(MSG.view_portlet_autodiscovery_config_platform_selection());
         label.setWrap(false);
 
         //-------------combobox for number of platforms to display on the dashboard

@@ -25,27 +25,29 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+
 public enum ResourceDataSourceField {
 
-    NAME("name", "Name"),
+    NAME("name", CoreGUI.getMessages().common_title_name()),
 
-    DESCRIPTION("description", "Description"),
+    DESCRIPTION("description", CoreGUI.getMessages().common_title_description()),
 
-    TYPE("resourceType.name", "Type"),
+    TYPE("resourceType.name", CoreGUI.getMessages().common_title_type()),
 
-    PLUGIN("pluginName", "Plugin"),
+    PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),
 
-    CATEGORY("resourceType.category", "Category"),
+    CATEGORY("resourceType.category", CoreGUI.getMessages().common_title_category()),
 
-    AVAILABILITY("currentAvailability", "Availability");
+    AVAILABILITY("currentAvailability", CoreGUI.getMessages().common_title_availability());
 
     /**
-     * Corresponds to a property name of Resource
+     * Corresponds to a property name of Resource (e.g. resourceType.name).
      */
     private String propertyName;
 
     /**
-     * The display name for the field or property
+     * The table header for the field or property (e.g. Type).
      */
     private String title;
 

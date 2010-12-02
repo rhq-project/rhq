@@ -30,12 +30,12 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -52,15 +52,15 @@ public class FileListView extends LocatableVLayout {
 
     private void viewFiles(PageList<BundleFile> files) {
 
-        Table table = new Table(extendLocatorId("BundleFiles"), "Bundle Files");
+        Table table = new Table(extendLocatorId("BundleFiles"), MSG.view_bundle_bundleFiles());
 
-        ListGridField id = new ListGridField("id", "Id");
+        ListGridField id = new ListGridField("id", MSG.common_title_id());
         id.setWidth("20%");
 
-        ListGridField name = new ListGridField("name", "Name");
+        ListGridField name = new ListGridField("name", MSG.common_title_name());
         name.setWidth("60%");
 
-        ListGridField size = new ListGridField("size", "File Size");
+        ListGridField size = new ListGridField("size", MSG.view_bundle_fileListView_fileSize());
         name.setWidth("20%");
 
         // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
@@ -81,7 +81,7 @@ public class FileListView extends LocatableVLayout {
         GWTServiceLookup.getBundleService().findBundleFilesByCriteria(criteria,
             new AsyncCallback<PageList<BundleFile>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load bundle file data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_fileListView_loadFailure(), caught);
                 }
 
                 public void onSuccess(PageList<BundleFile> result) {

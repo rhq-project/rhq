@@ -66,11 +66,4 @@ public class BundleDistributionFileUploadServlet extends FileUploadServlet {
         return;
     }
 
-    private String getFormField(Map<String, String> formFields, String key, String defaultValue) {
-        String value = formFields.get(key);
-        if (value == null) {
-            value = defaultValue;
-        }
-        return value;
-    }
 }

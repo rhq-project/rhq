@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -425,14 +426,62 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         return pageList;
     }
 
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersionNumber,
+        Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
+
+        return createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
+            packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream, null);
+    }
+
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersionNumber,
+        Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream,
+        Map<String, String> packageUploadDetails) {
+
+        log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
+
+        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
+
+        // Check permissions first
+        if (!authorizationManager
+            .hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResource.getId())) {
+            throw new PermissionException("User [" + user.getName()
+                + "] does not have permission to create a child resource for resource [" + parentResource + "]");
+        }
+
+        ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
+        PackageType newPackageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
+
+        // unless version is set start versioning the package by timestamp
+        packageVersionNumber = (null == packageVersionNumber) ? Long.toString(System.currentTimeMillis())
+            : packageVersionNumber;
+
+        // default to no required architecture
+        architectureId = (null != architectureId) ? architectureId : contentManager.getNoArchitecture().getId();
+
+        // Create/locate package and package version
+        PackageVersion packageVersion = null;
+        if (packageUploadDetails == null) {
+            packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream);
+        } else {
+            packageVersion = contentManager.getUploadedPackageVersion(packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
+        }
+
+        return doCreatePackageBackedResource(user, parentResource, newResourceType, newResourceName,
+            pluginConfiguration, deploymentTimeConfiguration, packageVersion);
+    }
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // Remote Interface Impl
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public CreateResourceHistory createResource(Subject user, int parentResourceId, int resourceTypeId, String resourceName,
-        Configuration pluginConfiguration, Configuration resourceConfiguration) {
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration) {
         log.debug("Received call to create configuration backed resource under parent: " + parentResourceId
             + " of type: " + resourceTypeId);
 
@@ -473,73 +522,56 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
-    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
-        String newResourceName,//
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, byte[] packageBits) {
 
-        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
-            packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));
+        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
+            packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(
+                packageBits));
     }
 
-    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
-        Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
-        return createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
-            packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream, null);
-    }
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration,//
+        int packageVersionId) {
 
-    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
-        Configuration deploymentTimeConfiguration, InputStream packageBitStream,
-        Map<String, String> packageUploadDetails) {
-        log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
-
-        Resource resource = entityManager.find(Resource.class, parentResourceId);
-        ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
-        PackageType newPackageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
-        Agent agent = resource.getAgent();
+        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
 
         // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, resource.getId())) {
-            throw new PermissionException("User [" + user.getName()
-                + "] does not have permission to create a child resource for resource [" + resource + "]");
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CREATE_CHILD_RESOURCES, parentResource
+            .getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to create a child resource for resource [" + parentResource + "]");
         }
 
-        /* Once we add support for selecting an existing package to deploy, that lookup will probably go here. We'll
-         * probably split it into a different call for selecting an existing package v. deploying a new one. For now
-         * since we don't have the full content source and package infrastructure in place, plus the need to get JON
-         * Beta 1 functionality back, I'm going to proceed with the idea that the package and package version do not
-         * exist and create them here. jdobies, Nov 28, 2007
-         */
+        ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
+        PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
-        // unless version is set start versioning the package by timestamp
-        packageVersionNumber = (null == packageVersionNumber) ? Long.toString(System.currentTimeMillis())
-            : packageVersionNumber;
+        return doCreatePackageBackedResource(subject, parentResource, newResourceType, newResourceName,
+            pluginConfiguration, deploymentTimeConfiguration, packageVersion);
+    }
 
-        // default to no required architecture
-        architectureId = (null != architectureId) ? architectureId : contentManager.getNoArchitecture().getId();
+    private CreateResourceHistory doCreatePackageBackedResource(Subject subject, Resource parentResource,
+        ResourceType newResourceType, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, PackageVersion packageVersion) {
 
-        // Create/locate package and package version
-        PackageVersion packageVersion = null;
-        if (packageUploadDetails == null) {
-            packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
-                packageVersionNumber, architectureId, packageBitStream);
-        } else {
-            packageVersion = contentManager.getUploadedPackageVersion(packageName, newPackageType.getId(),
-                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
-        }
+        Agent agent = parentResource.getAgent();
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
-        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
-            newResourceTypeId, newResourceName, packageVersion, deploymentTimeConfiguration);
+        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(subject, parentResource
+            .getId(), newResourceType.getId(), newResourceName, packageVersion, deploymentTimeConfiguration);
 
         // Package into transfer object
         ResourcePackageDetails packageDetails = ContentManagerHelper.packageVersionToDetails(packageVersion);
         packageDetails.setDeploymentTimeConfiguration(deploymentTimeConfiguration);
-        CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
+        CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResource.getId(),
             newResourceName, newResourceType.getName(), newResourceType.getPlugin(), pluginConfiguration,
             packageDetails);
 
@@ -563,6 +595,19 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             throw new RuntimeException("Error while sending create resource request to agent service", e);
         }
+    }
+
+    public List<DeleteResourceHistory> deleteResources(Subject user, int[] resourceIds) {
+        List<Integer> deleteResourceIds = new ArrayList<Integer>();
+        List<DeleteResourceHistory> deleteResourceHistories = new ArrayList<DeleteResourceHistory>();
+
+        for (Integer resourceId : resourceIds) {
+            if (!deleteResourceIds.contains(resourceId)) {
+                deleteResourceHistories.add(deleteResource(user, resourceId));
+            }
+        }
+
+        return deleteResourceHistories;
     }
 
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {

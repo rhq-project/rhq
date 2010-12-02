@@ -41,6 +41,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -91,7 +92,7 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
         queryCount.setParameter("parentFilter", parentFilter);
         query.setParameter("parentFilter", parentFilter);
         queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
-        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         queryCount.setParameter("startTime", startTime);
         query.setParameter("startTime", startTime);
         queryCount.setParameter("endTime", endTime);
@@ -177,9 +178,8 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
         }
     }
 
-    public int deleteAlertHistories(Subject subject, Integer[] historyIds) {
-        int removed = alertManager.deleteAlerts(subject,historyIds);
-        return removed;
+    public void deleteAlertHistories(Subject subject, Integer[] historyIds) {
+        alertManager.deleteAlerts(subject, ArrayUtils.unwrapArray(historyIds));
     }
 
     public int purgeAllAlertHistories(Subject subject) {

@@ -26,7 +26,7 @@ package org.rhq.core.domain.alert;
  * @author Joseph Marques
  */
 public enum AlertPriority {
-    LOW("! - Low"), MEDIUM("!! - Medium"), HIGH("!!! - High");
+    LOW("Low"), MEDIUM("Medium"), HIGH("High");
 
     private String displayName;
 

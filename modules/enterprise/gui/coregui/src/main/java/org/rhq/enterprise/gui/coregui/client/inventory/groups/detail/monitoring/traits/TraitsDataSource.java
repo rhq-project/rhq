@@ -18,15 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits;
 
+import java.util.List;
+
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
-
-import java.util.List;
 
 /**
  * A DataSource for reading traits for the current group.
@@ -41,16 +42,16 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
     }
 
     @Override
-    protected List<DataSourceField> createFields() {
-        List<DataSourceField> fields = super.createFields();
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField groupIdField =
-                new DataSourceIntegerField(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, "Group Id");
+        DataSourceIntegerField groupIdField = new DataSourceIntegerField(
+            MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, MSG.dataSource_traits_group_field_groupId());
         groupIdField.setHidden(true);
         fields.add(0, groupIdField);
 
-        DataSourceTextField resourceNameField =
-                new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, "Member Resource");
+        DataSourceTextField resourceNameField = new DataSourceTextField(
+            MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, MSG.dataSource_traits_group_field_memberResource());
         fields.add(0, resourceNameField);
 
         return fields;
@@ -62,8 +63,8 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
 
         record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, this.groupId);
 
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME,
-                from.getSchedule().getResource().getName());
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, from.getSchedule().getResource()
+            .getName());
 
         return record;
     }

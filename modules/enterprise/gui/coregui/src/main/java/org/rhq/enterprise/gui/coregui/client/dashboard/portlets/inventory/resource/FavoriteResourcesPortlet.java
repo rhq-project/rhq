@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
  */
 public class FavoriteResourcesPortlet extends ResourceSearchView implements Portlet {
 
-    public static final String KEY = "Favorite Resources";
+    public static final String KEY = MSG.view_portlet_favoriteResources_title();
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 
@@ -61,8 +61,6 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
@@ -85,6 +83,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             }
         });
 
+        super.configureTable();
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -99,7 +98,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays your favorite resources");
+        return new HTMLFlow(MSG.view_portlet_favoriteResources_msg());
     }
 
     public static final class Factory implements PortletViewFactory {

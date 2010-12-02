@@ -36,16 +36,24 @@ public class ViewPath {
     }
 
     public ViewPath(String pathString) {
+        this(pathString, false);
+    }
+
+    public ViewPath(String pathString, boolean refresh) {
         for (String pathElement : pathString.split("/")) {
             viewPath.add(new ViewId(pathElement));
         }
+        this.refresh = refresh;
     }
 
     public List<ViewId> getViewPath() {
         return viewPath;
     }
 
-
+    public String getParentViewPath() {
+        return getPathToIndex(this.index - 1);
+    }
+    
     public ViewPath next() {
         index++;
         return this;
@@ -68,12 +76,16 @@ public class ViewPath {
     }
 
     public String getPathToCurrent() {
+        return getPathToIndex(this.index);
+    }
+
+    private String getPathToIndex(int endIndex) {
         String path = "";
-        for (int i = 0; i < index; i++) {
+        for (int i = 0; i < endIndex; i++) {
             if (i > 0) {
                 path += "/";
             }
-            path += viewPath.get(i).getPath();
+            path += this.viewPath.get(i).getPath();
         }
         return path;
     }

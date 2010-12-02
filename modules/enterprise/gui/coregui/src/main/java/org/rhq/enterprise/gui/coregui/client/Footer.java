@@ -26,11 +26,11 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
-import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
@@ -46,29 +46,29 @@ public class Footer extends LocatableToolStrip {
         super(LOCATOR_ID);
         setHeight(30);
         setAlign(VerticalAlignment.CENTER);
-        //        setPadding(5);
         setWidth100();
-        setMembersMargin(15);
+        setMembersMargin(10);
+        setLayoutRightMargin(5);
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        final UserSessionState userSessionState = new UserSessionState("UserSessionState");
-        final MessageCenterView recentMessage = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
-        recentMessage.setWidth("*");
+        final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
 
-        addMember(userSessionState);
+        addMember(messageCenter);
+
         addMember(new ToolStripSeparator());
-        addMember(recentMessage);
-        addMember(new ToolStripSeparator());
-        addMember(favoritesButton);
+
         addMember(alertsMessage);
 
-        userSessionState.schedule(15000);
+        addMember(new ToolStripSeparator());
+
+        addMember(favoritesButton);
+
         alertsMessage.schedule(60000);
     }
 
@@ -109,23 +109,6 @@ public class Footer extends LocatableToolStrip {
         }
     }
 
-    public static class UserSessionState extends RefreshableLabel {
-        public UserSessionState(String locatorId) {
-            super(locatorId);
-            setWrap(false);
-            setMargin(5);
-            setValign(VerticalAlignment.CENTER);
-        }
-
-        public void refreshLoggedIn() {
-            setContents("Logged in as " + UserSessionManager.getSessionSubject().getName());
-        }
-
-        public void refreshLoggedOut() {
-            setContents("Logged out");
-        }
-    }
-
     public static class AlertsMessage extends RefreshableLabel {
         public AlertsMessage(String locatorId) {
             super(locatorId);
@@ -138,33 +121,31 @@ public class Footer extends LocatableToolStrip {
 
             addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    History.newItem("Reports/Inventory/Recent Alerts");
+                    History.newItem(ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
+                        + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID);
                 }
             });
         }
 
         public void refreshLoggedIn() {
             AlertCriteria alertCriteria = new AlertCriteria();
-            alertCriteria.setPaging(1, 1);
-            // last eight hours
-            alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8));
+            alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8)); // last 8 hrs
 
-            GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
-                new AsyncCallback<PageList<Alert>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Latest alerts lookup failed", caught);
-                    }
+            GWTServiceLookup.getAlertService().findAlertCountByCriteria(alertCriteria, new AsyncCallback<Long>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
+                }
 
-                    public void onSuccess(PageList<Alert> result) {
-                        if (result.isEmpty()) {
-                            setContents("no recent alerts");
-                            setIcon("subsystems/alert/Alert_LOW_16.png");
-                        } else {
-                            setContents(result.getTotalSize() + " recent alerts");
-                            setIcon("subsystems/alert/Alert_HIGH_16.png");
-                        }
+                public void onSuccess(Long result) {
+                    if (result == 0L) {
+                        setContents(MSG.view_core_recentAlerts("0"));
+                        setIcon("subsystems/alert/Alert_LOW_16.png");
+                    } else {
+                        setContents(MSG.view_core_recentAlerts(result.toString()));
+                        setIcon("subsystems/alert/Alert_HIGH_16.png");
                     }
-                });
+                }
+            });
         }
     }
 

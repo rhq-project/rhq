@@ -68,6 +68,18 @@ public class DBUpgrader extends Task {
 
     private DatabaseType databaseType;
 
+    private Connection connection;
+    private boolean doCloseConnection;
+    
+    public DBUpgrader() {
+        doCloseConnection = true;
+    }
+    
+    public DBUpgrader(Connection connection) {
+        this.connection = connection;
+        doCloseConnection = false;
+    }
+    
     /**
      * The URL to the database that is to be upgraded.
      *
@@ -297,7 +309,7 @@ public class DBUpgrader extends Task {
         } catch (Exception e) {
             throw new BuildException(e.getMessage(), e);
         } finally {
-            if ((conn != null) && (databaseType != null)) {
+            if ((conn != null) && (databaseType != null) && doCloseConnection) {
                 databaseType.closeConnection(conn);
             }
         }
@@ -446,9 +458,23 @@ public class DBUpgrader extends Task {
      * @throws SQLException
      */
     public Connection getConnection() throws SQLException {
-        return DbUtil.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        if (connection == null) {
+            connection = DbUtil.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        }
+        return connection; 
     }
 
+    /**
+     * This can be used to programatically override the JDBC connection to be used
+     * by this task.
+     *  
+     * @param connection
+     */
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+        doCloseConnection = connection == null;
+    }
+    
     /**
      * Returns the type of database that is being upgraded.
      *

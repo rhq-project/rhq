@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -42,34 +43,40 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface ResourceGWTService extends RemoteService {
 
+    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration newResourceConfiguration);
+
+    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration deploymentTimeConfiguration, int packageVersionId);
+
+    List<DeleteResourceHistory> deleteResources(int[] resourceIds);
+
+    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
+
     PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
 
     PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
 
-    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
-
-    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
+    List<ResourceError> findResourceErrors(int resourceId);
 
     List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems);
 
     Resource getPlatformForResource(int resourceId);
 
-    List<Integer> uninventoryResources(int[] resourceIds);
+    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
+
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
+
+    void ignoreResources(int[] resourceIds);
+
+    void importResources(int[] resourceIds);
+
+    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
 
     void updateResource(Resource resource);
 
-    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration newResourceConfiguration);
+    void unignoreResources(int[] resourceIds);
 
-    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
+    List<Integer> uninventoryResources(int[] resourceIds);
 
-    void importResources(Integer[] resourceIds);
-
-    void ignoreResources(Integer[] resourceIds);
-
-    void unignoreResources(Integer[] resourceIds);
-
-    List<ResourceError> findResourceErrors(int resourceId);
-
-    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
 }

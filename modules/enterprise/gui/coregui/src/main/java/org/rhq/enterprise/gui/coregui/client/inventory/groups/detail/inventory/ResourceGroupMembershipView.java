@@ -16,16 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
-import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -46,11 +44,23 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     private int resourceGroupId;
     private ResourceGroup resourceGroup;
     private ResourceGroupResourceSelector selector;
+    private ClickHandler saveButtonHandler;
 
     public ResourceGroupMembershipView(String locatorId, int resourceGroupId) {
         super(locatorId);
 
         this.resourceGroupId = resourceGroupId;
+    }
+
+    /**
+     * Allows an external component to hook into the save button. The given
+     * handler will be invoked when the save button is pressed. If <code>null</code>
+     * is given, then no external handler will be called.
+     * 
+     * @param saveButtonHandler
+     */
+    public void setSaveButtonHandler(ClickHandler saveButtonHandler) {
+        this.saveButtonHandler = saveButtonHandler;
     }
 
     @Override
@@ -63,13 +73,17 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
-        toolStrip.addMember(new LayoutSpacer());
-
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
+                if (ResourceGroupMembershipView.this.saveButtonHandler != null) {
+                    ResourceGroupMembershipView.this.saveButtonHandler.onClick(clickEvent);
+                }
             }
         });
 
@@ -97,6 +111,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                             : null, false);
 
                     addMember(ResourceGroupMembershipView.this.selector);
+                    markForRedraw();
                 }
             });
     }
@@ -107,21 +122,25 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         GWTServiceLookup.getResourceGroupService().setAssignedResources(this.resourceGroup.getId(), resourceIds, true,
             new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
+                    CoreGUI.getErrorHandler()
+                        .handleError(
+                            MSG.view_group_membership_saveFailure(ResourceGroupMembershipView.this.resourceGroup
+                                .getName()), caught);
                 }
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Group membership updated for ["
-                            + ResourceGroupMembershipView.this.resourceGroup.getName() + "]", Message.Severity.Info));
+                        new Message(MSG
+                            .view_group_membership_saveSuccessful(ResourceGroupMembershipView.this.resourceGroup
+                                .getName()), Message.Severity.Info));
                     CoreGUI.refresh();
                 }
             });
     }
 
     private int[] getSelectedResourceIds() {
-        int[] selection = new int[this.selector.getSelection().size()];
-        HashSet<Integer> selectedIds = this.selector.getSelection();
+        Set<Integer> selectedIds = this.selector.getSelection();
+        int[] selection = new int[selectedIds.size()];
         int i = 0;
         for (Integer id : selectedIds) {
             selection[i++] = id;

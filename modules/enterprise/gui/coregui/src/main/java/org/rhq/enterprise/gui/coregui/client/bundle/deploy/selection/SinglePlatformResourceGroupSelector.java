@@ -29,8 +29,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 
 /**
  * @author Greg Hinkle
@@ -46,8 +46,7 @@ public class SinglePlatformResourceGroupSelector extends ComboBoxItem {
         setOptionDataSource(new PlatformResourceGroupsDataSource());
 
         setWidth(240);
-        setTitle("Group");
-
+        setTitle(CoreGUI.getMessages().common_title_resource_group());
 
         setValueField("id");
         setDisplayField("name");
@@ -55,7 +54,6 @@ public class SinglePlatformResourceGroupSelector extends ComboBoxItem {
         setPickListFields(nameField, descriptionField);
         setTextMatchStyle(TextMatchStyle.SUBSTRING);
     }
-
 
     protected class PlatformResourceGroupsDataSource extends ResourceGroupsDataSource {
 
@@ -66,5 +64,4 @@ public class SinglePlatformResourceGroupSelector extends ComboBoxItem {
             return result;
         }
     }
-
 }

@@ -103,9 +103,9 @@
       </dependency>
 
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>test-utils</artifactId>
-         <version>${version}</version>
+         <version>${project.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -324,43 +324,8 @@
     </plugins>
   </build>   
 
-   <pluginRepositories>
-      <pluginRepository>
-         <id>java.net</id>
-         <name>java.net Maven Repository</name>
-         <url>http://download.java.net/maven/1/</url>
-         <layout>legacy</layout>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </pluginRepository>
-   </pluginRepositories>
-
-   <repositories>
-
-      <repository>
-         <id>java.net</id>
-         <name>java.net Maven Repository</name>
-         <url>http://download.java.net/maven/1/</url>
-         <layout>legacy</layout>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </repository>
-
-      <!-- This is for SIGAR 1.6.5 and Augeas 0.7.1. -->
-      <repository>
-          <id>jboss-thirdparty-uploads</id>
-          <name>JBoss Third Party Uploads</name>
-          <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-      </repository>
-
-   </repositories>
    <profiles>
-         <profile>
+     <profile>
       <id>cobertura</id>
       <activation>
         <activeByDefault>false</activeByDefault>
@@ -368,14 +333,12 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
-             <version>1.1</version>
+             <artifactId>maven-antrun-plugin</artifactId> 
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

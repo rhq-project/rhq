@@ -165,12 +165,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     private List<AvailabilityPoint> getAvailabilitiesForContext(Subject subject, EntityContext context,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (!authorizationManager.canViewResource(subject, context.resourceId)) {
                 throw new PermissionException("User [" + subject.getName() + "] does not have permission to view "
                     + context.toShortString());
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (!authorizationManager.canViewGroup(subject, context.groupId)) {
                 throw new PermissionException("User [" + subject.getName() + "] does not have permission to view "
                     + context.toShortString());
@@ -188,13 +188,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         Date fullRangeEndDate = new Date(fullRangeEndTime);
 
         try {
-            if (context.category == EntityContext.Category.Resource) {
+            if (context.type == EntityContext.Type.Resource) {
                 availabilities = findAvailabilityWithinInterval(context.resourceId, fullRangeBeginDate,
                     fullRangeEndDate);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
+            } else if (context.type == EntityContext.Type.ResourceGroup) {
                 availabilities = findResourceGroupAvailabilityWithinInterval(context.groupId, fullRangeBeginDate,
                     fullRangeEndDate);
-            } else if (context.category == EntityContext.Category.AutoGroup) {
+            } else if (context.type == EntityContext.Type.AutoGroup) {
                 availabilities = findAutoGroupAvailabilityWithinInterval(context.parentResourceId,
                     context.resourceTypeId, fullRangeBeginDate, fullRangeEndDate);
             } else {
@@ -230,7 +230,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 availabilities.add(0, surrogateAvailability); // add at the head of the list
             }
         } else {
-            Resource surrogateResource = context.category == EntityContext.Category.Resource ? entityManager.find(
+            Resource surrogateResource = context.type == EntityContext.Type.Resource ? entityManager.find(
                 Resource.class, context.resourceId) : new Resource(-1);
             Availability surrogateAvailability = new Availability(surrogateResource, fullRangeBeginDate, null);
             surrogateAvailability.setEndTime(fullRangeEndDate);
@@ -339,9 +339,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         if (withCurrentAvailability) {
             AvailabilityPoint oldFirstAvailabilityPoint = availabilityPoints.remove(availabilityPoints.size() - 1);
             AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
-            if (context.category == EntityContext.Category.Resource) {
+            if (context.type == EntityContext.Type.Resource) {
                 newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(subject, context.resourceId);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
+            } else if (context.type == EntityContext.Type.ResourceGroup) {
                 ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(subject,
                     context.groupId);
                 Double firstAvailability = composite.getExplicitAvail();
@@ -384,8 +384,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             }
         }
 
-        notifyAlertConditionCacheManager("mergeAvailabilityReport", report.getResourceAvailability().toArray(
-            new Availability[report.getResourceAvailability().size()]));
+        // translate data into Availability objects for downstream processing
+        int j = 0;
+        Availability[] availabilities = new Availability[report.getResourceAvailability().size()];
+        for (AvailabilityReport.Datum datum : report.getResourceAvailability()) {
+            availabilities[j++] = new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
+                datum.getAvailabilityType());
+        }
+
+        notifyAlertConditionCacheManager("mergeAvailabilityReport", availabilities);
 
         boolean askForFullReport = false;
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
@@ -409,7 +416,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             q.setFlushMode(FlushModeType.COMMIT);
 
             int count = 0;
-            for (Availability reported : report.getResourceAvailability()) {
+            for (Availability reported : availabilities) {
                 if ((++count % 100) == 0) {
                     entityManager.flush();
                     entityManager.clear();
@@ -499,9 +506,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 return false;
             }
         } else {
-            log.error("Could not figure out which agent sent availability report.  This is a bug, please report it. "
+            log.error("Could not figure out which agent sent availability report. "
+                + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
+                + agentName
+                + "] was recently removed. In any other case this is a bug."
                 + report);
-        }
+      }
 
         return true; // everything is OK and things look to be in sync
     }

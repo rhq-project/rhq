@@ -20,13 +20,12 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -79,13 +78,14 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                            .handleError("Cannot determine current roles - starting empty", caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_role_editor_loadFailed(), caught);
                         createNewSelector(null);
                     }
                 });
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot use current roles - starting empty", e);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_alert_definition_notification_role_editor_restoreFailed(), e);
                 createNewSelector(null);
             }
         } else {
@@ -106,12 +106,13 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     public boolean validate() {
         if (selector != null) {
             try {
-                HashSet<Integer> selectedIds = selector.getSelection();
+                Set<Integer> selectedIds = selector.getSelection();
                 String newPropValue = fence(selectedIds);
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
                 return true;
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot save the selected roles", e);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_role_editor_saveFailed(),
+                    e);
                 return false;
             }
         }
@@ -160,7 +161,6 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class RoleSelector extends AbstractSelector<Role> {
-
         public RoleSelector(String id, Collection<Role> roles) {
             super(id);
             if (roles != null) {
@@ -171,7 +171,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
 
         @Override
         protected RPCDataSource<Role> getDataSource() {
-            return new SelectedRolesDataSource();
+            return new RolesDataSource();
         }
 
         @Override
@@ -184,19 +184,10 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
             return null; // No Filters Currently
         }
 
-        public class SelectedRolesDataSource extends RolesDataSource {
-
-            @Override
-            public ListGridRecord[] buildRecords(Collection<Role> roles) {
-                ListGridRecord[] records = super.buildRecords(roles);
-                for (ListGridRecord record : records) {
-                    if (selection.contains(record.getAttributeAsInt("id"))) {
-                        record.setEnabled(false);
-                    }
-                }
-                return records;
-            }
+        @Override
+        protected String getItemTitle() {
+            return MSG.common_title_roles();
         }
-
     }
+
 }

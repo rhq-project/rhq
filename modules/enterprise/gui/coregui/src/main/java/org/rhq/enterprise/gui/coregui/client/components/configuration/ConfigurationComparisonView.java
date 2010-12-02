@@ -18,16 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
-import org.rhq.core.domain.configuration.AbstractPropertyMap;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
 
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -38,28 +32,37 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
  * @author Greg Hinkle
  */
 public class ConfigurationComparisonView extends VLayout {
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private ConfigurationDefinition definition;
     private List<Configuration> configs;
     private List<String> titles;
 
-    public ConfigurationComparisonView(ConfigurationDefinition definition, List<Configuration> configs, List<String> titles) {
+    public ConfigurationComparisonView(ConfigurationDefinition definition, List<Configuration> configs,
+        List<String> titles) {
         this.definition = definition;
         this.configs = configs;
         this.titles = titles;
 
         setWidth100();
     }
-
 
     @Override
     protected void onDraw() {
@@ -70,10 +73,9 @@ public class ConfigurationComparisonView extends VLayout {
 
         treeGrid.setLoadDataOnDemand(false);
 
-
         TreeGridField[] fields = new TreeGridField[2 + titles.size()];
 
-        TreeGridField nameField = new TreeGridField("name","Name",250);
+        TreeGridField nameField = new TreeGridField("name", MSG.common_title_name(), 250);
         nameField.setFrozen(true);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -85,7 +87,7 @@ public class ConfigurationComparisonView extends VLayout {
             }
         });
 
-        TreeGridField typeField = new TreeGridField("type","Type", 80);
+        TreeGridField typeField = new TreeGridField("type", MSG.common_title_type(), 80);
 
         fields[0] = nameField;
         fields[1] = typeField;
@@ -111,23 +113,20 @@ public class ConfigurationComparisonView extends VLayout {
 
         treeGrid.setData(buildTree());
 
-
         addMember(treeGrid);
     }
-
 
     protected Tree buildTree() {
         Tree tree = new Tree();
 
-        TreeNode root = new TreeNode("Configuration Comparison");
-
+        TreeNode root = new TreeNode(MSG.view_configCompare_configCompare());
 
         ArrayList<TreeNode> children = new ArrayList<TreeNode>();
 
         List<PropertyDefinition> nonGroupDefs = definition.getNonGroupedProperties();
         if (nonGroupDefs != null && !nonGroupDefs.isEmpty()) {
-            TreeNode groupNode = new TreeNode("General Properties");
-            buildNode(groupNode,nonGroupDefs, configs);
+            TreeNode groupNode = new TreeNode(MSG.common_title_generalProp());
+            buildNode(groupNode, nonGroupDefs, configs);
             children.add(groupNode);
         }
 
@@ -145,12 +144,11 @@ public class ConfigurationComparisonView extends VLayout {
         return tree;
     }
 
-
-
-    private void buildNode(TreeNode parent, Collection<PropertyDefinition> definitions, List<? extends AbstractPropertyMap> maps) {
+    private void buildNode(TreeNode parent, Collection<PropertyDefinition> definitions,
+        List<? extends AbstractPropertyMap> maps) {
         ArrayList<TreeNode> children = new ArrayList<TreeNode>();
 
-        parent.setAttribute("consistent",true);
+        parent.setAttribute("consistent", true);
         for (PropertyDefinition definition : definitions) {
             if (definition instanceof PropertyDefinitionSimple) {
 
@@ -158,9 +156,10 @@ public class ConfigurationComparisonView extends VLayout {
                 for (AbstractPropertyMap map : maps) {
                     properties.add(map.getSimple(definition.getName()));
                 }
-                ComparisonTreeNode node = new ComparisonTreeNode((PropertyDefinitionSimple) definition, properties, titles);
+                ComparisonTreeNode node = new ComparisonTreeNode((PropertyDefinitionSimple) definition, properties,
+                    titles);
                 if (!node.getAttributeAsBoolean("consistent")) {
-                    parent.setAttribute("consistent",false);
+                    parent.setAttribute("consistent", false);
                 }
                 children.add(node);
             }
@@ -170,34 +169,33 @@ public class ConfigurationComparisonView extends VLayout {
         parent.setChildren(children.toArray(new TreeNode[children.size()]));
     }
 
-
     public static void displayComparisonDialog(final ArrayList<ResourceConfigurationUpdate> configs) {
         int resourceId = configs.get(0).getResource().getResourceType().getId();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                resourceId,
-                EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                new ResourceTypeRepository.TypeLoadedCallback() {
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceId,
+            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            new ResourceTypeRepository.TypeLoadedCallback() {
 
-            public void onTypesLoaded(ResourceType type) {
+                public void onTypesLoaded(ResourceType type) {
 
-                ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
 
-                ArrayList<Configuration> configurations = new ArrayList<Configuration>();
-                ArrayList<String> titles = new ArrayList<String>();
-                for (ResourceConfigurationUpdate update : configs) {
-                    configurations.add(update.getConfiguration());
-                    titles.add(String.valueOf(update.getId()));
+                    ArrayList<Configuration> configurations = new ArrayList<Configuration>();
+                    ArrayList<String> titles = new ArrayList<String>();
+                    for (ResourceConfigurationUpdate update : configs) {
+                        configurations.add(update.getConfiguration());
+                        titles.add(String.valueOf(update.getId()));
+                    }
+                    displayComparisonDialog(definition, configurations, titles);
                 }
-                displayComparisonDialog(definition, configurations, titles);
-            }
-        } );
+            });
     }
 
-    public static void displayComparisonDialog(ConfigurationDefinition definition, ArrayList<Configuration> configurations, ArrayList<String> titles) {
+    public static void displayComparisonDialog(ConfigurationDefinition definition,
+        ArrayList<Configuration> configurations, ArrayList<String> titles) {
 
         ConfigurationComparisonView view = new ConfigurationComparisonView(definition, configurations, titles);
         Window dialog = new Window();
-        dialog.setTitle("Comparing configurations");
+        dialog.setTitle(MSG.view_configCompare_comparingConfigs());
         dialog.setWidth(800);
         dialog.setHeight(800);
         dialog.setIsModal(true);
@@ -208,13 +206,13 @@ public class ConfigurationComparisonView extends VLayout {
         dialog.show();
     }
 
-
     private static class ComparisonTreeNode extends TreeNode {
 
         PropertyDefinitionSimple definition;
         List<PropertySimple> properties;
 
-        private ComparisonTreeNode(PropertyDefinitionSimple definition, List<PropertySimple> properties, List<String> titles) {
+        private ComparisonTreeNode(PropertyDefinitionSimple definition, List<PropertySimple> properties,
+            List<String> titles) {
             super(definition.getDisplayName());
 
             this.definition = definition;
@@ -231,7 +229,8 @@ public class ConfigurationComparisonView extends VLayout {
 
                 if (i == 0) {
                     commonValue = value;
-                } else if (allTheSame && commonValue == null && value != null || (commonValue != null && !commonValue.equals(value))) {
+                } else if (allTheSame && commonValue == null && value != null
+                    || (commonValue != null && !commonValue.equals(value))) {
                     allTheSame = false;
                 }
                 setAttribute(titles.get(i++), value);
@@ -240,7 +239,6 @@ public class ConfigurationComparisonView extends VLayout {
             }
         }
     }
-
 
     private static class ColoredTreeGrid extends TreeGrid {
 

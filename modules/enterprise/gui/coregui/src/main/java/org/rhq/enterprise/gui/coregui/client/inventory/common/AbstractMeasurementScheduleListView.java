@@ -27,9 +27,10 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementSchedule measurement
@@ -53,7 +54,6 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
     }
 
     protected void configureTable() {
-
         ListGrid listGrid = getListGrid();
 
         // Set widths and cell formatters on the fields.
@@ -68,36 +68,40 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         intervalField.setWidth("25%");
 
         // Add action buttons and widgets.
-        addTableAction(extendLocatorId("Enable"), "Enable", Table.SelectionEnablement.ANY, null, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), null, new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addTableAction(extendLocatorId("Disable"), "Disable", Table.SelectionEnablement.ANY, null, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), null, new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
         addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this));
+
+
     }
 
     protected class CollectionEnabledCellFormatter extends BooleanCellFormatter {
         @Override
         public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
             String result = super.format(value, record, rowNum, colNum);
-            return ("".equals(result)) ? "mixed" : result;
+            return ("".equals(result)) ? MSG.view_inventory_mixed() : result;
         }
     }
 
     protected class CollectionIntervalCellFormatter implements CellFormatter {
         public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
             if (value == null) {
-                return "mixed";
+                return MSG.view_inventory_mixed();
             }
 
             long milliseconds = ((Number) value).longValue();
             if (milliseconds == 0) {
-                return "mixed";
+                return MSG.view_inventory_mixed();
             }
 
             StringBuilder result = new StringBuilder();
@@ -110,39 +114,27 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                     if (minutes > 60) {
                         long hours = minutes / 60;
                         minutes = minutes % 60;
-                        result.append(hours).append(" hour");
-                        if (hours > 1) {
-                            result.append("s");
-                        }
+                        result.append(hours).append(" ").append(MSG.common_label_hours());
                     }
                     if (minutes != 0) {
                         if (result.length() != 0) {
                             result.append(", ");
                         }
-                        result.append(minutes).append(" minute");
-                        if (minutes > 1) {
-                            result.append("s");
-                        }
+                        result.append(minutes).append(" ").append(MSG.common_label_minutes());
                     }
                 }
                 if (seconds != 0) {
                     if (result.length() != 0) {
                         result.append(", ");
                     }
-                    result.append(seconds).append(" second");
-                    if (seconds > 1) {
-                        result.append("s");
-                    }
+                    result.append(seconds).append(" ").append(MSG.common_label_seconds());
                 }
             }
             if (milliseconds != 0) {
                 if (result.length() != 0) {
                     result.append(", ");
                 }
-                result.append(milliseconds).append(" millisecond");
-                if (milliseconds > 1) {
-                    result.append("s");
-                }
+                result.append(milliseconds).append(" ").append(MSG.common_label_milliseconds());
             }
             return result.toString();
         }

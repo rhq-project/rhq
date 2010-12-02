@@ -19,10 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -47,6 +49,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -57,12 +60,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout {
+    private static final String TITLE = MSG.view_autoDiscoveryQ_title();
+    private static final String HEADER_ICON = "global/Recent_24.png";
 
-    private boolean simple = false;
+    private boolean simple;
     private TreeGrid treeGrid;
     private ToolStrip footer;
-    private DataSource dataSource = null;
-    private String headerIcon = "global/Recent_16.png";
+    private DataSource dataSource;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -83,20 +87,21 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         super.onInit();
 
         if (!simple) {
-            Img img = new Img(headerIcon, 24, 24);
+            Img img = new Img(HEADER_ICON, 24, 24);
             img.setPadding(4);
 
             HTMLFlow title = new HTMLFlow();
             title.setWidth100();
             title.setHeight(35);
-            title.setContents("Discovery Manager");
+            title.setContents(TITLE);
             title.setPadding(4);
             title.setStyleName("HeaderLabel");
 
             DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
-            final SelectItem statusSelectItem = new SelectItem("status", "Status");
-            statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
-            statusSelectItem.setValue("New");
+            final SelectItem statusSelectItem = new SelectItem("status", MSG.common_title_status());
+            statusSelectItem.setValueMap(AutodiscoveryQueueDataSource.NEW, AutodiscoveryQueueDataSource.IGNORED,
+                AutodiscoveryQueueDataSource.NEW_AND_IGNORED);
+            statusSelectItem.setValue(AutodiscoveryQueueDataSource.NEW);
             form.setItems(statusSelectItem);
 
             statusSelectItem.addChangedHandler(new ChangedHandler() {
@@ -121,9 +126,13 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         treeGrid.setHeight100();
 
-        treeGrid.setDataSource(dataSource = new AutodiscoveryQueueDataSource());
+        dataSource = new AutodiscoveryQueueDataSource(treeGrid);
+        treeGrid.setDataSource(dataSource);
         treeGrid.setAutoFetchData(true);
         treeGrid.setResizeFieldsInRealTime(true);
+        treeGrid.setAutoFitData(Autofit.HORIZONTAL);
+        treeGrid.setWrapCells(true);
+        treeGrid.setFixedRecordHeights(false);
 
         final TreeGridField name, key, type, description, status, ctime;
         name = new TreeGridField("name");
@@ -153,9 +162,12 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         addMember(footer);
 
-        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), "Import");
-        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), "Ignore");
-        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), "Unignore");
+        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), MSG
+            .view_autoDiscoveryQ_import());
+        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), MSG
+            .view_autoDiscoveryQ_ignore());
+        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), MSG
+            .view_autoDiscoveryQ_unignore());
 
         footer.addMember(importButton);
         footer.addMember(ignoreButton);
@@ -178,12 +190,12 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 resourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to import resources", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_importFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Successfully imported the selected resources", Message.Severity.Info));
+                            new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
                     }
                 });
@@ -194,12 +206,12 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to ignore resources", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_ignoreFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Successfully ignored the selected resources", Message.Severity.Info));
+                            new Message(MSG.view_autoDiscoveryQ_ignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
                     }
                 });
@@ -210,12 +222,12 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to unignore resources", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_unignoreFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Successfully unignored the selected resources", Message.Severity.Info));
+                            new Message(MSG.view_autoDiscoveryQ_unignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
                     }
                 });
@@ -224,14 +236,15 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
     }
 
-    private Integer[] getSelectedIds() {
-        ArrayList<Integer> selected = new ArrayList<Integer>();
+    private int[] getSelectedIds() {
+        List<Integer> selected = new ArrayList<Integer>();
         for (ListGridRecord node : treeGrid.getSelection()) {
             if (!InventoryStatus.COMMITTED.name().equals(node.getAttributeAsString("status"))) {
                 selected.add(Integer.parseInt(node.getAttributeAsString("id")));
             }
         }
-        return selected.toArray(new Integer[selected.size()]);
+
+        return TableUtility.getIds(selected);
     }
 
     /** Custom refresh operation as we cannot directly extend Table because it

@@ -19,21 +19,18 @@
 package org.rhq.enterprise.gui.coregui.client.components;
 
 import com.smartgwt.client.types.ContentsType;
-import com.smartgwt.client.widgets.HTMLPane;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 
 /**
  * @author Greg Hinkle
  */
-public class FullHTMLPane extends HTMLPane {
-    public FullHTMLPane() {
+public class FullHTMLPane extends LocatableHTMLPane {
+    public FullHTMLPane(String locatorId, String url) {
+        super(locatorId);
         setWidth100();
         setHeight100();
         setContentsType(ContentsType.PAGE);
-    }
-
-    public FullHTMLPane(String url) {
-        this();
-        com.allen_sauer.gwt.log.client.Log.debug("Creating IFrame pane with URL [" + url + "]...");
         setContentsURL(url);
     }
 }

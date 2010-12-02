@@ -42,9 +42,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class SubTabLayout extends LocatableVLayout {
 
-    /** maps subTab locator IDs to SubTabs */
+    /** maps subTab locator IDs to SubTabs. Unlike names, locatorIDs are qualified by the Tab and therefore unique. */
     private Map<String, SubTab> subTabs = new LinkedHashMap<String, SubTab>();
-    /** locator IDs of subTabs that are disabled */
+    /** locator IDs of subTabs that are disabled. Unlike names, locator IDs are qualified by the Tab and therefore unique. */
     private Set<String> disabledSubTabs = new HashSet<String>();
 
     private SubTab currentlyDisplayed;
@@ -139,7 +139,7 @@ public class SubTabLayout extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 SubTabLayout.this.currentlySelected = subTab.getLocatorId();
                 fireSubTabSelection();
-                draw();
+                markForRedraw();
             }
         });
 
@@ -205,7 +205,7 @@ public class SubTabLayout extends LocatableVLayout {
                 if (this.disabledSubTabs.contains(subTabLocatorId)) {
                     // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
                     SubTab subTab = this.subTabs.get(subTabLocatorId);
-                    CoreGUI.getErrorHandler().handleError("Cannot select disabled subTab '" + subTab.getTitle() + "'.");
+                    CoreGUI.getErrorHandler().handleError(MSG.view_subTab_error_disabled(subTab.getTitle()));
                 } else {
                     this.currentlySelected = subTabLocatorId;
                     foundTab = true;
@@ -221,10 +221,10 @@ public class SubTabLayout extends LocatableVLayout {
         return foundTab;
     }
 
-    public SubTab getSubTabByTitle(String title) {
+    public SubTab getSubTabByName(String name) {
         for (String subTabLocatorId : this.subTabs.keySet()) {
             SubTab subTab = this.subTabs.get(subTabLocatorId);
-            if (subTab.getTitle().equals(title)) {
+            if (subTab.getName().equals(name)) {
                 return subTab;
             }
         }
@@ -242,14 +242,14 @@ public class SubTabLayout extends LocatableVLayout {
         return null;
     }
 
-    public boolean selectSubTabByTitle(String title) {
-        SubTab subTab = getSubTabByTitle(title);
+    public boolean selectSubTabByName(String name) {
+        SubTab subTab = getSubTabByName(name);
         if (subTab == null) {
             return false;
         } else {
             if (this.disabledSubTabs.contains(subTab.getLocatorId())) {
                 // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
-                CoreGUI.getErrorHandler().handleError("Cannot select disabled subTab '" + title + "'.");
+                CoreGUI.getErrorHandler().handleError(MSG.view_subTab_error_disabled(subTab.getTitle()));
                 return false;
             }
             this.currentlySelected = subTab.getLocatorId();
@@ -280,7 +280,7 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public void fireSubTabSelection() {
-        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentSubTab().getTitle(), -1,
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentSubTab().getName(), -1,
             getCurrentCanvas());
         hm.fireEvent(event);
     }

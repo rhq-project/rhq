@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.resource.Agent;
@@ -106,7 +107,7 @@ public class StatusManagerBean implements StatusManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void updateByResource(int resourceId) {
+    public void updateByResource(Subject subject, int resourceId) {
         log.debug("About to mark status by resource");
 
         /* 
@@ -125,7 +126,7 @@ public class StatusManagerBean implements StatusManagerLocal {
          * this is informational debugging only - do NOT change the status bits here
          */
         if (log.isDebugEnabled()) {
-            Agent agent = agentManager.getAgentByResourceId(resourceId);
+            Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for resource[id=" + resourceId + "]");
 
@@ -134,7 +135,7 @@ public class StatusManagerBean implements StatusManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void updateByAlertDefinition(int alertDefinitionId) {
+    public void updateByAlertDefinition(Subject subject, int alertDefinitionId) {
         log.debug("About to mark status by alert definition");
 
         // alert templates and group alert definitions do not represent cache-ready entries
@@ -159,7 +160,7 @@ public class StatusManagerBean implements StatusManagerLocal {
          */
         if (log.isDebugEnabled()) {
             AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
-            Agent agent = agentManager.getAgentByResourceId(definition.getResource().getId());
+            Agent agent = agentManager.getAgentByResourceId(subject, definition.getResource().getId());
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for alertDefinition[id=" + alertDefinitionId + "]");
 

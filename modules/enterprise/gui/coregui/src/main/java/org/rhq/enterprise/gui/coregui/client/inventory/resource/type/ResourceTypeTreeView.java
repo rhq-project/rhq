@@ -29,6 +29,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -56,7 +57,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
 
         treeGrid.setHeight100();
 
-        treeGrid.setTitle("Resource Types");
+        treeGrid.setTitle(MSG.view_type_resourceTypes());
         treeGrid.setAnimateFolders(false);
         treeGrid.setResizeFieldsInRealTime(true);
 
@@ -75,7 +76,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to load", caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {
@@ -96,20 +97,12 @@ public class ResourceTypeTreeView extends LocatableVLayout {
         protected String getIcon(Record record, boolean defaultState) {
 
             if (record instanceof TreeNode) {
-                boolean open = getTree().isOpen((TreeNode) record);
+                // boolean open = getTree().isOpen((TreeNode) record);
 
                 if (record instanceof ResourceTypeTreeDataSource.ResourceTypeTreeNode) {
                     ResourceType resourceType = ((ResourceTypeTreeDataSource.ResourceTypeTreeNode) record)
                         .getResourceType();
-
-                    switch (resourceType.getCategory()) {
-                    case PLATFORM:
-                        return "types/Platform_up_16.png";
-                    case SERVER:
-                        return "types/Server_up_16.png";
-                    case SERVICE:
-                        return "types/Service_up_16.png";
-                    }
+                    return ImageManager.getResourceIcon(resourceType.getCategory());
                 } else if (record instanceof ResourceTypeTreeDataSource.PluginTreeNode) {
                     return "types/plugin_16.png";
                 }

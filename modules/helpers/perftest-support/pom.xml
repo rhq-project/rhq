@@ -1,0 +1,204 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>rhq-helpers</artifactId>
+        <groupId>org.rhq.helpers</groupId>
+        <version>4.0.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.rhq.helpers</groupId>
+    <artifactId>perftest-support</artifactId>
+    <version>4.0.0-SNAPSHOT</version>
+    <name>Performance Testing Support</name>
+    <description>To support performance testing, this is a basic tool to support extracting and later reimporting of
+        data from/to a database.
+    </description>
+    <dependencies>
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.6.5</version>
+        </dependency>
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+            <version>1.6.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+            <version>2.4.8</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>junit</artifactId>
+                    <groupId>junit</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>gnu-getopt</groupId>
+            <artifactId>getopt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>${commons-logging.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jcl</artifactId>
+            <version>1.5.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-dbutils</artifactId>
+            <version>${project.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+      <dependency>
+          <groupId>org.apache.poi</groupId>
+          <artifactId>poi</artifactId>
+          <version>3.7</version>
+      </dependency>
+
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.rhq.helpers.perftest.support.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+  <profiles>
+    <profile>
+      <id>cobertura</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+        <build>
+         <plugins>
+           <plugin>
+             <artifactId>maven-antrun-plugin</artifactId>
+              <dependencies>
+               <dependency>
+                 <groupId>net.sourceforge.cobertura</groupId>
+                 <artifactId>cobertura</artifactId>
+                 <version>1.9.4.1</version>
+               </dependency>
+             </dependencies>
+             <executions>
+              <execution>
+               <id>cobertura-instrument</id>
+               <phase>pre-integration-test</phase>
+                 <configuration>
+                   <tasks>
+                   <!-- prepare directory structure for cobertura-->
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup"/>
+                   <!-- backup all classes so that we can instrument the original classes-->
+                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                      <fileset dir="target/classes">
+                         <include name="**/*.class" />
+                      </fileset>
+                   </copy>
+                   <!-- create a properties file and save there location of cobertura data file-->
+                   <touch file="target/classes/cobertura.properties"/>
+                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                   <!-- instrument all classes in target/classes directory -->
+                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class"/>
+                      </fileset>
+                    </cobertura-instrument>
+                   </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+              </execution>
+              <execution>
+               <id>cobertura-report</id>
+               <phase>post-integration-test</phase>
+                 <configuration>
+                   <tasks>
+                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                     <!-- prepare directory structure for cobertura-->
+                     <mkdir dir="target/cobertura" />
+                     <mkdir dir="target/site/cobertura" />
+                     <!-- restore classes from backup folder to classes folder -->
+                     <copy toDir="target/classes" verbose="true" overwrite="true">
+                      <fileset dir="target/cobertura/backup">
+                         <include name="**/*.class" />
+                      </fileset>
+                     </copy>
+                     <!-- delete backup folder-->
+                     <delete dir="target/cobertura/backup"/>
+                     <!-- create a code coverage report -->
+                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                      <fileset dir="${basedir}/src/main/java">
+                         <include name="**/*.java" />
+                      </fileset>
+                     </cobertura-report>
+                     <!-- delete cobertura.properties file -->
+                     <delete file="target/classes/cobertura.properties"/>
+                   </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+               </execution>
+            </executions>
+           </plugin>
+          </plugins>
+       </build>
+     </profile>
+  </profiles>
+</project>

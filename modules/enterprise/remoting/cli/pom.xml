@@ -24,12 +24,11 @@
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
       <opencsv.version>1.8</opencsv.version>
-      <testng.version>5.9</testng.version>
    </properties>
 
    <dependencies>
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
          <version>${project.version}</version>         
       </dependency>   
@@ -64,9 +63,8 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>5.9</version>          
+         <version>${testng.version}</version>          
          <!-- Yes, this is actually meant to be compile, and not test, scoped. -->
-         <classifier>jdk15</classifier>
       </dependency>
 
       <dependency>
@@ -86,28 +84,7 @@
 
    <build>
       <plugins>
-      
-         <plugin>
-           <artifactId>maven-enforcer-plugin</artifactId>
-           <executions>
-             <execution>
-               <id>enforce-versions</id>
-               <goals>
-                 <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
-                                 builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
-                 <goal>enforce</goal>
-               </goals>
-               <configuration>
-                 <rules>
-                   <requireJavaVersion>
-                     <version>[1.6,1.8)</version> <!-- 1.6.x, 1.7.x -->
-                   </requireJavaVersion>
-                 </rules>
-               </configuration>
-             </execution>
-           </executions>
-         </plugin>
-          
+                
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
@@ -129,7 +106,7 @@
                            <property name="project.groupId" value="${project.groupId}" />
                            <property name="project.version" value="${project.version}" />
                            <property name="settings.localRepository" value="${settings.localRepository}" />
-                           <property name="rhq-remoting-ws.version" value="${version}" />
+                           <property name="rhq-remoting-ws.version" value="${project.version}" />
                            <property name="commons-logging.version" value="${commons-logging.version}" />
                            <property name="opencsv.version" value="${opencsv.version}" />
                            <property name="concurrent.version" value="${concurrent.version}" />
@@ -208,9 +185,9 @@
             <executions>
                <execution>
                   <id>assemble-rhq-client-zip</id>
-                  <phase>package</phase>
+                  <phase>pre-integration-test</phase>
                   <goals>
-                     <goal>attached</goal>
+                     <goal>single</goal>
                   </goals>
                </execution>
             </executions>
@@ -335,7 +312,7 @@
             </plugins>
          </build>
       </profile>
-             <profile>
+      <profile>
       <id>cobertura</id>
       <activation>
         <activeByDefault>false</activeByDefault>
@@ -343,14 +320,12 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
-             <version>1.1</version>             
+             <artifactId>maven-antrun-plugin</artifactId>                
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

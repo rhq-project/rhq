@@ -50,29 +50,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = Alert.QUERY_DASHBOARD_ALL_ADMIN, query = "SELECT a " + "  FROM Alert AS a "
-        + " WHERE a.ctime >= :startDate " + "  AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "),
-    @NamedQuery(name = Alert.QUERY_DASHBOARD_ALL, query = "SELECT a "
-        + "  FROM Alert AS a JOIN a.alertDefinition ad JOIN ad.resource res "
-        + "  WHERE a.ctime >= :startDate "
-        + "   AND res.id IN ( SELECT ires FROM Resource ires JOIN ires.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s.id = :subjectId ) "
-        + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "),
-    @NamedQuery(name = Alert.QUERY_DASHBOARD_BY_RESOURCE_IDS_ADMIN, query = "SELECT a " + "FROM Alert AS a "
-        + "WHERE a.ctime >= :startDate " + "AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
-        + "AND a.alertDefinition.resource.id IN ( :resourceIds )"),
-    @NamedQuery(name = Alert.QUERY_DASHBOARD_BY_RESOURCE_IDS, query = "SELECT a "
-        + "  FROM Alert AS a JOIN a.alertDefinition ad JOIN ad.resource res "
-        + " WHERE a.ctime >= :startDate "
-        + "   AND res.id IN ( SELECT ires FROM Resource ires JOIN ires.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s.id = :subjectId ) "
-        + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
-        + "   AND res.id IN ( :resourceIds )"),
-    @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE, //
-    query = "SELECT a " //
-        + "    FROM Alert AS a "
-        + "   WHERE a.alertDefinition.resource.id = :id "
-        + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
-        + "     AND (a.alertDefinition.priority = :priority OR :priority IS NULL) "),
+@NamedQueries({
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID, query = "SELECT a " + "  FROM Alert AS a "
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "
@@ -117,30 +95,71 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "  JOIN aDef.resource res  JOIN condition.measurementDefinition mDef   JOIN mDef.schedules sched"
         + " WHERE sched.definition = mDef.id   AND sched.resource = res    AND sched.id IN (:schedIds) "
         + "   AND (a.ctime BETWEEN :startDate AND :endDate)" + "GROUP BY sched.id"),
-    @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE_DATED, //
-    query = "SELECT a " //
-        + "    FROM Alert AS a "
-        + "   WHERE a.alertDefinition.resource.id = :id "
-        + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
-        + "     AND (a.alertDefinition.priority = :priority OR :priority IS NULL) "
-        + "     AND (a.ctime > :startDate OR :startDate IS NULL) "
-        + "     AND (a.ctime < :endDate OR :endDate IS NULL) "),
-    @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
-    @NamedQuery(name = Alert.QUERY_FIND_RESOURCES, query = "SELECT res FROM Alert AS a JOIN a.alertDefinition aDef "
-        + "     JOIN aDef.resource res WHERE a.id in (:alertIds) AND res.id IS NOT NULL"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "" //
         + "DELETE FROM Alert AS a " //
         + " WHERE a.ctime BETWEEN :begin AND :end"),//
-    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE, query = "" //
+    @NamedQuery(name = Alert.QUERY_RETURN_EXISTING_IDS, query = "" //
+        + " SELECT a.id " //
+        + "   FROM Alert a " //
+        + "  WHERE a.id IN ( :alertIds ) "), //
+    @NamedQuery(name = Alert.QUERY_CHECK_PERMISSION_BY_IDS, query = "" //
+        + " SELECT COUNT(a) " //
+        + "   FROM Alert a " //
+        + "   JOIN a.alertDefinition ad " //
+        + "   JOIN ad.resource res " //
+        + "  WHERE a.id IN ( :alertIds ) " //
+        + "    AND res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                      JOIN rr.implicitGroups g JOIN g.roles r JOIN r.permissions p JOIN r.subjects s " //
+        + "                     WHERE s.id = :subjectId  " //
+        + "                       AND p = :permission ) "), //
+    @NamedQuery(name = Alert.QUERY_DELETE_ALL, query = "" //
+        + "DELETE FROM Alert a "), //
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_IDS, query = "" //
         + "DELETE Alert AS alert " //
-        + " WHERE alert.id IN ( SELECT ia.id " //
-        + "                       FROM Alert ia " //
-        + "                      WHERE ia.alertDefinition.resource.id = :resourceId )"),
+        + " WHERE alert.id IN ( :alertIds )"), //
     @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCES, query = "" //
-        + "DELETE FROM Alert a " //
-        + " WHERE a.alertDefinition IN ( SELECT ad " //
-        + "                                FROM AlertDefinition ad " //
-        + "                               WHERE ad.resource.id IN ( :resourceIds ) )"),
+        + "DELETE FROM Alert alert " //
+        + " WHERE alert.id IN ( SELECT innerA.id " //
+        + "                       FROM AlertDefinition ad " //
+        + "                       JOIN ad.alerts innerA " //
+        + "                      WHERE ad.resource.id IN ( :resourceIds ) )"),
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE_GROUPS, query = "" //
+        + "DELETE FROM Alert alert " //
+        + " WHERE alert.id IN ( SELECT innerA.id " //
+        + "                       FROM AlertDefinition ad " //
+        + "                       JOIN ad.alerts innerA " //
+        + "                       JOIN ad.resource.implicitGroups rg " //
+        + "                      WHERE rg.id IN ( :groupIds ) )"),
+    @NamedQuery(name = Alert.QUERY_ACKNOWLEDGE_ALL, query = "" //
+        + "UPDATE Alert AS alert " //
+        + "   SET alert.acknowledgingSubject = :subjectName, " //
+        + "       alert.acknowledgeTime = :ackTime " //
+        + " WHERE alert.acknowledgingSubject IS NULL "), //
+    @NamedQuery(name = Alert.QUERY_ACKNOWLEDGE_BY_IDS, query = "" //
+        + "UPDATE Alert AS alert " //
+        + "   SET alert.acknowledgingSubject = :subjectName, " //
+        + "       alert.acknowledgeTime = :ackTime " //
+        + " WHERE alert.id IN ( :alertIds ) " //
+        + "   AND alert.acknowledgingSubject IS NULL "), // only ack what hasn't already been ack'ed
+    @NamedQuery(name = Alert.QUERY_ACKNOWLEDGE_BY_RESOURCES, query = "" //
+        + "UPDATE Alert AS alert " //
+        + "   SET alert.acknowledgingSubject = :subjectName, " //
+        + "       alert.acknowledgeTime = :ackTime " //
+        + " WHERE alert.id IN ( SELECT innerA.id " //
+        + "                       FROM AlertDefinition ad " //
+        + "                       JOIN ad.alerts innerA " //
+        + "                      WHERE ad.resource.id IN ( :resourceIds ) )" //
+        + "   AND alert.acknowledgingSubject IS NULL "),
+    @NamedQuery(name = Alert.QUERY_ACKNOWLEDGE_BY_RESOURCE_GROUPS, query = "" //
+        + "UPDATE Alert AS alert " //
+        + "   SET alert.acknowledgingSubject = :subjectName, " //
+        + "       alert.acknowledgeTime = :ackTime " //
+        + " WHERE alert.id IN ( SELECT innerA.id " //
+        + "                       FROM AlertDefinition ad " //
+        + "                       JOIN ad.alerts innerA " //
+        + "                       JOIN ad.resource.implicitGroups rg " //
+        + "                      WHERE rg.id IN ( :groupIds ) )" //
+        + "   AND alert.acknowledgingSubject IS NULL "),
     @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" //
         + "        ( a, parent.id, parent.name ) " //
@@ -191,23 +210,23 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 @SequenceGenerator(name = "RHQ_ALERT_ID_SEQ", sequenceName = "RHQ_ALERT_ID_SEQ", allocationSize = 100)
 @Table(name = "RHQ_ALERT")
 public class Alert implements Serializable {
-    public static final String QUERY_DASHBOARD_ALL = "Alert.DashboardAll";
-    public static final String QUERY_DASHBOARD_ALL_ADMIN = "Alert.DashboardAll_admin";
-    public static final String QUERY_DASHBOARD_BY_RESOURCE_IDS = "Alert.DashboardByResourceIds";
-    public static final String QUERY_DASHBOARD_BY_RESOURCE_IDS_ADMIN = "Alert.DashboardByResourceIds_admin";
-    public static final String QUERY_FIND_ALL = "Alert.findAll";
-    public static final String QUERY_FIND_BY_RESOURCE = "Alert.findByResource";
     public static final String QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID = "Alert.findByMeasurementDefinitionId";
-    public static final String QUERY_FIND_BY_RESOURCE_DATED = "Alert.findByResourceDated";
     public static final String QUERY_DELETE_BY_CTIME = "Alert.deleteByCTime";
-    public static final String QUERY_DELETE_BY_RESOURCE = "Alert.deleteByResource";
+    public static final String QUERY_RETURN_EXISTING_IDS = "Alert.returnExistingIds";
+    public static final String QUERY_CHECK_PERMISSION_BY_IDS = "Alert.checkPermissionByIds";
+    public static final String QUERY_DELETE_ALL = "Alert.deleteByAll";
+    public static final String QUERY_DELETE_BY_IDS = "Alert.deleteByIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "Alert.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "Alert.deleteByResourceGroups";
+    public static final String QUERY_ACKNOWLEDGE_ALL = "Alert.acknowledgeByAll";
+    public static final String QUERY_ACKNOWLEDGE_BY_IDS = "Alert.acknowledgeByIds";
+    public static final String QUERY_ACKNOWLEDGE_BY_RESOURCES = "Alert.acknowledgeByResources";
+    public static final String QUERY_ACKNOWLEDGE_BY_RESOURCE_GROUPS = "Alert.acknowledgeByResourceGroups";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES = "Alert.findByMeasDefIdAndResources";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCEGROUP = "Alert.findByMeasDefIdAndResourceGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP = "Alert.findByMeasDefIdAndAutoGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
-    public static final String QUERY_FIND_RESOURCES = "Alert.findResources";
 
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT";
 

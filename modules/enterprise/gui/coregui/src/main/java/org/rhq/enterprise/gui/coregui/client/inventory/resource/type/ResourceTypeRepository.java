@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -92,7 +93,7 @@ public class ResourceTypeRepository {
             return;
         }
 
-        long start = System.currentTimeMillis();
+        //long start = System.currentTimeMillis();
 
         Set<Integer> types = new HashSet<Integer>();
         for (Resource res : resources) {
@@ -125,7 +126,7 @@ public class ResourceTypeRepository {
             return;
         }
 
-        long start = System.currentTimeMillis();
+        // long start = System.currentTimeMillis();
 
         Set<Integer> types = new HashSet<Integer>();
         for (ResourceGroup group : groups) {
@@ -160,8 +161,17 @@ public class ResourceTypeRepository {
         });
     }
 
-    public void getResourceTypes(Integer[] resourceTypeIds, final EnumSet<MetadataType> metadataTypes,
+    public void getResourceTypes(Integer[] resourceTypeIds, EnumSet<MetadataType> metadataTypesNeeded,
         final TypesLoadedCallback callback) {
+
+        // note metadataTypesNeeded == null implies EnumSet.noneOf(MetadataType.class)
+        final EnumSet<MetadataType> metadataTypes;
+        if (metadataTypesNeeded == null) {
+            metadataTypes = EnumSet.noneOf(MetadataType.class);
+        } else {
+            metadataTypes = metadataTypesNeeded;
+        }
+
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
 
         final Map<Integer, ResourceType> cachedTypes = new HashMap<Integer, ResourceType>();
@@ -172,9 +182,14 @@ public class ResourceTypeRepository {
         } else {
 
             for (Integer typeId : resourceTypeIds) {
-                if (!typeCache.containsKey(typeId)
-                    || (metadataTypes != null && (typeCacheLevel.containsKey(typeId)) && !typeCacheLevel.get(typeId)
-                        .containsAll(metadataTypes))) {
+                // we need to query for data if:
+                // 1. we don't have the resource type in our cache at all, or...
+                // 2. we have the basic resource type but no additional metadata, but the caller is asking for additional metadata
+                // 3. we have the resource type and some additional metadata, but the caller is asking for metadata that we don't have
+                if (!typeCache.containsKey(typeId) // 1.
+                    || (!metadataTypes.isEmpty() && (!typeCacheLevel.containsKey(typeId) // 2. 
+                    || !typeCacheLevel.get(typeId).containsAll(metadataTypes)))) // 3. 
+                {
                     typesNeeded.add(typeId);
                 } else {
                     cachedTypes.put(typeId, typeCache.get(typeId));
@@ -193,41 +208,42 @@ public class ResourceTypeRepository {
         if (metadataTypes != null) {
             for (MetadataType metadataType : metadataTypes) {
                 switch (metadataType) {
-                    case children:
-                        criteria.fetchChildResourceTypes(true);
-                        break;
-                    case content:
-                        criteria.fetchPackageTypes(true);
-                        break;
-                    case events:
-                        criteria.fetchEventDefinitions(true);
-                        break;
-                    case measurements:
-                        criteria.fetchMetricDefinitions(true);
-                        break;
-                    case operations:
-                        criteria.fetchOperationDefinitions(true);
-                        break;
-                    case parentTypes:
-                        criteria.fetchParentResourceTypes(true);
-                        break;
-                    case pluginConfigurationDefinition:
-                        criteria.fetchPluginConfigurationDefinition(true);
-                        break;
-                    case processScans:
-                        criteria.fetchProcessScans(true);
-                        break;
-                    case productVersions:
-                        criteria.fetchProductVersions(true);
-                        break;
-                    case resourceConfigurationDefinition:
-                        criteria.fetchResourceConfigurationDefinition(true);
-                        break;
-                    case subCategory:
-                        criteria.fetchSubCategory(true);
-                        break;
-                    default:
-                        System.err.println("ERROR: metadataType " + metadataType.name() + " not incorporated into ResourceType criteria.");
+                case children:
+                    criteria.fetchChildResourceTypes(true);
+                    break;
+                case content:
+                    criteria.fetchPackageTypes(true);
+                    break;
+                case events:
+                    criteria.fetchEventDefinitions(true);
+                    break;
+                case measurements:
+                    criteria.fetchMetricDefinitions(true);
+                    break;
+                case operations:
+                    criteria.fetchOperationDefinitions(true);
+                    break;
+                case parentTypes:
+                    criteria.fetchParentResourceTypes(true);
+                    break;
+                case pluginConfigurationDefinition:
+                    criteria.fetchPluginConfigurationDefinition(true);
+                    break;
+                case processScans:
+                    criteria.fetchProcessScans(true);
+                    break;
+                case productVersions:
+                    criteria.fetchProductVersions(true);
+                    break;
+                case resourceConfigurationDefinition:
+                    criteria.fetchResourceConfigurationDefinition(true);
+                    break;
+                case subCategory:
+                    criteria.fetchSubCategory(true);
+                    break;
+                default:
+                    Log.error("ERROR: metadataType " + metadataType.name()
+                        + " not incorporated into ResourceType criteria.");
                 }
             }
         }
@@ -249,43 +265,44 @@ public class ResourceTypeRepository {
                         if (metadataTypes != null) {
                             for (MetadataType metadataType : metadataTypes) {
                                 switch (metadataType) {
-                                    case children:
-                                        cachedType.setChildResourceTypes(type.getChildResourceTypes());
-                                        break;
-                                    case content:
-                                        cachedType.setPackageTypes(type.getPackageTypes());
-                                        break;
-                                    case events:
-                                        cachedType.setPackageTypes(type.getPackageTypes());
-                                        break;
-                                    case measurements:
-                                        cachedType.setMetricDefinitions(type.getMetricDefinitions());
-                                        break;
-                                    case operations:
-                                        cachedType.setOperationDefinitions(type.getOperationDefinitions());
-                                        break;
-                                    case parentTypes:
-                                        cachedType.setParentResourceTypes(type.getParentResourceTypes());
-                                        break;
-                                    case pluginConfigurationDefinition:
-                                        cachedType
-                                            .setPluginConfigurationDefinition(type.getPluginConfigurationDefinition());
-                                        break;
-                                    case processScans:
-                                        cachedType.setProcessScans(type.getProcessScans());
-                                        break;
-                                    case productVersions:
-                                        cachedType.setProductVersions(type.getProductVersions());
-                                        break;
-                                    case resourceConfigurationDefinition:
-                                        cachedType.setResourceConfigurationDefinition(type
-                                            .getResourceConfigurationDefinition());
-                                        break;
-                                    case subCategory:
-                                        cachedType.setSubCategory(type.getSubCategory());
-                                        break;
-                                    default:
-                                        System.err.println("ERROR: metadataType " + metadataType.name() + " not merged into cached ResourceType.");
+                                case children:
+                                    cachedType.setChildResourceTypes(type.getChildResourceTypes());
+                                    break;
+                                case content:
+                                    cachedType.setPackageTypes(type.getPackageTypes());
+                                    break;
+                                case events:
+                                    cachedType.setPackageTypes(type.getPackageTypes());
+                                    break;
+                                case measurements:
+                                    cachedType.setMetricDefinitions(type.getMetricDefinitions());
+                                    break;
+                                case operations:
+                                    cachedType.setOperationDefinitions(type.getOperationDefinitions());
+                                    break;
+                                case parentTypes:
+                                    cachedType.setParentResourceTypes(type.getParentResourceTypes());
+                                    break;
+                                case pluginConfigurationDefinition:
+                                    cachedType
+                                        .setPluginConfigurationDefinition(type.getPluginConfigurationDefinition());
+                                    break;
+                                case processScans:
+                                    cachedType.setProcessScans(type.getProcessScans());
+                                    break;
+                                case productVersions:
+                                    cachedType.setProductVersions(type.getProductVersions());
+                                    break;
+                                case resourceConfigurationDefinition:
+                                    cachedType.setResourceConfigurationDefinition(type
+                                        .getResourceConfigurationDefinition());
+                                    break;
+                                case subCategory:
+                                    cachedType.setSubCategory(type.getSubCategory());
+                                    break;
+                                default:
+                                    Log.error("ERROR: metadataType " + metadataType.name()
+                                        + " not merged into cached ResourceType.");
                                 }
                             }
                         }
@@ -295,7 +312,7 @@ public class ResourceTypeRepository {
                         cachedTypes.put(type.getId(), type);
                     }
 
-                    if (metadataTypes != null) {
+                    if (metadataTypes != null && !metadataTypes.isEmpty()) {
                         if (typeCacheLevel.containsKey(type.getId())) {
                             typeCacheLevel.get(type.getId()).addAll(metadataTypes);
                         } else {

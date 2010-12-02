@@ -113,7 +113,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             groupDefinitionId);
 
         // button setup
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         //saveButton.addClickHandler(new SaveOrUpdateClickHandler(form, operationType, dynaGroupChildrenView));
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -125,7 +125,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                                 Record[] results = response.getData();
                                 if (results.length != 1) {
                                     CoreGUI.getErrorHandler().handleError(
-                                        "Error: " + results.length + " created instead of one");
+                                        MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
                                 } else {
                                     Record newRecord = results[0];
                                     GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance()
@@ -141,7 +141,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             }
         });
 
-        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("Recalculate"), "Save & Recalculate");
+        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("Recalculate"), MSG
+            .view_dynagroup_saveAndRecalculate());
         recalculateButton.setWidth(150);
         recalculateButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -153,16 +154,15 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                                 new int[] { groupDefinitionId }, new AsyncCallback<Void>() {
                                     @Override
                                     public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            "Failed to recalculate this group definition", caught);
+                                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(),
+                                            caught);
                                     }
 
                                     @Override
                                     public void onSuccess(Void result) {
                                         dynaGroupChildrenView.refresh();
                                         CoreGUI.getMessageCenter().notify(
-                                            new Message("Successfully recalculated this group definition",
-                                                Severity.Info));
+                                            new Message(MSG.view_dynagroup_recalcSuccessful(), Severity.Info));
                                     }
                                 });
                         }
@@ -171,7 +171,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             }
         });
 
-        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MSG.common_button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 form.reset();
@@ -194,8 +194,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     class DynaGroupChildrenView extends Table {
         public DynaGroupChildrenView(String locatorId, int groupDefinitionId) {
-            super(locatorId, "DynaGroup Children", new Criteria("groupDefinitionId", String.valueOf(groupDefinition
-                .getId())));
+            super(locatorId, MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String
+                .valueOf(groupDefinition.getId())));
             setDataSource(ResourceGroupsDataSource.getInstance());
             setMinHeight(250);
         }
@@ -209,9 +209,9 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         recalculationInterval.show();
 
         if (groupDefinitionId == 0) {
-            viewId.getBreadcrumbs().get(0).setDisplayName("New Group Definition");
+            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_dynagroup_newGroupDefinition());
         } else {
-            viewId.getBreadcrumbs().get(0).setDisplayName("Editing '" + name.getValue().toString() + "'");
+            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_dynagroup_editing(name.getValue().toString()));
         }
         CoreGUI.refreshBreadCrumbTrail();
 
@@ -219,26 +219,26 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     }
 
     private void buildForm() {
-        id = new TextItem("id", "ID");
+        id = new TextItem("id", MSG.common_title_id());
         id.setVisible(false);
 
-        name = new TextItem("name", "Name");
+        name = new TextItem("name", MSG.common_title_name());
         name.setWidth(400);
         name.setDefaultValue("");
 
-        description = new TextAreaItem("description", "Description");
+        description = new TextAreaItem("description", MSG.common_title_description());
         description.setWidth(400);
         description.setHeight(50);
         description.setDefaultValue("");
 
-        recursive = new CheckboxItem("recursive", "Recursive");
+        recursive = new CheckboxItem("recursive", MSG.view_dynagroup_recursive());
 
-        expression = new TextAreaItem("expression", "Expression");
+        expression = new TextAreaItem("expression", MSG.view_dynagroup_expression());
         expression.setWidth(400);
         expression.setHeight(150);
         expression.setDefaultValue("");
 
-        recalculationInterval = new SpinnerItem("recalculationInterval", "Recalculation Interval");
+        recalculationInterval = new SpinnerItem("recalculationInterval", MSG.view_dynagroup_recalculationInterval());
         recalculationInterval.setWrapTitle(false);
         recalculationInterval.setMin(0);
         recalculationInterval.setDefaultValue(0);
@@ -313,14 +313,14 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 new AsyncCallback<PageList<GroupDefinition>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failure loading group definition[id=" + groupDefinitionId + "]", caught);
+                            MSG.view_dynagroup_loadDefinitionFailure(String.valueOf(groupDefinitionId)), caught);
                         History.back();
                     }
 
                     public void onSuccess(PageList<GroupDefinition> result) {
                         if (result.size() == 0) {
                             CoreGUI.getErrorHandler().handleError(
-                                "No group definition exists with id=" + groupDefinitionId);
+                                MSG.view_dynagroup_loadDefinitionMissing(String.valueOf(groupDefinitionId)));
                             History.back();
                         } else {
                             GroupDefinition existingGroupDefinition = result.get(0);
@@ -337,13 +337,12 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(
-                    "Could not determine whether user had MANAGE_INVENTORY permission", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permUnknown(), caught);
                 handleAuthorizationFailure();
             }
 
             private void handleAuthorizationFailure() {
-                CoreGUI.getErrorHandler().handleError("You do not have permission to view group definitions");
+                CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permDenied());
                 History.back();
             }
 

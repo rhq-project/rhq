@@ -22,7 +22,7 @@
 
   <properties>
     <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.100</db.schema.version>
+    <db.schema.version>2.101</db.schema.version>
   </properties>
 
   <dependencies>
@@ -466,14 +466,12 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-             <version>1.1</version>             
+             <artifactId>maven-antrun-plugin</artifactId>            
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

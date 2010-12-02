@@ -35,7 +35,7 @@ public interface RoleGWTService extends RemoteService {
 
     Role updateRole(Role role);
 
-    void removeRoles(Integer[] roleIds);
+    void removeRoles(int[] roleIds);
 
     void setAssignedResourceGroups(int roleId, int[] resourceGroupIds);
 

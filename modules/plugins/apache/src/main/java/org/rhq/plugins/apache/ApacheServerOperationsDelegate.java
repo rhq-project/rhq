@@ -19,6 +19,7 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -50,11 +51,17 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
      */
     private SystemInfo systemInfo;
 
+    /**
+     * The plugin configuration of the server component.
+     */
+    private Configuration serverPluginConfiguration;
+    
     // Constructors  --------------------------------------------
 
-    public ApacheServerOperationsDelegate(ApacheServerComponent serverComponent, SystemInfo systemInfo) {
+    public ApacheServerOperationsDelegate(ApacheServerComponent serverComponent, Configuration serverPluginConfiguration, SystemInfo systemInfo) {
         this.serverComponent = serverComponent;
         this.systemInfo = systemInfo;
+        this.serverPluginConfiguration = serverPluginConfiguration;
     }
 
     public void startOperationFacet(OperationContext context) {
@@ -73,8 +80,14 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(controlScriptPath);
         processExecution.setWaitForCompletion(1000 * 30); // 30 seconds - should be plenty
         processExecution.setCaptureOutput(true); // essential, since we want to include the output in the result
-        if (osIsWindows()) {
-            processExecution.getArguments().add("-k"); // e.g. "Apache.exe -k start" vs. "apachectl start"
+        
+        addDefaultArguments(processExecution);
+        
+        //we always add some arguments to the control script thus forcing the passthrough mode.
+        //therefore no matter if we use httpd, Apache.exe or apachectl, the -k argument will always
+        //be used to specify the operation to invoke.
+        if (operation != Operation.CONFIG_TEST) {
+            processExecution.getArguments().add("-k");
         }
 
         switch (operation) {
@@ -126,6 +139,16 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         }
 
         return createOperationResult(processExecutionResults);
+    }
+
+    private void addDefaultArguments(ProcessExecution processExecution) throws Exception {
+        List<String> args = processExecution.getArguments();
+        
+        //these plugin config properties are required and readonly, so they should never be null
+        args.add("-d");
+        args.add(serverPluginConfiguration.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, null));
+        args.add("-f");
+        args.add(serverPluginConfiguration.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF, null));
     }
 
     private OperationResult createOperationResult(ProcessExecutionResults processExecutionResults) {

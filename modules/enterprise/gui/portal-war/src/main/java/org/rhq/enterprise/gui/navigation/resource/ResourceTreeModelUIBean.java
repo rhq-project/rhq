@@ -80,7 +80,8 @@ public class ResourceTreeModelUIBean {
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree root resource");
         log.debug("Found root resource in " + (end - start));
 
-        Agent agent = agentManager.getAgentByResourceId(rootResource.getId());
+        Agent agent = agentManager.getAgentByResourceId(EnterpriseFacesContextUtility.getSubject(), rootResource
+            .getId());
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
@@ -120,7 +121,8 @@ public class ResourceTreeModelUIBean {
                 if (res.getResourceType().getSubCategory() != null) {
                     // These are children that have subcategories
                     // Split them by if they are a sub-sub category or just a category
-                    ResourceSubCategoryFlyweight categoryKey = res.getResourceType().getSubCategory().getParentSubCategory();
+                    ResourceSubCategoryFlyweight categoryKey = res.getResourceType().getSubCategory()
+                        .getParentSubCategory();
                     if (categoryKey == null) {
                         categoryKey = res.getResourceType().getSubCategory();
                     }
@@ -132,13 +134,13 @@ public class ResourceTreeModelUIBean {
                 }
 
             }
-            
+
             Set<String> dupResourceTypeNames = getDuplicateResourceTypeNames(children);
 
-            for(Map.Entry<Object, List<ResourceFlyweight>> entry : children.entrySet()) {
+            for (Map.Entry<Object, List<ResourceFlyweight>> entry : children.entrySet()) {
                 Object key = entry.getKey();
                 List<ResourceFlyweight> resources = entry.getValue();
-                
+
                 double avail = 0;
                 for (ResourceFlyweight res : resources) {
                     avail += res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? 1 : 0;
@@ -147,10 +149,11 @@ public class ResourceTreeModelUIBean {
 
                 Object nodeData = null;
                 if (key instanceof ResourceSubCategoryFlyweight) {
-                    nodeData = new AutoGroupCompositeFlyweight(avail, parentResource, (ResourceSubCategoryFlyweight) key, resources.size());
+                    nodeData = new AutoGroupCompositeFlyweight(avail, parentResource,
+                        (ResourceSubCategoryFlyweight) key, resources.size());
                 } else if (key instanceof ResourceTypeFlyweight) {
                     ResourceTypeFlyweight typeKey = (ResourceTypeFlyweight) key;
-                    
+
                     if (typeKey.isSingleton()) {
                         nodeData = resources.get(0);
                     } else {
@@ -174,10 +177,10 @@ public class ResourceTreeModelUIBean {
             Map<Object, List<ResourceFlyweight>> children = new HashMap<Object, List<ResourceFlyweight>>();
             log.debug("composite parent" + compositeParent);
             if (compositeParent != null) {
-                
+
                 MembersCategoryHint membersCategory = MembersCategoryHint.NONE;
                 MembersAvailabilityHint membersAvailabilityHint = MembersAvailabilityHint.UP;
-                
+
                 for (ResourceFlyweight res : compositeParent.getParentResource().getChildResources()) {
                     boolean process = false;
                     if (compositeParent.getSubcategory() != null) {
@@ -199,17 +202,18 @@ public class ResourceTreeModelUIBean {
                     } else if (compositeParent.getResourceType() != null) {
                         if (compositeParent.getResourceType().equals(res.getResourceType())
                             && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
-                            
+
                             addToList(children, res.getResourceType(), res);
                             process = true;
                         }
                     }
-                    
+
                     if (process) {
                         //amend the overall category of all the members of the auto group.                
                         switch (membersCategory) {
                         case NONE: //this is the first child, so let's use its category as a starting point
-                            membersCategory = MembersCategoryHint.fromResourceCategory(res.getResourceType().getCategory());
+                            membersCategory = MembersCategoryHint.fromResourceCategory(res.getResourceType()
+                                .getCategory());
                             break;
                         case MIXED: //this is the "final" state. The children type is not going to change from this.
                             break;
@@ -218,34 +222,36 @@ public class ResourceTreeModelUIBean {
                                 membersCategory = MembersCategoryHint.MIXED;
                             }
                         }
-                        
+
                         //amend the availability hint of the autogroup. If all resources are up, the hint is UP, if some of the resources
                         //are down, the hint is DOWN, if some of the resources' avail state is unknown, the hint is UNKNOWN.
                         //The down state has the highest priority.
                         switch (membersAvailabilityHint) {
                         case UP:
-                            membersAvailabilityHint = MembersAvailabilityHint.fromAvailabilityType(res.getCurrentAvailability().getAvailabilityType());
+                            membersAvailabilityHint = MembersAvailabilityHint.fromAvailabilityType(res
+                                .getCurrentAvailability().getAvailabilityType());
                             break;
                         case UNKNOWN:
                             if (res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
                                 membersAvailabilityHint = MembersAvailabilityHint.DOWN;
                             }
                             break;
-                        case DOWN:; //a "terminal" state... if some resource is down, the overall state is going to be down as that is the most important information.
+                        case DOWN:
+                            ; //a "terminal" state... if some resource is down, the overall state is going to be down as that is the most important information.
                         }
                     }
                 }
-                
+
                 compositeParent.setMembersCategoryHint(membersCategory);
                 compositeParent.setMembersAvailabilityHint(membersAvailabilityHint);
             }
 
             AutoGroupCompositeFlyweight compositeParentNode = (AutoGroupCompositeFlyweight) parentNode.getData();
-            
+
             for (Map.Entry<Object, List<ResourceFlyweight>> entry : children.entrySet()) {
                 Object key = entry.getKey();
                 List<ResourceFlyweight> resources = entry.getValue();
-                
+
                 if (compositeParentNode.getSubcategory() != null) {
                     double avail = 0;
                     for (ResourceFlyweight res : resources) {
@@ -262,13 +268,13 @@ public class ResourceTreeModelUIBean {
                         if (typeKey.isSingleton()) {
                             nodeData = resources.get(0);
                         } else {
-                            nodeData = new AutoGroupCompositeFlyweight(avail, compositeParent.getParentResource(), typeKey,
-                                resources.size(), false);
+                            nodeData = new AutoGroupCompositeFlyweight(avail, compositeParent.getParentResource(),
+                                typeKey, resources.size(), false);
                         }
                     }
                     ResourceTreeNode node = new ResourceTreeNode(nodeData, parentNode);
                     load(node);
-                    
+
                     if (!recursivelyLocked(node)) {
                         parentNode.getChildren().add(node);
                     }
@@ -279,7 +285,7 @@ public class ResourceTreeModelUIBean {
                         if (!recursivelyLocked(node)) {
                             parentNode.getChildren().add(node);
                         }
-                    }                    
+                    }
                 }
             }
         }
@@ -289,7 +295,7 @@ public class ResourceTreeModelUIBean {
         if (node.getData() instanceof ResourceFlyweight && !((ResourceFlyweight) node.getData()).isLocked()) {
             return false;
         }
-        
+
         boolean allLocked = true;
         for (ResourceTreeNode child : node.getChildren()) {
             if (!recursivelyLocked(child))
@@ -337,15 +343,15 @@ public class ResourceTreeModelUIBean {
         }
         return dupResourceTypeNames;
     }
-    
+
     private static <K, V> void addToList(Map<K, List<V>> mapOfLists, K key, V value) {
         List<V> list = mapOfLists.get(key);
-        
+
         if (list == null) {
             list = new ArrayList<V>();
             mapOfLists.put(key, list);
         }
-        
+
         list.add(value);
     }
 }

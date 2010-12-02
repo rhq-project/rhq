@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -42,23 +46,34 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundlesWithLatestVersionDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
-        DataSourceLinkField linkField = new DataSourceLinkField("link", "Name");
-        addField(linkField);
+        DataSourceLinkField linkField = new DataSourceLinkField("link", MSG.common_title_name());
+        fields.add(linkField);
 
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
+        fields.add(descriptionField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
-        addField(descriptionField);
+        DataSourceTextField latestVersionField = new DataSourceTextField("latestVersion", MSG
+            .view_bundle_latestVersion());
+        fields.add(latestVersionField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("latestVersion", "Latest Version");
-        addField(latestVersionField);
+        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("versionsCount", MSG
+            .view_bundle_list_versionsCount());
+        fields.add(deploymentCountField);
 
-        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("versionsCount", "Versions Count");
-        addField(deploymentCountField);
+        return fields;
     }
 
     @Override
@@ -78,11 +93,10 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
-
         bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load bundle-with-latest-version data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_loadWithLatestFailure(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
@@ -97,7 +111,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     }
 
     @Override
-    public BundleWithLatestVersionComposite copyValues(ListGridRecord from) {
+    public BundleWithLatestVersionComposite copyValues(Record from) {
         Integer idAttrib = from.getAttributeAsInt("id");
         String nameAttrib = from.getAttribute("name");
         String descriptionAttrib = from.getAttribute("description");
@@ -115,10 +129,8 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
         record.setAttribute("id", from.getBundleId());
         record.setAttribute("name", from.getBundleName());
 
-
         record.setAttribute("link", "#Bundles/Bundle/" + from.getBundleId());
         record.setLinkText(from.getBundleName());
-
 
         record.setAttribute("description", from.getBundleDescription());
         record.setAttribute("latestVersion", from.getLatestVersion());

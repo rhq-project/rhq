@@ -53,13 +53,13 @@ import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
 
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -69,7 +69,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class LiveGraphView extends LocatableVLayout {
 
-    private static final String INSTRUCTIONS = "Point your mouse to a data point on the chart";
+    private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
@@ -226,7 +226,8 @@ public class LiveGraphView extends LocatableVLayout {
                 dataService.findLiveData(resourceId, new int[] { definition.getId() },
                     new AsyncCallback<Set<MeasurementData>>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load live data", caught);
+                            CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_resource_monitor_graphs_loadFailed(), caught);
                         }
 
                         public void onSuccess(Set<MeasurementData> result) {
@@ -271,7 +272,7 @@ public class LiveGraphView extends LocatableVLayout {
     public static void displayAsDialog(String locatorId, int resourceId, MeasurementDefinition def) {
         final LiveGraphView graph = new LiveGraphView(locatorId, resourceId, def);
         final Window graphPopup = new LocatableWindow(locatorId);
-        graphPopup.setTitle("Detailed Graph");
+        graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);
         graphPopup.setHeight(400);
         graphPopup.setIsModal(true);

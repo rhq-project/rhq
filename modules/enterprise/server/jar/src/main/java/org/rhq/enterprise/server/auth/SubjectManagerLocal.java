@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.auth;
 import java.util.Collection;
 
 import javax.ejb.Local;
+import javax.persistence.EntityExistsException;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
@@ -70,31 +71,6 @@ public interface SubjectManagerLocal {
      * @param pageControl the page control that specifies which page of the result set to return and how sort it
      */
     PageList<Subject> findAllSubjects(PageControl pageControl);
-
-    /**
-     * Generates a one-time temporary session password for the given session. This can be used to authenticate the user
-     * of that session for one time and one time only (i.e. to login as the user this temporary password can be used as
-     * opposed to the user's real password).
-     *
-     * <p>Note that this method should only be available on this EJB's local interface.</p>
-     *
-     * @param  sessionId the session to assign a temporary password to
-     *
-     * @return a temporary password that can be used once to login as the user
-     */
-    String generateTemporarySessionPassword(int sessionId);
-
-    /**
-     * Tests the validity of the given session password. Returns <code>true</code> if the password is valid and the
-     * session is still valid.
-     *
-     * @param  password a temporary session password that was created by {@link #generateTemporarySessionPassword(int)}.
-     *
-     * @return <code>true</code> if the given <code>password</code> is valid and its associated session is still valid
-     *
-     * @throws Exception if the password was valid but its associated session has either timed out or was invalidated
-     */
-    boolean authenticateTemporarySessionPassword(String password) throws Exception;
 
     /**
      * Logs in a user without performing any authentication. This method should be used with care and not available to
@@ -188,6 +164,30 @@ public interface SubjectManagerLocal {
 
     boolean isLoggedIn(String username);
 
+    /**
+     * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
+     * password.
+     *
+     * @param subject the logged in user's subject
+     * @param subjectToCreate the subject to be created (which will never be the same as <code>subject</code>)
+     * @param password the password for the principal to be created for the new user
+     *
+     * @return the persisted subject
+     */
+    Subject createSubject(Subject subject, Subject subjectToCreate, String password) throws SubjectException,
+        EntityExistsException;
+
+    /**
+     * Updates an existing subject, including their assigned roles, and optionally their password.
+     *
+     * @param  subject         the logged in user's subject
+     * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>subject</code>)
+     * @param  newPassword     if non-null, a new password to be set on the user's associated principal
+     *
+     * @return the merged subject, which may or may not be the <code>subjectToModify</code> instance
+     */
+    Subject updateSubject(Subject subject, Subject subjectToModify, String newPassword);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -244,4 +244,5 @@ public interface SubjectManagerLocal {
      */
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
 
+    Subject processSubjectForLdap(Subject subject, String subjectPassword) throws LoginException;
 }

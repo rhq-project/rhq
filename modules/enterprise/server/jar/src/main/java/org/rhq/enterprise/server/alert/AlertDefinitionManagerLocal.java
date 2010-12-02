@@ -77,11 +77,11 @@ public interface AlertDefinitionManagerLocal {
 
     PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
 
-    int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
+    int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
-    int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
+    int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
-    int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
+    int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
     String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications);
 }

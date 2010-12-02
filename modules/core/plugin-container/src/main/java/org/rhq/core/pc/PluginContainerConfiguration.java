@@ -194,7 +194,7 @@ public class PluginContainerConfiguration {
      * names will be returned in a list. If no plugins are to be disabled, and empty list is
      * returned. The returned list is a copy, not the actual list used internally.
      * Note that the plugin name is the name found in the plugin .xml descriptor in the plugin root element.
-     * 
+     *
      * @return list of plugin names identifying plugins to be disabled
      */
     @SuppressWarnings("unchecked")
@@ -211,7 +211,7 @@ public class PluginContainerConfiguration {
      * If one or more plugins are not to be loaded by the plugin container, the given
      * list should be the names of the plugins to be disabled. Note that the plugin name
      * is the name found in the plugin .xml descriptor in the plugin root element.
-     * 
+     *
      * @param disabledPlugins
      */
     public void setDisabledPlugins(List<String> disabledPlugins) {
@@ -231,7 +231,7 @@ public class PluginContainerConfiguration {
      * to all plugins.
      *
      * @return regular expression (may be <code>null</code>)
-     * 
+     *
      * @see RootPluginClassLoader
      */
     public String getRootPluginClassLoaderRegex() {
@@ -240,7 +240,7 @@ public class PluginContainerConfiguration {
 
     /**
      * Sets the regex that defines what classes the plugin container should hide from its plugins.
-     * 
+     *
      * @param regex regular expression
      *
      * @see RootPluginClassLoader
@@ -743,7 +743,7 @@ public class PluginContainerConfiguration {
     /**
      * Returns whether or not the plugin container is running inside an agent, which means it is running external to any
      * managed product.
-     * Note: Use {@link #getPluginContainerDeployment()} instead, this method might get deprecated later. 
+     * Note: Use {@link #getPluginContainerDeployment()} instead, this method might get deprecated later.
      *
      * @return <code>true</code> if the container is deployed inside an external agent process; <code>false</code> if
      *         the plugin container is embedded directly in a managed product
@@ -761,7 +761,7 @@ public class PluginContainerConfiguration {
     /**
      * Indicates where the plugin container is deployed. This is analogous to the {@link #isInsideAgent()} except
      * it returns the plugin API enum, rather than a boolean.
-     *   
+     *
      * @return indicator of where the plugin is deployed
      */
     public PluginContainerDeployment getPluginContainerDeployment() {
@@ -789,4 +789,85 @@ public class PluginContainerConfiguration {
     public String toString() {
         return configuration.toString();
     }
+
+
+    /**
+     * Returns the default filter for class loading that is used to prevent leaking
+     * of agent / PC classes to plugins.
+     * @return A regular expression to match classes against
+     */
+    public static String getDefaultClassLoaderFilter() {
+        String clRegex;
+        StringBuilder defaultRegex = new StringBuilder();
+
+        // I don't know if its appropriate to force plugins to have their own implementation
+        // of the Java Management API. Commenting out for now - plugins get our VM's JMX implementation.
+        //
+        //defaultRegex.append("(javax\\.management\\..*)|");
+
+        // Hide our version of JAXB.
+        // If the plugins want these, they should include their own implementations.
+        defaultRegex.append("(javax\\.xml\\.bind\\..*)|");
+        defaultRegex.append("(com\\.sun\\.activation\\..*)|");
+        defaultRegex.append("(com\\.sun\\.istack\\..*)|");
+        defaultRegex.append("(com\\.sun\\.xml\\..*)|");
+
+        // Hide some Apache libraries used by the agent.
+        // If the plugins want these, they should include their own implementations.
+        defaultRegex.append("(org\\.apache\\.commons\\.httpclient\\..*)|");
+
+        // Provide to the plugins some logging frameworks. These are such common
+        // dependencies that we provide them for the plugins, thus eliminating every plugin
+        // needing to include their own. Most plugins want to log messages and will most
+        // likely want to just piggyback what the agent is using and log in the agent log.
+        //
+        //defaultRegex.append("(org\\.apache\\.commons\\.logging\\..*)|");
+        //defaultRegex.append("(org\\.apache\\.log4j\\..*)|");
+        //defaultRegex.append("(mazz\\.i18n\\..*)|");
+
+        // Hide all JBoss libraries, including the JBoss JMX implementation and Remoting.
+        // If the plugins want these, they should include their own implementations.
+        defaultRegex.append("(org\\.jboss\\.logging\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.net\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.util\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.dom4j\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.mx\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.remoting\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.serial\\..*)|");
+
+        // Miscelleneous libraries that the agent has that we want to hide from plugins.
+        // If the plugins want these, they should include their own implementations.
+        defaultRegex.append("(org\\.dom4j\\..*)|");
+        defaultRegex.append("(EDU\\.oswego\\..*)|");
+        defaultRegex.append("(gnu\\.getopt\\..*)|");
+        defaultRegex.append("(javax\\.persistence\\..*)|");
+
+        // These core agent/plugin container libraries are not to be used by the plugins.
+        // We hide them to enforce this - plugin developers should not be using these.
+        defaultRegex.append("(org\\.rhq\\.core\\.clientapi\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.core\\.communications\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.core\\.pc\\..*)|");
+
+        // This is commented out mainly to support the agent plugin to be able
+        // to talk to the agent core in both production and testing scenarios.
+        // See the _static_ org.rhq.enterprise.agent.AgentManagementMBean.BASE_OBJECT_NAME
+        // and its accompanying javadoc for what that is used for. Putting a second copy
+        // of that in another classloader for the agent plugin defeats that hack. Therefore,
+        // we must ensure we do not exclude this package.
+        //
+        //defaultRegex.append("(org\\.rhq\\.enterprise\\.agent\\..*)|");
+
+        // Plugins should not be doing anything with the agent-server comm layer - we hide them.
+        // However, there are some management interfaces here that plugins will want to use/monitor,
+        // allow plugins to access those classes
+        defaultRegex
+            .append("(org\\.rhq\\.enterprise\\.communications\\.(?!command\\.server\\.CommandProcessorMetrics.*).*)");
+
+        // Other packages from other jars in the agent lib directory allowed to be used by the plugins.
+        // Therefore, they are not excluded here. This includes things like the plugin API and the core domain objects.
+
+        clRegex = defaultRegex.toString();
+        return clRegex;
+    }
+
 }

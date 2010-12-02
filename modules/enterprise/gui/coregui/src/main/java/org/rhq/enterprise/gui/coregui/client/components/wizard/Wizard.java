@@ -22,10 +22,15 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.IButton;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
 /**
  * @author Greg Hinkle
  */
 public interface Wizard {
+
+    Messages MSG = CoreGUI.getMessages();
 
     String getWindowTitle();
 

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.ui.Widget;
 import com.smartgwt.client.widgets.BaseWidget;
 import com.smartgwt.client.widgets.Canvas;
@@ -35,6 +36,7 @@ import java.util.List;
  * @author Ian Springer
  */
 public class WidgetUtility {
+    
     private WidgetUtility() {
     }
 
@@ -165,7 +167,7 @@ public class WidgetUtility {
             indent.append("  ");
         }
 
-        com.allen_sauer.gwt.log.client.Log.info(indent + simpleClassName + "[id=" + id + ", title=" + title + ", flags=[" + flags + "]]");
+        Log.info(indent + simpleClassName + "[id=" + id + ", title=" + title + ", flags=[" + flags + "]]");
     }
 
     private static List<Widget> getChildren(Widget widget) {

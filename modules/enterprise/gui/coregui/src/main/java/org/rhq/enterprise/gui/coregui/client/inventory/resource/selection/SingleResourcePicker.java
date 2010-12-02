@@ -16,10 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A window dialog box that lets you pick a single resource.
@@ -34,7 +33,7 @@ public class SingleResourcePicker extends ResourcePicker {
 
     @Override
     protected String getDefaultTitle() {
-        return "Select a Resource";
+        return MSG.widget_resourceSelector_selectResource();
     }
 
     @Override
@@ -44,10 +43,10 @@ public class SingleResourcePicker extends ResourcePicker {
 
     protected void ok() {
         OkHandler handler = getOkHandler();
-        HashSet<Integer> selection = getResourceSelector().getSelection();
+        Set<Integer> selection = getResourceSelector().getSelection();
 
         if (selection == null || selection.size() != 1) {
-            showWarningMessage("Please select a resource");
+            showWarningMessage(MSG.widget_resourceSelector_pleaseSelectResource());
         } else {
             if (handler.ok(selection)) {
                 markForDestroy();

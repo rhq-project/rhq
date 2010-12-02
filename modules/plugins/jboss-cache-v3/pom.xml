@@ -57,7 +57,7 @@
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-5-plugin</artifactId>
-         <version>${version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope>
      </dependency>
 
@@ -80,15 +80,9 @@
        </dependency>
         
         <dependency>
-            <groupId>jboss.messaging</groupId>
-            <artifactId>jboss-messaging-client</artifactId>            
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.microcontainer</groupId>
-            <artifactId>jboss-kernel</artifactId>
-            <scope>test</scope>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-kernel</artifactId>
+          <scope>test</scope>
         </dependency>
         
         <dependency>
@@ -561,7 +555,7 @@
          </build>
       </profile>
     <profile>
-      <id>cobertura</id>
+      <id>cobertura-plugins</id>
       <activation>
         <activeByDefault>false</activeByDefault>
       </activation>
@@ -569,13 +563,11 @@
          <plugins>
            <plugin>
              <artifactId>maven-antrun-plugin</artifactId> 
-             <version>1.1</version>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

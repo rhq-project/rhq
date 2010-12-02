@@ -19,9 +19,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.message;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
@@ -39,21 +36,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
     private static final String LOCATOR_ID = "MessageBar";
     private static final int AUTO_HIDE_DELAY_MILLIS = 15000; // 15 seconds
-
-    private static final Map<Message.Severity, String> SEVERITY_TO_STYLE_NAME_MAP = new HashMap<Message.Severity, String>();
-    static {
-        SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Info, "InfoBlock");
-        SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Warning, "WarnBlock");
-        SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Error, "ErrorBlock");
-        SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Fatal, "FatalBlock");
-    }
-
-    private static final Map<Message.Severity, String> SEVERITY_TO_ICON_MAP = new HashMap<Message.Severity, String>();
-    static {
-        SEVERITY_TO_ICON_MAP.put(Message.Severity.Info, "info/icn_info_blue.png");
-        SEVERITY_TO_ICON_MAP.put(Message.Severity.Warning, "info/icn_info_orange.png");
-        SEVERITY_TO_ICON_MAP.put(Message.Severity.Error, "info/icn_info_red.png");
-    }
 
     private Label label;
     private Message stickyMessage;
@@ -89,7 +71,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
             } else {
                 Timer hideTimer = new Timer() {
                     @Override
-                    public void run() {                       
+                    public void run() {
                         clearMessage(false);
                         if (stickyMessage != null) {
                             displayMessage(stickyMessage);
@@ -114,7 +96,6 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private void clearMessage(boolean clearSticky) {
         if (this.label != null) {
             this.label.destroy();
-            removeMember(this.label);
             markForRedraw();
         }
         if (clearSticky) {
@@ -130,7 +111,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         label.setContents(contents);
         label.setAlign(Alignment.CENTER);
 
-        String styleName = (contents != null) ? SEVERITY_TO_STYLE_NAME_MAP.get(message.getSeverity()) : null;
+        String styleName = (contents != null) ? message.getSeverity().getStyle() : null;
         label.setStyleName(styleName);
 
         label.setWidth(400);
@@ -139,7 +120,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         //       label.
         //label.setShowEdges(true);
 
-        String icon = (contents != null) ? SEVERITY_TO_ICON_MAP.get(message.getSeverity()) : null;
+        String icon = (contents != null) ? message.getSeverity().getIcon() : null;
         label.setIcon(icon);
 
         return label;

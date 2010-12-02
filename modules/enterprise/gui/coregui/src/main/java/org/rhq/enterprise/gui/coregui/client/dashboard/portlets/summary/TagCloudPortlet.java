@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
  */
 public class TagCloudPortlet extends TagCloudView implements Portlet {
 
-    public static final String KEY = "TagCloud";
+    public static final String KEY = MSG.view_portlet_tagCloud_title();
 
     public TagCloudPortlet(String locatorId) {
         super(locatorId, true);
@@ -47,8 +47,8 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("The <b>Tag Cloud</b> portlet displays the relative tag counts in the system visible "
-            + "to the current user.");
+        return new HTMLFlow(MSG.common_title_the() + " <b>" + MSG.common_title_tag_cloud() + "</b> "
+            + MSG.view_portlet_tagCloud_help());
     }
 
     public static final class Factory implements PortletViewFactory {

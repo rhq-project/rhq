@@ -41,7 +41,7 @@ public class BundleVersionListView extends Table {
     }
 
     public BundleVersionListView(String locatorId, Criteria criteria) {
-        super(locatorId, "Bundle Versions", criteria);
+        super(locatorId, MSG.view_bundle_bundleVersions(), criteria);
         setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
         BundleVersionDataSource bundleVersionsDataSource = new BundleVersionDataSource();
         setDataSource(bundleVersionsDataSource);
@@ -49,7 +49,6 @@ public class BundleVersionListView extends Table {
 
     @Override
     protected void configureTable() {
-
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
@@ -65,6 +64,7 @@ public class BundleVersionListView extends Table {
 
         getListGrid().setSelectionType(SelectionStyle.NONE);
         getListGrid().setSelectionAppearance(SelectionAppearance.ROW_STYLE);
+
 
     }
 }

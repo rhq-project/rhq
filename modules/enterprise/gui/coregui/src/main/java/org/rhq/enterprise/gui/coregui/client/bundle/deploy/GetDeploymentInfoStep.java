@@ -48,7 +48,7 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Provide Deployment Information";
+        return MSG.view_bundle_deployWizard_getInfoStep();
     }
 
     public Canvas getCanvas() {
@@ -63,13 +63,14 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
                 new AsyncCallback<String>() {
 
                     public void onSuccess(String result) {
-                        final StaticTextItem nameTextItem = new StaticTextItem("name", "Deployment Name");
+                        final StaticTextItem nameTextItem = new StaticTextItem("name", MSG
+                            .view_bundle_deployWizard_getInfo_deploymentName());
                         nameTextItem.setWidth(300);
                         wizard.setSubtitle(result);
                         nameTextItem.setValue(result);
 
-                        final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description",
-                            "Deployment Description");
+                        final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
+                            .view_bundle_deployWizard_getInfo_deploymentDesc());
                         descriptionTextAreaItem.setWidth(300);
                         descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                             public void onChanged(ChangedEvent event) {
@@ -81,8 +82,8 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
                             }
                         });
 
-                        final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment",
-                            "Clean Deployment? (wipe deploy directory on destination platform)");
+                        final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment", MSG
+                            .view_bundle_deployWizard_getInfo_clean());
                         cleanDeploymentCBItem.setValue(wizard.isCleanDeployment());
                         cleanDeploymentCBItem.addChangedHandler(new ChangedHandler() {
                             public void onChanged(ChangedEvent event) {
@@ -95,7 +96,7 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
                     }
 
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get deployment name.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_7(), caught);
                     }
                 });
         }

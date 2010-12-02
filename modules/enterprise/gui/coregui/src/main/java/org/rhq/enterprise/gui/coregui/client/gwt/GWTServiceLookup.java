@@ -23,8 +23,8 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
 
 /**
  * This lookup service retrieves each RPC service and sets a
@@ -32,11 +32,21 @@ import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
  * be security checked on the server.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
+ * @author John Mazzitelli
  */
 public class GWTServiceLookup {
 
     public static AlertDefinitionGWTServiceAsync getAlertDefinitionService() {
         return secure(AlertDefinitionGWTServiceAsync.Util.getInstance());
+    }
+
+    public static AlertTemplateGWTServiceAsync getAlertTemplateService() {
+        return secure(AlertTemplateGWTServiceAsync.Util.getInstance());
+    }
+
+    public static GroupAlertDefinitionGWTServiceAsync getGroupAlertDefinitionService() {
+        return secure(GroupAlertDefinitionGWTServiceAsync.Util.getInstance());
     }
 
     public static ConfigurationGWTServiceAsync getConfigurationService() {
@@ -53,6 +63,10 @@ public class GWTServiceLookup {
 
     public static ResourceTypeGWTServiceAsync getResourceTypeGWTService() {
         return secure(ResourceTypeGWTServiceAsync.Util.getInstance());
+    }
+
+    public static ResourceTypeGWTServiceAsync getResourceTypeGWTService(int timeout) {
+        return secure(ResourceTypeGWTServiceAsync.Util.getInstance(), timeout);
     }
 
     public static RoleGWTServiceAsync getRoleService() {
@@ -127,59 +141,64 @@ public class GWTServiceLookup {
         return secure(ClusterGWTServiceAsync.Util.getInstance());
     }
 
+    public static LdapGWTServiceAsync getLdapService() {
+        return secure(LdapGWTServiceAsync.Util.getInstance());
+    }
+
+    public static AgentGWTServiceAsync getAgentService() {
+        return secure(AgentGWTServiceAsync.Util.getInstance());
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
+        return (T) secure(sdt, -1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T secure(Object sdt, int timeout) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;
 
-        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder());
+        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder(timeout));
 
         return (T) sdt;
     }
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
-        private static int RPC_TIMEOUT = 60000;
+        private static int DEBUG_TIMEOUT_FUDGE_FACTOR = 30000;
+        private static int DEFAULT_RPC_TIMEOUT = 10000;
+        private int timeout;
+
+        public SessionRpcRequestBuilder(int timeout) {
+            super();
+
+            this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
+
+            if (CoreGUI.isDebugMode()) {
+                // debug mode is slow, so give requests more time to complete otherwise you'll get
+                // weird exceptions whose messages are extremely unhelpful in finding root cause
+                this.timeout += DEBUG_TIMEOUT_FUDGE_FACTOR;
+            }
+        }
 
         @Override
         protected RequestBuilder doCreate(String serviceEntryPoint) {
             RequestBuilder rb = super.doCreate(serviceEntryPoint);
-
-            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
-            //       to add resilience to gwt service calls
-            rb.setTimeoutMillis(RPC_TIMEOUT);
-
-            // TODO Don't use the expensive determineName except in dev mode
-            rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
+            rb.setTimeoutMillis(this.timeout);
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
-                Log.info("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
+                Log.debug("SessionRpcRequestBuilder is adding sessionId(" + sessionId + ") to request("
+                    + serviceEntryPoint + ")");
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
-                Log
-                    .error("SessionRpcRequestBuilder constructed without a value for "
-                        + UserSessionManager.SESSION_NAME);
+                Log.error("SessionRpcRequestBuilder missing sessionId for request(" + serviceEntryPoint + ") ");
             }
 
             return rb;
         }
 
-        public String determineName() {
-            Exception e = new Exception();
-
-            StackTraceElement[] stack = e.getStackTrace();
-            // Skip the first two stack elements to get to the proxy calling
-            for (int i = 2; i < stack.length; i++) {
-                StackTraceElement ste = stack[i];
-                // e.g. "org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService_Proxy.findResourcesByCriteria(ResourceGWTService_Proxy.java:36)"
-                if (ste.getClassName().startsWith("org.rhq.enterprise.gui.coregui.client.gwt")) {
-                    return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "."
-                        + ste.getMethodName();
-                }
-            }
-            return "unknown";
-        }
     }
 
 }

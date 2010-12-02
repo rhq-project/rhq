@@ -22,11 +22,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -40,7 +41,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -48,54 +48,58 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceScheduledMetricDatasource extends RPCDataSource<MeasurementDefinition> {
 
-
     public ResourceScheduledMetricDatasource() {
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id");
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceIntegerField id = new DataSourceIntegerField("id", MSG.common_title_id());
         id.setPrimaryKey(true);
-        addField(id);
+        fields.add(id);
 
-        DataSourceTextField name = new DataSourceTextField("name");
-        addField(name);
+        DataSourceTextField name = new DataSourceTextField("name", MSG.common_title_name());
+        fields.add(name);
 
-        DataSourceTextField displayName = new DataSourceTextField("displayName");
-        addField(displayName);
+        DataSourceTextField displayName = new DataSourceTextField("displayName", MSG.common_title_display_name());
+        fields.add(displayName);
 
-        DataSourceTextField description = new DataSourceTextField("description");
-        addField(description);
+        DataSourceTextField description = new DataSourceTextField("description", MSG.common_title_description());
+        fields.add(description);
 
-        DataSourceTextField units = new DataSourceTextField("units");
-        addField(units);
+        DataSourceTextField units = new DataSourceTextField("units", MSG.common_title_units());
+        fields.add(units);
 
-        DataSourceTextField numericType = new DataSourceTextField("numericType");
-        addField(numericType);
+        DataSourceTextField numericType = new DataSourceTextField("numericType", MSG.common_title_numeric_type());
+        fields.add(numericType);
 
-        DataSourceTextField category = new DataSourceTextField("category");
-        addField(category);
+        DataSourceTextField category = new DataSourceTextField("category", MSG.common_title_category());
+        fields.add(category);
+
+        return fields;
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-
-
 
         if (request.getCriteria().getValues().containsKey("id")) {
             MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
 
             criteria.addFilterId(request.getCriteria().getAttributeAsInt("id"));
             GWTServiceLookup.getMeasurementDataService().findMeasurementDefinitionsByCriteria(criteria,
-                    new AsyncCallback<PageList<MeasurementDefinition>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load metric definitions",caught);
-                        }
+                new AsyncCallback<PageList<MeasurementDefinition>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_definitions_loadFailed(), caught);
+                    }
 
-                        public void onSuccess(PageList<MeasurementDefinition> result) {
-                            response.setData(buildRecords(result));
-                            processResponse(request.getRequestId(), response);
-                        }
-                    });
-
+                    public void onSuccess(PageList<MeasurementDefinition> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
 
         } else if (request.getCriteria().getValues().containsKey("resourceId")) {
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
@@ -103,17 +107,17 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
 
             criteria.addFilterResourceId(request.getCriteria().getAttributeAsInt("resourceId"));
 
+            GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
+                new AsyncCallback<PageList<MeasurementSchedule>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
+                    }
 
-            GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria, new AsyncCallback<PageList<MeasurementSchedule>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load metric schedules", caught);
-                }
-
-                public void onSuccess(PageList<MeasurementSchedule> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+                    public void onSuccess(PageList<MeasurementSchedule> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
         } else {
             processResponse(request.getRequestId(), response);
         }
@@ -131,10 +135,9 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
         return buildRecords(definitions);
     }
 
-
     @Override
-    public MeasurementDefinition copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+    public MeasurementDefinition copyValues(Record from) {
+        return null; // TODO: Implement this method.
     }
 
     @Override

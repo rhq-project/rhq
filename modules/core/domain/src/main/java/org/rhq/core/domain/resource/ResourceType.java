@@ -92,16 +92,18 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
         "WHERE pa IN (:resourceType)"),
+    // template count composites need the parent types fetched; however, because of a quirk in hibernate,
+    // we can't use the template component constructor in the select, we'll build the composites in our code
     @NamedQuery(name = ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite" //
-        + "(" //
+    //  + "SELECT new org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite (" //
+        + "SELECT " //
         + "  rt," //
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = TRUE), "//
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = FALSE), "//
         + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = TRUE), "//
         + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE) "//
-        + ")" //
-        + "FROM ResourceType AS rt"),
+        //  + ")" //
+        + "FROM ResourceType AS rt LEFT JOIN FETCH rt.parentResourceTypes p"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_CATEGORY, query = "SELECT rt FROM ResourceType AS rt "
         + "WHERE rt.category = :category"),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
@@ -306,6 +308,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Column(name = "MTIME")
     private Long mtime;
+
+    @Column(name = "DELETED")
+    private boolean deleted;
 
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
@@ -532,6 +537,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public long getMtime() {
         return this.mtime;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     @PreUpdate

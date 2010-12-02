@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -70,7 +71,7 @@ public class OperationCreateWizard extends AbstractWizard {
         steps.add(schedulingStep);
         setSteps(steps);
 
-        executeNowButton = new IButton("Execute Immediately");
+        executeNowButton = new IButton(MSG.view_operationCreateWizard_button_executeImmediately());
         executeNowButton.setAutoFit(true);
         executeNowButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -78,7 +79,7 @@ public class OperationCreateWizard extends AbstractWizard {
             }
         });
 
-        executeButton = new IButton("Execute");
+        executeButton = new IButton(MSG.view_operationCreateWizard_button_execute());
         executeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 execute();
@@ -90,11 +91,11 @@ public class OperationCreateWizard extends AbstractWizard {
     }
 
     public String getWindowTitle() {
-        return "Operation Wizard";
+        return MSG.view_operationCreateWizard_title();
     }
 
     public String getTitle() {
-        return "Execute " + operationDefinition.getDisplayName() + " on " + resource.getName();
+        return MSG.view_operationCreateWizard_header(operationDefinition.getDisplayName(), resource.getName());
     }
 
     public String getSubtitle() {
@@ -113,7 +114,7 @@ public class OperationCreateWizard extends AbstractWizard {
     }
 
     private void execute() {
-        com.allen_sauer.gwt.log.client.Log.info("TODO Executed operation!!");
+        Log.info("TODO Executed operation!!");
 
         OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
@@ -123,13 +124,13 @@ public class OperationCreateWizard extends AbstractWizard {
         GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
             operationDefinition.getName(), parameters, schedule, " testing ", 0, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to schedule operation execution", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_operationCreateWizard_error_scheduleOperationFailure(),
+                        caught);
                 }
 
                 public void onSuccess(Void result) {
-
-                    String message = "Schedule operation [" + operationDefinition.getName() + "]  on resource ["
-                        + resource.getId() + "] with cron string [" + schedule.getCronString() + "]";
+                    String message = MSG.view_operationCreateWizard_message_scheduleOperationSuccess(
+                        operationDefinition.getName(), String.valueOf(resource.getId()), schedule.getCronString());
 
                     CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Info));
                 }

@@ -37,7 +37,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Set Deployment Configuration";
+        return MSG.view_bundle_deployWizard_getConfigStep();
     }
 
     public Canvas getCanvas() {
@@ -51,7 +51,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                 // This has started behaving badly. Instead of moving ahead let's give them a message
                 // and a chance to go back to the previous screen. 
                 // this.wizard.getView().incrementStep();
-                HeaderLabel label = new HeaderLabel("No configuration needed for this bundle version");
+                HeaderLabel label = new HeaderLabel(MSG.view_bundle_deployWizard_getConfigSkip());
                 label.setWidth100();
                 editor = new VLayout();
                 editor.addMember(label);

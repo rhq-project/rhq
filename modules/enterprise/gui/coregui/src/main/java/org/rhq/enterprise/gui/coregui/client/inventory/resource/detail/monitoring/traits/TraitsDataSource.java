@@ -18,15 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
 
-import com.smartgwt.client.data.DSRequest;
+import java.util.List;
+
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
-
-import java.util.List;
 
 /**
  * A DataSource for reading traits for the current Resource.
@@ -34,12 +34,13 @@ import java.util.List;
  * @author Ian Springer
  */
 public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
-    @Override
-    protected List<DataSourceField> createFields() {
-        List<DataSourceField> fields = super.createFields();
 
-        DataSourceIntegerField resourceIdField =
-                new DataSourceIntegerField(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, "Resource Id");
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceIntegerField resourceIdField = new DataSourceIntegerField(
+            MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, MSG.common_title_resource_id());
         resourceIdField.setHidden(true);
         fields.add(0, resourceIdField);
 
@@ -50,7 +51,8 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
     public ListGridRecord copyValues(MeasurementDataTrait from) {
         ListGridRecord record = super.copyValues(from);
 
-        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, from.getSchedule().getResource().getId());
+        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, from.getSchedule().getResource()
+            .getId());
 
         return record;
     }

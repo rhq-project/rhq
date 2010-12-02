@@ -24,14 +24,12 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
-
 /**
  * A tab set where each {@link TwoLevelTab tab} has one or more {@link SubTab subtab}s.
  *
  * @author Greg Hinkle
  */
-public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
+public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
 
     public TwoLevelTabSet(String locatorId) {
         super(locatorId);
@@ -73,8 +71,8 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
         TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
         SubTab currentSubTab = tab.getLayout().getCurrentSubTab();
         if (null != currentSubTab) {
-            TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getTitle(), tab.getLayout()
-                .getCurrentSubTab().getTitle(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentCanvas());
+            TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getName(), tab.getLayout()
+                .getCurrentSubTab().getName(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentCanvas());
             m.fireEvent(event);
         }
     }
@@ -82,7 +80,7 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         tabSelectedEvent.setTabNum(getSelectedTabNumber());
         Tab tab = getSelectedTab();
-        tabSelectedEvent.setId(tab.getTitle());
+        tabSelectedEvent.setId(this.getTabByTitle(tab.getTitle()).getName());
         m.fireEvent(tabSelectedEvent);
     }
 
@@ -94,6 +92,10 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
             }
         }
         return null;
+    }
+
+    public TwoLevelTab getTabByName(String name) {
+        return (TwoLevelTab) super.getTabByName(name);
     }
 
     public TwoLevelTab getTabByTitle(String title) {

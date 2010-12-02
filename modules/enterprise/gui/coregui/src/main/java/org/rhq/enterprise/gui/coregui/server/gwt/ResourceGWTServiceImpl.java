@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -250,6 +251,38 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration deploymentTimeConfiguration, int packageVersionId) {
+        try {
+
+            ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
+                .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
+            Configuration pluginConfig = null;
+            if (pluginConfigDefinition != null) {
+                ConfigurationTemplate pluginConfigTemplate = pluginConfigDefinition.getDefaultTemplate();
+                pluginConfig = (pluginConfigTemplate != null) ? pluginConfigTemplate.createConfiguration()
+                    : new Configuration();
+
+                // TODO GH: Is this still necessary now that we don't blow up on non-normalized configs
+                // ConfigurationUtility.normalizeConfiguration(pluginConfig, pluginConfigDefinition);
+            }
+
+            resourceFactoryManager.createPackageBackedResourceViaPackageVersion(getSessionSubject(), parentResourceId,
+                newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public List<DeleteResourceHistory> deleteResources(int[] resourceIds) {
+        try {
+            return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
+                "ResourceService.deleteResources");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
         try {
             return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
@@ -259,7 +292,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public void importResources(Integer[] resourceIds) {
+    public void importResources(int[] resourceIds) {
         try {
             discoveryBoss.importResources(getSessionSubject(), resourceIds);
         } catch (Exception e) {
@@ -267,7 +300,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public void ignoreResources(Integer[] resourceIds) {
+    public void ignoreResources(int[] resourceIds) {
         try {
             discoveryBoss.ignoreResources(getSessionSubject(), resourceIds);
         } catch (Exception e) {
@@ -275,7 +308,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public void unignoreResources(Integer[] resourceIds) {
+    public void unignoreResources(int[] resourceIds) {
         try {
             discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
         } catch (Exception e) {
@@ -297,4 +330,5 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
 }

@@ -90,7 +90,7 @@ public enum HttpdAddressUtility {
                 
                 return null;
             } catch (Exception e) {
-                log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
+                log.warn("Failed to obtain main server address.", e);
 
                 return null;
             }
@@ -115,7 +115,7 @@ public enum HttpdAddressUtility {
                 //there has to be at least one Listen directive
                 throw new IllegalStateException("Could find a listen address on port " + limitToPort);
             } catch (Exception e) {
-                log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
+                log.warn("Failed to obtain main server address.", e);
 
                 return null;
             }
@@ -131,6 +131,7 @@ public enum HttpdAddressUtility {
     public static class Address {
         public String host;
         public int port = -1;
+        public String scheme = "http";
         
         public static final String WILDCARD = "*";
         public static final String DEFAULT_HOST = "_default_";
@@ -142,6 +143,10 @@ public enum HttpdAddressUtility {
             this.port = port;
         }
 
+        public Address(String scheme, String host, int port) {
+            this(host, port);
+            this.scheme = scheme;
+        }
         /**
          * A simple parser of the provided address into host and port
          * sections.
@@ -150,6 +155,13 @@ public enum HttpdAddressUtility {
          * @return an instance of Address with host and port set accordingly
          */
         public static Address parse(String address) {
+            String scheme = "http";
+            int schemeSpecIdx = address.indexOf("://");
+            if (schemeSpecIdx >= 0) {
+                scheme = address.substring(0, schemeSpecIdx);
+                address = address.substring(schemeSpecIdx + "://".length());
+            }
+            
             int lastColonIdx = address.lastIndexOf(':');
             if (lastColonIdx == NO_PORT_SPECIFIED_VALUE) {
                 return new Address(address, -1);
@@ -166,10 +178,10 @@ public enum HttpdAddressUtility {
                         port = Integer.parseInt(portSpec);
                     }
                     
-                    return new Address(host, port);
+                    return new Address(scheme, host, port);
                 } else {
                     //this is an IP6 address without a port spec
-                    return new Address(address, NO_PORT_SPECIFIED_VALUE);
+                    return new Address(scheme, address, NO_PORT_SPECIFIED_VALUE);
                 }
             }
         }
@@ -205,21 +217,68 @@ public enum HttpdAddressUtility {
 
             Address o = (Address) other;
 
-            if (this.host == null) {
-                return o.host == null && this.port == o.port;
-            } else {
-                return this.host.equals(o.host) && this.port == o.port;
+            return safeEquals(host, o.host) && this.port == o.port;
+        }
+        
+        /**
+         * This differs from equals in the way that it considers wildcard values:
+         * <ul>
+         * <li>wildcard host matches any host
+         * <li>default host matches default host
+         * <li>wildcard port matches any port
+         * <li>undefined port matches undefined port
+         * </ul>
+         * The addresses match if both address and port match.
+         * 
+         * @param other the address to match
+         * @param whether to match the scheme as well
+         * @return true if the addresses match according to the rules described above, false otherwise
+         */
+        public boolean matches(Address other, boolean matchSchemes) {
+            if (matchSchemes && !safeEquals(scheme, other.scheme)) {
+                return false;
             }
+            
+            if (!WILDCARD.equals(host) && !WILDCARD.equals(other.host) && !safeEquals(host, other.host)) {
+                return false;
+            }
+            
+            if (PORT_WILDCARD_VALUE != port && PORT_WILDCARD_VALUE != other.port && port != other.port) {
+                return false;
+            }
+            
+            return true;
         }
         
         @Override
         public String toString() {
-            if (port == NO_PORT_SPECIFIED_VALUE) return host;
-            else {
-                String portSpec = port == PORT_WILDCARD_VALUE ? WILDCARD : String.valueOf(port);
-                
-                return host + ":" + portSpec;
+            return toString(true);
+        }
+        
+        public String toString(boolean includeScheme) {
+            StringBuilder bld = new StringBuilder();
+            
+            if (includeScheme) {
+                bld.append(scheme).append("://");
             }
+
+            bld.append(host);
+
+            if (port != NO_PORT_SPECIFIED_VALUE) {
+                bld.append(":");
+                
+                if (port == PORT_WILDCARD_VALUE) {
+                    bld.append(WILDCARD);
+                } else {
+                    bld.append(port);
+                }
+            }
+            
+            return bld.toString();
+        }
+        
+        private static boolean safeEquals(Object a, Object b) {
+            return a == null ? b == null : a.equals(b);
         }
     }
 
@@ -245,30 +304,29 @@ public enum HttpdAddressUtility {
      * @return the address on which the virtual host can be accessed or null on error
      */
     public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName, boolean snmpModuleCompatibleMode) {
-        Address addr = Address.parse(virtualHost);
-        if (addr.isHostDefault() || addr.isHostWildcard()) {
-            Address serverAddr = null;
-            if (snmpModuleCompatibleMode) {
-                serverAddr = getLocalhost(addr.port);
-            } else {
-                serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+        try {
+            Address addr = Address.parse(virtualHost);
+            if (addr.isHostDefault() || addr.isHostWildcard()) {
+                Address serverAddr = null;
+                if (snmpModuleCompatibleMode) {
+                    serverAddr = getLocalhost(addr.port);
+                } else {
+                    serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+                }
+                if (serverAddr == null)
+                    return null;
+                addr.host = serverAddr.host;
             }
-            if (serverAddr == null)
-                return null;
-            addr.host = serverAddr.host;
-        }
-
-        if (serverName != null) {
-            int colonIdx = serverName.indexOf(':');
-            if (colonIdx >= 0) {
-                addr.host = serverName.substring(0, colonIdx);
-                addr.port = Integer.parseInt(serverName.substring(colonIdx + 1));
-            } else {
-                addr.host = serverName;
+            
+            if (serverName != null) {
+                updateWithServerName(addr, serverName);
             }
-        }
 
-        return addr;
+            return addr;
+        } catch (Exception e) {
+            log.warn("Failed to obtain virtual host address.", e);
+            return null;
+        }
     }
     
     private static Address parseListen(String listenValue) {
@@ -335,7 +393,7 @@ public enum HttpdAddressUtility {
         try {
             return new Address(InetAddress.getLocalHost().getHostAddress(), port);
         } catch (UnknownHostException e) {
-            //well, this is bad, we can get address of the localhost. let's use the force...
+            //well, this is bad, we can't get address of the localhost. let's use the force...
             return new Address("127.0.0.1", port);
         }
     }
@@ -349,12 +407,46 @@ public enum HttpdAddressUtility {
         //be the case if the server listens on more than one interfaces.
         if (serverNameNodes.size() > 0) {
             String serverName = serverNameNodes.get(0).getValuesAsString();
-            InetAddress addrFromServerName = InetAddress.getByName(serverName);
+            updateWithServerName(address, serverName);
+        }
+    }
+    
+    private static void updateWithServerName(Address address, String serverName) throws UnknownHostException {
+        //the configuration may be invalid and/or the hostname can be unresolvable.
+        //we try to match the address with the servername first by IP address
+        //but if that fails (i.e. the hostname couldn't be resolved to an IP)
+        //we try to simply match the hostnames themselves.
+        
+        Address serverAddr = Address.parse(serverName);
+        String ipFromServerName = null;
+        String ipFromAddress = null;
+        String hostFromServerName = null;
+        String hostFromAddress = null;
+        boolean lookupFailed = false;
+
+        try {
+            InetAddress addrFromServerName = InetAddress.getByName(serverAddr.host);
+            ipFromServerName = addrFromServerName.getHostAddress();
+            hostFromServerName = addrFromServerName.getHostName();
+        } catch (UnknownHostException e) {
+            ipFromServerName = serverAddr.host;
+            hostFromServerName = serverAddr.host;
+            lookupFailed = true;
+        }
+        
+        try {
             InetAddress addrFromAddress = InetAddress.getByName(address.host);
-            
-            if (addrFromAddress.equals(addrFromServerName)) {
-                address.host = serverName;
-            }
+            ipFromAddress = addrFromAddress.getHostAddress();
+            hostFromAddress = addrFromAddress.getHostName();
+        } catch (UnknownHostException e) {
+            ipFromAddress = address.host;
+            hostFromAddress = address.host;
+            lookupFailed = true;
+        }
+        
+        if (ipFromAddress.equals(ipFromServerName) || (lookupFailed && (hostFromAddress.equals(hostFromServerName)))) {
+            address.scheme = serverAddr.scheme;
+            address.host = serverAddr.host;
         }
     }
 }

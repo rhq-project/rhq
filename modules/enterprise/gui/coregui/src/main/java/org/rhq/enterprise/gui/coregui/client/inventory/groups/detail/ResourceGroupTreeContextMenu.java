@@ -37,6 +37,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
+    public ResourceGroupTreeContextMenu(String locatorId) {
+        super(locatorId);
+    }
+
     public void showContextMenu(TreeNode node) {
 
         final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");

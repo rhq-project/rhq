@@ -316,7 +316,7 @@ public interface RepoManagerLocal {
      * @return count of the number of repositories synced.
      * @throws Exception if there is an error connecting with the plugin container
      */
-    int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+    int synchronizeRepos(Subject subject, int[] repoIds) throws Exception;
 
     /**
      * Performs the actual synchronization of the given repos.

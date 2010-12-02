@@ -705,10 +705,10 @@ import org.rhq.core.domain.util.Summary;
         + "   "),
     @NamedQuery(name = Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK, query = "" //
         + "UPDATE Resource r " //
-        + "   SET r.inventoryStatus = :status, " //
-        + "       r.agent = NULL, " //
-        + "       r.parentResource = NULL, " // takes resources out of the hierarchy, so we don't have to change ResourceSyncInfo logic
-        + "       r.resourceKey = 'deleted' " //
+        + "   SET r.inventoryStatus = :status, " // change to UNINVENTORIED status will remove it from inventory browser
+        + "       r.agent = NULL, " // don't have to change ResourceSyncInfo logic
+        + "       r.parentResource = NULL, " // resources without hierarchy can be deleted in any order
+        + "       r.resourceKey = 'deleted' " // prevents collision with future discovery reports
         + " WHERE r.id IN (:resourceIds ) "), //
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION, query = "" //
         + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL"),
@@ -1025,8 +1025,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
 
-    //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    //    private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
+    // not currently needed, but could be added if we find a need to get deployment info via the resource
+    // bulk delete (already being done)
+    // @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
+    // private List<BundleResourceDeployment> resourceDeployments = new ArrayList<BundleResourceDeployment>();
 
     @ManyToMany(mappedBy = "resources", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;

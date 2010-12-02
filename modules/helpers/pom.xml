@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -20,15 +22,17 @@
     <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers</developerConnection>
   </scm>
 
+
   <properties>
     <scm.module.path>modules/helpers/</scm.module.path>
   </properties>
 
-   <dependencies>
+
+  <dependencies>
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>
         <artifactId>cobertura</artifactId>
-        <version>1.9.4.1</version>       
+        <version>1.9.4.1</version>
         <scope>test</scope>
      </dependency>
   </dependencies>
@@ -36,17 +40,25 @@
 
   <modules>
 
-    <!-- plugins that are used by both enterprise and embedded -->
     <module>rtfilter</module>
-    <!-- plugin generator -->
+<!--
     <module>pluginGen</module>
     <module>pluginAnnotations</module>
-      <module>bundleGen</module>
-      <module>perftest-data-gen</module>
+-->
+    <module>bundleGen</module>
+    <module>perftest-support</module>
 
   </modules>
 
+
   <profiles>
+      <profile>
+         <id>rhq-perf</id>
+         <modules>
+            <module>perftest-support</module>
+         </modules>
+      </profile>
+
 
   </profiles>
 

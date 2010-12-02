@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.mysql;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -30,46 +29,62 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Greg Hinkle
+ * @author Steve Millidge
  */
 public class MySqlDatabaseDiscoveryComponent implements ResourceDiscoveryComponent<MySqlComponent> {
 
+    private Log logger = LogFactory.getLog(this.getClass());
 
-
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<MySqlComponent> context) {
-        Set<DiscoveredResourceDetails> tables = new LinkedHashSet<DiscoveredResourceDetails>();
 
-
+        if (logger.isDebugEnabled()) {
+            logger.debug("Database discovery started");
+        }
+        Set<DiscoveredResourceDetails> databases = new LinkedHashSet<DiscoveredResourceDetails>();
         Connection connection = context.getParentResourceComponent().getConnection();
 
 
         Statement statement = null;
         ResultSet resultSet = null;
-        try {
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery("SHOW DATABASES");
+        if (connection != null) {
+            try {
+                statement = connection.createStatement();
+                resultSet = statement.executeQuery("SHOW DATABASES");
 
-            while (resultSet.next()) {
-                String databaseName = resultSet.getString(1);
-                DiscoveredResourceDetails details =
-                        new DiscoveredResourceDetails(
-                                context.getResourceType(),
-                                databaseName,
-                                databaseName + " Database",
-                                null,
-                                "A MySql Database",
-                                null,
-                                null);
-                tables.add(details);
+                while (resultSet.next()) {
+                    String databaseName = resultSet.getString(1);
+                    Configuration config = new Configuration();
+                    config.put(new PropertySimple("databaseName",databaseName));
+                    DiscoveredResourceDetails details =
+                            new DiscoveredResourceDetails(
+                            context.getResourceType(),
+                            databaseName,
+                            databaseName + " Database",
+                            null,
+                            "A MySql Database",
+                            config,
+                            null);
+                    databases.add(details);
+                }
+
+            } catch (SQLException e) {
+            } finally {
+                DatabaseQueryUtility.close(statement, resultSet);
             }
-
-        } catch (SQLException e) {
-            DatabaseQueryUtility.close(statement, resultSet);
+        } else {
+            if (logger.isInfoEnabled()) {
+                logger.info("No connection to MySQL obtained from connection manager");
+            }
         }
 
-        return tables;
+        return databases;
     }
-
 }

@@ -73,6 +73,7 @@
             <descriptor>src/main/scripts/assembly.xml</descriptor>
           </descriptors>
           <finalName>${project.build.finalName}</finalName>
+          <appendAssemblyId>false</appendAssemblyId>          
         </configuration>
         <executions>
           <execution>

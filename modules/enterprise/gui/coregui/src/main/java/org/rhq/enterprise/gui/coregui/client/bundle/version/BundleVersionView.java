@@ -84,8 +84,8 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
 
         //        tabs.addTab(createUpdateHistoryTab());
 
-        addMember(new BackButton(extendLocatorId("BackButton"), "Back to Bundle: " + version.getBundle().getName(),
-            "Bundles/Bundle/" + version.getBundle().getId()));
+        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_version_backToBundle() + ": "
+            + version.getBundle().getName(), "Bundles/Bundle/" + version.getBundle().getId()));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": "
             + version.getVersion()));
@@ -106,14 +106,14 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     private Tab createSummaryTab() {
-        LocatableTab tab = new LocatableTab(extendLocatorId("Summary"), "Summary");
+        LocatableTab tab = new LocatableTab(extendLocatorId("Summary"), MSG.common_title_summary());
 
         LocatableDynamicForm form = new LocatableDynamicForm(tab.getLocatorId());
         form.setWidth100();
         form.setHeight100();
         form.setNumCols(4);
 
-        StaticTextItem versionItem = new StaticTextItem("version", "Version");
+        StaticTextItem versionItem = new StaticTextItem("version", MSG.common_title_version());
         versionItem.setValue(version.getVersion());
 
         CanvasItem tagItem = new CanvasItem("tag");
@@ -124,12 +124,14 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
                     GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update bundle version's tags", caught);
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_bundle_version_bundleVersionTagUpdateFailure(), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Bundle Version tags updated", Message.Severity.Info));
+                                    new Message(MSG.view_bundle_version_bundleVersionTagUpdateSuccessful(),
+                                        Message.Severity.Info));
                             }
                         });
                 }
@@ -138,16 +140,16 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
-        StaticTextItem descriptionItem = new StaticTextItem("description", "Description");
+        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
         descriptionItem.setValue(version.getDescription());
 
-        StaticTextItem liveDeploymentsItem = new StaticTextItem("deployments", "Deployments");
+        StaticTextItem liveDeploymentsItem = new StaticTextItem("deployments", MSG.view_bundle_deployments());
         liveDeploymentsItem.setValue(version.getBundleDeployments().size());
 
-        StaticTextItem filesItems = new StaticTextItem("files", "Files");
+        StaticTextItem filesItems = new StaticTextItem("files", MSG.view_bundle_files());
         filesItems.setValue(version.getBundleFiles().size());
 
-        TextAreaItem recipeItem = new TextAreaItem("recipe", "Recipe");
+        TextAreaItem recipeItem = new TextAreaItem("recipe", MSG.view_bundle_recipe());
         recipeItem.setDisabled(true);
         recipeItem.setTitleOrientation(TitleOrientation.TOP);
         recipeItem.setColSpan(4);
@@ -163,7 +165,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     private Tab createLiveDeploymentsTab() {
-        LocatableTab tab = new LocatableTab(extendLocatorId("Deployments"), "Deployments");
+        LocatableTab tab = new LocatableTab(extendLocatorId("Deployments"), MSG.view_bundle_deployments());
 
         Criteria criteria = new Criteria();
         criteria.setAttribute("bundleVersionId", version.getId());
@@ -174,7 +176,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     private Tab createFilesTab() {
-        LocatableTab tab = new LocatableTab(extendLocatorId("Files"), "Files");
+        LocatableTab tab = new LocatableTab(extendLocatorId("Files"), MSG.view_bundle_files());
 
         FileListView filesView = new FileListView(tab.getLocatorId(), version.getId());
 
@@ -199,7 +201,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
             new AsyncCallback<PageList<BundleVersion>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load budle version", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
                 }
 
                 public void onSuccess(PageList<BundleVersion> result) {

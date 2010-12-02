@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -41,75 +45,83 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
     private double maxMaximum;
 
     public CallTimeDataSource() {
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceTextField callDestination = new DataSourceTextField("callDestination", "Call Destination");
-        addField(callDestination);
-        DataSourceIntegerField count = new DataSourceIntegerField("count");
-        addField(count);
-        DataSourceIntegerField minimum = new DataSourceIntegerField("minimum");
-        addField(minimum);
-        DataSourceIntegerField average = new DataSourceIntegerField("average");
-        addField(average);
-        DataSourceIntegerField maximum = new DataSourceIntegerField("maximum");
-        addField(maximum);
-        DataSourceIntegerField total = new DataSourceIntegerField("total");
-        addField(total);
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
+        DataSourceTextField callDestination = new DataSourceTextField("callDestination", MSG
+            .view_resource_monitor_calltime_destination());
+        fields.add(callDestination);
+        DataSourceIntegerField count = new DataSourceIntegerField("count", MSG.view_resource_monitor_calltime_count());
+        fields.add(count);
+        DataSourceIntegerField minimum = new DataSourceIntegerField("minimum", MSG
+            .view_resource_monitor_calltime_minimum());
+        fields.add(minimum);
+        DataSourceIntegerField average = new DataSourceIntegerField("average", MSG
+            .view_resource_monitor_calltime_average());
+        fields.add(average);
+        DataSourceIntegerField maximum = new DataSourceIntegerField("maximum", MSG
+            .view_resource_monitor_calltime_maximum());
+        fields.add(maximum);
+        DataSourceIntegerField total = new DataSourceIntegerField("total", MSG.view_resource_monitor_calltime_total());
+        fields.add(total);
+
+        return fields;
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-
         int scheduleId = Integer.parseInt((String) request.getCriteria().getValues().get("scheduleId"));
         long now = System.currentTimeMillis();
         long eightHoursAgo = now - (1000L * 60 * 60 * 8);
 
         PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getMeasurementDataService().findCallTimeDataForResource(
-                scheduleId, eightHoursAgo, now, pc, new AsyncCallback<PageList<CallTimeDataComposite>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Could not load call time data", caught);
-                    }
-
-                    public void onSuccess(PageList<CallTimeDataComposite> result) {
-                        ListGridRecord[] data = buildRecords(result);
-                        setGraphs(data);
-                        response.setData(data);
-
-                        processResponse(request.getRequestId(), response);
-                    }
+        GWTServiceLookup.getMeasurementDataService().findCallTimeDataForResource(scheduleId, eightHoursAgo, now, pc,
+            new AsyncCallback<PageList<CallTimeDataComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_calltime_loadFailed(), caught);
                 }
-        );
+
+                public void onSuccess(PageList<CallTimeDataComposite> result) {
+                    Record[] data = buildRecords(result);
+                    setGraphs(data);
+                    response.setData(data);
+
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
 
     @Override
-    public CallTimeDataComposite copyValues(ListGridRecord from) {
-        throw new UnsupportedOperationException("Calltime not editable");
+    public CallTimeDataComposite copyValues(Record from) {
+        throw new UnsupportedOperationException(MSG.view_resource_monitor_calltime_editFailed());
     }
 
-    public void setGraphs(ListGridRecord[] records) {
-        for (ListGridRecord record : records) {
+    public void setGraphs(Record[] records) {
+        for (Record record : records) {
             if (record.getAttributeAsInt("maximum") > maxMaximum)
                 maxMaximum = record.getAttributeAsInt("maximum");
         }
 
-        for (ListGridRecord record : records) {
+        for (Record record : records) {
 
             int minWidth = (int) ((record.getAttributeAsInt("minimum") / maxMaximum) * 100d);
             int avgWidth = (int) ((record.getAttributeAsInt("average") / maxMaximum) * 100d);
             int maxWidth = (int) ((record.getAttributeAsInt("maximum") / maxMaximum) * 100d);
 
-
-
-            record.setBackgroundComponent(
-                    new HTMLFlow(
-                            "<div style=\"width: " + minWidth + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" +
-                            "<div style=\"width: " + avgWidth + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" +
-                            "<div style=\"width: " + maxWidth + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>"));
-
+            if (record instanceof ListGridRecord) {
+                ListGridRecord listGridRecord = (ListGridRecord) record;
+                listGridRecord.setBackgroundComponent(new HTMLFlow("<div style=\"width: " + minWidth
+                    + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" + "<div style=\"width: " + avgWidth
+                    + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" + "<div style=\"width: " + maxWidth
+                    + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>"));
+            }
         }
-
     }
 
     @Override
@@ -123,7 +135,6 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
         record.setAttribute("average", from.getAverage());
         record.setAttribute("maximum", from.getMaximum());
         record.setAttribute("total", from.getTotal());
-
 
         return record;
     }

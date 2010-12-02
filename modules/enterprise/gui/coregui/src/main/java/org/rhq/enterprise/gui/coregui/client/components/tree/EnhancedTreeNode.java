@@ -27,16 +27,28 @@ import org.rhq.core.domain.util.StringUtils;
  */
 public class EnhancedTreeNode extends TreeNode {
     public EnhancedTreeNode() {
-        this(null);
+        super();
     }
 
     public EnhancedTreeNode(String name) {
-        this(name, new TreeNode[0]);
+        super(name);
+        if (name != null) {
+            setTitle(StringUtils.deCamelCase(name));
+        }
     }
 
     public EnhancedTreeNode(String name, TreeNode... children) {
         super(name, children);
         if (name != null) {
+            setTitle(StringUtils.deCamelCase(name));
+        }
+    }
+
+    public EnhancedTreeNode(String name, String title, TreeNode... children) {
+        super(name, children);
+        if (!(null == title || "".equals(title.trim()))) {
+            setTitle(title);
+        } else if (name != null) {
             setTitle(StringUtils.deCamelCase(name));
         }
     }
@@ -65,8 +77,7 @@ public class EnhancedTreeNode extends TreeNode {
             String className = this.getClass().getName();
             String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
             innerClassName = simpleClassName.substring(simpleClassName.lastIndexOf("$") + 1);
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             innerClassName = "EnhancedTreeNode";
         }
 

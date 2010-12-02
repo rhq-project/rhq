@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,13 +20,11 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -44,16 +42,14 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class InventorySummaryView extends LocatableVLayout implements Portlet {
-
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
-    public static final String KEY = "Summary Counts";
+    public static final String KEY = MSG.common_title_summary_counts();
 
     public InventorySummaryView(String locatorId) {
         super(locatorId);
@@ -64,7 +60,7 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
     private void loadInventoryViewDiata() {
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
-                CoreGUI.getErrorHandler().handleError("Failed to retrieve inventory summary", throwable);
+                CoreGUI.getErrorHandler().handleError(MSG.view_portlet_inventory_error1(), throwable);
             }
 
             public void onSuccess(InventorySummary summary) {
@@ -75,31 +71,34 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
                 //                headerItem.setValue("Inventory Summary");
                 //                formItems.add(headerItem);
 
-                StaticTextItem platformTotal = createSummaryRow("platformTotal", "Platform Total", summary
-                    .getPlatformCount());
+                StaticTextItem platformTotal = createSummaryRow("platformTotal", MSG.common_title_platform_total(),
+                    summary.getPlatformCount(), "Inventory/Resources/Platforms");
                 formItems.add(platformTotal);
 
-                StaticTextItem serverTotal = createSummaryRow("serverTotal", "Server Total", summary.getServerCount());
+                StaticTextItem serverTotal = createSummaryRow("serverTotal", MSG.common_title_server_total(), summary
+                    .getServerCount(), "Inventory/Resources/Servers");
                 formItems.add(serverTotal);
 
-                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", "Service Total", summary
-                    .getServiceCount());
+                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", MSG.common_title_service_total(),
+                    summary.getServiceCount(), "Inventory/Resources/Services");
                 formItems.add(serviceTotal);
 
-                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal",
-                    "Compatible Group Total", summary.getCompatibleGroupCount());
+                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal", MSG
+                    .common_title_compatibleGroups_total(), summary.getCompatibleGroupCount(),
+                    "Inventory/Groups/CompatibleGroups");
                 formItems.add(compatibleGroupTotal);
 
-                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", "Mixed Group Total", summary
-                    .getMixedGroupCount());
+                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", MSG
+                    .common_title_mixedGroups_total(), summary.getMixedGroupCount(), "Inventory/Groups/MixedGroups");
                 formItems.add(mixedGroupTotal);
 
-                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal",
-                    "Group Definition Total", summary.getGroupDefinitionCount());
+                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal", MSG
+                    .common_title_group_def_total(), summary.getGroupDefinitionCount(),
+                    "Inventory/Groups/DynagroupManager");
                 formItems.add(groupDefinitionTotal);
 
-                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
-                    "Average Metrics per Minute", summary.getScheduledMeasurementsPerMinute());
+                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal", MSG
+                    .common_title_average_metrics(), summary.getScheduledMeasurementsPerMinute(), null);
                 formItems.add(avergeMetricsTotal);
 
                 form.setItems(formItems.toArray(new FormItem[formItems.size()]));
@@ -110,16 +109,21 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
         });
     }
 
-    private StaticTextItem createSummaryRow(String name, String label, int value) {
-        final LinkItem item = new LinkItem(name);
+    private StaticTextItem createSummaryRow(String name, String label, int value, final String viewPath) {
+        final StaticTextItem item;
+        if (viewPath != null) {
+            item = new LinkItem(name);
+            item.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    CoreGUI.goToView(viewPath);
+                }
+            });
+        } else {
+            item = new StaticTextItem(name);
+        }
+
         item.setTitle(label);
-        item.setValue(value);
-        item.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                // TODO Figure out to where the click events should be navigating
-                History.newItem(InventoryView.VIEW_ID);
-            }
-        });
+        item.setDefaultValue(value);
 
         return item;
     }
@@ -155,5 +159,4 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
             return new InventorySummaryView(locatorId);
         }
     }
-
 }

@@ -22,11 +22,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
 
+import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.FieldType;
@@ -54,27 +58,39 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
     public EventCompositeDatasource(EntityContext context) {
         super();
         this.entityContext = context;
-
-        //        DataSourceField id = new DataSourceIntegerField("id", "Id");
-        //        id.setPrimaryKey(true);
-        //        addField(id);
-
-        DataSourceTextField timestamp = new DataSourceTextField("timestamp", "Timestamp");
-        timestamp.setType(FieldType.DATETIME);
-        addField(timestamp);
-
-        DataSourceTextField severity = new DataSourceTextField("severity", "Severity");
-        addField(severity);
-
-        DataSourceTextField details = new HighlightingDatasourceTextField("details", "Details");
-        addField(details);
-
-        DataSourceTextField sourceLocation = new DataSourceTextField("source", "Source Location");
-        addField(sourceLocation);
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
     }
 
     @Override
-    public EventComposite copyValues(ListGridRecord from) {
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceField id = new DataSourceIntegerField("id", MSG.common_title_id());
+        id.setPrimaryKey(true);
+        fields.add(id);
+
+        DataSourceTextField timestamp = new DataSourceTextField("timestamp", MSG
+            .view_inventory_eventHistory_timestamp());
+        timestamp.setType(FieldType.DATETIME);
+        fields.add(timestamp);
+
+        DataSourceTextField severity = new DataSourceTextField("severity", MSG.view_inventory_eventHistory_severity());
+        fields.add(severity);
+
+        DataSourceTextField details = new HighlightingDatasourceTextField("details", MSG
+            .view_inventory_eventHistory_details());
+        fields.add(details);
+
+        DataSourceTextField sourceLocation = new DataSourceTextField("source", MSG
+            .view_inventory_eventHistory_sourceLocation());
+        fields.add(sourceLocation);
+
+        return fields;
+    }
+
+    @Override
+    public EventComposite copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 
@@ -98,12 +114,12 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
         GWTServiceLookup.getEventService().findEventCompositesByCriteria(criteria,
             new AsyncCallback<PageList<EventComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load event data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_eventDetails_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                 }
 
                 public void onSuccess(PageList<EventComposite> result) {
-                    ListGridRecord[] records = buildRecords(result);
+                    Record[] records = buildRecords(result);
                     highlightFilterMatches(request, records);
                     response.setData(records);
                     response.setTotalRows(result.getTotalSize());

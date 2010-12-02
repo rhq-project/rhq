@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -39,26 +43,35 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-    private int bundleId;
 
     public BundleVersionDataSource() {
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
-        addField(latestVersionField);
+        DataSourceTextField latestVersionField = new DataSourceTextField("version", MSG.common_title_version());
+        fields.add(latestVersionField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
-        addField(nameField);
+        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
+        fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
-        addField(descriptionField);
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
+        fields.add(descriptionField);
 
+        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", MSG
+            .view_bundle_bundleFiles());
+        fields.add(deploymentCountField);
 
-
-        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", "File Count");
-        addField(deploymentCountField);
+        return fields;
     }
 
     @Override
@@ -70,7 +83,8 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
         criteria.setPageControl(getPageControl(request));
 
         if (request.getCriteria().getValues().get("bundleId") != null) {
-            criteria.addFilterBundleId(Integer.parseInt(String.valueOf(request.getCriteria().getValues().get("bundleId"))));
+            criteria.addFilterBundleId(Integer.parseInt(String.valueOf(request.getCriteria().getValues()
+                .get("bundleId"))));
         }
 
         if (request.getCriteria().getValues().get("tagNamespace") != null) {
@@ -87,7 +101,7 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
 
         bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle version data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundleVersion_loadFailure(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -102,19 +116,8 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
     }
 
     @Override
-    public BundleVersion copyValues(ListGridRecord from) {
-        // can't I just get the "object" attribute and return it???
-        Integer idAttrib = from.getAttributeAsInt("id");
-        String nameAttrib = from.getAttribute("name");
-        String descriptionAttrib = from.getAttribute("description");
-        String versionAttrib = from.getAttribute("version");
-
-        BundleVersion bv = new BundleVersion();
-        bv.setId(idAttrib.intValue());
-        bv.setName(nameAttrib);
-        bv.setDescription(descriptionAttrib);
-        bv.setVersion(versionAttrib);
-        return bv;
+    public BundleVersion copyValues(Record from) {
+        return (BundleVersion) from.getAttributeAsObject("object");
     }
 
     @Override

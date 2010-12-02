@@ -23,7 +23,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
-import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -31,10 +31,10 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
@@ -67,16 +67,16 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
             availableFilterForm.setNumCols(6);
             availableFilterForm.setWidth("75%");
-            final TextItem search = new TextItem("search", "Search");
+            final TextItem search = new TextItem("search", MSG.common_title_search());
             final SelectItem categorySelect;
 
-            typeSelectItem = new IPickTreeItem("type", "Type");
+            typeSelectItem = new IPickTreeItem("type", MSG.common_title_type());
             typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource());
             typeSelectItem.setValueField("id");
             typeSelectItem.setCanSelectParentItems(true);
             typeSelectItem.setLoadDataOnDemand(false);
-            typeSelectItem.setEmptyMenuMessage("Loading...");
-            typeSelectItem.setShowIcons(true);
+            typeSelectItem.setEmptyMenuMessage(MSG.common_msg_loading());
+            typeSelectItem.setShowIcons(false);
 
             if (this.forceResourceTypeFilter) {
                 typeSelectItem.setDisabled(true);
@@ -85,14 +85,24 @@ public class ResourceSelector extends AbstractSelector<Resource> {
                 typeSelectItem.setVisible(false);
             }
 
-            categorySelect = new SelectItem("category", "Category");
-            categorySelect.setValueMap("Platform", "Server", "Service");
+            categorySelect = new SelectItem("category", MSG.common_title_category());
+            LinkedHashMap<String, String> valueMap = buildResourceCategoryValueMap();
+            categorySelect.setValueMap(valueMap);
             categorySelect.setAllowEmptyValue(true);
 
             availableFilterForm.setItems(search, categorySelect, typeSelectItem);
         }
 
         return availableFilterForm;
+    }
+
+    private LinkedHashMap<String, String> buildResourceCategoryValueMap() {
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+        ResourceCategory[] categories = ResourceCategory.values();
+        for (ResourceCategory category : categories) {
+            valueMap.put(category.name(), category.getDisplayName());
+        }
+        return valueMap;
     }
 
     protected RPCDataSource<Resource> getDataSource() {
@@ -130,12 +140,17 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return criteria;
     }
 
+    @Override
+    protected String getItemTitle() {
+        return "resource";
+    }
+
     /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.
      */
     public void addAvailableGridSelectionsToAssignedGrid() {
         assignedGrid.transferSelectedData(availableGrid);
         select(assignedGrid.getSelection());
-        updateButtons();
+        updateButtonEnablement();
     }
 
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
@@ -165,17 +180,6 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     //}
 
     private class SelectedResourceDataSource extends ResourceDatasource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<Resource> resources) {
-            ListGridRecord[] records = super.buildRecords(resources);
-            for (ListGridRecord record : records) {
-                if (getSelection().contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
 
         @Override
         protected ResourceCriteria getFetchCriteria(final DSRequest request) {

@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.Recordizable;
 
 /**
  * @author Greg Hinkle
@@ -201,7 +200,7 @@ import org.rhq.core.domain.util.Recordizable;
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
-public class Subject implements Serializable, Recordizable {
+public class Subject implements Serializable {
     public static final String QUERY_FIND_ALL = "Subject.findAll";
     public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Subject.findByName";
@@ -410,10 +409,6 @@ public class Subject implements Serializable, Recordizable {
     }
 
     public java.util.Set<Role> getRoles() {
-        if (this.roles == null) {
-            this.roles = new HashSet<Role>();
-        }
-
         return this.roles;
     }
 
@@ -422,9 +417,16 @@ public class Subject implements Serializable, Recordizable {
     }
 
     public void addRole(Role role, boolean isLdap) {
-        getRoles().add(role);
+        if (this.roles == null) {
+            this.roles = new HashSet<Role>();
+        }
+
+        this.roles.add(role);
         if (isLdap) {
-            getLdapRoles().add(role);
+            if (this.ldapRoles == null) {
+                this.ldapRoles = new HashSet<Role>();
+            }
+            this.ldapRoles.add(role);
         }
     }
 
@@ -433,14 +435,12 @@ public class Subject implements Serializable, Recordizable {
     }
 
     public void removeRole(Role role) {
-        getRoles().remove(role);
+        if (this.roles != null) {
+            this.roles.remove(role);
+        }
     }
 
     public java.util.Set<Role> getLdapRoles() {
-        if (this.ldapRoles == null) {
-            this.ldapRoles = new HashSet<Role>();
-        }
-
         return this.ldapRoles;
     }
 
@@ -449,11 +449,13 @@ public class Subject implements Serializable, Recordizable {
     }
 
     public void addLdapRole(Role role) {
-        getLdapRoles().add(role);
+        addRole(role, true);
     }
 
     public void removeLdapRole(Role role) {
-        getLdapRoles().remove(role);
+        if (this.ldapRoles != null) {
+            this.ldapRoles.remove(role);
+        }
     }
 
     public List<ResourceGroup> getOwnedGroups() {
@@ -466,7 +468,7 @@ public class Subject implements Serializable, Recordizable {
 
     @Override
     public String toString() {
-        return "org.rhq.core.domain.auth.Subject[id=" + id + ",name=" + name + "]";
+        return "Subject[id=" + id + ",name=" + name + "]";
     }
 
     @Override

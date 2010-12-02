@@ -37,15 +37,16 @@ public class EntityContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public enum Category {
+    public enum Type {
         Resource, // 
         ResourceTemplate, //
         ResourceGroup, // 
-        AutoGroup;
+        AutoGroup, //
+        SubsystemView;
     }
 
     // can't make these fields final because need public no-arg ctor for GWT-compile
-    public Category category;
+    public Type type;
     public int resourceId;
     public int groupId;
     public int parentResourceId;
@@ -54,8 +55,8 @@ public class EntityContext implements Serializable {
     public EntityContext() {
     }
 
-    public Category getCategory() {
-        return category;
+    public Type getType() {
+        return type;
     }
 
     public int getResourceId() {
@@ -86,17 +87,17 @@ public class EntityContext implements Serializable {
         this.resourceTypeId = rtId;
 
         if (this.groupId > 0) {
-            category = Category.ResourceGroup;
+            type = Type.ResourceGroup;
         } else if (this.resourceTypeId > 0) {
             if (this.parentResourceId > 0) {
-                category = Category.AutoGroup;
+                type = Type.AutoGroup;
             } else {
-                category = Category.ResourceTemplate;
+                type = Type.ResourceTemplate;
             }
         } else if (this.resourceId > 0) {
-            category = Category.Resource;
+            type = Type.Resource;
         } else {
-            throw new IllegalArgumentException(getUnknownContextMessage());
+            type = Type.SubsystemView;
         }
     }
 
@@ -116,6 +117,10 @@ public class EntityContext implements Serializable {
         return new EntityContext(null, null, null, resourceTypeId);
     }
 
+    public static EntityContext forSubsystemView() {
+        return new EntityContext(null, null, null, null);
+    }
+
     public static EntityContext fromCriteriaMap(Map<String, Object> criteriaMap) {
         return new EntityContext(//
             Integer.valueOf((String) criteriaMap.get("resourceId")), //
@@ -127,7 +132,7 @@ public class EntityContext implements Serializable {
     public Map<String, String> toCriteriaMap() {
         Map<String, String> criteriaMap = new HashMap<String, String>();
 
-        switch (category) {
+        switch (type) {
         case Resource:
             criteriaMap.put("resourceId", String.valueOf(resourceId));
             break;
@@ -147,7 +152,7 @@ public class EntityContext implements Serializable {
     }
 
     public String getLegacyKey() {
-        switch (category) {
+        switch (type) {
         case Resource:
             return String.valueOf(resourceId);
         case ResourceGroup:
@@ -165,12 +170,12 @@ public class EntityContext implements Serializable {
 
     @Override
     public String toString() {
-        return "EntityContext[category=" + category + ",resourceId=" + resourceId + "," + "groupId=" + groupId + ","
+        return "EntityContext[category=" + type + ",resourceId=" + resourceId + "," + "groupId=" + groupId + ","
             + "parent=" + parentResourceId + "," + "type=" + resourceTypeId + "]";
     }
 
     public String toShortString() {
-        switch (category) {
+        switch (type) {
         case Resource:
             return "resource[id=" + resourceId + "]";
         case ResourceGroup:

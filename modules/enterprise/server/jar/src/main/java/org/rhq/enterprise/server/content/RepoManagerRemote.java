@@ -218,6 +218,8 @@ public interface RepoManagerRemote {
         @WebParam(name = "repoIds") int[] repoIds);
 
     @WebMethod
-    int synchronizeRepos(@WebParam(name = "subject") Subject subject, @WebParam(name = "repoIds") Integer[] repoIds)
+    int synchronizeRepos( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "repoIds") int[] repoIds) //
         throws Exception;
 }

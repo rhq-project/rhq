@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinatio
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTileLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -42,11 +43,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class TaggedView extends LocatableVLayout implements BookmarkableView {
-    public static final String VIEW_ID = "Tag";
+
+    public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags());
 
     private TagCloudView tagCloudView;
-
-    private Criteria criteria;
 
     private ArrayList<Table> tiles = new ArrayList<Table>();
 
@@ -78,7 +78,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
         Tag tag = new Tag(tagString);
 
-        criteria = new Criteria();
+        Criteria criteria = new Criteria();
         criteria.addCriteria("tagNamespace", tag.getNamespace());
         criteria.addCriteria("tagSemantic", tag.getSemantic());
         criteria.addCriteria("tagName", tag.getName());
@@ -104,7 +104,8 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
                 criteria);
             tiles.add(bundleDestinationListView);
 
-            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, "Tagged Resources");
+            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, MSG
+                .view_taggedResources_title());
             tiles.add(resourceView);
 
             for (Table t : tiles) {
@@ -124,4 +125,5 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             viewTag(tagString);
         }
     }
+
 }

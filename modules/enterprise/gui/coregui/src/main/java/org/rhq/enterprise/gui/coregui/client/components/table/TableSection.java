@@ -26,6 +26,7 @@ import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -35,14 +36,16 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class TableSection extends Table implements BookmarkableView {
+public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> implements BookmarkableView {
 
     private VLayout detailsHolder;
     private Canvas detailsView;
@@ -64,6 +67,11 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super(locatorId, tableTitle, autoFetchData);
     }
 
+    protected TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
+        String[] excludedFieldNames) {
+        super(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames);
+    }
+
     protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
         super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);
@@ -79,9 +87,10 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super.onInit();
 
         detailsHolder = new VLayout();
+        detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
-        detailsHolder.setMargin(5);
+        detailsHolder.setMargin(4);
         detailsHolder.hide();
 
         addMember(detailsHolder);
@@ -143,7 +152,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
     protected Integer getId(ListGridRecord record) {
         Integer id = (record != null) ? record.getAttributeAsInt("id") : 0;
         if (id == null) {
-            String msg = "Table [" + this.getClass() + "] record is missing 'id' attribute - please report this bug.";
+            String msg = MSG.view_tableSection_error_noId(this.getClass().toString());
             CoreGUI.getErrorHandler().handleError(msg);
             throw new IllegalStateException(msg);
         }
@@ -175,8 +184,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
         if (id > 0) {
             History.newItem(basePath + "/" + id);
         } else {
-            String msg = "Can not show detail for [" + this.getClass() + "]. Illegal 'id': " + id
-                + " Please report this bug";
+            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), Integer.toString(id));
             CoreGUI.getErrorHandler().handleError(msg);
             throw new IllegalArgumentException(msg);
         }
@@ -193,13 +201,13 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     @Override
     public void renderView(ViewPath viewPath) {
-        basePath = viewPath.getPathToCurrent();
+        this.basePath = viewPath.getPathToCurrent();
 
         if (!viewPath.isEnd()) {
             int id = Integer.parseInt(viewPath.getCurrent().getPath());
-            detailsView = getDetailsView(id);
-            if (detailsView instanceof BookmarkableView) {
-                ((BookmarkableView) detailsView).renderView(viewPath);
+            this.detailsView = getDetailsView(id);
+            if (this.detailsView instanceof BookmarkableView) {
+                ((BookmarkableView) this.detailsView).renderView(viewPath);
             }
 
             switchToDetailsView();
@@ -262,7 +270,18 @@ public abstract class TableSection extends Table implements BookmarkableView {
         detailsView.setWidth100();
         detailsView.setHeight100();
 
-        detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
+        boolean isEditable = (detailsView instanceof DetailsView && ((DetailsView) detailsView).isEditable());
+        if (!isEditable) {
+            // Only add the "Back to List" button if the details are definitely not editable, because if they are
+            // editable, a Cancel button should already be provided by the details view.
+            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+                basePath);
+            detailsHolder.addMember(backButton);
+            VLayout verticalSpacer = new VLayout();
+            verticalSpacer.setHeight(8);
+            detailsHolder.addMember(verticalSpacer);
+        }
+
         detailsHolder.addMember(detailsView);
         detailsHolder.animateShow(AnimationEffect.WIPE);
     }

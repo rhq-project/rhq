@@ -22,6 +22,7 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
@@ -29,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  * @author Greg Hinkle
  */
 public class ResourceTopView extends LocatableHLayout implements BookmarkableView {
-    public static final String VIEW_ID = "Resource";
+    public static final ViewName VIEW_ID = new ViewName("Resource", MSG.common_title_resource());
 
     private Canvas contentCanvas;
     private ResourceTreeView treeView;

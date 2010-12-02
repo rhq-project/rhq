@@ -27,6 +27,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window.Location;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
@@ -37,29 +38,37 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.help.HelpView;
+import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.test.TestConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * The GWT {@link EntryPoint entry point} to the RHQ GUI.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
-    private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID;
+
+    // This must come first to ensure proper I18N class loading for dev mode
+    private static final Messages MSG = GWT.create(Messages.class);
+
+    private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
 
     // just to avoid constructing this over and over
     private static final String TREE_NAV_VIEW_PATTERN = "(" + ResourceTopView.VIEW_ID + "|"
@@ -86,7 +95,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static CoreGUI coreGUI;
 
-    private static Messages messages;
+    private static Message pendingMessage;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -102,7 +111,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         coreGUI = this;
 
-        if (!GWT.isScript()) {
+        if (isDebugMode()) {
             KeyIdentifier debugKey = new KeyIdentifier();
             debugKey.setCtrlKey(true);
             debugKey.setKeyName("D");
@@ -115,13 +124,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
-                getErrorHandler().handleError("Globally uncaught exception", e);
+                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
             }
         });
 
         messageCenter = new MessageCenter();
-
-        messages = GWT.create(Messages.class);
 
         UserSessionManager.login();
 
@@ -153,7 +160,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             rootCanvas.addMember(menuBarView);
 
             rootCanvas.addMember(messageBar);
-            rootCanvas.addMember(breadCrumbTrailPane);
+            //rootCanvas.addMember(breadCrumbTrailPane);
             rootCanvas.addMember(canvas);
             rootCanvas.addMember(new Footer());
             rootCanvas.draw();
@@ -162,6 +169,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
 
         if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
+            // request a redraw of the MenuBarItem to ensure the correct sessio info is displayed 
+            rootCanvas.getMember(0).markForRedraw();
+
             // go to default view if user doesn't specify a history token
             History.newItem(getDefaultView());
         } else {
@@ -171,52 +181,49 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        String event = URL.decodeComponent(stringValueChangeEvent.getValue());
-        com.allen_sauer.gwt.log.client.Log.debug("Handling history event: " + event);
-        currentPath = event;
+        currentPath = URL.decodeComponent(stringValueChangeEvent.getValue());
+        Log.debug("Handling history event for path: " + currentPath);
 
-        currentViewPath = new ViewPath(event);
-
-        rootCanvas.renderView(currentViewPath);
+        currentViewPath = new ViewPath(currentPath);
+        coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
     public static void refresh() {
-        currentViewPath = new ViewPath(currentPath);
-
-        currentViewPath.setRefresh(true);
+        currentViewPath = new ViewPath(currentPath, true);
         coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
-        if (breadcrumbName.equals(AdministrationView.VIEW_ID)) {
-            canvas = new AdministrationView("Admin");
-        } else if (breadcrumbName.equals(DemoCanvas.VIEW_ID)) {
-            canvas = new DemoCanvas();
-        } else if (breadcrumbName.equals(InventoryView.VIEW_ID)) {
-            canvas = new InventoryView("Inventory");
-        } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID)) {
-            canvas = new ResourceTopView("Resource");
-        } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID)) {
-            canvas = new ResourceGroupTopView("Group");
-        } else if (breadcrumbName.equals(DashboardsView.VIEW_ID)) {
-            canvas = new DashboardsView("Dashboard");
-        } else if (breadcrumbName.equals(BundleTopView.VIEW_ID)) {
-            canvas = new BundleTopView("Bundle");
+        if (breadcrumbName.equals(DashboardsView.VIEW_ID.getName())) {
+            canvas = new DashboardsView(breadcrumbName);
+        } else if (breadcrumbName.equals(InventoryView.VIEW_ID.getName())) {
+            canvas = new InventoryView();
+        } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID.getName())) {
+            canvas = new ResourceTopView(breadcrumbName);
+        } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
+            canvas = new ResourceGroupTopView(breadcrumbName);
+        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID.getName())) {
+            canvas = new ReportTopView();
+        } else if (breadcrumbName.equals(BundleTopView.VIEW_ID.getName())) {
+            canvas = new BundleTopView(breadcrumbName);
+        } else if (breadcrumbName.equals(AdministrationView.VIEW_ID.getName())) {
+            canvas = new AdministrationView();
+        } else if (breadcrumbName.equals(HelpView.VIEW_ID.getName())) {
+            canvas = new HelpView();
         } else if (breadcrumbName.equals("LogOut")) {
             // TODO: don't make LogOut a history event, just perform the logout action by responding to click event
-            LoginView logoutView = new LoginView();
+            LoginView logoutView = new LoginView("Login");
             canvas = logoutView;
+            UserSessionManager.logout();
             logoutView.showLoginDialog();
-        } else if (breadcrumbName.equals(TaggedView.VIEW_ID)) {
-            canvas = new TaggedView("Tag");
+        } else if (breadcrumbName.equals(TaggedView.VIEW_ID.getName())) {
+            canvas = new TaggedView(breadcrumbName);
         } else if (breadcrumbName.equals("Subsystems")) {
-            canvas = new AlertsView("Alert");
-        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
-            canvas = new ReportTopView("Report");
-        } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {
-            canvas = new TestConfigurationView("TestConfig");
+            canvas = new AlertHistoryView("Alert");
+        } else if (breadcrumbName.equals(TestTopView.VIEW_ID.getName())) {
+            canvas = new TestTopView();
         } else {
             canvas = null;
         }
@@ -255,6 +262,17 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
+        goToView(viewPath, null);
+    }
+
+    public static void goToView(String viewPath, Message message) {
+        pendingMessage = message;
+
+        // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
+        if (viewPath.charAt(0) == '#') {
+            viewPath = viewPath.substring(1);
+        }
+
         String currentViewPath = History.getToken();
         if (currentViewPath.equals(viewPath)) {
             // We're already there - just refresh the view.
@@ -286,7 +304,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static Messages getMessages() {
-        return messages;
+        return MSG;
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {
@@ -298,12 +316,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             setHeight100();
         }
 
-        public void renderView(ViewPath viewPath) {
+        public void renderView(final ViewPath viewPath) {
             if (viewPath.isEnd()) {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);
             } else {
                 messageBar.clearMessage();
+                if (pendingMessage != null) {
+                    getMessageCenter().notify(pendingMessage);
+                    pendingMessage = null;
+                }
 
                 ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
                 if (!topLevelViewId.equals(this.currentViewId)) {
@@ -313,22 +335,38 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 }
 
                 if (this.currentCanvas instanceof BookmarkableView) {
-                    ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
+                    if (this.currentCanvas instanceof InitializableView) {
+                        final InitializableView initializableView = (InitializableView) this.currentCanvas;
+                        final long startTime = System.currentTimeMillis();
+                        final Timer timer = new Timer() {
+                            public void run() {
+                                if (initializableView.isInitialized()) {
+                                    ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+                                } else {
+                                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                                    if (elapsedMillis < 5000) {
+                                        // Reschedule the timer.
+                                        schedule(100);
+                                    }
+                                }
+                            }
+                        };
+                        if (initializableView.isInitialized()) {
+                            ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+                        } else {
+                            timer.schedule(100);
+                        }
+                    } else {
+                        ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+                    }
                 }
-
-                // reverting this is as it breaks rendering of single-element paths (like "#Bundles or
-                // #Reports.  the BookmarkableView's renderView needs to be invoked.
-                //
-                //if (this.currentCanvas instanceof BookmarkableView) {
-                //    viewPath.next();
-                //    if (!viewPath.isEnd()) {
-                //        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
-                //    }
-                //}                               
 
                 refreshBreadCrumbTrail();
             }
         }
     }
 
+    public static boolean isDebugMode() {
+        return !GWT.isScript();
+    }
 }

@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -45,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class OperationDetailsView extends LocatableVLayout implements BookmarkableView {
 
-    private int historyId;
     private OperationDefinition definition;
     private ResourceOperationHistory operationHistory;
 
@@ -98,19 +98,19 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         form.setWidth100();
         form.setWrapItemTitles(false);
 
-        StaticTextItem operationItem = new StaticTextItem("operation", "Operation");
+        StaticTextItem operationItem = new StaticTextItem(OperationHistoryDataSource.Field.OPERATION_NAME, "Operation");
         operationItem.setValue(definition.getName());
 
-        StaticTextItem submittedItem = new StaticTextItem("submitted", "Date Submitted");
+        StaticTextItem submittedItem = new StaticTextItem(OperationHistoryDataSource.Field.STARTED_TIME, "Date Submitted");
         submittedItem.setValue(new Date(operationHistory.getStartedTime()));
 
         StaticTextItem completedItem = new StaticTextItem("completed", "Date Completed");
         completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
 
-        StaticTextItem requesterItem = new StaticTextItem("requester", "Requester");
+        StaticTextItem requesterItem = new StaticTextItem(OperationHistoryDataSource.Field.SUBJECT, "Requester");
         requesterItem.setValue(operationHistory.getSubjectName());
 
-        StaticTextItem statusItem = new StaticTextItem("status", "Status");
+        StaticTextItem statusItem = new StaticTextItem(OperationHistoryDataSource.Field.STATUS, "Status");
         statusItem.setValue(operationHistory.getStatus().name());
 
         /*
@@ -159,7 +159,8 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceOperationHistory>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_operationHistoryDetails_error_fetchFailure(),
+                        caught);
                 }
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
@@ -184,16 +185,13 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         window.centerInPage();
         window.addItem(detailsView);
         window.show();
-
     }
 
     @Override
     public void renderView(ViewPath viewPath) {
-
-        historyId = viewPath.getCurrentAsInt();
-
-        viewId = viewPath.getCurrent();
-
+        this.viewId = viewPath.getCurrent();
+        int historyId = viewPath.getCurrentAsInt();
         lookupDetails(historyId);
     }
+    
 }

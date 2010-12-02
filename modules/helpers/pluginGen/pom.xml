@@ -1,30 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>rhq-helpers</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>3.0.0</version>
     </parent>
-
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginGen</artifactId>
     <packaging>jar</packaging>
+    <version>3.0.2-SNAPSHOT</version>
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
-    <version>4.0.0-SNAPSHOT</version>
 
     <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</developerConnection>
-   </scm>
+      <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    </scm>
 
-   <build>
-    <plugins>
+
+    <build>
+     <plugins>
+
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -33,8 +35,7 @@
         </configuration>
       </plugin>
 
-        <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
+      <plugin>  
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.2</version>
         <configuration>
@@ -64,31 +65,124 @@
             <id>make-assembly</id>     <!-- this is used for inheritance merges -->
             <phase>package</phase>     <!-- append to the packaging phase. -->
             <goals>
-              <goal>attached</goal>  <!-- goals == mojos -->
+              <goal>single</goal>  <!-- goals == mojos -->
             </goals>
           </execution>
         </executions>
       </plugin>
-    </plugins>
+
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.1</version>
+      </plugin>
+
+     </plugins>
 
     </build>
+
 
     <dependencies>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>${commons-logging.version}</version>
+            <version>1.1.0.jboss</version>
         </dependency>
-
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>2.3.11</version>
+            <version>2.3.16</version>
         </dependency>
         <dependency>
             <groupId>org.rhq.helpers</groupId>
             <artifactId>rhq-pluginAnnotations</artifactId>
-            <version>${project.version}</version>
+            <version>3.0.1</version>
         </dependency>
     </dependencies>
+  
+  <profiles>
+    <profile>
+      <id>cobertura</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+        <build>
+         <plugins>
+           <plugin>
+             <artifactId>maven-antrun-plugin</artifactId>
+              <dependencies>
+               <dependency>
+                 <groupId>net.sourceforge.cobertura</groupId>
+                 <artifactId>cobertura</artifactId>
+                 <version>1.9.4.1</version>       
+               </dependency>
+             </dependencies>
+             <executions>                         
+              <execution>              
+               <id>cobertura-instrument</id>
+               <phase>pre-integration-test</phase>
+                 <configuration>                  
+                   <tasks> 
+                   <!-- prepare directory structure for cobertura-->
+                   <mkdir dir="target/cobertura" /> 
+                   <mkdir dir="target/cobertura/backup"/>
+                   <!-- backup all classes so that we can instrument the original classes-->
+                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                      <fileset dir="target/classes">
+                         <include name="**/*.class" />                         
+                      </fileset>
+                   </copy>
+                   <!-- create a properties file and save there location of cobertura data file-->
+                   <touch file="target/classes/cobertura.properties"/>
+                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                   <!-- instrument all classes in target/classes directory -->
+                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
+                     <fileset dir="${project.build.directory}/classes">                     
+                        <include name="**/*.class"/>
+                      </fileset>
+                    </cobertura-instrument>
+                   </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+              </execution>                            
+              <execution>
+               <id>cobertura-report</id>
+               <phase>post-integration-test</phase>
+                 <configuration>
+                   <tasks>
+                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                     <!-- prepare directory structure for cobertura-->
+                     <mkdir dir="target/cobertura" />
+                     <mkdir dir="target/site/cobertura" />
+                     <!-- restore classes from backup folder to classes folder -->
+                     <copy toDir="target/classes" verbose="true" overwrite="true">
+                      <fileset dir="target/cobertura/backup">
+                         <include name="**/*.class" />                         
+                      </fileset>
+                     </copy>
+                     <!-- delete backup folder-->
+                     <delete dir="target/cobertura/backup"/>
+                     <!-- create a code coverage report -->
+                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                      <fileset dir="${basedir}/src/main/java">
+                         <include name="**/*.java" />
+                      </fileset>
+                     </cobertura-report>
+                     <!-- delete cobertura.properties file -->
+                     <delete file="target/classes/cobertura.properties"/>
+                   </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+               </execution>                                           
+            </executions>   
+           </plugin>          
+          </plugins>
+       </build>
+     </profile>    
+  </profiles>
 </project>
+

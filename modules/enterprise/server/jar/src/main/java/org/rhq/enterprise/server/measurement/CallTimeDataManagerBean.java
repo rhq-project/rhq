@@ -203,11 +203,11 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
         //criteria.addSortAverage(PageOrdering.DESC);
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterResourceId(context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             criteria.addFilterResourceGroupId(context.groupId);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }

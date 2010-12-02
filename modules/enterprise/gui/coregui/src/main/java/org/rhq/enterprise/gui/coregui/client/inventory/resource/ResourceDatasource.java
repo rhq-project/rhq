@@ -25,10 +25,15 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -39,46 +44,74 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceDatasource extends RPCDataSource<Resource> {
-
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+
+    private static ResourceDatasource INSTANCE;
+
+    public static ResourceDatasource getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new ResourceDatasource();
+        }
+        return INSTANCE;
+    }
 
     public ResourceDatasource() {
         super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
+        idDataField.setCanEdit(false);
+        fields.add(idDataField);
 
         DataSourceImageField iconField = new DataSourceImageField("icon", "");
         iconField.setImageURLPrefix("types/");
+        fields.add(iconField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
+        fields.add(nameDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
         descriptionDataField.setCanEdit(false);
+        fields.add(descriptionDataField);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
+        fields.add(typeNameDataField);
+
         DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
+        fields.add(pluginNameDataField);
+
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
+        fields.add(categoryDataField);
 
         DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
             .title(), 20);
-
         availabilityDataField.setCanEdit(false);
+        fields.add(availabilityDataField);
 
-        setFields(idDataField, iconField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
-            categoryDataField, availabilityDataField);
+        return fields;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
@@ -86,14 +119,41 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<Resource> result) {
-
                 dataRetrieved(result, response, request);
+            }
+        });
+    }
+
+    protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        for (Resource resource : result) {
+            ResourceType type = resource.getResourceType();
+            if (type != null) {
+                typesSet.add(type.getId());
+            }
+        }
+
+        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                Record[] records = buildRecords(result);
+                for (Record record : records) {
+                    Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
+                    ResourceType type = types.get(typeId);
+                    if (type != null) {
+                        record.setAttribute(TYPE.propertyName(), type.getName());
+                    }
+                }
+                response.setData(records);
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                processResponse(request.getRequestId(), response);
             }
         });
     }
@@ -118,15 +178,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         return criteria;
     }
 
-    protected void dataRetrieved(PageList<Resource> result, DSResponse response, DSRequest request) {
-        ListGridRecord[] records = buildRecords(result);
-        response.setData(records);
-        response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-        processResponse(request.getRequestId(), response);
-    }
-
     @Override
-    public Resource copyValues(ListGridRecord from) {
+    public Resource copyValues(Record from) {
         return new Resource(from.getAttributeAsInt("id"));
     }
 
@@ -139,15 +192,11 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
-        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
         record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
             + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
-
-        record
-            .setAttribute(
-                "currentAvailability",
-                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
-                    : "/images/icons/availability_red_16.png");
+        record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
+            .getCurrentAvailability().getAvailabilityType()));
 
         return record;
     }

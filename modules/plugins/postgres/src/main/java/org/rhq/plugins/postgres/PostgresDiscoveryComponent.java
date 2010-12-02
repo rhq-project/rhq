@@ -18,22 +18,6 @@
  */
 package org.rhq.plugins.postgres;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pluginapi.inventory.*;
-import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
-import org.rhq.core.system.ProcessExecution;
-import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.system.SystemInfo;
-import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.plugins.postgres.util.PostgresqlConfFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -49,6 +33,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.plugins.postgres.util.PostgresqlConfFile;
 
 /**
  * @author Greg Hinkle
@@ -84,8 +87,8 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             String pgDataPath = getDataDirPath(procInfo);
             if (pgDataPath == null) {
                 log.error("Unable to obtain data directory for postgres process with pid " + procInfo.getPid()
-                        + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
-                        + " environment variable).");
+                    + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
+                    + " environment variable).");
                 continue;
             }
 
@@ -100,7 +103,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                 log.debug("PostgreSQL data directory: " + pgData);
 
                 File postgresConfFile = (configFilePath != null) ? new File(configFilePath) : new File(pgData,
-                        PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
+                    PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
                 if (!postgresConfFile.exists()) {
                     log.warn("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
                 }
@@ -135,7 +138,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                 }
             }
 
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfig, procInfo);
+            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfig, procInfo, false);
             servers.add(resourceDetails);
         }
 
@@ -150,24 +153,22 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
         ProcessInfo processInfo = null;
-        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig,
-                processInfo);
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
+            true);
         return resourceDetails;
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                                     Configuration pluginConfiguration, @Nullable
-    ProcessInfo processInfo) {
+        Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, boolean logConnectionFailure) {
         String key = buildUrl(pluginConfiguration);
-        Connection conn = getConnection(pluginConfiguration);
+        Connection conn = buildConnection(pluginConfiguration, logConnectionFailure);
         String name = getServerResourceName(pluginConfiguration, conn);
         String version = getVersion(pluginConfiguration, processInfo, discoveryContext.getSystemInformation(), conn);
         JDBCUtil.safeClose(conn);
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
-                DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+            DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
     }
 
     protected static String buildUrl(Configuration config) {
@@ -178,7 +179,8 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return url;
     }
 
-    protected static String getVersion(Configuration config, ProcessInfo processInfo, SystemInfo systemInfo, Connection conn) {
+    protected static String getVersion(Configuration config, ProcessInfo processInfo, SystemInfo systemInfo,
+        Connection conn) {
         String version = null;
         try {
             if (conn != null) {
@@ -206,17 +208,17 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                 log.info("Failed to obtain Postgres version information from the executable file.", e);
             }
         }
-        
+
         return version;
     }
 
-    public static Connection buildConnection(Configuration configuration) throws SQLException {
+    public static Connection buildConnection(Configuration configuration, boolean logFailure) {
         String driverClass = configuration.getSimple(DRIVER_CONFIGURATION_PROPERTY).getStringValue();
         try {
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
             throw new InvalidPluginConfigurationException("Specified JDBC driver class (" + driverClass
-                    + ") not found.");
+                + ") not found.");
         }
 
         String url = buildUrl(configuration);
@@ -227,7 +229,11 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         try {
             return DriverManager.getConnection(url, principal, credentials);
         } catch (SQLException e) {
-            log.info("Failed to connect to the database", e);
+            if (logFailure) {
+                log.info("Failed to connect to the database", e);
+            } else {
+                log.debug("Failed to connect to the database", e);
+            }
             return null;
         }
     }
@@ -258,8 +264,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     @Nullable
-    private static String getConfigFilePath(@NotNull
-    ProcessInfo procInfo) {
+    private static String getConfigFilePath(@NotNull ProcessInfo procInfo) {
         String configFilePath = null;
         String[] cmdLine = procInfo.getCommandLine();
         for (int i = 0; i < cmdLine.length; i++) {
@@ -269,7 +274,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     int equalsIndex = paramString.indexOf('=');
                     if (equalsIndex == -1) {
                         log.error("Invalid value '" + paramString + "' for -c option on postgres command line: "
-                                + Arrays.asList(cmdLine));
+                            + Arrays.asList(cmdLine));
                         continue;
                     }
 
@@ -286,35 +291,18 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
 
         return configFilePath;
     }
-    
-    private static Connection getConnection(Configuration config) {
-        try {
-            return buildConnection(config);
-        } catch (SQLException e) {
-            log.info("Failed to connect to postgres database.", e);
-            
-            return null;
-        }
-    }
-    
-    public static List<String> getDatabases(Configuration pluginConfiguration) {
-        Connection conn = getConnection(pluginConfiguration);
-        try {
-            return getDatabaseNames(pluginConfiguration, conn);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
-    }
-    
+
     private static List<String> getDatabaseNames(Configuration config, Connection conn) {
         Statement statement = null;
         ResultSet resultSet = null;
-        
-        if (conn == null) return Collections.emptyList();
+
+        if (conn == null) {
+            return Collections.emptyList();
+        }
         
         try {
             List<String> ret = new ArrayList<String>();
-            
+
             statement = conn.createStatement();
             resultSet = statement
                 .executeQuery("SELECT *, pg_database_size(datname) FROM pg_database where datistemplate = false");
@@ -322,7 +310,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                 String databaseName = resultSet.getString("datname");
                 ret.add(databaseName);
             }
-            
+
             return ret;
         } catch (SQLException e) {
             log.info("Failed to obtain the list of databases in a postgres instance", e);
@@ -331,7 +319,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             JDBCUtil.safeClose(statement, resultSet);
         }
     }
-    
+
     private static String getServerResourceName(Configuration config, Connection conn) {
         List<String> schemas = getDatabaseNames(config, conn);
         if (schemas.size() > 0 && schemas.size() < 3) {

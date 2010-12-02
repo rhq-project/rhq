@@ -205,7 +205,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                     + "' is not a valid Apache executable (" + e + ").");
             }
 
-            this.operationsDelegate = new ApacheServerOperationsDelegate(this, this.resourceContext
+            this.operationsDelegate = new ApacheServerOperationsDelegate(this, pluginConfig, this.resourceContext
                 .getSystemInformation());
 
             startEventPollers();
@@ -589,6 +589,13 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return executableFile;
     }
 
+    /**
+     * @return The url the server is pinged for availability or null if the url is not set.
+     */
+    public @Nullable String getServerUrl() {
+        return resourceContext.getPluginConfiguration().getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
+    }
+    
     /**
      * Returns the httpd.conf file
      * @return A File object that represents the httpd.conf file or null in case of error

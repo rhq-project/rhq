@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.domain.resource.group;
 
 import java.io.Serializable;
@@ -51,14 +50,17 @@ import org.rhq.core.domain.authz.Role;
 @SequenceGenerator(name = "id", sequenceName = "RHQ_ROLE_LDAP_GROUP_ID_SEQ", allocationSize = 100)
 @XmlAccessorType(XmlAccessType.FIELD)
 public class LdapGroup implements Serializable {
+    
     private static final long serialVersionUID = 1L;
+
     public static final String DELETE_BY_ID = "LdapGroup.deleteById";
     public static final String QUERY_FIND_ALL = "LdapGroup.findAll";
     public static final String FIND_BY_ROLES_GROUP_NAMES = "LdapGroup.findRolesByGroupNames";
+    
     @Id
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
-    private Integer id;
+    private int id;
 
     @ManyToOne
     @JoinColumn(name = "ROLE_ID", referencedColumnName = "ID", nullable = false)
@@ -67,23 +69,15 @@ public class LdapGroup implements Serializable {
     @Column(name = "LDAP_GROUP_NAME", nullable = false)
     private String name;
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     @Transient
     private String description = "";
 
-    public String getName() {
-        return name;
+    public int getId() {
+        return id;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public Role getRole() {
@@ -94,37 +88,47 @@ public class LdapGroup implements Serializable {
         this.role = role;
     }
 
-    @Override
-    public int hashCode() {
-        return getName().hashCode() + 17 * ((role != null) ? role.hashCode() : 0);
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == this) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
 
-        if (!(o instanceof LdapGroup)) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        LdapGroup grp = (LdapGroup) o;
-        if (!getName().equals(grp.getName())) {
-            return false;
-        }
+        LdapGroup that = (LdapGroup)obj;
 
-        if (getRole() != null) {
-            return getRole().equals(grp.getRole());
-        }
-
-        return grp.getRole() == null;
+        return !(this.name != null ? !this.name.equals(that.name) : that.name != null);
     }
 
-    public Integer getId() {
-        return id;
+    @Override
+    public int hashCode() {
+        return (this.name != null) ? this.name.hashCode() : 0;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    @Override
+    public String toString() {
+        return "LdapGroup[" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ']';
     }
+
 }

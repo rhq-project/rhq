@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -31,14 +33,18 @@ import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.gwt.AuthorizationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 
@@ -47,35 +53,56 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
  */
 public class AutodiscoveryQueueDataSource extends DataSource {
 
+    private static Messages MSG = CoreGUI.getMessages();
+
+    public static final String NEW = MSG.view_autoDiscoveryQ_new();
+    public static final String IGNORED = MSG.view_autoDiscoveryQ_ignored();
+    public static final String NEW_AND_IGNORED = MSG.view_autoDiscoveryQ_newAndIgnored();
+
+    private static final String NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noperm();
+    private static final String EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noItems();
+
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private AuthorizationGWTServiceAsync authorizationService = GWTServiceLookup.getAuthorizationService();
+    private TreeGrid dataContainerReference = null;
+    private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;
 
     public AutodiscoveryQueueDataSource() {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-        DataSourceTextField idField = new DataSourceTextField("id", "ID");
+        DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG
+            .view_autoDiscoveryQ_field_parentId());
         parentIdField.setForeignKey("id");
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", "Resource Name");
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.view_autoDiscoveryQ_field_name());
 
-        DataSourceTextField resourceKeyField = new DataSourceTextField("resourceKey", "Resource Key");
+        DataSourceTextField resourceKeyField = new DataSourceTextField("resourceKey", MSG
+            .view_autoDiscoveryQ_field_key());
 
-        DataSourceTextField resourceTypeField = new DataSourceTextField("typeName", "Type");
+        DataSourceTextField resourceTypeField = new DataSourceTextField("typeName", MSG.common_title_type());
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
 
-        DataSourceTextField timestampField = new DataSourceTextField("ctime", "Discovery Time");
+        DataSourceTextField timestampField = new DataSourceTextField("ctime", MSG
+            .view_autoDiscoveryQ_field_discoveryTime());
 
-        DataSourceTextField statusField = new DataSourceTextField("status", "Inventory Status");
+        DataSourceTextField statusField = new DataSourceTextField("status", MSG
+            .view_autoDiscoveryQ_field_inventoryStatus());
 
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField, descriptionField,
             statusField, timestampField);
+    }
+
+    public AutodiscoveryQueueDataSource(TreeGrid treeGrid) {
+        this();
+        this.dataContainerReference = treeGrid;
     }
 
     protected Object transformRequest(DSRequest request) {
@@ -95,15 +122,15 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     }
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        PageControl pc = getPageControl(request);
+        final PageControl pc = getPageControl(request);
 
-        HashSet<InventoryStatus> statuses = new HashSet<InventoryStatus>();
+        final HashSet<InventoryStatus> statuses = new HashSet<InventoryStatus>();
 
-        String statusesString = request.getCriteria().getAttributeAsString("statuses");
+        String statusesString = request.getCriteria().getAttributeAsString("status");
         if (statusesString != null) {
-            if ("New".equals(statusesString)) {
+            if (NEW.equals(statusesString)) {
                 statuses.add(InventoryStatus.NEW);
-            } else if ("Ignored".equals(statusesString)) {
+            } else if (IGNORED.equals(statusesString)) {
                 statuses.add(InventoryStatus.IGNORED);
             } else {
                 statuses.add(InventoryStatus.NEW);
@@ -113,16 +140,41 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             statuses.add(InventoryStatus.NEW);
         }
 
-        resourceService.getQueuedPlatformsAndServers(statuses, pc, new AsyncCallback<Map<Resource, List<Resource>>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue", caught);
+        //determine if has manage inventory perms, if so then chain and proceed with getting discovered resources
+        authorizationService.getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            public void onSuccess(Set<Permission> globalPermissions) {
+                Boolean accessGranted = globalPermissions.contains(MANAGE_INVENTORY);
+                if (accessGranted) {
+                    if (dataContainerReference != null) {
+                        dataContainerReference.setEmptyMessage(EMPTY_MESSAGE);
+                    }
+                    resourceService.getQueuedPlatformsAndServers(statuses, pc,
+                        new AsyncCallback<Map<Resource, List<Resource>>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
+                            }
+
+                            public void onSuccess(Map<Resource, List<Resource>> result) {
+                                response.setData(buildNodes(result));
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
+                } else {
+                    Log.debug("(User does not have required managed inventory permissions. " + EMPTY_MESSAGE);
+                    response.setTotalRows(0);
+                    if (dataContainerReference != null) {
+                        Log.trace("Setting better empty container message." + NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
+                        dataContainerReference.setEmptyMessage(NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
+                    }
+                    processResponse(request.getRequestId(), response);
+                }
             }
 
-            public void onSuccess(Map<Resource, List<Resource>> result) {
-                response.setData(buildNodes(result));
-                processResponse(request.getRequestId(), response);
+            public void onFailure(Throwable caught) {
+                Log.error("Unable to determine whether if user has manage inventory permissions - check server logs.");
             }
         });
+
     }
 
     private TreeNode[] buildNodes(Map<Resource, List<Resource>> result) {

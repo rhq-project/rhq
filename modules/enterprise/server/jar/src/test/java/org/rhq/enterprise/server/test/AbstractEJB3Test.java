@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.test;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -62,7 +63,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public abstract class AbstractEJB3Test extends AssertJUnit {
-    @BeforeSuite(groups = "integration.ejb3")
+    @BeforeSuite(groups = {"integration.ejb3","PERF"})
     public static void startupEmbeddedJboss() throws Exception {
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
@@ -135,7 +136,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public static void startTest() {
         if (DatabaseTypeFactory.getDefaultDatabaseType() == null) {
             try {
-                Connection conn = LookupUtil.getDataSource().getConnection();
+                Connection conn = getConnection();
                 DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
             } catch (Exception e) {
                 System.err.println("!!! WARNING !!! cannot set default database type, some tests may fail");
@@ -144,6 +145,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         }
 
         start = stats.getQueryExecutionCount();
+    }
+
+    public static Connection getConnection() throws SQLException {
+        return LookupUtil.getDataSource().getConnection();
     }
 
     @AfterMethod

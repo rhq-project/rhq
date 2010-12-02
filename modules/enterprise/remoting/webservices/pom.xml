@@ -20,7 +20,6 @@
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <persistence-api.version>1.0</persistence-api.version>
       <ant.contrib.version>1.0b3</ant.contrib.version>
-      <testng.version>5.9</testng.version>
    </properties>
 
    <dependencies>
@@ -77,7 +76,6 @@
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <version>${testng.version}</version>
-         <classifier>jdk15</classifier>
       </dependency>
       
    </dependencies>
@@ -96,8 +94,9 @@
                   <phase>compile</phase>
                   <configuration>
                      <tasks>
-                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">
+                        <echo>ant.version=${ant.version}</echo>
 
+                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">                           
                            <property name="buildNumber" value="${buildNumber}" />
                            <property name="java.jre.home" value="${java.home}" />
                            <property name="maven.compile.classpath" refid="maven.compile.classpath" />
@@ -114,7 +113,7 @@
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                            <property name="quartz.version" value="${quartz.version}" />
                            <property name="ant.contrib.version" value="${ant.contrib.version}" />
-                           <property name="webservice.version" value="${version}" />
+                           <property name="webservice.version" value="${project.version}" />
                         </ant>
                      </tasks>
                   </configuration>
@@ -130,7 +129,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
-               <classesDirectory>${project.build.directory}/rhq-remoting-webservices-${version}
+               <classesDirectory>${project.build.directory}/rhq-remoting-webservices-${project.version}
                </classesDirectory>
 
                <includes>
@@ -206,7 +205,7 @@
                            </systemProperties>
                            <additionalClasspathElements>
                               <additionalClasspathElement>
-                                 ${project.build.directory}/rhq-remoting-webservices-${version}.jar
+                                 ${project.build.directory}/rhq-remoting-webservices-${project.version}.jar
                               </additionalClasspathElement>
                            </additionalClasspathElements>
                         </configuration>

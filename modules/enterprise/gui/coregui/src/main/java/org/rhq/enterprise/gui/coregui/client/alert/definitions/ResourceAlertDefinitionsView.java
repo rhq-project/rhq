@@ -119,7 +119,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
             Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
@@ -129,13 +129,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("[" + result + "] alert definitions enabled.", Severity.Info));
+                    new Message(MSG.view_alert_definitions_enable_success(String.valueOf(result)), Severity.Info));
                 ResourceAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to enable alert definitions", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_enable_failure(), caught);
             }
         });
     }
@@ -146,7 +146,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
             Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
@@ -156,13 +156,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("[" + result + "] alert definitions disabled.", Severity.Info));
+                    new Message(MSG.view_alert_definitions_disable_success(String.valueOf(result)), Severity.Info));
                 ResourceAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to disable alert definitions.", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_disable_failure(), caught);
             }
         });
     }
@@ -173,7 +173,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
             Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
@@ -183,13 +183,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("[" + result + "] alert definitions deleted.", Severity.Info));
+                    new Message(MSG.view_alert_definitions_delete_success(String.valueOf(result)), Severity.Info));
                 ResourceAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete alert definitions.", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_delete_failure(), caught);
             }
         });
     }
@@ -202,13 +202,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     @Override
                     public void onSuccess(Integer result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Alert definition is created", Severity.Info));
+                            new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create alert definition.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_create_failure(), caught);
                     }
                 });
         } else {
@@ -217,12 +217,12 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     @Override
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Alert definition is updated.", Severity.Info));
+                            new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update alert definition.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
                     }
                 });
         }

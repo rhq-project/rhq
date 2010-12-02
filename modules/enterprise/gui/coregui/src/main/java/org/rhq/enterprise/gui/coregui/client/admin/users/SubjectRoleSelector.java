@@ -22,8 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.Collection;
-
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -37,13 +35,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  */
 public class SubjectRoleSelector extends AbstractSelector<Role> {
+    private static final String ITEM_ICON = "global/Role_16.png";
 
-    public SubjectRoleSelector(String locatorId, Collection<Role> roles) {
-        super(locatorId);
-        if (roles != null) {
-            ListGridRecord[] data = (new RolesDataSource()).buildRecords(roles);
-            setAssigned(data);
-        }
+    public SubjectRoleSelector(String locatorId, ListGridRecord[] roleRecords, boolean isReadOnly) {
+        super(locatorId, isReadOnly);
+        setAssigned(roleRecords);
     }
 
     @Override
@@ -53,7 +49,7 @@ public class SubjectRoleSelector extends AbstractSelector<Role> {
 
     @Override
     protected RPCDataSource<Role> getDataSource() {
-        return new SelectedRolesDataSource();
+        return new RolesDataSource();
 
     }
 
@@ -62,18 +58,13 @@ public class SubjectRoleSelector extends AbstractSelector<Role> {
         return null; // TODO: Implement this method.
     }
 
-    public class SelectedRolesDataSource extends RolesDataSource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<Role> roles) {
-            ListGridRecord[] records = super.buildRecords(roles);
-            for (ListGridRecord record : records) {
-                if (selection.contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
+    @Override
+    protected String getItemTitle() {
+        return MSG.common_title_roles();
     }
 
+    @Override
+    protected String getItemIcon() {
+        return ITEM_ICON;
+    }
 }

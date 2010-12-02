@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -38,6 +36,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
@@ -45,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * @author Greg Hinkle
  */
 public class ResourceTypeTreeDataSource extends DataSource {
-
+    private Messages MSG = CoreGUI.getMessages();
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
@@ -55,19 +54,17 @@ public class ResourceTypeTreeDataSource extends DataSource {
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-
-        DataSourceTextField idField = new DataSourceTextField("id", "ID");
+        DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG.view_type_parentId());
         parentIdField.setForeignKey("id");
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.common_title_name());
 
-        DataSourceTextField resourceKeyField = new DataSourceTextField("plugin", "Plugin");
+        DataSourceTextField resourceKeyField = new DataSourceTextField("plugin", MSG.common_title_plugin());
 
-        DataSourceTextField resourceTypeField = new DataSourceTextField("category", "Category");
-
+        DataSourceTextField resourceTypeField = new DataSourceTextField("category", MSG.common_title_category());
 
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField);
     }
@@ -78,16 +75,15 @@ public class ResourceTypeTreeDataSource extends DataSource {
         // Asume success
         response.setStatus(0);
         switch (request.getOperationType()) {
-            case FETCH:
-                executeFetch(request, response);
-                break;
-            default:
-                break;
+        case FETCH:
+            executeFetch(request, response);
+            break;
+        default:
+            break;
         }
 
         return request.getData();
     }
-
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
@@ -96,25 +92,22 @@ public class ResourceTypeTreeDataSource extends DataSource {
             processResponse(request.getRequestId(), response);
         } else {
 
-
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
             criteria.fetchParentResourceTypes(true);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-            resourceTypeService.findResourceTypesByCriteria(criteria,
-                    new AsyncCallback<PageList<ResourceType>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load resource type tree data", caught);
-                        }
+            resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_type_typeTreeLoadFailure(), caught);
+                }
 
-                        public void onSuccess(PageList<ResourceType> result) {
-                            response.setData(buildNodes(result));
-                            processResponse(request.getRequestId(), response);
-                        }
-                    });
+                public void onSuccess(PageList<ResourceType> result) {
+                    response.setData(buildNodes(result));
+                    processResponse(request.getRequestId(), response);
+                }
+            });
         }
     }
-
 
     public static TreeNode[] buildNodes(PageList<ResourceType> result) {
 
@@ -125,7 +118,8 @@ public class ResourceTypeTreeDataSource extends DataSource {
 
         for (ResourceType type : result) {
 
-            if (type.getCategory() != ResourceCategory.PLATFORM && (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
+            if (type.getCategory() != ResourceCategory.PLATFORM
+                && (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
                 noParentNonPlatformNodes.add(type);
 
             } else if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
@@ -144,11 +138,9 @@ public class ResourceTypeTreeDataSource extends DataSource {
             }
         }
 
-
         TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
         return treeNodes;
     }
-
 
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
@@ -163,7 +155,8 @@ public class ResourceTypeTreeDataSource extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
 
         // Initialize sorting.
@@ -180,7 +173,6 @@ public class ResourceTypeTreeDataSource extends DataSource {
         return pageControl;
     }
 
-
     public static class PluginTreeNode extends TreeNode {
 
         String id;
@@ -192,17 +184,20 @@ public class ResourceTypeTreeDataSource extends DataSource {
             setParentID(null);
 
             setAttribute("name", pluginName);
-//            setAttribute("plugin",pluginName);
+            //            setAttribute("plugin",pluginName);
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
 
             PluginTreeNode that = (PluginTreeNode) o;
 
-            if (!id.equals(that.id)) return false;
+            if (!id.equals(that.id))
+                return false;
 
             return true;
         }
@@ -238,20 +233,23 @@ public class ResourceTypeTreeDataSource extends DataSource {
             setIsFolder(true);
         }
 
-
         public ResourceType getResourceType() {
             return resourceType;
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
 
             ResourceTypeTreeNode that = (ResourceTypeTreeNode) o;
 
-            if (!id.equals(that.id)) return false;
-            if (parentId != null ? !parentId.equals(that.parentId) : that.parentId != null) return false;
+            if (!id.equals(that.id))
+                return false;
+            if (parentId != null ? !parentId.equals(that.parentId) : that.parentId != null)
+                return false;
 
             return true;
         }

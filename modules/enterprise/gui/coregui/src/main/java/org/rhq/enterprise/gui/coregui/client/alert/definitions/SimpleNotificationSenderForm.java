@@ -65,7 +65,7 @@ public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    String errMsg = "Cannot get alert sender configuration definition";
+                    String errMsg = MSG.view_alert_definition_notification_editor_loadFailed_single();
                     CoreGUI.getErrorHandler().handleError(errMsg, caught);
                     Label label = new Label(errMsg);
                     label.setIcon("[SKIN]/Dialog/error.png");

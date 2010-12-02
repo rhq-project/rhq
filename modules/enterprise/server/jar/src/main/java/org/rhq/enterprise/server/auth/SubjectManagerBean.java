@@ -221,7 +221,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             Set<Role> currentRoles =
                 new HashSet<Role>(roleManager.findRolesBySubject(subjectToModify.getId(), 
                     PageControl.getUnlimitedInstance()));
-            if (newRoles.containsAll(currentRoles) && currentRoles.containsAll(newRoles)) {
+            boolean rolesChanged = !(newRoles.containsAll(currentRoles) && currentRoles.containsAll(newRoles));
+            if (rolesChanged) {
                 int[] newRoleIds = new int[newRoles.size()];
                 int i = 0;
                 for (Role role : newRoles) {

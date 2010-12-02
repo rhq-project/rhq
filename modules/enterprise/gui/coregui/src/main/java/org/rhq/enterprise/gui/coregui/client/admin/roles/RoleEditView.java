@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -178,8 +179,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private LocatableTab buildPermissionsTab(LocatableTabSet tabSet) {
         LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("Permissions"), MSG.common_title_permissions(),
             "global/Locked_16.png");
-        // NOTE: We will overwrite the canvas with the permissions editor later after the Role has been fetched.
-        tab.setPane(new Canvas());
+        // NOTE: We will set the tab content to the permissions editor later once the Role has been fetched.
 
         return tab;
     }
@@ -187,8 +187,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private LocatableTab buildResourceGroupsTab(LocatableTabSet tabSet) {
         LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("ResourceGroups"),
             MSG.common_title_resourceGroups(), ImageManager.getGroupIcon(GroupCategory.MIXED));
-        // NOTE: We will overwrite the canvas with a Selector later after the Role has been fetched.
-        tab.setPane(new Canvas());
+        // NOTE: We will set the tab content to the resource group selector later once the Role has been fetched.
 
         return tab;
     }
@@ -196,8 +195,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private LocatableTab buildSubjectsTab(LocatableTabSet tabSet) {
         LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("Users"), MSG.common_title_users(),
             "global/User_16.png");
-        // NOTE: We will overwrite the canvas with a Selector later after the Role has been fetched.
-        tab.setPane(new Canvas());
+        // NOTE: We will set the tab content to the subject selector later once the Role has been fetched.
 
         return tab;
     }
@@ -205,8 +203,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private LocatableTab buildLdapGroupsTab(LocatableTabSet tabSet) {
         LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("LdapGroups"), MSG.common_title_ldapGroups(),
             "global/Role_16.png");
-        // NOTE: We will overwrite the canvas with a Selector later after the Role has been fetched.
-        tab.setPane(new Canvas());
+        // NOTE: We will set the tab content to the LDAP group selector later once the Role has been fetched.
 
         return tab;
     }
@@ -240,7 +237,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
             this.permissionsEditor = new PermissionsEditor(this, !hasManageSecurityPermission ||
                 this.isSystemRole);
-            this.permissionsTab.setPane(permissionsEditor);
+            updateTab(this.permissionsTab, this.permissionsEditor);
 
             if (!this.isSystemRole) {
                 Record[] groupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.RESOURCE_GROUPS);
@@ -252,7 +249,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                         onItemChanged();
                     }
                 });
-                this.resourceGroupsTab.setPane(this.resourceGroupSelector);
+                updateTab(this.resourceGroupsTab, this.resourceGroupSelector);
             }
 
             ListGridRecord[] subjectListGridRecords = toListGridRecordArray(subjectRecords);
@@ -278,7 +275,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                     onItemChanged();
                 }
             });
-            this.subjectsTab.setPane(this.subjectSelector);
+            updateTab(this.subjectsTab, this.subjectSelector);
 
             if (this.isLdapConfigured) {
                 Record[] ldapGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.LDAP_GROUPS);
@@ -290,7 +287,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                         onItemChanged();
                     }
                 });
-                this.ldapGroupsTab.setPane(this.ldapGroupSelector);
+                updateTab(this.ldapGroupsTab, this.ldapGroupSelector);
             } else {
                 Label label = new Label("<b>"
                     + MSG.common_msg_emphasizedNotePrefix()
@@ -305,6 +302,10 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         }
 
         this.permissionsEditor.redraw();
+    }
+
+    private static void updateTab(Tab tab, Canvas content) {
+        tab.getTabSet().updateTab(tab, content);
     }
 
     @Override

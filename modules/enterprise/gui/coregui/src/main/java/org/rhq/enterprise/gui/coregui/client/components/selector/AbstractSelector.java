@@ -318,9 +318,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     private VStack buildButtonStack() {
         VStack moveButtonStack = new VStack(6);
-        moveButtonStack.setHeight100();
-        moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(42);
+        moveButtonStack.setHeight(250);
+        moveButtonStack.setAlign(VerticalAlignment.CENTER);
 
         this.addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
         this.addButton.addClickHandler(new ClickHandler() {

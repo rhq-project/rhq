@@ -56,6 +56,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
 
+    private static final String COLLAPSED_TOOLTIP = MSG.view_titleBar_group_summary_collapsedTooltip();
+    private static final String EXPANDED_TOOLTIP = MSG.view_titleBar_group_summary_expandedTooltip();
+
     private ResourceGroup group;
     private ResourceGroupComposite groupComposite;
     boolean isAutoGroup;
@@ -102,6 +105,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         });
 
         expandCollapseArrow = new Img("[SKIN]/ListGrid/row_collapsed.png", 16, 16);
+        expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
         expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(this.group.getId());
@@ -135,9 +139,11 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                             collapsed = !collapsed;
                             if (collapsed) {
                                 expandCollapseArrow.setSrc("[SKIN]/ListGrid/row_collapsed.png");
+                                expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
                                 generalProperties.hide();
                             } else {
                                 expandCollapseArrow.setSrc("[SKIN]/ListGrid/row_expanded.png");
+                                expandCollapseArrow.setTooltip(EXPANDED_TOOLTIP);
                                 generalProperties.show();
                             }
                             ResourceGroupTitleBar.this.markForRedraw();

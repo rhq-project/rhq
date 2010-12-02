@@ -48,6 +48,7 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
@@ -69,7 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Greg Hinkle
  */
-public class DashboardsView extends LocatableVLayout implements BookmarkableView {
+public class DashboardsView extends LocatableVLayout implements BookmarkableView, InitializableView {
 
     public static final ViewName VIEW_ID = new ViewName("Dashboard", MSG.view_dashboards_title());
 
@@ -90,6 +91,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
+    private boolean initialized = false;
+
     public DashboardsView(String locatorId) {
         super(locatorId);
         setOverflow(Overflow.AUTO);
@@ -108,6 +111,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(List<Dashboard> result) {
+                initialized = true;
                 if (result.isEmpty()) {
                     result.add(getDefaultDashboard());
                 }
@@ -346,6 +350,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
     public Dashboard getDashboard() {
         return selectedDashboard;
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return initialized;
     }
 
 }

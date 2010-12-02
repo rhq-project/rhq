@@ -63,6 +63,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -197,7 +198,7 @@ public class LoginView extends LocatableCanvas {
         if (!loginShowing) {
             loginShowing = true;
 
-            form = new DynamicForm();
+            form = new EnhancedDynamicForm(extendLocatorId("LdapUserRegistration"));
             form.setMargin(25);
             form.setAutoFocus(true);
             form.setShowErrorText(true);
@@ -223,7 +224,6 @@ public class LoginView extends LocatableCanvas {
             final TextItem username = new TextItem(USERNAME, MSG.dataSource_users_field_name());
             {
                 username.setValue(user);
-
                 username.setDisabled(true);
                 username.setWidth(fieldWidth);
             }
@@ -236,22 +236,22 @@ public class LoginView extends LocatableCanvas {
             department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
-            DynamicForm inputFields = new DynamicForm();
-            inputFields.setNumCols(6);
-            inputFields.setFields(header, first, last, username, email, phone, department);
-            inputFields.setValuesManager(valuesManager);
-            loadValidators(inputFields);
-            column.addMember(inputFields);
+
+            EnhancedDynamicForm inputForm = new EnhancedDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
+            inputForm.setFields(header, username, first, last, email, phone, department);
+            valuesManager.addMember(inputForm);
+            loadValidators(inputForm);
+            column.addMember(inputForm);
 
             HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
-            hr.setWidth(750);
+            hr.setWidth(620);
             hr.setAlign(Alignment.CENTER);
             column.addMember(hr);
 
             HStack row = new HStack();
             row.setMembersMargin(5);
             row.setAlign(VerticalAlignment.CENTER);
-            IButton okButton = new IButton(MSG.common_button_ok());
+            IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     //F5 refresh check? If they've reloaded the form for some reason then bail.
@@ -316,7 +316,7 @@ public class LoginView extends LocatableCanvas {
                 }
             });
 
-            IButton resetButton = new LocatableIButton(MSG.common_button_reset());
+            IButton resetButton = new LocatableIButton(inputForm.extendLocatorId("Reset"), MSG.common_button_reset());
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     //F5 refresh check? If they've reloaded the form for some reason then bail.
@@ -344,15 +344,15 @@ public class LoginView extends LocatableCanvas {
             });
             row.addMember(resetButton);
 
-            IButton logout = new LocatableIButton(MSG.view_login_logout());
-            logout.addClickHandler(new ClickHandler() {
+            IButton logoutButton = new LocatableIButton(inputForm.extendLocatorId("Logout"), MSG.view_login_logout());
+            logoutButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     UserSessionManager.logout();
                     resetLogin(LoginView.this.extendLocatorId("Reset"));
                     return;
                 }
             });
-            row.addMember(logout);
+            row.addMember(logoutButton);
             Label logoutLabel = new Label(MSG.view_login_registerLater());
             logoutLabel.setWrap(false);
             row.addMember(logoutLabel);
@@ -360,8 +360,8 @@ public class LoginView extends LocatableCanvas {
             form.addChild(column);
 
             window = new Window();
-            window.setWidth(800);
-            window.setHeight(300);
+            window.setWidth(670);
+            window.setHeight(330);
             window.setTitle(MSG.view_login_registerUser());
 
             // forced focused, static size, can't close / dismiss
@@ -475,10 +475,6 @@ public class LoginView extends LocatableCanvas {
         }
     }
 
-    /**Build and loads the validators for each of the formItems
-     * 
-     * @param form
-     */
     private void loadValidators(DynamicForm form) {
         if (form != null) {
             for (FormItem item : form.getFields()) {
@@ -539,7 +535,7 @@ public class LoginView extends LocatableCanvas {
 
     @SuppressWarnings("unused")
     private void preloadAllTypeMetadata() {
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes((Integer[]) null,
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(null,
             EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
                     Log.info("Preloaded [" + types.size() + "] resource types");

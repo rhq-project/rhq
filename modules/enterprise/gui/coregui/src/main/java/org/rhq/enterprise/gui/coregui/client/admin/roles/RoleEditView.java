@@ -165,10 +165,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             this.subjectsTab = buildSubjectsTab(tabSet);
             tabSet.addTab(subjectsTab);
 
-            if (this.isLdapConfigured) {
-                this.ldapGroupsTab = buildLdapGroupsTab(tabSet);
-                tabSet.addTab(ldapGroupsTab);
-            }
+            this.ldapGroupsTab = buildLdapGroupsTab(tabSet);
+            tabSet.addTab(ldapGroupsTab);
         }
 
         contentPane.addMember(tabSet);
@@ -289,6 +287,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 });
                 updateTab(this.ldapGroupsTab, this.ldapGroupSelector);
             } else {
+                // LDAP is not configured for this RHQ Server - display a message on the LDAP Groups tab informing the
+                // user of this along with a link to the System Settings view.
                 Label label = new Label("<b>"
                     + MSG.common_msg_emphasizedNotePrefix()
                     + "</b> "
@@ -297,15 +297,11 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 label.setWidth100();
                 label.setHeight(20);
                 label.setPadding(5);
-                this.ldapGroupsTab.setPane(label);
+                updateTab(this.ldapGroupsTab, label);
             }
         }
 
         this.permissionsEditor.redraw();
-    }
-
-    private static void updateTab(Tab tab, Canvas content) {
-        tab.getTabSet().updateTab(tab, content);
     }
 
     @Override
@@ -363,6 +359,13 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         if (this.ldapGroupSelector != null) {
             this.ldapGroupSelector.reset();
         }
+    }
+
+    private static void updateTab(Tab tab, Canvas content) {
+        if (tab == null) {
+            throw new IllegalStateException("A null tab was specified.");
+        }
+        tab.getTabSet().updateTab(tab, content);
     }
 
 }

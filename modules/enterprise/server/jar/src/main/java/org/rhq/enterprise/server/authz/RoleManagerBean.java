@@ -137,8 +137,21 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Role createRole(Subject subject, Role newRole) {
+        // TODO (ips): Do we want to enforce uniqueness of the Role name?
+
+        if (newRole.getFsystem()) {
+            throw new IllegalArgumentException("Unable to create role [" + newRole.getName()
+                + "] - new system roles cannot be created.");
+        }
         processDependentPermissions(newRole);
+
+        Set<LdapGroup> ldapGroups = newRole.getLdapGroups();
+        for (LdapGroup ldapGroup : ldapGroups) {
+            ldapGroup.setRole(newRole);
+        }
+
         entityManager.persist(newRole);
+
         return newRole;
     }
 

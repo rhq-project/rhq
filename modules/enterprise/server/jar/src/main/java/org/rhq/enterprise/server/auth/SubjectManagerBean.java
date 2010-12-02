@@ -186,13 +186,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @Override
     public Subject createSubject(Subject whoami, Subject subjectToCreate, String password)
         throws SubjectException, EntityExistsException {
-        // Make sure there's not an existing subject with the same name.
         if (getSubjectByName(subjectToCreate.getName()) != null) {
             throw new EntityExistsException("A user named [" + subjectToCreate.getName() + "] already exists.");
         }
 
         if (subjectToCreate.getFsystem()) {
-            throw new SubjectException("Cannot create new system subjects: " + subjectToCreate.getName());
+            throw new SubjectException("Cannot create new system users: " + subjectToCreate.getName());
         }
 
         entityManager.persist(subjectToCreate);
@@ -296,7 +295,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject createSubject(Subject whoami, Subject subject) throws SubjectException {
         // Make sure there's not an existing subject with the same name.
         if (getSubjectByName(subject.getName()) != null) {
-            throw new SubjectException("A user named [" + subject.getName() + "] already exists.");
+            throw new EntityExistsException("A user named [" + subject.getName() + "] already exists.");
         }
 
         if (subject.getFsystem()) {

@@ -149,16 +149,19 @@ public class ResourceSearchView extends Table {
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
         categoryField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String categoryName = (String)value;
+                String categoryName = (String) value;
                 ResourceCategory category = ResourceCategory.valueOf(categoryName);
                 String displayName = "";
                 switch (category) {
-                    case PLATFORM:
-                        displayName = MSG.common_title_platform(); break;
-                    case SERVER:
-                        displayName = MSG.common_title_server(); break;
-                    case SERVICE:
-                        displayName = MSG.common_title_service(); break;
+                case PLATFORM:
+                    displayName = MSG.common_title_platform();
+                    break;
+                case SERVER:
+                    displayName = MSG.common_title_server();
+                    break;
+                case SERVICE:
+                    displayName = MSG.common_title_service();
+                    break;
                 }
                 return displayName;
             }
@@ -193,44 +196,44 @@ public class ResourceSearchView extends Table {
         });
 
         if (this.groupIdToModify != null) {
-            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_membership(), new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
-                    winModal.setTitle(MSG.view_tabs_common_group_membership());
-                    winModal.setOverflow(Overflow.VISIBLE);
-                    winModal.setShowMinimizeButton(false);
-                    winModal.setIsModal(true);
-                    winModal.setShowModalMask(true);
-                    winModal.setWidth(700);
-                    winModal.setHeight(450);
-                    winModal.setAutoCenter(true);
-                    winModal.setShowResizer(true);
-                    winModal.setCanDragResize(true);
-                    winModal.centerInPage();
-                    winModal.addCloseClickHandler(new CloseClickHandler() {
-                        @Override
-                        public void onCloseClick(CloseClientEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
+            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_group_membership() + "...",
+                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
+                        winModal.setTitle(MSG.view_tabs_common_group_membership());
+                        winModal.setOverflow(Overflow.VISIBLE);
+                        winModal.setShowMinimizeButton(false);
+                        winModal.setIsModal(true);
+                        winModal.setShowModalMask(true);
+                        winModal.setWidth(700);
+                        winModal.setHeight(450);
+                        winModal.setAutoCenter(true);
+                        winModal.setShowResizer(true);
+                        winModal.setCanDragResize(true);
+                        winModal.centerInPage();
+                        winModal.addCloseClickHandler(new CloseClickHandler() {
+                            @Override
+                            public void onCloseClick(CloseClientEvent event) {
+                                winModal.markForDestroy();
+                            }
+                        });
 
-                    ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(
-                        ResourceSearchView.this.extendLocatorId("View"), ResourceSearchView.this.groupIdToModify
-                            .intValue());
+                        ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(
+                            ResourceSearchView.this.extendLocatorId("View"), ResourceSearchView.this.groupIdToModify
+                                .intValue());
 
-                    membershipView.setSaveButtonHandler(new ClickHandler() {
-                        @Override
-                        public void onClick(ClickEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
+                        membershipView.setSaveButtonHandler(new ClickHandler() {
+                            @Override
+                            public void onClick(ClickEvent event) {
+                                winModal.markForDestroy();
+                            }
+                        });
 
-                    winModal.addItem(membershipView);
-                    winModal.show();
-                }
-            });
+                        winModal.addItem(membershipView);
+                        winModal.show();
+                    }
+                });
         }
 
         //        //load double click handler for this table

@@ -388,7 +388,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
         criteria.fetchTags(true);
-        //criteria.fetchParentResource(true);
+        criteria.fetchParentResource(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {

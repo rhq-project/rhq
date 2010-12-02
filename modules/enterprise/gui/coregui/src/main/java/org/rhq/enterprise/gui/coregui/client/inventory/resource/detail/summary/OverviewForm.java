@@ -294,7 +294,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         setValue("location", resource.getLocation());
         setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
             + "</i>");
-        Resource parentResource = resource.getParentResource();
+        Resource parentResource = this.resourceComposite.getParent();
         setValue("parent", parentResource != null ? ("<a href=\"#Resource/" + parentResource.getId() + "\">"
             + parentResource.getName() + "</a>") : "<i>" + MSG.common_label_none() + "</i>");
     }

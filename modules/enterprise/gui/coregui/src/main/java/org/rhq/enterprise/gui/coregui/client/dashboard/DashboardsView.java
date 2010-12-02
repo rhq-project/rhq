@@ -190,6 +190,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                     new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
+                                dashboardsByName.remove(tabCloseClickEvent.getTab().getTitle());
                                 tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
                                 History.newItem(VIEW_ID.getName());
@@ -287,6 +288,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(Dashboard result) {
+                dashboardsByName.put(result.getName(), result); // update map so name can not be reused
                 DashboardView dashboardView = new DashboardView(extendLocatorId(result.getName()), DashboardsView.this,
                     result);
                 String tabName = String.valueOf(result.getId());

@@ -76,8 +76,8 @@ public class PermissionsEditor extends LocatableVStack {
         this.isReadOnly = isReadOnly;
         this.selectedPermissions = new HashSet<Permission>();
 
-        setWidth100();
-        setHeight(500);
+        setWidth("95%");
+        setHeight100();
         
         VLayout spacer = createVerticalSpacer(13);
         addMember(spacer);
@@ -148,17 +148,14 @@ public class PermissionsEditor extends LocatableVStack {
 
         ListGridField iconField = createIconField();
 
-        ListGridField nameField = new ListGridField("name");
-        nameField.setHidden(true);
+        ListGridField displayNameField = new ListGridField("displayName", "Name", 130);
 
-        ListGridField displayNameField = new ListGridField("displayName", "Name", 120);
-
-        ListGridField descriptionField = new ListGridField("description", "Description", 450);
+        ListGridField descriptionField = new ListGridField("description", "Description");
         descriptionField.setWrap(true);
 
         final ListGridField authorizedField = createAuthorizedField("authorized", "Authorized?", "name", grid);
 
-        grid.setFields(iconField, nameField, displayNameField, descriptionField, authorizedField);
+        grid.setFields(iconField, displayNameField, descriptionField, authorizedField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         ListGridRecord record = createGlobalPermissionRecord("Manage Security", "global/Locked", Permission.MANAGE_SECURITY,
@@ -186,21 +183,15 @@ public class PermissionsEditor extends LocatableVStack {
 
         ListGridField iconField = createIconField();
 
-        ListGridField readNameField = new ListGridField("readName");
-        readNameField.setHidden(true);
+        ListGridField displayNameField = new ListGridField("displayName", "Name", 130);
 
-        ListGridField writeNameField = new ListGridField("writeName");
-        writeNameField.setHidden(true);
-
-        ListGridField displayNameField = new ListGridField("displayName", "Name", 120);
-
-        ListGridField descriptionField = new ListGridField("description", "Description", 450);
+        ListGridField descriptionField = new ListGridField("description", "Description");
         descriptionField.setWrap(true);
 
         ListGridField readField = createAuthorizedField("readAuthorized", "Read?", "readName", grid);
         ListGridField writeField = createAuthorizedField("writeAuthorized", "Write?", "writeName", grid);
 
-        grid.setFields(iconField, readNameField, displayNameField, descriptionField, readField, writeField);
+        grid.setFields(iconField, displayNameField, descriptionField, readField, writeField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 

@@ -155,7 +155,7 @@ public class PermissionsEditor extends LocatableVStack {
 
         final ListGridField authorizedField = createAuthorizedField("authorized", "Authorized?", "name", grid);
 
-        grid.setFields(iconField, displayNameField, descriptionField, authorizedField);
+        grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         ListGridRecord record = createGlobalPermissionRecord("Manage Security", "global/Locked", Permission.MANAGE_SECURITY,
@@ -191,7 +191,7 @@ public class PermissionsEditor extends LocatableVStack {
         ListGridField readField = createAuthorizedField("readAuthorized", "Read?", "readName", grid);
         ListGridField writeField = createAuthorizedField("writeAuthorized", "Write?", "writeName", grid);
 
-        grid.setFields(iconField, displayNameField, descriptionField, readField, writeField);
+        grid.setFields(iconField, displayNameField, readField, writeField, descriptionField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 

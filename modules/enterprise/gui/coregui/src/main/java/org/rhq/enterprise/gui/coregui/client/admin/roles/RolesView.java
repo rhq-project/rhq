@@ -90,9 +90,9 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
                     }
 
                     for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
-                        if (id == RolesDataSource.ID_SUPERUSER || id == RolesDataSource.ID_ALL_RESOURCES) {
-                            // The superuser and all-resources roles cannot be deleted.
+                        int roleId = record.getAttributeAsInt(RolesDataSource.Field.ID);
+                        if (RolesDataSource.isSystemRoleId(roleId)) {
+                            // The superuser role cannot be deleted.
                             return false;
                         }
                     }

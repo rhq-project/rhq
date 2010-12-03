@@ -62,6 +62,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
+
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(RoleManagerBean.class);
 

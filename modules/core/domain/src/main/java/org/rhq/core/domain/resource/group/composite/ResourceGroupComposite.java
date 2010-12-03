@@ -147,6 +147,18 @@ public class ResourceGroupComposite implements Serializable {
         return this.explicitDown;
     }
 
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    public String getExplicitFormatted() {
+        return getAlignedAvailabilityResults(getExplicitUp(), getExplicitDown());
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    public String getImplicitFormatted() {
+        return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+    }
+
     @XmlTransient
     public void setResourceFacets(ResourceFacets facets) {
         this.resourceFacets = facets;
@@ -172,6 +184,58 @@ public class ResourceGroupComposite implements Serializable {
      */
     public String getGroupQueryString() {
         return "groupId=" + getResourceGroup().getId();
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    private String getAlignedAvailabilityResults(long up, long down) {
+        StringBuilder results = new StringBuilder();
+        results.append("<table width=\"120px\"><tr>");
+        if (up == 0 && down == 0) {
+            results.append(getColumn(false, "<img src=\"" + "subsystems/availability/availability_grey_16.png"
+                + "\" /> 0"));
+            results.append(getColumn(true));
+            results.append(getColumn(false));
+        } else {
+            if (up > 0) {
+                results.append(getColumn(false, " <img src=\"" + "subsystems/availability/availability_green_16.png"
+                    + "\" />", up));
+            }
+
+            if (up > 0 && down > 0) {
+                results.append(getColumn(true)); // , " / ")); // use a vertical separator image if we want a separator
+            }
+
+            if (down > 0) {
+                results.append(getColumn(false, " <img src=\"" + "subsystems/availability/availability_red_16.png"
+                    + "\" />", down));
+            } else {
+                results.append(getColumn(false,
+                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+            }
+        }
+        results.append("</tr></table>");
+        return results.toString();
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    private String getColumn(boolean isSpacerColumn, Object... data) {
+        StringBuilder results = new StringBuilder();
+        if (isSpacerColumn) {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"10px\" align=\"left\" >");
+        } else {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"55px\" align=\"left\" >");
+        }
+        if (data == null) {
+            results.append("&nbsp;");
+        } else {
+            for (Object datum : data) {
+                results.append(datum == null ? "&nbsp;" : datum);
+            }
+        }
+        results.append("</td>");
+        return results.toString();
     }
 
     @Override

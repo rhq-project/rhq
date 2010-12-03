@@ -212,9 +212,13 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         subjectService.createSubject(newSubject, password, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
                 // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
-                Map<String, String> errorMessages = new HashMap<String, String>();
-                errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
-                sendValidationErrorResponse(request, response, errorMessages);
+                if (caught.getMessage().contains("javax.persistence.EntityExistsException")) {
+                    Map<String, String> errorMessages = new HashMap<String, String>();
+                    errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
+                    sendValidationErrorResponse(request, response, errorMessages);
+                } else {
+                    throw new RuntimeException(caught);
+                }
             }
 
             public void onSuccess(final Subject createdSubject) {
@@ -290,7 +294,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         targetRecord.setAttribute(Field.LDAP, isLdap);
 
-        // Leave the password field blank if username is null (i.e. it's a new user).
+        // Leave the password fields blank if username is null (i.e. it's a new user).
         if (subject.getName() != null) {
             targetRecord.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
             targetRecord.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);

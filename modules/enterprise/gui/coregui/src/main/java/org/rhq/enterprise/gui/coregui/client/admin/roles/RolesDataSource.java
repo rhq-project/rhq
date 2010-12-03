@@ -147,9 +147,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         final String rolename = roleToAdd.getName();
         roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                Map<String, String> errorMessages = new HashMap<String, String>();
-                errorMessages.put(Field.NAME, MSG.view_adminRoles_roleExists(rolename));
-                sendValidationErrorResponse(request, response, errorMessages);
+                throw new RuntimeException(caught);
             }
 
             public void onSuccess(Role addedRole) {

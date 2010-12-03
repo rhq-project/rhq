@@ -184,8 +184,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     @Override
-    public Subject createSubject(Subject whoami, Subject subjectToCreate, String password)
-        throws SubjectException, EntityExistsException {
+    public Subject createSubject(Subject whoami, Subject subjectToCreate, String password) throws SubjectException,
+        EntityExistsException {
         if (getSubjectByName(subjectToCreate.getName()) != null) {
             throw new EntityExistsException("A user named [" + subjectToCreate.getName() + "] already exists.");
         }
@@ -212,15 +212,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         boolean subjectToModifyIsSystemSuperuser = authorizationManager.isSystemSuperuser(subjectToModify);
         if (!subjectToModify.getFactive() && subjectToModifyIsSystemSuperuser) {
-            throw new PermissionException("You cannot disable the system user [" + subjectToModify.getName()
-                + "].");
+            throw new PermissionException("You cannot disable the system user [" + subjectToModify.getName() + "].");
         }
 
         Set<Role> newRoles = subjectToModify.getRoles();
         if (newRoles != null) {
-            Set<Role> currentRoles =
-                new HashSet<Role>(roleManager.findRolesBySubject(subjectToModify.getId(), 
-                    PageControl.getUnlimitedInstance()));
+            Set<Role> currentRoles = new HashSet<Role>(roleManager.findRolesBySubject(subjectToModify.getId(),
+                PageControl.getUnlimitedInstance()));
             boolean rolesChanged = !(newRoles.containsAll(currentRoles) && currentRoles.containsAll(newRoles));
             if (rolesChanged) {
                 int[] newRoleIds = new int[newRoles.size()];
@@ -242,18 +240,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             subjectLdapRolesCriteria.addFilterLdapSubjectId(subjectToModify.getId());
             PageList<Role> currentLdapRoles = roleManager.findRolesByCriteria(whoami, subjectLdapRolesCriteria);
 
-            ldapRolesModified =
-                !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles.containsAll(currentLdapRoles));
+            ldapRolesModified = !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles
+                .containsAll(currentLdapRoles));
         }
 
         boolean isUserWithPrincipal = isUserWithPrincipal(subjectToModify.getName());
         if (ldapRolesModified) {
             if (!isSecurityManager) {
-                throw new PermissionException("You cannot change the LDAP roles assigned to [" + subjectToModify.getName()
-                    + "] - only a user with the MANAGE_SECURITY permission can do so.");
+                throw new PermissionException("You cannot change the LDAP roles assigned to ["
+                    + subjectToModify.getName() + "] - only a user with the MANAGE_SECURITY permission can do so.");
             } else if (isUserWithPrincipal) {
-                throw new PermissionException("You cannot set LDAP roles on non-LDAP user [" + subjectToModify.getName()
-                            + "].");
+                throw new PermissionException("You cannot set LDAP roles on non-LDAP user ["
+                    + subjectToModify.getName() + "].");
             }
 
             // TODO: Update LDAP roles.
@@ -387,7 +385,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 int sessionId = sessionManager.getSessionIdFromUsername(username);
                 subject.setSessionId(sessionId);
                 //insert processing for LDAP users who have registered before and have jdbc credentials, but no principal.
-                log.trace("Processing subject '" + subject.getName() + "' for LDAP functionality.");
+                log.debug("Processing subject '" + subject.getName() + "' for LDAP functionality.");
                 //as already logged in as regular JDBC 
                 subject = processSubjectForLdap(subject, password);
             } catch (SessionException se) {
@@ -434,7 +432,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             //if user has principal then bail as LDAP processing not required
             boolean userHasPrincipal = isUserWithPrincipal(subject.getName());
-            log.trace("Processing subject '" + subject.getName() + "' for LDAP check, userHasPrincipal:"
+            log.debug("Processing subject '" + subject.getName() + "' for LDAP check, userHasPrincipal:"
                 + userHasPrincipal);
 
             //if user has principal then return as non-ldap user
@@ -480,14 +478,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             logout(subject.getSessionId().intValue());
                             subject = login(ldapSubject.getName(), subjectPassword);
                             Integer sessionId = subject.getSessionId();
-                            log.trace("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
+                            log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
                                 + "]");
                         } else {//then this is a registration request. insert overlord registration and login
                             //we've verified that this user has valid session, requires registration and that ldap is configured.
                             Subject superuser = getOverlord();
 
                             // create the subject, but don't add a principal since LDAP will handle authentication
-                            log.trace("registering new LDAP-authenticated subject [" + subject.getName() + "]");
+                            log.debug("registering new LDAP-authenticated subject [" + subject.getName() + "]");
                             createSubject(superuser, subject);
 
                             // nuke the temporary session and establish a new
@@ -524,7 +522,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
                         List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
                             .getName()));
-                        log.trace("Updating ldap authorization data for user '" + subject.getName() + "'");
+                        log.debug("Updating ldap authorization data for user '" + subject.getName() + "'");
                         ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
                     }
                 } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail 
@@ -600,10 +598,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public void changePassword(Subject whoami, String username, String password) {
         // a user can change his/her own password, as can a user with the appropriate permission
-        if (!whoami.getName().equals(username) &&
-            !authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
-                throw new PermissionException("You do not have permission to change the password for user [" + username
-                    + "]");
+        if (!whoami.getName().equals(username)
+            && !authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
+            throw new PermissionException("You do not have permission to change the password for user [" + username
+                + "]");
         }
 
         changePasswordInternal(username, password);

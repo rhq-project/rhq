@@ -43,7 +43,6 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -59,11 +58,9 @@ import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -71,6 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
@@ -82,9 +80,9 @@ public class LoginView extends LocatableCanvas {
 
     private Window window;
     private DynamicForm form;
+    private LocatableDynamicForm inputForm;
 
     private SubmitItem loginButton;
-    private ValuesManager valuesManager = new ValuesManager();
 
     public LoginView(String locatorId) {
         super(locatorId);
@@ -198,16 +196,13 @@ public class LoginView extends LocatableCanvas {
         if (!loginShowing) {
             loginShowing = true;
 
-            form = new EnhancedDynamicForm(extendLocatorId("LdapUserRegistration"));
-            form.setMargin(25);
-            form.setAutoFocus(true);
-            form.setShowErrorText(true);
-            form.setErrorOrientation(FormErrorOrientation.BOTTOM);
             int fieldWidth = 120;
 
-            VLayout column = new VLayout();
+            LocatableVLayout column = new LocatableVLayout(extendLocatorId("NewLdapRegistration"));
+            column.setMargin(25);
             HeaderItem header = new HeaderItem();
             header.setValue(MSG.view_login_welcomeMsg());
+            header.setWidth("100%");
             //build ui elements for registration screen
             first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
             {
@@ -230,17 +225,26 @@ public class LoginView extends LocatableCanvas {
             email = new TextItem(EMAIL, MSG.dataSource_users_field_emailAddress());
             email.setRequired(true);
             email.setWidth(fieldWidth);
+            email.setWrapTitle(false);
             phone = new TextItem(PHONE, MSG.dataSource_users_field_phoneNumber());
             phone.setWidth(fieldWidth);
+            phone.setWrapTitle(false);
             department = new TextItem(DEPARTMENT, MSG.dataSource_users_field_department());
             department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
 
-            EnhancedDynamicForm inputForm = new EnhancedDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
-            inputForm.setFields(header, username, first, last, email, phone, department);
-            valuesManager.addMember(inputForm);
+            inputForm = new LocatableDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
+            inputForm.setAutoFocus(true);
+            inputForm.setErrorOrientation(FormErrorOrientation.LEFT);
+            inputForm.setNumCols(4);
+            //moving header to it's own container for proper display. Didn't display right in production mode
+            inputForm.setFields(username, first, last, email, phone, department);
             loadValidators(inputForm);
+            inputForm.setValidateOnExit(true);
+            DynamicForm headerWrapper = new DynamicForm();
+            headerWrapper.setFields(header);
+            column.addMember(headerWrapper);
             column.addMember(inputForm);
 
             HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
@@ -264,18 +268,18 @@ public class LoginView extends LocatableCanvas {
                     }
 
                     //validation
-                    if (valuesManager.validate()) {
+                    if (inputForm.validate()) {
                         Log.trace("Successfully validated all data for user registration.");
                         //populate form
-                        form.setValue(FIRST, String.valueOf(first.getValue()));
-                        form.setValue(LAST, String.valueOf(last.getValue()));
-                        form.setValue(USERNAME, String.valueOf(username.getValue()));
-                        form.setValue(EMAIL, String.valueOf(email.getValue()));
-                        form.setValue(PHONE, String.valueOf(phone.getValue()));
-                        form.setValue(DEPARTMENT, String.valueOf(department.getValue()));
-                        form.setValue(SESSIONID, sessionId);
-                        form.setValue(PASSWORD, password);
-                        registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), form, callback);
+                        inputForm.setValue(FIRST, String.valueOf(first.getValue()));
+                        inputForm.setValue(LAST, String.valueOf(last.getValue()));
+                        inputForm.setValue(USERNAME, String.valueOf(username.getValue()));
+                        inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
+                        inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
+                        inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
+                        inputForm.setValue(SESSIONID, sessionId);
+                        inputForm.setValue(PASSWORD, password);
+                        registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);
                     }
                 }
 
@@ -310,7 +314,7 @@ public class LoginView extends LocatableCanvas {
                 }
 
                 public void onFailure(Throwable caught) {
-                    form.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
+                    inputForm.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
                     Log
                         .debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
                 }
@@ -333,7 +337,7 @@ public class LoginView extends LocatableCanvas {
                         first.setValue(empty);
                         last.setValue(empty);
                         email.setValue("test@test.com");
-                        valuesManager.validate();
+                        inputForm.validate();
                     }
                     first.clearValue();
                     last.clearValue();
@@ -356,7 +360,6 @@ public class LoginView extends LocatableCanvas {
             logoutLabel.setWrap(false);
             row.addMember(logoutLabel);
             column.addMember(row);
-            form.addChild(column);
 
             window = new Window();
             window.setWidth(670);
@@ -372,7 +375,7 @@ public class LoginView extends LocatableCanvas {
             window.setShowMinimizeButton(false);
             window.setAutoCenter(true);
 
-            window.addItem(form);
+            window.addItem(column);
             window.show();
         }
     }

@@ -409,6 +409,9 @@ public class Subject implements Serializable {
     }
 
     public java.util.Set<Role> getRoles() {
+        if (this.roles == null) {
+            this.roles = new HashSet<Role>();
+        }
         return this.roles;
     }
 

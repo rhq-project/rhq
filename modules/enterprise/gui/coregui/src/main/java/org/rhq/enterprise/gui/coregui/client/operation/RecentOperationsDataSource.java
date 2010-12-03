@@ -35,6 +35,7 @@ import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedCom
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -196,23 +197,33 @@ public class RecentOperationsDataSource extends
     private String generateResourceOperationStatusLink(
         DisambiguationReport<ResourceOperationLastCompletedComposite> report) {
 
-        String iconLink;
-        if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.SUCCESS) == 0) {
-            iconLink = ImageManager.getAvailabilityIcon(Boolean.TRUE);
-        } else if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.FAILURE) == 0) {
-            iconLink = ImageManager.getAvailabilityIcon(Boolean.FALSE);
-        } else if (report.getOriginal().getOperationStatus().compareTo(OperationRequestStatus.CANCELED) == 0) {
-            iconLink = ImageManager.getAvailabilityYellowIcon();
-        } else {
-            iconLink = ImageManager.getAvailabilityIcon(null);
+        OperationRequestStatus opStatus = report.getOriginal().getOperationStatus();
+        String iconLink = ImageManager.getOperationResultsIcon(opStatus);
+        String statusStr = "";
+        switch (opStatus) {
+        case SUCCESS: {
+            statusStr = MSG.common_status_success();
+            break;
+        }
+        case FAILURE: {
+            statusStr = MSG.common_status_failed();
+            break;
+        }
+        case INPROGRESS: {
+            statusStr = MSG.common_status_inprogress();
+            break;
+        }
+        case CANCELED: {
+            statusStr = MSG.common_status_canceled();
+            break;
+        }
         }
 
-        //TODO: refactor this out for more general case
-        String link = "<a href='" + "/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml?id="
-            + report.getOriginal().getResourceId() + "&opId=" + report.getOriginal().getResourceId() + "'>";
-        String img = "<img alt='" + report.getOriginal().getOperationStatus() + "' title='"
-            + report.getOriginal().getOperationStatus() + "' src='";
-        img += iconLink;
+        String link = "<a href='"
+            + LinkManager.getSubsystemResourceOperationHistoryLink(report.getOriginal().getResourceId(), report
+                .getOriginal().getOperationHistoryId()) + "'>";
+        String img = "<img alt='" + statusStr + "' title='" + statusStr + "' src='";
+        img += ImageManager.getFullImagePath(iconLink);
         link = link + img + "'></img></a>";
         return link;
     }

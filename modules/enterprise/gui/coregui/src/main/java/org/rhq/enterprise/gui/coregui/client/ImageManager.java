@@ -4,6 +4,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -21,6 +22,32 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 public class ImageManager {
 
     public static final String IMAGES_DIR = "images/";
+
+    /**
+     * Returns the operation status icon. If status is null, returns
+     * the plain, unbadged, operation icon.
+     */
+    public static String getOperationResultsIcon(OperationRequestStatus status) {
+        String icon = "";
+        if (status != null) {
+            switch (status) {
+            case INPROGRESS:
+                icon = "_inprogress";
+                break;
+            case SUCCESS:
+                icon = "_ok";
+                break;
+            case FAILURE:
+                icon = "_failed";
+                break;
+            case CANCELED:
+                icon = "_cancel";
+                break;
+            }
+        }
+
+        return "subsystems/control/Operation" + icon + "_16.png";
+    }
 
     /**
      * All methods in this ImageManager class return image paths relative to the top

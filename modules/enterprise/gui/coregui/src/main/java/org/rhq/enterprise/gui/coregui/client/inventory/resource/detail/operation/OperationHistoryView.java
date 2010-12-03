@@ -21,9 +21,22 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 import java.util.EnumSet;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.DateDisplayFormat;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -35,22 +48,25 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class OperationHistoryView extends TableSection {
     public static final ViewName VIEW_ID = new ViewName("RecentOperations", MSG.common_title_recent_operations());
 
     private ResourceComposite composite;
-    private Resource resource;
 
     public OperationHistoryView(String locatorId) {
         super(locatorId, VIEW_ID.getTitle());
@@ -58,59 +74,143 @@ public class OperationHistoryView extends TableSection {
         setHeight100();
 
         setDataSource(new OperationHistoryDataSource());
-
     }
 
     public OperationHistoryView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId, VIEW_ID.getTitle(), new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID, String
             .valueOf(resourceComposite.getResource().getId())));
         this.composite = resourceComposite;
-        this.resource = resourceComposite.getResource();
 
         setDataSource(new OperationHistoryDataSource());
-
     }
 
     @Override
     protected void configureTable() {
-        getListGrid().getField(OperationHistoryDataSource.Field.ID).setWidth(40);
-        getListGrid().getField(OperationHistoryDataSource.Field.OPERATION_NAME).setWidth("*");
-        getListGrid().getField(OperationHistoryDataSource.Field.STATUS).setWidth(100);
-        getListGrid().getField(OperationHistoryDataSource.Field.STATUS).setCellFormatter(new CellFormatter() {
+        ListGridField idField = new ListGridField(OperationHistoryDataSource.Field.ID, MSG.common_title_id());
+        idField.setWidth(10);
+
+        ListGridField opNameField = new ListGridField(OperationHistoryDataSource.Field.OPERATION_NAME, MSG
+            .dataSource_operationHistory_operationName());
+        opNameField.setWidth(300);
+        opNameField.setAutoFitWidth(true);
+        opNameField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
+
+        ListGridField subjectField = new ListGridField(OperationHistoryDataSource.Field.SUBJECT, MSG
+            .common_title_user());
+        subjectField.setWidth(10);
+        subjectField.setAutoFitWidth(true);
+        subjectField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+
+        ListGridField statusField = new ListGridField(OperationHistoryDataSource.Field.STATUS, MSG
+            .common_title_status());
+        statusField.setWidth(10);
+        statusField.setAutoFitWidth(true);
+        statusField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        statusField.setAlign(Alignment.CENTER);
+        statusField.setCellAlign(Alignment.CENTER);
+        statusField.setShowHover(true);
+        statusField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String statusStr = record.getAttribute(OperationHistoryDataSource.Field.STATUS);
+                OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
+                switch (status) {
+                case SUCCESS: {
+                    return MSG.common_status_success();
+                }
+                case FAILURE: {
+                    return MSG.common_status_failed();
+                }
+                case INPROGRESS: {
+                    return MSG.common_status_inprogress();
+                }
+                case CANCELED: {
+                    return MSG.common_status_canceled();
+                }
+                }
+                return "unknown"; // should never get here
+            }
+        });
+        statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 OperationRequestStatus status = OperationRequestStatus.valueOf((String) o);
-                String icon = "";
-                switch (status) {
-                case INPROGRESS:
-                    break;
-                case SUCCESS:
-                    icon = "_ok";
-                    break;
-                case FAILURE:
-                    icon = "_failed";
-                    break;
-                case CANCELED:
-                    icon = "_cancel";
-                    break;
-                }
+                String icon = ImageManager.getOperationResultsIcon(status);
+                return Canvas.imgHTML(icon, 16, 16);
+            }
+        });
+        statusField.addRecordClickHandler(new RecordClickHandler() {
+            @Override
+            public void onRecordClick(RecordClickEvent event) {
+                Record record = event.getRecord();
+                String statusStr = record.getAttribute(OperationHistoryDataSource.Field.STATUS);
+                OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
+                if (status == OperationRequestStatus.FAILURE) {
+                    final Window winModal = new LocatableWindow(OperationHistoryView.this
+                        .extendLocatorId("statusDetailsWin"));
+                    winModal.setTitle(MSG.common_title_details());
+                    winModal.setOverflow(Overflow.VISIBLE);
+                    winModal.setShowMinimizeButton(false);
+                    winModal.setShowMaximizeButton(true);
+                    winModal.setIsModal(true);
+                    winModal.setShowModalMask(true);
+                    winModal.setAutoSize(true);
+                    winModal.setAutoCenter(true);
+                    winModal.setShowResizer(true);
+                    winModal.setCanDragResize(true);
+                    winModal.centerInPage();
+                    winModal.addCloseClickHandler(new CloseClickHandler() {
+                        @Override
+                        public void onCloseClick(CloseClientEvent event) {
+                            winModal.markForDestroy();
+                        }
+                    });
 
-                return Canvas.imgHTML("subsystems/control/Operation" + icon + "_16.png", 16, 16)
-                    + status.getDisplayName();
+                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(OperationHistoryView.this
+                        .extendLocatorId("statusDetailsPane"));
+                    htmlPane.setMargin(10);
+                    htmlPane.setDefaultWidth(500);
+                    htmlPane.setDefaultHeight(400);
+                    String errorMsg = record.getAttribute(OperationHistoryDataSource.Field.ERROR_MESSAGE);
+                    if (errorMsg == null) {
+                        errorMsg = MSG.common_status_failed();
+                    }
+                    htmlPane.setContents("<pre>" + errorMsg + "</pre>");
+                    winModal.addItem(htmlPane);
+                    winModal.show();
+                }
             }
         });
 
-        getListGrid().getField(OperationHistoryDataSource.Field.STARTED_TIME).setWidth(120);
+        ListGridField startedTimeField = new ListGridField(OperationHistoryDataSource.Field.STARTED_TIME, MSG
+            .dataSource_operationHistory_startedTime());
+        startedTimeField.setType(ListGridFieldType.DATE);
+        startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        startedTimeField.setAlign(Alignment.LEFT);
+        startedTimeField.setCellAlign(Alignment.LEFT);
+        startedTimeField.setWidth(10);
+        startedTimeField.setAutoFitWidth(true);
+        startedTimeField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
-        if (this.resource == null) {
-            getListGrid().getField(OperationHistoryDataSource.Field.RESOURCE).setWidth(300);
-            getListGrid().getField(OperationHistoryDataSource.Field.RESOURCE).setCellFormatter(new CellFormatter() {
+        final Resource resource = this.composite.getResource();
+
+        if (resource == null) { // if null, we aren't viewing op history for a single resource
+            ListGridField resourceField = new ListGridField(OperationHistoryDataSource.Field.RESOURCE, MSG
+                .common_title_resource());
+            resourceField.setAlign(Alignment.LEFT);
+            resourceField.setCellAlign(Alignment.LEFT);
+            resourceField.setWidth("*");
+            resourceField.setAutoFitWidth(true);
+            resourceField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
+            resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Resource res = (Resource) o;
                     return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
                 }
             });
+
+            setListGridFields(idField, opNameField, startedTimeField, subjectField, statusField, resourceField);
         } else {
-            getListGrid().hideField(OperationHistoryDataSource.Field.RESOURCE);
+            setListGridFields(idField, opNameField, startedTimeField, subjectField, statusField);
         }
 
         if (resource != null && composite.getResourcePermission().isControl()) {
@@ -138,18 +238,15 @@ public class OperationHistoryView extends TableSection {
             addExtraWidget(operationsButton);
         }
 
-
     }
 
     @Override
     public Canvas getDetailsView(int id) {
         OperationDetailsView detailsView = new OperationDetailsView(this.extendLocatorId("Details"));
-
         return detailsView;
     }
 
     public static OperationHistoryView getResourceHistoryView(String locatorId, ResourceComposite resource) {
-
         return new OperationHistoryView(locatorId, resource);
     }
 

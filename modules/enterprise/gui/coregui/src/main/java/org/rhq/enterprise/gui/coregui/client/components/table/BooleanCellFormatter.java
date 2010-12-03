@@ -11,9 +11,9 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
  * @author Ian Springer
  */
 public class BooleanCellFormatter implements CellFormatter {
-    private static String RED = ImageManager.getAvailabilityIcon(Boolean.FALSE);
-    private static String GREEN = ImageManager.getAvailabilityIcon(Boolean.TRUE);
-    private static String GREY = ImageManager.getAvailabilityIcon(null);
+    private static String RED = ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.FALSE));
+    private static String GREEN = ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.TRUE));
+    private static String GREY = ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null));
 
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
         String result;

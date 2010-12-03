@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class OperationHistoryView extends TableSection {
+public class OperationHistoryView extends TableSection<OperationHistoryDataSource> {
     public static final ViewName VIEW_ID = new ViewName("RecentOperations", MSG.common_title_recent_operations());
 
     private ResourceComposite composite;

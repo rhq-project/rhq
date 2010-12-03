@@ -161,24 +161,22 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public Subject updateSubject(Subject whoami, Subject subjectToModify) {
         // let a user change his own details
-        if (whoami.equals(subjectToModify)
-            || authorizationManager.getExplicitGlobalPermissions(whoami).contains(Permission.MANAGE_SECURITY)) {
-            if (subjectToModify.getFsystem() || (authorizationManager.isSystemSuperuser(subjectToModify))) {
-                if (!subjectToModify.getFactive()) {
-                    throw new PermissionException("You cannot disable user [" + subjectToModify.getName()
-                        + "] - it must always be active");
-                }
-            }
-        } else {
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(whoami);
+        if (!whoami.equals(subjectToModify) && !globalPermissions.contains(Permission.MANAGE_SECURITY)) {
             throw new PermissionException("You [" + whoami.getName() + "] do not have permission to update user ["
-                + subjectToModify.getName() + "]");
+                + subjectToModify.getName() + "].");
+        }
+        if (authorizationManager.isSystemSuperuser(subjectToModify) && !subjectToModify.getFactive()) {
+            throw new PermissionException("You cannot disable system user [" + subjectToModify.getName()
+                    + "] - it must always be active.");
         }
 
-        // Reset the roles and ldap roles according to the current settings as this method will not update them
-        // To update assinged roles see RoleManager
+        // Reset the roles, LDAP roles, and owned groups according to the current settings as this method will not
+        // update them. To update assigned roles, use the 3-param createSubject() or use RoleManagerLocal.
         Subject currentSubject = entityManager.find(Subject.class, subjectToModify.getId());
         subjectToModify.setRoles(currentSubject.getRoles());
         subjectToModify.setLdapRoles(currentSubject.getLdapRoles());
+        subjectToModify.setOwnedGroups(currentSubject.getOwnedGroups());
 
         return entityManager.merge(subjectToModify);
     }
@@ -308,6 +306,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         // we are ignoring roles - anything the caller gave us is thrown out
         subject.setRoles(null);
+        subject.setLdapRoles(null);
+        subject.setOwnedGroups(null);
         Configuration configuration = subject.getUserConfiguration();
         if (configuration != null) {
             configuration = entityManager.merge(configuration);

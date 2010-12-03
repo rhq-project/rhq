@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
@@ -63,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class OperationHistoryView extends TableSection {
+public class OperationHistoryView extends TableSection<OperationHistoryDataSource> {
     public static final ViewName VIEW_ID = new ViewName("RecentOperations", MSG.common_title_recent_operations());
 
     private ResourceComposite composite;
@@ -87,25 +86,15 @@ public class OperationHistoryView extends TableSection {
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField(OperationHistoryDataSource.Field.ID, MSG.common_title_id());
-        idField.setWidth(10);
 
         ListGridField opNameField = new ListGridField(OperationHistoryDataSource.Field.OPERATION_NAME, MSG
             .dataSource_operationHistory_operationName());
-        opNameField.setWidth(300);
-        opNameField.setAutoFitWidth(true);
-        opNameField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
 
         ListGridField subjectField = new ListGridField(OperationHistoryDataSource.Field.SUBJECT, MSG
             .common_title_user());
-        subjectField.setWidth(10);
-        subjectField.setAutoFitWidth(true);
-        subjectField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
         ListGridField statusField = new ListGridField(OperationHistoryDataSource.Field.STATUS, MSG
             .common_title_status());
-        statusField.setWidth(10);
-        statusField.setAutoFitWidth(true);
-        statusField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         statusField.setAlign(Alignment.CENTER);
         statusField.setCellAlign(Alignment.CENTER);
         statusField.setShowHover(true);
@@ -187,9 +176,6 @@ public class OperationHistoryView extends TableSection {
         startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
-        startedTimeField.setWidth(10);
-        startedTimeField.setAutoFitWidth(true);
-        startedTimeField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
         final Resource resource = this.composite.getResource();
 
@@ -198,9 +184,6 @@ public class OperationHistoryView extends TableSection {
                 .common_title_resource());
             resourceField.setAlign(Alignment.LEFT);
             resourceField.setCellAlign(Alignment.LEFT);
-            resourceField.setWidth("*");
-            resourceField.setAutoFitWidth(true);
-            resourceField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Resource res = (Resource) o;
@@ -208,8 +191,21 @@ public class OperationHistoryView extends TableSection {
                 }
             });
 
+            idField.setWidth(10);
+            opNameField.setWidth("25%");
+            subjectField.setWidth("25%");
+            statusField.setWidth(50);
+            startedTimeField.setWidth("25%");
+            resourceField.setWidth("25%");
+
             setListGridFields(idField, opNameField, startedTimeField, subjectField, statusField, resourceField);
         } else {
+            idField.setWidth(10);
+            opNameField.setWidth("34%");
+            subjectField.setWidth("33%");
+            statusField.setWidth(50);
+            startedTimeField.setWidth("33%");
+
             setListGridFields(idField, opNameField, startedTimeField, subjectField, statusField);
         }
 

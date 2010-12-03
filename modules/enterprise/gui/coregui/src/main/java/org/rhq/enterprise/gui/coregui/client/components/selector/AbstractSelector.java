@@ -524,14 +524,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     protected void updateButtonEnablement() {
-        addButton.setDisabled(!availableGrid.anySelected() || availableGrid.getDataAsRecordList().isEmpty());
-        removeButton.setDisabled(!assignedGrid.anySelected() || assignedGrid.getDataAsRecordList().isEmpty());
-        addAllButton.setDisabled(availableGrid.getDataAsRecordList().isEmpty());
-        removeAllButton.setDisabled(assignedGrid.getDataAsRecordList().isEmpty());
-    }
-
-    @Deprecated
-    protected void select(ListGridRecord[] records) {
+        addButton.setDisabled(!availableGrid.anySelected());
+        removeButton.setDisabled(!assignedGrid.anySelected());
+        addAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.availableGrid));
+        removeAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.assignedGrid));
     }
 
     @Deprecated
@@ -546,6 +542,18 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected String getSelectorKey() {
         return SELECTOR_KEY;
+    }
+
+    private static boolean containsAtLeastOneEnabledRecord(ListGrid grid) {
+        boolean result = false;
+        ListGridRecord[] assignedRecords = grid.getRecords();
+        for (ListGridRecord assignedRecord : assignedRecords) {
+            if (assignedRecord.getEnabled()) {
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 
 }

@@ -52,12 +52,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 
 /**
- * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role
- * role}.
+ * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role role}.
  *
  * @author Ian Springer
  */
-// TODO: i18n
 public class PermissionsEditor extends LocatableVStack {
 
     private static Messages MSG = CoreGUI.getMessages();
@@ -82,7 +80,8 @@ public class PermissionsEditor extends LocatableVStack {
         VLayout spacer = createVerticalSpacer(13);
         addMember(spacer);
 
-        Label globalPermissionsHeader = new Label("<h4>Global Permissions</h4>");
+        Label globalPermissionsHeader = new Label("<h4>" + MSG.view_adminRoles_permissions_globalPermissions()
+            + "</h4>");
         globalPermissionsHeader.setHeight(17);
         addMember(globalPermissionsHeader);
 
@@ -92,7 +91,8 @@ public class PermissionsEditor extends LocatableVStack {
         spacer = createVerticalSpacer(13);
         addMember(spacer);
 
-        Label resourcePermissionsHeader = new Label("<h4>Resource Permissions</h4>");
+        Label resourcePermissionsHeader = new Label("<h4>" + MSG.view_adminRoles_permissions_resourcePermissions()
+            + "</h4>");
         resourcePermissionsHeader.setHeight(17);
         addMember(resourcePermissionsHeader);
 
@@ -148,28 +148,32 @@ public class PermissionsEditor extends LocatableVStack {
 
         ListGridField iconField = createIconField();
 
-        ListGridField displayNameField = new ListGridField("displayName", "Name", 130);
+        ListGridField displayNameField = new ListGridField("displayName", MSG.common_title_name(), 130);
 
-        ListGridField descriptionField = new ListGridField("description", "Description");
+        ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
         descriptionField.setWrap(true);
 
-        final ListGridField authorizedField = createAuthorizedField("authorized", "Authorized?", "name", grid);
+        final ListGridField authorizedField = createAuthorizedField("authorized",
+            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid);
 
         grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
-        ListGridRecord record = createGlobalPermissionRecord("Manage Security", "global/Locked", Permission.MANAGE_SECURITY,
-            "can create, update, or delete users and roles (viewing is implied for everyone)");
+        ListGridRecord record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSecurity(),
+            "global/Locked", Permission.MANAGE_SECURITY,
+            MSG.view_adminRoles_permissions_permDesc_manageSecurity());
         records.add(record);
-        record = createGlobalPermissionRecord("Manage Inventory", "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY,
-            "has all Resource permissions, as described below, for all Resources; can create, update, and delete groups; " +
-            "and can import auto-discovered or manually discovered Resources");
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageInventory(),
+            "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY,
+            MSG.view_adminRoles_permissions_permDesc_manageInventory());
         records.add(record);
-        record = createGlobalPermissionRecord("Manage Settings", "subsystems/configure/Configure", Permission.MANAGE_SETTINGS,
-            "can modify the RHQ Server configuration and perform any Server-related functionality");
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSettings(),
+            "subsystems/configure/Configure", Permission.MANAGE_SETTINGS,
+            MSG.view_adminRoles_permissions_permDesc_manageSettings());
         records.add(record);
-        record = createGlobalPermissionRecord("Manage Bundles", "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
-            "can create, update, or delete provisioning bundles (viewing is implied for everyone)");
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundles(),
+            "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
+            MSG.view_adminRoles_permissions_permDesc_manageBundles());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
@@ -183,79 +187,90 @@ public class PermissionsEditor extends LocatableVStack {
 
         ListGridField iconField = createIconField();
 
-        ListGridField displayNameField = new ListGridField("displayName", "Name", 130);
+        ListGridField displayNameField = new ListGridField("displayName", MSG.common_title_name(), 130);
 
-        ListGridField descriptionField = new ListGridField("description", "Description");
+        ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
         descriptionField.setWrap(true);
 
-        ListGridField readField = createAuthorizedField("readAuthorized", "Read?", "readName", grid);
-        ListGridField writeField = createAuthorizedField("writeAuthorized", "Write?", "writeName", grid);
+        ListGridField readField = createAuthorizedField("readAuthorized", MSG.view_adminRoles_permissions_isRead(),
+            "readName", grid);
+        ListGridField writeField = createAuthorizedField("writeAuthorized", MSG.view_adminRoles_permissions_isWrite(),
+            "writeName", grid);
 
         grid.setFields(iconField, displayNameField, readField, writeField, descriptionField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
-        ListGridRecord record = createResourcePermissionRecord("Inventory", "subsystems/inventory/Inventory",
+        ListGridRecord record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_inventory(),
+            "subsystems/inventory/Inventory",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view Resource properties (name, description, version, etc.), connection settings, and connection settings history",
+            MSG.view_adminRoles_permissions_permReadDesc_inventory(),
             Permission.MODIFY_RESOURCE,
-            "update Resource name, version, description, and connection settings; delete connection settings history items");
+            MSG.view_adminRoles_permissions_permWriteDesc_inventory());
         records.add(record);
 
-        record = createResourcePermissionRecord("Manage Measurements", "subsystems/monitor/Monitor",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageMeasurements(),
+            "subsystems/monitor/Monitor",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view metric data and collection schedules",
+            MSG.view_adminRoles_permissions_permReadDesc_manageMeasurements(),
             Permission.MANAGE_MEASUREMENTS,
-            "update metric collection schedules");
+            MSG.view_adminRoles_permissions_permWriteDesc_manageMeasurements());
         records.add(record);
 
-        record = createResourcePermissionRecord("Manage Alerts", "subsystems/alert/Alerts",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageAlerts(),
+            "subsystems/alert/Alerts",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view alert definitions and alert history",
+            MSG.view_adminRoles_permissions_permReadDesc_manageAlerts(),
             Permission.MANAGE_ALERTS,
-            "create, update, and delete alert definitions; acknowledge and delete alert history items");
+            MSG.view_adminRoles_permissions_permWriteDesc_manageAlerts());
         records.add(record);
 
-        record = createResourcePermissionRecord("Configure", "subsystems/configure/Configure",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_configure(),
+            "subsystems/configure/Configure",
             Permission.CONFIGURE_READ,
-            "view Resource configuration and Resource configuration revision history",
+            MSG.view_adminRoles_permissions_permReadDesc_configure(),
             Permission.CONFIGURE_WRITE,
-            "update Resource configuration; delete Resource configuration revision history items");
+            MSG.view_adminRoles_permissions_permWriteDesc_configure());
         records.add(record);
 
-        record = createResourcePermissionRecord("Control", "subsystems/control/Operation",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_control(),
+            "subsystems/control/Operation",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view available operations and operation execution history",
+            MSG.view_adminRoles_permissions_permReadDesc_control(),
             Permission.CONTROL,
-            "execute operations; delete operation execution history items");
+            MSG.view_adminRoles_permissions_permWriteDesc_control());
         records.add(record);
 
-        record = createResourcePermissionRecord("Manage Events", "subsystems/event/Events",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageEvents(),
+            "subsystems/event/Events",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view events",
+            MSG.view_adminRoles_permissions_permReadDesc_manageEvents(),
             Permission.MANAGE_EVENTS,
-            "delete events");
+            MSG.view_adminRoles_permissions_permWriteDesc_manageEvents());
         records.add(record);
 
-        record = createResourcePermissionRecord("Manage Content", "subsystems/content/Content",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageContent(),
+            "subsystems/content/Content",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view installed and available packages; view package installation history",
+            MSG.view_adminRoles_permissions_permReadDesc_manageContent(),
             Permission.MANAGE_CONTENT,
-            "subscribe to content sources; install and uninstall packages");
+            MSG.view_adminRoles_permissions_permWriteDesc_manageContent());
         records.add(record);
 
-        record = createResourcePermissionRecord("Create Child Resources", "subsystems/inventory/Inventory",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_createChildResources(),
+            "subsystems/inventory/Inventory",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view child creation history",
+            MSG.view_adminRoles_permissions_permReadDesc_createChildResources(),
             Permission.CREATE_CHILD_RESOURCES,
-            "create new child Resources (for child Resources of types that are creatable)");
+            MSG.view_adminRoles_permissions_permWriteDesc_createChildResources());
         records.add(record);
 
-        record = createResourcePermissionRecord("Delete Child Resources", "subsystems/inventory/Inventory",
+        record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_deleteChildResources(),
+            "subsystems/inventory/Inventory",
             Permission.VIEW_RESOURCE,
-            "(IMPLIED) view child deletion history",
+            MSG.view_adminRoles_permissions_permReadDesc_deleteChildResources(),
             Permission.DELETE_RESOURCE,
-            "delete child Resources (for child Resources of types that are deletable)");
+            MSG.view_adminRoles_permissions_permWriteDesc_deleteChildResources());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
@@ -316,8 +331,9 @@ public class PermissionsEditor extends LocatableVStack {
                         event.getItem().setValue(true);
                         event.getItem().disable();
                         String permissionDisplayName = record.getAttribute("displayName");
-                        Message message = new Message("Read access for the " + permissionDisplayName
-                            + " permission is implied and cannot be disabled.", Message.Severity.Warning);
+                        Message message = new Message(
+                            MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName),
+                            Message.Severity.Warning);
                         CoreGUI.getMessageCenter().notify(message);                                                    
                     } else {
                         updatePermissions(authorized, permission);
@@ -387,7 +403,8 @@ public class PermissionsEditor extends LocatableVStack {
         record.setAttribute("icon", icon);
         record.setAttribute("readName", readPermission.name());
         record.setAttribute("readAuthorized", this.selectedPermissions.contains(readPermission));
-        record.setAttribute("description", "<b>Read:</b> " + readDescription + "<br/><b>Write:</b> " + writeDescription);
+        record.setAttribute("description", "<b>" + MSG.view_adminRoles_permissions_read() + "</b> " + readDescription
+            + "<br/><b>" + MSG.view_adminRoles_permissions_write() + "</b> " + writeDescription);
         record.setAttribute("writeName", writePermission.name());
         record.setAttribute("writeAuthorized", this.selectedPermissions.contains(writePermission));
 

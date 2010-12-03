@@ -303,10 +303,12 @@ public class PermissionsEditor extends LocatableVStack {
     private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid) {
         final ListGridField authorizedField = new ListGridField(name, title, 65);
 
-        // Show yes/no rather than true/false.
-        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        valueMap.put(Boolean.TRUE.toString(), MSG.common_val_yes_lower());
-        valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());        
+        // Show images rather than true/false.
+        authorizedField.setType(ListGridFieldType.IMAGE);
+        authorizedField.setImageSize(11);
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
+        valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
+        valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
         authorizedField.setValueMap(valueMap);
 
         if (!this.isReadOnly) {

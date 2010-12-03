@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
@@ -152,10 +152,10 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID, ImageManager
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
             .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
             public Canvas createView() {
-                return new PlatformPortletView(extendLocatorId(PlatformPortletView.VIEW_ID.getName()));
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
             }
         });
 

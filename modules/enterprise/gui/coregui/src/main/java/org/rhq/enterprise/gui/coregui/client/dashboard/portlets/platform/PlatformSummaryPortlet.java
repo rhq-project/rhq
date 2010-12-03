@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 /**
  * @author Greg Hinkle
  */
-public class PlatformPortletView extends LocatableListGrid implements Portlet {
+public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
     public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
@@ -68,7 +68,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
     public static final String KEY = MSG.view_portlet_platform_title();
 
-    public PlatformPortletView(String locatorId) {
+    public PlatformSummaryPortlet(String locatorId) {
         super(locatorId);
 
         setWidth100();
@@ -340,7 +340,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new PlatformPortletView(locatorId);
+            return new PlatformSummaryPortlet(locatorId);
         }
     }
 }

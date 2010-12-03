@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -163,9 +162,17 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         tabSet.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
                 NamedTab selectedTab = tabSet.getTabByTitle(tabSelectedEvent.getTab().getTitle());
-                Log.debug("onTabSelected(" + selectedTab.getTitle() + ")");
-                History.newItem("Dashboard/" + selectedTab.getName(), false);
-                selectedDashboardView = (DashboardView) tabSelectedEvent.getTab().getPane();
+
+                /*
+                 * do not record history item if initially loading the DashboardsView.  if the selectedDashboardView is
+                 * null, suppression will prevent redirection from #Dashboard to #Dashboard/<id>, which would require
+                 * the user to hit the back button twice to return to the previous page.
+                 */
+                if (selectedDashboardView != null) {
+                    History.newItem("Dashboard/" + selectedTab.getName(), false);
+                }
+
+                selectedDashboardView = (DashboardView) selectedTab.getPane();
                 selectedDashboard = selectedDashboardView.getDashboard();
                 selectedDashboardView.setEditMode(editMode);
             }

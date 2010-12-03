@@ -68,9 +68,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     private EntityContext entityContext;
 
-    private static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
-    private static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
-    private static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
+    public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
+    public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
+    public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -151,13 +151,12 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         statusField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String ackTime = listGridRecord.getAttribute("acknowledgeTime");
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
                 if (ackSubject == null) {
                     return MSG.view_alerts_field_ack_status_empty();
                 } else {
-                    String formattedTime = TimestampCellFormatter.DATE_TIME_FORMAT.format(new Date(Long
-                        .parseLong(ackTime)));
+                    Date ackTime = listGridRecord.getAttributeAsDate("acknowledgeTime");
+                    String formattedTime = TimestampCellFormatter.format(ackTime);
                     return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
                 }
             }
@@ -230,8 +229,10 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     public static ListGridRecord convert(Alert from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
-        record.setAttribute("ctime", from.getCtime());
-        record.setAttribute("acknowledgeTime", from.getAcknowledgeTime());
+        record.setAttribute("ctime", new Date(from.getCtime()));
+        if (from.getAcknowledgeTime() != null && from.getAcknowledgeTime().longValue() > 0) {
+            record.setAttribute("acknowledgeTime", new Date(from.getAcknowledgeTime().longValue()));
+        }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());

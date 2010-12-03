@@ -113,6 +113,13 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowFilterForm(false); //disable filter form for portlet
     }
 
+    @Override
+    public void showDetails(int id) {
+        // the way our superclass AlertDetailsView is impl'ed, we can't view details from portlet
+        // so disallow showing details
+        return;
+    }
+
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         this.storedPortlet = storedPortlet;
         //Operation range property - retrieve existing value
@@ -631,7 +638,7 @@ class AlertResourceSelectorRegion {
                             }
                         }
                         //simulate 'add' button push.
-                        selector.addSelectedRows();                        
+                        selector.addSelectedRows();
                     }
                 }
             });

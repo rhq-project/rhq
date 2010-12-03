@@ -51,9 +51,8 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
-
-    // TODO: We need a 24x24 version of the Role icon.
-    private static final String HEADER_ICON = "global/Role_16.png";
+    
+    private static final String HEADER_ICON = "global/Role_24.png";
 
     private boolean hasManageSecurity;
 

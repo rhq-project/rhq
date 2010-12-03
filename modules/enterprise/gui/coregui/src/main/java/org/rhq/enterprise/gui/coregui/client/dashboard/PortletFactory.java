@@ -33,7 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.Re
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
@@ -48,7 +48,7 @@ public class PortletFactory {
     static {
         registeredPortlets = new HashMap<String, PortletViewFactory>();
 
-        registeredPortlets.put(InventorySummaryView.KEY, InventorySummaryView.Factory.INSTANCE);
+        registeredPortlets.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
         registeredPortlets.put(RecentlyAddedView.KEY, RecentlyAddedView.Factory.INSTANCE);
         registeredPortlets.put(PlatformPortletView.KEY, PlatformPortletView.Factory.INSTANCE);
 

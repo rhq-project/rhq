@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.Re
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
@@ -223,7 +223,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         DashboardPortlet summary = new DashboardPortlet(MSG.view_dashboardsManager_inventory_title(),
-            InventorySummaryView.KEY, 230);
+            InventorySummaryPortlet.KEY, 230);
         dashboard.addPortlet(summary, 0, 0);
 
         DashboardPortlet tagCloud = new DashboardPortlet(MSG.view_dashboardsManager_tagcloud_title(),

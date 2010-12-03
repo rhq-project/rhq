@@ -27,7 +27,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -88,10 +87,10 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
-        idField.setWidth("10");
+        idField.setWidth(10);
 
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-        nameField.setWidth("10%");
+        nameField.setWidth("40%");
 
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
@@ -102,22 +101,16 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         });
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        descriptionField.setWidth("10%");
+        descriptionField.setWidth("30%");
 
         ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-        typeNameField.setWidth("1");
-        typeNameField.setAutoFitWidth(true);
-        typeNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        typeNameField.setWidth("10%");
 
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-        pluginNameField.setWidth("1");
-        pluginNameField.setAutoFitWidth(true);
-        pluginNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        pluginNameField.setWidth("10%");
 
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryField.setWidth("1");
-        categoryField.setAutoFitWidth(true);
-        categoryField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        categoryField.setWidth(70);
         categoryField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String categoryName = (String) value;

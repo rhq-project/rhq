@@ -33,7 +33,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -66,15 +65,11 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         // add two more columns
         ListGridField parentIdField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
         parentIdField.setType(ListGridFieldType.LINK);
-        parentIdField.setWidth("10%");
-        parentIdField.setAutoFitWidth(true);
-        parentIdField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        parentIdField.setWidth(100);
         fields.add(parentIdField);
 
         ListGridField readOnlyField = new ListGridField(FIELD_READONLY, MSG.view_alerts_field_protected());
-        readOnlyField.setWidth("5%");
-        readOnlyField.setAutoFitWidth(true);
-        readOnlyField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        readOnlyField.setWidth(60);
         readOnlyField.setAlign(Alignment.CENTER);
         fields.add(readOnlyField);
 

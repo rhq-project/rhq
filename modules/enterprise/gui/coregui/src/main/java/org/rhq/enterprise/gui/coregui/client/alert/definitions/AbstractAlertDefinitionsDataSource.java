@@ -30,7 +30,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -100,16 +99,12 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         ListGridField enabledField = new ListGridField(FIELD_ENABLED, MSG.view_alerts_field_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
-        enabledField.setWidth("5%");
-        enabledField.setAutoFitWidth(true);
-        enabledField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        enabledField.setWidth(60);
         fields.add(enabledField);
 
         ListGridField priorityField = new ListGridField(FIELD_PRIORITY, MSG.view_alerts_field_priority());
         priorityField.setType(ListGridFieldType.IMAGE);
-        priorityField.setWidth("5%");
-        priorityField.setAutoFitWidth(true);
-        priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        priorityField.setWidth(60);
         priorityField.setAlign(Alignment.CENTER);
         priorityField.setShowHover(true);
         priorityField.setHoverCustomizer(new HoverCustomizer() {

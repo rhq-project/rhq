@@ -34,7 +34,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -103,29 +102,17 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
             .view_alerts_field_created_time());
-        ctimeField.setWidth("15%");
-        ctimeField.setAutoFitWidth(true);
-        ctimeField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         ctimeField.setCellFormatter(new TimestampCellFormatter());
         fields.add(ctimeField);
 
         ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
-        nameField.setWidth("25%");
-        nameField.setAutoFitWidth(true);
-        nameField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
-        conditionField.setWidth("30%");
-        conditionField.setAutoFitWidth(true);
-        conditionField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
         priorityField.setType(ListGridFieldType.IMAGE);
-        priorityField.setWidth("5%");
-        priorityField.setAutoFitWidth(true);
-        priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         priorityField.setAlign(Alignment.CENTER);
         priorityField.setShowHover(true);
         priorityField.setHoverCustomizer(new HoverCustomizer() {
@@ -146,9 +133,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         fields.add(priorityField);
 
         ListGridField statusField = new ListGridField("status", MSG.common_title_status());
-        statusField.setWidth("15%");
-        statusField.setAutoFitWidth(true);
-        statusField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
@@ -166,9 +150,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         if (this.entityContext.type != EntityContext.Type.Resource) {
             // TODO need to disambiguate this
             ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource());
-            resourceNameField.setWidth("10%");
-            resourceNameField.setAutoFitWidth(true);
-            resourceNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
@@ -176,6 +157,19 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                 }
             });
             fields.add(resourceNameField);
+
+            ctimeField.setWidth(100);
+            nameField.setWidth("25%");
+            conditionField.setWidth("40%");
+            priorityField.setWidth(50);
+            statusField.setWidth("15%");
+            resourceNameField.setWidth("20%");
+        } else {
+            ctimeField.setWidth(100);
+            nameField.setWidth("35%");
+            conditionField.setWidth("40%");
+            priorityField.setWidth(50);
+            statusField.setWidth("25%");
         }
 
         return fields;

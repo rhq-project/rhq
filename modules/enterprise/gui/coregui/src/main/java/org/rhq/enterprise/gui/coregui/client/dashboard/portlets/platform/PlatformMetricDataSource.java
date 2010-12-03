@@ -35,9 +35,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasour
 public class PlatformMetricDataSource extends ResourceDatasource {
     private static final Messages MSG = CoreGUI.getMessages();
 
-    PlatformPortletView view;
+    PlatformSummaryPortlet view;
 
-    public PlatformMetricDataSource(PlatformPortletView view) {
+    public PlatformMetricDataSource(PlatformSummaryPortlet view) {
         super();
         this.view = view;
 

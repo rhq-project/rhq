@@ -87,6 +87,10 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return INSTANCE;
     }
 
+    public static boolean isSystemSubjectId(int subjectId) {
+        return (subjectId == ID_OVERLORD || subjectId == ID_RHQADMIN);
+    }
+
     public UsersDataSource() {
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);

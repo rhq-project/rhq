@@ -83,14 +83,11 @@ public class UsersView extends TableSection<UsersDataSource> {
     private void fetchManageSecurityPermissionAsync() {
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
             new AsyncCallback<Set<Permission>>() {
-
-                @Override
                 public void onSuccess(Set<Permission> result) {
                     hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
                     refresh();
                 }
 
-                @Override
                 public void onFailure(Throwable caught) {
                     hasManageSecurity = false;
                     CoreGUI.getMessageCenter().notify(
@@ -164,8 +161,8 @@ public class UsersView extends TableSection<UsersDataSource> {
                 }
 
                 for (ListGridRecord record : selection) {
-                    int id = record.getAttributeAsInt(UsersDataSource.Field.ID);
-                    if (id == UsersDataSource.ID_OVERLORD || id == UsersDataSource.ID_RHQADMIN) {
+                    int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
+                    if (UsersDataSource.isSystemSubjectId(subjectId)) {
                         // The superuser and rhqadmin users cannot be deleted.
                         return false;
                     }

@@ -100,8 +100,8 @@ public class RecentlyAddedResourceDS extends DataSource {
         long ctime = -1;
         int maxItems = -1;
         //retrieve current portlet display settings
-        if ((this.portlet != null) && (this.portlet instanceof RecentlyAddedView)) {
-            RecentlyAddedView recentAdditionsPortlet = (RecentlyAddedView) this.portlet;
+        if ((this.portlet != null) && (this.portlet instanceof RecentlyAddedResourcesPortlet)) {
+            RecentlyAddedResourcesPortlet recentAdditionsPortlet = (RecentlyAddedResourcesPortlet) this.portlet;
             if (recentAdditionsPortlet != null) {
                 if (getMaximumRecentlyAddedToDisplay() > 0) {
                     maxItems = getMaximumRecentlyAddedToDisplay();

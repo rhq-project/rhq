@@ -71,7 +71,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public static final int ID_SUPERUSER = 1;
-    public static final int ID_ALL_RESOURCES = 2;
 
     private static RolesDataSource INSTANCE;
 
@@ -85,7 +84,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public static boolean isSystemRoleId(int roleId) {
-        return (roleId == ID_SUPERUSER || roleId == ID_ALL_RESOURCES);
+        return (roleId == ID_SUPERUSER);
     }
 
     public RolesDataSource() {
@@ -94,6 +93,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         addFields(fields);
     }
 
+    // TODO: i18n field titles
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
@@ -115,8 +115,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         fields.add(resourceGroupsField);
 
         DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
-        // TODO (ips): add this back?
-        //fields.add(permissionsField);
+        fields.add(permissionsField);
 
         DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
         fields.add(subjectsField);

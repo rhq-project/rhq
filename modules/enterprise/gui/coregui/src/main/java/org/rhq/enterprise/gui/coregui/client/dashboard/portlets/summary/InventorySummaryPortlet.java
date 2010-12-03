@@ -47,14 +47,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-public class InventorySummaryView extends LocatableVLayout implements AutoRefreshPortlet {
+public class InventorySummaryPortlet extends LocatableVLayout implements AutoRefreshPortlet {
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
     public static final String KEY = MSG.common_title_summary_counts();
     private Timer reloader;
 
-    public InventorySummaryView(String locatorId) {
+    public InventorySummaryPortlet(String locatorId) {
         super(locatorId);
 
         loadInventoryViewDiata();
@@ -164,7 +164,7 @@ public class InventorySummaryView extends LocatableVLayout implements AutoRefres
 
         public final Portlet getInstance(String locatorId) {
             // return GWT.create(InventorySummaryView.class);
-            return new InventorySummaryView(locatorId);
+            return new InventorySummaryPortlet(locatorId);
         }
     }
 

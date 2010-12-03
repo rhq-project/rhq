@@ -131,8 +131,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         tabSet.setWidth100();
         tabSet.setHeight100();
 
-        tabSet.setCanCloseTabs(true);
-
         editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
             .common_title_edit_mode());
         editButton.setAutoFit(true);
@@ -191,6 +189,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
         }
 
+        updateFirstTabCanCloseState("update dashboards");
+
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
                 tabCloseClickEvent.cancel();
@@ -203,6 +203,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                                 tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
                                 History.newItem(VIEW_ID.getName());
+
+                                updateFirstTabCanCloseState("close handler");
                             }
                         }
                     });
@@ -210,7 +212,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         });
 
         addMember(tabSet);
-
     }
 
     protected Dashboard getDefaultDashboard() {
@@ -310,8 +311,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 tabSet.selectTab(tab);
                 editMode = true;
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
-                //dashboardView.setEditMode(editMode);
 
+                updateFirstTabCanCloseState("store dashboard");
             }
         });
     }
@@ -350,6 +351,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
         }
 
+        updateFirstTabCanCloseState("render view");
+
         tabSet.selectTab(selectedTab);
     }
 
@@ -360,6 +363,14 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     @Override
     public boolean isInitialized() {
         return initialized;
+    }
+
+    // must be called when the tabset is first loaded (onInit), on each subsequent load, and whenever it changes
+    public void updateFirstTabCanCloseState(String comingFrom) {
+        // do not allow closing if there is only one dashboard tab remaining
+        boolean canClose = tabSet.getTabs().length > 1;
+        NamedTab firstTab = tabSet.getTabs()[0];
+        firstTab.setCanClose(canClose);
     }
 
 }

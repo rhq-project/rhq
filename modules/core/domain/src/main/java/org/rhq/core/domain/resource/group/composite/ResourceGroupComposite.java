@@ -192,14 +192,14 @@ public class ResourceGroupComposite implements Serializable {
         StringBuilder results = new StringBuilder();
         results.append("<table width=\"120px\"><tr>");
         if (up == 0 && down == 0) {
-            results.append(getColumn(false, "<img src=\"" + "subsystems/availability/availability_grey_16.png"
-                + "\" /> 0"));
+            results.append(getColumn(false, "<img src=\""
+                + "/coregui/images/subsystems/availability/availability_grey_16.png" + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
         } else {
             if (up > 0) {
-                results.append(getColumn(false, " <img src=\"" + "subsystems/availability/availability_green_16.png"
-                    + "\" />", up));
+                results.append(getColumn(false, " <img src=\""
+                    + "/coregui/images/subsystems/availability/availability_green_16.png" + "\" />", up));
             }
 
             if (up > 0 && down > 0) {
@@ -207,11 +207,11 @@ public class ResourceGroupComposite implements Serializable {
             }
 
             if (down > 0) {
-                results.append(getColumn(false, " <img src=\"" + "subsystems/availability/availability_red_16.png"
-                    + "\" />", down));
+                results.append(getColumn(false, " <img src=\""
+                    + "/coregui/images/subsystems/availability/availability_red_16.png" + "\" />", down));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+                    "&nbsp;&nbsp;<img src=\"/coregui/images/blank.png\" width=\"16px\" height=\"16px\" />"));
             }
         }
         results.append("</tr></table>");

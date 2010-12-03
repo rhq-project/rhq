@@ -145,14 +145,6 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return "resource";
     }
 
-    /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.
-     */
-    public void addAvailableGridSelectionsToAssignedGrid() {
-        assignedGrid.transferSelectedData(availableGrid);
-        select(assignedGrid.getSelection());
-        updateButtonEnablement();
-    }
-
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
     //  String search = (String) availableFilterForm.getValue("search");
     //  String type = availableFilterForm.getValueAsString("type");

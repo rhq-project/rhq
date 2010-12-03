@@ -48,6 +48,7 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
@@ -69,7 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Greg Hinkle
  */
-public class DashboardsView extends LocatableVLayout implements BookmarkableView {
+public class DashboardsView extends LocatableVLayout implements BookmarkableView, InitializableView {
 
     public static final ViewName VIEW_ID = new ViewName("Dashboard", MSG.view_dashboards_title());
 
@@ -90,6 +91,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
+    private boolean initialized = false;
+
     public DashboardsView(String locatorId) {
         super(locatorId);
         setOverflow(Overflow.AUTO);
@@ -108,6 +111,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(List<Dashboard> result) {
+                initialized = true;
                 if (result.isEmpty()) {
                     result.add(getDefaultDashboard());
                 }
@@ -159,6 +163,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         tabSet.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
                 NamedTab selectedTab = tabSet.getTabByTitle(tabSelectedEvent.getTab().getTitle());
+                Log.debug("onTabSelected(" + selectedTab.getTitle() + ")");
                 History.newItem("Dashboard/" + selectedTab.getName(), false);
                 selectedDashboardView = (DashboardView) tabSelectedEvent.getTab().getPane();
                 selectedDashboard = selectedDashboardView.getDashboard();
@@ -181,15 +186,16 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
+                tabCloseClickEvent.cancel();
                 final DashboardView dashboardView = (DashboardView) tabCloseClickEvent.getTab().getPane();
                 SC.ask(MSG.view_dashboards_confirm1() + " [" + tabCloseClickEvent.getTab().getTitle() + "]?",
                     new BooleanCallback() {
-                        public void execute(Boolean aBoolean) {
-                            if (aBoolean) {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                dashboardsByName.remove(tabCloseClickEvent.getTab().getTitle());
+                                tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
                                 History.newItem(VIEW_ID.getName());
-                            } else {
-                                tabCloseClickEvent.cancel();
                             }
                         }
                     });
@@ -284,6 +290,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(Dashboard result) {
+                dashboardsByName.put(result.getName(), result); // update map so name can not be reused
                 DashboardView dashboardView = new DashboardView(extendLocatorId(result.getName()), DashboardsView.this,
                     result);
                 String tabName = String.valueOf(result.getId());
@@ -310,42 +317,42 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     public void renderView(ViewPath viewPath) {
-        //added to avoid NPE in gwt debug window. 
-        if (tabSet != null) {
-            NamedTab[] tabs = tabSet.getTabs();
+        NamedTab[] tabs = tabSet.getTabs();
 
-            // make sure we have at least a default dashboard tab
-            if (0 == tabs.length) {
-                List<Dashboard> defaultTabs = new ArrayList<Dashboard>(1);
-                defaultTabs.add(getDefaultDashboard());
-                updateDashboards(defaultTabs);
-                tabs = tabSet.getTabs();
-            }
+        // make sure we have at least a default dashboard tab
+        if (0 == tabs.length) {
+            List<Dashboard> defaultTabs = new ArrayList<Dashboard>(1);
+            defaultTabs.add(getDefaultDashboard());
+            updateDashboards(defaultTabs);
+            tabs = tabSet.getTabs();
+        }
 
-            // if nothing selected or pathtab does not exist, default to the first tab
-            NamedTab selectedTab = tabs[0];
-            selectedTabName = selectedTab.getName();
+        // if nothing selected or pathtab does not exist, default to the first tab
+        NamedTab selectedTab = tabs[0];
+        selectedTabName = selectedTab.getName();
 
-            if (!viewPath.isEnd()) {
-                String pathTabName = viewPath.getCurrent().getPath();
+        if (!viewPath.isEnd()) {
+            String pathTabName = viewPath.getCurrent().getPath();
 
-                for (NamedTab tab : tabSet.getTabs()) {
-                    if (tab.getName().equals(pathTabName)) {
-                        selectedTab = tab;
-                        selectedTabName = pathTabName;
-                        break;
-                    }
+            for (NamedTab tab : tabSet.getTabs()) {
+                if (tab.getName().equals(pathTabName)) {
+                    selectedTab = tab;
+                    selectedTabName = pathTabName;
+                    break;
                 }
             }
-
-            tabSet.selectTab(selectedTab);
-        } else {
-            Log.debug("While rendering DashboardsView, tabSet is null.");
         }
+
+        tabSet.selectTab(selectedTab);
     }
 
     public Dashboard getDashboard() {
         return selectedDashboard;
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return initialized;
     }
 
 }

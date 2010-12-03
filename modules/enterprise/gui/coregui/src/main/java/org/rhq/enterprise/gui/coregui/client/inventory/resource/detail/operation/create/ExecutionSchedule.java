@@ -24,10 +24,15 @@ import java.util.HashSet;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
 /**
  * @author Greg Hinkle
  */
 public class ExecutionSchedule implements Serializable {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public enum Start {
         Immediately, Future
@@ -166,46 +171,55 @@ public class ExecutionSchedule implements Serializable {
         DateTimeFormat dateFormat = DateTimeFormat.getMediumDateFormat();
         DateTimeFormat timeFormat = DateTimeFormat.getMediumTimeFormat();
 
-
-        String message = "Will execute";
+        String message;
         switch (start) {
 
             case Immediately:
-                message += " immediately";
+                message = MSG.view_operationCreateWizard_executionSchedule_willExecuteOnce(
+                    MSG.view_operationCreateWizard_executionSchedule_immediately());
                 break;
+
             case Future:
-
                 if (recurr == Recurr.Once) {
-                    message += " once at " + onceDateTime;
-
+                    message = MSG.view_operationCreateWizard_executionSchedule_willExecuteOnce(
+                    MSG.view_operationCreateWizard_executionSchedule_onceAtGivenTime(onceDateTime.toString()));
                 } else {
+                    String recurrenceMessage;
                     switch (recurr) {
                         case EveryNMinutes:
-                            message += " every " + minuteInterval + " minutes";
+                            recurrenceMessage = MSG.view_operationCreateWizard_executionSchedule_everyNMinutes(minuteInterval.toString());
                             break;
                         case Hourly:
-                            message += " every hour on the " + suffix(minuteInHour) + " minute";
+                            recurrenceMessage = MSG.view_operationCreateWizard_executionSchedule_everyHourOnNthMinute(suffix(minuteInHour));
                             break;
                         case Daily:
-                            message += " every day at " + timeFormat.format(timeOfDay);
+                            recurrenceMessage = MSG.view_operationCreateWizard_executionSchedule_everyDayAtGivenTime(timeFormat.format(timeOfDay));
                             break;
                         case Weekly:
-                            message += " every week on " + daysOfWeek.toString() + " at " + timeFormat.format(timeOfDay);
+                            recurrenceMessage = MSG.view_operationCreateWizard_executionSchedule_everyWeekOnGivenDayAtGivenTime(daysOfWeek.toString(), timeFormat.format(timeOfDay));
                             break;
                         case Monthly:
-                            message += " every month on the " + suffix(dayOfMonth) + " day at " + timeFormat.format(timeOfDay);
+                            recurrenceMessage = MSG.view_operationCreateWizard_executionSchedule_everyMonthOnNthDayAtGivenTime(suffix(dayOfMonth), timeFormat.format(timeOfDay));
                             break;
+                        default:
+                            recurrenceMessage = "";
                     }
 
-                    message += ", starting on " + dateFormat.format(startDate);
                     if (endDate != null) {
-                        message += " and ending on " + dateFormat.format(endDate);
+                        message = MSG.view_operationCreateWizard_executionSchedule_willExecuteRecurringWithEnd(
+                            recurrenceMessage, dateFormat.format(startDate), dateFormat.format(endDate));
+                    } else {
+                        message = MSG.view_operationCreateWizard_executionSchedule_willExecuteRecurring(
+                            recurrenceMessage, dateFormat.format(startDate));
                     }
-
                 }
                 break;
+
+            default:
+                message = "";
+
         }
-        message += ".";
+
         return message;
     }
 
@@ -213,21 +227,18 @@ public class ExecutionSchedule implements Serializable {
     public String getCronString() {
 
         /* Cron fields
-        1. Seconds
-        2. Minutes
-        3. Hours
-        4. Day-of-Month
-        5. Month
-        6. Day-of-Week
-        7. Year (optional field)
+             1. Seconds
+             2. Minutes
+             3. Hours
+             4. Day-of-Month
+             5. Month
+             6. Day-of-Week
+             7. Year (optional field)
         */
 
         String cseconds, cminutes = null, chours = null, cdayOfMonth = null, cmonth = null, cdayOfWeek = null;
 
         cseconds = "0";
-
-        DateTimeFormat dateFormat = DateTimeFormat.getMediumDateFormat();
-        DateTimeFormat timeFormat = DateTimeFormat.getMediumTimeFormat();
 
         switch (start) {
 
@@ -277,18 +288,24 @@ public class ExecutionSchedule implements Serializable {
 
     }
 
-    public String suffix(int num) {
-        int last = num % 10;
+    public static String suffix(int number) {
+        String result;
+        String numberAsString = String.valueOf(number);
+        int last = number % 10;
         switch (last) {
             case 1:
-                return num + "st";
+                result = MSG.common_val_n1st(numberAsString);
+                break;
             case 2:
-                return num + "nd";
+                result = MSG.common_val_n2nd(numberAsString);
+                break;
             case 3:
-                return num + "rd";
+                result = MSG.common_val_n3rd(numberAsString);
+                break;
             default:
-                return num + "th";
+                result = MSG.common_val_nth(numberAsString);
         }
+        return result;
     }
 
 }

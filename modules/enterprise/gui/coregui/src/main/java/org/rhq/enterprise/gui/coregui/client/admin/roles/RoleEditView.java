@@ -60,9 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implements BookmarkableView {
-
-    // TODO: Get 24x24 Role icon.
-    private static final String HEADER_ICON = "global/Role_16.png";
+    
+    private static final String HEADER_ICON = "global/Role_24.png";
 
     private LocatableTab permissionsTab;
     private PermissionsEditor permissionsEditor;

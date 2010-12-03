@@ -444,6 +444,9 @@ public class Subject implements Serializable {
     }
 
     public java.util.Set<Role> getLdapRoles() {
+        if (this.ldapRoles == null) {
+            this.ldapRoles = new HashSet<Role>();
+        }
         return this.ldapRoles;
     }
 

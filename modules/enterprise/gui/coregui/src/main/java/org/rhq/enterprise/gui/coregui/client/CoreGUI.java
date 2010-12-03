@@ -337,25 +337,20 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 if (this.currentCanvas instanceof BookmarkableView) {
                     if (this.currentCanvas instanceof InitializableView) {
                         final InitializableView initializableView = (InitializableView) this.currentCanvas;
-                        final long startTime = System.currentTimeMillis();
-                        final Timer timer = new Timer() {
+                        new Timer() {
+                            final long startTime = System.currentTimeMillis();
+
                             public void run() {
                                 if (initializableView.isInitialized()) {
                                     ((BookmarkableView) currentCanvas).renderView(viewPath.next());
                                 } else {
                                     long elapsedMillis = System.currentTimeMillis() - startTime;
                                     if (elapsedMillis < 5000) {
-                                        // Reschedule the timer.
-                                        schedule(100);
+                                        schedule(100); // Reschedule the timer.
                                     }
                                 }
                             }
-                        };
-                        if (initializableView.isInitialized()) {
-                            ((BookmarkableView) currentCanvas).renderView(viewPath.next());
-                        } else {
-                            timer.schedule(100);
-                        }
+                        }.run(); // fire the timer immediately
                     } else {
                         ((BookmarkableView) currentCanvas).renderView(viewPath.next());
                     }

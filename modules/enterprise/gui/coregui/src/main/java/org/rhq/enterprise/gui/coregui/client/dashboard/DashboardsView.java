@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
@@ -252,7 +252,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.KEY, RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
 
-        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(), RecentlyAddedView.KEY,
+        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(), RecentlyAddedResourcesPortlet.KEY,
             250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 

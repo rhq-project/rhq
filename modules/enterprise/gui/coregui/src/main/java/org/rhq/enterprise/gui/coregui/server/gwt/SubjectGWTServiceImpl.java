@@ -96,6 +96,16 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
+    public Subject updateSubject(Subject subjectToModify) {
+        try {
+            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
+                "SubjectManager.updateSubject");
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
+        }
+    }
+
     public Subject updateSubject(Subject subjectToModify, String newPassword) {
         try {
             return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify, newPassword),

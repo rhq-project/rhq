@@ -45,6 +45,10 @@ import org.rhq.enterprise.server.RHQConstants;
 @ExcludeDefaultInterceptors
 @Stateless
 public class AuthorizationManagerBean implements AuthorizationManagerLocal {
+
+    private static final int SUBJECT_ID_OVERLORD = 1;
+    private static final int SUBJECT_ID_RHQADMIN = 2;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -173,7 +177,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
 
-        query.setParameter("subject", -1);
+        query.setParameter("subject", -SUBJECT_ID_OVERLORD);
         long baseCount = (Long) query.getSingleResult();
 
         query.setParameter("subject", subject);
@@ -233,7 +237,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
 
-        query.setParameter("subject", -1);
+        query.setParameter("subject", -SUBJECT_ID_OVERLORD);
         long baseCount = (Long) query.getSingleResult();
 
         query.setParameter("subject", subject);
@@ -271,7 +275,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         }
 
         // We know that our overlord is always id=1 and the rhqadmin user is always id=2.
-        return ((subject.getId() == 1) || (subject.getId() == 2));
+        return ((subject.getId() == SUBJECT_ID_OVERLORD) || (subject.getId() == SUBJECT_ID_RHQADMIN));
     }
 
     public boolean isOverlord(Subject subject) {
@@ -279,6 +283,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
             return false;
         }
 
-        return (subject.getId() == 1);
+        return (subject.getId() == SUBJECT_ID_OVERLORD);
     }
+    
 }

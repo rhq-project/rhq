@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -59,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  * @author Simeon Pinder
  * @author Greg Hinkle
  */
-public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet {
+public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     public static final String KEY = MSG.view_portlet_recentAlerts_title();
     //widget keys also used in form population
@@ -99,6 +101,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     //instance ui widgets
     private Canvas containerCanvas;
     private LocatableHLayout resourceSelectionLabelRow;
+    private Timer reloader;
 
     public RecentAlertsPortlet(String locatorId) {
         super(locatorId);
@@ -568,6 +571,18 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         public final Portlet getInstance(String locatorId) {
             return new RecentAlertsPortlet(locatorId);
         }
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                refresh();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 }
 

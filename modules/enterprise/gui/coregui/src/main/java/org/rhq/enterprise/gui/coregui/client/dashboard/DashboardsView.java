@@ -189,6 +189,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             if (dashboard.getName().equals(selectedTabName)) {
                 tabSet.selectTab(tab);
             }
+
         }
 
         tabSet.addCloseClickHandler(new CloseClickHandler() {

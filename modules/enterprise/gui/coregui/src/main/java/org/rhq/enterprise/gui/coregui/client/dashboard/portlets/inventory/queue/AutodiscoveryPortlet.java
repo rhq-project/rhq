@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -31,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -43,7 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 /**
  * @author Greg Hinkle
  */
-public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements CustomSettingsPortlet {
+public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements CustomSettingsPortlet,
+    AutoRefreshPortlet {
     //ui attributes/properties/indentifiers
     public static final String KEY = MSG.view_portlet_autodiscovery_title();
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
@@ -52,6 +55,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     //portlet settings and datasource elements
     private DashboardPortlet storedPortlet;
     private AutodiscoveryQueueDataSource dataSource;
+    private Timer reloader;
 
     public AutodiscoveryPortlet(String locatorId) {
         super(locatorId, true);
@@ -175,5 +179,17 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     public AutodiscoveryQueueDataSource getDataSource() {
         return dataSource;
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 }

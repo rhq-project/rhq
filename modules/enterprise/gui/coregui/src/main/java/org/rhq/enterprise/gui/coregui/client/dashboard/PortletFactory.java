@@ -79,6 +79,11 @@ public class PortletFactory {
             + Integer.toString(storedPortlet.getId()));
         view.configure(portletWindow, storedPortlet);
 
+        //add code to initiate refresh cycle for portlets
+        if (view instanceof AutoRefreshPortlet) {
+            ((AutoRefreshPortlet) view).startRefreshCycle();
+        }
+
         return view;
     }
 

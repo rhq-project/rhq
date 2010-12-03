@@ -19,6 +19,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -36,6 +37,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -53,7 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Simeon Pinder
  */
-public class OperationsPortlet extends LocatableVLayout implements CustomSettingsPortlet {
+public class OperationsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     //unique field/form identifiers
     public static final String OPERATIONS_RANGE_COMPLETED_ENABLED = "operations-completed-enabled";
@@ -74,6 +76,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     private DashboardPortlet storedPortlet = null;
     private RecentOperationsDataSource dataSourceCompleted;
     private ScheduledOperationsDataSource dataSourceScheduled;
+    private Timer reloader;
     public static String unlimited = MSG.common_label_unlimited();
     public static String defaultValue = unlimited;
     public static boolean defaultEnabled = true;
@@ -410,5 +413,17 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     public LocatableListGrid getScheduledOperationsGrid() {
         return this.scheduledOperationsGrid;
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 }

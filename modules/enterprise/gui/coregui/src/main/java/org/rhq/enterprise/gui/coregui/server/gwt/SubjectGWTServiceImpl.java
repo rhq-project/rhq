@@ -59,13 +59,12 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
-    public Subject createSubject(Subject subjectToCreate, String password) {
+    public Subject createSubject(Subject subjectToCreate, String password) throws Exception {
         try {
             return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate, password),
                 "SubjectManager.createSubject");
         } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+            throw new Exception(e);            
         }
     }
 

@@ -61,7 +61,7 @@ public interface SubjectGWTService extends RemoteService {
      *
      * @return the persisted subject
      */
-    Subject createSubject(Subject subjectToCreate, String password);
+    Subject createSubject(Subject subjectToCreate, String password) throws Exception;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with

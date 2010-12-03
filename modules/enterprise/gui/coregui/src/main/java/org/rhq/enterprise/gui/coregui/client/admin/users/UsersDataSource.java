@@ -212,7 +212,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         subjectService.createSubject(newSubject, password, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
                 // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
-                if (caught.getMessage().contains("javax.persistence.EntityExistsException")) {
+                String message = caught.getMessage();
+                if (message != null && message.contains("javax.persistence.EntityExistsException")) {
                     Map<String, String> errorMessages = new HashMap<String, String>();
                     errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
                     sendValidationErrorResponse(request, response, errorMessages);

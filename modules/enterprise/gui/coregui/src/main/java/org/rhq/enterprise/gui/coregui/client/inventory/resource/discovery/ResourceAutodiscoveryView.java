@@ -197,6 +197,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }
@@ -213,6 +214,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_autoDiscoveryQ_ignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }
@@ -229,6 +231,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_autoDiscoveryQ_unignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }

@@ -96,7 +96,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildSubsystemsSection() {
-        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Cloud_16.png", new ViewFactory() {
+        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Tag_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName()));
             }

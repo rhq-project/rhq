@@ -25,9 +25,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -61,7 +58,6 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private static final String HEADER_ICON = "global/User_24.png";
     private static final int SUBJECT_ID_RHQADMIN = 2;
 
-    private CanvasItem rolesItem;
     private SubjectRoleSelector roleSelector;
 
     private boolean hasManageSecurityPermission;
@@ -122,15 +118,13 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
             boolean isReadOnly = areRolesReadOnly(record);
 
-            roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
-            roleSelector.setWidth100();
-            roleSelector.setAlign(Alignment.LEFT);
-            roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
+            this.roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
-                    onItemChanged();
+                    UserEditView.this.onItemChanged();
                 }
             });
-            this.rolesItem.setCanvas(this.roleSelector);
+            getContentPane().addMember(this.roleSelector);
         }
     }
 
@@ -143,7 +137,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     private boolean areRolesReadOnly(Record record) {
         boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
+        return (!this.hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
     }
 
     @Override
@@ -202,12 +196,6 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
         activeItem.setVertical(false);
         items.add(activeItem);
-
-        this.rolesItem = new CanvasItem(UsersDataSource.Field.ROLES);
-        this.rolesItem.setShowTitle(false);
-        this.rolesItem.setColSpan(form.getNumCols());
-        this.rolesItem.setCanvas(new Canvas());
-        items.add(this.rolesItem);
 
         return items;
     }

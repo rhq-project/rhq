@@ -40,10 +40,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
-import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -81,6 +78,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private String dataTypeName;
     private String listViewPath;
     private ButtonBar buttonBar;
+    private LocatableVLayout contentPane;
+    private boolean postFetchHandlerExecutedAlready;
 
     public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
                                 String headerIcon) {
@@ -130,14 +129,14 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         } else {
             this.isReadOnly = isReadOnly;
 
-            VLayout contentPane = buildContentPane();
-            contentPane.hide();
-            addMember(contentPane);
+            this.contentPane = buildContentPane();
+            this.contentPane.hide();
+            addMember(this.contentPane);
 
             this.buttonBar = buildButtonBar();
-            if (buttonBar != null) {
-                buttonBar.hide();
-                addMember(buttonBar);
+            if (this.buttonBar != null) {
+                this.buttonBar.hide();
+                addMember(this.buttonBar);
             }
 
             if (this.recordId == ID_NEW) {
@@ -192,6 +191,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected boolean isFormReadOnly() {
         return this.isReadOnly;
+    }
+
+    public LocatableVLayout getContentPane() {
+        return this.contentPane;
     }
 
     public void setForm(EnhancedDynamicForm form) {
@@ -379,19 +382,25 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         criteria.addCriteria(FIELD_ID, recordId);
         this.form.fetchData(criteria, new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
-                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
-                    Record[] records = response.getData();
-                    if (records.length == 0) {
-                        throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
-                    }
-                    if (records.length > 1) {
-                        throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
-                    }
-                    Record record = records[0];
-                    editExistingRecord(record);
+                // The below check is a workaround for a SmartGWT bug, where it calls the execute() method on this
+                // callback twice, rather than once.
+                // TODO: Remove it once the SmartGWT bug has been fixed.
+                if (!postFetchHandlerExecutedAlready) {
+                    postFetchHandlerExecutedAlready = true;
+                    if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                        Record[] records = response.getData();
+                        if (records.length == 0) {
+                            throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
+                        }
+                        if (records.length > 1) {
+                            throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
+                        }
+                        Record record = records[0];
+                        editExistingRecord(record);
 
-                    // Now that all the widgets have been created and initialized, make everything visible.
-                    displayForm();
+                        // Now that all the widgets have been created and initialized, make everything visible.
+                        displayForm();
+                    }
                 }
             }
         });

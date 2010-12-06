@@ -96,8 +96,9 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         // DataSource Settings        
         setUseAllDataSourceFields(false);
+        setAutoFetchData(false);
 
-        // Validation Settings                  
+        // Validation Settings        
         setStopOnError(false);
     }
 

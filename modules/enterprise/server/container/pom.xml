@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.0.0.B02</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
@@ -358,7 +358,7 @@
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-merge datafile="${project.build.directory}/cobertura/cobertura.ser">
                      <fileset dir="../../../../">                     
-                        <include name="**/cobertura.ser"/>
+                        <include name="**/cobertura.ser" />
                       </fileset>
                     </cobertura-merge>
                   </tasks>

@@ -961,10 +961,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             builder.append("/");
         }
 
-        builder.append("alerts/Alerts.do?mode=viewAlert");
-
-        builder.append("&id=").append(alert.getAlertDefinition().getResource().getId());
-        builder.append("&a=").append(alert.getId());
+        builder.append("coregui/CoreGUI.html#Resource/");
+        builder.append(alert.getAlertDefinition().getResource().getId());
+        builder.append("/Alerts/History/");
+        builder.append(alert.getId());
 
         return builder.toString();
     }

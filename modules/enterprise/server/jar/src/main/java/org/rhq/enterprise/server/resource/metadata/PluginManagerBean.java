@@ -160,6 +160,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
@@ -198,6 +199,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds.isEmpty()) {
             return;

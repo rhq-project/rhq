@@ -1,10 +1,12 @@
 package org.rhq.core.domain.resource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.collections.iterators.ArrayListIterator;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.unitils.UnitilsTestNG;
@@ -83,11 +85,15 @@ public class ResourceTypeTest extends UnitilsTestNG {
     }
 
     void assertDeletedTypesIgnored(List<ResourceType> types) {
+        List<ResourceType> deletedTypes = new ArrayList<ResourceType>();
+
         for (ResourceType type : types) {
             if (type.isDeleted()) {
-                fail("Deleted should be ignored.");
+                deletedTypes.add(type);
             }
         }
+        assertTrue(deletedTypes.size() == 0, "Deleted types should be ignored. The following deleted types were " +
+            "found: " + deletedTypes);
     }
 
 }

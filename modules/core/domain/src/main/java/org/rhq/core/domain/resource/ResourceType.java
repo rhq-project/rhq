@@ -221,6 +221,7 @@ import org.rhq.core.domain.util.Summary;
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) "
+        + "AND crt2.deleted = false "
         + "AND crt2.category = ? " + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
         + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, "

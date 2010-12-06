@@ -35,7 +35,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.ExecutionSchedule;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -70,21 +69,25 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
-    public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
-        ExecutionSchedule schedule, String description, int timeout) throws RuntimeException {
+    public void invokeResourceOperation(int resourceId, String operationName, Configuration parameters,
+        String description, int timeout) throws RuntimeException {
         try {
-            ResourceOperationSchedule opSchedule;
-            if (schedule.getStart() == ExecutionSchedule.Start.Immediately) {
-                opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(), resourceId, operationName,
-                    0, 0, 0, 0, parameters, description);
-            } else {
-                CronTrigger ct = new CronTrigger("resource " + resourceId + "_" + operationName, "group", schedule
-                    .getCronString());
-                opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(), resourceId, operationName,
-                    parameters, ct, description);
-            }
+            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
+                resourceId, operationName, 0, 0, 0, 0, parameters, description);
         } catch (Exception e) {
-            throw new RuntimeException("Unabled to schedule operation execution" + e.getMessage());
+            throw new RuntimeException("Unabled to invoke operation: " + e.getMessage());
+        }
+    }
+
+    public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
+        String description, int timeout, String cronString) throws RuntimeException {
+        try {
+            CronTrigger ct = new CronTrigger("resource " + resourceId + "_" + operationName, "group", cronString);
+            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
+                resourceId, operationName, parameters, ct, description);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Unabled to schedule operation execution: " + e.getMessage());
         }
     }
 

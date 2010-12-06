@@ -119,26 +119,34 @@ public class OperationCreateWizard extends AbstractWizard {
         String description = "";
         int timeout = 0;
 
-        GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
-            operationDefinition.getName(), parameters, schedule, description, timeout, new AsyncCallback<Void>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_operationCreateWizard_error_scheduleOperationFailure(), caught);
-                }
+        AsyncCallback<Void> operationCallback = new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_operationCreateWizard_error_scheduleOperationFailure(),
+                    caught);
+            }
 
-                public void onSuccess(Void result) {
-                    String opName = operationDefinition.getDisplayName();
-                    String cron = schedule.getCronString();
-                    if (cron == null) {
-                        cron = MSG.common_val_na();
-                    }
-                    String concise = MSG.view_operationCreateWizard_message_scheduleOperationSuccess_short(opName);
-                    String message = MSG.view_operationCreateWizard_message_scheduleOperationSuccess(opName, String
-                        .valueOf(resource.getId()), cron);
-
-                    CoreGUI.getMessageCenter().notify(new Message(concise, message, Message.Severity.Info));
+            public void onSuccess(Void result) {
+                String opName = operationDefinition.getDisplayName();
+                String cron = schedule.getCronString();
+                if (cron == null) {
+                    cron = MSG.common_val_na();
                 }
-            });
+                String concise = MSG.view_operationCreateWizard_message_scheduleOperationSuccess_short(opName);
+                String message = MSG.view_operationCreateWizard_message_scheduleOperationSuccess(opName, String
+                    .valueOf(resource.getId()), cron);
+
+                CoreGUI.getMessageCenter().notify(new Message(concise, message, Message.Severity.Info));
+            }
+        };
+
+        if (schedule.getStart() == ExecutionSchedule.Start.Immediately) {
+            GWTServiceLookup.getOperationService().invokeResourceOperation(resource.getId(),
+                operationDefinition.getName(), parameters, description, timeout, operationCallback);
+        } else {
+            GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
+                operationDefinition.getName(), parameters, description, timeout, schedule.getCronString(),
+                operationCallback);
+        }
 
         view.closeDialog();
     }

@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
  * @author Ian Springer
  */
 public class UserPreferences {
+
     private static final String PREF_LIST_DELIM = "|";
     private static final String PREF_LIST_DELIM_REGEX = "\\|";
 
@@ -101,7 +102,7 @@ public class UserPreferences {
 
         UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, value, oldValue);
         for (UserPreferenceChangeListener listener : changeListeners) {
-            listener.onPreferrenceChange(event);
+            listener.onPreferenceChange(event);
         }
     }
 
@@ -146,4 +147,5 @@ public class UserPreferences {
     public void addChangeListener(UserPreferenceChangeListener listener) {
         changeListeners.add(listener);
     }
+
 }

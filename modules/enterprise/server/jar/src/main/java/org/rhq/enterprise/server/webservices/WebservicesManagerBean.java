@@ -165,7 +165,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -477,6 +477,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes) {
         contentManager.deletePackages(subject, resourceId, installedPackageIds, requestNotes);
+    }
+
+    public void deletePackageVersion(Subject subject, int packageVersionId) {
+        contentManager.deletePackageVersion(subject, packageVersionId);
     }
 
     public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds) {
@@ -820,8 +824,22 @@ public class WebservicesManagerBean implements WebservicesRemote {
             deploymentTimeConfiguration, packageBits);
     }
 
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//        
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, int packageVersionId) {
+        return resourceFactoryManager.createPackageBackedResourceViaPackageVersion(subject, parentResourceId,
+            newResourceTypeId, newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId);
+    }
+
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {
         return resourceFactoryManager.deleteResource(subject, resourceId);
+    }
+
+    public List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds) {
+        return resourceFactoryManager.deleteResources(subject, resourceIds);
     }
 
     //RESOURCEFACTORYMANAGER: END ----------------------------------

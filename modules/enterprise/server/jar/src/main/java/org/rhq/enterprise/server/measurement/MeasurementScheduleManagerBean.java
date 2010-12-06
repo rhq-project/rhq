@@ -221,12 +221,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     private long verifyMinimumCollectionInterval(long collectionInterval) {
-        // reset the schedules minimum collection interval if necessary
-        if (collectionInterval < MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS) {
-            return MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS;
+        // Reset the schedule to the minimum collection interval if necessary.
+        long validCollectionInterval;
+        if (collectionInterval > 0 && collectionInterval < MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS) {
+            validCollectionInterval = MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS;
+        } else {
+            validCollectionInterval = collectionInterval;
         }
 
-        return collectionInterval;
+        return validCollectionInterval;
     }
 
     /**
@@ -304,13 +307,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllDefaultCollections(Subject subject) {
         entityManager.createNamedQuery(MeasurementDefinition.DISABLE_ALL).executeUpdate();
     }
 
-    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllSchedules(Subject subject) {
         entityManager.createNamedQuery(MeasurementSchedule.DISABLE_ALL).executeUpdate();
@@ -331,28 +334,29 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    /**
-    * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
-    * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
-    * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
-    * inventory in the future.
-    *
-    * @param subject                  a valid subject that has Permission.MANAGE_SETTINGS
-    * @param measurementDefinitionIds The primary keys for the definitions
-    * @param collectionInterval       if > 0, enable the metric with this value as the the new collection
-    *                                 interval, in milliseconds; if == 0, enable the metric with its current
-    *                                 collection interval; if < 0, disable the metric
-    * @param updateExistingSchedules  If true, then existing schedules for this definition will also be updated.
-    */
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
-
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
         modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, collectionInterval,
             updateExistingSchedules);
     }
 
+    /**
+     * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
+     * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
+     * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
+     * inventory in the future.
+     * @param subject 
+     *
+     * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated
+     * @param collectionInterval if > 0, enable the metric with this value as the the new collection
+     *                           interval, in milliseconds; if == 0, enable the metric with its current
+     *                           collection interval; if < 0, disable the metric; if >0, it is assumed that
+     *                           the caller has verified the value is >=30000, since 30s is the minimum
+     *                           interval allowed
+     * @param updateExistingSchedules if true, existing Resource schedules for metrics of this type should also be updated
+     */
     private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
 
@@ -367,17 +371,35 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         for (int batchIndex = 0; (batchIndex < measurementDefinitionIds.length); batchIndex += 1000) {
             int[] batchIdArray = ArrayUtils.copyOfRange(measurementDefinitionIds, batchIndex, batchIndex + 1000);
 
-            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enable,
-                collectionInterval, updateExistingSchedules);
+            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enable, collectionInterval,
+                updateExistingSchedules);
         }
     }
 
-    /** 
-     * @param measurementDefinitionIds 1 <= length <= 1000.
+    /**
+     * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
+     * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
+     * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
+     * inventory in the future.
+     *
+     * <strong>Only the 3-param modifyDefaultCollectionIntervalForMeasurementDefinitions method should call this method,
+     * since it will batch the metric defs specified by the user to ensure no more than 1000 metric defs are passed to
+     * this method.</strong>
+     * @param subject 
+     *
+     * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated; the size of
+     *                                 this array must be <= 1000
+     * @param enable if true, enable the default schedule, otherwise, disable it
+     * @param collectionInterval if > 0, enable the metric with this value as the the new collection
+     *                           interval, in milliseconds; if == 0, enable the metric with its current
+     *                           collection interval; if < 0, disable the metric; if >0, it is assumed that
+     *                           the caller has verified the value is >=30000, since 30s is the minimum
+     *                           interval allowed
+     * @param updateExistingSchedules if true, existing Resource schedules for metrics of this type should also be updated
      */
     @SuppressWarnings("unchecked")
     private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
-        int[] measurementDefinitionIds, boolean enableDisable, long collectionInterval, boolean updateExistingSchedules) {
+        int[] measurementDefinitionIds, boolean enable, long collectionInterval, boolean updateExistingSchedules) {
 
         // this method has been rewritten to ensure that the Hibernate cache is not utilized in an
         // extensive way, regardless of the number of measurementDefinitionIds being processed. Future
@@ -387,24 +409,29 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Connection conn = null;
         PreparedStatement defUpdateStmt = null;
         PreparedStatement schedUpdateStmt = null;
-        String queryString = null;
+        String queryString;
         int i;
         try {
             conn = dataSource.getConnection();
 
             // update the defaults on the measurement definitions
-            queryString = (collectionInterval > 0L) ? MeasurementDefinition.QUERY_NATIVE_UPDATE_DEFAULTS_BY_IDS
-                : MeasurementDefinition.QUERY_NATIVE_UPDATE_DEFAULT_ON_BY_IDS;
+            if (collectionInterval > 0L) {
+                // This query enables the default schedule and updates its collection interval.
+                queryString = MeasurementDefinition.QUERY_NATIVE_UPDATE_DEFAULTS_BY_IDS;
+            } else {
+                // <=0 : This query enables (=0) or disables (<0) the default schedule but does not update the interval.
+                queryString = MeasurementDefinition.QUERY_NATIVE_UPDATE_DEFAULT_ON_BY_IDS;
+            }
 
             String transformedQuery = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@DEFINITION_IDS@@",
                 measurementDefinitionIds.length);
             defUpdateStmt = conn.prepareStatement(transformedQuery);
             i = 1;
-            defUpdateStmt.setBoolean(i++, enableDisable);
+            defUpdateStmt.setBoolean(i++, enable);
             if (collectionInterval > 0L) {
                 defUpdateStmt.setLong(i++, collectionInterval);
             }
-            JDBCUtil.bindNTimes(defUpdateStmt, measurementDefinitionIds, i++);
+            JDBCUtil.bindNTimes(defUpdateStmt, measurementDefinitionIds, i);
             defUpdateStmt.executeUpdate();
 
             if (updateExistingSchedules) {
@@ -412,14 +439,19 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 List<Integer> idsAsList = ArrayUtils.wrapInList(measurementDefinitionIds);
 
                 // update the schedules associated with the measurement definitions (i.e. the current inventory)
-                queryString = (collectionInterval > 0L) ? MeasurementDefinition.QUERY_NATIVE_UPDATE_SCHEDULES_BY_IDS
-                    : MeasurementDefinition.QUERY_NATIVE_UPDATE_SCHEDULES_ENABLE_BY_IDS;
+                if (collectionInterval > 0L) {
+                    // This query enables the schedules and updates their collection intervals.
+                    queryString = MeasurementDefinition.QUERY_NATIVE_UPDATE_SCHEDULES_BY_IDS;
+                } else {
+                    // <=0 : This query enables (=0) or disables (<0) the schedules but does not update their intervals.
+                    queryString = MeasurementDefinition.QUERY_NATIVE_UPDATE_SCHEDULES_ENABLE_BY_IDS;
+                }
 
                 transformedQuery = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@DEFINITION_IDS@@",
                     measurementDefinitionIds.length);
                 schedUpdateStmt = conn.prepareStatement(transformedQuery);
                 i = 1;
-                schedUpdateStmt.setBoolean(i++, enableDisable);
+                schedUpdateStmt.setBoolean(i++, enable);
                 if (collectionInterval > 0L) {
                     schedUpdateStmt.setLong(i++, collectionInterval);
                 }
@@ -434,7 +466,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 // Return only the data necessary to construct minimal objects ourselves. Using JPQL
                 // is ok, it just lets Hibernate do the heavy lifting for query generation.
                 queryString = "" //
-                    + "SELECT ms.id, ms.resource.id, ms.definition.name, ms.definition.dataType, ms.definition.numericType" //
+                    + "SELECT ms.id, ms.resource.id, ms.definition.name, ms.definition.dataType, ms.definition.rawNumericType" //
                     + " FROM  MeasurementSchedule ms" //
                     + " WHERE ms.definition.id IN ( :definitionIds )";
                 Query query = entityManager.createQuery(queryString);
@@ -455,7 +487,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                         reqMap.put(resourceId, req);
                     }
                     MeasurementScheduleRequest msr = new MeasurementScheduleRequest(schedId, name, collectionInterval,
-                        enableDisable, dataType, numericType);
+                        enable, dataType, numericType);
                     req.addMeasurementScheduleRequest(msr);
                 }
 
@@ -464,7 +496,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
                 // The number of Agents is manageable, so we can work with entities here
                 for (Integer resourceId : reqMap.keySet()) {
-                    Agent agent = agentManager.getAgentByResourceId(resourceId);
+                    Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
 
                     Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
                     if (agentUpdate == null) {
@@ -1126,7 +1158,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
-        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, true, -1, true);
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, 0, true);
     }
 
     /**
@@ -1152,19 +1184,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             collectionInterval);
     }
 
-    /**
-     * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions). If the passed group is not compatible or
-     * does not exist an Exception is thrown.
-     *
-     * @param subject                  Subject of the caller
-     * @param measurementDefinitionIds the definitions on which the schedules to update are based
-     * @param groupId                  ID of the group
-     * @param collectionInterval       the new interval
-     *
-     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateSchedulesForCompatibleGroup(org.rhq.core.domain.auth.Subject,
-     *        int[], int, long)
-     */
     public void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
@@ -1184,29 +1203,27 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         // check authorization up front, so that criteria-based queries can run without authz checks
         switch (context.type) {
-            case Resource:
-                if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view measurement schedules for resource[id=" +
-                        context.resourceId
-                        + "]");
-                }
-                break;
-            case ResourceGroup:
-                if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view measurement schedules for resourceGroup[id="
-                        + context.groupId + "]");
-                }
-                break;
-            case AutoGroup:
-                if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) ==
-                    false) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
-                        + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
-                }
-                break;
+        case Resource:
+            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for resource[id=" + context.resourceId
+                    + "]");
+            }
+            break;
+        case ResourceGroup:
+            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for resourceGroup[id="
+                    + context.groupId + "]");
+            }
+            break;
+        case AutoGroup:
+            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
+                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+            }
+            break;
         }
 
         PageList<MeasurementDefinition> definitions;
@@ -1229,16 +1246,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
             //criteria.addFilterDefinitionIds(measurementDefinitionIds);
             switch (context.type) {
-                case Resource:
-                    criteria.addFilterResourceId(context.resourceId);
-                    break;
-                case ResourceGroup:
-                    criteria.addFilterResourceGroupId(context.groupId);
-                    break;
-                case AutoGroup:
-                    criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
-                    criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
-                    break;
+            case Resource:
+                criteria.addFilterResourceId(context.resourceId);
+                break;
+            case ResourceGroup:
+                criteria.addFilterResourceGroupId(context.groupId);
+                break;
+            case AutoGroup:
+                criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+                criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+                break;
             }
             criteria.setPageControl(pc); // for primary return list, use passed PageControl
 

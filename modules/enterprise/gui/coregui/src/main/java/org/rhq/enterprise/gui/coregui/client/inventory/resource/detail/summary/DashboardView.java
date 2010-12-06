@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
  * @author Greg Hinkle
  */
 public class DashboardView extends FullHTMLPane implements ResourceSelectListener {
+
     private ResourceComposite resourceComposite;
 
     public DashboardView(String locatorId, ResourceComposite resourceComposite) {
@@ -49,4 +50,5 @@ public class DashboardView extends FullHTMLPane implements ResourceSelectListene
         this.resourceComposite = resourceComposite;
         setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceComposite.getResource().getId());
     }
+
 }

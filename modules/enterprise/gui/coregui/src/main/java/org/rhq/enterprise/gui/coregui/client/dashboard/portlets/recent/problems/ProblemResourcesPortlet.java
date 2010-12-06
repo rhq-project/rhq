@@ -23,6 +23,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
 import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -39,6 +40,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -55,19 +57,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  *
  * @author Simeon Pinder
  */
-public class ProblemResourcesPortlet extends Table implements CustomSettingsPortlet {
+public class ProblemResourcesPortlet extends Table implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     //keys for smart gwt elements. should be unique
     public static final String PROBLEM_RESOURCE_SHOW_HRS = "max-problems-query-span";
     public static final String PROBLEM_RESOURCE_SHOW_MAX = "max-problems-shown";
-    public static final String KEY = "Has Alerts or Currently Unavailable";
+    public static final String KEY = MSG.view_portlet_problem_resources_title();
     private static final String TITLE = KEY;
     private DashboardPortlet storedPortlet;
     //reference to datasource
     private ProblemResourcesDataSource dataSource;
 
     //constants
-    public static final String unlimited = "unlimited";
+    public static final String unlimited = MSG.common_label_unlimited();
     public static final String defaultValue = unlimited;
 
     public ProblemResourcesPortlet(String locatorId) {
@@ -99,6 +101,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setWrapCells(true);
             addExtraWidget(new TimeRange(this.getLocatorId(), this));
         }
+
     }
 
     @Override
@@ -150,7 +153,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays resources that have reported alerts or Down availability.");
+        return new HTMLFlow(MSG.view_portlet_problem_resources_help());
     }
 
     /** Build custom for to dispaly the Portlet Configuration settings.
@@ -162,8 +165,9 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //-------------combobox for number of resource to display on the dashboard
         final SelectItem maximumProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_MAX);
-        maximumProblemResourcesComboBox.setTitle("Display");
-        maximumProblemResourcesComboBox.setHint("<nobr><b> problem resources on dashboard.</b></nobr>");
+        maximumProblemResourcesComboBox.setTitle(MSG.common_title_display());
+        maximumProblemResourcesComboBox.setHint("<nobr><b> "
+            + MSG.view_portlet_problem_resources_config_problem_label() + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
@@ -187,8 +191,8 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_HRS);
-        maximumTimeProblemResourcesComboBox.setTitle("Over ");
-        maximumTimeProblemResourcesComboBox.setHint("<nobr><b> hours </b></nobr>");
+        maximumTimeProblemResourcesComboBox.setTitle(MSG.common_title_over() + " ");
+        maximumTimeProblemResourcesComboBox.setHint("<nobr><b> " + MSG.common_label_hours() + " </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
@@ -240,13 +244,13 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition("ProblemResourcesPortlet Configuration",
-            "The configuration settings for the Problem resources portlet.");
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG
+            .view_portlet_problem_resources_config_title(), MSG.view_portlet_problem_resources_config_title_desc());
 
-        definition.put(new PropertyDefinitionSimple(PROBLEM_RESOURCE_SHOW_MAX,
-            "Maximum number of Problem resources to display.", true, PropertySimpleType.INTEGER));
-        definition.put(new PropertyDefinitionSimple(PROBLEM_RESOURCE_SHOW_HRS,
-            "Show problem resources going back this many hours.", true, PropertySimpleType.INTEGER));
+        definition.put(new PropertyDefinitionSimple(PROBLEM_RESOURCE_SHOW_MAX, MSG
+            .view_portlet_problem_resources_config_display_maximum(), true, PropertySimpleType.INTEGER));
+        definition.put(new PropertyDefinitionSimple(PROBLEM_RESOURCE_SHOW_HRS, MSG
+            .view_portlet_problem_resources_config_display_range(), true, PropertySimpleType.INTEGER));
 
         return definition;
     }
@@ -267,22 +271,34 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
                 timeRange = new String[] { MeasurementUtility.getDateTimeFormatter().format(new Date(begin)),
                     MeasurementUtility.getDateTimeFormatter().format(new Date(end)) };
             }
-            for (Canvas extraWidget : extraWidgets) {
+            for (Object extraWidget : extraWidgets) {
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(getListGrid());
                 }
             }
             //remove selected count as portlet is view only. Selection not used.
-            getTableInfo().setContents("Total: " + getListGrid().getTotalRows());
+            getTableInfo().setContents(MSG.common_title_total() + ": " + getListGrid().getTotalRows());
         }
     }
 
     private String[] timeRange = null;
+    private Timer reloader;
 
     public String[] getTimeRange() {
         return timeRange;
     }
 
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                refresh();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
+    }
 }
 
 /**Construct table widget Label to display timerange settings used with latest datasource query.
@@ -301,7 +317,9 @@ class TimeRange extends LocatableHLayout implements TableWidget {
     @Override
     public void refresh(ListGrid listGrid) {
         this.label.setWidth(400);
-        this.label.setContents("From " + portlet.getTimeRange()[0] + " to " + portlet.getTimeRange()[1]);
+        //        this.label.setContents("From " + portlet.getTimeRange()[0] + " to " + portlet.getTimeRange()[1]);
+        this.label.setContents(MSG.view_portlet_problem_resources_config_display_range2(portlet.getTimeRange()[0],
+            portlet.getTimeRange()[1]));
     }
 
     @Override

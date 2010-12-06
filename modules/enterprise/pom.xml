@@ -23,16 +23,15 @@
    <properties>
       <scm.module.path>modules/enterprise/</scm.module.path>
    </properties>
-   
+
    <dependencies>
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>
         <artifactId>cobertura</artifactId>
-        <version>1.9.4.1</version>       
-        <scope>test</scope>
+        <version>1.9.4.1</version>
      </dependency>
   </dependencies>
-   
+
    <profiles>
 
       <profile>
@@ -77,6 +76,19 @@
             <module>server/ear</module>
             <module>server/container-lib</module>
             <module>server/container</module>
+         </modules>
+      </profile>
+
+      <profile>
+         <id>rhq-perf</id>
+         <activation>
+            <property>
+               <name>rhq_perf</name>
+            </property>
+         </activation>
+         <modules>
+            <module>comm</module>
+            <module>server</module>
          </modules>
       </profile>
 

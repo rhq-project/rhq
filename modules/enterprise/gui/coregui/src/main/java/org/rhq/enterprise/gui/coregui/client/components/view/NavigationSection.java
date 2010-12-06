@@ -28,12 +28,12 @@ import java.util.Map;
  * @author Ian Springer
  */
 public class NavigationSection {
-    private String name;
+    private ViewName viewName;
     private List<NavigationItem> navigationItems;
     private Map<String, NavigationItem> navigationItemsByName;
 
-    public NavigationSection(String name, NavigationItem ... navigationItems) {
-        this.name = name;
+    public NavigationSection(ViewName name, NavigationItem... navigationItems) {
+        this.viewName = name;
         this.navigationItems = Arrays.asList(navigationItems);
         this.navigationItemsByName = new LinkedHashMap<String, NavigationItem>(navigationItems.length);
         for (NavigationItem navigationItem : navigationItems) {
@@ -41,8 +41,16 @@ public class NavigationSection {
         }
     }
 
+    public ViewName getViewName() {
+        return viewName;
+    }
+
     public String getName() {
-        return name;
+        return viewName.getName();
+    }
+
+    public String getTitle() {
+        return viewName.getTitle();
     }
 
     public List<NavigationItem> getNavigationItems() {

@@ -46,12 +46,12 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField groupIdField = new DataSourceIntegerField(
-            MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, "Group Id");
+            MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, MSG.dataSource_traits_group_field_groupId());
         groupIdField.setHidden(true);
         fields.add(0, groupIdField);
 
         DataSourceTextField resourceNameField = new DataSourceTextField(
-            MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, "Member Resource");
+            MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, MSG.dataSource_traits_group_field_memberResource());
         fields.add(0, resourceNameField);
 
         return fields;

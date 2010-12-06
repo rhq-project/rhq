@@ -22,19 +22,21 @@
  */
 package org.rhq.core.domain.authz;
 
-import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 
 /**
  * An authorization permission is applied to {@link Role}s and related to {@link Subject}s that are members of those
- * Roles. There are two types of permissions - global and resource.
+ * Roles. There are two types of permissions - {@link Target#GLOBAL global} and {@link Target#RESOURCE Resource}.
  *
  * @author Ian Springer
  * @author Joseph Marques
  * @author Greg Hinkle
  */
 public enum Permission {
+
     /* ========== Global Permissions ========== */
     /**
      * can C/U/D users and roles (viewing is implied for everyone)
@@ -47,19 +49,22 @@ public enum Permission {
     MANAGE_INVENTORY(Target.GLOBAL), // 1
 
     /**
-     * can modify the JON Server configuration and perform any server-related functionality
+     * can modify the RHQ Server configuration and perform any server-related functionality
      */
     MANAGE_SETTINGS(Target.GLOBAL), // 2
 
+    
     /* ========= Resource Permissions ========= */
 
     /**
-     * can view this resource's config, metrics, and alerts
+     * can view (but not C/U/D) all aspects of this Resource except its configuration ({@link #CONFIGURE_READ} is
+     * required to view that); this permission is implied just by having a Resource or Group in one's assigned Roles
      */
     VIEW_RESOURCE(Target.RESOURCE), // 3
 
     /**
-     * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to access the managed JBossAS instance)
+     * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to
+     * access the managed JBossAS instance)
      */
     MODIFY_RESOURCE(Target.RESOURCE), // 4
 
@@ -74,48 +79,53 @@ public enum Permission {
     CREATE_CHILD_RESOURCES(Target.RESOURCE), // 6
 
     /**
-     * can C/U/D alert definitions (this implies {@link #VIEW_RESOURCE}, {@link #MANAGE_MEASUREMENTS}, {@link #CONTROL})
+     * can C/U/D alert definitions (this implies {@link #MANAGE_MEASUREMENTS} and {@link #CONTROL})
      */
     MANAGE_ALERTS(Target.RESOURCE), // 7
 
     /**
-     * can C/U/D metric schedules (this implies {@link #VIEW_RESOURCE})
+     * can C/U/D metric schedules
      */
     MANAGE_MEASUREMENTS(Target.RESOURCE), // 8
 
     /**
-     * can C/U/D content (package bits, software updates, etc) (this implies {@link #VIEW_RESOURCE})
+     * can C/U/D content (package bits, software updates, etc.)
      */
     MANAGE_CONTENT(Target.RESOURCE), // 9
 
     /**
-     * can invoke operations that only change the "running" state of the resource (e.g. start/stop)
+     * can invoke operations and delete operation history items
      */
     CONTROL(Target.RESOURCE), // 10
 
     /**
      * can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199);
-     * having this permission implies having @link {@link #CONFIGURE_READ}
+     * having this permission implies having {@link #CONFIGURE_READ}
      */
     CONFIGURE_WRITE(Target.RESOURCE), // 11
 
-    /* ========== New Bundle Global Permission ========== */
-
+    /**
+     * can C/U/D provisioning bundles
+     */
+    // NOTE: This is a GLOBAL permission, but is defined down here so as to maintain the ordinal indexes of the other
+    //       pre-existing permissions.
     MANAGE_BUNDLE(Target.GLOBAL), // 12
 
     /**
-     * can read resource configu, but can not necessarily C/U/D unless @link {@link #CONFIGURE_WRITE} is also possessed
+     * can view Resource configuration, but can not necessarily C/U/D unless {@link #CONFIGURE_WRITE} is also possessed
      */
     CONFIGURE_READ(Target.RESOURCE), // 13
 
     /**
-     * can C/U/D events (this implies {@link #VIEW_RESOURCE})
-     * in the future, will also C/U/D event definitions
+     * can C/U/D events
+     * (in the future, will also C/U/D event definitions)
      */
-    MANAGE_EVENTS(Target.RESOURCE); // 14
+    MANAGE_EVENTS(Target.RESOURCE) // 14
+
+    ;
 
     /**
-     * The target that a permission applies to.
+     * the target to which the permission applies
      */
     public enum Target {
         /** global permissions do not apply to specific resources in groups */
@@ -132,21 +142,27 @@ public enum Permission {
     }
 
     /**
-     * Returns the target that this permission applies to.
+     * Returns the target to which the permission applies
      *
-     * @return the target of this permission
+     * @return the target to which the permission applies
      */
     public Target getTarget() {
         return target;
     }
 
-    public static final EnumSet<Permission> RESOURCE_ALL = EnumSet.noneOf(Permission.class);
-
+    public static final Set<Permission> GLOBAL_ALL = new HashSet<Permission>();
+    public static final Set<Permission> RESOURCE_ALL = new HashSet<Permission>();
     static {
         for (Permission permission : Permission.values()) {
-            if (permission.getTarget() == Target.RESOURCE) {
-                RESOURCE_ALL.add(permission);
+            switch (permission.getTarget()) {
+                case GLOBAL:
+                    GLOBAL_ALL.add(permission);
+                    break;
+                case RESOURCE:
+                    RESOURCE_ALL.add(permission);
+                    break;
             }
         }
     }
+
 }

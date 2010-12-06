@@ -37,7 +37,7 @@ public class SingleResourceSelector extends ResourceSelector {
     }
 
     @Override
-    protected void updateButtons() {
+    protected void updateButtonEnablement() {
         addButton.setDisabled(!availableGrid.anySelected() || availableGrid.getTotalRows() == 0
             || assignedGrid.getTotalRows() > 0);
         removeButton.setDisabled(!assignedGrid.anySelected());

@@ -23,26 +23,34 @@ package org.rhq.enterprise.gui.coregui.client.components.view;
  * @author Ian Springer
  */
 public class NavigationItem {
-    private final String name;
+    private final ViewName viewName;
     private final String icon;
     private final ViewFactory viewFactory;
     private final boolean enabled;
 
     private boolean refreshRequired = false;
 
-    public NavigationItem(String name, String icon, ViewFactory viewFactory) {
+    public NavigationItem(ViewName name, String icon, ViewFactory viewFactory) {
         this(name, icon, viewFactory, true);
     }
 
-    public NavigationItem(String name, String icon, ViewFactory viewFactory, boolean enabled) {
+    public NavigationItem(ViewName name, String icon, ViewFactory viewFactory, boolean enabled) {
         this.icon = icon;
-        this.name = name;
+        this.viewName = name;
         this.viewFactory = viewFactory;
         this.enabled = enabled;
     }
 
+    public ViewName getViewName() {
+        return viewName;
+    }
+
     public String getName() {
-        return name;
+        return viewName.getName();
+    }
+
+    public String getTitle() {
+        return viewName.getTitle();
     }
 
     public String getIcon() {

@@ -67,6 +67,9 @@ import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
@@ -414,7 +417,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
             this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
             false);
-        //resource.setResourceConfiguration(liveConfig.deepCopy(false));
+
+        // resource.setResourceConfiguration(liveConfig.deepCopy(false));
         resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
         return update;
     }
@@ -803,9 +807,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
-                    log
-                        .info("Group Resource configuration update request seems to have been orphaned - timing it out: "
-                            + request);
+
+                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
+                        + request);
+
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
                     request.setStatus(ConfigurationUpdateStatus.FAILURE);
@@ -867,8 +872,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
         if (resourceId == null && !authorizationManager.isInventoryManager(subject)) {
-            throw new PermissionException("User[" + subject.getName() + "] Must be an inventory manager to query " +
-                    "without a resource id.");
+            throw new PermissionException("User[" + subject.getName() + "] Must be an inventory manager to query "
+                + "without a resource id.");
         } else if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resourceId)) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view configuration history for resource[id=" + resourceId + "]");
@@ -911,6 +916,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<ResourceConfigurationUpdate>(updates, (int) totalCount, pc);
     }
 
+    /**
+     * @deprecated use criteria-based API
+     */
     public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
 
@@ -924,6 +932,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
+    /**
+     * @deprecated use criteria-based API
+     */
     public ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject subject, int configurationUpdateId) {
         ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
             configurationUpdateId);
@@ -955,7 +966,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a plugin configuration update audit trail for resource ["
                 + resource + "]");
@@ -985,7 +996,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a configuration update audit trail for resource [" + resource
                 + "]");
@@ -1690,7 +1701,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @SuppressWarnings("unchecked")
     public PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl) {
-        // will perform CONFIGURE_READ security check for us, no need to save the 
+
+        // will perform CONFIGURE_READ security check for us, no need to save the
+
         getGroupResourceConfigurationUpdate(subject, configurationUpdateId);
 
         pageControl.initDefaultOrderingField("cu.modifiedTime");
@@ -1763,6 +1776,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             groupIdParameter);
     }
 
+    // TODO: THIS NEEDS AUTHZ CHECK!
     @SuppressWarnings("unchecked")
     public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId) {
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",
@@ -1810,6 +1824,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
+    /**
+     * @deprecated use criteria-based API
+     */
     @SuppressWarnings("unchecked")
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc) {
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
@@ -1829,6 +1846,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<GroupPluginConfigurationUpdate>(results, (int) count, pc);
     }
 
+    /**
+     * @deprecated use criteria-based API
+     */
     @SuppressWarnings("unchecked")
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject,
         int groupId, PageControl pc) {
@@ -1882,7 +1902,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public int deleteGroupPluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupPluginConfigurationUpdateIds) {
-        //TODO: use subject and resourceGroupId to perform security check
+
+        // TODO: use subject and resourceGroupId to perform security check
+
+        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId) == false) {
+            log.error(subject + " attempted to delete " + groupPluginConfigurationUpdateIds.length
+                + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
+                + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
+            return 0;
+        }
+
         int removed = 0;
         for (Integer apcuId : groupPluginConfigurationUpdateIds) {
             /*
@@ -1979,18 +2008,26 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         propertiesQuery.executeUpdate();
     }
 
+    /**
+     * @deprecated use criteria-based API
+     */
     public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
-        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId) == false) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view group resourceConfiguration[id=" + configurationUpdateId + "]");
+
+        if (!authorizationManager.canViewGroup(subject, groupId)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view group Resource configuration for [" + update.getGroup() + "]");
+
         }
 
         return update;
     }
 
+    /**
+     * @deprecated use criteria-based API
+     */
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId) {
         GroupResourceConfigurationUpdate update = getGroupResourceConfigurationById(configurationUpdateId);
@@ -2041,24 +2078,73 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return out;
     }
 
-
     @SuppressWarnings("unchecked")
-    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
-            Subject subject, ResourceConfigurationUpdateCriteria criteria) {
+    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(Subject subject,
+        ResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (!authorizationManager.isInventoryManager(subject)) {
-            generator.setAuthorizationResourceFragment(
-                    CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, "resource", subject.getId());
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "resource", subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner =
-                new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
 
         PageList<ResourceConfigurationUpdate> updates = queryRunner.execute();
 
         return updates;
     }
 
+    @SuppressWarnings("unchecked")
+    public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(Subject subject,
+        PluginConfigurationUpdateCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "resource", subject.getId());
+        }
+
+        CriteriaQueryRunner<PluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+
+        PageList<PluginConfigurationUpdate> updates = queryRunner.execute();
+
+        return updates;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
+        GroupResourceConfigurationUpdateCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, "group",
+                subject.getId());
+        }
+
+        CriteriaQueryRunner<GroupResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria,
+            generator, entityManager);
+
+        PageList<GroupResourceConfigurationUpdate> updates = queryRunner.execute();
+
+        return updates;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
+        GroupPluginConfigurationUpdateCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, "group",
+                subject.getId());
+        }
+
+        CriteriaQueryRunner<GroupPluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+
+        PageList<GroupPluginConfigurationUpdate> updates = queryRunner.execute();
+
+        return updates;
+    }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

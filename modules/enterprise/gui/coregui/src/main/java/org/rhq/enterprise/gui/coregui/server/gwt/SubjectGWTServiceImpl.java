@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -28,7 +27,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -39,23 +37,15 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     private static final long serialVersionUID = 1L;
 
-    private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-    private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
-    private final Log log = LogFactory.getLog(SubjectGWTServiceImpl.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
-    public void changePassword(String username, String password) {
-        try {
-            subjectManager.changePassword(getSessionSubject(), username, password);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
+    private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
     public void createPrincipal(String username, String password) {
         try {
             subjectManager.createPrincipal(getSessionSubject(), username, password);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (RuntimeException e) {
+            handleException(e);
         }
     }
 
@@ -63,16 +53,26 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         try {
             return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate),
                 "SubjectManager.createSubject");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
+        }
+    }
+
+    public Subject createSubject(Subject subjectToCreate, String password) throws Exception {
+        try {
+            return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate, password),
+                "SubjectManager.createSubject");
+        } catch (RuntimeException e) {
+            throw new Exception(e);            
         }
     }
 
     public void deleteSubjects(int[] subjectIds) {
         try {
             subjectManager.deleteSubjects(getSessionSubject(), subjectIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (RuntimeException e) {
+            handleException(e);
         }
     }
 
@@ -81,14 +81,17 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             return SerialUtility.prepare(subjectManager.login(username, password), "SubjectManager.login");
         } catch (LoginException e) {
             throw new RuntimeException("LoginException: " + e.getMessage());
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
         }
     }
 
     public void logout(Subject subject) {
         try {
             subjectManager.logout(subject.getSessionId());
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (RuntimeException e) {
+            handleException(e);
         }
     }
 
@@ -96,8 +99,19 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         try {
             return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
                 "SubjectManager.updateSubject");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
+        }
+    }
+
+    public Subject updateSubject(Subject subjectToModify, String newPassword) {
+        try {
+            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify, newPassword),
+                "SubjectManager.updateSubject");
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
         }
     }
 
@@ -129,8 +143,11 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             //                }
             //            }
             return SerialUtility.prepare(processedSubject, "SubjectManager.processSubjectForLdap");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (LoginException e) {
+            throw new RuntimeException("LoginException: " + e.getMessage());
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
         }
     }
 
@@ -138,9 +155,19 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         try {
             return SerialUtility.prepare(subjectManager.findSubjectsByCriteria(getSessionSubject(), criteria),
                 "SubjectManager.findSubjectsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
         }
     }
+    
+    public boolean isUserWithPrincipal(String username) {
+        return subjectManager.isUserWithPrincipal(username);
+    }
 
+    private void handleException(Exception e) {
+        log.error("Unexpected error.", e);
+        throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+    }
+    
 }

@@ -384,8 +384,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             }
         }
 
-        notifyAlertConditionCacheManager("mergeAvailabilityReport", report.getResourceAvailability().toArray(
-            new Availability[report.getResourceAvailability().size()]));
+        // translate data into Availability objects for downstream processing
+        int j = 0;
+        Availability[] availabilities = new Availability[report.getResourceAvailability().size()];
+        for (AvailabilityReport.Datum datum : report.getResourceAvailability()) {
+            availabilities[j++] = new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
+                datum.getAvailabilityType());
+        }
+
+        notifyAlertConditionCacheManager("mergeAvailabilityReport", availabilities);
 
         boolean askForFullReport = false;
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
@@ -409,7 +416,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             q.setFlushMode(FlushModeType.COMMIT);
 
             int count = 0;
-            for (Availability reported : report.getResourceAvailability()) {
+            for (Availability reported : availabilities) {
                 if ((++count % 100) == 0) {
                     entityManager.flush();
                     entityManager.clear();
@@ -499,9 +506,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 return false;
             }
         } else {
-            log.error("Could not figure out which agent sent availability report.  This is a bug, please report it. "
+            log.error("Could not figure out which agent sent availability report. "
+                + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
+                + agentName
+                + "] was recently removed. In any other case this is a bug."
                 + report);
-        }
+      }
 
         return true; // everything is OK and things look to be in sync
     }

@@ -55,7 +55,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField resourceIdField = new DataSourceIntegerField(
-            MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID, "Resource Id");
+            MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID, MSG.common_title_resource_id());
         resourceIdField.setHidden(true);
         fields.add(resourceIdField);
 
@@ -78,21 +78,25 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
 
     @Override
     protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-        int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
+        final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         this.measurementService.enableSchedulesForResource(this.resourceId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to enable collection of metrics " + measurementDefinitionDisplayNames
-                            + " for Resource with id [" + resourceId + "].", throwable);
+                        MSG.dataSource_schedules_enableFailure_resource(
+                            String.valueOf(measurementDefinitionIds.length), String.valueOf(resourceId),
+                            measurementDefinitionDisplayNames.toString()), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Enabled collection of metrics " + measurementDefinitionDisplayNames
-                            + " for Resource with id [" + resourceId + "].", Message.Severity.Info));
+                        new Message(MSG.dataSource_schedules_enableSuccessful_concise(String
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_enableSuccessful_full_resource(String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -100,21 +104,25 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
 
     @Override
     protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-        int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
+        final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         this.measurementService.disableSchedulesForResource(this.resourceId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to disable collection of metrics " + measurementDefinitionDisplayNames
-                            + " for Resource with id [" + resourceId + "].", throwable);
+                        MSG.dataSource_schedules_disableFailure_resource(String
+                            .valueOf(measurementDefinitionIds.length), String.valueOf(resourceId),
+                            measurementDefinitionDisplayNames.toString()), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Disabled collection of metrics " + measurementDefinitionDisplayNames
-                            + " for Resource with id [" + resourceId + "].", Message.Severity.Info));
+                        new Message(MSG.dataSource_schedules_disableSuccessful_concise(String
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_disableSuccessful_full_resource(String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -122,24 +130,28 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
 
     @Override
     protected void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-        int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
+        final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
         this.measurementService.updateSchedulesForResource(this.resourceId, measurementDefinitionIds,
             collectionInterval, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to set collection interval to " + (collectionInterval / 1000) + " seconds for metrics "
-                            + measurementDefinitionDisplayNames + " for Resource with id [" + resourceId + "].",
+                        MSG.dataSource_schedules_updateFailure_resource(
+                            String.valueOf(measurementDefinitionIds.length), String.valueOf(resourceId),
+                            measurementDefinitionDisplayNames.toString(), String.valueOf(collectionInterval / 1000)),
                         throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
+                    String collIntervalStr = String.valueOf(collectionInterval / 1000);
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Collection interval for metrics " + measurementDefinitionDisplayNames
-                            + " for Resource with id [" + resourceId + "] set to " + (collectionInterval / 1000)
-                            + " seconds.", Message.Severity.Info));
+                        new Message(MSG.dataSource_schedules_updateSuccessful_concise(collIntervalStr, String
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_updateSuccessful_full_resource(collIntervalStr, String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });

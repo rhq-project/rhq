@@ -18,11 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -44,6 +45,22 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
  * @author Ian Springer
  */
 public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
+    private static final String ITEM_INTERVAL = "interval";
+    private static final String ITEM_UNITS = "units";
+
+    private static final String UNITS_SECONDS = "s";
+    private static final String UNITS_MINUTES = "m";
+    private static final String UNITS_HOURS = "h";
+
+    // Maps values to labels for the units select list.
+    private static final LinkedHashMap<String, String> VALUE_MAP = new LinkedHashMap<String, String>();
+    static {
+        // TODO: Internationalize the values in this map.
+        VALUE_MAP.put(UNITS_SECONDS, MSG.common_label_seconds());
+        VALUE_MAP.put(UNITS_MINUTES, MSG.common_label_minutes());
+        VALUE_MAP.put(UNITS_HOURS, MSG.common_label_hours());
+    }
+
     private AbstractMeasurementScheduleListView schedulesView;
     private DynamicForm form;
     private IButton setButton;
@@ -64,8 +81,8 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         this.form = new LocatableDynamicForm(this.getLocatorId());
         this.form.setNumCols(3);
         IntegerItem intervalItem = new IntegerItem();
-        intervalItem.setName("interval");
-        intervalItem.setTitle("Collection Interval");
+        intervalItem.setName(ITEM_INTERVAL);
+        intervalItem.setTitle(MSG.view_inventory_collectionInterval());
         IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
         intervalItem.setValidators(integerRangeValidator);
@@ -76,9 +93,9 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
             }
         });
         // Specify a null title so no label is rendered to the left of the combo box.
-        SelectItem unitsItem = new SelectItem("units", null);
-        unitsItem.setValueMap("second(s)", "minute(s)", "hour(s)");
-        unitsItem.setDefaultValue("second(s)");
+        SelectItem unitsItem = new SelectItem(ITEM_UNITS, null);
+        unitsItem.setValueMap(VALUE_MAP);
+        unitsItem.setDefaultValue(UNITS_MINUTES);
         unitsItem.setShowTitle(false);
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
@@ -107,19 +124,20 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     }
 
     private Long getInterval() {
-        FormItem item = this.form.getItem("interval");
+        IntegerItem item = (IntegerItem) this.form.getItem(ITEM_INTERVAL);
         if (item.getValue() == null || !item.validate()) {
             return null;
         }
-        String stringValue = this.form.getValueAsString("interval");
-        long value = Long.valueOf(stringValue.trim());
-        String units = this.form.getValueAsString("units");
-        value *= 1000;
-        if (units.equals("minutes")) {
-            value *= 60;
-        } else if (units.equals("hours")) {
-            value *= 60 * 60;
+        String stringValue = this.form.getValueAsString(ITEM_INTERVAL);
+        long longValue = Long.valueOf(stringValue);
+
+        String units = this.form.getValueAsString(ITEM_UNITS);
+        longValue *= 1000;
+        if (units.equals(UNITS_MINUTES)) {
+            longValue *= 60;
+        } else if (units.equals(UNITS_HOURS)) {
+            longValue *= 60 * 60;
         }
-        return value;
+        return longValue;
     }
 }

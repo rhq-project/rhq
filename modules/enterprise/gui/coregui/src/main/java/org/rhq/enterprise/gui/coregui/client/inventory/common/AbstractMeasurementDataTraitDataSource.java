@@ -26,6 +26,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -57,26 +58,28 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField primaryKeyField = new DataSourceTextField("primaryKey", "Primary Key");
+        DataSourceTextField primaryKeyField = new DataSourceTextField("primaryKey", MSG
+            .dataSource_traits_field_primaryKey());
         primaryKeyField.setPrimaryKey(true);
         primaryKeyField.setHidden(true);
         fields.add(primaryKeyField);
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "Definition Id");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.dataSource_traits_field_definitionID());
         idField.setHidden(true);
         fields.add(idField);
 
         DataSourceTextField nameField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME,
-            "Trait");
+            MSG.dataSource_traits_field_trait());
         fields.add(nameField);
 
         // TODO: Include description from metric def?
 
-        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, "Value");
+        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, MSG
+            .common_title_value());
         fields.add(valueField);
 
         DataSourceIntegerField timestampField = new DataSourceIntegerField(
-            MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, "Last Changed");
+            MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, MSG.dataSource_traits_field_lastChanged());
         fields.add(timestampField);
 
         return fields;
@@ -134,7 +137,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
     }
 
     @Override
-    public MeasurementDataTrait copyValues(ListGridRecord from) {
+    public MeasurementDataTrait copyValues(Record from) {
         return null;
     }
 

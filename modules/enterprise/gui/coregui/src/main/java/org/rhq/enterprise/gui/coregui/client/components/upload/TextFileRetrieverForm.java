@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -53,15 +54,17 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
     protected void onDraw() {
         super.onDraw();
 
+        // the "retrieve" indicates to FileUploadServlet to expect a single text file and return its contents
+        // in the response.
         HiddenItem retrieveField = new HiddenItem("retrieve");
-        retrieveField.setValue(true);
+        retrieveField.setDefaultValue(true);
 
         HiddenItem sessionIdField = new HiddenItem("sessionid");
-        sessionIdField.setValue(UserSessionManager.getSessionSubject().getSessionId().intValue());
+        sessionIdField.setDefaultValue(UserSessionManager.getSessionSubject().getSessionId().intValue());
 
         setNumCols(4);
 
-        textFile = new UploadItem("textFile", "Upload File");
+        textFile = new UploadItem("textFile", MSG.view_upload_prompt_2());
         textFile.setEndRow(false);
 
         uploadButton = new ButtonItem("Upload");
@@ -102,11 +105,11 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         if (uploadButton != null) {
             FormItemIcon loadedIcon = new FormItemIcon();
             if (ok) {
-                loadedIcon.setSrc("/images/icons/availability_green_16.png");
-                CoreGUI.getMessageCenter().notify(new Message("Uploaded file successfully", Severity.Info));
+                loadedIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
+                CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_success(), Severity.Info));
             } else {
-                loadedIcon.setSrc("/images/icons/availability_red_16.png");
-                CoreGUI.getMessageCenter().notify(new Message("File upload failed", Severity.Error));
+                loadedIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
+                CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_error_file(), Severity.Error));
             }
             loadedIcon.setWidth(16);
             loadedIcon.setHeight(16);

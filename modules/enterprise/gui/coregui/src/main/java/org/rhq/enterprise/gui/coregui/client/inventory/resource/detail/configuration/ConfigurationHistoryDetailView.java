@@ -40,20 +40,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
-
-    private int configurationUpdateId;
-
+    
     public ConfigurationHistoryDetailView(String locatorId) {
         super(locatorId);
 
         setWidth100();
         setHeight100();
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-
     }
 
     private void displayHistory(final ResourceConfigurationUpdate update) {
@@ -63,9 +55,7 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
             new ResourceTypeRepository.TypeLoadedCallback() {
 
                 public void onTypesLoaded(ResourceType type) {
-
                     ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
-
                     ConfigurationEditor editor = new ConfigurationEditor("ResConfigHist-"
                         + update.getResource().getName(), definition, update.getConfiguration());
                     editor.setReadOnly(true);
@@ -76,9 +66,8 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
     }
 
     public void displayInDialog() {
-
         Window window = new Window();
-        window.setTitle("Configuration Details");
+        window.setTitle(MSG.view_configurationHistoryDetails_dialogTitle());
         window.setWidth(800);
         window.setHeight(800);
         window.setIsModal(true);
@@ -102,7 +91,8 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
         GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_configurationHistoryDetails_error_loadFailure(),
+                        caught);
                 }
 
                 public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
@@ -111,6 +101,5 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
                     displayHistory(update);
                 }
             });
-
     }
 }

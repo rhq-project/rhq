@@ -18,21 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceDateField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.Alert;
@@ -42,21 +47,29 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Ian Springer
  * @author Joseph Marques
+ * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert> {
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     private EntityContext entityContext;
+
+    public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
+    public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
+    public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -66,39 +79,98 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         super();
         this.entityContext = context;
 
-        // TODO: when these fields are added, AlertHistoryView breaks -- why?
-
-        //List<DataSourceField> fields = addDataSourceFields();
-        //addFields(fields);
+        addDataSourceFields();
     }
 
     @Override
     protected List<DataSourceField> addDataSourceFields() {
+        // for some reason, the client seems to crash if you don't specify any data source fields
+        // even though we know we defined override ListGridFields for all columns.
         List<DataSourceField> fields = super.addDataSourceFields();
+        fields.add(new DataSourceTextField("name"));
+        return fields;
+    }
 
-        DataSourceDateField ctimeField = new DataSourceDateField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
-        addField(ctimeField);
+    /**
+     * The view that contains the list grid which will display this datasource's data will call this
+     * method to get the field information which is used to control the display of the data.
+     * 
+     * @return list grid fields used to display the datasource data
+     */
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        DataSourceIntegerField ackTimeField = new DataSourceIntegerField("acknowledgeTime", "Ack Time");
-        addField(ackTimeField);
+        ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
+            .view_alerts_field_created_time());
+        ctimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(ctimeField);
 
-        DataSourceTextField ackSubjectField = new DataSourceTextField("acknowledgingSubject", "Ack Subject");
-        addField(ackSubjectField);
+        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
+        fields.add(nameField);
 
-        DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name");
-        addField(nameField);
+        ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
+        fields.add(conditionField);
 
-        DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
-        addField(conditionTextField);
+        ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
+        priorityField.setType(ListGridFieldType.IMAGE);
+        priorityField.setAlign(Alignment.CENTER);
+        priorityField.setShowHover(true);
+        priorityField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String prio = record.getAttribute("priority");
+                if (PRIORITY_ICON_HIGH.equals(prio)) {
+                    return MSG.common_alert_high();
+                } else if (PRIORITY_ICON_MEDIUM.equals(prio)) {
+                    return MSG.common_alert_medium();
+                } else if (PRIORITY_ICON_LOW.equals(prio)) {
+                    return MSG.common_alert_low();
+                } else {
+                    return ""; // will never get here
+                }
+            }
+        });
+        fields.add(priorityField);
 
-        DataSourceTextField conditionValueField = new DataSourceTextField("conditionValue", "Condition Value");
-        addField(conditionValueField);
+        ListGridField statusField = new ListGridField("status", MSG.common_title_status());
+        statusField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
+                if (ackSubject == null) {
+                    return MSG.view_alerts_field_ack_status_empty();
+                } else {
+                    Date ackTime = listGridRecord.getAttributeAsDate("acknowledgeTime");
+                    String formattedTime = TimestampCellFormatter.format(ackTime);
+                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
+                }
+            }
+        });
+        fields.add(statusField);
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("resourceName", "Resource");
-        addField(resourceNameField);
+        if (this.entityContext.type != EntityContext.Type.Resource) {
+            // TODO need to disambiguate this
+            ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource());
+            resourceNameField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
+                    return "<a href=\"" + LinkManager.getResourceLink(resourceId) + "\">" + o + "</a>";
+                }
+            });
+            fields.add(resourceNameField);
 
-        DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, "Priority", 15);
-        addField(priorityField);
+            ctimeField.setWidth(100);
+            nameField.setWidth("25%");
+            conditionField.setWidth("40%");
+            priorityField.setWidth(50);
+            statusField.setWidth("15%");
+            resourceNameField.setWidth("20%");
+        } else {
+            ctimeField.setWidth(100);
+            nameField.setWidth("35%");
+            conditionField.setWidth("40%");
+            priorityField.setWidth(50);
+            statusField.setWidth("25%");
+        }
 
         return fields;
     }
@@ -108,31 +180,23 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         AlertCriteria criteria = getCriteria(request);
 
-        //check for still logged in before submitting server side request
-        if (userStillLoggedIn()) {
-            this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+        this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
-                    response.setStatus(RPCResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
-                public void onSuccess(PageList<Alert> result) {
-                    long fetchTime = System.currentTimeMillis() - start;
-                    com.allen_sauer.gwt.log.client.Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                    response.setData(buildRecords(result));
-                    // For paging to work, we have to specify size of full result set.
-                    response.setTotalRows(result.getTotalSize());
-                    processResponse(request.getRequestId(), response);
-                }
-            });
-        } else {//dump request
-            response.setTotalRows(0);
-            processResponse(request.getRequestId(), response);
-            Log.debug("user not logged in. Not fetching any alerts now.");
-        }
-
+            public void onSuccess(PageList<Alert> result) {
+                long fetchTime = System.currentTimeMillis() - start;
+                Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                response.setData(buildRecords(result));
+                // For paging to work, we have to specify size of full result set.
+                response.setTotalRows(result.getTotalSize());
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
     protected AlertCriteria getCriteria(DSRequest request) {
@@ -141,12 +205,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         criteria.addFilterPriorities(getArrayFilter(request, "severities", AlertPriority.class));
         criteria.addFilterEntityContext(entityContext);
+        criteria.fetchConditionLogs(true);
 
         return criteria;
     }
 
     @Override
-    public Alert copyValues(ListGridRecord from) {
+    public Alert copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 
@@ -158,20 +223,22 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     public static ListGridRecord convert(Alert from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
-        record.setAttribute("ctime", from.getCtime());
-        record.setAttribute("acknowledgeTime", from.getAcknowledgeTime());
+        record.setAttribute("ctime", new Date(from.getCtime()));
+        if (from.getAcknowledgeTime() != null && from.getAcknowledgeTime().longValue() > 0) {
+            record.setAttribute("acknowledgeTime", new Date(from.getAcknowledgeTime().longValue()));
+        }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
         record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());
-        record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
+        record.setAttribute("priority", ImageManager.getAlertIcon(from.getAlertDefinition().getPriority()));
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
         String conditionValue;
         if (conditionLogs.size() > 1) {
-            conditionText = "Multiple Conditions";
+            conditionText = MSG.view_alerts_field_condition_text_many();
             conditionValue = "--";
         } else if (conditionLogs.size() == 1) {
             AlertConditionLog conditionLog = conditionLogs.iterator().next();
@@ -183,7 +250,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                     .getMeasurementDefinition().getUnits(), true);
             }
         } else {
-            conditionText = "No Conditions";
+            conditionText = MSG.view_alerts_field_condition_text_none();
             conditionValue = "--";
         }
         record.setAttribute("conditionText", conditionText);
@@ -225,10 +292,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         return record;
     }
 
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        ListGridRecord record = new ListGridRecord(data);
-        Window.alert(String.valueOf(record.getAttributeAsInt("id")));
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        // TODO
+        Window.alert(String.valueOf(recordToRemove.getAttributeAsInt("id")));
     }
 
     public AlertGWTServiceAsync getAlertService() {

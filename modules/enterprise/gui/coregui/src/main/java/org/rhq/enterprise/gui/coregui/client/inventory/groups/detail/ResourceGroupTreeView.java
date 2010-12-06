@@ -53,6 +53,7 @@ import org.rhq.core.domain.resource.group.composite.ClusterKeyFlyweight;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -102,7 +103,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         addMember(this.treeGrid);
 
-        contextMenu = new ResourceGroupTreeContextMenu();
+        contextMenu = new ResourceGroupTreeContextMenu(extendLocatorId("contextMenu"));
         treeGrid.setContextMenu(contextMenu);
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
@@ -171,6 +172,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         ResourceGroupTreeView.this.rootGroupId = rootResourceGroup.getId();
                         TreeNode fakeRoot = new TreeNode("fakeRootNode");
                         TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
+                        String icon = ImageManager.getGroupIcon(GroupCategory.MIXED);
+                        rootNode.setIcon(icon);
                         rootNode.setID(String.valueOf(rootResourceGroup.getId())); //getClusterKey().toString());
                         fakeRoot.setChildren(new TreeNode[] { rootNode });
                         Tree tree = new Tree();
@@ -263,7 +266,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         ResourceType rootResourceType = typeMap.get(rootResourceGroup.getResourceType().getId());
         rootNode.setAttribute("resourceType", rootResourceType);
-        String icon = "types/" + rootResourceType.getCategory().getDisplayName() + "_up_16.png";
+        String icon = ImageManager.getResourceIcon(rootResourceType.getCategory());
         rootNode.setIcon(icon);
 
         fakeRoot.setChildren(new TreeNode[] { rootNode });
@@ -383,7 +386,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         node.setAttribute("resourceType", type);
         node.setIsFolder(!child.getChildren().isEmpty());
 
-        String icon = "types/" + type.getCategory().getDisplayName() + "_up_16.png";
+        String icon = ImageManager.getResourceIcon(type.getCategory());
         node.setIcon(icon);
         return node;
     }

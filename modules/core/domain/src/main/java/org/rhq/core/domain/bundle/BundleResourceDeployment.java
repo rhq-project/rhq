@@ -58,6 +58,8 @@ import org.rhq.core.domain.resource.Resource;
  */
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = BundleResourceDeployment.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM BundleResourceDeployment brd "
+        + " WHERE brd.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployment.id = :id "),
     @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_RESOURCE_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.resource.id = :id ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEPLOY_ID_SEQ")
@@ -66,6 +68,7 @@ import org.rhq.core.domain.resource.Resource;
 public class BundleResourceDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_DELETE_BY_RESOURCES = "BundleResourceDeployment.deleteByResources";
     public static final String QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH = "BundleResourceDeployment.findByDeploymentIdNoFetch";
     public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleResourceDeployment.findByResourceIdNoFetch";
 

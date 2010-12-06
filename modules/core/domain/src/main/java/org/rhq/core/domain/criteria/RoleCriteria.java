@@ -37,18 +37,21 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class RoleCriteria extends Criteria {
+
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private String filterDescription;
     private String filterName;
-    private Integer filterSubjectId; // needs overrides
-    private List<Integer> filterIds; // needs overrides
+    private Integer filterSubjectId;     // needs overrides
+    private Integer filterLdapSubjectId; // needs overrides
+    private List<Integer> filterIds;     // needs overrides
 
     private boolean fetchPermissions;
     private boolean fetchResourceGroups;
     private boolean fetchRoleNotifications;
     private boolean fetchSubjects;
+    private boolean fetchLdapGroups;
 
     private PageOrdering sortName;
 
@@ -57,6 +60,12 @@ public class RoleCriteria extends Criteria {
             + "id IN ( SELECT innerRole.id " //
             + "          FROM Role innerRole " //
             + "          JOIN innerRole.subjects innerSubject " // 
+            + "         WHERE innerSubject.id = ? )");
+
+        filterOverrides.put("ldapSubjectId", "" //
+            + "id IN ( SELECT innerRole.id " //
+            + "          FROM Role innerRole " //
+            + "          JOIN innerRole.ldapSubjects innerSubject " //
             + "         WHERE innerSubject.id = ? )");
 
         filterOverrides.put("ids", "id IN ( ? )");
@@ -83,12 +92,17 @@ public class RoleCriteria extends Criteria {
         this.filterSubjectId = filterSubjectId;
     }
 
+    public void addFilterLdapSubjectId(Integer filterLdapSubjectId) {
+        this.filterLdapSubjectId = filterLdapSubjectId;
+    }
+
     public void addFilterIds(Integer... filterIds) {
         this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     /**
      * Requires MANAGE_SECURITY
+     *
      * @param fetchSubjects
      */
     public void fetchSubjects(boolean fetchSubjects) {
@@ -96,7 +110,17 @@ public class RoleCriteria extends Criteria {
     }
 
     /**
+     * Specify whether or not LDAP groups should be fetched. Requires MANAGE_SECURITY.
+     *
+     * @param fetchLdapGroups true if LDAP groups should be fetched
+     */
+    public void fetchLdapGroups(boolean fetchLdapGroups) {
+        this.fetchLdapGroups = fetchLdapGroups;
+    }
+
+    /**
      * Requires MANAGE_SECURITY
+     *
      * @param fetchResourceGroups
      */
     public void fetchResourceGroups(boolean fetchResourceGroups) {
@@ -118,6 +142,7 @@ public class RoleCriteria extends Criteria {
 
     /** subclasses should override as necessary */
     public boolean isSecurityManagerRequired() {
-        return (this.fetchSubjects || this.fetchResourceGroups);
+        return (this.fetchSubjects || this.fetchResourceGroups || this.fetchLdapGroups);
     }
+
 }

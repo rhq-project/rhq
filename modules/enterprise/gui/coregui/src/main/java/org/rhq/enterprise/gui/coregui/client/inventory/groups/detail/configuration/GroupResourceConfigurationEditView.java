@@ -29,7 +29,6 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -61,8 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public class GroupResourceConfigurationEditView extends LocatableVLayout
-    implements PropertyValueChangeListener, RefreshableView {
+public class GroupResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
+    RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private ResourceGroup group;
@@ -86,11 +85,12 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
-        toolStrip.addMember(new LayoutSpacer());
-
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        this.saveButton.setTooltip("Update the configurations of all group members.");
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton.setTooltip(MSG.view_group_resConfig_edit_saveTooltip());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -102,8 +102,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout
         refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
-            Message message = new Message("You do not have permission to edit this group's configuration.",
-                Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+            Message message = new Message(MSG.view_group_resConfig_edit_noperm(), Message.Severity.Info, EnumSet.of(
+                Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -151,27 +151,30 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout
 
     private void loadConfigurations() {
         this.memberConfigurations = null;
-        this.configurationService.findResourceConfigurationsForGroup(group.getId(), new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to retrieve member Resource configurations for " + group + ".", caught);
-                    }
+        this.configurationService.findResourceConfigurationsForGroup(group.getId(),
+            new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to retrieve member Resource configurations for [" + group + "]", caught);
+                }
 
-                    public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
-                        memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
-                        for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
-                            int resourceId = result.getOriginal().getResourceId();
-                            String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);                                                        
-                            Configuration configuration = result.getOriginal().getConfiguration();
-                            GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
-                                configuration);
-                            if (configuration == null || configuration.getProperties().isEmpty()) {
-                                throw new RuntimeException("One or more null or empty member Resource configuration was returned by the Server.");
-                            }
-                            memberConfigurations.add(memberConfiguration);
+                public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
+                    memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
+                    for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
+                        int resourceId = result.getOriginal().getResourceId();
+                        String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);
+                        Configuration configuration = result.getOriginal().getConfiguration();
+                        GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
+                            configuration);
+                        if (configuration == null || configuration.getProperties().isEmpty()) {
+                            throw new RuntimeException(
+                                "One or more null or empty member Resource configuration was returned by the Server.");
                         }
-                        initEditor();
+                        memberConfigurations.add(memberConfiguration);
                     }
-                });
+                    initEditor();
+                }
+            });
     }
 
     private void save() {
@@ -179,24 +182,24 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout
         GWTServiceLookup.getConfigurationService().updateResourceConfigurationsForGroup(this.group.getId(),
             resourceConfigurations, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Configuration update failed for "
-                        + group.getResourceType().getName() + " compatible group '" + group.getName() + "'.", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_group_resConfig_edit_saveFailure(group.getResourceType().getName(), group.getName()),
+                        caught);
                 }
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Configuration update initiated.",
-                            "Configuration update initiated for " + group.getResourceType().getName()
-                                + " compatible group '" + group.getName() + "'.",
-                            Message.Severity.Info));
+                        new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
+                            .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
+                                .getName()), Message.Severity.Info));
                     refresh();
                 }
             });
     }
 
     private List<ResourceConfigurationComposite> convertToCompositeList() {
-        List<ResourceConfigurationComposite> resourceConfigurations =
-            new ArrayList<ResourceConfigurationComposite>(this.memberConfigurations.size());
+        List<ResourceConfigurationComposite> resourceConfigurations = new ArrayList<ResourceConfigurationComposite>(
+            this.memberConfigurations.size());
         for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
             resourceConfigurations.add(new ResourceConfigurationComposite(memberConfiguration.getId(),
                 memberConfiguration.getConfiguration()));
@@ -211,13 +214,12 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout
         if (event.isValidationStateChanged()) {
             Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
-                this.saveButton.enable();                
-                message = new Message("All configuration properties have valid values, so the configuration can now be saved.",
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                this.saveButton.enable();
+                message = new Message(MSG.view_group_resConfig_edit_valid(), Message.Severity.Info, EnumSet.of(
+                    Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("The following configuration properties have invalid values: "
-                    + invalidPropertyNames + ". The values must be corrected before the configuration can be saved.",
+                message = new Message(MSG.view_group_resConfig_edit_invalid(invalidPropertyNames.toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

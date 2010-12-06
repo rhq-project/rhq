@@ -96,6 +96,7 @@ public class PluginValidator {
         PluginContainerConfiguration configuration = new PluginContainerConfiguration();
         configuration.setPluginFinder(finder);
         configuration.setTemporaryDirectory(new File(System.getProperty("java.io.tmpdir")));
+        configuration.setDataDirectory(new File(System.getProperty("java.io.tmpdir")));
 
         PluginManager manager = new PluginManager();
         manager.setConfiguration(configuration);

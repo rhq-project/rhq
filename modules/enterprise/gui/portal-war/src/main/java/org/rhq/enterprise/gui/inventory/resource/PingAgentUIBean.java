@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.inventory.resource;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -75,7 +76,7 @@ public class PingAgentUIBean {
         try {
             int resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
                 Integer.class);
-            agent = agentManager.getAgentByResourceId(resourceId);
+            agent = agentManager.getAgentByResourceId(EnterpriseFacesContextUtility.getSubject(), resourceId);
             if (agent == null) {
                 throw new IllegalStateException("No agent is associated with the resource with id " + resourceId + ".");
             }

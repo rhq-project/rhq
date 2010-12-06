@@ -28,7 +28,7 @@
 
    <dependencies>
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
          <version>${project.version}</version>         
       </dependency>   
@@ -106,7 +106,7 @@
                            <property name="project.groupId" value="${project.groupId}" />
                            <property name="project.version" value="${project.version}" />
                            <property name="settings.localRepository" value="${settings.localRepository}" />
-                           <property name="rhq-remoting-ws.version" value="${version}" />
+                           <property name="rhq-remoting-ws.version" value="${project.version}" />
                            <property name="commons-logging.version" value="${commons-logging.version}" />
                            <property name="opencsv.version" value="${opencsv.version}" />
                            <property name="concurrent.version" value="${concurrent.version}" />
@@ -312,7 +312,7 @@
             </plugins>
          </build>
       </profile>
-             <profile>
+      <profile>
       <id>cobertura</id>
       <activation>
         <activeByDefault>false</activeByDefault>
@@ -320,14 +320,12 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
-             <version>1.1</version>             
+             <artifactId>maven-antrun-plugin</artifactId>                
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

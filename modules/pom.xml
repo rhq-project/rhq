@@ -109,6 +109,16 @@
             <module>cli-tests</module>
 	 </modules>
       </profile>
+
+       <profile>
+          <id>rhq-perf</id>
+          <modules>
+             <module>core</module>
+             <module>helpers</module>
+             <module>enterprise</module>
+          </modules>
+       </profile>
+
    </profiles>
 
    <modules>

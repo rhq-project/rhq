@@ -39,7 +39,7 @@ public class ResourceOverviewUIBean {
 
     private List<Alert> getAlerts(Subject subject, int resourceId, int count) {
         PageControl lastFive = new PageControl(0, count);
-        lastFive.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
+        lastFive.initDefaultOrderingField("ctime", PageOrdering.DESC);
 
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);

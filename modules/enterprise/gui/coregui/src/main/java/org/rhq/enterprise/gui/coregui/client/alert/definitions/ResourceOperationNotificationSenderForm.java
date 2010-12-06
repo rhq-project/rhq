@@ -20,12 +20,10 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -110,7 +108,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         operationArgumentsCanvasItem.setHeight(400);
         operationArgumentsCanvasItem.setWidth(500);
 
-        operationSelectItem = new SelectItem("operationSelectItem", "Operation");
+        operationSelectItem = new SelectItem("operationSelectItem", MSG
+            .view_alert_definition_notification_operation_editor_common_operation());
         operationSelectItem.setStartRow(true);
         operationSelectItem.setEndRow(true);
         operationSelectItem.setWrapTitle(false);
@@ -127,7 +126,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // for SPECIFIC mode
 
-        singleResourceTextItem = new StaticTextItem("singleResourceTextItem", "Resource");
+        singleResourceTextItem = new StaticTextItem("singleResourceTextItem", MSG
+            .view_alert_definition_notification_operation_editor_specific_resource());
         singleResourceTextItem.setStartRow(true);
         singleResourceTextItem.setEndRow(false);
         singleResourceTextItem.setValue("Pick a resource...");
@@ -135,7 +135,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         singleResourceTextItem.setAttribute(RESOURCE_ID_ATTRIBUTE, 0); // we hide the resource ID in this attribute
         singleResourceTextItem.setValidators(new ResourceIdValidator(singleResourceTextItem));
 
-        ButtonItem singleResourceButtonItem = new ButtonItem("singleResourceButtonItem", "Pick");
+        ButtonItem singleResourceButtonItem = new ButtonItem("singleResourceButtonItem", MSG
+            .view_alert_definition_notification_operation_editor_specific_pick_button());
         singleResourceButtonItem.setStartRow(false);
         singleResourceButtonItem.setEndRow(true);
         singleResourceButtonItem.setShowTitle(false);
@@ -146,8 +147,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 SingleResourcePicker singleResourcePicker;
                 singleResourcePicker = new SingleResourcePicker(extendLocatorId("singleResourcePicker"),
                     new OkHandler() {
-                        @Override
-                        public boolean ok(HashSet<Integer> resourceIdSelection) {
+                        public boolean ok(Set<Integer> resourceIdSelection) {
                             final int resourceId = resourceIdSelection.iterator().next().intValue();
                             setSpecificResource(resourceId, null, null);
                             return true;
@@ -159,15 +159,16 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // for RELATIVE mode
 
-        ancestorTypeSelectItem = new SelectItem("ancestorTypeSelectItem", "Start Search From");
+        ancestorTypeSelectItem = new SelectItem("ancestorTypeSelectItem", MSG
+            .view_alert_definition_notification_operation_editor_relative_ancestor());
         ancestorTypeSelectItem.setStartRow(true);
         ancestorTypeSelectItem.setEndRow(true);
         ancestorTypeSelectItem.setWrapTitle(false);
         ancestorTypeSelectItem.setRedrawOnChange(true);
         ancestorTypeSelectItem.setDefaultToFirstOption(true);
         ancestorTypeSelectItem.setHoverWidth(200);
-        ancestorTypeSelectItem
-            .setTooltip("Select the top of the type hierarchy from which to search its descedant tree for the Filter By type");
+        ancestorTypeSelectItem.setTooltip(MSG
+            .view_alert_definition_notification_operation_editor_relative_ancestor_tooltip());
         ancestorTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
         ancestorTypeSelectItem.addChangedHandler(new ChangedHandler() {
             @Override
@@ -176,15 +177,16 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             }
         });
 
-        descendantTypeSelectItem = new SelectItem("descendantTypeSelectItem", "Then Filter By");
+        descendantTypeSelectItem = new SelectItem("descendantTypeSelectItem", MSG
+            .view_alert_definition_notification_operation_editor_relative_descendant());
         descendantTypeSelectItem.setStartRow(true);
         descendantTypeSelectItem.setEndRow(false);
         descendantTypeSelectItem.setWrapTitle(false);
         descendantTypeSelectItem.setRedrawOnChange(true);
         descendantTypeSelectItem.setDefaultToFirstOption(true);
         descendantTypeSelectItem.setHoverWidth(200);
-        descendantTypeSelectItem
-            .setTooltip("The resource type to search for under the root type defined in the Start Search From selection.");
+        descendantTypeSelectItem.setTooltip(MSG
+            .view_alert_definition_notification_operation_editor_relative_descendant_tooltip());
         descendantTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
         descendantTypeSelectItem.addChangedHandler(new ChangedHandler() {
             @Override
@@ -198,14 +200,15 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         descendantNameTextItem.setEndRow(true);
         descendantNameTextItem.setShowTitle(false);
         descendantNameTextItem.setRequired(false);
-        descendantNameTextItem
-            .setTooltip("A specific name to uniquely identify a resource when more than one resource of the selected type might exist. This is optional if there will only ever be one resource of the resource type in the selected type hierarchy.");
+        descendantNameTextItem.setTooltip(MSG
+            .view_alert_definition_notification_operation_editor_relative_descendant_filter_tooltip());
         descendantNameTextItem.setHoverWidth(200);
         descendantNameTextItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
 
         // the mode selector menu
 
-        modeSelectItem = new SelectItem("modeSelectItem", "Resource Selection Mode");
+        modeSelectItem = new SelectItem("modeSelectItem", MSG
+            .view_alert_definition_notification_operation_editor_mode_title());
         modeSelectItem.setStartRow(true);
         modeSelectItem.setEndRow(true);
         modeSelectItem.setWrapTitle(false);
@@ -225,7 +228,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     break;
                 }
                 case SPECIFIC: {
-                    singleResourceTextItem.setValue("Pick a resource...");
+                    singleResourceTextItem.setValue(MSG
+                        .view_alert_definition_notification_operation_editor_specific_pick_text());
                     singleResourceTextItem.setAttribute(RESOURCE_ID_ATTRIBUTE, 0);
                     hideOperationDropDownMenu();
                     break;
@@ -302,7 +306,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot get type ancestry", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_alert_definition_notification_operation_editor_relative_ancestor_loadFailed(), caught);
                 }
             };
 
@@ -334,7 +339,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 @Override
                 public void onSuccess(HashMap<Integer, String> results) {
                     LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(results.size() + 1);
-                    map.put(String.valueOf(rootResourceTypeId), "Root Ancestor Type");
+                    map.put(String.valueOf(rootResourceTypeId), MSG
+                        .view_alert_definition_notification_operation_editor_relative_ancestor_root());
                     for (Map.Entry<Integer, String> entry : results.entrySet()) {
                         map.put(entry.getKey().toString(), entry.getValue());
                     }
@@ -352,7 +358,9 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot get type descendants", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_alert_definition_notification_operation_editor_relative_descendant_loadFailed(),
+                        caught);
                 }
             });
     }
@@ -421,7 +429,9 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 @Override
                 public void onSuccess(PageList<ResourceType> result) {
                     if (result == null || result.size() != 1) {
-                        CoreGUI.getErrorHandler().handleError("Error getting operations: " + result);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_operation_editor_operations_loadFailed() + ": "
+                                + result);
                         hideOperationDropDownMenu();
                         return;
                     }
@@ -456,7 +466,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load the list of available operations", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_alert_definition_notification_operation_editor_operations_loadFailed(), caught);
                     hideOperationDropDownMenu();
                 }
             });
@@ -483,13 +494,15 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                         singleResourceTextItem.setValue(resource.getName());
                         setOperationDropDownMenuValues(resource.getResourceType().getId(), opId, args);
                     } else {
-                        onFailure(new Exception("query returns no results"));
+                        onFailure(new Exception(MSG
+                            .view_alert_definition_notification_operation_editor_operations_loadFailed()));
                     }
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot determine resource name", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_alert_definition_notification_operation_editor_operations_loadFailed(), caught);
                     singleResourceTextItem.setValue(resourceId);
                     hideOperationDropDownMenu();
                 }
@@ -529,7 +542,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             ConfigurationEditor configEditor = new ConfigurationEditor(extendLocatorId("opArgs"), def, config);
             operationArgumentsCanvasItem.addMember(configEditor);
         } else {
-            Label l = new Label("This operation does not take any parameters");
+            Label l = new Label(MSG.view_alert_definition_notification_operation_editor_operations_no_parameters());
             l.setWrap(false);
             operationArgumentsCanvasItem.addMember(l);
         }
@@ -610,7 +623,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 return false;
             }
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Cannot save the notification configuration", e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_editor_saveFailed(), e);
             return false;
         }
     }
@@ -641,13 +654,14 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             Integer id = Integer.valueOf(idItem.getAttributeAsInt(RESOURCE_ID_ATTRIBUTE));
             boolean valid = (id != null && id.intValue() != 0);
             if (!valid) {
-                setErrorMessage("Please pick a resource");
+                setErrorMessage(MSG.view_alert_definition_notification_operation_editor_specific_pick_error_invalid());
             } else {
                 LinkedHashMap<Integer, OperationDefinition> ops = (LinkedHashMap<Integer, OperationDefinition>) operationSelectItem
                     .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE);
                 if (ops == null || ops.isEmpty()) {
                     valid = false;
-                    setErrorMessage("Please pick a resource that has one or more operations");
+                    setErrorMessage(MSG
+                        .view_alert_definition_notification_operation_editor_specific_pick_error_no_operation());
                 }
             }
             return valid;

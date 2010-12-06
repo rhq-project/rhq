@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.util.List;
+
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -106,15 +108,61 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "packageBits") byte[] packageBits);
 
     /**
+     * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
+     * the resource component of the indicated parent will be used to create the new resource. This call should only be
+     * made for resource types that are defined with a create/delete policy of {@link CreateDeletePolicy#BOTH} or
+     * {@link CreateDeletePolicy#CREATE_ONLY}. If this call is made for a resource type that cannot be created based on
+     * this policy, the plugin container will throw an exception. This call should only be made for resource types that
+     * are defined with a creation data type of {@link ResourceCreationDataType#CONTENT}. If this call is made for a
+     * resource type that cannot be created via an package, the plugin container will throw an exception.
+     *
+     * @param subject                     user requesting the creation
+     * @param parentResourceId            parent resource under which the new resource should be created
+     * @param newResourceTypeId           identifies the type of resource being created
+     * @param newResourceName             Ignored, pass null. This is determined from the package.
+     * @param pluginConfiguration         optional plugin configuration that may be needed in order to create the new
+     *                                    resource
+     * @param deploymentTimeConfiguration dictates how the package will be deployed
+     * @param packageVersionId            An existing package version to back this resource
+     */
+    @WebMethod
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
+        @WebParam(name = "newResourceName") String newResourceName, //
+        @WebParam(name = "pluginConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @WebParam(name = "deploymentTimeConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, //
+        @WebParam(name = "packageVersionId") int packageVersionId);
+
+    /**
      * Deletes a physical resource from the agent machine. After this call, the resource will no longer be accessible
      * not only to JON, but in general. It is up to the plugin to determine how to complete the delete, but a deleted
      * resource will no longer be returned from resource discoveries.
      *
-     * @param subject    user requesting the creation
+     * @param subject    user requesting the deletion. must have resource delete perm on the resource.
      * @param resourceId resource being deleted
      */
     @WebMethod
     DeleteResourceHistory deleteResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
+
+    /**
+     * Deletes physical resources from the agent machine. After this call, the resource will no longer be accessible
+     * not only to JON, but in general. It is up to the plugin to determine how to complete the delete, but a deleted
+     * resource will no longer be returned from resource discoveries.
+     *
+     * @param subject    user requesting the deletion. must have resource delete perm on the resources.
+     * @param resourceIds the resources being deleted
+     */
+    @WebMethod
+    List<DeleteResourceHistory> deleteResources( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceIds") int[] resourceIds);
+
 }

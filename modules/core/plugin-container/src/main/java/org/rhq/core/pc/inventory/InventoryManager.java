@@ -882,22 +882,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
 
-        List<Availability> reportAvails = report.getResourceAvailability();
+        List<AvailabilityReport.Datum> reportAvails = report.getResourceAvailability();
 
-        if (configuration.isInsideAgent() && (reportAvails != null)) {
+        if (configuration.isInsideAgent() && reportAvails.size() > 0) {
             // Due to the asynchronous nature of the availability collection,
             // it is possible we may have collected availability of a resource that has just recently been deleted;
             // therefore, as a secondary check, let's remove any availabilities for resources that no longer exist.
             // I suppose after we do this check and before we send the report to the server that a resource could
             // then be deleted, but that time period where that could happen is now very small and thus this will
             // be a rare event.  And even if that does happen, nothing catastrophic would happen on the server,
-            // the report would fail, an error would be logged on the server, and the exception thrown would
-            // cause us to send a full report next time.
+            // the report would be accepted normally, a message would be inserted in the server log indicating an empty
+            // report was received, and the rest of the handling would be short-circuited.
             this.inventoryLock.readLock().lock();
             try {
-                Availability[] avails = reportAvails.toArray(new Availability[reportAvails.size()]);
-                for (Availability avail : avails) {
-                    ResourceContainer container = getResourceContainer(avail.getResource());
+                AvailabilityReport.Datum[] avails = reportAvails.toArray(new AvailabilityReport.Datum[reportAvails
+                    .size()]);
+                for (AvailabilityReport.Datum avail : avails) {
+                    int resourceId = avail.getResourceId();
+                    ResourceContainer container = getResourceContainer(resourceId);
+
                     if ((container == null)
                         || (container.getResource().getInventoryStatus() == InventoryStatus.DELETED)) {
                         reportAvails.remove(avail);
@@ -934,6 +937,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
         }
+
     }
 
     /**

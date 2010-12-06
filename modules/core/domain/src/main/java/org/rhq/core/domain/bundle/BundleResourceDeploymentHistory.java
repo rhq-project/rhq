@@ -48,7 +48,10 @@ import javax.xml.bind.annotation.XmlType;
  * @author Jay Shaughnessy
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_FIND_ALL, query = "SELECT brdh FROM BundleResourceDeploymentHistory brdh") //
+@NamedQueries( {
+    @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM BundleResourceDeploymentHistory brdh "
+        + " WHERE brdh.resourceDeployment IN ( SELECT brd FROM BundleResourceDeployment brd WHERE brd.resource.id IN ( :resourceIds ) ) )"),
+    @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_FIND_ALL, query = "SELECT brdh FROM BundleResourceDeploymentHistory brdh") //
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEP_HIST_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_RES_DEP_HIST")
@@ -56,6 +59,7 @@ import javax.xml.bind.annotation.XmlType;
 public class BundleResourceDeploymentHistory implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_DELETE_BY_RESOURCES = "BundleResourceDeploymentHistory.deleteByResources";
     public static final String QUERY_FIND_ALL = "BundleResourceDeploymentHistory.findAll";
 
     @Column(name = "ID", nullable = false)

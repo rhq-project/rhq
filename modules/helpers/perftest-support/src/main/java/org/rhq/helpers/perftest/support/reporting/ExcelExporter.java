@@ -76,7 +76,16 @@ public class ExcelExporter implements PerformanceReportExporter {
         } catch (Exception e) {
             wb = new HSSFWorkbook();
         }
+        finally {
+            if (inp!=null)
+                try {
+                    inp.close();
+                } catch (IOException e) {
+                    e.printStackTrace();  // TODO: Customise this generated block
+                }
+        }
         // Now write to it
+        FileOutputStream fileOut = null;
         try {
             // Check if we have our sheet, otherwise create
             if (wb.getNumberOfSheets()==0) {
@@ -100,14 +109,22 @@ public class ExcelExporter implements PerformanceReportExporter {
             createDetailsSheet(wb,timings,result);
 
             // Write the output to a file
-            FileOutputStream fileOut = new FileOutputStream(fileName);
+            File outFile = new File(fileName);
+            System.out.println("ExcelExporter, writing to " + outFile.getAbsolutePath());
+            fileOut = new FileOutputStream(outFile);
             wb.write(fileOut);
-            fileOut.close();
-            if (inp!=null)
-                inp.close();
+            fileOut.flush();
         }
         catch (Exception e) {
             e.printStackTrace();
+        }
+        finally {
+            try {
+                if (fileOut!=null)
+                    fileOut.close();
+            } catch (IOException e) {
+                System.err.println("Failed to close the workbook: " + e.getMessage());
+            }
         }
     }
 
@@ -301,16 +318,16 @@ public class ExcelExporter implements PerformanceReportExporter {
         switch (rolling) {
             case HOURLY:
                 df = new SimpleDateFormat("yyMMdd-kk");
-                suffix = df.format(new Date());
+                suffix = "-" + df.format(new Date());
                 break;
             case DAILY:
                 df = new SimpleDateFormat("yyMMdd");
-                suffix = df.format(new Date());
+                suffix = "-" + df.format(new Date());
             default:
                 break;
         }
 
-        fileName = fileName + "-" + suffix + DOT_XLS;
+        fileName = fileName + suffix + DOT_XLS;
 
         return fileName;
     }

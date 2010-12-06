@@ -30,8 +30,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  * @author Joseph Marques
  */
 public class TableUtility {
+
     private TableUtility() {
-        // statuc utility class only
+        // static utility class only
     }
 
     public static int[] getIds(ListGridRecord[] selections) {
@@ -51,4 +52,5 @@ public class TableUtility {
         }
         return ids;
     }
+    
 }

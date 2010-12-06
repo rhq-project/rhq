@@ -24,6 +24,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -59,8 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout {
-    private static final String TITLE = "Autodiscovery Queue";
-    private static final String HEADER_ICON = "global/Recent_16.png";
+    private static final String TITLE = MSG.view_autoDiscoveryQ_title();
+    private static final String HEADER_ICON = "global/Recent_24.png";
 
     private boolean simple;
     private TreeGrid treeGrid;
@@ -97,9 +98,10 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             title.setStyleName("HeaderLabel");
 
             DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
-            final SelectItem statusSelectItem = new SelectItem("status", "Status");
-            statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
-            statusSelectItem.setValue("New");
+            final SelectItem statusSelectItem = new SelectItem("status", MSG.common_title_status());
+            statusSelectItem.setValueMap(AutodiscoveryQueueDataSource.NEW, AutodiscoveryQueueDataSource.IGNORED,
+                AutodiscoveryQueueDataSource.NEW_AND_IGNORED);
+            statusSelectItem.setValue(AutodiscoveryQueueDataSource.NEW);
             form.setItems(statusSelectItem);
 
             statusSelectItem.addChangedHandler(new ChangedHandler() {
@@ -128,13 +130,16 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         treeGrid.setDataSource(dataSource);
         treeGrid.setAutoFetchData(true);
         treeGrid.setResizeFieldsInRealTime(true);
+        treeGrid.setAutoFitData(Autofit.HORIZONTAL);
+        treeGrid.setWrapCells(true);
+        treeGrid.setFixedRecordHeights(false);
 
         final TreeGridField name, key, type, description, status, ctime;
         name = new TreeGridField("name");
         key = new TreeGridField("resourceKey");
         type = new TreeGridField("typeName");
         description = new TreeGridField("description");
-        status = new TreeGridField("status");
+        status = new TreeGridField("statusLabel");
         ctime = new TreeGridField("ctime");
 
         if (!simple) {
@@ -157,9 +162,12 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         addMember(footer);
 
-        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), "Import");
-        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), "Ignore");
-        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), "Unignore");
+        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), MSG
+            .view_autoDiscoveryQ_import());
+        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), MSG
+            .view_autoDiscoveryQ_ignore());
+        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), MSG
+            .view_autoDiscoveryQ_unignore());
 
         footer.addMember(importButton);
         footer.addMember(ignoreButton);
@@ -182,13 +190,14 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 resourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to import resources", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_importFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Successfully imported the selected resources", Message.Severity.Info));
+                            new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }
@@ -198,13 +207,14 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to ignore resources", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_ignoreFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Successfully ignored the selected resources", Message.Severity.Info));
+                            new Message(MSG.view_autoDiscoveryQ_ignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }
@@ -214,13 +224,14 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to unignore resources", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_unignoreFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Successfully unignored the selected resources", Message.Severity.Info));
+                            new Message(MSG.view_autoDiscoveryQ_unignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }

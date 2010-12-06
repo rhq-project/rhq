@@ -315,6 +315,11 @@ public interface ContentManagerLocal {
     void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes);
 
     /**
+     * @see {@link ContentManagerRemote#deletePackageVersion(Subject, int)}
+     */
+    public void deletePackageVersion(Subject subject, int packageVersionId);
+
+    /**
      * @see {@link ContentManagerRemote#deployPackages(Subject, int[], int[])}
      */
     void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds);

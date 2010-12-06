@@ -36,7 +36,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -70,7 +69,7 @@ public class OperationCreateWizard extends AbstractWizard {
         steps.add(schedulingStep);
         setSteps(steps);
 
-        executeNowButton = new IButton("Execute Immediately");
+        executeNowButton = new IButton(MSG.view_operationCreateWizard_button_executeImmediately());
         executeNowButton.setAutoFit(true);
         executeNowButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -78,7 +77,7 @@ public class OperationCreateWizard extends AbstractWizard {
             }
         });
 
-        executeButton = new IButton("Execute");
+        executeButton = new IButton(MSG.view_operationCreateWizard_button_execute());
         executeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 execute();
@@ -90,11 +89,11 @@ public class OperationCreateWizard extends AbstractWizard {
     }
 
     public String getWindowTitle() {
-        return "Operation Wizard";
+        return MSG.view_operationCreateWizard_title();
     }
 
     public String getTitle() {
-        return "Execute " + operationDefinition.getDisplayName() + " on " + resource.getName();
+        return MSG.view_operationCreateWizard_header(operationDefinition.getDisplayName(), resource.getName());
     }
 
     public String getSubtitle() {
@@ -113,25 +112,31 @@ public class OperationCreateWizard extends AbstractWizard {
     }
 
     private void execute() {
-        com.allen_sauer.gwt.log.client.Log.info("TODO Executed operation!!");
-
-        OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
-
         Configuration parameters = parametersStep.getParameterConfiguration();
         final ExecutionSchedule schedule = schedulingStep.getExecutionSchedule();
 
+        // TODO: get the description and timeout from user input
+        String description = "";
+        int timeout = 0;
+
         GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
-            operationDefinition.getName(), parameters, schedule, " testing ", 0, new AsyncCallback<Void>() {
+            operationDefinition.getName(), parameters, schedule, description, timeout, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to schedule operation execution", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_operationCreateWizard_error_scheduleOperationFailure(), caught);
                 }
 
                 public void onSuccess(Void result) {
+                    String opName = operationDefinition.getDisplayName();
+                    String cron = schedule.getCronString();
+                    if (cron == null) {
+                        cron = MSG.common_val_na();
+                    }
+                    String concise = MSG.view_operationCreateWizard_message_scheduleOperationSuccess_short(opName);
+                    String message = MSG.view_operationCreateWizard_message_scheduleOperationSuccess(opName, String
+                        .valueOf(resource.getId()), cron);
 
-                    String message = "Schedule operation [" + operationDefinition.getName() + "]  on resource ["
-                        + resource.getId() + "] with cron string [" + schedule.getCronString() + "]";
-
-                    CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Info));
+                    CoreGUI.getMessageCenter().notify(new Message(concise, message, Message.Severity.Info));
                 }
             });
 

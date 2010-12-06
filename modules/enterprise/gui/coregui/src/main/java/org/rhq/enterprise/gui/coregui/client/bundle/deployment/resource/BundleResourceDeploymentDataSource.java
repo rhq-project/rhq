@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -56,14 +57,14 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id", "ID");
+        DataSourceIntegerField id = new DataSourceIntegerField("id", MSG.common_title_id());
         id.setPrimaryKey(true);
         fields.add(id);
 
-        DataSourceTextField resourceName = new DataSourceTextField("resourceName", "Resource");
+        DataSourceTextField resourceName = new DataSourceTextField("resourceName", MSG.common_title_resource());
         fields.add(resourceName);
 
-        DataSourceTextField status = new DataSourceTextField("status", "Status");
+        DataSourceTextField status = new DataSourceTextField("status", MSG.common_title_status());
         fields.add(status);
 
         return fields;
@@ -85,7 +86,7 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
         bundleService.findBundleResourceDeploymentsByCriteria(criteria,
             new AsyncCallback<PageList<BundleResourceDeployment>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load bundle resource deployments", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_resDeployDS_loadFailure(), caught);
                 }
 
                 public void onSuccess(PageList<BundleResourceDeployment> result) {
@@ -97,7 +98,7 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
     }
 
     @Override
-    public BundleResourceDeployment copyValues(ListGridRecord from) {
+    public BundleResourceDeployment copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 

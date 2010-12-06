@@ -53,7 +53,7 @@ public class OperationParametersStep extends AbstractWizardStep {
             }
             return configurationEditor;
         } else {
-            return new HTMLFlow("This operation does not take any parameters.");
+            return new HTMLFlow(MSG.view_operationCreateWizard_parametersStep_noParameters());
         }
     }
 
@@ -62,10 +62,11 @@ public class OperationParametersStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Operation Parameters";
+        return MSG.view_operationCreateWizard_parametersStep_name();
     }
 
     public Configuration getParameterConfiguration() {
         return configurationEditor != null ? configurationEditor.getConfiguration() : null;
     }
+    
 }

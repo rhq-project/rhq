@@ -29,16 +29,17 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -57,22 +58,22 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField metricField = new DataSourceTextField("scheduleName", "Metric");
+        DataSourceTextField metricField = new DataSourceTextField("scheduleName", MSG.dataSource_measurementOob_field_scheduleName());
         fields.add(metricField);
 
-        DataSourceTextField resourceField = new DataSourceTextField("resourceName", "Resource");
+        DataSourceTextField resourceField = new DataSourceTextField("resourceName", MSG.dataSource_measurementOob_field_resourceName());
         fields.add(resourceField);
 
-        DataSourceTextField parentField = new DataSourceTextField("parentName", "Parent");
+        DataSourceTextField parentField = new DataSourceTextField("parentName", MSG.dataSource_measurementOob_field_parentName());
         fields.add(parentField);
 
-        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", "Band");
+        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", MSG.dataSource_measurementOob_field_formattedBaseband());
         fields.add(bandField);
 
-        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", "Outlier");
+        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", MSG.dataSource_measurementOob_field_formattedOutlier());
         fields.add(outlierField);
 
-        DataSourceTextField factorField = new DataSourceTextField("factor", "Out of range factor (%)");
+        DataSourceTextField factorField = new DataSourceTextField("factor", MSG.dataSource_measurementOob_field_factor());
         fields.add(factorField);
 
         return fields;
@@ -87,7 +88,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         GWTServiceLookup.getMeasurementDataService().getSchedulesWithOOBs(null, null, null, pc,
             new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load measurement OOB information", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_measurementOob_error_fetchFailure(), caught);
                 }
 
                 public void onSuccess(PageList<MeasurementOOBComposite> result) {
@@ -100,18 +101,19 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     }
 
     @Override
-    public MeasurementOOBComposite copyValues(ListGridRecord from) {
+    public MeasurementOOBComposite copyValues(Record from) {
         throw new UnsupportedOperationException("OOBs Read only");
     }
 
     @Override
-    public ListGridRecord[] buildRecords(Collection<MeasurementOOBComposite> list) {
-        for (MeasurementOOBComposite oob : list) {
-            if (oob.getFactor() > maximumFactor)
+    public ListGridRecord[] buildRecords(Collection<MeasurementOOBComposite> dataObjects) {
+        for (MeasurementOOBComposite oob : dataObjects) {
+            if (oob.getFactor() > maximumFactor) {
                 maximumFactor = oob.getFactor();
+            }
         }
 
-        return super.buildRecords(list);
+        return super.buildRecords(dataObjects);
     }
 
     @Override

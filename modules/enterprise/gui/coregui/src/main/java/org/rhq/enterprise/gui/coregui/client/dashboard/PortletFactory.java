@@ -28,12 +28,12 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
@@ -48,9 +48,9 @@ public class PortletFactory {
     static {
         registeredPortlets = new HashMap<String, PortletViewFactory>();
 
-        registeredPortlets.put(InventorySummaryView.KEY, InventorySummaryView.Factory.INSTANCE);
-        registeredPortlets.put(RecentlyAddedView.KEY, RecentlyAddedView.Factory.INSTANCE);
-        registeredPortlets.put(PlatformPortletView.KEY, PlatformPortletView.Factory.INSTANCE);
+        registeredPortlets.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
+        registeredPortlets.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.Factory.INSTANCE);
+        registeredPortlets.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
 
         registeredPortlets.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
 
@@ -78,6 +78,11 @@ public class PortletFactory {
         Portlet view = viewFactory.getInstance(replaceSpaces(storedPortlet.getPortletKey()) + "-"
             + Integer.toString(storedPortlet.getId()));
         view.configure(portletWindow, storedPortlet);
+
+        //add code to initiate refresh cycle for portlets
+        if (view instanceof AutoRefreshPortlet) {
+            ((AutoRefreshPortlet) view).startRefreshCycle();
+        }
 
         return view;
     }

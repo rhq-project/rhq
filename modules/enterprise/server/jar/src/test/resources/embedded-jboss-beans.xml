@@ -3,7 +3,7 @@
 <deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="urn:jboss:bean-deployer:2.0 bean-deployer_2_0.xsd"
             xmlns="urn:jboss:bean-deployer:2.0">
-            
+
    <bean name="Naming" class="org.jnp.server.SingletonNamingServer"/>
 
    <bean name="InitialContextProperties" class="java.util.Hashtable">
@@ -86,13 +86,13 @@
 
    <bean name="RHQDSBootstrap" class="org.jboss.resource.adapter.jdbc.local.LocalTxDataSource">
       <property name="driverClass">${rhq.test.ds.driver-class}</property>
-      <property name="connectionURL">${rhq.test.ds.connection-url}</property>      
+      <property name="connectionURL">${rhq.test.ds.connection-url}</property>
       <property name="userName">${rhq.test.ds.user-name}</property>
       <property name="password">${rhq.test.ds.password}</property>
       <property name="jndiName">java:/RHQDS</property>
       <property name="minSize">0</property>
-      <property name="maxSize">10</property>
-      <property name="blockingTimeout">1000</property>
+      <property name="maxSize">20</property>
+      <property name="blockingTimeout">3000</property>
       <property name="idleTimeout">100000</property>
       <property name="transactionManager">
          <inject bean="TransactionManager"/>
@@ -114,7 +114,7 @@
    <!-- needed for Quartz' no-TX data source (even though this is a local-tx, seems like Quartz is still working) -->
    <bean name="NoTxRHQDSBootstrap" class="org.jboss.resource.adapter.jdbc.local.LocalTxDataSource">
       <property name="driverClass">${rhq.test.ds.driver-class}</property>
-      <property name="connectionURL">${rhq.test.ds.connection-url}</property>      
+      <property name="connectionURL">${rhq.test.ds.connection-url}</property>
       <property name="userName">${rhq.test.ds.user-name}</property>
       <property name="password">${rhq.test.ds.password}</property>
       <property name="jndiName">java:/NoTxRHQDS</property>
@@ -196,7 +196,7 @@
       <property name="dataSource">java:/DefaultDS</property>
       <property name="sqlProperties">
          CREATE_DB_ON_STARTUP = TRUE
-         
+
          CREATE_TABLE_JOB_DETAILS = CREATE TABLE qrtz_job_details(JOB_NAME VARCHAR(80) NOT NULL, JOB_GROUP VARCHAR(80) NOT NULL, \
             DESCRIPTION VARCHAR(120) NULL, JOB_CLASS_NAME VARCHAR(128) NOT NULL, IS_DURABLE VARCHAR(1) NOT NULL, \
             IS_VOLATILE VARCHAR(1) NOT NULL, IS_STATEFUL VARCHAR(1) NOT NULL, REQUESTS_RECOVERY VARCHAR(1) NOT NULL, \

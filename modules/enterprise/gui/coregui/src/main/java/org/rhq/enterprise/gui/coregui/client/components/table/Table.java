@@ -19,12 +19,20 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
@@ -58,22 +66,31 @@ import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
+ * A tabular view of set of data records from an {@link RPCDataSource}.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
-    private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
+    private static final String FIELD_ID = "id";
+    private static final String FIELD_NAME = "name";
 
     private VLayout contents;
 
@@ -84,7 +101,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     private TableFilter filterForm;
     private ListGrid listGrid;
-    private ToolStrip footer;
     private Label tableInfo;
 
     private List<String> headerIcons = new ArrayList<String>();
@@ -92,6 +108,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
     private boolean showHeader = true;
     private boolean showFooter = true;
     private boolean showFooterRefresh = true;
+    private boolean showFilterForm = true;
 
     private String tableTitle;
     private Criteria criteria;
@@ -100,40 +117,13 @@ public class Table extends LocatableHLayout implements RefreshableView {
     private boolean autoFetchData;
     private boolean flexRowDisplay = true;
 
-    private RPCDataSource dataSource;
-
-    /**
-     * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
-     */
-    public enum SelectionEnablement {
-        /**
-         * Enabled no matter how many rows are selected (zero or more)
-         */
-        ALWAYS,
-        /**
-         * One or more rows are selected.
-         */
-        ANY,
-        /**
-         * Exactly one row is selected.
-         */
-        SINGLE,
-        /**
-         * Two or more rows are selected.
-         */
-        MULTIPLE,
-        /**
-         * Never enabled - usually due to the user having a lack of permissions
-         */
-        NEVER
-    }
-
-    ;
+    private DS dataSource;
 
     private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
+    private ToolStrip footer;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -233,7 +223,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
-        return SelectionStyle.SIMPLE;
+        return SelectionStyle.MULTIPLE;
     }
 
     @Override
@@ -246,17 +236,13 @@ public class Table extends LocatableHLayout implements RefreshableView {
             }
 
             // Title
-            title = new HTMLFlow();
-            setTableTitle(tableTitle);
+            this.title = new HTMLFlow();
+            setTableTitle(this.tableTitle);
 
             if (showHeader) {
                 titleLayout = new HLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
-            }
-
-            // Add components to the view
-            if (showHeader) {
                 contents.addMember(titleLayout, 0);
             }
 
@@ -267,7 +253,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             contents.addMember(listGrid);
 
             // Footer
-            footer = new ToolStrip();
+            this.footer = new ToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -300,90 +286,136 @@ public class Table extends LocatableHLayout implements RefreshableView {
             getTableInfo().setWrap(false);
 
             if (showHeader) {
-
-                for (String headerIcon : headerIcons) {
-                    Img img = new Img(headerIcon, 24, 24);
-                    img.setPadding(4);
-                    titleLayout.addMember(img);
-                }
-
-                titleLayout.addMember(title);
-
-                if (titleComponent != null) {
-                    titleLayout.addMember(new LayoutSpacer());
-                    titleLayout.addMember(titleComponent);
-                }
-
+                drawHeader();
             }
 
             if (showFooter) {
-
-                footer.removeMembers(footer.getMembers());
-
-                for (final TableActionInfo tableAction : tableActions) {
-                    IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
-                    button.setDisabled(true);
-                    button.addClickHandler(new ClickHandler() {
-                        public void onClick(ClickEvent clickEvent) {
-                            if (tableAction.confirmMessage != null) {
-
-                                String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                    .getSelection().length));
-
-                                SC.ask(message, new BooleanCallback() {
-                                    public void execute(Boolean confirmed) {
-                                        if (confirmed) {
-                                            tableAction.action.executeAction(listGrid.getSelection());
-                                        }
-                                    }
-                                });
-                            } else {
-                                tableAction.action.executeAction(listGrid.getSelection());
-                            }
-                        }
-                    });
-                    tableAction.actionButton = button;
-                    footer.addMember(button);
-                }
-
-                for (Canvas extraWidgetCanvas : extraWidgets) {
-                    footer.addMember(extraWidgetCanvas);
-                }
-
-                footer.addMember(new LayoutSpacer());
-
-                if (isShowFooterRefresh()) {
-                    IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
-                    refreshButton.addClickHandler(new ClickHandler() {
-                        public void onClick(ClickEvent clickEvent) {
-                            listGrid.invalidateCache();
-                        }
-                    });
-                    footer.addMember(refreshButton);
-                }
-
-                footer.addMember(tableInfo);
-
-                // Manages enable/disable buttons for the grid
-                listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                    public void onSelectionChanged(SelectionEvent selectionEvent) {
-                        refreshTableInfo();
-                    }
-                });
-
-                listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-                    public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                        refreshTableInfo();
-                        fieldSizes.clear();
-                    }
-                });
-
-                // Ensure buttons are initially set correctly.
-                refreshTableInfo();
+                drawFooter();
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
         }
+    }
+
+    private void drawHeader() {
+        for (String headerIcon : headerIcons) {
+            Img img = new Img(headerIcon, 24, 24);
+            img.setPadding(4);
+            titleLayout.addMember(img);
+        }
+
+        titleLayout.addMember(title);
+
+        if (titleComponent != null) {
+            titleLayout.addMember(new LayoutSpacer());
+            titleLayout.addMember(titleComponent);
+        }
+    }
+
+    private void drawFooter() {
+        footer.removeMembers(footer.getMembers());
+
+        for (final TableActionInfo tableAction : tableActions) {
+
+            if (null == tableAction.getValueMap()) {
+                // button action
+                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                button.setDisabled(true);
+                button.setOverflow(Overflow.VISIBLE);
+                button.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        if (tableAction.confirmMessage != null) {
+
+                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                .getSelection().length));
+
+                            SC.ask(message, new BooleanCallback() {
+                                public void execute(Boolean confirmed) {
+                                    if (confirmed) {
+                                        tableAction.action.executeAction(listGrid.getSelection(), null);
+                                    }
+                                }
+                            });
+                        } else {
+                            tableAction.action.executeAction(listGrid.getSelection(), null);
+                        }
+                    }
+                });
+
+                tableAction.actionCanvas = button;
+                footer.addMember(button);
+
+            } else {
+                // menu action
+                LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
+                final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
+                for (final String key : menuEntries.keySet()) {
+                    MenuItem item = new MenuItem(key);
+                    item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+
+                        @Override
+                        public void onClick(MenuItemClickEvent event) {
+                            tableAction.getAction().executeAction(listGrid.getSelection(), menuEntries.get(key));
+                        }
+                    });
+                    menu.addItem(item);
+                }
+
+                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle(),
+                    menu);
+                menuButton.setDisabled(true);
+                // this makes it pretty tight, but maybe better than the default, which is pretty wide
+                menuButton.setAutoFit(true);
+                menuButton.setOverflow(Overflow.VISIBLE);
+
+                tableAction.actionCanvas = menuButton;
+                footer.addMember(menuButton);
+            }
+        }
+
+        for (Canvas extraWidgetCanvas : extraWidgets) {
+            footer.addMember(extraWidgetCanvas);
+        }
+
+        footer.addMember(new LayoutSpacer());
+
+        if (isShowFooterRefresh()) {
+            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+            refreshButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    listGrid.invalidateCache();
+                }
+            });
+            footer.addMember(refreshButton);
+        }
+
+        footer.addMember(tableInfo);
+
+        // Manages enable/disable buttons for the grid
+        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                refreshTableInfo();
+            }
+        });
+
+        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                refreshTableInfo();
+                fieldSizes.clear();
+            }
+        });
+
+        // Ensure buttons are initially set correctly.
+        refreshTableInfo();
+    }
+
+    /**
+     * Subclasses can use this as a chance to configure the list grid after it has been
+     * created but before it has been drawn to the DOM. This is also the proper place to add table
+     * actions so that they're rendered in the footer.
+     */
+    protected void configureTable() {
+        return;
     }
 
     public void setFilterFormItems(FormItem... formItems) {
@@ -395,15 +427,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
      * the table that displays their data.
      */
     protected void configureTableFilters() {
-
-    }
-
-    /**
-     * Overriding components can use this as a chance to configure the list grid after it has been
-     * created but before it has been drawn to the DOM. This is also the proper place to add table
-     * actions so that they're rendered in the footer.
-     */
-    protected void configureTable() {
 
     }
 
@@ -452,7 +475,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
         }
     }
 
-    public void refresh() {
+    public void refresh() {        
         if (null != this.listGrid) {
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
@@ -480,11 +503,11 @@ public class Table extends LocatableHLayout implements RefreshableView {
         title.markForRedraw();
     }
 
-    public RPCDataSource getDataSource() {
+    public DS getDataSource() {
         return dataSource;
     }
 
-    public void setDataSource(RPCDataSource dataSource) {
+    public void setDataSource(DS dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -495,65 +518,67 @@ public class Table extends LocatableHLayout implements RefreshableView {
     /**
      * Wraps ListGrid.setFields(...) but takes care of "id" field display handling. Equivalent to calling:
      * <pre>
-     * 
      * setFields( false, fields );
      * </pre>
      * 
-     * @param fields
+     * @param fields the fields
      */
     public void setListGridFields(ListGridField... fields) {
         setListGridFields(false, fields);
     }
 
     /**
-     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling
-     * @param forceIdField if true, and "id" is a defined field, then display it. If false it is displayed
+     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling.
+     *
+     * @param forceIdField if true, and "id" is a defined field, then display it. If false, it is displayed
      *        only in debug mode.  
-     * @param fields
+     * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
+        String[] dataSourceFieldNames = this.dataSource.getFieldNames();
+        Set<String> dataSourceFieldNamesSet = new LinkedHashSet<String>();
+        dataSourceFieldNamesSet.addAll(Arrays.asList(dataSourceFieldNames));
+        Map<String, ListGridField> listGridFieldsMap = new LinkedHashMap<String, ListGridField>();
+        for (ListGridField listGridField : fields) {
+            listGridFieldsMap.put(listGridField.getName(), listGridField);
+        }
+        dataSourceFieldNamesSet.removeAll(listGridFieldsMap.keySet());
 
-        DataSourceField dsIdField = this.dataSource.getField("id");
-        ListGridField lsIdField = null;
-        for (int i = 0; (null == lsIdField) && (i < fields.length); ++i) {
-            if ("id".equals(fields[i].getName())) {
-                lsIdField = fields[i];
-            }
+        DataSourceField dataSourceIdField = this.dataSource.getField(FIELD_ID);
+        boolean hideIdField = (!CoreGUI.isDebugMode() && !forceIdField);
+        if (dataSourceIdField != null && hideIdField) {
+            // setHidden() will not work on the DataSource field - use the listGrid.hideField() instead.
+            this.listGrid.hideField(FIELD_ID);
         }
 
-        // if we don't have to worry about the "id" field just set the fields and continue
-        if ((null == dsIdField) && (null == lsIdField)) {
-            this.listGrid.setFields(fields);
-            return;
+        ListGridField listGridIdField = listGridFieldsMap.get(FIELD_ID);
+        if (listGridIdField != null) {
+            listGridIdField.setHidden(hideIdField);
         }
 
-        // otherwise, make sure "id" is shown or hidden depending on mode and flags
-        if (CoreGUI.isDebugMode() || forceIdField) {
-            if (null != lsIdField) {
-                lsIdField.setHidden(false);
-                this.listGrid.setFields(fields);
-            } else {
-                // override the ds id field for better handling
-                ListGridField idField = new ListGridField("id", "Id", 55);
-                idField.setType(ListGridFieldType.INTEGER);
-                idField.setAlign(Alignment.LEFT);
-                idField.setCanEdit(false);
-
-                ListGridField[] newFields = new ListGridField[fields.length + 1];
-                newFields[0] = idField;
-                for (int i = 0; i < fields.length; ++i) {
-                    newFields[i + 1] = fields[i];
-                }
-                this.listGrid.setFields(newFields);
+        if (!dataSourceFieldNamesSet.isEmpty()) {
+            ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
+            int destIndex = 0;
+            if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
+                listGridIdField = new ListGridField(FIELD_ID, MSG.common_title_id(), 55);
+                // Override the DataSource id field metadata for consistent display across all Tables.
+                listGridIdField.setType(ListGridFieldType.INTEGER);
+                listGridIdField.setCanEdit(false);
+                listGridIdField.setHidden(hideIdField);
+                newFields[destIndex++] = listGridIdField;
+                dataSourceFieldNamesSet.remove(FIELD_ID);
             }
+            System.arraycopy(fields, 0, newFields, destIndex, fields.length);
+            destIndex += fields.length;
+            for (String dataSourceFieldName : dataSourceFieldNamesSet) {
+                DataSourceField dataSourceField = this.dataSource.getField(dataSourceFieldName);
+                ListGridField listGridField = new ListGridField(dataSourceField.getName());
+                this.listGrid.hideField(dataSourceFieldName);
+                listGridField.setHidden(true);
+                newFields[destIndex++] = listGridField;
+            }
+            this.listGrid.setFields(newFields);
         } else {
-            if (null != dsIdField) {
-                // setHidden will not work on the ds field, use the hideField method
-                this.listGrid.hideField("id");
-            }
-            if (null != lsIdField) {
-                lsIdField.setHidden(true);
-            }
             this.listGrid.setFields(fields);
         }
     }
@@ -566,14 +591,13 @@ public class Table extends LocatableHLayout implements RefreshableView {
         this.addTableAction(locatorId, title, null, null, tableAction);
     }
 
-    public void addTableAction(String locatorId, String title, SelectionEnablement enablement, String confirmation,
-        TableAction tableAction) {
+    public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
+        this.addTableAction(locatorId, title, confirmation, null, tableAction);
+    }
 
-        if (enablement == null) {
-            enablement = DEFAULT_SELECTION_ENABLEMENT;
-        }
-        TableActionInfo info = new TableActionInfo(locatorId, title, enablement, tableAction);
-        info.confirmMessage = confirmation;
+    public void addTableAction(String locatorId, String title, String confirmation,
+        LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
+        TableActionInfo info = new TableActionInfo(locatorId, title, confirmation, valueMap, tableAction);
         tableActions.add(info);
     }
 
@@ -629,33 +653,10 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
-                if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this
-                    boolean enabled;
-                    if (!this.tableActionDisableOverride) {
-                        switch (tableAction.enablement) {
-                        case ALWAYS:
-                            enabled = true;
-                            break;
-                        case NEVER:
-                            enabled = false;
-                            break;
-                        case ANY:
-                            enabled = (count >= 1);
-                            break;
-                        case SINGLE:
-                            enabled = (count == 1);
-                            break;
-                        case MULTIPLE:
-                            enabled = (count > 1);
-                            break;
-                        default:
-                            throw new IllegalStateException("Unhandled SelectionEnablement: "
-                                + tableAction.enablement.name());
-                        }
-                    } else {
-                        enabled = false;
-                    }
-                    tableAction.actionButton.setDisabled(!enabled);
+                if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
+                    boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
+                        .getSelection()));
+                    tableAction.actionCanvas.setDisabled(!enabled);
                 }
             }
             for (Canvas extraWidget : extraWidgets) {
@@ -664,9 +665,45 @@ public class Table extends LocatableHLayout implements RefreshableView {
                 }
             }
             if (getTableInfo() != null) {
-                getTableInfo().setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+                getTableInfo().setContents(
+                    MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
             }
         }
+    }
+
+    protected void deleteSelectedRecords() {
+        getListGrid().removeSelectedData(new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                Record[] deletedRecords = response.getData();
+                List<String> recordNames = new ArrayList<String>(deletedRecords.length);
+                for (Record deletedRecord : deletedRecords) {
+                    String name = deletedRecord.getAttribute(getTitleFieldName());
+                    recordNames.add(name);
+                }
+
+                Message message = new Message(MSG
+                    .widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()), MSG
+                    .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
+                        getDataTypeNamePlural(), recordNames.toString()));
+                CoreGUI.getMessageCenter().notify(message);
+            }
+        }, null);
+    }
+
+    protected String getDataTypeName() {
+        return "item";
+    }
+
+    protected String getDataTypeNamePlural() {
+        return "items";
+    }
+
+    protected String getTitleFieldName() {
+        return FIELD_NAME;
+    }
+
+    protected String getDeleteConfirmMessage() {
+        return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
     }
 
     // -------------- Inner utility classes ------------- //
@@ -727,19 +764,20 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     }
 
-    private static class TableActionInfo {
-
+    public static class TableActionInfo {
         private String locatorId;
         private String title;
-        private SelectionEnablement enablement;
-        private TableAction action;
         private String confirmMessage;
-        private IButton actionButton;
+        private LinkedHashMap<String, ? extends Object> valueMap;
+        private TableAction action;
+        private Canvas actionCanvas;
 
-        protected TableActionInfo(String locatorId, String title, SelectionEnablement enablement, TableAction action) {
+        protected TableActionInfo(String locatorId, String title, String confirmMessage,
+            LinkedHashMap<String, ? extends Object> valueMap, TableAction action) {
             this.locatorId = locatorId;
             this.title = title;
-            this.enablement = enablement;
+            this.confirmMessage = confirmMessage;
+            this.valueMap = valueMap;
             this.action = action;
         }
 
@@ -751,25 +789,30 @@ public class Table extends LocatableHLayout implements RefreshableView {
             return title;
         }
 
-        public SelectionEnablement getEnablement() {
-            return enablement;
-        }
-
-        public IButton getActionButton() {
-            return actionButton;
-        }
-
-        String getConfirmMessage() {
+        public String getConfirmMessage() {
             return confirmMessage;
         }
 
-        void setConfirmMessage(String confirmMessage) {
-            this.confirmMessage = confirmMessage;
+        public LinkedHashMap<String, ? extends Object> getValueMap() {
+            return valueMap;
         }
 
-        void setActionButton(IButton actionButton) {
-            this.actionButton = actionButton;
+        public Canvas getActionCanvas() {
+            return actionCanvas;
         }
+
+        public void setActionCanvas(Canvas actionCanvas) {
+            this.actionCanvas = actionCanvas;
+        }
+
+        public TableAction getAction() {
+            return action;
+        }
+
+        public void setAction(TableAction action) {
+            this.action = action;
+        }
+
     }
 
     public boolean isShowFooterRefresh() {
@@ -786,5 +829,13 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     public void setTableInfo(Label tableInfo) {
         this.tableInfo = tableInfo;
+    }
+
+    public boolean isShowFilterForm() {
+        return showFilterForm;
+    }
+
+    public void setShowFilterForm(boolean showFilterForm) {
+        this.showFilterForm = showFilterForm;
     }
 }

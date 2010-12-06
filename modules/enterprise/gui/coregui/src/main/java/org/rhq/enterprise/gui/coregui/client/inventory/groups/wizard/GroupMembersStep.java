@@ -22,7 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
 
-import java.util.HashSet;
+import java.util.Set;
 
 import com.smartgwt.client.widgets.Canvas;
 
@@ -54,12 +54,12 @@ public class GroupMembersStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Select Members";
+        return MSG.view_groupCreateWizard_membersStepName();
     }
 
     public int[] getSelectedResourceIds() {
-        int[] selection = new int[selector.getSelection().size()];
-        HashSet<Integer> selectedIds = selector.getSelection();
+        Set<Integer> selectedIds = selector.getSelection();
+        int[] selection = new int[selectedIds.size()];
         int i = 0;
         for (Integer id : selectedIds) {
             selection[i++] = id;

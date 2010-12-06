@@ -136,7 +136,8 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
             LocatableDynamicForm conditionExpressionForm;
             conditionExpressionForm = new LocatableDynamicForm(this.extendLocatorId("conditionExpressionForm"));
-            conditionExpression = new SelectItem("conditionExpression", "Fire alert when");
+            conditionExpression = new SelectItem("conditionExpression", MSG
+                .view_alert_common_tab_conditions_expression());
             LinkedHashMap<String, String> condExprs = new LinkedHashMap<String, String>(2);
             condExprs.put(BooleanExpression.ANY.name(), BooleanExpression.ANY.toString());
             condExprs.put(BooleanExpression.ALL.name(), BooleanExpression.ALL.toString());
@@ -144,10 +145,10 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
             conditionExpression.setDefaultValue(BooleanExpression.ANY.name());
             conditionExpression.setWrapTitle(false);
             conditionExpression.setHoverWidth(300);
-            conditionExpression
-                .setTooltip("Determines if ANY or ALL of the conditions must evaluate to true in order for the entire condition set to be considered true.");
+            conditionExpression.setTooltip(MSG.view_alert_common_tab_conditions_expression_tooltip());
 
-            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", "Fire alert when");
+            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", MSG
+                .view_alert_common_tab_conditions_expression());
             conditionExpressionStatic.setWrapTitle(false);
 
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);

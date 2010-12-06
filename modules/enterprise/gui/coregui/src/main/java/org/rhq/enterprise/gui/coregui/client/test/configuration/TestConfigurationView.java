@@ -70,7 +70,7 @@ public class TestConfigurationView
 
         toolStrip.addMember(new LayoutSpacer());
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();

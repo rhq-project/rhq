@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.AdvancedCriteria;
@@ -29,7 +28,6 @@ import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
@@ -54,9 +52,9 @@ public class BundleSelector extends AbstractSelector<Bundle> {
     protected DynamicForm getAvailableFilterForm() {
         DynamicForm availableFilterForm = new DynamicForm();
         availableFilterForm.setNumCols(4);
-        final TextItem search = new TextItem("search", "Search");
+        final TextItem search = new TextItem("search", MSG.common_title_search());
 
-        final SelectItem bundleTypeSelect = new SelectItem("bundleType", "Bundle Type");
+        final SelectItem bundleTypeSelect = new SelectItem("bundleType", MSG.view_bundle_bundleType());
         bundleService.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to load Bundle data", caught);
@@ -77,7 +75,7 @@ public class BundleSelector extends AbstractSelector<Bundle> {
     }
 
     protected RPCDataSource<Bundle> getDataSource() {
-        return new SelectedBundleDataSource();
+        return new BundlesDataSource();
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
@@ -96,17 +94,8 @@ public class BundleSelector extends AbstractSelector<Bundle> {
         return latestCriteria;
     }
 
-    private class SelectedBundleDataSource extends BundlesDataSource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<Bundle> bundles) {
-            ListGridRecord[] records = super.buildRecords(bundles);
-            for (ListGridRecord record : records) {
-                if (selection.contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
+    @Override
+    protected String getItemTitle() {
+        return MSG.common_title_bundles();
     }
 }

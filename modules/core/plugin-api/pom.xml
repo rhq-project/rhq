@@ -74,48 +74,24 @@
 
    </dependencies>
 
-   <pluginRepositories>
-      <pluginRepository>
-         <id>java.net</id>
-         <name>java.net Maven Repository</name>
-         <url>http://download.java.net/maven/1/</url>
-         <layout>legacy</layout>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </pluginRepository>
-   </pluginRepositories>
-
-   <repositories>
-      <repository>
-         <id>java.net</id>
-         <name>java.net Maven Repository</name>
-         <url>http://download.java.net/maven/1/</url>
-         <layout>legacy</layout>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </repository>
-   </repositories>
- <profiles>
+   <profiles>
       <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
+        <id>cobertura</id>
+        <activation>
+          <activeByDefault>false</activeByDefault>
+        </activation>
+
         <build>
          <plugins>
            <plugin>
              <artifactId>maven-antrun-plugin</artifactId>
-             <version>1.1</version>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
-                 <scope>test</scope>
-               </dependency>
-             </dependencies>
+             <dependencies>
+              <dependency>
+               <groupId>net.sourceforge.cobertura</groupId>
+               <artifactId>cobertura</artifactId>
+               <version>1.9.4.1</version> 
+              </dependency>
+             </dependencies>           
              <executions>                         
               <execution>              
                <id>cobertura-instrument</id>
@@ -146,7 +122,8 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>   
+                         
               <execution>
                <id>cobertura-report</id>
                <phase>prepare-package</phase>

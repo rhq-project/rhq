@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
  * @author Joseph Marques
  */
 public class SearchGUI implements EntryPoint {
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public static SearchGUI singleton = new SearchGUI();
     private SearchBar searchBar;
@@ -49,7 +50,7 @@ public class SearchGUI implements EntryPoint {
         UserSessionManager.checkLoginStatus(null, null, new AsyncCallback<Subject>() {
             @Override
             public void onFailure(Throwable caught) {
-                SC.say("Unable to determine login status, check server status");
+                SC.say(MSG.view_searchGUI_loginStatus());
             }
 
             @Override

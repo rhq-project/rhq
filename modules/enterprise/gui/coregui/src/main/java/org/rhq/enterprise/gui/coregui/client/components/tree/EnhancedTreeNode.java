@@ -44,6 +44,15 @@ public class EnhancedTreeNode extends TreeNode {
         }
     }
 
+    public EnhancedTreeNode(String name, String title, TreeNode... children) {
+        super(name, children);
+        if (!(null == title || "".equals(title.trim()))) {
+            setTitle(title);
+        } else if (name != null) {
+            setTitle(StringUtils.deCamelCase(name));
+        }
+    }
+
     @Override
     public void setName(String name) {
         super.setName(name);

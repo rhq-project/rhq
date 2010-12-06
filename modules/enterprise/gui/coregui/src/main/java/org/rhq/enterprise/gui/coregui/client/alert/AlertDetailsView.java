@@ -20,6 +20,8 @@
 package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -45,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -80,7 +83,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failure loading event details", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_details_loadFailed(), caught);
             }
         });
     }
@@ -91,7 +94,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         }
 
         if (this.viewId != null) {
-            viewId.getBreadcrumbs().get(0).setDisplayName("Details");
+            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_alert_details_breadcrumb());
             CoreGUI.refreshBreadCrumbTrail();
         }
 
@@ -104,13 +107,13 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     private TabSet getDetailsTabSet(Record record) {
         TabSet tabset = new TabSet();
 
-        Tab generalTab = new Tab("General");
+        Tab generalTab = new Tab(MSG.view_alert_common_tab_general());
         generalTab.setPane(getDetailsTableForAlert(record));
 
-        Tab conditionsTab = new Tab("Conditions");
+        Tab conditionsTab = new Tab(MSG.view_alert_common_tab_conditions());
         conditionsTab.setPane(getConditionsForAlert(record));
 
-        Tab notificationsTab = new Tab("Notifications");
+        Tab notificationsTab = new Tab(MSG.view_alert_common_tab_notifications());
         notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);
@@ -129,36 +132,52 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
 
         List<FormItem> items = new ArrayList<FormItem>();
 
-        StaticTextItem nameTextItem = new StaticTextItem("name", "Name");
+        StaticTextItem nameTextItem = new StaticTextItem("name", MSG.common_title_name());
         nameTextItem.setValue(record.getAttribute("name"));
         nameTextItem.setTooltip("Id = " + record.getAttribute("id"));
         items.add(nameTextItem);
 
-        StaticTextItem descriptionTextItem = new StaticTextItem("description", "Description");
+        StaticTextItem descriptionTextItem = new StaticTextItem("description", MSG.common_title_description());
         descriptionTextItem.setValue(record.getAttribute("description"));
         items.add(descriptionTextItem);
 
-        StaticTextItem prioTextItem = new StaticTextItem("priority", "Priority");
+        StaticTextItem prioTextItem = new StaticTextItem("priority", MSG.view_alerts_field_priority());
         prioTextItem.setValue(record.getAttribute("priority"));
+        LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>(3);
+        priorityIcons.put(AlertDataSource.PRIORITY_ICON_HIGH, AlertDataSource.PRIORITY_ICON_HIGH);
+        priorityIcons.put(AlertDataSource.PRIORITY_ICON_MEDIUM, AlertDataSource.PRIORITY_ICON_MEDIUM);
+        priorityIcons.put(AlertDataSource.PRIORITY_ICON_LOW, AlertDataSource.PRIORITY_ICON_LOW);
+        prioTextItem.setValueIcons(priorityIcons);
+        // shouldn't have to do this, but the data source stores the actual URL of the icon in it, we need to map back to value
+        LinkedHashMap<String, String> priorityMap = new LinkedHashMap<String, String>(3);
+        priorityMap.put(AlertDataSource.PRIORITY_ICON_HIGH, MSG.common_alert_high());
+        priorityMap.put(AlertDataSource.PRIORITY_ICON_MEDIUM, MSG.common_alert_medium());
+        priorityMap.put(AlertDataSource.PRIORITY_ICON_LOW, MSG.common_alert_low());
+        prioTextItem.setValueMap(priorityMap);
         items.add(prioTextItem);
 
-        StaticTextItem createdTextItem = new StaticTextItem("ctime", "Created at");
-        createdTextItem.setValue(record.getAttribute("ctime"));
+        StaticTextItem createdTextItem = new StaticTextItem("ctime", MSG.view_alerts_field_created_time());
+        createdTextItem.setValue(TimestampCellFormatter.format(record.getAttributeAsDate("ctime")));
         items.add(createdTextItem);
 
-        StaticTextItem ackByItem = new StaticTextItem("ack_by", "Acknowledged by");
-        if (record.getAttribute("ack_by") != null) {
-            ackByItem.setValue(record.getAttribute("ack_by"));
+        StaticTextItem ackByItem = new StaticTextItem("acknowledgingSubject", MSG.view_alert_details_field_ack_by());
+        if (record.getAttribute("acknowledgingSubject") != null) {
+            ackByItem.setValue(record.getAttribute("acknowledgingSubject"));
+        } else {
+            ackByItem.setValue(MSG.view_alerts_field_ack_status_empty());
         }
         items.add(ackByItem);
 
-        StaticTextItem ackTimeItem = new StaticTextItem("ack_time", "Acknowledged at");
-        if (record.getAttribute("ack_time") != null) {
-            ackTimeItem.setValue(record.getAttribute("ack_time"));
+        StaticTextItem ackTimeItem = new StaticTextItem("acknowledgeTime", MSG.view_alert_details_field_ack_at());
+        Date ack_time = record.getAttributeAsDate("acknowledgeTime");
+        if (ack_time != null) {
+            ackTimeItem.setValue(TimestampCellFormatter.format(ack_time));
+        } else {
+            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_empty());
         }
         items.add(ackTimeItem);
 
-        StaticTextItem recoveryItem = new StaticTextItem("recovery", "Recovery Info");
+        StaticTextItem recoveryItem = new StaticTextItem("recovery", MSG.view_alert_details_field_recovery_info());
         recoveryItem.setValue(record.getAttribute("recoveryInfo"));
         items.add(recoveryItem);
 
@@ -167,49 +186,65 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         return form;
     }
 
+    private class NotificationLogsTable extends Table {
+        private final Record record;
+
+        public NotificationLogsTable(String locatorId, String tableTitle, Record record) {
+            super(locatorId, tableTitle, false);
+            this.record = record;
+            setHeight("35%");
+            setWidth100();
+        }
+
+        @Override
+        protected void configureTable() {
+            DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
+            ListGrid grid = getListGrid();
+            grid.setData((Record[]) input);
+            ListGridField sender = new ListGridField("sender", MSG.view_alert_common_tab_notifications_sender());
+            sender.setWidth("33%");
+            ListGridField status = new ListGridField("status", MSG.view_alert_common_tab_notifications_status());
+            status.setWidth("33%");
+            ListGridField message = new ListGridField("message", MSG.view_alert_common_tab_notifications_message());
+            message.setWidth("34%");
+
+            grid.setFields(sender, status, message);
+        }
+    }
+
     private Table getNotificationsForAlert(Record record) {
-        DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
-
-        //Table notifTable = new Table(extendLocatorId("Notifications"), "Notifications", false);
-        Table notifTable = new Table("AlertDetailsNotifications", "Notifications", false);
-        notifTable.setHeight("35%");
-        notifTable.setWidth100();
-        ListGrid grid = notifTable.getListGrid();
-        grid.setData((Record[]) input);
-
-        ListGridField sender = new ListGridField("sender", "Sender");
-        sender.setWidth("10%");
-        ListGridField status = new ListGridField("status", "Result");
-        status.setWidth("8%");
-        ListGridField message = new ListGridField("message", "Message");
-        message.setWidth("32%");
-        ListGridField allEmails = new ListGridField("allEmails", "All Emails");
-        allEmails.setWidth("25%");
-        ListGridField badEmails = new ListGridField("badEmails", "Bad Emails");
-        badEmails.setWidth("25%");
-
-        grid.setFields(sender, status, message, allEmails, badEmails);
-
+        Table notifTable = new NotificationLogsTable("AlertDetailsNotifications", MSG
+            .view_alert_common_tab_notifications(), record);
         return notifTable;
     }
 
+    private class ConditionLogsTable extends Table {
+        private final Record record;
+
+        public ConditionLogsTable(String locatorId, String tableTitle, Record record) {
+            super(locatorId, tableTitle, false);
+            this.record = record;
+            setHeight("35%");
+            setWidth100();
+        }
+
+        @Override
+        protected void configureTable() {
+            DataClass[] input = record.getAttributeAsRecordArray("conditionLogs");
+            ListGrid grid = getListGrid();
+            grid.setData((Record[]) input);
+            ListGridField condition = new ListGridField("text", MSG.view_alert_common_tab_conditions_text());
+            condition.setWidth("60%");
+            ListGridField value = new ListGridField("value", MSG.view_alert_common_tab_conditions_value());
+
+            grid.setFields(condition, value);
+        }
+    }
+
     private Table getConditionsForAlert(Record record) {
-        DataClass[] input = record.getAttributeAsRecordArray("conditionLogs");
         String mode = record.getAttribute("conditionExpression");
-
-        //Table table = new Table(extendLocatorId("ConditionLog"), "Conditions: match = " + mode, false);
-        Table table = new Table("AlertDetailsConditionLog", "Conditions: match = " + mode, false);
-        table.setHeight("35%");
-        table.setWidth100();
-        ListGrid grid = table.getListGrid();
-        grid.setData((Record[]) input);
-
-        ListGridField condition = new ListGridField("text", "Matching condition");
-        condition.setWidth("60%");
-        ListGridField value = new ListGridField("value", "Value");
-
-        grid.setFields(condition, value);
-
+        Table table = new ConditionLogsTable("AlertDetailsConditionLog", MSG.view_alert_common_tab_conditions()
+            + ": match = " + mode, record);
         return table;
     }
 

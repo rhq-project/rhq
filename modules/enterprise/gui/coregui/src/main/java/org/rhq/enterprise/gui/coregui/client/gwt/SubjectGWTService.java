@@ -18,25 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import javax.persistence.EntityExistsException;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SubjectException;
 
 /**
- * @author Greg Hinkle
- * @see org.rhq.enterprise.server.auth.SubjectManagerRemote
+ * @see org.rhq.enterprise.server.auth.SubjectManagerLocal
  */
 public interface SubjectGWTService extends RemoteService {
-
-    /**
-     * Change the password for a user.
-     *
-     * @param username The user whose password will be changed
-     * @param password The new password for the user
-     */
-    void changePassword(String username, String password);
 
     /**
      * Creates a new principal (username and password) in the internal database. The password will be encoded before
@@ -56,6 +51,17 @@ public interface SubjectGWTService extends RemoteService {
      * @return the newly persisted {@link Subject}
      */
     Subject createSubject(Subject subjectToCreate);
+
+    /**
+     * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
+     * password.
+     *
+     * @param subjectToCreate the subject to be created (which will never be the same as <code>subject</code>)
+     * @param password the password for the principal to be created for the new user
+     *
+     * @return the persisted subject
+     */
+    Subject createSubject(Subject subjectToCreate, String password) throws Exception;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with
@@ -86,13 +92,25 @@ public interface SubjectGWTService extends RemoteService {
     void logout(Subject subject);
 
     /**
-     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
+     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles, but it will save
      * the subject's configuration.
      *
      * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
+     *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
     Subject updateSubject(Subject subjectToModify);
+
+    /**
+     * Updates an existing subject with new data. This cascades changes to roles and LDAP roles, so the passed-in
+     * subject should be fully-fetched (i.e. both roles and LDAP roles should be fetched).
+     *
+     * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
+     * @param newPassword if non-null, a new password to be set on the user's associated Principal
+     *
+     * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
+     */
+    Subject updateSubject(Subject subjectToModify, String newPassword);
 
     /**
      * Queries subjects using current logged in user.
@@ -103,14 +121,24 @@ public interface SubjectGWTService extends RemoteService {
     PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
 
     /**
-     * Checks the subject passed in for LDAP processing, to optionally
-     * i)perform registration of new RHQ LDAP user
-     * ii)handles case insentive username matches.
-     * iii)update ldap user->role ldap assignments
+     * Checks the subject passed in for LDAP processing, to optionally:
+     *   i) perform registration of new RHQ LDAP user
+     *   ii) handles case insentive username matches.
+     *   iii) update ldap user->role ldap assignments
      *
-     * @param criteria details for the search
-     * @return PageList<Subject> matching criteria.
+     * @param subjectToModify the subject
+     * @param password the LDAP password
      */
     Subject processSubjectForLdap(Subject subjectToModify, String password);
 
+    /**
+     * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
+     * exists and is authenticated via JDBC. An LDAP user will not have a {@link Principal} because it is authenticated
+     * via the LDAP server, not from the database.
+     *
+     * @param  username the user whose existence is to be checked
+     *
+     * @return <code>true</code> if the user exists and has a {@link Principal}, <code>false</code> otherwise
+     */
+    boolean isUserWithPrincipal(String username);
 }

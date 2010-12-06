@@ -43,10 +43,12 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
@@ -114,6 +116,10 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
     private Canvas getGridCanvas() {
         if (this.gridCanvas == null) {
             LocatableVLayout layout = new LocatableVLayout(extendLocatorId("gridLayout"));
+
+            TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_templates(), ImageManager.getMetricEditIcon());
+            titleBar.setExtraSpace(10);
+            layout.addMember(titleBar);
 
             SectionStack sectionStack = new SectionStack();
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
@@ -223,7 +229,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
         });
     }
 
-    private void editMetricTemplate(int resourceTypeId) {        
+    private void editMetricTemplate(int resourceTypeId) {
         Layout metricCanvas = getMetricTemplateCanvas();
         TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(extendLocatorId("MetricTemplate"),
             resourceTypeId);
@@ -293,7 +299,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 metricTemplateImg.setShowDown(false);
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
-                metricTemplateImg.setSrc("subsystems/monitor/Edit_Metric.png");
+                metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
                 metricTemplateImg.setPrompt("Edit Metric Template");
                 metricTemplateImg.setHeight(16);
                 metricTemplateImg.setWidth(16);
@@ -307,7 +313,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 alertTemplateImg.setShowDown(false);
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
-                alertTemplateImg.setSrc("subsystems/alert/Edit_Alert.png");
+                alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
                 alertTemplateImg.setPrompt("Edit Alert Template");
                 alertTemplateImg.setHeight(16);
                 alertTemplateImg.setWidth(16);
@@ -389,7 +395,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 metricTemplateImg.setShowDown(false);
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
-                metricTemplateImg.setSrc("subsystems/monitor/Edit_Metric.png");
+                metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
                 metricTemplateImg.setPrompt("Edit Metric Template");
                 metricTemplateImg.setHeight(16);
                 metricTemplateImg.setWidth(16);
@@ -403,7 +409,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 alertTemplateImg.setShowDown(false);
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
-                alertTemplateImg.setSrc("subsystems/alert/Edit_Alert.png");
+                alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
                 alertTemplateImg.setPrompt("Edit Alert Template");
                 alertTemplateImg.setHeight(16);
                 alertTemplateImg.setWidth(16);
@@ -430,14 +436,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             if (record instanceof TreeNode) {
                 if (record instanceof ResourceTypeTreeNodeBuilder.ResourceTypeTreeNode) {
                     String categoryName = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
-                    switch (ResourceCategory.valueOf(categoryName)) {
-                    case PLATFORM:
-                        return "types/Platform_up_16.png";
-                    case SERVER:
-                        return "types/Server_up_16.png";
-                    case SERVICE:
-                        return "types/Service_up_16.png";
-                    }
+                    return ImageManager.getResourceIcon(ResourceCategory.valueOf(categoryName));
                 }
             }
             return null;

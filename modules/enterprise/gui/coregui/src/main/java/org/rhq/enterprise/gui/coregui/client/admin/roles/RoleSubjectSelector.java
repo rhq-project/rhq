@@ -22,13 +22,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.Collection;
-
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -37,18 +39,18 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  */
 public class RoleSubjectSelector extends AbstractSelector<Subject> {
+    
+    private static final String ITEM_ICON = "global/User_16.png";
 
-    public RoleSubjectSelector(String id, Collection<Subject> subjects) {
-        super(id);
-        if (subjects != null) {
-            ListGridRecord[] data = (new UsersDataSource()).buildRecords(subjects);
-            setAssigned(data);
-        }
+    public RoleSubjectSelector(String id, ListGridRecord[] subjectRecords, boolean isReadOnly) {
+        super(id, isReadOnly);
+        
+        setAssigned(subjectRecords);
     }
 
     @Override
     protected RPCDataSource<Subject> getDataSource() {
-        return new SelectedSubjectsDataSource();
+        return new RoleUsersDataSource();
     }
 
     @Override
@@ -61,17 +63,30 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
         return null; // No Filters Currently
     }
 
-    public class SelectedSubjectsDataSource extends UsersDataSource {
+    @Override
+    protected String getItemTitle() {
+        return MSG.common_title_users();
+    }
 
+    @Override
+    protected String getItemIcon() {
+        return ITEM_ICON;
+    }
+
+    class RoleUsersDataSource extends UsersDataSource {
         @Override
-        public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
-            ListGridRecord[] records = super.buildRecords(subjects);
-            for (ListGridRecord record : records) {
-                if (selection.contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
+        protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
+            Record rhqAdminRecord = null;
+            for (Record record : records) {
+                Integer id = record.getAttributeAsInt(Field.ID);
+                if (id.equals(ID_RHQADMIN)) {
+                   rhqAdminRecord = record;
                 }
             }
-            return records;
+            if (rhqAdminRecord != null) {
+                records.remove(rhqAdminRecord);
+            }
+            super.sendSuccessResponseRecords(request, response, records);
         }
     }
 

@@ -27,6 +27,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 
 import org.apache.commons.logging.Log;
@@ -35,6 +36,7 @@ import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseDataSourceConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.datatype.IDataTypeFactory;
+import org.rhq.core.db.ant.dbupgrade.SST_DirectSQL;
 import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
@@ -77,23 +79,48 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             return;
         }
 
-        Date now = new Date();
-
-
+        String dbUrl="-unknown-" ;
+        Connection jdbcConnection = null;
+        Statement statement = null;
         try {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
-            System.out.println("Using database at " + connection.getConnection().getMetaData().getURL());
+            jdbcConnection = connection.getConnection();
+            dbUrl = jdbcConnection.getMetaData().getURL();
+            System.out.println("Using database at " + dbUrl);
+            System.out.flush();
 
             setDatabaseType(connection);
 
+            try {
+                statement = jdbcConnection.createStatement();
+                statement.execute("DROP TABLE RHQ_SUBJECT CASCADE");
+            } catch (SQLException e) {
+                System.out.println("Don't worry about : " + e.getMessage());
+            } finally {
+                if (statement!=null)
+                    statement.close();
+            }
+
+            try {
+                statement = jdbcConnection.createStatement();
+                statement.execute("DROP TABLE RHQ_CONFIG CASCADE");
+            } catch (SQLException e) {
+                System.out.println("Don't worry about : " + e.getMessage());
+            } finally {
+                if (statement!=null)
+                    statement.close();
+            }
+
+
+            System.out.flush();
             FileFormat format = state.format();
 
             Input input = format.getInput(streamProvider);
 
             try {
-                DbSetup dbSetup = new DbSetup(connection.getConnection());
+                DbSetup dbSetup = new DbSetup(jdbcConnection);
                 dbSetup.setup(state.dbVersion());
                 Importer.run(connection, input);
                 dbSetup.upgrade(null);
@@ -101,8 +128,24 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 input.close();
             }
         } catch (Exception e) {
-            LOG.warn("Failed to setup a database for method '" + method.getTestMethod().getMethodName() + "'.", e);
+            LOG.warn("Failed to setup a database at [ " + dbUrl + "] for method '" + method.getTestMethod().getMethodName() + "'.", e);
         }
+        finally {
+            if (statement!=null)
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    LOG.error("Failed to close a statement: " + e.getMessage());
+                }
+            if (jdbcConnection!=null)
+                try {
+                    jdbcConnection.close();
+                } catch (SQLException e) {
+                    LOG.error("Failed to close a JDBC connetion: " + e.getMessage());
+                }
+        }
+        System.out.flush();
+        System.err.flush();
     }
 
     private void setDatabaseType(IDatabaseConnection connection) throws SQLException {
@@ -132,15 +175,31 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             return;
         }
 
-        Date now = new Date();
-
+        Connection jdbcConnection=null;
+        Statement statement=null;
         try {
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
-            connection.getConnection().createStatement().execute("DROP TABLE RHQ_SUBJECT CASCADE");
+            jdbcConnection = connection.getConnection();
+            statement = jdbcConnection.createStatement();
+            statement.execute("DROP TABLE RHQ_SUBJECT CASCADE");
         } catch (Exception e) {
             System.err.println("== drop subject table failed: " + e.getMessage());
+        } finally {
+            if (statement!=null)
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                   LOG.error("Failed to close a statement: " + e.getMessage());
+                }
+            if (jdbcConnection!=null)
+                try {
+                    jdbcConnection.close();
+                } catch (SQLException e) {
+                    LOG.error("Failed to close a JDBC connection: " + e.getMessage());
+                }
         }
+
 
     }
 

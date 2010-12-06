@@ -26,15 +26,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
@@ -47,14 +55,15 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
  * @author Ian Springer
  */
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
-    public static final String VIEW_ID = "Reports";
 
-    private static final String SUBSYSTEMS_SECTION_VIEW_ID = "Subsystems";
-    private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
+    public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
+
+    public static final ViewName SECTION_SUBSYSTEMS_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
+    public static final ViewName SECTION_INVENTORY_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     public ReportTopView() {
         // This is a top level view, so our locator id can simply be our view id.
-        super(VIEW_ID);
+        super(VIEW_ID.getName());
     }
 
     @Override
@@ -71,76 +80,86 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
     @Override
-    protected HTMLFlow defaultView() {
-        String contents = "<h1>Reports</h1>\n" + "This section provides access to global reports.";
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+    protected VLayout defaultView() {
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_reportsTop_description());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     private NavigationSection buildSubsystemsSection() {
-        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Cloud_16.png", new ViewFactory() {
+        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Tag_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new TaggedView(extendLocatorId("Tag"));
+                return new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName()));
             }
         });
 
         NavigationItem suspectMetricsItem = new NavigationItem(MeasurementOOBView.VIEW_ID,
             "subsystems/monitor/Monitor_failed_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new MeasurementOOBView(extendLocatorId("SuspectMetrics"));
-            }
-        });
+                public Canvas createView() {
+                    return new MeasurementOOBView(extendLocatorId(MeasurementOOBView.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem recentConfigurationChangesItem = new NavigationItem(ConfigurationHistoryView.VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new ConfigurationHistoryView(extendLocatorId("ConfigHistory"));
-            }
-        });
+                public Canvas createView() {
+                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new OperationHistoryView(extendLocatorId("RecentOps"));
-            }
-        });
+                public Canvas createView() {
+                    return new OperationHistoryView(extendLocatorId(OperationHistoryView.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    // TODO: how do we know if the user is able to ack the alerts? right now, I hardcode false to not allow it
+                    return new SubsystemResourceAlertView(
+                        extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), false);
+                }
+            });
+
+        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
+            .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new AlertHistoryView(extendLocatorId("RecentAlerts"));
+                return new ResourceTypeTreeView(extendLocatorId(AdministrationView.PAGE_TEMPLATES_VIEW_ID.getName()));
             }
         });
 
-        NavigationItem alertDefinitionsItem = new NavigationItem("AlertDefinitions",
-            "subsystems/alert/Alerts_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return null; // TODO: mazz
-            }
-        });
-
-        return new NavigationSection(SUBSYSTEMS_SECTION_VIEW_ID, tagItem, suspectMetricsItem,
+        return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
             recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);
     }
 
     private NavigationSection buildInventorySection() {
-        NavigationItem
-            inventorySummaryItem = new NavigationItem("InventorySummary", "subsystems/inventory/Inventory_16.png",
-            new ViewFactory() {
+        NavigationItem inventorySummaryItem = new NavigationItem(new ViewName("InventorySummary", MSG
+            .common_title_inventorySummary()), "subsystems/inventory/Inventory_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId("InventorySummary"),
                     "/rhq/admin/report/resourceInstallReport-body.xhtml");
             }
         });
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID, "types/Platform_up_16.png",
-            new ViewFactory() {
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
+            .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
             public Canvas createView() {
-                return new PlatformPortletView(extendLocatorId("Platforms"));
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
             }
         });
 
-        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
+        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }
+
 }

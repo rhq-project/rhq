@@ -27,7 +27,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
  */
 public class GroupAlertHistoryView extends AlertHistoryView {
     public static GroupAlertHistoryView get(String locatorId, ResourceGroupComposite composite) {
-        String tableTitle = "Group Alert History";
+        String tableTitle = MSG.view_alerts_table_title_group();
         EntityContext context = EntityContext.forGroup(composite.getResourceGroup().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isAlert();
         return new GroupAlertHistoryView(locatorId, tableTitle, context, hasWriteAccess);

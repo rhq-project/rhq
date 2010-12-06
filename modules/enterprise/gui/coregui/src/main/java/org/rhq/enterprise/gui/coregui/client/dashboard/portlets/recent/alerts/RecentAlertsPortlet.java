@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -41,8 +42,11 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -57,10 +61,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  * @author Simeon Pinder
  * @author Greg Hinkle
  */
-public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet {
+public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
-    public static final String KEY = "Recent Alerts";
-    public static final String TITLE = KEY;
+    public static final String KEY = MSG.view_portlet_recentAlerts_title();
     //widget keys also used in form population
     public static final String ALERT_RANGE_DISPLAY_AMOUNT_VALUE = "alert-range-display-amount-value";
     public static final String ALERT_RANGE_PRIORITY_VALUE = "alert-range-priority-value";
@@ -69,26 +72,26 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     public static final String ALERT_RANGE_RESOURCE_IDS = "alert-range-resource-ids";
     //configuration default information
     private static final String defaultAlertCountValue = "5";
-    private static final String PRIORITY_ALL = "ALL";
+    private static final String PRIORITY_ALL = MSG.common_label_all();
     private static final String PRIORITY_HIGH = AlertPriority.HIGH.getDisplayName();
     private static final String PRIORITY_MEDIUM = AlertPriority.MEDIUM.getDisplayName();
     private static final String PRIORITY_LOW = AlertPriority.LOW.getDisplayName();
     private static final String defaultPriorityValue = PRIORITY_ALL;
-    private static final String TIME_30_MINS = "30 minutes";
-    private static final String TIME_HOUR = "hour";
-    private static final String TIME_12_HRS = "12 hours";
-    private static final String TIME_DAY = "day";
-    private static final String TIME_WEEK = "week";
-    private static final String TIME_MONTH = "month";
+    private static final String TIME_30_MINS = "30 " + MSG.common_label_minutes();
+    private static final String TIME_HOUR = MSG.common_label_hour();
+    private static final String TIME_12_HRS = "12 " + MSG.common_label_hours();
+    private static final String TIME_DAY = MSG.common_label_day();
+    private static final String TIME_WEEK = MSG.common_label_week();
+    private static final String TIME_MONTH = MSG.common_label_month();
     private static final String defaultTimeValue = TIME_DAY;
-    public static final String RESOURCES_ALL = "all resources";
-    public static final String RESOURCES_SELECTED = "selected resources";
+    public static final String RESOURCES_ALL = MSG.common_label_all_resources();
+    public static final String RESOURCES_SELECTED = MSG.common_label_selected_resources();
     public static final String defaultResourceValue = RESOURCES_ALL;
-    private static final String unlimited = "unlimited";
+    private static final String unlimited = MSG.common_label_unlimited();
     //alert resource labels
-    public static final String ALERT_LABEL_SELECTED_RESOURCES = "Selected Resources";
-    public static final String ALERT_LABEL_AVAILABLE_RESOURCES = "Available Resources";
-    public static final String ALERT_LABEL_RESOURCE_INVENTORY = "Resource Inventory";
+    public static final String ALERT_LABEL_SELECTED_RESOURCES = MSG.common_title_selected_resources();
+    public static final String ALERT_LABEL_AVAILABLE_RESOURCES = MSG.common_title_available_resources();
+    public static final String ALERT_LABEL_RESOURCE_INVENTORY = MSG.common_title_resource_inventory();
     public static final int ALERT_RESOURCE_SELECTION_WIDTH = 800;
     public static final String ID = "id";
     //shared private UI elements
@@ -98,6 +101,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     //instance ui widgets
     private Canvas containerCanvas;
     private LocatableHLayout resourceSelectionLabelRow;
+    private Timer reloader;
 
     public RecentAlertsPortlet(String locatorId) {
         super(locatorId);
@@ -109,6 +113,14 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowHeader(false);
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
+        setShowFilterForm(false); //disable filter form for portlet
+    }
+
+    @Override
+    public void showDetails(int id) {
+        // the way our superclass AlertDetailsView is impl'ed, we can't view details from portlet
+        // so disallow showing details
+        return;
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -249,7 +261,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("Displays recent alerts fired on resources visible to the current user login.");
+        return new HTMLFlow(MSG.view_portlet_recentAlerts_help_msg());
     }
 
     public DynamicForm getCustomSettingsForm() {
@@ -264,7 +276,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         VLayout column = new VLayout();
 
         //label
-        LocatableLabel alertRangeLabel = new LocatableLabel("DynamicForm_Label_Alert_Range", "<b>Alert Range</b>");
+        LocatableLabel alertRangeLabel = new LocatableLabel("DynamicForm_Label_Alert_Range", "<b>"
+            + MSG.common_title_alert_range() + "</b>");
 
         //horizontal layout
         LocatableHLayout row = new LocatableHLayout(extendLocatorId("alert-range-settings-row-1"));
@@ -272,10 +285,10 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
         //-------------combobox for number of completed scheduled ops to display on the dashboard
         final SelectItem alertRangeLastComboBox = new SelectItem(ALERT_RANGE_DISPLAY_AMOUNT_VALUE);
-        alertRangeLastComboBox.setTitle("Last");
+        alertRangeLastComboBox.setTitle(MSG.view_measureRange_last());
         alertRangeLastComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] acceptableDisplayValues = { "5", "10", "unlimited" };
+        String[] acceptableDisplayValues = { "5", "10", MSG.common_label_unlimited() };
         alertRangeLastComboBox.setValueMap(acceptableDisplayValues);
         //set width of dropdown display region
         alertRangeLastComboBox.setWidth(100);
@@ -305,7 +318,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         //-------------combobox for number of completed scheduled ops to display on the dashboard
         final SelectItem alertRangePriorityComboBox = new SelectItem(ALERT_RANGE_PRIORITY_VALUE);
         alertRangePriorityComboBox.setTitle("");
-        alertRangePriorityComboBox.setHint("<nobr> <b> priority Alerts,</b></nobr>");
+        alertRangePriorityComboBox.setHint("<nobr> <b> " + MSG.view_portlet_recentAlerts_config_priority_label()
+            + "</b></nobr>");
         alertRangePriorityComboBox.setType("selection");
         //define acceptable values for display amount
         String[] acceptablePriorityDisplayValues = { PRIORITY_ALL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW };
@@ -345,8 +359,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         //horizontal layout
         LocatableHLayout row2 = new LocatableHLayout(extendLocatorId("alert-range-settings-row-2"));
 
-        LocatableLabel alertRangeSpanLabel = new LocatableLabel(extendLocatorId("range-span-label"),
-            "<b>within the past<b>");
+        LocatableLabel alertRangeSpanLabel = new LocatableLabel(extendLocatorId("range-span-label"), "<b>"
+            + MSG.view_portlet_recentAlerts_config_when() + "<b>");
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem alertRangeTimeComboBox = new SelectItem(ALERT_RANGE_TIME_VALUE);
         alertRangeTimeComboBox.setTitle("");
@@ -381,7 +395,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         // build resource selection drop down
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem alertResourcesComboBox = new SelectItem(ALERT_RANGE_RESOURCES_VALUE);
-        alertResourcesComboBox.setTitle("for");
+        alertResourcesComboBox.setTitle(MSG.common_val_for());
         alertResourcesComboBox.setHint("");
         alertResourcesComboBox.setType("selection");
         String[] acceptableResourceDisplayValues = { RESOURCES_ALL, RESOURCES_SELECTED };
@@ -508,7 +522,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
                 PropertySimple prop = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE);
 
                 //check to see if "Selected Resources" or "All Resources"
-                if (prop.getStringValue().equals(RESOURCES_SELECTED)) {
+                if (prop != null && RESOURCES_SELECTED.equals(prop.getStringValue())) {
                     //retrieve currentlyAssignedIds
                     Integer[] valuesToPersist = resourceSelector.getListGridValues();
                     resourceSelector.setCurrentlyAssignedIds(valuesToPersist);
@@ -558,13 +572,25 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
             return new RecentAlertsPortlet(locatorId);
         }
     }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                refresh();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
+    }
 }
 
 /** Bundles a ResourceSelector instance with labelling in Canvas for display.
  *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
  */
 class AlertResourceSelectorRegion {
-
+    private static final Messages MSG = CoreGUI.getMessages();
     private ResourceSelector selector = null;
 
     private Integer[] currentlyAssignedIds;
@@ -594,19 +620,20 @@ class AlertResourceSelectorRegion {
 
     public Canvas getCanvas() {
         if (selector == null) {
-            selector = new ResourceSelector("Select Members", ResourceType.ANY_PLATFORM_TYPE, true);
+            selector = new ResourceSelector(MSG.view_portlet_recentAlerts_config_members(),
+                ResourceType.ANY_PLATFORM_TYPE, true);
             selector.setWidth100();
             selector.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH);
             //widget ui updates
-            selector.getAvailableGrid().setTitle("Available Resources");
-            selector.getAvailableGrid().setEmptyMessage("Loading data...");
-            selector.getAssignedGrid().setTitle("Selected Resources");
+            selector.getAvailableGrid().setTitle(MSG.common_title_available_resources());
+            selector.getAvailableGrid().setEmptyMessage(MSG.common_msg_loading());
+            selector.getAssignedGrid().setTitle(MSG.common_title_selected_resources());
             //disable display typeFilter.
             selector.setDisplayResourceTypeFilter(false);
 
             //populate fields for grid.
-            ListGridField nameField = new ListGridField("name", "Name");
-            ListGridField iconField = new ListGridField("icon", "icon", 50);
+            ListGridField nameField = new ListGridField("name", MSG.common_title_name());
+            ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 50);
             iconField.setImageURLPrefix("types/");
             iconField.setType(ListGridFieldType.ICON);
             selector.getAssignedGrid().setFields(iconField, nameField);
@@ -626,11 +653,7 @@ class AlertResourceSelectorRegion {
                             }
                         }
                         //simulate 'add' button push.
-                        selector.addAvailableGridSelectionsToAssignedGrid();
-                        selector.getAssignedGrid().invalidateCache();
-                        selector.getAssignedGrid().markForRedraw();
-                    } else {//no selected resources found
-                        selector.getAvailableGrid().setEmptyMessage("No items to show");
+                        selector.addSelectedRows();
                     }
                 }
             });

@@ -128,13 +128,14 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Void v) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("[" + alertDefIds.length + "] alert templates enabled.", Severity.Info));
+                    new Message(MSG.view_alert_definitions_enable_success(String.valueOf(alertDefIds.length)),
+                        Severity.Info));
                 TemplateAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to enable alert templates", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_enable_failure(), caught);
             }
         });
     }
@@ -156,13 +157,14 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Void v) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("[" + alertDefIds.length + "] alert templates disabled.", Severity.Info));
+                    new Message(MSG.view_alert_definitions_disable_success(String.valueOf(alertDefIds.length)),
+                        Severity.Info));
                 TemplateAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to disable alert templates", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_disable_failure(), caught);
             }
         });
     }
@@ -184,13 +186,14 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Void v) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("[" + alertDefIds.length + "] alert templates deleted.", Severity.Info));
+                    new Message(MSG.view_alert_definitions_delete_success(String.valueOf(alertDefIds.length)),
+                        Severity.Info));
                 TemplateAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete alert templates", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_delete_failure(), caught);
             }
         });
     }
@@ -202,13 +205,14 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 Integer.valueOf(this.resourceType.getId()), new AsyncCallback<Integer>() {
                     @Override
                     public void onSuccess(Integer result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Alert template is created", Severity.Info));
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create alert template.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_create_failure(), caught);
                     }
                 });
         } else {
@@ -216,12 +220,13 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Alert template is updated.", Severity.Info));
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update alert template.", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
                     }
                 });
         }

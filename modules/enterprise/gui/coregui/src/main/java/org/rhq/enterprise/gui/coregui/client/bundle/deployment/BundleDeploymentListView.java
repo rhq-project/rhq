@@ -38,14 +38,13 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 public class BundleDeploymentListView extends Table {
 
     public BundleDeploymentListView(String locatorId, Criteria criteria) {
-        super(locatorId, "Bundle Deployments", criteria);
+        super(locatorId, MSG.view_bundle_bundleDeployments(), criteria);
         setDataSource(new BundleDeploymentDataSource());
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
     @Override
     protected void configureTable() {
-
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
@@ -76,6 +75,7 @@ public class BundleDeploymentListView extends Table {
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setWidth(80);
+
 
     }
 }

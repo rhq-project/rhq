@@ -48,7 +48,7 @@ public class GetRevertInfoStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "Provide Revert Information";
+        return MSG.view_bundle_revertWizard_getInfoStep_name();
     }
 
     public Canvas getCanvas() {
@@ -63,19 +63,22 @@ public class GetRevertInfoStep extends AbstractWizardStep {
                 new AsyncCallback<String>() {
 
                     public void onSuccess(String result) {
-                        final StaticTextItem nameTextItem = new StaticTextItem("name", "Revert Deployment Name");
+                        final StaticTextItem nameTextItem = new StaticTextItem("name", MSG
+                            .view_bundle_revertWizard_getInfoStep_revertDeployName());
                         nameTextItem.setWidth(300);
                         wizard.setSubtitle(result);
                         nameTextItem.setValue(result);
 
-                        final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description",
-                            "Revert Deployment Description");
+                        final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
+                            .view_bundle_revertWizard_getInfoStep_revertDeployDesc());
                         descriptionTextAreaItem.setWidth(300);
                         String liveDesc = wizard.getLiveDeployment().getDescription();
                         liveDesc = (null == liveDesc) ? wizard.getLiveDeployment().getName() : liveDesc;
                         String prevDesc = wizard.getPreviousDeployment().getDescription();
                         prevDesc = (null == prevDesc) ? wizard.getPreviousDeployment().getName() : prevDesc;
                         wizard.setDeploymentDescription("[REVERT From]\n" + liveDesc + "\n\n[REVERT To]\n" + prevDesc);
+                        wizard.setDeploymentDescription(MSG.view_bundle_revertWizard_getInfoStep_revertDeployDescFull(
+                            liveDesc, prevDesc));
                         descriptionTextAreaItem.setValue(wizard.getDeploymentDescription());
                         descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                             public void onChanged(ChangedEvent event) {
@@ -87,8 +90,8 @@ public class GetRevertInfoStep extends AbstractWizardStep {
                             }
                         });
 
-                        final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment",
-                            "Clean Deployment? (wipe deploy directory prior to the revert deploy)");
+                        final CheckboxItem cleanDeploymentCBItem = new CheckboxItem("cleanDeployment", MSG
+                            .view_bundle_revertWizard_getInfoStep_cleanDeploy());
                         cleanDeploymentCBItem.setValue(wizard.isCleanDeployment());
                         cleanDeploymentCBItem.addChangedHandler(new ChangedHandler() {
                             public void onChanged(ChangedEvent event) {
@@ -100,7 +103,8 @@ public class GetRevertInfoStep extends AbstractWizardStep {
                     }
 
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get revert deployment name.", caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_bundle_revertWizard_getInfoStep_getNameFailure(), caught);
                     }
                 });
         }

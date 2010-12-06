@@ -147,10 +147,14 @@ public class ResourceGroupComposite implements Serializable {
         return this.explicitDown;
     }
 
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
     public String getExplicitFormatted() {
         return getAlignedAvailabilityResults(getExplicitUp(), getExplicitDown());
     }
 
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
     public String getImplicitFormatted() {
         return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
     }
@@ -182,16 +186,20 @@ public class ResourceGroupComposite implements Serializable {
         return "groupId=" + getResourceGroup().getId();
     }
 
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
     private String getAlignedAvailabilityResults(long up, long down) {
         StringBuilder results = new StringBuilder();
         results.append("<table width=\"120px\"><tr>");
         if (up == 0 && down == 0) {
-            results.append(getColumn(false, "<img src=\"/images/icons/availability_grey_16.png\" /> 0"));
+            results.append(getColumn(false, "<img src=\""
+                + "/coregui/images/subsystems/availability/availability_grey_16.png" + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
         } else {
             if (up > 0) {
-                results.append(getColumn(false, " <img src=\"/images/icons/availability_green_16.png\" />", up));
+                results.append(getColumn(false, " <img src=\""
+                    + "/coregui/images/subsystems/availability/availability_green_16.png" + "\" />", up));
             }
 
             if (up > 0 && down > 0) {
@@ -199,16 +207,19 @@ public class ResourceGroupComposite implements Serializable {
             }
 
             if (down > 0) {
-                results.append(getColumn(false, " <img src=\"/images/icons/availability_red_16.png\" />", down));
+                results.append(getColumn(false, " <img src=\""
+                    + "/coregui/images/subsystems/availability/availability_red_16.png" + "\" />", down));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+                    "&nbsp;&nbsp;<img src=\"/coregui/images/blank.png\" width=\"16px\" height=\"16px\" />"));
             }
         }
         results.append("</tr></table>");
         return results.toString();
     }
 
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
     private String getColumn(boolean isSpacerColumn, Object... data) {
         StringBuilder results = new StringBuilder();
         if (isSpacerColumn) {

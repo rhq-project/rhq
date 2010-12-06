@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -56,26 +57,26 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id");
+        DataSourceIntegerField id = new DataSourceIntegerField("id", MSG.common_title_id());
         id.setPrimaryKey(true);
         fields.add(id);
 
-        DataSourceTextField name = new DataSourceTextField("name");
+        DataSourceTextField name = new DataSourceTextField("name", MSG.common_title_name());
         fields.add(name);
 
-        DataSourceTextField displayName = new DataSourceTextField("displayName");
+        DataSourceTextField displayName = new DataSourceTextField("displayName", MSG.common_title_display_name());
         fields.add(displayName);
 
-        DataSourceTextField description = new DataSourceTextField("description");
+        DataSourceTextField description = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(description);
 
-        DataSourceTextField units = new DataSourceTextField("units");
+        DataSourceTextField units = new DataSourceTextField("units", MSG.common_title_units());
         fields.add(units);
 
-        DataSourceTextField numericType = new DataSourceTextField("numericType");
+        DataSourceTextField numericType = new DataSourceTextField("numericType", MSG.common_title_numeric_type());
         fields.add(numericType);
 
-        DataSourceTextField category = new DataSourceTextField("category");
+        DataSourceTextField category = new DataSourceTextField("category", MSG.common_title_category());
         fields.add(category);
 
         return fields;
@@ -91,7 +92,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
             GWTServiceLookup.getMeasurementDataService().findMeasurementDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementDefinition>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load metric definitions", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_definitions_loadFailed(), caught);
                     }
 
                     public void onSuccess(PageList<MeasurementDefinition> result) {
@@ -109,7 +110,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
             GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementSchedule>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load metric schedules", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
                     }
 
                     public void onSuccess(PageList<MeasurementSchedule> result) {
@@ -135,7 +136,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
     }
 
     @Override
-    public MeasurementDefinition copyValues(ListGridRecord from) {
+    public MeasurementDefinition copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 

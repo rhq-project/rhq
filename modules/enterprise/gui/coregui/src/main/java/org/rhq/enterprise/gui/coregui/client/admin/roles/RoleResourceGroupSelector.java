@@ -22,12 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.Collection;
-
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 
 /**
@@ -35,11 +31,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
  */
 public class RoleResourceGroupSelector extends ResourceGroupSelector {
 
-    public RoleResourceGroupSelector(String locatorId, Collection<ResourceGroup> groups) {
-        super(locatorId);
-        if (groups != null) {
-            ListGridRecord[] data = (new ResourceGroupsDataSource()).buildRecords(groups);
-            setAssigned(data);
-        }
+    public RoleResourceGroupSelector(String locatorId, ListGridRecord[] groupRecords, boolean isReadOnly) {
+        super(locatorId, isReadOnly);
+        
+        setAssigned(groupRecords);
     }
+
 }

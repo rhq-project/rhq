@@ -43,7 +43,7 @@ public class BundleTypeDropDownSelectItem extends SelectItem {
     private BundleType selected = null;
 
     public BundleTypeDropDownSelectItem(String name) {
-        super(name, "Bundle Type");
+        super(name, CoreGUI.getMessages().view_bundle_bundleType());
         buildDropDownMenu();
     }
 
@@ -74,7 +74,9 @@ public class BundleTypeDropDownSelectItem extends SelectItem {
             public void onSuccess(ArrayList<BundleType> result) {
                 if (result == null || result.size() == 0) {
                     setSelected(null);
-                    CoreGUI.getMessageCenter().notify(new Message("No bundle types are supported", Severity.Error));
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(CoreGUI.getMessages().view_bundle_createWizard_noBundleTypesSupported(),
+                            Severity.Error));
                     return;
                 }
 
@@ -96,7 +98,8 @@ public class BundleTypeDropDownSelectItem extends SelectItem {
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("No bundle types available", caught);
+                CoreGUI.getErrorHandler().handleError(
+                    CoreGUI.getMessages().view_bundle_createWizard_noBundleTypesAvail(), caught);
             }
         });
     }

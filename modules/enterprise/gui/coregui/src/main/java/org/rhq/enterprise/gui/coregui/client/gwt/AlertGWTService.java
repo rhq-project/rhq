@@ -40,6 +40,15 @@ public interface AlertGWTService extends RemoteService {
     PageList<Alert> findAlertsByCriteria(AlertCriteria criteria);
 
     /**
+     * Find the count of alerts that match the specified criteria.
+     *
+     * @param criteria the criteria
+     *
+     * @return the count of alerts that match the specified criteria
+     */
+    long findAlertCountByCriteria(AlertCriteria criteria);
+
+    /**
      * Delete the alerts with the specified ids if the current user has permission to do so (i.e. either
      * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS permission for all corresponding resources).
      * If the user does not have permission for all of the specified alerts, then none of the alerts will be deleted

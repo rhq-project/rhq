@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -28,6 +29,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Joseph Marques
  */
 public class ErrorHandler {
+
+    protected static final Messages MSG = CoreGUI.getMessages();
+
     public void handleError(String message) {
         handleError(message, null);
     }
@@ -56,7 +60,7 @@ public class ErrorHandler {
                 indent = indent + "   ";
             }
         } else {
-            results.append(">> exception was null <<");
+            results.append(">> " + MSG.util_errorHandler_nullException() + " <<");
         }
 
         return results.toString();
@@ -77,4 +81,5 @@ public class ErrorHandler {
 
         return list.toArray(new String[list.size()]);
     }
+    
 }

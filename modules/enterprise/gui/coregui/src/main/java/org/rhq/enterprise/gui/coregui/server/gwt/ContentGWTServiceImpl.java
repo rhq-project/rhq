@@ -22,6 +22,10 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
+import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -40,6 +44,14 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
+    public void deletePackageVersion(int packageVersionId) {
+        try {
+            contentManager.deletePackageVersion(getSessionSubject(), packageVersionId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) {
         try {
             return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),
@@ -49,4 +61,21 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         }
     }
 
+    public List<Architecture> getArchitectures() {
+        try {
+            return SerialUtility.prepare(contentManager.findArchitectures(getSessionSubject()),
+                "ContentService.getArchitectures");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public PackageType getResourceCreationPackageType(int resourceTypeId) {
+        try {
+            return SerialUtility.prepare(contentManager.getResourceCreationPackageType(resourceTypeId),
+                "ContentService.getResourceCreationPackageType");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
 }

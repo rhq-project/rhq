@@ -18,15 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
-import java.util.Collection;
-
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -41,7 +38,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     public ResourceGroupSelector(String locatorId) {
-        super(locatorId);
+        this(locatorId, false);
+    }
+    
+    public ResourceGroupSelector(String locatorId, boolean isReadOnly) {
+        super(locatorId, isReadOnly);
     }
 
     protected DynamicForm getAvailableFilterForm() {
@@ -49,10 +50,10 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         availableFilterForm.setWidth100();
         availableFilterForm.setNumCols(4);
 
-        final TextItem search = new TextItem("search", "Search");
+        final TextItem search = new TextItem("search", MSG.common_title_search());
 
-        SelectItem groupCategorySelect = new SelectItem("groupCategory", "Group Category");
-        groupCategorySelect.setValueMap("Compatible", "Mixed");
+        SelectItem groupCategorySelect = new SelectItem("groupCategory", MSG.widget_resourceSelector_groupCategory());
+        groupCategorySelect.setValueMap("Compatible", "Mixed"); // I don't think we can i18n these, may need these literal values - need to double check this
         groupCategorySelect.setAllowEmptyValue(true);
         availableFilterForm.setItems(search, groupCategorySelect, new SpacerItem());
 
@@ -80,6 +81,11 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         return criteria;
     }
 
+    @Override
+    protected String getItemTitle() {
+        return MSG.common_title_resourceGroups();
+    }
+
     //    protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
     //        String search = (String) availableFilterForm.getValue("search");
     //        String category = (String) availableFilterForm.getValue("groupCategory");
@@ -97,18 +103,6 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
     //    }
 
     public class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<ResourceGroup> resourceGroups) {
-            ListGridRecord[] records = super.buildRecords(resourceGroups);
-            for (ListGridRecord record : records) {
-                if (selection.contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
-
         @Override
         protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
             ResourceGroupCriteria result = super.getFetchCriteria(request);
@@ -117,6 +111,5 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
             }
             return result;
         }
-
     }
 }

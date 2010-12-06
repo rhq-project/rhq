@@ -20,13 +20,12 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -80,13 +79,14 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Cannot determine current users - starting empty",
-                                caught);
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_alert_definition_notification_user_editor_loadFailed(), caught);
                             createNewSelector(null);
                         }
                     });
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot use current users - starting empty", e);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_alert_definition_notification_user_editor_restoreFailed(), e);
                 createNewSelector(null);
             }
         } else {
@@ -107,12 +107,13 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     public boolean validate() {
         if (selector != null) {
             try {
-                HashSet<Integer> selectedIds = selector.getSelection();
+                Set<Integer> selectedIds = selector.getSelection();
                 String newPropValue = fence(selectedIds);
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
                 return true;
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Cannot save the selected users", e);
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_user_editor_saveFailed(),
+                    e);
                 return false;
             }
         }
@@ -161,7 +162,6 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class SubjectSelector extends AbstractSelector<Subject> {
-
         public SubjectSelector(String id, Collection<Subject> subjects) {
             super(id);
             if (subjects != null) {
@@ -172,7 +172,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
         @Override
         protected RPCDataSource<Subject> getDataSource() {
-            return new SelectedSubjectsDataSource();
+            return new UsersDataSource();
         }
 
         @Override
@@ -185,19 +185,9 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
             return null; // No Filters Currently
         }
 
-        public class SelectedSubjectsDataSource extends UsersDataSource {
-
-            @Override
-            public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
-                ListGridRecord[] records = super.buildRecords(subjects);
-                for (ListGridRecord record : records) {
-                    if (selection.contains(record.getAttributeAsInt("id"))) {
-                        record.setEnabled(false);
-                    }
-                }
-                return records;
-            }
+        @Override
+        protected String getItemTitle() {
+            return MSG.common_title_users();
         }
-
     }
 }

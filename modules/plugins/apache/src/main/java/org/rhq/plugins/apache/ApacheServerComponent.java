@@ -205,7 +205,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                     + "' is not a valid Apache executable (" + e + ").");
             }
 
-            this.operationsDelegate = new ApacheServerOperationsDelegate(this, this.resourceContext
+            this.operationsDelegate = new ApacheServerOperationsDelegate(this, pluginConfig, this.resourceContext
                 .getSystemInformation());
 
             startEventPollers();

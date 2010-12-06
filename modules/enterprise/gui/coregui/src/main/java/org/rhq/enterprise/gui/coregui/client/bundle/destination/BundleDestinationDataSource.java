@@ -29,6 +29,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -58,35 +59,35 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", "Id");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField name = new DataSourceTextField("name", "Name");
+        DataSourceTextField name = new DataSourceTextField("name", MSG.common_title_name());
         fields.add(name);
 
-        DataSourceTextField description = new DataSourceTextField("description", "Description");
+        DataSourceTextField description = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(description);
 
-        DataSourceTextField bundle = new DataSourceTextField("bundleName", "Bundle");
+        DataSourceTextField bundle = new DataSourceTextField("bundleName", MSG.view_bundle_bundle());
         fields.add(bundle);
 
-        DataSourceTextField group = new DataSourceTextField("groupName", "Group");
+        DataSourceTextField group = new DataSourceTextField("groupName", MSG.view_bundle_dest_group());
         fields.add(group);
 
-        DataSourceTextField deployDir = new DataSourceTextField("deployDir", "Deploy Directory");
+        DataSourceTextField deployDir = new DataSourceTextField("deployDir", MSG.view_bundle_dest_deployDir());
         fields.add(deployDir);
 
-        DataSourceTextField latestDeploymentVersion = new DataSourceTextField("latestDeploymentVersion",
-            "Last Deployed Version");
+        DataSourceTextField latestDeploymentVersion = new DataSourceTextField("latestDeploymentVersion", MSG
+            .view_bundle_dest_lastDeployedVersion());
         fields.add(latestDeploymentVersion);
 
-        DataSourceTextField latestDeploymentDate = new DataSourceTextField("latestDeploymentDate",
-            "Last Deployment Date");
+        DataSourceTextField latestDeploymentDate = new DataSourceTextField("latestDeploymentDate", MSG
+            .view_bundle_dest_lastDeploymentDate());
         fields.add(latestDeploymentDate);
 
-        DataSourceTextField latestDeploymentStatus = new DataSourceTextField("latestDeploymentStatus",
-            "Last Deployment Status");
+        DataSourceTextField latestDeploymentStatus = new DataSourceTextField("latestDeploymentStatus", MSG
+            .view_bundle_dest_lastDeploymentStatus());
         fields.add(latestDeploymentStatus);
 
         return fields;
@@ -120,7 +121,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         GWTServiceLookup.getBundleService().findBundleDestinationsByCriteria(criteria,
             new AsyncCallback<PageList<BundleDestination>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load bundle destinations", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);
                 }
 
                 public void onSuccess(final PageList<BundleDestination> result) {
@@ -133,8 +134,8 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
                     GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(versionCriteria,
                         new AsyncCallback<PageList<BundleVersion>>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    "Failed to load bundle destination deployed version info", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_loadFailureVersionInfo(),
+                                    caught);
                             }
 
                             public void onSuccess(PageList<BundleVersion> versions) {
@@ -161,7 +162,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     }
 
     @Override
-    public BundleDestination copyValues(ListGridRecord from) {
+    public BundleDestination copyValues(Record from) {
         return null;
     }
 

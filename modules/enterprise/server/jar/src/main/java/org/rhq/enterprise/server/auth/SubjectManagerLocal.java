@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.auth;
 import java.util.Collection;
 
 import javax.ejb.Local;
+import javax.persistence.EntityExistsException;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
@@ -162,6 +163,30 @@ public interface SubjectManagerLocal {
     Subject getSubjectBySessionId(int sessionId) throws Exception;
 
     boolean isLoggedIn(String username);
+
+    /**
+     * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
+     * password.
+     *
+     * @param subject the logged in user's subject
+     * @param subjectToCreate the subject to be created (which will never be the same as <code>subject</code>)
+     * @param password the password for the principal to be created for the new user
+     *
+     * @return the persisted subject
+     */
+    Subject createSubject(Subject subject, Subject subjectToCreate, String password) throws SubjectException,
+        EntityExistsException;
+
+    /**
+     * Updates an existing subject, including their assigned roles, and optionally their password.
+     *
+     * @param  subject         the logged in user's subject
+     * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>subject</code>)
+     * @param  newPassword     if non-null, a new password to be set on the user's associated principal
+     *
+     * @return the merged subject, which may or may not be the <code>subjectToModify</code> instance
+     */
+    Subject updateSubject(Subject subject, Subject subjectToModify, String newPassword);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

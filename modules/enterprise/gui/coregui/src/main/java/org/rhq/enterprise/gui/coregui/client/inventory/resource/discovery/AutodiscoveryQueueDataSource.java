@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.AuthorizationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -52,12 +53,19 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
  */
 public class AutodiscoveryQueueDataSource extends DataSource {
 
+    private static Messages MSG = CoreGUI.getMessages();
+
+    public static final String NEW = MSG.view_autoDiscoveryQ_new();
+    public static final String IGNORED = MSG.view_autoDiscoveryQ_ignored();
+    public static final String NEW_AND_IGNORED = MSG.view_autoDiscoveryQ_newAndIgnored();
+
+    private static final String NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noperm();
+    private static final String EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noItems();
+
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
     private AuthorizationGWTServiceAsync authorizationService = GWTServiceLookup.getAuthorizationService();
-    public static final String NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE = "(Required manage inventory permissions missing. See Administrator to change)";
-    public static final String EMPTY_MESSAGE = "No items to show";
     private TreeGrid dataContainerReference = null;
     private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;
 
@@ -66,23 +74,27 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-        DataSourceTextField idField = new DataSourceTextField("id", "ID");
+        DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG
+            .view_autoDiscoveryQ_field_parentId());
         parentIdField.setForeignKey("id");
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", "Resource Name");
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.view_autoDiscoveryQ_field_name());
 
-        DataSourceTextField resourceKeyField = new DataSourceTextField("resourceKey", "Resource Key");
+        DataSourceTextField resourceKeyField = new DataSourceTextField("resourceKey", MSG
+            .view_autoDiscoveryQ_field_key());
 
-        DataSourceTextField resourceTypeField = new DataSourceTextField("typeName", "Type");
+        DataSourceTextField resourceTypeField = new DataSourceTextField("typeName", MSG.common_title_type());
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
 
-        DataSourceTextField timestampField = new DataSourceTextField("ctime", "Discovery Time");
+        DataSourceTextField timestampField = new DataSourceTextField("ctime", MSG
+            .view_autoDiscoveryQ_field_discoveryTime());
 
-        DataSourceTextField statusField = new DataSourceTextField("status", "Inventory Status");
+        DataSourceTextField statusField = new DataSourceTextField("statusLabel", MSG
+            .view_autoDiscoveryQ_field_inventoryStatus());
 
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField, descriptionField,
             statusField, timestampField);
@@ -114,11 +126,11 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
         final HashSet<InventoryStatus> statuses = new HashSet<InventoryStatus>();
 
-        String statusesString = request.getCriteria().getAttributeAsString("statuses");
+        String statusesString = request.getCriteria().getAttributeAsString("status");
         if (statusesString != null) {
-            if ("New".equals(statusesString)) {
+            if (NEW.equals(statusesString)) {
                 statuses.add(InventoryStatus.NEW);
-            } else if ("Ignored".equals(statusesString)) {
+            } else if (IGNORED.equals(statusesString)) {
                 statuses.add(InventoryStatus.IGNORED);
             } else {
                 statuses.add(InventoryStatus.NEW);
@@ -139,8 +151,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
                     resourceService.getQueuedPlatformsAndServers(statuses, pc,
                         new AsyncCallback<Map<Resource, List<Resource>>>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue",
-                                    caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
                             }
 
                             public void onSuccess(Map<Resource, List<Resource>> result) {
@@ -235,6 +246,23 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             setAttribute("description", resource.getDescription());
             setAttribute("ctime", new Date(resource.getCtime()));
             setAttribute("status", resource.getInventoryStatus().name());
+            switch (resource.getInventoryStatus()) {
+            case NEW:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_new());
+                break;
+            case COMMITTED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_committed());
+                break;
+            case IGNORED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_ignored());
+                break;
+            case DELETED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_deleted());
+                break;
+            case UNINVENTORIED:
+                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_uninventoried());
+                break;
+            }
         }
 
         public Resource getResource() {

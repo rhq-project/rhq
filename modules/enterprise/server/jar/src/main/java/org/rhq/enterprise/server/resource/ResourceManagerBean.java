@@ -56,6 +56,8 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -267,7 +269,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (resource.getParentResource() == null) {
             try {
                 // note, this needs to be done before the marking because the agent reference is going to be set to null
-                doomedAgent = agentManager.getAgentByResourceId(resourceId);
+                doomedAgent = agentManager.getAgentByResourceId(user, resourceId);
             } catch (Exception e) {
                 doomedAgent = null;
                 log.warn("This warning should occur in TEST code only! " + e);
@@ -277,13 +279,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         AgentClient agentClient = null;
         try {
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
-            agentClient = agentManager.getAgentClient(resourceId);
+            agentClient = agentManager.getAgentClient(user, resourceId);
         } catch (Throwable t) {
             log.warn("No AgentClient found for resource [" + resource
                 + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
         }
 
-        // since we delete the resource asychronously now, we need to make sure we remove things that would cause
+        // since we delete the resource asynchronously now, we need to make sure we remove things that would cause
         // system side effects after markForDeletion completed but before the resource was actually removed from the DB
         Subject overlord = subjectManager.getOverlord();
 
@@ -455,6 +457,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ResourceError.QUERY_DELETE_BY_RESOURCES, //
             Event.DELETE_BY_RESOURCES, //
             EventSource.QUERY_DELETE_BY_RESOURCES, //
+            BundleResourceDeploymentHistory.QUERY_DELETE_BY_RESOURCES, // resource deployment history BEFORE resource deployment
+            BundleResourceDeployment.QUERY_DELETE_BY_RESOURCES, //
             PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, // steps BEFORE installed package history
             InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, // history BEFORE installed packages & content service requests
             InstalledPackage.QUERY_DELETE_BY_RESOURCES, //

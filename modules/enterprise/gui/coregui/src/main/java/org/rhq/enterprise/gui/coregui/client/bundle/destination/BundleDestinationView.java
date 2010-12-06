@@ -85,8 +85,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new BackButton(extendLocatorId("BackButton"), "Back to Bundle: " + bundle.getName(),
-            "Bundles/Bundle/" + bundle.getId()));
+        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle() + ": "
+            + bundle.getName(), "Bundles/Bundle/" + bundle.getId()));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"), destination.getName()));
 
@@ -96,7 +96,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         form.setColWidths("20%", "30%", "25%", "25%");
 
         LinkItem bundleName = new LinkItem("bundle");
-        bundleName.setTitle("Bundle");
+        bundleName.setTitle(MSG.view_bundle_bundle());
         bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
         bundleName.setLinkTitle(bundle.getName());
         bundleName.setTarget("_self");
@@ -109,13 +109,12 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                     GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update bundle destination's tags",
-                                    caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_tagUpdateFailure(), caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                    new Message("Bundle Destination Tags updated", Message.Severity.Info));
+                                    new Message(MSG.view_bundle_dest_tagUpdateSuccessful(), Message.Severity.Info));
                             }
                         });
                 }
@@ -129,16 +128,16 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
         actionItem.setRowSpan(4);
 
-        StaticTextItem created = new StaticTextItem("created", "Created");
+        StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
         created.setValue(new Date(destination.getCtime()));
 
         LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle("Group");
+        destinationGroup.setTitle(MSG.view_bundle_dest_group());
         destinationGroup.setValue("#ResourceGroup/" + destination.getGroup().getId());
         destinationGroup.setLinkTitle(destination.getGroup().getName());
         destinationGroup.setTarget("_self");
 
-        StaticTextItem path = new StaticTextItem("path", "Path");
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
         path.setValue(destination.getDeployDir());
 
         form.setFields(bundleName, tagItem, actionItem, created, destinationGroup, path);
@@ -159,20 +158,20 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     private Canvas getActionLayout(String locatorId) {
         LocatableVLayout actionLayout = new LocatableVLayout(locatorId);
         actionLayout.setMembersMargin(10);
-        IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), "Deploy");
+        IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new BundleDeployWizard(destination).startBundleWizard();
+                new BundleDeployWizard(destination).startWizard();
             }
         });
         actionLayout.addMember(deployButton);
 
-        IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), "Revert");
+        IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG.view_bundle_revert());
         revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new BundleRevertWizard(destination).startBundleWizard();
+                new BundleRevertWizard(destination).startWizard();
             }
         });
         actionLayout.addMember(revertButton);
@@ -247,7 +246,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDestinationsByCriteria(criteria, new AsyncCallback<PageList<BundleDestination>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle destiation", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);
             }
 
             public void onSuccess(PageList<BundleDestination> result) {

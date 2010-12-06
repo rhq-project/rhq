@@ -19,7 +19,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
-import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
@@ -94,7 +94,7 @@ public class ResourcePicker extends LocatableWindow {
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("buttons"));
         form.setLayoutAlign(Alignment.CENTER);
 
-        ButtonItem ok = new ButtonItem("ok", "OK");
+        ButtonItem ok = new ButtonItem("ok", MSG.common_button_ok());
         ok.setStartRow(true);
         ok.setEndRow(false);
         ok.addClickHandler(new ClickHandler() {
@@ -103,7 +103,7 @@ public class ResourcePicker extends LocatableWindow {
                 ok();
             }
         });
-        ButtonItem cancel = new ButtonItem("cancel", "Cancel");
+        ButtonItem cancel = new ButtonItem("cancel", MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -129,7 +129,7 @@ public class ResourcePicker extends LocatableWindow {
     }
 
     protected String getDefaultTitle() {
-        return "Select Resources";
+        return MSG.widget_resourceSelector_selectMultipleResources();
     }
 
     protected ResourceSelector getResourceSelector() {
@@ -145,10 +145,10 @@ public class ResourcePicker extends LocatableWindow {
 
     protected void ok() {
         OkHandler handler = getOkHandler();
-        HashSet<Integer> selection = selector.getSelection();
+        Set<Integer> selection = selector.getSelection();
 
         if (selection == null || selection.isEmpty()) {
-            showWarningMessage("Please select one of more resources");
+            showWarningMessage(MSG.widget_resourceSelector_pleaseSelectMultipleResource());
         } else {
             if (handler.ok(selection)) {
                 selector = null;
@@ -188,7 +188,7 @@ public class ResourcePicker extends LocatableWindow {
      * close - true means the picker can close the window.
      */
     public interface OkHandler {
-        public boolean ok(HashSet<Integer> resourceIdSelection);
+        public boolean ok(Set<Integer> resourceIdSelection);
     }
 
     /**

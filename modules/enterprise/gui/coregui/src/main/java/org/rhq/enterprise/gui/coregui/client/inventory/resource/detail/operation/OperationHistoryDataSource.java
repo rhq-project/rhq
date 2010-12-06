@@ -25,9 +25,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -43,6 +42,24 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationHistory> {
 
+    public static abstract class Field {
+        public static final String ID = "id";
+        public static final String OPERATION_NAME = "operationName";
+        public static final String RESOURCE = "resource";
+        public static final String STATUS = "status";
+        public static final String STARTED_TIME = "startedTime";
+        public static final String CREATED_TIME = "createdTime";
+        public static final String DURATION = "duration";
+        public static final String SUBJECT = "subject";
+        public static final String OPERATION_DEFINITION = "operationDefinition";
+        public static final String ERROR_MESSAGE = "errorMessage";
+        public static final String PARAMETERS = "parameters";
+    }
+
+    public static abstract class CriteriaField {
+        public static final String RESOURCE_ID = "resourceId";
+    }
+
     private OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
     public OperationHistoryDataSource() {
@@ -54,22 +71,26 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id");
+        /*
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID);
         idField.setPrimaryKey(true);
         fields.add(idField);
+        */
 
-        DataSourceTextField nameField = new DataSourceTextField("operationName");
+        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME);
         fields.add(nameField);
 
-        DataSourceTextField resourceField = new DataSourceTextField("resource");
+        /*
+        DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE);
         fields.add(resourceField);
 
-        DataSourceTextField statusField = new DataSourceTextField("status");
+        DataSourceTextField statusField = new DataSourceTextField(Field.STATUS);
         fields.add(statusField);
 
-        DataSourceTextField startedField = new DataSourceTextField("startedTime");
+        DataSourceTextField startedField = new DataSourceTextField(Field.STARTED_TIME);
         startedField.setType(FieldType.DATETIME);
         fields.add(startedField);
+        */
 
         return fields;
     }
@@ -78,9 +99,9 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
 
-        if (request.getCriteria().getValues().containsKey("resourceId")) {
-            criteria.addFilterResourceIds(Integer
-                .parseInt((String) request.getCriteria().getValues().get("resourceId")));
+        if (request.getCriteria().getValues().containsKey(CriteriaField.RESOURCE_ID)) {
+            criteria.addFilterResourceIds(Integer.parseInt((String) request.getCriteria().getValues().get(
+                CriteriaField.RESOURCE_ID)));
         }
 
         criteria.setPageControl(getPageControl(request));
@@ -88,7 +109,7 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         operationService.findResourceOperationHistoriesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceOperationHistory>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failure loading operation histories", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
                 }
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
@@ -99,26 +120,26 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
     }
 
     @Override
-    public ResourceOperationHistory copyValues(ListGridRecord from) {
-        throw new UnsupportedOperationException("ResourceOperationHistory is read only");
+    public ResourceOperationHistory copyValues(Record from) {
+        throw new UnsupportedOperationException("ResourceOperationHistory is read only.");
     }
 
     @Override
     public ListGridRecord copyValues(ResourceOperationHistory from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", from.getId());
-        record.setAttribute("createdTime", from.getCreatedTime());
-        record.setAttribute("startedTime", new Date(from.getStartedTime()));
-        record.setAttribute("duration", from.getDuration());
-        record.setAttribute("resource", from.getResource());
-        record.setAttribute("subject", from.getSubjectName());
-        record.setAttribute("operationDefinition", from.getOperationDefinition());
-        record.setAttribute("operationName", from.getOperationDefinition().getDisplayName());
-        record.setAttribute("errorMessage", from.getErrorMessage());
-        record.setAttribute("status", from.getStatus().name());
-        record.setAttribute("parameters", from.getParameters());
+        record.setAttribute(Field.ID, from.getId());
+        record.setAttribute(Field.CREATED_TIME, from.getCreatedTime());
+        record.setAttribute(Field.STARTED_TIME, new Date(from.getStartedTime()));
+        record.setAttribute(Field.DURATION, from.getDuration());
+        record.setAttribute(Field.RESOURCE, from.getResource());
+        record.setAttribute(Field.SUBJECT, from.getSubjectName());
+        record.setAttribute(Field.OPERATION_DEFINITION, from.getOperationDefinition());
+        record.setAttribute(Field.OPERATION_NAME, from.getOperationDefinition().getDisplayName());
+        record.setAttribute(Field.ERROR_MESSAGE, from.getErrorMessage());
+        record.setAttribute(Field.STATUS, from.getStatus().name());
+        record.setAttribute(Field.PARAMETERS, from.getParameters());
 
-        record.setAttribute("entity", from);
         return record;
     }
+
 }

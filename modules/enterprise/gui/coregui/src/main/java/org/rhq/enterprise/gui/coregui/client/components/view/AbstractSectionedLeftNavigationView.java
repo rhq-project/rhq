@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -120,13 +121,13 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         TreeNode[] treeNodes = new TreeNode[navigationItems.size()];
         for (int i = 0, navigationItemsSize = navigationItems.size(); i < navigationItemsSize; i++) {
             NavigationItem item = navigationItems.get(i);
-            final TreeNode treeNode = new EnhancedTreeNode(item.getName());
+            final TreeNode treeNode = new EnhancedTreeNode(item.getName(), item.getTitle());
             treeNode.setIcon(item.getIcon());
             treeNode.setEnabled(item.isEnabled());
             treeNodes[i] = treeNode;
         }
 
-        TreeNode rootNode = new EnhancedTreeNode(navigationSection.getName(), treeNodes);
+        TreeNode rootNode = new EnhancedTreeNode(navigationSection.getName(), navigationSection.getTitle(), treeNodes);
         Tree tree = new Tree();
         tree.setRoot(rootNode);
         treeGrid.setData(tree);
@@ -136,6 +137,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
 
     private void addSection(final TreeGrid treeGrid) {
         final String sectionName = treeGrid.getTree().getRoot().getName();
+        final String sectionTitle = treeGrid.getTree().getRoot().getTitle();
         this.treeGrids.put(sectionName, treeGrid);
 
         treeGrid.addCellClickHandler(new CellClickHandler() {
@@ -153,7 +155,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             }
         });
 
-        SectionStackSection section = new SectionStackSection(sectionName);
+        SectionStackSection section = new SectionStackSection(sectionTitle);
         section.setExpanded(true);
         section.addItem(treeGrid);
 
@@ -221,6 +223,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
             }
+            if (this.currentContent instanceof RefreshableView) {
+                ((RefreshableView) this.currentContent).refresh();
+            }
         }
     }
 
@@ -235,15 +240,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
                 if (node != null) {
                     treeGrid.selectSingleRecord(node);
                 } else {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Unknown page name '" + pageName + "' for section '" + sectionName + "' - URL is invalid.");
+                    CoreGUI.getErrorHandler().handleError(MSG.view_leftNav_unknownPage(pageName, sectionName));
                 }
             }
         }
-    }
-
-    protected static String addQueryStringParam(String url, String param) {
-        char separatorChar = (url.indexOf('?') == -1) ? '?' : '&';
-        return url + separatorChar + param;
     }
 }

@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
@@ -44,8 +45,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -60,15 +62,11 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private static final String FIELD_CONFIGURATION = "configuration";
 
     private AlertDefinition alertDefinition;
-    private ArrayList<AlertNotification> notifications;
+    private List<AlertNotification> notifications;
 
     private boolean formBuilt = false;
 
     private Table table;
-
-    public NotificationsAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
-    }
 
     public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
         super(locatorId);
@@ -180,17 +178,19 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         protected List<DataSourceField> addDataSourceFields() {
             List<DataSourceField> fields = super.addDataSourceFields();
 
-            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, "Sender");
+            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, MSG
+                .view_alert_definition_notification_editor_field_sender());
             fields.add(senderField);
 
-            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, "Configuration");
+            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, MSG
+                .view_alert_definition_notification_editor_field_configuration());
             fields.add(configField);
 
             return fields;
         }
 
         @Override
-        public AlertNotification copyValues(ListGridRecord from) {
+        public AlertNotification copyValues(Record from) {
             return (AlertNotification) from.getAttributeAsObject(FIELD_OBJECT);
         }
 
@@ -200,13 +200,14 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             record.setAttribute(FIELD_OBJECT, from);
             record.setAttribute(FIELD_SENDER, from.getSenderName());
             // our executeFetch will fill in the real value for FIELD_CONFIGURATION
-            record.setAttribute(FIELD_CONFIGURATION, "(unknown)");
+            record.setAttribute(FIELD_CONFIGURATION, "("
+                + MSG.view_alert_definition_notification_editor_field_configuration_not_loaded() + ")");
             return record;
         }
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response) {
-            final ListGridRecord[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
+            final Record[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
 
             AlertNotification[] notifs = notifications.toArray(new AlertNotification[notifications.size()]);
             GWTServiceLookup.getAlertDefinitionService().getAlertNotificationConfigurationPreview(notifs,
@@ -214,7 +215,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                     @Override
                     public void onSuccess(String[] result) {
                         int i = 0;
-                        for (ListGridRecord record : records) {
+                        for (Record record : records) {
                             record.setAttribute(FIELD_CONFIGURATION, result[i++]);
                         }
                         response.setData(records);
@@ -223,8 +224,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get notification configuration preview",
-                            caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_alert_definition_notification_editor_field_configuration_loadFailed(), caught);
                         response.setData(records);
                         processResponse(request.getRequestId(), response);
                     }
@@ -232,7 +233,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         }
     }
 
-    private class NotificationTable extends Table {
+    private class NotificationTable extends Table<NotificationDataSource> {
         public NotificationTable(String locatorId) {
             super(locatorId);
             setShowHeader(false);
@@ -243,9 +244,11 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
         @Override
         protected void configureTable() {
-            ListGridField senderField = new ListGridField(FIELD_SENDER, "Sender");
+            ListGridField senderField = new ListGridField(FIELD_SENDER, MSG
+                .view_alert_definition_notification_editor_field_sender());
             senderField.setWidth("25%");
-            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, "Configuration");
+            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, MSG
+                .view_alert_definition_notification_editor_field_configuration());
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
 
@@ -255,40 +258,41 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                     ListGrid listGrid = (ListGrid) event.getSource();
                     ListGridRecord[] selectedRows = listGrid.getSelection();
                     if (selectedRows != null && selectedRows.length == 1) {
-                        AlertNotification notif = ((NotificationDataSource) getDataSource())
+                        AlertNotification notif = (getDataSource())
                             .copyValues(selectedRows[0]);
                         popupNotificationEditor(notif);
                     }
                 }
             });
 
-            addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
+            addTableAction(this.extendLocatorId("add"), MSG.common_button_add(), null, new AbstractTableAction() {
                 @Override
-                public void executeAction(ListGridRecord[] selection) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);
                 }
             });
 
-            addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
-                new TableAction() {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection) {
-                        for (ListGridRecord record : selection) {
-                            AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
-                            notifications.remove(notif);
-                        }
-                        table.refresh();
+            addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+                .view_alert_definition_notification_editor_delete_confirm(), new AbstractTableAction(
+                TableActionEnablement.ANY) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    for (ListGridRecord record : selection) {
+                        AlertNotification notif = (getDataSource()).copyValues(record);
+                        notifications.remove(notif);
                     }
-                });
+                    table.refresh();
+                }
+            });
         }
 
         private void popupNotificationEditor(AlertNotification notifToEdit) {
             final Window winModal = new LocatableWindow(NotificationsAlertDefinitionForm.this
                 .extendLocatorId("notificationEditorWindow"));
             if (notifToEdit == null) {
-                winModal.setTitle("Add Notification");
+                winModal.setTitle(MSG.view_alert_definition_notification_editor_title_add());
             } else {
-                winModal.setTitle("Edit Notification");
+                winModal.setTitle(MSG.view_alert_definition_notification_editor_title_edit());
             }
             winModal.setOverflow(Overflow.VISIBLE);
             winModal.setShowMinimizeButton(false);

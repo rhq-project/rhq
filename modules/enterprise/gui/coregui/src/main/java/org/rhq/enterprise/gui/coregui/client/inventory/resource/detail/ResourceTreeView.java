@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -68,6 +69,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -82,6 +84,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -138,7 +141,7 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.setLeaveScrollbarGap(false);
 
         resourceContextMenu = new Menu();
-        autoGroupContextMenu = new ResourceGroupContextMenu();
+        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
@@ -148,7 +151,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         ResourceTreeNode resourceNode = (ResourceTreeNode) selectedRecord;
 
                         if (!resourceNode.isLocked()) {
-                            System.out.println("Resource Node selected in tree: " + selectedRecord);
+                            Log.info("Resource Node selected in tree: " + selectedRecord);
 
                             selectedNodeId = resourceNode.getID();
                             String viewPath = "Resource/" + resourceNode.getResource().getId();
@@ -163,13 +166,14 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         }
                     } else if (selectedRecord instanceof AutoGroupTreeNode) {
-                        com.allen_sauer.gwt.log.client.Log.info("AutoGroup Node selected in tree: " + selectedRecord);
+                        Log.info("AutoGroup Node selected in tree: " + selectedRecord);
 
                         AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
                         selectedNodeId = agNode.getID();
                         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to select autogroup node", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
+                                    caught);
                             }
 
                             public void onSuccess(ResourceGroup result) {
@@ -230,7 +234,7 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.addFilterVisible(false);
         resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch autogroup backing group", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
             }
 
             public void onSuccess(PageList<ResourceGroup> result) {
@@ -245,7 +249,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.createPrivateResourceGroup(backingGroup, childIds,
                         new AsyncCallback<ResourceGroup>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to create resource autogroup", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_create(), caught);
                             }
 
                             public void onSuccess(ResourceGroup result) {
@@ -267,8 +271,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    "Failed to set assigned members for autogroup backing group", caught);
+                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_update(), caught);
                             }
 
                             public void onSuccess(Void result) {
@@ -324,14 +327,14 @@ public class ResourceTreeView extends LocatableVLayout {
         if (node instanceof ResourceTreeNode) {
             Resource nr = ((ResourceTreeNode) node).getResource();
             String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
-            String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
+            String icon = ImageManager.getResourceIcon(nr.getResourceType().getCategory());
 
             viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
 
         } else if (node instanceof AutoGroupTreeNode) {
             String name = ((AutoGroupTreeNode) node).getBackingGroupName();
             String display = node.getName() + " <span class=\"subtitle\">" + name + "</span>";
-            String icon = "types/" + ((AutoGroupTreeNode) node).getResourceType().getCategory() + "_up_16.png";
+            String icon = ImageManager.getResourceIcon(((AutoGroupTreeNode) node).getResourceType().getCategory());
 
             viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
         }
@@ -340,7 +343,7 @@ public class ResourceTreeView extends LocatableVLayout {
     private void showContextMenu(AutoGroupTreeNode agNode) {
         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to select AutoGroup node", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), caught);
             }
 
             public void onSuccess(ResourceGroup result) {
@@ -368,16 +371,17 @@ public class ResourceTreeView extends LocatableVLayout {
     private void buildResourceContextMenu(final Resource resource, final ResourceType resourceType) {
         resourceContextMenu.setItems(new MenuItem(resource.getName()));
 
-        resourceContextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
+        resourceContextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(resourceType
+            .getName())));
 
-        MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
+        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_pluginConfiguration());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int resourceId = resource.getId();
                 int resourceTypeId = resourceType.getId();
 
                 Window configEditor = new Window();
-                configEditor.setTitle("Edit " + resource.getName() + " plugin configuration");
+                configEditor.setTitle(MSG.view_tree_common_contextMenu_editPluginConfiguration(resource.getName()));
                 configEditor.setWidth(800);
                 configEditor.setHeight(800);
                 configEditor.setIsModal(true);
@@ -393,14 +397,14 @@ public class ResourceTreeView extends LocatableVLayout {
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
         resourceContextMenu.addItem(editPluginConfiguration);
 
-        MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
+        MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
         editResourceConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int resourceId = resource.getId();
                 int resourceTypeId = resourceType.getId();
 
                 final Window configEditor = new Window();
-                configEditor.setTitle("Edit " + resource.getName() + " resource configuration");
+                configEditor.setTitle(MSG.view_tree_common_contextMenu_editResourceConfiguration(resource.getName()));
                 configEditor.setWidth(800);
                 configEditor.setHeight(800);
                 configEditor.setIsModal(true);
@@ -425,7 +429,7 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem("Operations");
+        MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
         Menu opSubMenu = new Menu();
         for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
             MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
@@ -440,8 +444,8 @@ public class ResourceTreeView extends LocatableVLayout {
                     GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
                         new AsyncCallback<PageList<Resource>>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler()
-                                    .handleError("Failed to get resource to run operation", caught);
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_tree_common_contextMenu_operations_loadFailed(), caught);
                             }
 
                             public void onSuccess(PageList<Resource> result) {
@@ -461,7 +465,7 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(buildMetricsMenu(resourceType));
 
         // Create Menu
-        MenuItem createChildMenu = new MenuItem("Create Child");
+        MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
         Menu createChildSubMenu = new Menu();
         for (final ResourceType childType : resourceType.getChildResourceTypes()) {
             if (childType.isCreatable()) {
@@ -482,7 +486,7 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(createChildMenu);
 
         // Manually Add Menu
-        MenuItem importChildMenu = new MenuItem("Import");
+        MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
         Menu importChildSubMenu = new Menu();
         for (final ResourceType childType : resourceType.getChildResourceTypes()) {
             if (childType.isSupportsManualAdd()) {
@@ -490,7 +494,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                 importItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        ResourceFactoryCreateWizard.showImportWizard(resource, childType);
+                        ResourceFactoryImportWizard.showImportWizard(resource, childType);
                     }
                 });
 
@@ -515,7 +519,8 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.fetchParentResourceTypes(true);
         rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load platform manual add children", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_manualAddChildren(),
+                    caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {
@@ -525,7 +530,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         item.addClickHandler(new ClickHandler() {
                             public void onClick(MenuItemClickEvent event) {
-                                ResourceFactoryCreateWizard.showImportWizard(resource, type);
+                                ResourceFactoryImportWizard.showImportWizard(resource, type);
                             }
                         });
 
@@ -537,12 +542,12 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private MenuItem buildMetricsMenu(final ResourceType type) {
-        MenuItem measurements = new MenuItem("Measurements");
+        MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
 
         GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load user dashboards", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(), caught);
             }
 
             public void onSuccess(List<Dashboard> result) {
@@ -555,7 +560,8 @@ public class ResourceTreeView extends LocatableVLayout {
                     defItem.setSubmenu(defSubItem);
 
                     for (final Dashboard d : result) {
-                        MenuItem addToDBItem = new MenuItem("Add chart to Dashboard: " + d.getName());
+                        MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
+                            .getName()));
                         defSubItem.addItem(addToDBItem);
 
                         addToDBItem.addClickHandler(new ClickHandler() {
@@ -574,14 +580,15 @@ public class ResourceTreeView extends LocatableVLayout {
                                 GWTServiceLookup.getDashboardService().storeDashboard(d,
                                     new AsyncCallback<Dashboard>() {
                                         public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError("Failed to save dashboard to server",
-                                                caught);
+                                            CoreGUI.getErrorHandler().handleError(
+                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(), caught);
                                         }
 
                                         public void onSuccess(Dashboard result) {
                                             CoreGUI.getMessageCenter().notify(
-                                                new Message("Saved dashboard " + result.getName() + " to server",
-                                                    Message.Severity.Info));
+                                                new Message(MSG
+                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                        .getName()), Message.Severity.Info));
                                         }
                                     });
 
@@ -639,7 +646,7 @@ public class ResourceTreeView extends LocatableVLayout {
             new AsyncCallback<List<ResourceLineageComposite>>() {
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to lookup platform for tree", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_root(), caught);
                 }
 
                 public void onSuccess(List<ResourceLineageComposite> result) {
@@ -672,7 +679,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
-                                System.out.println("Done fetching data for tree.");
+                                Log.info("Done fetching data for tree.");
                                 updateSelection();
 
                                 if (null != callback) {
@@ -700,8 +707,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
                                     } else {
                                         CoreGUI.getMessageCenter().notify(
-                                            new Message("Failed to select Resource [" + selectedResourceId
-                                                + "] in tree.", Message.Severity.Warning));
+                                            new Message(MSG.view_tree_common_loadFailed_selection(),
+                                                Message.Severity.Warning));
                                     }
 
                                 }
@@ -731,7 +738,7 @@ public class ResourceTreeView extends LocatableVLayout {
             criteria.fetchResourceType(true);
             resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch autogroup backing group", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {
@@ -741,7 +748,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load tree", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                         }
 
                         @Override

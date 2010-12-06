@@ -21,35 +21,40 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 import java.util.Date;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.TitleOrientation;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  */
 public class OperationDetailsView extends LocatableVLayout implements BookmarkableView {
 
-    private int historyId;
     private OperationDefinition definition;
     private ResourceOperationHistory operationHistory;
-
-    private ViewId viewId;
 
     private DynamicForm form;
 
@@ -78,15 +83,10 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         }
     }
 
-    private void displayDetails(ResourceOperationHistory operationHistory) {
+    private void displayDetails(final ResourceOperationHistory operationHistory) {
 
         for (Canvas child : getMembers()) {
             removeChild(child);
-        }
-
-        if (this.viewId != null) {
-            viewId.getBreadcrumbs().get(0).setDisplayName(operationHistory.getOperationDefinition().getDisplayName());
-            CoreGUI.refreshBreadCrumbTrail();
         }
 
         this.definition = operationHistory.getOperationDefinition();
@@ -98,53 +98,124 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         form.setWidth100();
         form.setWrapItemTitles(false);
 
-        StaticTextItem operationItem = new StaticTextItem("operation", "Operation");
-        operationItem.setValue(definition.getName());
+        OperationRequestStatus status = operationHistory.getStatus();
 
-        StaticTextItem submittedItem = new StaticTextItem("submitted", "Date Submitted");
+        StaticTextItem operationItem = new StaticTextItem(OperationHistoryDataSource.Field.OPERATION_NAME, MSG
+            .view_operationHistoryDetails_operation());
+        operationItem.setValue(definition.getDisplayName());
+
+        StaticTextItem submittedItem = new StaticTextItem(OperationHistoryDataSource.Field.STARTED_TIME, MSG
+            .view_operationHistoryDetails_dateSubmitted());
         submittedItem.setValue(new Date(operationHistory.getStartedTime()));
 
-        StaticTextItem completedItem = new StaticTextItem("completed", "Date Completed");
-        completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
+        StaticTextItem completedItem = new StaticTextItem("completed", MSG.view_operationHistoryDetails_dateCompleted());
+        if (status == OperationRequestStatus.INPROGRESS) {
+            completedItem.setValue(MSG.common_val_na());
+        } else if (status == OperationRequestStatus.CANCELED) {
+            completedItem.setValue(MSG.common_val_never());
+        } else {
+            completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
+        }
 
-        StaticTextItem requesterItem = new StaticTextItem("requester", "Requester");
+        StaticTextItem requesterItem = new StaticTextItem(OperationHistoryDataSource.Field.SUBJECT, MSG
+            .view_operationHistoryDetails_requestor());
         requesterItem.setValue(operationHistory.getSubjectName());
 
-        StaticTextItem statusItem = new StaticTextItem("status", "Status");
-        statusItem.setValue(operationHistory.getStatus().name());
+        LinkItem errorLinkItem = null;
+
+        StaticTextItem statusItem = new StaticTextItem(OperationHistoryDataSource.Field.STATUS, MSG
+            .view_operationHistoryDetails_status());
+        String icon = ImageManager.getFullImagePath(ImageManager.getOperationResultsIcon(status));
+        statusItem.setValue("<img src='" + icon + "'/>");
+        switch (status) {
+        case SUCCESS:
+            statusItem.setTooltip(MSG.common_status_success());
+            break;
+        case FAILURE:
+            statusItem.setTooltip(MSG.common_status_failed());
+            errorLinkItem = new LinkItem("errorLink");
+            errorLinkItem.setTitle(MSG.common_title_error());
+            errorLinkItem.setLinkTitle(getShortErrorMessage(operationHistory));
+            errorLinkItem.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    final Window winModal = new LocatableWindow(OperationDetailsView.this.extendLocatorId("errorWin"));
+                    winModal.setTitle(MSG.common_title_details());
+                    winModal.setOverflow(Overflow.VISIBLE);
+                    winModal.setShowMinimizeButton(false);
+                    winModal.setShowMaximizeButton(true);
+                    winModal.setIsModal(true);
+                    winModal.setShowModalMask(true);
+                    winModal.setAutoSize(true);
+                    winModal.setAutoCenter(true);
+                    winModal.setShowResizer(true);
+                    winModal.setCanDragResize(true);
+                    winModal.centerInPage();
+                    winModal.addCloseClickHandler(new CloseClickHandler() {
+                        @Override
+                        public void onCloseClick(CloseClientEvent event) {
+                            winModal.markForDestroy();
+                        }
+                    });
+
+                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(OperationDetailsView.this
+                        .extendLocatorId("statusDetailsPane"));
+                    htmlPane.setMargin(10);
+                    htmlPane.setDefaultWidth(500);
+                    htmlPane.setDefaultHeight(400);
+                    String errorMsg = operationHistory.getErrorMessage();
+                    if (errorMsg == null) {
+                        errorMsg = MSG.common_status_failed();
+                    }
+                    htmlPane.setContents("<pre>" + errorMsg + "</pre>");
+                    winModal.addItem(htmlPane);
+                    winModal.show();
+                }
+            });
+
+            break;
+        case INPROGRESS:
+            statusItem.setTooltip(MSG.common_status_inprogress());
+            break;
+        case CANCELED:
+            statusItem.setTooltip(MSG.common_status_canceled());
+            break;
+        }
 
         /*
-        Operation:  	View Process List
-        Date Submitted: 	3/11/10, 12:24:02 PM, EST
-        Date Completed: 	3/11/10, 12:24:03 PM, EST
-        Requester: 	rhqadmin
-        Status: 	Success
+        Operation:      View Process List
+        Date Submitted: 3/11/10, 12:24:02 PM, EST
+        Date Completed: 3/11/10, 12:24:03 PM, EST
+        Requester:      rhqadmin
+        Status:         Failure
+        Error Message:  __Exception: Cannot connect...__ 
         */
 
-        form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem);
+        if (errorLinkItem != null) {
+            form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem, errorLinkItem);
+        } else {
+            form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem);
+        }
 
         addMember(form);
 
-        // Results configuration view
+        // params/results
 
-        if (operationHistory.getErrorMessage() != null) {
-
-            DynamicForm errorDisplay = new DynamicForm();
-            errorDisplay.setNumCols(1);
-            AutoFitTextAreaItem errorText = new AutoFitTextAreaItem("error", "Error");
-            errorText.setTitleOrientation(TitleOrientation.TOP);
-            errorText.setValue(operationHistory.getErrorMessage());
-
+        if (operationHistory.getParameters() != null) {
+            ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"), definition
+                .getParametersConfigurationDefinition(), operationHistory.getParameters());
+            editor.setReadOnly(true);
+            editor.setStructuredConfigTabTitle(MSG.view_operationHistoryDetails_parameters());
+            addMember(editor);
         }
 
-        if (operationHistory.getResults() != null) {
-
-            ConfigurationEditor resultsEditor = new ConfigurationEditor(this.getLocatorId(), definition
+        if (status == OperationRequestStatus.SUCCESS && operationHistory.getResults() != null) {
+            ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"), definition
                 .getResultsConfigurationDefinition(), operationHistory.getResults());
-            resultsEditor.setReadOnly(true);
-            addMember(resultsEditor);
+            editor.setReadOnly(true);
+            editor.setStructuredConfigTabTitle(MSG.view_operationHistoryDetails_results());
+            addMember(editor);
         }
-
     }
 
     private void lookupDetails(int historyId) {
@@ -159,7 +230,8 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceOperationHistory>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
+                    CoreGUI.getErrorHandler()
+                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
                 }
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
@@ -169,31 +241,19 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
             });
     }
 
-    public static void displayDetailsDialog(String locatorId, ResourceOperationHistory operationHistory) {
-
-        OperationDetailsView detailsView = new OperationDetailsView(locatorId, operationHistory
-            .getOperationDefinition(), operationHistory);
-
-        Window window = new Window();
-        window.setTitle(operationHistory.getOperationDefinition().getDisplayName() + " History");
-        window.setWidth(900);
-        window.setHeight(900);
-        window.setIsModal(true);
-        window.setShowModalMask(true);
-        window.setCanDragResize(true);
-        window.centerInPage();
-        window.addItem(detailsView);
-        window.show();
-
-    }
-
     @Override
     public void renderView(ViewPath viewPath) {
-
-        historyId = viewPath.getCurrentAsInt();
-
-        viewId = viewPath.getCurrent();
-
+        int historyId = viewPath.getCurrentAsInt();
         lookupDetails(historyId);
+    }
+
+    private String getShortErrorMessage(ResourceOperationHistory operationHistory) {
+        String errMsg = operationHistory.getErrorMessage();
+        if (errMsg == null) {
+            errMsg = MSG.common_status_failed();
+        } else if (errMsg.length() > 80) {
+            errMsg = errMsg.substring(0, 80) + "...";
+        }
+        return errMsg;
     }
 }

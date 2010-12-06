@@ -46,7 +46,7 @@ public class LocatableTabSet extends TabSet {
         super.setTabs(tabs);
     }
 
-    public LocatableTab[] getTabs() {        
+    public LocatableTab[] getTabs() {
         Tab[] tabs = super.getTabs();
         LocatableTab[] locatableTabs = new LocatableTab[tabs.length];
         for (int i = 0, tabsLength = tabs.length; i < tabsLength; i++) {

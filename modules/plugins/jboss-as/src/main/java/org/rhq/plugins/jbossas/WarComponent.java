@@ -24,9 +24,13 @@ package org.rhq.plugins.jbossas;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -83,6 +87,9 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     private static final String SERVLET_NAME_BASE_TEMPLATE = "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=Servlet,name=%name%";
 
     private static final String SESSION_NAME_BASE_TEMPLATE = "jboss.web:host=%HOST%,type=Manager,path=%PATH%";
+
+    // WebModule=//localhost/test-simple,service=ClusterManager
+    private static final String CLUSTER_SESSION_NAME_BASE_TEMPLATE = "jboss.web:service=ClusterManager,WebModule=//%HOST%%PATH%";
     private static final String SESSION_PREFIX = "Session.";
     private static final String VHOST_PREFIX = "Vhost";
     public static final String VHOST_CONFIG_PROP = "vHost";
@@ -95,6 +102,20 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     private ResponseTimeLogParser logParser;
     String vhost;
     private String contextRoot;
+    // Mapping non-clustered names -> attribute name in the cluster manager
+    private final String[] CLUSTER_SESSION_ATTRIBUTE_NAMES = {
+            "maxInactiveInterval","MaxInactiveInterval",
+            "activeSessions","ActiveSessionCount",
+            "sessionCounter","CreatedSessionCount",
+            "sessionAverageAliveTime","",
+            "processingTime","ProcessingTime",
+            "maxActive","MaxActiveSessionCount",
+            "maxActiveSessions","MaxActiveAllowed",
+            "expiredSessions","ExpiredSessionCount",
+            "rejectedSessions","RejectedSessionCount",
+            "sessionIdLength","SessionIdLength"
+    };
+
 
     @Override
     public AvailabilityType getAvailability() {
@@ -135,6 +156,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }
+
     }
 
     @Override
@@ -190,12 +212,26 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     }
 
     private Double getSessionMetric(String metricName) {
+        boolean isClustered = false;
+
         EmsConnection jmxConnection = getEmsConnection();
         String servletMBeanNames = SESSION_NAME_BASE_TEMPLATE.replace("%PATH%",
                 WarDiscoveryHelper.getContextPath(this.contextRoot));
         servletMBeanNames = servletMBeanNames.replace("%HOST%", vhost);
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
         List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
+
+        if (mBeans.size()==0) {
+            // retry with the cluster manager TODO select the local vs cluster mode on discovery
+            servletMBeanNames = CLUSTER_SESSION_NAME_BASE_TEMPLATE.replace("%PATH%",
+                    WarDiscoveryHelper.getContextPath(this.contextRoot));
+            servletMBeanNames = servletMBeanNames.replace("%HOST%", vhost);
+            queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
+            mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
+            if (mBeans.size()>0)
+                isClustered = true;
+
+        }
 
         String property = metricName.substring(SESSION_PREFIX.length());
 
@@ -204,14 +240,34 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         if (mBeans.size() > 0) { // TODO flag error if != 1 ?
             EmsBean eBean = mBeans.get(0);
             eBean.refreshAttributes();
+
+            if (isClustered) {
+                property = lookupClusteredAttributeName(property);
+            }
+
             EmsAttribute att = eBean.getAttribute(property);
             if (att != null) {
-                Integer i = (Integer) att.getValue();
-                ret = Double.valueOf(i);
+                Object o = att.getValue();
+                if (o instanceof Long) {
+                    Long l = (Long) o;
+                    ret = Double.valueOf(l);
+                }
+                else {
+                    Integer i = (Integer) o;
+                    ret = Double.valueOf(i);
+                }
             }
 
         }
         return ret;
+    }
+
+    private String lookupClusteredAttributeName(String property) {
+        for (int i = 0; i < CLUSTER_SESSION_ATTRIBUTE_NAMES.length ; i+=2) {
+            if (CLUSTER_SESSION_ATTRIBUTE_NAMES[i].equals(property))
+                return CLUSTER_SESSION_ATTRIBUTE_NAMES[i+1];
+        }
+        return property;
     }
 
     private Double getServletMetric(String metricName) {

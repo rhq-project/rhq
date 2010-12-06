@@ -26,8 +26,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceEnumField;
+import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -41,13 +43,19 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  *
  * @author Lukas Krejci
+ * @author Simeon Pinder
  */
 public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
 
-    public static final String SUMMARY_ID = "summary";
-    public static final String DETAIL_ID = "detail";
-    public static final String ERROR_TYPE_ID = "errorType";
-    public static final String TIME_OCCURED_ID = "timeOccured";
+    public static abstract class Field {
+        public static final String SUMMARY = "summary";
+        public static final String DETAIL = "detail";
+        public static final String ERROR_TYPE = "errorType";
+        public static final String TIME_OCCURED = "timeOccured";
+        public static final String ICON = "icon";
+    }
+
+    private static final String ERROR_ICON = "[SKIN]/Dialog/warn.png";
 
     ResourceGWTServiceAsync resourceService;
     int resourceId;
@@ -63,10 +71,14 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        fields.add(new DataSourceTextField(SUMMARY_ID, "Summary"));
-        fields.add(new DataSourceTextField(DETAIL_ID, "Detailed Message"));
-        fields.add(new DataSourceEnumField(ERROR_TYPE_ID, "Error Type"));
-        fields.add(new DataSourceDateTimeField(TIME_OCCURED_ID, "Time"));
+        fields.add(new DataSourceEnumField(Field.ERROR_TYPE, MSG.dataSource_resourceErrors_field_errorType()));
+        fields.add(new DataSourceDateTimeField(Field.TIME_OCCURED, MSG.dataSource_resourceErrors_field_timeOccured()));
+        fields.add(new DataSourceTextField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary()));
+        DataSourceTextField details = new DataSourceTextField(Field.DETAIL, MSG
+            .dataSource_resourceErrors_field_detail());
+        details.setHidden(true);//won't be displaying this value directly in the listgrid
+        fields.add(details);
+        fields.add(new DataSourceImageField(Field.ICON, MSG.dataSource_resourceErrors_field_detail()));
 
         return fields;
     }
@@ -79,7 +91,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         resourceService.findResourceErrors(resourceId, new AsyncCallback<List<ResourceError>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    "Failed to find resource errors for resource with id: " + resourceId, caught);
+                    MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceId)), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -87,11 +99,11 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
             public void onSuccess(List<ResourceError> result) {
                 response.setData(buildRecords(result));
                 processResponse(request.getRequestId(), response);
-            };
+            }
         });
     }
 
-    public ResourceError copyValues(ListGridRecord from) {
+    public ResourceError copyValues(Record from) {
         //This is read-only datasource, so no need to implement this.
         return null;
     }
@@ -99,12 +111,12 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
     public ListGridRecord copyValues(ResourceError from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute(DETAIL_ID, from.getDetail());
-        record.setAttribute(ERROR_TYPE_ID, from.getErrorType().toString());
-        record.setAttribute(SUMMARY_ID, from.getSummary());
-        record.setAttribute(TIME_OCCURED_ID, new Date(from.getTimeOccurred()));
+        record.setAttribute(Field.DETAIL, from.getDetail());
+        record.setAttribute(Field.ICON, ERROR_ICON);
+        record.setAttribute(Field.ERROR_TYPE, from.getErrorType().name());
+        record.setAttribute(Field.SUMMARY, from.getSummary());
+        record.setAttribute(Field.TIME_OCCURED, new Date(from.getTimeOccurred()));
 
         return record;
     }
-
 }

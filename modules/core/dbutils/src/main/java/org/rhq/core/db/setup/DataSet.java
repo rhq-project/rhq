@@ -248,7 +248,7 @@ abstract class DataSet {
             if (data == null) {
                 System.err.println("Data at column index for table " + m_strTableName + " is null");
             }
-            if (data.isKeyColumn()) {
+            else if (data.isKeyColumn()) {
                 return true;
             }
         }
@@ -264,7 +264,7 @@ abstract class DataSet {
             if (data == null) {
                 System.err.println("Data at column index for table " + m_strTableName + " is null");
             }
-            if (data.isKeyColumn()) {
+            else if (data.isKeyColumn()) {
                 keys.add(data);
             }
         }

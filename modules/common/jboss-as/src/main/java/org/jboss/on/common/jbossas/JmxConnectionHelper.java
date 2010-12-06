@@ -173,16 +173,19 @@ public class JmxConnectionHelper {
                     connectionSettings.setAdvancedProperties(new Properties());
                 }
 
-                connectionSettings.getAdvancedProperties().setProperty(ConnectionFactory.USE_CONTEXT_CLASSLOADER, "true");
+                connectionSettings.getAdvancedProperties().setProperty(ConnectionFactory.USE_CONTEXT_CLASSLOADER,
+                    "true");
                 connectionSettings.getAdvancedProperties().setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
 
                 // Make sure the timeout always happens, even if the JBoss server is hung.
                 connectionSettings.getAdvancedProperties().setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
                 connectionSettings.getAdvancedProperties().setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
 
-                // TODO (ips): Remove this?
+                // Tell EMS "don't bother creating your own classloader, I (the caller of EMS) already created
+                // an isolated classloader for you, with all necessary jars - just use the context classloader
+                // and don't bother creating a new one for yourself"
                 connectionSettings.getAdvancedProperties().setProperty(ConnectionFactory.USE_CONTEXT_CLASSLOADER,
-                        Boolean.TRUE.toString());
+                    Boolean.TRUE.toString());
 
                 if (copyConnectionLibraries) {
                     // Tell EMS to make copies of jar files so that the ems classloader doesn't lock

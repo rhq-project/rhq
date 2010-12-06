@@ -22,10 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,16 +32,15 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.RecordList;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
-import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 
 import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
@@ -54,30 +51,21 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 /**
  * @author Simeon Pinder
  */
-public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>> {
-    public static final String id = "id";
-    public static final String name = "name";
-    public static final String description = "description";
-    public static final String AVAILABLE_GROUPS = "Available Groups";
-    public static final String SELECTED_GROUPS = "Selected Groups";
-    private LdapGroupsDataSource availableDatasource;
-    protected HashSet<String> selection = new HashSet<String>();
-    private int currentRole = -1;
-    private boolean initialLdapSelectionsLoad = true;
-    //cache ldap group data from external server
-    private Set<Map<String, String>> cachedLdapGroupsAvailable;
-    private HashMap<String, Map<String, String>> cachedNameKeyedMap;
+public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
+
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_DESCRIPTION = "description";
 
     //override the selector key for ldap group selection.
     protected String getSelectorKey() {
         return "name";
     }
 
-    public RoleLdapGroupSelector(String locatorId, Integer integer) {
-        super(locatorId);
-        if (integer != null) {
-            this.currentRole = integer.intValue();
-        }
+    public RoleLdapGroupSelector(String locatorId, ListGridRecord[] assignedRecords, boolean isReadOnly) {
+        super(locatorId, isReadOnly);
+        
+        setAssigned(assignedRecords);
     }
 
     /** Define search for case insensitive filtering on ldap name.
@@ -88,72 +76,15 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         availableFilterForm.setWidth100();
         availableFilterForm.setNumCols(2);
 
-        final TextItem search = new TextItem("search", "Search");
+        final TextItem search = new TextItem("search", MSG.common_title_search());
         availableFilterForm.setItems(search, new SpacerItem());
 
         return availableFilterForm;
     }
 
     @Override
-    protected RPCDataSource<PageList<LdapGroup>> getDataSource() {
-        if (availableDatasource == null) {
-            availableDatasource = new LdapGroupsDataSource();
-            //add subsequent listener
-            int currentRoleId = getCurrentRole();
-            if (currentRoleId > -1) {
-
-                //add listener to AvailableGrid, to act after successfully populated.
-                getAvailableGrid().addDataArrivedHandler(new DataArrivedHandler() {
-                    @Override
-                    public void onDataArrived(DataArrivedEvent event) {
-                        int currentRoleId = getCurrentRole();
-                        if (currentRoleId > -1) {
-                            if (initialLdapSelectionsLoad) {
-                                GWTServiceLookup.getLdapService().findLdapGroupsAssignedToRole(currentRoleId,
-                                    new AsyncCallback<PageList<LdapGroup>>() {
-                                        public void onFailure(Throwable throwable) {
-                                            CoreGUI.getErrorHandler().handleError(
-                                                "Failed to load LdapGroups available for role.", throwable);
-                                        }
-
-                                        public void onSuccess(PageList<LdapGroup> currentlyAssignedLdapGroups) {
-                                            //translate groups into records for grid
-                                            //instead of setting the data, find which ones are shared and transfer as before. eliminate stale
-                                            if ((currentlyAssignedLdapGroups != null)
-                                                && (!currentlyAssignedLdapGroups.isEmpty())) {
-                                                RecordList loaded = availableGrid.getDataAsRecordList();
-                                                if (loaded != null) {
-                                                    ArrayList<Integer> located = new ArrayList<Integer>();
-                                                    for (LdapGroup group : currentlyAssignedLdapGroups) {
-                                                        int index = loaded.findIndex(name, (String) group.getName());
-                                                        if (index > -1) {
-                                                            group.setId(index);//overwrite RHQ Resource ID to match ldap fabricated id.
-                                                            located.add(Integer.valueOf(index));
-                                                        }
-                                                    }
-                                                    int[] records = new int[located.size()];
-                                                    int i = 0;
-                                                    for (Integer index : located) {
-                                                        records[i++] = index.intValue();
-                                                    }
-                                                    availableGrid.selectRecords(records);
-                                                    //now simulate button push
-                                                    assignedGrid.transferSelectedData(availableGrid);
-                                                    initialLdapSelectionsLoad = false;
-                                                    select(assignedGrid.getSelection());
-                                                    updateButtons();
-                                                    assignedGrid.deselectAllRecords();
-                                                }
-                                            }
-                                        }
-                                    });
-                            }
-                        }
-                    }
-                });
-            }
-        }
-        return availableDatasource;
+    protected RPCDataSource<LdapGroup> getDataSource() {
+        return new LdapGroupsDataSource();
     }
 
     /** Retrieve latest search string entered by the user.
@@ -168,268 +99,125 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         return criteria;
     }
 
-    public class LdapGroupsDataSource extends RPCDataSource<PageList<LdapGroup>> {
+    @Override
+    protected String getItemTitle() {
+        return MSG.common_title_ldapGroups();
+    }
 
-        public static final String LDAP_NOT_CONFIGURED_EMPTY_MESSAGE = "(LDAP not configured. 'Administrator'->System Settings to change)";
-        public static final String EMPTY_MESSAGE = "No items to show";
+    public static class LdapGroupsDataSource extends RPCDataSource<LdapGroup> {
+
+        //cache ldap group data from external server
+        private Set<Map<String, String>> cachedLdapGroupsAvailable;
+        private Map<String, Map<String, String>> cachedNameKeyedMap;
 
         public LdapGroupsDataSource() {
-            DataSourceTextField nameField = new DataSourceTextField(name, name);
+            DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, FIELD_NAME);
             nameField.setPrimaryKey(true);
 
-            DataSourceTextField descriptionField = new DataSourceTextField(description, description);
+            DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, FIELD_DESCRIPTION);
 
             setFields(nameField, descriptionField);
         }
 
-        public ListGridRecord[] buildRecords(Set<LdapGroup> locatedGroups) {
-            ListGridRecord[] records = new ListGridRecord[0];
-            int indx = 0;
-            if ((locatedGroups != null) && (!locatedGroups.isEmpty())) {
-                //load groupsData
-                records = new ListGridRecord[locatedGroups.size()];
-                int index = 0;
-                //for each Map returned then iterate over to retrieve the values
-                for (LdapGroup group : locatedGroups) {
-                    //iterate over the group data to translate into records
-                    ListGridRecord record = new ListGridRecord();
-                    //load identifier 
-                    record.setAttribute(id, index++);
-                    record.setAttribute(name, group.getName());
-                    record.setAttribute(description, group.getDescription());
-                    records[indx++] = record;
-                }
+        @Override
+        public LdapGroup copyValues(Record from) {
+            LdapGroup to = new LdapGroup();
 
-                for (ListGridRecord record : records) {
-                    if (selection.contains(record.getAttributeAsInt("id"))) {
-                        record.setEnabled(false);
-                    }
-                }
-            }
-            return records;
+            to.setId(from.getAttributeAsInt(FIELD_ID));
+            to.setName(from.getAttributeAsString(FIELD_NAME));
+            to.setDescription(from.getAttributeAsString(FIELD_DESCRIPTION));
+
+            return to;
         }
 
         @Override
-        public PageList<LdapGroup> copyValues(ListGridRecord from) {
-            throw new UnsupportedOperationException("Ldap Group data is read only");
-        }
+        public ListGridRecord copyValues(LdapGroup from) {
+            ListGridRecord to = new ListGridRecord();
 
-        @Override
-        public ListGridRecord copyValues(PageList<LdapGroup> from) {
-            return null;
+            to.setAttribute(FIELD_ID, from.getId());
+            to.setAttribute(FIELD_NAME, from.getName());
+            to.setAttribute(FIELD_DESCRIPTION, from.getDescription());
+
+            return to;
         }
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response) {
             //if not null then go through to initialize
             if (cachedLdapGroupsAvailable == null) {
-                //determine if ldap enabled, if so then chain and proceed with finding groups
-                GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
-                    @Override
-                    public void onSuccess(Boolean ldapConfigured) {
-                        if (ldapConfigured) {
-                            availableGrid.setEmptyMessage(EMPTY_MESSAGE);
-                            GWTServiceLookup.getLdapService().findAvailableGroups(
-                                new AsyncCallback<Set<Map<String, String>>>() {
-
-                                    public void onFailure(Throwable throwable) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            "Failed to load LdapGroups available for role.", throwable);
-                                    }
-
-                                    public void onSuccess(Set<Map<String, String>> locatedGroups) {
-                                        Log.trace("Successfully located " + locatedGroups.size()
-                                            + " LDAP available groups.");
-                                        if (cachedLdapGroupsAvailable == null) {
-                                            cachedLdapGroupsAvailable = locatedGroups;
-                                        }
-                                        //all groups displayed initially 
-                                        response.setData(buildRecords(convertToCollection(locatedGroups)));
-                                        //entry count
-                                        if (null != locatedGroups) {
-                                            response.setTotalRows(locatedGroups.size());
-                                        } else {
-                                            response.setTotalRows(0);
-                                        }
-                                        //pass off for processing
-                                        processResponse(request.getRequestId(), response);
-                                    }
-                                });//end of findAvailableGroups
-                        } else {//ldap not configured
-                            Log.debug("(LDAP not currently enabled. " + EMPTY_MESSAGE);
-                            response.setTotalRows(0);
-                            availableGrid.setEmptyMessage(LDAP_NOT_CONFIGURED_EMPTY_MESSAGE);
-                            processResponse(request.getRequestId(), response);
-                        }
-                    }//end onSuccess
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Log.error("Unable to determine whether ldap configured - check server logs.");
-                    }
-                });//end of checkLdapConfigured status
+                fetchLdapGroupsFromServerAsync(request, response);
             } else {//use cached data and return correct response
                 //process cachedLdapGroupsAvailable based on criteria
-                Criteria criteria = getLatestCriteria(availableFilterForm);
-                String search = (String) criteria.getValues().get("name");
-                //empty group
-                Set<Map<String, String>> locatedGroups = new HashSet<Map<String, String>>();
-
-                //populate the indexed map
-                if (cachedNameKeyedMap == null) {
-                    cachedNameKeyedMap = new HashMap<String, Map<String, String>>();
-                    Iterator<Map<String, String>> iterator = cachedLdapGroupsAvailable.iterator();
-                    while (iterator.hasNext()) {
-                        Map<String, String> map = iterator.next();
-                        String id = map.get("name");
-                        cachedNameKeyedMap.put(id, map);
-                    }
-                }
-                //if search non empty
-                if ((search != null) && (!search.trim().isEmpty())) {
-                    //now iterate over keys to find matches
-                    Set<String> keySet = cachedNameKeyedMap.keySet();
-                    for (String key : keySet) {
-                        //do case insensitive match to entered string.
-                        if (key.toLowerCase().contains(search.trim().toLowerCase())) {
-                            locatedGroups.add(cachedNameKeyedMap.get(key));
-                        }
-                    }
-                } else {//return full list .. as no filtering done.
-                    locatedGroups = cachedLdapGroupsAvailable;
-                }
-                //then convert.
-                response.setData(buildRecords(convertToCollection(locatedGroups)));
-                //entry count
-                if (null != locatedGroups) {
-                    response.setTotalRows(locatedGroups.size());
-                } else {
-                    response.setTotalRows(0);
-                }
-
-                //pass off for processing
-                processResponse(request.getRequestId(), response);
+                PageList<LdapGroup> ldapGroups = filterCachedLdapGroups(request);
+                sendSuccessResponse(request, response, ldapGroups);                
             }
+        }
+
+        private PageList<LdapGroup> filterCachedLdapGroups(DSRequest request) {
+            //populate the indexed map
+            if (cachedNameKeyedMap == null) {
+                cachedNameKeyedMap = new HashMap<String, Map<String, String>>();
+                for (Map<String, String> map : cachedLdapGroupsAvailable) {
+                    String id = map.get("name");
+                    cachedNameKeyedMap.put(id, map);
+                }
+            }
+
+            Set<Map<String, String>> locatedGroupMaps;
+
+            Criteria criteria = request.getCriteria();
+            String nameFilter = (String) criteria.getValues().get("name");
+            if ((nameFilter != null) && (!nameFilter.trim().isEmpty())) {
+                // filter the cached list by the user-specified name filter
+                locatedGroupMaps = new HashSet<Map<String, String>>();
+                //now iterate over keys to find matches
+                Set<String> keySet = cachedNameKeyedMap.keySet();
+                for (String key : keySet) {
+                    //do case insensitive match to entered string.
+                    if (key.toLowerCase().contains(nameFilter.trim().toLowerCase())) {
+                        locatedGroupMaps.add(cachedNameKeyedMap.get(key));
+                    }
+                }
+            } else {//return full list .. as no filtering done.
+                locatedGroupMaps = cachedLdapGroupsAvailable;
+            }
+            @SuppressWarnings({"UnnecessaryLocalVariable"})
+            PageList<LdapGroup> ldapGroups = convertToPageList(locatedGroupMaps);
+            return ldapGroups;
+        }
+
+        private void fetchLdapGroupsFromServerAsync(final DSRequest request, final DSResponse response) {
+            GWTServiceLookup.getLdapService().findAvailableGroups(
+                new AsyncCallback<Set<Map<String, String>>>() {
+                    public void onSuccess(Set<Map<String, String>> locatedGroupMaps) {
+                        Log.debug("Successfully located " + locatedGroupMaps.size() + " available LDAP groups.");
+                        cachedLdapGroupsAvailable = locatedGroupMaps;
+                        //all groups displayed initially
+                        PageList<LdapGroup> ldapGroups = convertToPageList(locatedGroupMaps);
+                        sendSuccessResponse(request, response, ldapGroups);
+                    }
+
+                    public void onFailure(Throwable throwable) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsRole(),
+                            throwable);
+                    }
+                });//end of findAvailableGroups
         }
     }
 
-    public static Set<LdapGroup> convertToCollection(Set<Map<String, String>> locatedGroups) {
-        Set<LdapGroup> converted = new HashSet<LdapGroup>();
-        if (locatedGroups != null) {
-            Iterator<Map<String, String>> iterator = locatedGroups.iterator();
-            int index = 0;
-            while (iterator.hasNext()) {
-                Map<String, String> map = iterator.next();
+    public static PageList<LdapGroup> convertToPageList(Set<Map<String, String>> locatedGroupMaps) {
+        PageList<LdapGroup> converted = new PageList<LdapGroup>();
+        converted.setPageControl(PageControl.getUnlimitedInstance());
+        if (locatedGroupMaps != null) {
+            for (Map<String, String> locatedGroupMap : locatedGroupMaps) {
                 LdapGroup group = new LdapGroup();
-                group.setDescription(map.get("description"));
-                group.setName(map.get("name"));
-                group.setId(index++);
+                group.setDescription(locatedGroupMap.get("description"));
+                group.setName(locatedGroupMap.get("name"));
+                //group.setId(0);
                 converted.add(group);
             }
         }
         return converted;
     }
 
-    public class LdapAssignedGroupsDatasource extends RPCDataSource<Set<String>> {
-        private Integer currentRoleId = Integer.valueOf(-1);
-
-        public LdapAssignedGroupsDatasource(Integer integer) {
-            if (integer != null) {
-                this.currentRoleId = integer;
-            }
-            getAssignedGrid().invalidateCache();
-            getAssignedGrid().markForRedraw();
-        }
-
-        @Override
-        public Set<String> copyValues(ListGridRecord from) {
-            return null;
-        }
-
-        @Override
-        public ListGridRecord copyValues(Set<String> from) {
-            return null;
-        }
-
-        @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
-            int currentRoleId = -1;
-            if ((getCurrentRoleId() != null) && (getCurrentRoleId().intValue() > -1)) {
-                currentRoleId = getCurrentRoleId().intValue();
-            }
-
-            GWTServiceLookup.getLdapService().findLdapGroupsAssignedToRole(currentRoleId,
-                new AsyncCallback<PageList<LdapGroup>>() {
-
-                    public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load LdapGroups available for role.",
-                            throwable);
-                    }
-
-                    public void onSuccess(PageList<LdapGroup> currentlyAssignedLdapGroups) {
-                        //instead of setting the data, find which ones are shared and transfer as before
-                        RecordList loaded = getAssignedGrid().getDataAsRecordList();
-                        ArrayList<Integer> located = new ArrayList<Integer>();
-                        for (LdapGroup groupMap : currentlyAssignedLdapGroups) {
-                            int index = loaded.findIndex(id, groupMap.getId());
-                            if (index > -1) {
-                                located.add(Integer.valueOf(index));
-                            }
-                        }
-                        int[] records = new int[located.size()];
-                        int i = 0;
-                        for (Integer index : located) {
-                            records[i++] = index.intValue();
-                        }
-                        getAssignedGrid().selectRecords(records);
-                        //now simulate button push
-                        assignedGrid.transferSelectedData(availableGrid);
-                        select(assignedGrid.getSelection());
-                        updateButtons();
-
-                        //entry count
-                        if (null != currentlyAssignedLdapGroups) {
-                            response.setTotalRows(currentlyAssignedLdapGroups.size());
-                        } else {
-                            response.setTotalRows(0);
-                        }
-                        //pass off for processing
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
-        }
-
-        public ListGridRecord[] buildAssignedRecords(Set<LdapGroup> currentlyAssignedLdapGroups) {
-            ListGridRecord[] records = new ListGridRecord[0];
-            int index = 0;
-            if ((currentlyAssignedLdapGroups != null) && (!currentlyAssignedLdapGroups.isEmpty())) {
-                //load groupsData
-                records = new ListGridRecord[currentlyAssignedLdapGroups.size()];
-                for (LdapGroup group : currentlyAssignedLdapGroups) {
-                    ListGridRecord record = new ListGridRecord();
-                    //                    record.setAttribute(id, group.getName());
-                    record.setAttribute(id, group.getId());
-                    //load name 
-                    record.setAttribute(name, group.getName());
-                    //load description 
-                    record.setAttribute(description, group.getDescription());
-
-                    records[index++] = record;
-                }
-            }
-            return records;
-        }
-
-        public Integer getCurrentRoleId() {
-            return currentRoleId;
-        }
-
-        public void setCurrentRoleId(Integer currentRoleId) {
-            this.currentRoleId = currentRoleId;
-        }
-    }
-
-    public int getCurrentRole() {
-        return currentRole;
-    }
 }

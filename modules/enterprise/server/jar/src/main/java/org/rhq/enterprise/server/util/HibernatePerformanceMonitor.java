@@ -88,7 +88,7 @@ public class HibernatePerformanceMonitor {
                 if ((watch.getTransations() / (double) watch.getQueryExecutions()) >= 5.0) {
                     cause = "(xaction nesting?) "; // might indicate excessive @REQUIRES_NEW
                 } else if (watch.getTransations() > 10) {
-                    cause = "(too many xactions?";
+                    cause = "(too many xactions?)";
                 }
             }
             if (watch.getTime() > 3000) {
@@ -98,7 +98,7 @@ public class HibernatePerformanceMonitor {
             String callingContext = " for " + (logPrefix == null ? "(unknown)" : logPrefix);
             log.debug(watch.toString() + cause + callingContext);
 
-            if (logPrefix!=null && logPrefix.contains("URL")) {
+            if (logPrefix != null && logPrefix.contains("URL")) {
                 String[] queries = watch.getStats().getQueries();
                 for (int i = 0; i < queries.length; i++) {
                     String query = queries[i];

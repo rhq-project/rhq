@@ -170,7 +170,8 @@ if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"
-   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+#   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
    MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
 fi
 
@@ -259,11 +260,11 @@ if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
       echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
       #rm -rf "$MAVEN_LOCAL_REPO_DIR"
    else
-      OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-      if [ -n "$OUTPUT" ]; then       
-         echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-         rm -rf "$MAVEN_LOCAL_REPO_DIR"
-      fi
+      #OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+      #if [ -n "$OUTPUT" ]; then       
+      #   echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+      #   rm -rf "$MAVEN_LOCAL_REPO_DIR"
+      #fi
    fi
    
 fi

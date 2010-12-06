@@ -179,13 +179,6 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
         List<FormItem> items = createFormItems(form);
         form.setFields(items.toArray(new FormItem[items.size()]));
-        for (final FormItem item : items) {
-            item.addBlurHandler(new BlurHandler() {
-                public void onBlur(BlurEvent event) {
-                    item.validate();
-                }
-            });
-        }
 
         form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent event) {

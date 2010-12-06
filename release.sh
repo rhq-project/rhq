@@ -136,7 +136,7 @@ fi
 mvn -version >/dev/null
 [ $? -ne 0 ] && abort "mvn --version failed with exit code $?."
 MAVEN_VERSION=`mvn -version | head -1 | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
-if echo $MAVEN_VERSION | grep -ev "^(2\.[12]|3\.0)"; then
+if echo $MAVEN_VERSION | grep -Ev "^(2\.[12]|3\.0)"; then
    abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x, 2.2.x, or 3.0.x is supported. Please update the value of M2_HOME, then try again."
 fi
 

@@ -103,8 +103,8 @@ public class HibernatePerformanceMonitor {
                 for (int i = 0; i < queries.length; i++) {
                     String query = queries[i];
                     QueryStatistics queryStats = watch.getStats().getQueryStatistics(query);
-                    log.debug("queryString[" + i + "]=" + queries[i]);
-                    log.debug("queryStats[" + i + "=" + queryStats);
+                    log.debug("query[" + i + "] " + queryStats);
+                    log.debug("query[" + i + "] " + queries[i]);
                 }
                 //watch.getStats().logSummary();
             }

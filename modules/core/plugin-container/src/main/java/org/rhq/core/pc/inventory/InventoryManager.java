@@ -197,8 +197,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
 
-    private RebootRequestListener rebootRequestListener;
-
     public InventoryManager() {
         super(DiscoveryAgentService.class);
     }
@@ -971,7 +969,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.error("Failed to merge inventory report with server. The report contains one or more resource types " +
                 "that have been marked for deletion. Notifying the plugin container that a reboot is needed to purge " +
                 "stale types.");
-            rebootRequestListener.reboot();
+            PluginContainer.getInstance().notifyRebootRequestListener();
             return false;
         } catch (InvalidInventoryReportException e) {
             log.error("Failure sending inventory report to Server - was this Agent's platform deleted?", e);
@@ -2719,10 +2717,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.error("Resource container not initialized for resource [" + resource
                 + "] during upgrade. This should not happen.");
         }
-    }
-
-    public void addRebootRequestListener(RebootRequestListener listener) {
-        rebootRequestListener = listener;
     }
 
     /**

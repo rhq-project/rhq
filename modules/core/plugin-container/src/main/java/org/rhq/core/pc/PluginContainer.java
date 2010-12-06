@@ -80,6 +80,12 @@ public class PluginContainer implements ContainerService {
 
     private final Log log = LogFactory.getLog(PluginContainer.class);
 
+    private static final class NullRebootRequestListener implements RebootRequestListener {
+        @Override
+        public void reboot() {
+        }
+    }
+
     // our management interface
     private PluginContainerMBeanImpl mbean;
 
@@ -102,6 +108,8 @@ public class PluginContainer implements ContainerService {
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
     private AgentRegistrar agentRegistrar = null;
+
+    private RebootRequestListener rebootListener = new NullRebootRequestListener();
 
     // this is to prevent race conditions on startup between components from all the different managers
     private ReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -582,8 +590,12 @@ public class PluginContainer implements ContainerService {
         return (this.configuration != null && this.configuration.isInsideAgent());
     }
 
-    public void addRebootRequestListener(RebootRequestListener listener) {
-        inventoryManager.addRebootRequestListener(listener);
+    public void setRebootRequestListener(RebootRequestListener listener) {
+        rebootListener = listener;
+    }
+
+    public void notifyRebootRequestListener() {
+        rebootListener.reboot();
     }
 
 }

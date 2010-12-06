@@ -47,7 +47,17 @@ public class AgentRestartCounter {
          * The agent was restarted by the VM Health Check in an attempt
          * to correct a critical error occurring in the agent.
          */
-        VM_HEALTH_CHECK
+        VM_HEALTH_CHECK,
+
+        /**
+         * The agent contains one or more stale resource types that need to be purged.
+         * This will occur when a plugin is deleted on the server and the agent is
+         * subsequently notified of the stale types when it sends up to the server an
+         * inventory report containing those types. The server will reject the report,
+         * throwing an exception letting the agent know it needs to restart to update
+         * its plugins.
+         */
+        STALE_INVENTORY
     }
 
     private AgentRestartReason lastRestartReason = AgentRestartReason.PROCESS_START;

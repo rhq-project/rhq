@@ -222,7 +222,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 int[] newRoleIds = new int[newRoles.size()];
                 int i = 0;
                 for (Role role : newRoles) {
-                    newRoleIds[i] = role.getId();
+                    newRoleIds[i++] = role.getId();
                 }
                 roleManager.setAssignedSubjectRoles(whoami, subjectToModify.getId(), newRoleIds);
             }

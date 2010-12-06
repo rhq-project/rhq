@@ -97,8 +97,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         // DataSource Settings        
         setUseAllDataSourceFields(false);
 
-        // Validation Settings
-        setValidateOnChange(!isNewRecord);
+        // Validation Settings                  
         setStopOnError(false);
     }
 
@@ -219,9 +218,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         for (FormItem item : itemsList) {
-            if (isNewRecord() != null && isNewRecord() && !(item instanceof StaticTextItem)) {
-                item.setValidateOnChange(true);
-            }
+            item.setValidateOnExit(true);
 
             //item.setWidth("*"); // this causes a JavaScript exception ...  :-(
             item.setWidth(195);

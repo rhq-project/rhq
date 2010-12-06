@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -41,6 +40,8 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
+import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -79,7 +80,6 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private boolean isReadOnly;
     private String dataTypeName;
     private String listViewPath;
-    private boolean wasInvalid;
     private ButtonBar buttonBar;
 
     public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
@@ -174,17 +174,24 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);        
+        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);
         form.setDataSource(this.dataSource);
 
         List<FormItem> items = createFormItems(form);
         form.setFields(items.toArray(new FormItem[items.size()]));
+        for (final FormItem item : items) {
+            item.addBlurHandler(new BlurHandler() {
+                public void onBlur(BlurEvent event) {
+                    item.validate();
+                }
+            });
+        }
 
         form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent event) {
                 AbstractRecordEditor.this.onItemChanged();
             }
-        });
+        });        
                 
         return form;
     }
@@ -225,38 +232,18 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      * and update the Save button's enablement based on whether or not all items on the form are valid.
      */
     public void onItemChanged() {
-        boolean isValid = this.form.valuesAreValid(false);
-        //boolean isValid = this.valuesManager.validate();
-
         // If we're in editable mode, update the button enablement.
         if (!this.isReadOnly) {
             IButton saveButton = this.buttonBar.getSaveButton();
-            boolean saveButtonWasDisabled = saveButton.isDisabled();
-            saveButton.setDisabled(!isValid);
-            if (saveButtonWasDisabled != !saveButton.isDisabled()) {
-                 CanvasUtility.blink(saveButton);
+            if (saveButton.isDisabled()) {
+                saveButton.setDisabled(false);
+                CanvasUtility.blink(saveButton);
             }
 
             IButton resetButton = this.buttonBar.getResetButton();
             if (resetButton.isDisabled()) {
                 resetButton.setDisabled(false);
                 CanvasUtility.blink(resetButton);
-            }
-
-            if (!isValid) {
-                this.wasInvalid = true;
-                Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
-                    + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
-                    Message.Option.Sticky, Message.Option.Transient));
-                CoreGUI.getMessageCenter().notify(message);
-            } else {
-                if (this.wasInvalid) {
-                    Message message = new Message("All fields now have valid values. This " + this.dataTypeName
-                        + " can now be saved.", Message.Severity.Info, EnumSet.of(Message.Option.Sticky,
-                        Message.Option.Transient));
-                    CoreGUI.getMessageCenter().notify(message);
-                    this.wasInvalid = false;
-                }
             }
         }
     }
@@ -266,6 +253,15 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     }
 
     protected void save() {
+        if (!this.form.validate()) {
+            // TODO: i18n
+            Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
+                            + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
+                            Message.Option.Transient));
+            CoreGUI.getMessageCenter().notify(message);
+            return;
+        }
+
         this.form.saveData(new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
                 if (response.getStatus() == RPCResponse.STATUS_SUCCESS) {
@@ -472,7 +468,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG.common_button_cancel());
             cancelButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    History.back();
+                    CoreGUI.goToView(getListViewPath());
                 }
             });
             hLayout.addMember(cancelButton);

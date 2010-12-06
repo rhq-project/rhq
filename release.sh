@@ -300,6 +300,8 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+
+            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M</gwt-plugin.extraJvmArgs>
          </properties>
       </profile>
 

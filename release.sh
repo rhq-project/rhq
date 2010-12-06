@@ -260,6 +260,7 @@ if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
       echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
       #rm -rf "$MAVEN_LOCAL_REPO_DIR"
    else
+      echo boo
       #OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
       #if [ -n "$OUTPUT" ]; then       
       #   echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."

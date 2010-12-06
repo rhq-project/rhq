@@ -311,6 +311,10 @@
                <groupId>com.sun.facelets</groupId>
                <artifactId>jsf-facelets</artifactId>
             </exclusion>
+             <exclusion>
+               <groupId>org.jboss.seam</groupId>
+               <artifactId>jboss-seam</artifactId>
+             </exclusion>
          </exclusions>
          <scope>runtime</scope>
       </dependency>

@@ -271,7 +271,13 @@ public class PropertyRenderingUtility {
             //}
 
             if (postBack) {
-                boolean inputIsNull = PropertySimpleValueConverter.NULL_INPUT_VALUE.equals(input.getSubmittedValue());
+                //we need to do a check for both null and NULL_INPUT_VALUE here.
+                //The null value is present in the stored state in the session 
+                //(that is what the NULL_INPUT_VALUE becomes after processing with PropertySimpleValueConverter)
+                //where as NULL_INPUT_VALUE is actually submitted from the client.
+                //Because this is a common method that processes the page regardless
+                //of where the input has come from, we need to check for both possible values.
+                boolean inputIsNull = input.getSubmittedValue() == null || PropertySimpleValueConverter.NULL_INPUT_VALUE.equals(input.getSubmittedValue());
                 FacesComponentUtility.setUnset(input, inputIsNull);
             }
             if (FacesComponentUtility.isUnset(input)) {

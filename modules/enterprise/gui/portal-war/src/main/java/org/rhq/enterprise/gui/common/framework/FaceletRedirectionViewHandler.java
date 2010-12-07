@@ -62,7 +62,7 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
     public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
         long monitorId = HibernatePerformanceMonitor.get().start();
         super.renderView(context, viewToRender);
-        HibernatePerformanceMonitor.get().stop(monitorId, "URL " + getURL(viewToRender));
+        HibernatePerformanceMonitor.get().stop(monitorId, "URL:" + getURL(viewToRender));
     }
 
     private String getURL(UIViewRoot viewToRender) {

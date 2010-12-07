@@ -88,7 +88,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         super.onAfterRequestDeserialized(rpcRequest);
 
         Method rpcMethod = rpcRequest.getMethod();
-        String className = rpcMethod.getClass().getSimpleName();
+        String className = rpcMethod.getDeclaringClass().getSimpleName();
         String methodName = rpcMethod.getName();
 
         this.rpcMethod.set(className + "." + methodName);

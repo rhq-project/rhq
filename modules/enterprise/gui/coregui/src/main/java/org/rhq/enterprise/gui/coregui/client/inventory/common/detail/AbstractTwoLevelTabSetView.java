@@ -115,7 +115,17 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             getTabSet().setTabEnabled(attachedTab, enabled);
         } else {
             if (attachedTab != null) {
+                // NOTE: If the currently selected tab is going away then switch to the default
+                // prior to the removeTab call.
+                if (attachedTab.equals(getTabSet().getSelectedTab())) {
+                    selectDefaultTabAndSubTab();
+                }
+                // NOTE: We need to remove the tab, because SmartGWT tabset doesn't support hiding tabs.
+                Canvas contentPane = attachedTab.getPane();
+                getTabSet().updateTab(attachedTab, null);
                 getTabSet().removeTab(attachedTab);
+                // Reset the pane on the tab, since the call to updateTab() above nulled it out.
+                attachedTab.setPane(contentPane);
             }
         }
 
@@ -146,7 +156,6 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
                 CoreGUI.goToView(path);
             }
         }
-        // TODO?: Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
     }
 
     public void renderView(final ViewPath viewPath) {
@@ -208,28 +217,23 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      */
     public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
         try {
-            TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : this.tabSet.getDefaultTab();
+            TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : null;
+            SubTab subtab = null;
+
             if (tab == null || tab.getDisabled()) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidTab(tabName));
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                tab = this.tabSet.getDefaultTab();
-                if (tab == null) {
-                    throw new IllegalStateException("No default tab is defined.");
+                subtab = selectDefaultTabAndSubTab();
+            } else {
+                // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
+                subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
+                if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subtabName));
+                    subtab = tab.getLayout().getDefaultSubTab();
                 }
-                subtabName = null;
-            }
-            // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
+                tab.getLayout().selectSubTab(subtab);
 
-            SubTab subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
-            if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subtabName));
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                subtab = tab.getLayout().getDefaultSubTab();
+                // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
+                this.tabSet.selectTab(tab);
             }
-            tab.getLayout().selectSubTab(subtab);
-
-            // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
-            this.tabSet.selectTab(tab);
 
             // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
@@ -243,6 +247,26 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         } catch (Exception e) {
             com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
         }
+    }
+
+    private SubTab selectDefaultTabAndSubTab() {
+        TwoLevelTab tab = this.tabSet.getDefaultTab();
+        if (tab == null) {
+            throw new IllegalStateException("No default tab is defined.");
+        }
+
+        SubTab subTab = tab.getDefaultSubTab();
+        if (subTab == null || tab.getLayout().isSubTabDisabled(subTab)) {
+            CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subTab.getName()));
+            subTab = tab.getLayout().getDefaultSubTab();
+        }
+
+        tab.getLayout().selectSubTab(subTab);
+
+        // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
+        this.tabSet.selectTab(tab);
+
+        return subTab;
     }
 
     protected abstract T getSelectedItem();

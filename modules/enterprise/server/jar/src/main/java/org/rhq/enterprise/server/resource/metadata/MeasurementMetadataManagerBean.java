@@ -2,10 +2,13 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 
@@ -33,6 +36,9 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
     @EJB
     private MeasurementDefinitionManagerLocal measurementDefinitionMgr;
+
+    @EJB
+    private SubjectManagerLocal subjectMgr;
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -134,18 +140,23 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
     public void deleteMetadata(ResourceType existingType) {
         log.debug("Deleting metric definitions for " + existingType);
 
+        MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
+        criteria.addFilterResourceTypeId(existingType.getId());
+        List<MeasurementDefinition> definitions = measurementDefinitionMgr.findMeasurementDefinitionsByCriteria(
+            subjectMgr.getOverlord(), criteria);
+
         // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
         // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
         // of removing any associated schedules and those schedules' OOBs.
-        Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
         if (definitions != null) {
             Iterator<MeasurementDefinition> defIter = definitions.iterator();
             while (defIter.hasNext()) {
                 MeasurementDefinition def = defIter.next();
-                if (entityMgr.contains(def)) {
-                    entityMgr.refresh(def);
-                    measurementDefinitionMgr.removeMeasurementDefinition(def);
-                }
+                measurementDefinitionMgr.removeMeasurementDefinition(def);
+//                if (entityMgr.contains(def)) {
+//                    entityMgr.refresh(def);
+//                    measurementDefinitionMgr.removeMeasurementDefinition(def);
+//                }
                 defIter.remove();
             }
         }

@@ -83,16 +83,16 @@ public class HibernatePerformanceMonitor {
             String cause = "";
             if (watch.getQueryExecutions() != 0) {
                 if ((watch.getConnects() / (double) (watch.getEntityLoads() + watch.getQueryExecutions())) >= 5.0) {
-                    cause = "(N+1 issue?) ";// might indicate need for LEFT JOIN FETCHes
+                    cause = "(perf: N+1 issue?) ";// might indicate need for LEFT JOIN FETCHes
                 }
                 if ((watch.getTransations() / (double) watch.getQueryExecutions()) >= 5.0) {
-                    cause = "(xaction nesting?) "; // might indicate excessive @REQUIRES_NEW
+                    cause = "(perf: xaction nesting?) "; // might indicate excessive @REQUIRES_NEW
                 } else if (watch.getTransations() > 10) {
-                    cause = "(too many xactions?)";
+                    cause = "(perf: too many xactions?)";
                 }
             }
             if (watch.getTime() > 3000) {
-                cause = "(slowness?) "; // might indicate inefficient query or table contention
+                cause = "(perf: slowness?) "; // might indicate inefficient query or table contention
             }
 
             String callingContext = " for " + (logPrefix == null ? "(unknown)" : logPrefix);
@@ -104,7 +104,7 @@ public class HibernatePerformanceMonitor {
                     String query = queries[i];
                     QueryStatistics queryStats = watch.getStats().getQueryStatistics(query);
                     log.debug("query[" + i + "] " + queryStats);
-                    log.debug("query[" + i + "] " + queries[i]);
+                    log.debug("query[" + i + "] " + queries[i].replaceAll("\\s+", " "));
                 }
                 //watch.getStats().logSummary();
             }

@@ -371,7 +371,7 @@ public class StartupServlet extends HttpServlet {
             // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60 * 5;
-            scheduler.scheduleSimpleRepeatingJob(PurgeResourceTypes.class, true, false, initialDelay, interval);
+            scheduler.scheduleSimpleRepeatingJob(PurgeResourceTypesJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log("Cannot schedule purge resource types job: " + e.getMessage());
         }

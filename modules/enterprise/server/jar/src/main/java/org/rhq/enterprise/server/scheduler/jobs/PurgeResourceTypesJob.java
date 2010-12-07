@@ -10,7 +10,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 import java.util.List;
 
-public class PurgeResourceTypes extends AbstractStatefulJob {
+public class PurgeResourceTypesJob extends AbstractStatefulJob {
 
     private static class DeletionStats {
         int numDeleted;
@@ -18,11 +18,11 @@ public class PurgeResourceTypes extends AbstractStatefulJob {
 
         @Override
         public String toString() {
-            return PurgeResourceTypes.class.getSimpleName() + ": deleted " + numDeleted + " in " + deletionTime + " ms";
+            return PurgeResourceTypesJob.class.getSimpleName() + ": deleted " + numDeleted + " in " + deletionTime + " ms";
         }
     }
 
-    private static final Log log = LogFactory.getLog(PurgeResourceTypes.class);
+    private static final Log log = LogFactory.getLog(PurgeResourceTypesJob.class);
 
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {

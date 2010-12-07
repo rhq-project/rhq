@@ -44,7 +44,7 @@ public interface InventoryManagerLocal {
     /**
      * Permanently removes the resource type from the database along with all associated meta data such as metric
      * definitions, operation definitions, and resource configuration definitions. This method is intended to be called
-     * by the scheduled job {@link org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypes}.
+     * by the scheduled job {@link org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob}.
      *
      * @param resourceType The resource type to delete
      */

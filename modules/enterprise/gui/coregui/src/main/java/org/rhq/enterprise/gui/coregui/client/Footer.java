@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.Criteria.Restriction;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
@@ -132,7 +133,7 @@ public class Footer extends LocatableToolStrip {
         public void refreshLoggedIn() {
             AlertCriteria alertCriteria = new AlertCriteria();
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8)); // last 8 hrs
-            alertCriteria.setPaging(0, 0);
+            alertCriteria.setRestriction(Restriction.COUNT_ONLY);
 
             GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
                 new AsyncCallback<PageList<Alert>>() {

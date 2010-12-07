@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 
 import javax.servlet.ServletException;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.auth.Subject;
@@ -43,6 +45,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
     private static final long serialVersionUID = 1L;
 
     private ThreadLocal<Subject> sessionSubject = new ThreadLocal<Subject>();
+    private ThreadLocal<String> rpcMethod = new ThreadLocal<String>();
 
     protected Subject getSessionSubject() {
         return sessionSubject.get();
@@ -76,8 +79,19 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
             //      to add resilience to gwt service calls
             long id = HibernatePerformanceMonitor.get().start();
             super.service(req, resp);
-            HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
+            HibernatePerformanceMonitor.get().stop(id, "GWT:" + rpcMethod.get());
         }
+    }
+
+    @Override
+    protected void onAfterRequestDeserialized(RPCRequest rpcRequest) {
+        super.onAfterRequestDeserialized(rpcRequest);
+
+        Method rpcMethod = rpcRequest.getMethod();
+        String className = rpcMethod.getClass().getSimpleName();
+        String methodName = rpcMethod.getName();
+
+        this.rpcMethod.set(className + "." + methodName);
     }
 
     @SuppressWarnings("unchecked")

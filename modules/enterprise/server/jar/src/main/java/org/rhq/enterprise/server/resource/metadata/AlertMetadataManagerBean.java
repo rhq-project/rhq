@@ -41,6 +41,10 @@ public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
             templateIds[i++] = template.getId();
         }
 
+        // Alert definitions associated with individual resources and with groups
+        // are deleted as part of resource deletion. This commit adds support for
+        // templates which are alert definitions associated with the resource
+        // type
         alertTemplateMgr.removeAlertTemplates(subject, templateIds);
         alertDefinitionMgr.purgeUnusedAlertDefinitions();
     }

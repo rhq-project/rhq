@@ -75,6 +75,7 @@ import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
@@ -199,6 +200,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return modified;
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public int deleteAlertsByContext(Subject subject, EntityContext context) {
         Query deleteConditionLogsQuery = null;
         Query deleteNotificationLogsQuery = null;

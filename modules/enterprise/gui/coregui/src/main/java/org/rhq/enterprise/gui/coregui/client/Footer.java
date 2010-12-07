@@ -26,7 +26,9 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -130,22 +132,24 @@ public class Footer extends LocatableToolStrip {
         public void refreshLoggedIn() {
             AlertCriteria alertCriteria = new AlertCriteria();
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8)); // last 8 hrs
+            alertCriteria.setPaging(0, 0);
 
-            GWTServiceLookup.getAlertService().findAlertCountByCriteria(alertCriteria, new AsyncCallback<Long>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
-                }
-
-                public void onSuccess(Long result) {
-                    if (result == 0L) {
-                        setContents(MSG.view_core_recentAlerts("0"));
-                        setIcon("subsystems/alert/Alert_LOW_16.png");
-                    } else {
-                        setContents(MSG.view_core_recentAlerts(result.toString()));
-                        setIcon("subsystems/alert/Alert_HIGH_16.png");
+            GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
+                new AsyncCallback<PageList<Alert>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
                     }
-                }
-            });
+
+                    public void onSuccess(PageList<Alert> result) {
+                        if (result.getTotalSize() == 0) {
+                            setContents(MSG.view_core_recentAlerts("0"));
+                            setIcon("subsystems/alert/Alert_LOW_16.png");
+                        } else {
+                            setContents(MSG.view_core_recentAlerts(String.valueOf(result.getTotalSize())));
+                            setIcon("subsystems/alert/Alert_HIGH_16.png");
+                        }
+                    }
+                });
         }
     }
 

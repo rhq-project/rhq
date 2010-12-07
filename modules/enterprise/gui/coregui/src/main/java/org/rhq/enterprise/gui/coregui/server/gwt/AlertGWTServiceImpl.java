@@ -46,14 +46,6 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         }
     }
 
-    public long findAlertCountByCriteria(AlertCriteria criteria) {
-        try {
-            return this.alertManager.findAlertCountByCriteria(getSessionSubject(), criteria);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
-
     public int deleteAlerts(int[] alertIds) {
         try {
             return this.alertManager.deleteAlerts(getSessionSubject(), alertIds);

@@ -1,9 +1,10 @@
 package org.rhq.enterprise.server.inventory;
 
-import org.rhq.core.domain.resource.ResourceType;
+import java.util.List;
 
 import javax.ejb.Local;
-import java.util.List;
+
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Provides methods for carrying resource type deletion.

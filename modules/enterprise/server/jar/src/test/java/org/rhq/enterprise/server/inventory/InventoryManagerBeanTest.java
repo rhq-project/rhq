@@ -1,5 +1,8 @@
 package org.rhq.enterprise.server.inventory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
@@ -11,17 +14,15 @@ import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import org.xml.sax.InputSource;
+
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.xml.sax.InputSource;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static java.util.Arrays.asList;
 

@@ -1,13 +1,14 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.io.File;
+import java.util.List;
+
+import javax.ejb.Local;
+
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
-
-import javax.ejb.Local;
-import java.io.File;
-import java.util.List;
 
 @Local
 public interface PluginManagerLocal {

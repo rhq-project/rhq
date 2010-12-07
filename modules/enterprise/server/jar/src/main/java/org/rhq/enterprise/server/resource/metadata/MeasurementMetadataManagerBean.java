@@ -1,5 +1,17 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -11,17 +23,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
 @Stateless
 public class MeasurementMetadataManagerBean implements MeasurementMetadataManagerLocal {
@@ -153,10 +154,6 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
             while (defIter.hasNext()) {
                 MeasurementDefinition def = defIter.next();
                 measurementDefinitionMgr.removeMeasurementDefinition(def);
-//                if (entityMgr.contains(def)) {
-//                    entityMgr.refresh(def);
-//                    measurementDefinitionMgr.removeMeasurementDefinition(def);
-//                }
                 defIter.remove();
             }
         }

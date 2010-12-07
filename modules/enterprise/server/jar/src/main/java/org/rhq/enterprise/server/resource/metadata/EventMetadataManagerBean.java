@@ -1,19 +1,19 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.event.EventDefinition;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.event.EventManagerLocal;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.event.EventDefinition;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 
 @Stateless
 public class EventMetadataManagerBean implements EventMetdataManagerLocal {

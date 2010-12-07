@@ -18,19 +18,12 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.io.File;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
-import javax.persistence.NoResultException;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataParser;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**

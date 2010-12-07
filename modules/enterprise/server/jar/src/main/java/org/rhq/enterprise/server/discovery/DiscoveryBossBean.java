@@ -79,6 +79,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -115,11 +116,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private SystemManagerLocal systemManager;
 
+    @EJB
+    private PluginManagerLocal pluginManager;
+
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report)
         throws InvalidInventoryReportException {
         validateInventoryReport(report);
 
-        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager);
+        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager,
+            pluginManager);
         if (!filter.accept(report)) {
             throw new StaleTypeException("The report contains one or more resource types that have been marked for " +
                 "deletion.");

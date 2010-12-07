@@ -148,8 +148,6 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
             this.discoveryServerService.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
             throw new RuntimeException(e);
-        } catch (StaleTypeException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -173,8 +171,6 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
             this.discoveryServerService.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
             throw new RuntimeException(e);
-        } catch (StaleTypeException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -191,8 +187,6 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
             report.addAddedRoot(platform);
             this.discoveryServerService.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
-            throw new RuntimeException(e);
-        } catch (StaleTypeException e) {
             throw new RuntimeException(e);
         }
     }

@@ -62,7 +62,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
     ResourceSyncInfo mergeInventoryReport(InventoryReport report)
-        throws InvalidInventoryReportException, StaleTypeException;
+        throws InvalidInventoryReportException;
 
     /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not

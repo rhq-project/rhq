@@ -96,13 +96,10 @@ public class InventoryManagerBean implements InventoryManagerLocal {
         if (!resourceType.isDeleted()) {
             return false;
         }
-
-        ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterResourceTypeId(resourceType.getId());
-        criteria.addFilterInventoryStatus(null);
-
-        List<Resource> resources = resourceMgr.findResourcesByCriteria(subjectMgr.getOverlord(), criteria);
-        return resources.isEmpty();
+        Number count = (Number) entityMgr.createQuery("select count(r) from Resource r where r.resourceType = :type")
+            .setParameter("type", resourceType)
+            .getSingleResult();
+        return count.intValue() == 0;
     }
 
     @Override

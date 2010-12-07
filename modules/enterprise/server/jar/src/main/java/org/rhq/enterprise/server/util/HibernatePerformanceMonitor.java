@@ -28,7 +28,6 @@ import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
 
 import org.rhq.core.server.PersistenceUtility;
@@ -98,7 +97,8 @@ public class HibernatePerformanceMonitor {
             String callingContext = " for " + (logPrefix == null ? "(unknown)" : logPrefix);
             log.debug(watch.toString() + cause + callingContext);
 
-            if (logPrefix != null && logPrefix.contains("URL")) {
+            /* these queries are global, not per transaction
+            if (logPrefix != null && (logPrefix.contains("URL") || logPrefix.contains("GWT:"))) {
                 String[] queries = watch.getStats().getQueries();
                 for (int i = 0; i < queries.length; i++) {
                     String query = queries[i];
@@ -106,8 +106,8 @@ public class HibernatePerformanceMonitor {
                     log.debug("query[" + i + "] " + queryStats);
                     log.debug("query[" + i + "] " + queries[i].replaceAll("\\s+", " "));
                 }
-                //watch.getStats().logSummary();
             }
+            */
         }
     }
 

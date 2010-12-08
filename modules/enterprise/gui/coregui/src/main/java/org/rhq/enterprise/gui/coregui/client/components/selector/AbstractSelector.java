@@ -58,6 +58,7 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VStack;
@@ -180,6 +181,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             this.availableFilterForm = getAvailableFilterForm();
             if (this.availableFilterForm != null) {
                 addMember(this.availableFilterForm);
+                LayoutSpacer spacer = new LayoutSpacer();
+                spacer.setHeight(10);
+                addMember(spacer);
             }
 
             SectionStack availableItemsStack = buildAvailableItemsStack();

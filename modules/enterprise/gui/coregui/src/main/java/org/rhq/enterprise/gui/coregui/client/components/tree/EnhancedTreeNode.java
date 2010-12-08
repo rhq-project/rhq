@@ -20,8 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.components.tree;
 
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.util.StringUtils;
-
 /**
  * @author Ian Springer
  */
@@ -33,14 +31,14 @@ public class EnhancedTreeNode extends TreeNode {
     public EnhancedTreeNode(String name) {
         super(name);
         if (name != null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 
     public EnhancedTreeNode(String name, TreeNode... children) {
         super(name, children);
         if (name != null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 
@@ -49,7 +47,7 @@ public class EnhancedTreeNode extends TreeNode {
         if (!(null == title || "".equals(title.trim()))) {
             setTitle(title);
         } else if (name != null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 
@@ -57,7 +55,7 @@ public class EnhancedTreeNode extends TreeNode {
     public void setName(String name) {
         super.setName(name);
         if (name != null && getTitle() == null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 

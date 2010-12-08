@@ -227,6 +227,7 @@ public class ResourceSearchView extends Table {
                             @Override
                             public void onClick(ClickEvent event) {
                                 winModal.markForDestroy();
+                                CoreGUI.refresh();
                             }
                         });
 

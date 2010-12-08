@@ -60,7 +60,6 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private static final String EXPANDED_TOOLTIP = MSG.view_titleBar_group_summary_expandedTooltip();
 
     private ResourceGroup group;
-    private ResourceGroupComposite groupComposite;
     boolean isAutoCluster;
     boolean isAutoGroup;
 

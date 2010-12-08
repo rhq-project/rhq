@@ -79,6 +79,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
@@ -284,7 +285,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void renderAutoGroup(ResourceGroup backingGroup) {
-        String viewPath = "Resource/AutoGroup/" + backingGroup.getId();
+        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "/" + backingGroup.getId();
         String currentViewPath = History.getToken();
         if (!currentViewPath.startsWith(viewPath)) {
             CoreGUI.goToView(viewPath);

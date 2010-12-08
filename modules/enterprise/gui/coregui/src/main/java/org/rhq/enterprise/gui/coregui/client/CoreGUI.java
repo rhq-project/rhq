@@ -71,8 +71,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
 
     // just to avoid constructing this over and over
-    private static final String TREE_NAV_VIEW_PATTERN = "(" + ResourceTopView.VIEW_ID + "|"
-        + ResourceGroupTopView.VIEW_ID + "|" + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + ")/[^/]*";
+    private static final String TREE_NAV_VIEW_PATTERN = "(" //
+        + ResourceTopView.VIEW_ID + "|" //
+        + ResourceGroupTopView.VIEW_ID + "|" //
+        + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "|" //
+        + ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH //
+        + ")/[^/]*";
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 

@@ -67,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author Ian Springer
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
+    public static final String AUTO_CLUSTER_VIEW_PATH = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW_PATH = "Resource/AutoGroup";
 
     private Integer groupId;
@@ -136,7 +137,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     @Override
     protected ResourceGroupTitleBar createTitleBar() {
-        return new ResourceGroupTitleBar(getLocatorId(), isAutoGroup());
+        return new ResourceGroupTitleBar(getLocatorId(), isAutoGroup(), isAutoCluster());
     }
 
     protected List<TwoLevelTab> createTabs() {
@@ -266,7 +267,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
 
         // Inventory tab is always visible and enabled.
-        enabled = !isAutoGroup() && globalPermissions.contains(Permission.MANAGE_INVENTORY); // true, then user can modify group membership
+        enabled = !isAutoGroup() && !isAutoCluster() && globalPermissions.contains(Permission.MANAGE_INVENTORY); // true, then user can modify group membership
         updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryMembers
             .extendLocatorId("View"), groupId, enabled), true, true);
         updateSubTab(this.inventoryTab, this.inventoryConn, new CurrentGroupPluginConfigurationView(this.inventoryConn
@@ -330,8 +331,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
 
-        // for autogroups we need to add more criteria
-        if (isAutoGroup()) {
+        // for autoclusters and autogroups we need to add more criteria
+        if (isAutoCluster()) {
+            criteria.addFilterVisible(null);
+
+        } else if (isAutoGroup()) {
             criteria.addFilterVisible(null);
             criteria.addFilterPrivate(true);
         }
@@ -357,6 +361,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     private boolean isAutoGroup() {
         return AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath());
+    }
+
+    private boolean isAutoCluster() {
+        return AUTO_CLUSTER_VIEW_PATH.equals(getBaseViewPath());
     }
 
     private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {
@@ -402,4 +410,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         currentSubTabName = subtabName;
         super.selectTab(tabName, subtabName, viewPath);
     }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+        if ("AutoCluster".equals(viewPath.getCurrent().getPath())) {
+            super.renderView(viewPath.next());
+        } else {
+            super.renderView(viewPath);
+        }
+    }
+
 }

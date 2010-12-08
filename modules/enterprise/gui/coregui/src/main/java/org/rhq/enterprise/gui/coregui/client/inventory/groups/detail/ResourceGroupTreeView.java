@@ -203,7 +203,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             // TODO reselect tree to selected node
             TreeNode selectedNode;
             if (this.selectedGroup.getClusterKey() != null) {
-                selectedNode = treeGrid.getTree().findById(this.selectedGroup.getClusterKey());
+                //selectedNode = treeGrid.getTree().findById(this.selectedGroup.getClusterKey());
+                selectedNode = treeGrid.getTree().find("key", this.selectedGroup.getClusterKey());
             } else {
                 selectedNode = treeGrid.getTree().findById(String.valueOf(this.selectedGroup.getId()));
             }
@@ -252,10 +253,19 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                 @Override
                 public void onSuccess(ResourceGroup result) {
-                    int groupId = result.getId();
-                    History.newItem(ResourceGroupTopView.VIEW_ID + "/" + groupId);
+                    renderAutoCluster(result);
+                    //int groupId = result.getId();
+                    //History.newItem(ResourceGroupTopView.VIEW_ID + "/" + groupId);
                 }
             });
+    }
+
+    private void renderAutoCluster(ResourceGroup backingGroup) {
+        String viewPath = ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH + "/" + backingGroup.getId();
+        String currentViewPath = History.getToken();
+        if (!currentViewPath.startsWith(viewPath)) {
+            CoreGUI.goToView(viewPath);
+        }
     }
 
     private void loadTree(ClusterFlyweight root) {
@@ -400,11 +410,20 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     }
 
     public void renderView(ViewPath viewPath) {
-        this.currentViewId = viewPath.getCurrent();
+        currentViewId = viewPath.getCurrent();
+        String currentViewIdPath = currentViewId.getPath();
         if (this.currentViewId != null) {
-            String groupIdString = this.currentViewId.getPath();
-            int groupId = Integer.parseInt(groupIdString);
-            setSelectedGroup(groupId);
+            if ("AutoCluster".equals(currentViewIdPath)) {
+                // Move the currentViewId to the ID portion to play better with other code
+                currentViewId = viewPath.getNext();
+                String clusterGroupIdString = currentViewId.getPath();
+                Integer clusterGroupId = Integer.parseInt(clusterGroupIdString);
+                setSelectedGroup(clusterGroupId);
+            } else {
+                String groupIdString = currentViewId.getPath();
+                int groupId = Integer.parseInt(groupIdString);
+                setSelectedGroup(groupId);
+            }
         }
     }
 

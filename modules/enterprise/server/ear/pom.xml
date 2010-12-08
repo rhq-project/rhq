@@ -65,15 +65,6 @@
          <type>war</type>
       </dependency>
 
-
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-webdav</artifactId>
-         <version>${project.version}</version>
-         <type>war</type>
-      </dependency>
-
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-content_http</artifactId>

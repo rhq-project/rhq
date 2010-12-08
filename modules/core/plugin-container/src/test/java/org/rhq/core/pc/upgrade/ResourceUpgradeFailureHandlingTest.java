@@ -345,7 +345,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
             expectations.will(getCurrentServerSideInventory().upgradeResources());
         } catch (InvalidInventoryReportException e) {
             //this is not going to happen because we're mocking the invocation
-        } catch (StaleTypeException e) {            
         }
     }
 

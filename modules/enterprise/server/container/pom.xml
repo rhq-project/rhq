@@ -358,7 +358,7 @@
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-merge datafile="${project.build.directory}/cobertura/cobertura.ser">
                      <fileset dir="../../../../">                     
-                        <include name="**/cobertura.ser"/>
+                        <include name="**/cobertura.ser" />
                       </fileset>
                     </cobertura-merge>
                   </tasks>

@@ -92,9 +92,7 @@ public class ResourceComposite implements Serializable {
             content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0));
     }
 
-    /**
-     * Private constructor that both public constructors delegate to.
-     */
+    // Private constructor that all public constructors delegate to
     private ResourceComposite(Resource resource, Resource parent, AvailabilityType availability,
         ResourcePermission resourcePermission) {
         this.resource = resource;

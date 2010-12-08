@@ -290,6 +290,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         //TreeUtility.printTree(tree);
 
         treeGrid.setData(tree);
+        treeGrid.getTree().openFolder(rootNode);
         treeGrid.markForRedraw();
     }
 

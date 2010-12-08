@@ -1027,29 +1027,54 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
 
-        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria);
+        Set<Permission> userGlobalPermissions = authorizationManager.getExplicitGlobalPermissions(subject);
 
-        String replacementSelectList = ""
-            + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-            + "   ( SELECT COUNT(avail) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
-            + "   ( SELECT AVG(avail.availabilityType) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail,"
-            + "   ( SELECT COUNT(avail) FROM resourcegroup.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount,"
-            + "   ( SELECT AVG(avail.availabilityType) FROM resourcegroup.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
-            + "   resourcegroup ) ";
-        generator.alterProjection(replacementSelectList);
+        String compositeProjection;
+        if (userGlobalPermissions.contains(Permission.MANAGE_INVENTORY)) {
+            compositeProjection = ""
+                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
+                + "    %alias% ) "; // ResourceGroup
+        } else {
+            compositeProjection = ""
+                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
+                + "    %alias%, " // ResourceGroup
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 10 ), " // CONTROL
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 7 ), " // MANAGE_ALERTS
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 14 ), " // MANAGE_EVENTS
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 13 ), " // CONFIGURE_READ
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
+                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ))"; // DELETE_RESOURCES
+            compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
+        }
+        compositeProjection = compositeProjection.replace("%alias%", criteria.getAlias());
+
+        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, userGlobalPermissions);
+        generator.alterProjection(compositeProjection);
 
         CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
-            criteria, generator, entityManager);
+            criteria, generator, entityManager, false); // don't auto-init bags, we're returning composites not entities
         PageList<ResourceGroupComposite> results = queryRunner.execute();
+
         for (ResourceGroupComposite composite : results) {
             ResourceGroup group = composite.getResourceGroup();
-            queryRunner.initPersistentBags(group); // manually init bags for composite-wrapped entity
             ResourceType type = group.getResourceType();
             ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
                 : ResourceFacets.NONE;
+
+            queryRunner.initPersistentBags(group); // manually init bags for composite-wrapped entity
             composite.setResourceFacets(facets);
-            Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
-            composite.setResourcePermission(new ResourcePermission(perms));
         }
         return results;
     }
@@ -1478,21 +1503,22 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
 
-        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria);
+        Set<Permission> globalUserPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, globalUserPerms);
 
         CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         PageList<ResourceGroup> result = queryRunner.execute();
         return result;
     }
 
-    private CriteriaQueryGenerator getCriteriaQueryGenerator(Subject subject, ResourceGroupCriteria criteria) {
-        if (criteria.isSecurityManagerRequired()
-            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
+    private CriteriaQueryGenerator getCriteriaQueryGenerator(Subject subject, ResourceGroupCriteria criteria,
+        Set<Permission> globalUserPerms) {
+        if (criteria.isSecurityManagerRequired() && !globalUserPerms.contains(Permission.MANAGE_SECURITY)) {
             throw new PermissionException("Subject [" + subject.getName()
                 + "] requires SecurityManager permission for requested query criteria.");
         }
 
-        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
+        boolean isInventoryManager = globalUserPerms.contains(Permission.MANAGE_INVENTORY);
         boolean groupAuthzRequired = (!(criteria.isFilterPrivate() || isInventoryManager));
 
         if (criteria.isInventoryManagerRequired() && !isInventoryManager) {

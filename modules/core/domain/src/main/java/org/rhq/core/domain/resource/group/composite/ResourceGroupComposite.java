@@ -67,17 +67,34 @@ public class ResourceGroupComposite implements Serializable {
             (double) explicitUp / (explicitUp + explicitDown), //
             implicitUp + implicitDown, //
             (double) implicitUp / (implicitUp + implicitDown), //
-            resourceGroup, null);
+            resourceGroup, null, new ResourcePermission());
     }
 
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
         Double implicitAvailability, ResourceGroup resourceGroup) {
-        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null);
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
+            new ResourcePermission());
+    }
+
+    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
+        Double implicitAvailability, ResourceGroup resourceGroup, Number measure, Number inventory, Number control,
+        Number alert, Number event, Number configureRead, Number configureWrite, Number content,
+        Number createChildResources, Number deleteResources) {
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
+            new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control.intValue() > 0, alert
+                .intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0, configureWrite.intValue() > 0,
+                content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0));
     }
 
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
         Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, facets,
+            new ResourcePermission());
+    }
 
+    // Private constructor that all public constructors delegate to
+    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
+        Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets, ResourcePermission permissions) {
         long expCount = (explicitCount == null ? 0 : explicitCount);
         double expAvail = (explicitAvailability == null ? 0 : explicitAvailability);
         long impCount = (implicitCount == null ? 0 : implicitCount);
@@ -113,6 +130,7 @@ public class ResourceGroupComposite implements Serializable {
         }
 
         this.resourceFacets = facets;
+        this.resourcePermission = permissions;
     }
 
     public Double getImplicitAvail() {

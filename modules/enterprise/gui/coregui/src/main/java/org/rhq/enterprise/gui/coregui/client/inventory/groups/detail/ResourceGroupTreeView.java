@@ -276,7 +276,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         ResourceType rootResourceType = typeMap.get(rootResourceGroup.getResourceType().getId());
         rootNode.setAttribute("resourceType", rootResourceType);
-        String icon = ImageManager.getResourceIcon(rootResourceType.getCategory());
+        String icon = ImageManager.getClusteredResourceIcon(rootResourceType.getCategory());
         rootNode.setIcon(icon);
 
         fakeRoot.setChildren(new TreeNode[] { rootNode });
@@ -397,7 +397,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         node.setAttribute("resourceType", type);
         node.setIsFolder(!child.getChildren().isEmpty());
 
-        String icon = ImageManager.getResourceIcon(type.getCategory());
+        String icon = ImageManager.getClusteredResourceIcon(type.getCategory());
         node.setIcon(icon);
         return node;
     }

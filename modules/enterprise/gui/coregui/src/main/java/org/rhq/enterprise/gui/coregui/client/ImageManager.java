@@ -96,6 +96,27 @@ public class ImageManager {
         return getResourceIcon(category, avail, size);
     }
 
+    public static String getClusteredResourceIcon(ResourceCategory category) {
+        String categoryName = null;
+
+        switch (category) {
+        case PLATFORM: {
+            categoryName = "Platform";
+            break;
+        }
+        case SERVER: {
+            categoryName = "Server";
+            break;
+        }
+        case SERVICE: {
+            categoryName = "Service";
+            break;
+        }
+        }
+
+        return "resources/" + categoryName + "_Group_16.png";
+    }
+
     public static String getResourceIcon(ResourceCategory category) {
         return getResourceIcon(category, Boolean.TRUE);
     }

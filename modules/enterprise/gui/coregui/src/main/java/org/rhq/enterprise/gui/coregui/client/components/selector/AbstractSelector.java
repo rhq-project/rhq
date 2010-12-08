@@ -194,6 +194,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         SectionStack assignedItemsStack = buildAssignedItemsStack();
         this.hlayout.addMember(assignedItemsStack);
 
+        // initialize the state of the buttons - allows subclasses to tweek buttons on init time
+        updateButtonEnablement();
+
         addMember(this.hlayout);
     }
 

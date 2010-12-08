@@ -9,6 +9,7 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -40,6 +41,7 @@ public class DeletedResourceTypeFilter implements InventoryReportFilter {
     private void loadDeletedTypes() {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterDeleted(true);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
         PageList<ResourceType> results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
             criteria);
         for (ResourceType type : results) {

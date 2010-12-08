@@ -235,7 +235,7 @@ public class PluginManagerBean implements PluginManagerLocal {
         List<Plugin> plugins = getAllPluginsById(pluginIds);
 
         if (log.isDebugEnabled()) {
-            log.debug("Preparing to delete " + plugins);
+            log.debug(subject + " preparing to delete the following plugins: " + plugins);
         }
 
         for (Plugin plugin : plugins) {

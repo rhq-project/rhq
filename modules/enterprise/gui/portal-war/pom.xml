@@ -26,7 +26,6 @@
       <!-- dependency versions -->
       <el.version>1.0</el.version>
       <jsf-facelets.version>1.1.15.B1</jsf-facelets.version>
-      <seam.version>2.1.0.SP1</seam.version>
 
       <!-- plugin versions -->
       <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>
@@ -594,7 +593,6 @@
          <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
       </repository>
-
    </repositories>
 
 </project>

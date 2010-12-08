@@ -26,7 +26,6 @@
 
       <!-- dependency versions -->
       <el.version>1.0</el.version>
-      <seam.version>2.1.0.SP1</seam.version>
    </properties>
 
    <dependencies>
@@ -158,7 +157,6 @@
             <enabled>false</enabled>
          </snapshots>
       </repository>
-
    </repositories>
 
    <profiles>

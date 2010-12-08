@@ -84,6 +84,7 @@
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
+    <seam.version>2.2.1.CR2</seam.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.15.1</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
@@ -417,7 +418,6 @@
          <artifactId>jna</artifactId>
          <version>${jna.version}</version>
       </dependency>
-
     </dependencies>
 
   </dependencyManagement>
@@ -814,6 +814,17 @@
          <enabled>true</enabled>
          <updatePolicy>never</updatePolicy>
        </releases>
+       <!-- Explicitly disable snapshots, so Maven won't try to
+            check for updates for snapshot internal (rhq-*) deps. -->
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
+    </repository>
+
+    <repository>
+       <id>jboss-repository</id>
+       <name>JBoss</name>
+       <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
        <!-- Explicitly disable snapshots, so Maven won't try to
             check for updates for snapshot internal (rhq-*) deps. -->
        <snapshots>

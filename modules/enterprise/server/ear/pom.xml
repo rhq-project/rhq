@@ -25,7 +25,7 @@
       <earDirectory>${project.build.directory}/${project.build.finalName}</earDirectory>
 
       <!-- dependency versions -->
-      <seam.version>1.2.1.GA</seam.version>
+      <!-- <seam.version>1.2.1.GA</seam.version> -->
    </properties>
 
    <dependencies>

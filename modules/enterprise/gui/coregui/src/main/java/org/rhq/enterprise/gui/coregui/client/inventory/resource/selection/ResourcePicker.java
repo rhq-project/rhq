@@ -65,7 +65,7 @@ public class ResourcePicker extends LocatableWindow {
         setShowMinimizeButton(false);
         setIsModal(true);
         setWidth(700);
-        setHeight(400);
+        setHeight(425);
         setAutoCenter(true);
         centerInPage();
 
@@ -92,8 +92,10 @@ public class ResourcePicker extends LocatableWindow {
         selector = getResourceSelector();
 
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("buttons"));
-        form.setAlign(Alignment.CENTER);
         form.setLayoutAlign(Alignment.CENTER);
+        form.setAutoWidth();
+        form.setAutoHeight();
+        form.setCellPadding(10);
 
         ButtonItem ok = new ButtonItem("ok", MSG.common_button_ok());
         ok.setStartRow(true);

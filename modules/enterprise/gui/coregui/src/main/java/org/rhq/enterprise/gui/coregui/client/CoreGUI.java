@@ -303,8 +303,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static void refreshBreadCrumbTrail() {
-        breadCrumbTrailPane.refresh(currentViewPath);
+        //breadCrumbTrailPane.refresh(currentViewPath);
     }
 
     public static Messages getMessages() {

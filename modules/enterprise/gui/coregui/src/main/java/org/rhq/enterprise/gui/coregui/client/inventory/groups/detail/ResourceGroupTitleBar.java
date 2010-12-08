@@ -102,7 +102,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 Set<Integer> favorites = toggleFavoriteLocally();
-                UserSessionManager.getUserPreferences().setFavoriteResources(favorites, new UpdateFavoritesCallback());
+                UserSessionManager.getUserPreferences().setFavoriteResourceGroups(favorites,
+                    new UpdateFavoritesCallback());
             }
         });
 

@@ -80,5 +80,15 @@
     <rhq_measurement_sched/>
     <rhq_package/>
     <rhq_bundle/>
-    <rhq_plugin/>
+
+    <rhq_plugin id="1"
+                deployment="AGENT"
+                name="test"
+                display_name="test"
+                enabled="true"
+                status="INSTALLED"
+                path="/plugins/test.jar"
+                md5="1234567"
+                ctime="12345"
+                mtime="123456"/>
 </dataset>

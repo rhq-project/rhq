@@ -90,7 +90,7 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
         bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

@@ -65,7 +65,8 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
                 new AsyncCallback<PageList<ResourceGroup>>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group for context menu", caught);
+                        CoreGUI.getErrorHandler()
+                            .handleError(MSG.view_tree_common_contextMenu_loadFail_group(), caught);
                     }
 
                     @Override

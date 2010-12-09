@@ -97,7 +97,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(c,
             new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch Resource Group", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_group_membership_failFetch(), caught);
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {

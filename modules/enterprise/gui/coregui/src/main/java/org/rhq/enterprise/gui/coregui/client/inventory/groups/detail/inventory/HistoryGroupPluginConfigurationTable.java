@@ -289,7 +289,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get group plugin config history", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_failFetch(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
                         processResponse(request.getRequestId(), response);
                     }

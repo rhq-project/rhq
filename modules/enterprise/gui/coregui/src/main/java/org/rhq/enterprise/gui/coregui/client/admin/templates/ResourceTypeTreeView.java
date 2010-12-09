@@ -101,7 +101,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             try {
                 resourceTypeId = viewPath.getCurrentAsInt();
             } catch (Exception e) {
-                CoreGUI.getErrorHandler().handleError("Invalid URL. Bad resource type ID: " + viewPath.getCurrent());
+                CoreGUI.getErrorHandler().handleError(MSG.widget_typeTree_badTypeId(viewPath.getCurrent().getPath()));
                 return;
             }
 

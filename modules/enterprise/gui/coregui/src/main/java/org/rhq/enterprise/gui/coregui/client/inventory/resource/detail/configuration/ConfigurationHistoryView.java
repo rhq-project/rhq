@@ -114,7 +114,7 @@ public class ConfigurationHistoryView extends TableSection {
             TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // TODO: Implement this method.
-                CoreGUI.getErrorHandler().handleError("Not implemented");
+                CoreGUI.getErrorHandler().handleError(MSG.common_msg_notYetImplemented());
             }
         });
 

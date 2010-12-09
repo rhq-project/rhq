@@ -232,7 +232,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         criteria.fetchParentResourceTypes(true);
         rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load platform manual add children", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFail_children(), caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {
@@ -252,7 +252,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
         GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load user dashboards", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFail_dashboards(), caught);
             }
 
             public void onSuccess(List<Dashboard> result) {

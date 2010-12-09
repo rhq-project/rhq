@@ -159,7 +159,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             new AsyncCallback<PageList<ResourceGroup>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load group with id [" + groupId + "].", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_tree_common_loadFailed_group(String.valueOf(groupId)), caught);
                 }
 
                 @Override
@@ -219,7 +220,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             this.rootGroupId = groupId;
             GWTServiceLookup.getClusterService().getClusterTree(groupId, new AsyncCallback<ClusterFlyweight>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load group tree.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_groupTree(), caught);
                 }
 
                 public void onSuccess(ClusterFlyweight result) {
@@ -250,7 +251,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             new AsyncCallback<ResourceGroup>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create or update auto cluster group", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_createFailed_autoCluster(), caught);
                 }
 
                 @Override

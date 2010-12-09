@@ -76,7 +76,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.widget_typeTree_loadFail(), caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {

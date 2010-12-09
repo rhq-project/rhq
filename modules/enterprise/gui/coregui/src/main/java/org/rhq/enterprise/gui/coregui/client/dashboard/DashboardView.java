@@ -312,7 +312,7 @@ public class DashboardView extends LocatableVLayout {
             GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(),
                 new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dashboardManager_deleteFail(), caught);
                     }
 
                     public void onSuccess(Void result) {

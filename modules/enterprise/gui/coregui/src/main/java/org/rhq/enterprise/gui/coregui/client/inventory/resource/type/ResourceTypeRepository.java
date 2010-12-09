@@ -37,6 +37,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
@@ -46,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * @author Greg Hinkle
  */
 public class ResourceTypeRepository {
+    static private final Messages MSG = CoreGUI.getMessages();
 
     private Map<Integer, ResourceType> typeCache = new HashMap<Integer, ResourceType>();
     private Map<Integer, EnumSet<MetadataType>> typeCacheLevel = new HashMap<Integer, EnumSet<MetadataType>>();
@@ -255,7 +257,7 @@ public class ResourceTypeRepository {
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load resource type metadata", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
             }
 
             public void onSuccess(PageList<ResourceType> result) {

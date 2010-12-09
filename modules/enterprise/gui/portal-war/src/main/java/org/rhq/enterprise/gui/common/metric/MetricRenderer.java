@@ -129,7 +129,7 @@ public class MetricRenderer extends Renderer {
         writer.startElement("a", null);
         writer.writeAttribute("href", "#", null);
         writer.writeAttribute("onclick",
-            "javascript:window.open('/rhq/common/metric/advanced.xhtml','Metric Display Range Settings','"
+            "javascript:window.open('/rhq/common/metric/advanced.xhtml','MetricDisplayRangeSettings','"
                 + getWindowOptions() + "');", null);
         if (rangePreferences.readOnly) {
             writer.write("Edit Settings...");

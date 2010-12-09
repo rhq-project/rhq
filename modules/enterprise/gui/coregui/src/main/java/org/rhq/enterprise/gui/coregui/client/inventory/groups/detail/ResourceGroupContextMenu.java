@@ -291,13 +291,11 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                             }
 
                                             public void onSuccess(Dashboard result) {
-                                                CoreGUI
-                                                    .getMessageCenter()
-                                                    .notify(
-                                                        new Message(
-                                                            MSG
-                                                                .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                                    .getName()), Message.Severity.Info));
+                                                String msg = MSG
+                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                        .getName());
+                                                CoreGUI.getMessageCenter().notify(
+                                                    new Message(msg, Message.Severity.Info));
                                             }
                                         });
 

@@ -158,7 +158,7 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to retrieve member connection settings for [" + group + "]", caught);
+                        MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
@@ -185,10 +185,9 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
         GWTServiceLookup.getConfigurationService().updatePluginConfigurationsForGroup(this.group.getId(),
             resourceConfigurations, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
+                    String typeName = group.getResourceType().getName();
                     CoreGUI.getErrorHandler().handleError(
-                        MSG
-                            .view_group_pluginConfig_edit_saveFailure(group.getResourceType().getName(), group
-                                .getName()), caught);
+                        MSG.view_group_pluginConfig_edit_saveFailure(typeName, group.getName()), caught);
                 }
 
                 public void onSuccess(Void result) {

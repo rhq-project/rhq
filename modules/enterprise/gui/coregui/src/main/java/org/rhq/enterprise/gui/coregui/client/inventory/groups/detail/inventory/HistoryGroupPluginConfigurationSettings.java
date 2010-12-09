@@ -119,7 +119,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to retrieve member connection settings for [" + group + "]", caught);
+                        MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

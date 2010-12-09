@@ -50,7 +50,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to create or update auto-cluster group: " + clusterKey, caught);
+                            MSG.view_tree_group_error_updateAutoCluster(clusterKey.getKey()), caught);
                     }
 
                     @Override

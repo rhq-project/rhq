@@ -293,7 +293,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 drawFooter();
             }
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
     }
 
@@ -475,7 +475,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
-    public void refresh() {        
+    public void refresh() {
         if (null != this.listGrid) {
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();

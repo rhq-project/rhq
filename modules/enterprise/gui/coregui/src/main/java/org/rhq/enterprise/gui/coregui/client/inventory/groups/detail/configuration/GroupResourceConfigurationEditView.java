@@ -154,8 +154,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         this.configurationService.findResourceConfigurationsForGroup(group.getId(),
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Failed to retrieve member Resource configurations for [" + group + "]", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()),
+                        caught);
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

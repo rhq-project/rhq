@@ -91,8 +91,8 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             } else if ("Metric".equals(typeOfTemplatePath.getPath())) {
                 isAlertTemplate = false;
             } else {
-                CoreGUI.getErrorHandler().handleError(
-                    "Invalid URL. Unknown template type: " + typeOfTemplatePath.getPath());
+                CoreGUI.getErrorHandler()
+                    .handleError(MSG.widget_typeTree_badTemplateType(typeOfTemplatePath.getPath()));
                 return;
             }
 

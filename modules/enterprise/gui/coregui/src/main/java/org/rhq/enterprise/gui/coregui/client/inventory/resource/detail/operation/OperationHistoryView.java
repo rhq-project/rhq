@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
@@ -234,6 +235,12 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             addExtraWidget(operationsButton);
         }
 
+    }
+
+    @Override
+    protected ListGridField getNameField() {
+        // TODO: What field if any should we return here?
+        return null;
     }
 
     @Override

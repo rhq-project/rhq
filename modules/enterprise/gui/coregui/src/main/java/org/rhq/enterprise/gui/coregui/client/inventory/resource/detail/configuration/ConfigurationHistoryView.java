@@ -24,6 +24,7 @@ import java.util.List;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -139,6 +140,12 @@ public class ConfigurationHistoryView extends TableSection {
             }
         });
 
+    }
+
+    @Override
+    protected ListGridField getNameField() {
+        ListGrid grid = getListGrid();
+        return (grid != null) ? grid.getField(FIELD_ID) : null;
     }
 
     @Override

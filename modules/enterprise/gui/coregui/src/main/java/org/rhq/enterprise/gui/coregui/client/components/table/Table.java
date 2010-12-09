@@ -89,8 +89,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  */
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
-    private static final String FIELD_ID = "id";
-    private static final String FIELD_NAME = "name";
+    protected static final String FIELD_ID = "id";
+    protected static final String FIELD_NAME = "name";
 
     private VLayout contents;
 

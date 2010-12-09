@@ -686,6 +686,10 @@ public final class CriteriaQueryGenerator {
         this.projection = projection;
     }
 
+    public boolean isProjectionAltered() {
+        return this.projection != null;
+    }
+
     /**
      * The groupBy clause can be set if and only if the projection is altered.  The passed argument should not be
      * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The 

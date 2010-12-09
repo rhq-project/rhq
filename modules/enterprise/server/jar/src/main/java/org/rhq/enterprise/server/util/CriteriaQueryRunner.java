@@ -109,7 +109,7 @@ public class CriteriaQueryRunner<T> {
                     initPersistentBags(entity);
                 }
             }
-            if (!queryGenerator.getJoinFetchFields().isEmpty()) {
+            if (queryGenerator.isProjectionAltered() && !queryGenerator.getJoinFetchFields().isEmpty()) {
                 for (T entity : results) {
                     initJoinFetchFields(entity);
                 }
@@ -128,7 +128,9 @@ public class CriteriaQueryRunner<T> {
 
     public void initFetchFields(Object entity) {
         initPersistentBags(entity);
-        initJoinFetchFields(entity);
+        if (queryGenerator.isProjectionAltered()) {
+            initJoinFetchFields(entity);
+        }
     }
 
     private void initPersistentBags(Object entity) {

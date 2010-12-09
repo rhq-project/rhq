@@ -51,8 +51,6 @@ import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
-import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
 import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -267,12 +265,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
 
         // Add event handlers.
-        this.availableGrid.addDataArrivedHandler(new DataArrivedHandler() {
-            public void onDataArrived(DataArrivedEvent event) {
-                updateButtonEnablement();
-            }
-        });
-
+        
         this.availableGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 updateButtonEnablement();
@@ -318,7 +311,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         }
                     } else {
                         availableRecords.addAll(Arrays.asList(allRecords));
-                    }
+                    }                    
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
                 } finally {
                     updateButtonEnablement();
@@ -537,8 +530,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected void updateButtonEnablement() {
         addButton.setDisabled(!availableGrid.anySelected());
         removeButton.setDisabled(!assignedGrid.anySelected());
-        addAllButton.setDisabled(!containsAtLeastOneRecord(this.availableGrid));
-        removeAllButton.setDisabled(!containsAtLeastOneRecord(this.assignedGrid));
+        addAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.availableGrid));
+        removeAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.assignedGrid));
     }
 
     @Deprecated
@@ -555,8 +548,20 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         return SELECTOR_KEY;
     }
 
-    private static boolean containsAtLeastOneRecord(ListGrid grid) {
-        return grid.getTotalRows() > 0;
+    private static boolean containsAtLeastOneEnabledRecord(ListGrid grid) {
+        boolean result = false;
+        ListGridRecord[] assignedRecords = grid.getRecords();
+        for (ListGridRecord assignedRecord : assignedRecords) {
+            if (isEnabled(assignedRecord)) {
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
+
+    private static boolean isEnabled(ListGridRecord assignedRecord) {
+        return assignedRecord.getAttribute("enabled") == null || assignedRecord.getEnabled();
     }
 
 }

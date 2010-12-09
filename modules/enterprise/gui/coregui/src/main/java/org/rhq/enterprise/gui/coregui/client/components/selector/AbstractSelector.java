@@ -300,25 +300,29 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         this.datasource.invalidateCache();
         this.datasource.fetchData(criteria, new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
-                availableRecords = new ArrayList<Record>();
-                Record[] allRecords = response.getData();
-                ListGridRecord[] assignedRecords = assignedGrid.getRecords();
-                if (assignedRecords != null && assignedRecords.length != 0) {
-                    Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
-                    for (Record record : assignedRecords) {
-                        String id = record.getAttribute(getSelectorKey());
-                        selectedRecordIds.add(id);
-                    }
-                    for (Record record : allRecords) {
-                        String id = record.getAttribute(getSelectorKey());
-                        if (!selectedRecordIds.contains(id)) {
-                            availableRecords.add(record);
+                try {
+                    availableRecords = new ArrayList<Record>();
+                    Record[] allRecords = response.getData();
+                    ListGridRecord[] assignedRecords = assignedGrid.getRecords();
+                    if (assignedRecords != null && assignedRecords.length != 0) {
+                        Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
+                        for (Record record : assignedRecords) {
+                            String id = record.getAttribute(getSelectorKey());
+                            selectedRecordIds.add(id);
                         }
+                        for (Record record : allRecords) {
+                            String id = record.getAttribute(getSelectorKey());
+                            if (!selectedRecordIds.contains(id)) {
+                                availableRecords.add(record);
+                            }
+                        }
+                    } else {
+                        availableRecords.addAll(Arrays.asList(allRecords));
                     }
-                } else {
-                    availableRecords.addAll(Arrays.asList(allRecords));
+                    availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
+                } finally {
+                    updateButtonEnablement();
                 }
-                availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
             }
         });
     }
@@ -533,8 +537,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected void updateButtonEnablement() {
         addButton.setDisabled(!availableGrid.anySelected());
         removeButton.setDisabled(!assignedGrid.anySelected());
-        addAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.availableGrid));
-        removeAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.assignedGrid));
+        addAllButton.setDisabled(!containsAtLeastOneRecord(this.availableGrid));
+        removeAllButton.setDisabled(!containsAtLeastOneRecord(this.assignedGrid));
     }
 
     @Deprecated
@@ -551,16 +555,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         return SELECTOR_KEY;
     }
 
-    private static boolean containsAtLeastOneEnabledRecord(ListGrid grid) {
-        boolean result = false;
-        ListGridRecord[] assignedRecords = grid.getRecords();
-        for (ListGridRecord assignedRecord : assignedRecords) {
-            if (assignedRecord.getEnabled()) {
-                result = true;
-                break;
-            }
-        }
-        return result;
+    private static boolean containsAtLeastOneRecord(ListGrid grid) {
+        return grid.getTotalRows() > 0;
     }
 
 }

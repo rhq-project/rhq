@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 /**
  * @author Greg Hinkle
  */
+@Deprecated
 public class AutoGroupTopView extends LocatableHLayout implements BookmarkableView {
 
     private Canvas contentCanvas;

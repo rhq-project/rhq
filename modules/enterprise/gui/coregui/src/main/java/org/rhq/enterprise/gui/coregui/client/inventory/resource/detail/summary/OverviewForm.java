@@ -262,10 +262,8 @@ public class OverviewForm extends EnhancedDynamicForm {
         formItems.add(locationItem);
 
         StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
+        versionItem.setEndRow(true);
         formItems.add(versionItem);
-
-        StaticTextItem parentItem = new StaticTextItem("parent", MSG.view_summaryOverviewForm_field_parent());
-        formItems.add(parentItem);
 
         for (MeasurementDefinition trait : traits) {
             String id = trait.getDisplayName().replaceAll("\\.", "_").replaceAll(" ", "__");
@@ -294,9 +292,6 @@ public class OverviewForm extends EnhancedDynamicForm {
         setValue("location", resource.getLocation());
         setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
             + "</i>");
-        Resource parentResource = this.resourceComposite.getParent();
-        setValue("parent", parentResource != null ? ("<a href=\"#Resource/" + parentResource.getId() + "\">"
-            + parentResource.getName() + "</a>") : "<i>" + MSG.common_label_none() + "</i>");
     }
 
     public boolean isHeaderEnabled() {

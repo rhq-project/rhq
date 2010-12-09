@@ -57,7 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -102,7 +101,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryConn;
     private SubTab inventoryConnHistory;
     private SubTab inventoryGroups;
-    private SubTab inventoryGroupMembership;
     private SubTab inventoryAgent;
     private SubTab opHistory;
     private SubTab opSched;
@@ -147,12 +145,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
         inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
             .view_tabs_common_groups()), null);
-        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), new ViewName(
-            "GroupMembership", MSG.view_tabs_common_group_membership()), null);
+        //inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), new ViewName(
+        //    "GroupMembership", MSG.view_tabs_common_group_membership()), null);
         inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
             .view_tabs_common_agent()), null);
         inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
-            this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership, this.inventoryAgent);
+            this.inventoryConnHistory, this.inventoryGroups, this.inventoryAgent);
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
@@ -301,12 +299,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
             .extendLocatorId("GroupsView"), resource.getId()), true, true);
 
-        enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
-        canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
-            resourceId) : null;
-        updateSubTab(this.inventoryTab, this.inventoryGroupMembership, canvas, true, enabled);
+        //enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        //canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
+        //    resourceId) : null;
+        //updateSubTab(this.inventoryTab, this.inventoryGroupMembership, canvas, true, enabled);
 
         //Agent subtab
+        enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceResourceAgentView(this.inventoryTab.extendLocatorId("AgentView"), resourceId)
             : null;
         updateSubTab(this.inventoryTab, this.inventoryAgent, canvas, true, enabled);
@@ -388,7 +387,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
         criteria.fetchTags(true);
-        criteria.fetchParentResource(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {

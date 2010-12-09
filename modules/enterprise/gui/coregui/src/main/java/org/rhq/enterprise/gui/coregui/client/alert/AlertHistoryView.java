@@ -103,7 +103,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     @Override
     protected void configureTable() {
-        getListGrid().setFields(((AlertDataSource) getDataSource()).getListGridFields().toArray(new ListGridField[0]));
+        getListGrid().setFields(getDataSource().getListGridFields().toArray(new ListGridField[0]));
         setupTableInteractions();
     }
 

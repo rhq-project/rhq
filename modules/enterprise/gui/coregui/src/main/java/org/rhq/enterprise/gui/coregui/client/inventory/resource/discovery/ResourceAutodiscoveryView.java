@@ -153,6 +153,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         treeGrid.setShowPartialSelection(true);
         treeGrid.setCascadeSelection(true);
 
+        // Do this last since it causes the TreeGrid to be initialized.
+        treeGrid.deselectAllRecords();
+
         addMember(treeGrid);
 
         footer = new ToolStrip();

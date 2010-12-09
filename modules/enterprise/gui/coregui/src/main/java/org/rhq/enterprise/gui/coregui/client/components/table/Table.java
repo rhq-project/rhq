@@ -682,7 +682,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
 
                 Message message = new Message(MSG
-                    .widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()), MSG
+                    .widget_recordEditor_info_recordsDeletedConcise(String.valueOf(deletedRecords.length),
+                    getDataTypeNamePlural()), MSG
                     .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
                         getDataTypeNamePlural(), recordNames.toString()));
                 CoreGUI.getMessageCenter().notify(message);

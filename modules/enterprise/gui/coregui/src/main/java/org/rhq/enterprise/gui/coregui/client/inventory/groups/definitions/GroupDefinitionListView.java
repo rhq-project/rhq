@@ -137,7 +137,6 @@ public class GroupDefinitionListView extends TableSection {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_dynagroup_recalcSuccessfulSelection(String
                                 .valueOf(groupDefinitionIds.length)), Severity.Info));
-
                         GroupDefinitionListView.this.refresh();
                     }
                 });

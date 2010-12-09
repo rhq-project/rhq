@@ -96,7 +96,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
             .view_alert_definitions_delete_confirm(), new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteButtonPressed(selection);
-                refresh();
             }
         });
 

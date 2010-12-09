@@ -121,9 +121,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
                 setAlertDefinition(getAlertDefinition()); // loads data into static fields
                 makeViewOnly();
 
-                alertDefView.commitAlertDefinition(getAlertDefinition());
-
-                alertDefView.refresh();
+                alertDefView.commitAlertDefinition(getAlertDefinition());                
             }
         });
 

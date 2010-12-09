@@ -32,6 +32,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
 
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.Criteria.Restriction;
@@ -45,18 +46,18 @@ public class CriteriaQueryRunner<T> {
     private Criteria criteria;
     private CriteriaQueryGenerator queryGenerator;
     private EntityManager entityManager;
-    private boolean autoInitializeBags;;
+    private boolean automaticFetching;;
 
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager) {
         this(criteria, queryGenerator, entityManager, true);
     }
 
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager,
-        boolean autoInitializeBags) {
+        boolean automaticFetching) {
         this.criteria = criteria;
         this.queryGenerator = queryGenerator;
         this.entityManager = entityManager;
-        this.autoInitializeBags = autoInitializeBags;
+        this.automaticFetching = automaticFetching;
     }
 
     public PageList<T> execute() {
@@ -97,9 +98,21 @@ public class CriteriaQueryRunner<T> {
         Query query = queryGenerator.getQuery(entityManager);
         List<T> results = query.getResultList();
 
-        if (autoInitializeBags && (!queryGenerator.getPersistentBagFields().isEmpty())) {
-            for (T entity : results) {
-                initPersistentBags(entity);
+        /* 
+         * suppression of auto-fetch useful in cases where alterProject(String) was called on the generator, which
+         * changed the return type of the result set from List<T> to something else.  in that case, the caller to
+         * this method must, as necessary, perform the fetch manually.
+         */
+        if (automaticFetching) {
+            if (!queryGenerator.getPersistentBagFields().isEmpty()) {
+                for (T entity : results) {
+                    initPersistentBags(entity);
+                }
+            }
+            if (!queryGenerator.getJoinFetchFields().isEmpty()) {
+                for (T entity : results) {
+                    initJoinFetchFields(entity);
+                }
             }
         }
 
@@ -113,20 +126,29 @@ public class CriteriaQueryRunner<T> {
         return (int) count;
     }
 
-    public void initPersistentBags(Object entity) {
+    public void initFetchFields(Object entity) {
+        initPersistentBags(entity);
+        initJoinFetchFields(entity);
+    }
+
+    private void initPersistentBags(Object entity) {
         for (Field persistentBagField : queryGenerator.getPersistentBagFields()) {
-            List<?> persistentBag = getList(entity, persistentBagField);
-            persistentBag.size();
+            initialize(entity, persistentBagField);
         }
     }
 
-    private List<?> getList(Object entity, Field field) {
+    private void initJoinFetchFields(Object entity) {
+        for (Field joinFetchField : queryGenerator.getJoinFetchFields()) {
+            initialize(entity, joinFetchField);
+        }
+    }
+
+    private void initialize(Object entity, Field field) {
         try {
             field.setAccessible(true);
-            return (List<?>) field.get(entity);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
+            Hibernate.initialize(field.get(entity));
+        } catch (Exception e) {
+            LOG.warn("Could not initialize " + field);
         }
     }
 

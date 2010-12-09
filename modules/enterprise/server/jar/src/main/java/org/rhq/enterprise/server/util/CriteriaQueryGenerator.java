@@ -90,6 +90,7 @@ public final class CriteriaQueryGenerator {
     private static List<String> EXPRESSION_START_KEYWORDS;
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
+    private List<Field> joinFetchFields = new ArrayList<Field>();
 
     static {
         EXPRESSION_START_KEYWORDS = new ArrayList<String>(2);
@@ -294,7 +295,7 @@ public final class CriteriaQueryGenerator {
                 results.append("COUNT(").append(alias).append(")").append(NL);
             } else {
                 // gets the count of the number of aggregate/grouped rows
-                // NOTE: this only works when the gorupBy is a single element, as opposed to a list of elements
+                // NOTE: this only works when the groupBy is a single element, as opposed to a list of elements
                 results.append("COUNT(DISTINCT ").append(groupByClause).append(")").append(NL);
             }
         } else {
@@ -310,11 +311,27 @@ public final class CriteriaQueryGenerator {
              * don't fetch in the count query to avoid: "query specified join fetching, 
              * but the owner of the fetched association was not present in the select list"
              */
-            for (String fetchJoin : getFetchFields(criteria)) {
-                if (isPersistentBag(fetchJoin)) {
-                    addPersistentBag(fetchJoin);
+            for (String fetchField : getFetchFields(criteria)) {
+                if (isPersistentBag(fetchField)) {
+                    addPersistentBag(fetchField);
                 } else {
-                    results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
+                    if (this.projection == null) {
+                        /* 
+                         * if not altering the projection, join fetching can be using
+                         * to retrieve the associated instance in the same SELECT
+                         */
+                        results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
+                    } else {
+                        /* 
+                         * if the projection is altered (perhaps converting it into a constructor query), then all
+                         * fields specified in the fetch must be in the explicit return list.  this is not possible
+                         * today with constructor queries, so any altered projection will implicitly disable fetching.
+                         * instead, we'll record which fields need to be explicitly fetched after the primary query
+                         * returns the bulk of the data, and use a similar methodology at the SLSB layer to eagerly
+                         * load those before returning the PageList back to the caller. 
+                         */
+                        addJoinFetch(fetchField);
+                    }
                 }
             }
         }
@@ -632,6 +649,15 @@ public final class CriteriaQueryGenerator {
         }
     }
 
+    private void addJoinFetch(String fieldName) {
+        try {
+            Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
+            joinFetchFields.add(field);
+        } catch (NoSuchFieldException e) {
+            LOG.warn("Failed to add join fetch field.", e);
+        }
+    }
+
     /**
      * <strong>Note:</strong> This method should only be called after {@link #getQueryString(boolean)}} because it is
      * that method where the persistentBagFields property is initialized.
@@ -641,6 +667,10 @@ public final class CriteriaQueryGenerator {
      */
     public List<Field> getPersistentBagFields() {
         return persistentBagFields;
+    }
+
+    public List<Field> getJoinFetchFields() {
+        return joinFetchFields;
     }
 
     /**

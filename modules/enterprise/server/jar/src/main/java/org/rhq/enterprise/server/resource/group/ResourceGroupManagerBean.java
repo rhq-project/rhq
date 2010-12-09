@@ -1073,7 +1073,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
                 : ResourceFacets.NONE;
 
-            queryRunner.initPersistentBags(group); // manually init bags for composite-wrapped entity
+            queryRunner.initFetchFields(group); // manual field fetch for composite-wrapped entity
             composite.setResourceFacets(facets);
         }
         return results;

@@ -2252,7 +2252,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ResourceType nextResourceType = nextResource.getResourceType();
             ResourceFacets facets = typeManager.getResourceFacets(nextResourceType.getId());
 
-            queryRunner.initPersistentBags(nextResource); // manually init bags for composite-wrapped entity
+            queryRunner.initFetchFields(nextResource); // manual field fetch for composite-wrapped entity
             nextComposite.setResourceFacets(facets);
         }
 

@@ -86,6 +86,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         setWidth(250);
         setHeight100();
+
+        setShowResizeBar(true);
     }
 
     @Override

@@ -21,10 +21,10 @@ public interface InventoryManagerLocal {
      * resource types and their resources for deletion. The actual deletion is carried out by asynchronously by a
      * scheduled job.
      *
-     * @param resourceTypes The resource types to delete
+     * @param resourceTypeIds The ids of the resource types to delete
      * @return The number of types marked for deletion.
      */
-    int markTypesDeleted(List<ResourceType> resourceTypes);
+    int markTypesDeleted(List<Integer> resourceTypeIds);
 
     /**
      * @return A list of all resource types that are marked for deletion

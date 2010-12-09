@@ -241,9 +241,10 @@ public class PluginManagerBean implements PluginManagerLocal {
         for (Plugin plugin : plugins) {
             if (plugin.getStatus().equals(PluginStatusType.INSTALLED)) {
                 long startTime = System.currentTimeMillis();
-                List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
+//                List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
+                List<Integer> resourceTypeIds = resourceTypeMgr.getResourceTypeIdsByPlugin(plugin.getName());
                 Plugin managedPlugin = entityManager.merge(plugin);
-                inventoryMgr.markTypesDeleted(resourceTypes);
+                inventoryMgr.markTypesDeleted(resourceTypeIds);
                 managedPlugin.setStatus(PluginStatusType.DELETED);
                 long endTime = System.currentTimeMillis();
                 log.debug("Deleted " + plugin + " in " + (endTime - startTime) + " ms");

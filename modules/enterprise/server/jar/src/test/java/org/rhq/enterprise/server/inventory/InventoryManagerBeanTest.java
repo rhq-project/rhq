@@ -33,12 +33,13 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         initDB();
 
         getTransactionManager().begin();
-        List<ResourceType> resourceTypes = asList(
-                getEntityManager().find(ResourceType.class, 1),
-                getEntityManager().find(ResourceType.class, 4));
+        List<Integer> resourceTypeIds = asList(1, 2, 3, 4, 5);
+//        List<ResourceType> resourceTypes = asList(
+//                getEntityManager().find(ResourceType.class, 1),
+//                getEntityManager().find(ResourceType.class, 4));
 
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
-        inventoryMgr.markTypesDeleted(resourceTypes);
+        inventoryMgr.markTypesDeleted(resourceTypeIds);
         getTransactionManager().commit();
     }
 

@@ -347,6 +347,10 @@ import org.rhq.core.domain.util.Summary;
         + " WHERE res.resourceType = :type " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "   AND res.id IN ( :ids ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_IDS_BY_TYPE_IDS, query =
+          "SELECT r.id "
+        + "FROM Resource r "
+        + "WHERE r.resourceType.id IN (:resourceTypeIds)"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
@@ -786,6 +790,8 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public static final String QUERY_FIND_BY_TYPE = "Resource.findByType";
     public static final String QUERY_FIND_BY_TYPE_ADMIN = "Resource.findByType_admin";
+
+    public static final String QUERY_FIND_IDS_BY_TYPE_IDS = "Resource.findIDsByType";
 
     public static final String QUERY_FIND_BY_TYPE_AND_IDS = "Resource.findByTypeAndIds";
     public static final String QUERY_FIND_BY_TYPE_AND_IDS_ADMIN = "Resource.findByTypeAndIds_admin";

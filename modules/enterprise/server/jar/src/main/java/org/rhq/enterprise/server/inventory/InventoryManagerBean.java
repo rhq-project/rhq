@@ -23,6 +23,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.util.BatchIterator;
 
 /**
  * This API could not be added directly {@link org.rhq.enterprise.server.resource.ResourceTypeManagerBean} because it
@@ -48,39 +49,31 @@ public class InventoryManagerBean implements InventoryManagerLocal {
     private ResourceMetadataManagerLocal metadataMgr;
 
     @Override
+    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public int markTypesDeleted(List<ResourceType> resourceTypes) {
-        if (resourceTypes.size() == 0) {
-            return 0;
+    public int markTypesDeleted(List<Integer> resourceTypeIds) {
+        int typesDeleted = 0;
+        BatchIterator<Integer> batchIterator = new BatchIterator<Integer>(resourceTypeIds);
+        for (List<Integer> typeIdsBatch : batchIterator) {
+            List<Integer> resourceIds = entityMgr.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
+                .setParameter("resourceTypeIds", typeIdsBatch)
+                .getResultList();
+            resourceMgr.uninventoryResources(subjectMgr.getOverlord(), toIntArray(resourceIds));
+
+            Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);
+            query.setParameter("resourceTypeIds", typeIdsBatch);
+            typesDeleted += query.executeUpdate();
         }
+        return typesDeleted;
+    }
 
-        Set<Integer> ids = new HashSet<Integer>();
-        Set<Resource> resources = new HashSet<Resource>();
-
-        for (ResourceType type : resourceTypes) {
-            ids.add(type.getId());
-            resources.addAll(type.getResources());
-        }
-
-        int[] resourceIds = new int[resources.size()];
+    private int[] toIntArray(List<Integer> list) {
+        int[] array = new int[list.size()];
         int i = 0;
-        for (Resource resource : resources) {
-            resourceIds[i++] = resource.getId();
+        for (Integer integer : list) {
+            array[i++] = integer;
         }
-
-        resourceMgr.uninventoryResources(subjectMgr.getOverlord(), resourceIds);
-
-        Map<Integer,  SortedSet<ResourceType>> childTypes =
-                resourceTypeMgr.getChildResourceTypesForResourceTypes(resourceTypes);
-        for (SortedSet<ResourceType> children : childTypes.values()) {
-            for (ResourceType childType : children) {
-                ids.add(childType.getId());
-            }
-        }
-
-        Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);
-        query.setParameter("resourceTypeIds", ids);
-        return query.executeUpdate();
+        return array;
     }
 
     @Override

@@ -101,7 +101,7 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
             new AsyncCallback<PageList<MeasurementScheduleComposite>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to fetch measurement schedules for context " + entityContext, caught);
+                        MSG.dataSource_schedules_loadFailedContext(entityContext.toString()), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

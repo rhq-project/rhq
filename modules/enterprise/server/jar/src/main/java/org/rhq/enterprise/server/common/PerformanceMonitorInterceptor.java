@@ -11,7 +11,7 @@ public class PerformanceMonitorInterceptor {
         String prefix = context.getMethod().getDeclaringClass().getSimpleName() + "." + context.getMethod().getName();
         long monitorId = HibernatePerformanceMonitor.get().start();
         Object results = context.proceed();
-        HibernatePerformanceMonitor.get().stop(monitorId, prefix);
+        HibernatePerformanceMonitor.get().stop(monitorId, "SLSB:" + prefix);
         return results;
     }
 }

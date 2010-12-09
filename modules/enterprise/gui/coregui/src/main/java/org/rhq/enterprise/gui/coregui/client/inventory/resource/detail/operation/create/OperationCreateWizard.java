@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -37,7 +36,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -114,27 +112,41 @@ public class OperationCreateWizard extends AbstractWizard {
     }
 
     private void execute() {
-        Log.info("TODO Executed operation!!");
-
-        OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
-
         Configuration parameters = parametersStep.getParameterConfiguration();
         final ExecutionSchedule schedule = schedulingStep.getExecutionSchedule();
 
-        GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
-            operationDefinition.getName(), parameters, schedule, " testing ", 0, new AsyncCallback<Void>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_operationCreateWizard_error_scheduleOperationFailure(),
-                        caught);
-                }
+        // TODO: get the description and timeout from user input
+        String description = "";
+        int timeout = 0;
 
-                public void onSuccess(Void result) {
-                    String message = MSG.view_operationCreateWizard_message_scheduleOperationSuccess(
-                        operationDefinition.getName(), String.valueOf(resource.getId()), schedule.getCronString());
+        AsyncCallback<Void> operationCallback = new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_operationCreateWizard_error_scheduleOperationFailure(),
+                    caught);
+            }
 
-                    CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Info));
+            public void onSuccess(Void result) {
+                String opName = operationDefinition.getDisplayName();
+                String cron = schedule.getCronString();
+                if (cron == null) {
+                    cron = MSG.common_val_na();
                 }
-            });
+                String concise = MSG.view_operationCreateWizard_message_scheduleOperationSuccess_short(opName);
+                String message = MSG.view_operationCreateWizard_message_scheduleOperationSuccess(opName, String
+                    .valueOf(resource.getId()), cron);
+
+                CoreGUI.getMessageCenter().notify(new Message(concise, message, Message.Severity.Info));
+            }
+        };
+
+        if (schedule.getStart() == ExecutionSchedule.Start.Immediately) {
+            GWTServiceLookup.getOperationService().invokeResourceOperation(resource.getId(),
+                operationDefinition.getName(), parameters, description, timeout, operationCallback);
+        } else {
+            GWTServiceLookup.getOperationService().scheduleResourceOperation(resource.getId(),
+                operationDefinition.getName(), parameters, description, timeout, schedule.getCronString(),
+                operationCallback);
+        }
 
         view.closeDialog();
     }

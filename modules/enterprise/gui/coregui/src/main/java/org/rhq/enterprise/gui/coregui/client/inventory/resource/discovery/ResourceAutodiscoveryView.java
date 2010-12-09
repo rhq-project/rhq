@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout {
     private static final String TITLE = MSG.view_autoDiscoveryQ_title();
-    private static final String HEADER_ICON = "global/Recent_16.png";
+    private static final String HEADER_ICON = "global/Recent_24.png";
 
     private boolean simple;
     private TreeGrid treeGrid;
@@ -139,7 +139,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         key = new TreeGridField("resourceKey");
         type = new TreeGridField("typeName");
         description = new TreeGridField("description");
-        status = new TreeGridField("status");
+        status = new TreeGridField("statusLabel");
         ctime = new TreeGridField("ctime");
 
         if (!simple) {
@@ -197,6 +197,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }
@@ -213,6 +214,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_autoDiscoveryQ_ignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }
@@ -229,6 +231,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_autoDiscoveryQ_unignoreSuccessful(), Message.Severity.Info));
                         treeGrid.invalidateCache();
+                        treeGrid.markForRedraw();
                     }
                 });
             }

@@ -22,8 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import java.util.Set;
-
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -35,7 +33,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -63,7 +60,6 @@ public class UserSessionManager {
     private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
 
     public static final String SESSION_NAME = "RHQ_Session";
-    private static final UserPermissionsManager USER_PERMISSIONS_MANAGER = UserPermissionsManager.getInstance();
 
     private static final String LOCATOR_ID = "SessionManagerLogin";
 
@@ -320,14 +316,8 @@ public class UserSessionManager {
                     //update savedSessionId for browser refresh
                     saveSessionId(String.valueOf(sessionSubject.getSessionId()));
                 }
-
-                // Kick off async load of the user's global permissions.
-                USER_PERMISSIONS_MANAGER.loadGlobalPermissions(new PermissionsLoadedListener() {
-                    public void onPermissionsLoaded(Set<Permission> permissions) {
-                        // Once the permissions have been loaded, build the GUI.
-                        CoreGUI.get().buildCoreUI();
-                    }
-                });
+                
+                CoreGUI.get().buildCoreUI();
             }
 
             public void onFailure(Throwable caught) {
@@ -373,8 +363,6 @@ public class UserSessionManager {
         sessionState = State.IS_LOGGED_OUT;
         Log.info("Destroying session timer...");
         sessionTimer.cancel();
-
-        USER_PERMISSIONS_MANAGER.clearCache();
 
         // log out the web session on the server-side in a delayed fashion,
         // allowing enough time to pass to let in-flight requests complete

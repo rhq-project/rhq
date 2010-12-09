@@ -187,7 +187,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
         @Override
         protected String getItemTitle() {
-            return "user";
+            return MSG.common_title_users();
         }
     }
 }

@@ -3,20 +3,17 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 
 /**
- * Formats a Boolean value as "yes" or "no".
+ * Formats a Boolean value as "yes" or "no" image.
  * 
  * @author Ian Springer
  */
 public class BooleanCellFormatter implements CellFormatter {
-    private static final Messages MSG = CoreGUI.getMessages();
-
-    private static String RED = "/images/icons/availability_red_16.png";
-    private static String GREEN = "/images/icons/availability_green_16.png";
-    private static String GREY = "/images/icons/availability_grey_16.png";
+    private static String RED = ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.FALSE));
+    private static String GREEN = ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.TRUE));
+    private static String GREY = ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null));
 
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
         String result;

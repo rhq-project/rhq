@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
  * @author Ian Springer
  */
 public class UserPreferences {
+
     private static final String PREF_LIST_DELIM = "|";
     private static final String PREF_LIST_DELIM_REGEX = "\\|";
 
@@ -106,7 +107,7 @@ public class UserPreferences {
     }
 
     public void store(AsyncCallback<Subject> callback) {
-        this.subjectService.updateSubject(this.subject, null, callback);
+        this.subjectService.updateSubject(this.subject, callback);
     }
 
     public Configuration getConfiguration() {
@@ -146,4 +147,5 @@ public class UserPreferences {
     public void addChangeListener(UserPreferenceChangeListener listener) {
         changeListeners.add(listener);
     }
+
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,29 +20,15 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert;
-
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-
-import org.rhq.core.domain.criteria.AlertCriteria;
+package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 /**
- * @author Ian Springer
+ * @author Simeon Pinder
  */
-public class SubsystemResourceAlertDataSource extends AlertDataSource {
-    @Override
-    protected void onInit() {
-        super.onInit();
+public interface AutoRefreshPortlet extends Portlet {
 
-        DataSourceField[] fields = getFields();
-        DataSourceField[] updatedFields = new DataSourceField[fields.length + 1];
+    int refreshCycle = 40000;//ms
 
-        // TODO: Replace 'Resource Id' column with 'Resource Name' and 'Resource Lineage' columns.
-        DataSourceField resourceIdField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_RESOURCE_ID, MSG
-            .common_title_resource_id());
-        updatedFields[0] = resourceIdField;
+    void startRefreshCycle();
 
-        System.arraycopy(fields, 0, updatedFields, 1, fields.length);
-    }
 }

@@ -23,6 +23,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -37,13 +38,15 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-public class RecentlyAddedView extends LocatableVLayout implements CustomSettingsPortlet {
+public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
+    AutoRefreshPortlet {
 
     public static final String KEY = MSG.view_portlet_recentlyAdded_title();
 
@@ -56,8 +59,9 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
     private static final String RECENTLY_ADDED_SHOW_HRS = "recently-added-time-range";
+    private Timer reloader;
 
-    public RecentlyAddedView(String locatorId) {
+    public RecentlyAddedResourcesPortlet(String locatorId) {
         super(locatorId);
         //insert the datasource
         this.dataSource = new RecentlyAddedResourceDS(this);
@@ -204,7 +208,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new RecentlyAddedView(locatorId);
+            return new RecentlyAddedResourcesPortlet(locatorId);
         }
     }
 
@@ -221,5 +225,17 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
 
     public RecentlyAddedResourceDS getDataSource() {
         return dataSource;
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 }

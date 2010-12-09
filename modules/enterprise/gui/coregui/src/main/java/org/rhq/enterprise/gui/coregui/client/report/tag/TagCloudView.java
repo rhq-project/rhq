@@ -33,7 +33,6 @@ import org.rhq.core.domain.tagging.compsite.TagReportComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -46,15 +45,8 @@ public class TagCloudView extends LocatableVLayout {
 
     private String selectedTag;
 
-    private boolean simple = false;
-
     public TagCloudView(String locatorId) {
         super(locatorId);
-    }
-
-    public TagCloudView(String locatorId, boolean simple) {
-        this(locatorId);
-        this.simple = simple;
     }
 
     @Override
@@ -82,10 +74,6 @@ public class TagCloudView extends LocatableVLayout {
         }
 
         this.tags = tags;
-
-        if (!simple) {
-            addMember(new HeaderLabel(MSG.view_tagCloud_title()));
-        }
 
         long max = 0;
         long total = 0;

@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -124,7 +125,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
 
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterGroupCategory(getFilter(request, CATEGORY.propertyName(), GroupCategory.class));
-        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Integer.class));
+        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
 
@@ -175,8 +176,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         record.setAttribute("implicitUp", String.valueOf(from.getImplicitUp()));
         record.setAttribute("implicitDown", String.valueOf(from.getImplicitDown()));
 
-        record.setAttribute("availabilityChildren", from.getExplicitFormatted());
-        record.setAttribute("availabilityDescendents", from.getImplicitFormatted());
+        record.setAttribute("availabilityChildren", getExplicitFormatted(from));
+        record.setAttribute("availabilityDescendents", getImplicitFormatted(from));
 
         if (from.getResourceGroup().getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceGroup().getResourceType());
@@ -185,5 +186,61 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         }
 
         return record;
+    }
+
+    private String getExplicitFormatted(ResourceGroupComposite from) {
+        return getAlignedAvailabilityResults(from.getExplicitUp(), from.getExplicitDown());
+    }
+
+    private String getImplicitFormatted(ResourceGroupComposite from) {
+        return getAlignedAvailabilityResults(from.getImplicitUp(), from.getImplicitDown());
+    }
+
+    private String getAlignedAvailabilityResults(long up, long down) {
+        StringBuilder results = new StringBuilder();
+        results.append("<table width=\"120px\"><tr>");
+        if (up == 0 && down == 0) {
+            results.append(getColumn(false, "<img src=\""
+                + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
+            results.append(getColumn(true));
+            results.append(getColumn(false));
+        } else {
+            if (up > 0) {
+                results.append(getColumn(false, " <img src=\""
+                    + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.TRUE)) + "\" />", up));
+            }
+
+            if (up > 0 && down > 0) {
+                results.append(getColumn(true)); // , " / ")); // use a vertical separator image if we want a separator
+            }
+
+            if (down > 0) {
+                results.append(getColumn(false, " <img src=\""
+                    + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.FALSE)) + "\" />", down));
+            } else {
+                results.append(getColumn(false,
+                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+            }
+        }
+        results.append("</tr></table>");
+        return results.toString();
+    }
+
+    private String getColumn(boolean isSpacerColumn, Object... data) {
+        StringBuilder results = new StringBuilder();
+        if (isSpacerColumn) {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"10px\" align=\"left\" >");
+        } else {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"55px\" align=\"left\" >");
+        }
+        if (data == null) {
+            results.append("&nbsp;");
+        } else {
+            for (Object datum : data) {
+                results.append(datum == null ? "&nbsp;" : datum);
+            }
+        }
+        results.append("</td>");
+        return results.toString();
     }
 }

@@ -20,13 +20,14 @@
 package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.Arrays;
-import java.util.Date;
+import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -34,12 +35,10 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -55,9 +54,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Joseph Marques
  * @author Ian Springer
  * @author Heiko W. Rupp
+ * @author John Mazzitelli
  */
-public class AlertHistoryView extends TableSection {
-    // TODO: Create a subclass for the subsystem view.
+public class AlertHistoryView extends TableSection<AlertDataSource> {
+
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts());
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
@@ -80,54 +80,31 @@ public class AlertHistoryView extends TableSection {
 
     @Override
     protected void configureTableFilters() {
-        final EnumSelectItem priorityFilter = new EnumSelectItem("severities", MSG.view_alerts_table_filter_priority(),
-            AlertPriority.class);
+        SelectItem priorityFilter = new SelectItem("severities", MSG.view_alerts_table_filter_priority());
+        priorityFilter.setMultiple(true);
+        priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
 
-        setFilterFormItems(priorityFilter);
+        LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
+        priorities.put(AlertPriority.HIGH.name(), MSG.common_alert_high());
+        priorities.put(AlertPriority.MEDIUM.name(), MSG.common_alert_medium());
+        priorities.put(AlertPriority.LOW.name(), MSG.common_alert_low());
+        LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>(3);
+        priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
+        priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
+        priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
+        priorityFilter.setValueMap(priorities);
+        priorityFilter.setValueIcons(priorityIcons);
+        priorityFilter.setValues(AlertPriority.HIGH.name(), AlertPriority.MEDIUM.name(), AlertPriority.LOW.name());
+
+        if (isShowFilterForm()) {
+            setFilterFormItems(priorityFilter);
+        }
     }
 
     @Override
     protected void configureTable() {
-        ListGridField ctimeField = new ListGridField("ctime", MSG.view_alerts_field_created_time(), 100);
-        ctimeField.setCellFormatter(new TimestampCellFormatter());
-
-        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name(), 100);
-        ListGridField conditionTextField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
-        ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority(), 50);
-
-        ListGridField statusField = new ListGridField("status", 175);
-        statusField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String ackTime = listGridRecord.getAttribute("acknowledgeTime");
-                String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
-                if (ackSubject == null) {
-                    return MSG.view_alerts_field_ack_status_empty();
-                } else {
-                    String formattedTime = TimestampCellFormatter.DATE_TIME_FORMAT.format(new Date(Long
-                        .parseLong(ackTime)));
-                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
-                }
-            }
-        });
-
-        ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource(), 125);
-        resourceNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
-                return "<a href=\"" + LinkManager.getResourceLink(resourceId) + "\">" + o + "</a>";
-            }
-        });
-
-        if (context.type == EntityContext.Type.Resource) {
-            getListGrid().setFields(ctimeField, nameField, conditionTextField, priorityField, statusField);
-        } else {
-            getListGrid().setFields(ctimeField, nameField, conditionTextField, priorityField, statusField,
-                resourceNameField);
-        }
-
+        getListGrid().setFields(((AlertDataSource) getDataSource()).getListGridFields().toArray(new ListGridField[0]));
         setupTableInteractions();
-
-
     }
 
     private void setupTableInteractions() {

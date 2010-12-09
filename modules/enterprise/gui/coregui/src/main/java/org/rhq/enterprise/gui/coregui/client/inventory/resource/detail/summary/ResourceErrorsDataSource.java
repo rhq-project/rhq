@@ -29,6 +29,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceEnumField;
+import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -42,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  *
  * @author Lukas Krejci
+ * @author Simeon Pinder
  */
 public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
 
@@ -50,7 +52,10 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         public static final String DETAIL = "detail";
         public static final String ERROR_TYPE = "errorType";
         public static final String TIME_OCCURED = "timeOccured";
+        public static final String ICON = "icon";
     }
+
+    private static final String ERROR_ICON = "[SKIN]/Dialog/warn.png";
 
     ResourceGWTServiceAsync resourceService;
     int resourceId;
@@ -69,7 +74,11 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         fields.add(new DataSourceEnumField(Field.ERROR_TYPE, MSG.dataSource_resourceErrors_field_errorType()));
         fields.add(new DataSourceDateTimeField(Field.TIME_OCCURED, MSG.dataSource_resourceErrors_field_timeOccured()));
         fields.add(new DataSourceTextField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary()));
-        fields.add(new DataSourceTextField(Field.DETAIL, MSG.dataSource_resourceErrors_field_detail()));
+        DataSourceTextField details = new DataSourceTextField(Field.DETAIL, MSG
+            .dataSource_resourceErrors_field_detail());
+        details.setHidden(true);//won't be displaying this value directly in the listgrid
+        fields.add(details);
+        fields.add(new DataSourceImageField(Field.ICON, MSG.dataSource_resourceErrors_field_detail()));
 
         return fields;
     }
@@ -103,11 +112,11 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(Field.DETAIL, from.getDetail());
+        record.setAttribute(Field.ICON, ERROR_ICON);
         record.setAttribute(Field.ERROR_TYPE, from.getErrorType().name());
         record.setAttribute(Field.SUMMARY, from.getSummary());
         record.setAttribute(Field.TIME_OCCURED, new Date(from.getTimeOccurred()));
 
         return record;
     }
-
 }

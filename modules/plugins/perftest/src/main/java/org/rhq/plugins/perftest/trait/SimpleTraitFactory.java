@@ -16,13 +16,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.core.domain.util;
+package org.rhq.plugins.perftest.trait;
+
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.plugins.perftest.trait.TraitFactory;
+
+import java.util.Date;
 
 /**
- * A marker interface for generating Record builders
+ * Create trait data
  *
- * @author Greg Hinkle
+ * @author Heiko W. Rupp
  */
-public interface Recordizable {
+public class SimpleTraitFactory implements TraitFactory {
 
+    public MeasurementDataTrait nextValue(MeasurementScheduleRequest request) {
+
+        String name = request.getName();
+        Date date = new Date();
+
+        MeasurementDataTrait data = new MeasurementDataTrait(request,name + ", " + date);
+
+        return data;
+
+    }
 }

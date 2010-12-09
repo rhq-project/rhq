@@ -34,6 +34,7 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
@@ -53,6 +54,7 @@ import org.rhq.plugins.perftest.calltime.CalltimeFactory;
 import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
 import org.rhq.plugins.perftest.event.PerfTestEventPoller;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
+import org.rhq.plugins.perftest.trait.TraitFactory;
 
 import java.io.InputStream;
 import java.util.List;
@@ -109,6 +111,7 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
          */
         MeasurementFactory measurementFactory = scenarioManager.getMeasurementFactory(resourceTypeName);
         CalltimeFactory calltimeFactory = scenarioManager.getCalltimeFactory(resourceTypeName);
+        TraitFactory traitFactory = scenarioManager.getTraitFactory(resourceTypeName);
 
         for (MeasurementScheduleRequest metric : metrics) {
             switch (metric.getDataType()) {
@@ -126,6 +129,12 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
                     }
                     break;
                 case TRAIT:
+                    MeasurementDataTrait measurementDataTrait = traitFactory.nextValue(metric);
+                    if (measurementDataTrait != null) {
+                        report.addData(measurementDataTrait);
+                    }
+                    break;
+
                 case COMPLEX:
                     log.error("DataType " + metric.getDataType() + " not yet supported");
             }

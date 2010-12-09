@@ -21,6 +21,7 @@
    <resource type="service-d-metrics">
       <simpleResourceGenerator property="on.perftest.service-d-metrics-count"/>
       <simpleNumericMeasurementGenerator/>
+      <simpleTraitMeasurementGenerator/>
       <ConfigurableCallTimeDataGenerator
                minMsgCount="1" maxMsgCount="500"
                minDuration="10" maxDuration="500"

@@ -19,24 +19,26 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.smartgwt.client.data.Record;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -55,6 +57,8 @@ public class UsersView extends TableSection<UsersDataSource> {
 
     private static final String HEADER_ICON = "global/User_24.png";
 
+    private boolean hasManageSecurity;
+
     public UsersView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_users());
 
@@ -72,12 +76,38 @@ public class UsersView extends TableSection<UsersDataSource> {
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             createDeleteAction());
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
+
+        fetchManageSecurityPermissionAsync();
+    }
+
+    private void fetchManageSecurityPermissionAsync() {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+            new AsyncCallback<Set<Permission>>() {
+                public void onSuccess(Set<Permission> result) {
+                    hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+                    refresh();
+                }
+
+                public void onFailure(Throwable caught) {
+                    hasManageSecurity = false;
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                            .of(Message.Option.BackgroundJobResult)));
+                }
+            });
     }
 
     private List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
+        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 150);
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                Integer subjectId = getId(record);
+                String userUrl = LinkManager.getUserLink(subjectId);
+                return SeleniumUtility.getLocatableHref(userUrl, value.toString(), null);
+            }
+        });
         fields.add(nameField);
 
         ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
@@ -95,11 +125,13 @@ public class UsersView extends TableSection<UsersDataSource> {
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
         fields.add(departmentField);
 
-        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
-        if (globalPermissions.contains(Permission.MANAGE_SECURITY)) {
+        // TODO: instead of fetching roles, use a composite object that will pull the role count across the wire.
+        //       this count will not required permission checks at all. 
+
+        /*
             ListGridField rolesField = new ListGridField(UsersDataSource.Field.ROLES, 250);
             rolesField.setCellFormatter(new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {                    
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                     Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
                     StringBuilder formattedValue = new StringBuilder();
                     for (int i = 0; i < roleRecords.length; i++) {
@@ -114,7 +146,8 @@ public class UsersView extends TableSection<UsersDataSource> {
                 }
             });
             fields.add(rolesField);
-        }
+        
+        */
 
         return fields;
     }
@@ -128,8 +161,8 @@ public class UsersView extends TableSection<UsersDataSource> {
                 }
 
                 for (ListGridRecord record : selection) {
-                    int id = record.getAttributeAsInt(UsersDataSource.Field.ID);
-                    if (id == UsersDataSource.ID_OVERLORD || id == UsersDataSource.ID_RHQADMIN) {
+                    int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
+                    if (UsersDataSource.isSystemSubjectId(subjectId)) {
                         // The superuser and rhqadmin users cannot be deleted.
                         return false;
                     }
@@ -143,9 +176,12 @@ public class UsersView extends TableSection<UsersDataSource> {
         };
     }
 
-    private AbstractTableAction createNewAction() {
-        return new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
+    private TableAction createNewAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return hasManageSecurity;
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }

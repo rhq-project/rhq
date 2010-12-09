@@ -207,7 +207,6 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             int id = Integer.parseInt(viewPath.getCurrent().getPath());
             this.detailsView = getDetailsView(id);
             if (this.detailsView instanceof BookmarkableView) {
-                viewPath.next();
                 ((BookmarkableView) this.detailsView).renderView(viewPath);
             }
 

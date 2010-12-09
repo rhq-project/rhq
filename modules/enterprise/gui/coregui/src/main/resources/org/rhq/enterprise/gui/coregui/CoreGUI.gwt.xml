@@ -49,12 +49,6 @@
     -->
     <set-property name="log_DivLogger" value="DISABLED" />
 
-    <!--
-     <generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
-        <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>
-     </generate-with>
-    -->
-
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
@@ -63,6 +57,12 @@
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
         <when-property-is name="user.agent" value="ie6"/>
     </replace-with>
+    
+    
+    <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
+        <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
+    </generate-with>
+    
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.
@@ -91,8 +91,7 @@
          must have a file suffixed with _<locale>.properties in the same package/directory as
          the corresponding GWT i18n interface class resides.-->
     <!--<extend-property name="locale" values="de,fr"/>-->
-
-    <extend-property name="locale" values="de"/>
+    <extend-property name="locale" values="${gwt.locale}" />
 
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
     <entry-point class='org.rhq.enterprise.gui.coregui.client.SearchGUI'/>

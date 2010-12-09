@@ -43,7 +43,6 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -59,7 +58,6 @@ import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceType;
@@ -70,6 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
@@ -81,9 +80,9 @@ public class LoginView extends LocatableCanvas {
 
     private Window window;
     private DynamicForm form;
+    private LocatableDynamicForm inputForm;
 
     private SubmitItem loginButton;
-    private ValuesManager valuesManager = new ValuesManager();
 
     public LoginView(String locatorId) {
         super(locatorId);
@@ -197,16 +196,13 @@ public class LoginView extends LocatableCanvas {
         if (!loginShowing) {
             loginShowing = true;
 
-            form = new DynamicForm();
-            form.setMargin(25);
-            form.setAutoFocus(true);
-            form.setShowErrorText(true);
-            form.setErrorOrientation(FormErrorOrientation.BOTTOM);
             int fieldWidth = 120;
 
-            VLayout column = new VLayout();
+            LocatableVLayout column = new LocatableVLayout(extendLocatorId("NewLdapRegistration"));
+            column.setMargin(25);
             HeaderItem header = new HeaderItem();
             header.setValue(MSG.view_login_welcomeMsg());
+            header.setWidth("100%");
             //build ui elements for registration screen
             first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
             {
@@ -223,35 +219,43 @@ public class LoginView extends LocatableCanvas {
             final TextItem username = new TextItem(USERNAME, MSG.dataSource_users_field_name());
             {
                 username.setValue(user);
-
                 username.setDisabled(true);
                 username.setWidth(fieldWidth);
             }
             email = new TextItem(EMAIL, MSG.dataSource_users_field_emailAddress());
             email.setRequired(true);
             email.setWidth(fieldWidth);
+            email.setWrapTitle(false);
             phone = new TextItem(PHONE, MSG.dataSource_users_field_phoneNumber());
             phone.setWidth(fieldWidth);
+            phone.setWrapTitle(false);
             department = new TextItem(DEPARTMENT, MSG.dataSource_users_field_department());
             department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
-            DynamicForm inputFields = new DynamicForm();
-            inputFields.setNumCols(6);
-            inputFields.setFields(header, first, last, username, email, phone, department);
-            inputFields.setValuesManager(valuesManager);
-            loadValidators(inputFields);
-            column.addMember(inputFields);
+
+            inputForm = new LocatableDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
+            inputForm.setAutoFocus(true);
+            inputForm.setErrorOrientation(FormErrorOrientation.LEFT);
+            inputForm.setNumCols(4);
+            //moving header to it's own container for proper display. Didn't display right in production mode
+            inputForm.setFields(username, first, last, email, phone, department);
+            loadValidators(inputForm);
+            inputForm.setValidateOnExit(true);
+            DynamicForm headerWrapper = new DynamicForm();
+            headerWrapper.setFields(header);
+            column.addMember(headerWrapper);
+            column.addMember(inputForm);
 
             HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
-            hr.setWidth(750);
+            hr.setWidth(620);
             hr.setAlign(Alignment.CENTER);
             column.addMember(hr);
 
             HStack row = new HStack();
             row.setMembersMargin(5);
             row.setAlign(VerticalAlignment.CENTER);
-            IButton okButton = new IButton(MSG.common_button_ok());
+            IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     //F5 refresh check? If they've reloaded the form for some reason then bail.
@@ -264,18 +268,18 @@ public class LoginView extends LocatableCanvas {
                     }
 
                     //validation
-                    if (valuesManager.validate()) {
+                    if (inputForm.validate()) {
                         Log.trace("Successfully validated all data for user registration.");
                         //populate form
-                        form.setValue(FIRST, String.valueOf(first.getValue()));
-                        form.setValue(LAST, String.valueOf(last.getValue()));
-                        form.setValue(USERNAME, String.valueOf(username.getValue()));
-                        form.setValue(EMAIL, String.valueOf(email.getValue()));
-                        form.setValue(PHONE, String.valueOf(phone.getValue()));
-                        form.setValue(DEPARTMENT, String.valueOf(department.getValue()));
-                        form.setValue(SESSIONID, sessionId);
-                        form.setValue(PASSWORD, password);
-                        registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), form, callback);
+                        inputForm.setValue(FIRST, String.valueOf(first.getValue()));
+                        inputForm.setValue(LAST, String.valueOf(last.getValue()));
+                        inputForm.setValue(USERNAME, String.valueOf(username.getValue()));
+                        inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
+                        inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
+                        inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
+                        inputForm.setValue(SESSIONID, sessionId);
+                        inputForm.setValue(PASSWORD, password);
+                        registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);
                     }
                 }
 
@@ -310,13 +314,13 @@ public class LoginView extends LocatableCanvas {
                 }
 
                 public void onFailure(Throwable caught) {
-                    form.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
+                    inputForm.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
                     Log
                         .debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
                 }
             });
 
-            IButton resetButton = new LocatableIButton(MSG.common_button_reset());
+            IButton resetButton = new LocatableIButton(inputForm.extendLocatorId("Reset"), MSG.common_button_reset());
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     //F5 refresh check? If they've reloaded the form for some reason then bail.
@@ -333,7 +337,7 @@ public class LoginView extends LocatableCanvas {
                         first.setValue(empty);
                         last.setValue(empty);
                         email.setValue("test@test.com");
-                        valuesManager.validate();
+                        inputForm.validate();
                     }
                     first.clearValue();
                     last.clearValue();
@@ -344,24 +348,22 @@ public class LoginView extends LocatableCanvas {
             });
             row.addMember(resetButton);
 
-            IButton logout = new LocatableIButton(MSG.view_login_logout());
-            logout.addClickHandler(new ClickHandler() {
+            IButton cancelButton = new LocatableIButton(inputForm.extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     UserSessionManager.logout();
                     resetLogin(LoginView.this.extendLocatorId("Reset"));
-                    return;
                 }
             });
-            row.addMember(logout);
+            row.addMember(cancelButton);
             Label logoutLabel = new Label(MSG.view_login_registerLater());
             logoutLabel.setWrap(false);
             row.addMember(logoutLabel);
             column.addMember(row);
-            form.addChild(column);
 
             window = new Window();
-            window.setWidth(800);
-            window.setHeight(300);
+            window.setWidth(670);
+            window.setHeight(330);
             window.setTitle(MSG.view_login_registerUser());
 
             // forced focused, static size, can't close / dismiss
@@ -373,7 +375,7 @@ public class LoginView extends LocatableCanvas {
             window.setShowMinimizeButton(false);
             window.setAutoCenter(true);
 
-            window.addItem(form);
+            window.addItem(column);
             window.show();
         }
     }
@@ -475,10 +477,6 @@ public class LoginView extends LocatableCanvas {
         }
     }
 
-    /**Build and loads the validators for each of the formItems
-     * 
-     * @param form
-     */
     private void loadValidators(DynamicForm form) {
         if (form != null) {
             for (FormItem item : form.getFields()) {
@@ -539,7 +537,7 @@ public class LoginView extends LocatableCanvas {
 
     @SuppressWarnings("unused")
     private void preloadAllTypeMetadata() {
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes((Integer[]) null,
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(null,
             EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
                     Log.info("Preloaded [" + types.size() + "] resource types");

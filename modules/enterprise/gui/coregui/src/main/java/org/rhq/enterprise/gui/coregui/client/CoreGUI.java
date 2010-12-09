@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
@@ -70,8 +71,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
 
     // just to avoid constructing this over and over
-    private static final String TREE_NAV_VIEW_PATTERN = "(" + ResourceTopView.VIEW_ID + "|"
-        + ResourceGroupTopView.VIEW_ID + "|" + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + ")/[^/]*";
+    private static final String TREE_NAV_VIEW_PATTERN = "(" //
+        + ResourceTopView.VIEW_ID + "|" //
+        + ResourceGroupTopView.VIEW_ID + "|" //
+        + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "|" //
+        + ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH //
+        + ")/[^/]*";
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
@@ -168,6 +173,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
 
         if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
+            // request a redraw of the MenuBarItem to ensure the correct sessio info is displayed 
+            rootCanvas.getMember(0).markForRedraw();
+
             // go to default view if user doesn't specify a history token
             History.newItem(getDefaultView());
         } else {
@@ -192,18 +200,22 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
-        if (breadcrumbName.equals(AdministrationView.VIEW_ID.getName())) {
-            canvas = new AdministrationView();
+        if (breadcrumbName.equals(DashboardsView.VIEW_ID.getName())) {
+            canvas = new DashboardsView(breadcrumbName);
         } else if (breadcrumbName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
         } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID.getName())) {
             canvas = new ResourceTopView(breadcrumbName);
         } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
             canvas = new ResourceGroupTopView(breadcrumbName);
-        } else if (breadcrumbName.equals(DashboardsView.VIEW_ID.getName())) {
-            canvas = new DashboardsView(breadcrumbName);
+        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID.getName())) {
+            canvas = new ReportTopView();
         } else if (breadcrumbName.equals(BundleTopView.VIEW_ID.getName())) {
             canvas = new BundleTopView(breadcrumbName);
+        } else if (breadcrumbName.equals(AdministrationView.VIEW_ID.getName())) {
+            canvas = new AdministrationView();
+        } else if (breadcrumbName.equals(HelpView.VIEW_ID.getName())) {
+            canvas = new HelpView();
         } else if (breadcrumbName.equals("LogOut")) {
             // TODO: don't make LogOut a history event, just perform the logout action by responding to click event
             LoginView logoutView = new LoginView("Login");
@@ -214,8 +226,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new TaggedView(breadcrumbName);
         } else if (breadcrumbName.equals("Subsystems")) {
             canvas = new AlertHistoryView("Alert");
-        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID.getName())) {
-            canvas = new ReportTopView();
         } else if (breadcrumbName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
         } else {
@@ -293,8 +303,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static void refreshBreadCrumbTrail() {
-        breadCrumbTrailPane.refresh(currentViewPath);
+        //breadCrumbTrailPane.refresh(currentViewPath);
     }
 
     public static Messages getMessages() {
@@ -331,25 +345,20 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 if (this.currentCanvas instanceof BookmarkableView) {
                     if (this.currentCanvas instanceof InitializableView) {
                         final InitializableView initializableView = (InitializableView) this.currentCanvas;
-                        final long startTime = System.currentTimeMillis();
-                        final Timer timer = new Timer() {
+                        new Timer() {
+                            final long startTime = System.currentTimeMillis();
+
                             public void run() {
                                 if (initializableView.isInitialized()) {
                                     ((BookmarkableView) currentCanvas).renderView(viewPath.next());
                                 } else {
                                     long elapsedMillis = System.currentTimeMillis() - startTime;
                                     if (elapsedMillis < 5000) {
-                                        // Reschedule the timer.
-                                        schedule(100);
+                                        schedule(100); // Reschedule the timer.
                                     }
                                 }
                             }
-                        };
-                        if (initializableView.isInitialized()) {
-                            ((BookmarkableView) currentCanvas).renderView(viewPath.next());
-                        } else {
-                            timer.schedule(100);
-                        }
+                        }.run(); // fire the timer immediately
                     } else {
                         ((BookmarkableView) currentCanvas).renderView(viewPath.next());
                     }

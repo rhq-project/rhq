@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
+import org.rhq.enterprise.gui.coregui.client.test.i18n.TestRemoteServiceStatisticsView;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -59,6 +60,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
+    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("Remote Service Statistics");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -127,6 +129,14 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem);
+        NavigationItem remoteServiceStatisticsItem = new NavigationItem(PAGE_REMOTE_SERVICE_STATISTICS, null,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new TestRemoteServiceStatisticsView(
+                        extendLocatorId(PAGE_REMOTE_SERVICE_STATISTICS.getName()));
+                }
+            });
+
+        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, remoteServiceStatisticsItem);
     }
 }

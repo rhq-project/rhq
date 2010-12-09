@@ -32,14 +32,14 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceComposit
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -102,6 +103,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryConnHistory;
     private SubTab inventoryGroups;
     private SubTab inventoryGroupMembership;
+    private SubTab inventoryAgent;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -123,7 +125,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
         summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), new ViewName("Summary", MSG
-            .view_tabs_common_summary()), "/images/icons/Service_up_16.png");
+            .view_tabs_common_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
         summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), new ViewName("Overview", MSG
             .view_tabs_common_overview()), null);
         summaryDashboard = new SubTab(summaryTab.extendLocatorId("Dashboard"), new ViewName("Dashboard", MSG
@@ -132,6 +134,35 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_timeline()), null);
         summaryTab.registerSubTabs(summaryOverview, summaryDashboard, summaryTimeline);
         tabs.add(summaryTab);
+
+        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
+            .view_tabs_common_inventory()), "/images/icons/Inventory_grey_16.png");
+        inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), new ViewName("Children", MSG
+            .view_tabs_common_child_resources()), null);
+        inventoryChildHistory = new SubTab(inventoryTab.extendLocatorId("ChildHist"), new ViewName("ChildHistory", MSG
+            .view_tabs_common_child_history()), null);
+        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
+            "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
+        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"), new ViewName(
+            "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
+        inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
+            .view_tabs_common_groups()), null);
+        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), new ViewName(
+            "GroupMembership", MSG.view_tabs_common_group_membership()), null);
+        inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
+            .view_tabs_common_agent()), null);
+        inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
+            this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership, this.inventoryAgent);
+        tabs.add(inventoryTab);
+
+        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
+            .view_tabs_common_alerts()), "/images/icons/Alert_grey_16.png");
+        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
+        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
+            .view_tabs_common_definitions()), null);
+        alertsTab.registerSubTabs(alertHistory, alertDef);
+        tabs.add(alertsTab);
 
         monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), new ViewName("Monitoring", MSG
             .view_tabs_common_monitoring()), "/images/icons/Monitor_grey_16.png");
@@ -151,23 +182,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             monitorCallTime);
         tabs.add(monitoringTab);
 
-        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
-            .view_tabs_common_inventory()), "/images/icons/Inventory_grey_16.png");
-        inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), new ViewName("Children", MSG
-            .view_tabs_common_child_resources()), null);
-        inventoryChildHistory = new SubTab(inventoryTab.extendLocatorId("ChildHist"), new ViewName("ChildHistory", MSG
-            .view_tabs_common_child_history()), null);
-        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
-            "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
-        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"), new ViewName(
-            "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
-        inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
-            .view_tabs_common_groups()), null);
-        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), new ViewName(
-            "GroupMembership", MSG.view_tabs_common_group_membership()), null);
-        inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
-            this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership);
-        tabs.add(inventoryTab);
+        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events", MSG
+            .view_tabs_common_events()), "/images/icons/Events_grey_16.png");
+        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
+        eventsTab.registerSubTabs(eventHistory);
+        tabs.add(eventsTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
@@ -178,15 +198,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         operationsTab.registerSubTabs(this.opHistory, this.opSched);
         tabs.add(operationsTab);
 
-        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
-            .view_tabs_common_alerts()), "/images/icons/Alert_grey_16.png");
-        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History", MSG
-            .view_tabs_common_history()), null);
-        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
-            .view_tabs_common_definitions()), null);
-        alertsTab.registerSubTabs(alertHistory, alertDef);
-        tabs.add(alertsTab);
-
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
             MSG.view_tabs_common_configuration()), "/images/icons/Configure_grey_16.png");
         this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), new ViewName("Current", MSG
@@ -195,13 +206,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_history()), null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
-
-        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events", MSG
-            .view_tabs_common_events()), "/images/icons/Events_grey_16.png");
-        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), new ViewName("History", MSG
-            .view_tabs_common_history()), null);
-        eventsTab.registerSubTabs(eventHistory);
-        tabs.add(eventsTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
             .view_tabs_common_content()), "/images/icons/Content_grey_16.png");
@@ -236,7 +240,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
-        Set<Permission> globalPermissions = UserPermissionsManager.getInstance().getGlobalPermissions();
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
@@ -302,6 +305,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
             resourceId) : null;
         updateSubTab(this.inventoryTab, this.inventoryGroupMembership, canvas, true, enabled);
+
+        //Agent subtab
+        canvas = (enabled) ? new ResourceResourceAgentView(this.inventoryTab.extendLocatorId("AgentView"), resourceId)
+            : null;
+        updateSubTab(this.inventoryTab, this.inventoryAgent, canvas, true, enabled);
 
         // Operations Tab
         if (updateTab(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION), true)) {
@@ -380,7 +388,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
         criteria.fetchTags(true);
-        //criteria.fetchParentResource(true);
+        criteria.fetchParentResource(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -397,14 +405,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                         onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
-                        // First load the user's permissions for the Resource.
-                        UserPermissionsManager.getInstance().loadResourcePermissions(resourceComposite,
-                            new PermissionsLoadedListener() {
-                                public void onPermissionsLoaded(Set<Permission> permissions) {
-                                    // Next load the Resource's type.
-                                    loadResourceType(resourceComposite, viewPath);
-                                }
-                            });
+                        loadResourceType(resourceComposite, viewPath);
                     }
                 }
             });

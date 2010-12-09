@@ -245,9 +245,4 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             }
         }
     }
-
-    protected static String addQueryStringParam(String url, String param) {
-        char separatorChar = (url.indexOf('?') == -1) ? '?' : '&';
-        return url + separatorChar + param;
-    }
 }

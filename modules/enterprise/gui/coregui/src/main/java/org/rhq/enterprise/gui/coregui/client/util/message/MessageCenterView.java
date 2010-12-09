@@ -60,7 +60,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     public MessageCenterView(String locatorId) {
         super(locatorId, 5);
         setHeight100();
-        setAlign(Alignment.LEFT);
+        //setAlign(Alignment.RIGHT);
         setAlign(VerticalAlignment.CENTER);
         setOverflow(Overflow.HIDDEN);
     }
@@ -72,9 +72,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         final Menu recentEventsMenu = new LocatableMenu(this.extendLocatorId("Messages"));
 
-        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"),
-            MSG.view_messageCenter_messageTitle(),
-            recentEventsMenu);
+        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), MSG
+            .view_messageCenter_messageTitle(), recentEventsMenu);
         recentEventsButton.setTop(5);
         recentEventsButton.setShowMenuBelow(false);
         recentEventsButton.setAutoFit(true);
@@ -110,8 +109,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         vl.setAlign(VerticalAlignment.CENTER);
         vl.addMember(recentEventsButton);
 
-        addMember(vl);
         addMember(new LayoutSpacer());
+        addMember(vl);
     }
 
     private void showDetails(Message message) {
@@ -202,36 +201,36 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         // TODO: Format the message better.
         String logMessage = message.toString();
         switch (message.getSeverity()) {
-            case Info:
-                Log.info(logMessage);
-                break;
-            case Warning:
-                Log.warn(logMessage);
-                break;
-            case Error:
-                Log.error(logMessage);
-                break;
-            case Fatal:
-                Log.fatal(logMessage);
-                break;
+        case Info:
+            Log.info(logMessage);
+            break;
+        case Warning:
+            Log.warn(logMessage);
+            break;
+        case Error:
+            Log.error(logMessage);
+            break;
+        case Fatal:
+            Log.fatal(logMessage);
+            break;
         }
     }
 
     private String getSeverityIcon(Message.Severity severity) {
         String iconSrc = null;
         switch (severity) {
-          case Info:
+        case Info:
             iconSrc = "info/icn_info_blue.png";
             break;
-          case Warning:
+        case Warning:
             iconSrc = "info/icn_info_orange.png";
             break;
-          case Error:
-          case Fatal:
+        case Error:
+        case Fatal:
             iconSrc = "info/icn_info_red.png";
             break;
         }
         return iconSrc;
     }
-    
+
 }

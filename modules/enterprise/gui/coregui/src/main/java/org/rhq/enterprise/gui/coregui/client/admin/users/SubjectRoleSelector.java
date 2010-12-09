@@ -23,7 +23,6 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -61,7 +60,7 @@ public class SubjectRoleSelector extends AbstractSelector<Role> {
 
     @Override
     protected String getItemTitle() {
-        return "role";
+        return MSG.common_title_roles();
     }
 
     @Override

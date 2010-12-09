@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -32,6 +31,8 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -40,17 +41,18 @@ import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
+import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -58,8 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
-    implements BookmarkableView, DetailsView {
+public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout implements
+    BookmarkableView, DetailsView {
 
     private static final Label LOADING_LABEL = new Label(MSG.widget_recordEditor_label_loading());
 
@@ -70,39 +72,38 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     private int recordId;
     private TitleBar titleBar;
-    private VLayout editCanvas;
     private EnhancedDynamicForm form;
     private DS dataSource;
-    private IButton saveButton;
-    private IButton resetButton;
     private boolean isReadOnly;
-    private VLayout bottomLayout;
     private String dataTypeName;
     private String listViewPath;
-    private boolean wasInvalid;
+    private ButtonBar buttonBar;
+    private LocatableVLayout contentPane;
+    private boolean postFetchHandlerExecutedAlready;
 
-    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
-                                String headerIcon) {
+    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName, String headerIcon) {
         super(locatorId);
         this.dataSource = dataSource;
         this.recordId = recordId;
         this.dataTypeName = capitalize(dataTypeName);
 
-        // Set properties for this VLayout.
-        setOverflow(Overflow.AUTO);
-        setPadding(7);
+        setLayoutMargin(0);
+        setMembersMargin(16);
 
         // Display a "Loading..." label at the top of the view to keep the user informed.
         addMember(LOADING_LABEL);
 
         // Add title bar. We'll set the actual title later.
-        this.titleBar = new TitleBar(null, headerIcon);
+        this.titleBar = new TitleBar(this, null, headerIcon);
         this.titleBar.hide();
         addMember(this.titleBar);
     }
 
     @Override
     public void renderView(ViewPath viewPath) {
+        // TODO: The below line is temporary until TableSection.renderView() advances the view id pointer as it should.
+        viewPath.next();
+
         String parentViewPath = viewPath.getParentViewPath();
         if (!viewPath.isEnd()) {
             CoreGUI.getErrorHandler().handleError(MSG.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
@@ -120,15 +121,21 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      */
     protected void init(boolean isReadOnly) {
         if (this.recordId == ID_NEW && isReadOnly) {
-            Message message =
-                new Message("You do not have the permissions required to create a new " + this.dataTypeName + ".",
-                    Message.Severity.Error);
+            Message message = new Message(MSG.widget_recordEditor_error_permissionCreate(this.dataTypeName),
+                Message.Severity.Error);
             CoreGUI.goToView(getListViewPath(), message);
         } else {
             this.isReadOnly = isReadOnly;
-            this.editCanvas = buildEditor();
-            this.editCanvas.hide();
-            addMember(this.editCanvas);
+
+            this.contentPane = buildContentPane();
+            this.contentPane.hide();
+            addMember(this.contentPane);
+
+            this.buttonBar = buildButtonBar();
+            if (this.buttonBar != null) {
+                this.buttonBar.hide();
+                addMember(this.buttonBar);
+            }
 
             if (this.recordId == ID_NEW) {
                 editNewRecord();
@@ -141,134 +148,111 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         }
     }
 
-    private VLayout buildEditor() {
-        VLayout editorVLayout = new VLayout();
+    protected LocatableVLayout buildContentPane() {
+        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
+        contentPane.setWidth100();
+        contentPane.setHeight100();
+        contentPane.setOverflow(Overflow.AUTO);
+        //contentPane.setPadding(7);
 
+        this.form = buildForm();
+        contentPane.addMember(this.form);
+
+        return contentPane;
+    }
+
+    protected ButtonBar buildButtonBar() {
+        if (this.isReadOnly) {
+            return null;
+        }
+
+        return new ButtonBar();
+    }
+
+    protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        this.form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewRecord);
-        this.form.setDataSource(this.dataSource);
+        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);
+        form.setDataSource(this.dataSource);
 
-        List<FormItem> items = createFormItems(isNewRecord);
-        this.form.setItems(items.toArray(new FormItem[items.size()]));
+        List<FormItem> items = createFormItems(form);
+        form.setFields(items.toArray(new FormItem[items.size()]));
 
-        this.form.addItemChangedHandler(new ItemChangedHandler() {
+        form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent event) {
                 AbstractRecordEditor.this.onItemChanged();
             }
         });
 
-        editorVLayout.addMember(this.form);
-
-        this.bottomLayout = new VLayout();
-        editorVLayout.addMember(this.bottomLayout);
-
-        if (!this.isReadOnly) {
-            VLayout verticalSpacer = new VLayout();
-            verticalSpacer.setHeight(12);
-            editorVLayout.addMember(verticalSpacer);
-
-            HLayout buttonLayout = createButtons();
-
-            editorVLayout.addMember(buttonLayout);
-        }
-
-        return editorVLayout;
-    }
-
-    private HLayout createButtons() {
-        HLayout buttonLayout = new HLayout(10);
-
-        saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
-        saveButton.setDisabled(true);
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                save();
-            }
-        });
-
-        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MSG.common_button_reset());
-        resetButton.setDisabled(true);
-        resetButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                reset();
-                resetButton.disable();
-            }
-        });
-
-        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
-        cancelButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                History.back();
-            }
-        });
-
-        buttonLayout.addMember(saveButton);
-        buttonLayout.addMember(resetButton);
-        buttonLayout.addMember(cancelButton);
-        return buttonLayout;
-    }
-
-    public VLayout getBottomLayout() {
-        return bottomLayout;
-    }
-
-    public EnhancedDynamicForm getForm() {
         return form;
     }
 
+    protected boolean isFormReadOnly() {
+        return this.isReadOnly;
+    }
+
+    public LocatableVLayout getContentPane() {
+        return this.contentPane;
+    }
+
+    public void setForm(EnhancedDynamicForm form) {
+        this.form = form;
+    }
+
+    public EnhancedDynamicForm getForm() {
+        return this.form;
+    }
+
     public DS getDataSource() {
-        return dataSource;
+        return this.dataSource;
     }
 
     public boolean isReadOnly() {
-        return isReadOnly;
+        return this.isReadOnly;
     }
 
     public int getRecordId() {
-        return recordId;
+        return this.recordId;
     }
 
     public String getListViewPath() {
-        return listViewPath;
+        return this.listViewPath;
     }
 
-    protected abstract List<FormItem> createFormItems(boolean newUser);
+    protected abstract List<FormItem> createFormItems(EnhancedDynamicForm form);
 
     /**
      * This method should be called whenever any editable item on the page is changed. It will enable the Reset button
      * and update the Save button's enablement based on whether or not all items on the form are valid.
      */
     public void onItemChanged() {
-        // TODO: We also need to validate complex fields - selectors, etc.
-        boolean isValid = this.form.valuesAreValid(false);
-
         // If we're in editable mode, update the button enablement.
         if (!this.isReadOnly) {
-            this.saveButton.setDisabled(!isValid);
-            this.resetButton.setDisabled(false);
-            if (!isValid) {
-                this.wasInvalid = true;
-                Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
-                    + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
-                    Message.Option.Sticky, Message.Option.Transient));
-                CoreGUI.getMessageCenter().notify(message);
-            } else {
-                if (this.wasInvalid) {
-                    Message message = new Message("All fields now have valid values. This " + this.dataTypeName
-                        + " can now be saved.", Message.Severity.Info, EnumSet.of(Message.Option.Sticky,
-                        Message.Option.Transient));
-                    CoreGUI.getMessageCenter().notify(message);
-                    this.wasInvalid = false;
-                }
+            IButton saveButton = this.buttonBar.getSaveButton();
+            if (saveButton.isDisabled()) {
+                saveButton.setDisabled(false);
+                CanvasUtility.blink(saveButton);
+            }
+
+            IButton resetButton = this.buttonBar.getResetButton();
+            if (resetButton.isDisabled()) {
+                resetButton.setDisabled(false);
+                CanvasUtility.blink(resetButton);
             }
         }
     }
 
     protected void reset() {
-        this.form.reset();
+        this.form.resetValues();
     }
 
     protected void save() {
+        if (!this.form.validate()) {
+            Message message = new Message(MSG.widget_recordEditor_warn_validation(this.dataTypeName),
+                Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+            CoreGUI.getMessageCenter().notify(message);
+            return;
+        }
+
         this.form.saveData(new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
                 if (response.getStatus() == RPCResponse.STATUS_SUCCESS) {
@@ -291,60 +275,48 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                         }
                     }
                     switch (operationType) {
-                        case ADD:
-                            conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
-                            detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
-                            if (CoreGUI.isDebugMode()) {
-                                conciseMessage += " (" + FIELD_ID + "=" + id + ")";
-                                detailedMessage += " (" + FIELD_ID + "=" + id + ")";
-                            }
-                            break;
-                        case UPDATE:
-                            conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
-                            detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
-                            break;
-                        default:
-                            throw new IllegalStateException(
-                                MSG.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
+                    case ADD:
+                        conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
+                        detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
+                        if (CoreGUI.isDebugMode()) {
+                            conciseMessage += " (" + FIELD_ID + "=" + id + ")";
+                            detailedMessage += " (" + FIELD_ID + "=" + id + ")";
+                        }
+                        break;
+                    case UPDATE:
+                        conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
+                        detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
+                        break;
+                    default:
+                        throw new IllegalStateException(MSG
+                            .widget_recordEditor_error_unsupportedOperationType(operationType.name()));
                     }
 
                     message = new Message(conciseMessage, detailedMessage);
                     CoreGUI.goToView(getListViewPath(), message);
                 } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
-                    Message message = new Message("Operation failed - one or more fields have invalid values.",
+                    Message message = new Message(MSG.widget_recordEditor_error_operationInvalidValues(),
                         Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 } else {
-                    // assume failure
-                    Message message = new Message("Operation failed - an error occurred.", Message.Severity.Error);
+                    // assume failure                    
+                    Message message = new Message(MSG.widget_recordEditor_error_operation(), Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 }
             }
         });
     }
 
-    @SuppressWarnings("unchecked")
-    protected void editRecord(Record record) {
-        // Update the view title.
-        String recordName = record.getAttribute(getTitleFieldName());
-        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
-            MSG.widget_recordEditor_title_edit(this.dataTypeName, recordName);
-        this.titleBar.setTitle(title);
-
-        // Load the data into the form.
-        this.form.editRecord(record);
-
-        // Perform up front validation for existing records.
-        // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.
-        this.form.validate();
-    }
-
     protected void editNewRecord() {
         // Update the view title.
-        this.titleBar.setTitle("New " + this.dataTypeName);
+        this.titleBar.setTitle(MSG.widget_recordEditor_title_new(this.dataTypeName));
 
-        // Clear the form
-        this.form.editNewRecord();
+        // Create a new record.
+        Record record = createNewRecord();
+
+        // And populate the form with it.
+        this.form.editRecord(record);
+        this.form.setSaveOperationType(DSOperationType.ADD);
 
         // But make sure the value of the "id" field is set to "0", since a value of null could cause the dataSource's
         // copyValues(Record) impl to choke.
@@ -353,12 +325,50 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             idItem.setDefaultValue(ID_NEW);
             idItem.hide();
         }
+
+        editRecord(record);
+    }
+
+    protected void editExistingRecord(Record record) {
+        // Update the view title.
+        String recordName = record.getAttribute(getTitleFieldName());
+        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) : MSG
+            .widget_recordEditor_title_edit(this.dataTypeName, recordName);
+        this.titleBar.setTitle(title);
+
+        // Load the data into the form.
+        this.form.editRecord(record);
+
+        // Perform up front validation for existing records.
+        // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.
+        this.form.validate();
+
+        editRecord(record);
+    }
+
+    /**
+     * Initialize the editor with the data from the passed record. This method will be called for both new records
+     * (after the record has been created by {@link #createNewRecord()}) and existing records (after the record has
+     * been fetched by {@link #fetchExistingRecord(int)}.
+     *
+     * @param record the record
+     */
+    protected void editRecord(Record record) {
+    }
+
+    // Subclasses will generally want to override this.
+    protected Record createNewRecord() {
+        return new ListGridRecord();
     }
 
     private void displayForm() {
-        LOADING_LABEL.hide();
-        this.titleBar.show();
-        this.editCanvas.show();
+        removeMember(LOADING_LABEL);
+        LOADING_LABEL.destroy();
+
+        for (Canvas member : getMembers()) {
+            member.show();
+        }
+
         markForRedraw();
     }
 
@@ -367,19 +377,25 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         criteria.addCriteria(FIELD_ID, recordId);
         this.form.fetchData(criteria, new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
-                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
-                    Record[] records = response.getData();
-                    if (records.length == 0) {
-                        throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
-                    }
-                    if (records.length > 1) {
-                        throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
-                    }
-                    Record record = records[0];
-                    editRecord(record);
+                // The below check is a workaround for a SmartGWT bug, where it calls the execute() method on this
+                // callback twice, rather than once.
+                // TODO: Remove it once the SmartGWT bug has been fixed.
+                if (!postFetchHandlerExecutedAlready) {
+                    postFetchHandlerExecutedAlready = true;
+                    if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                        Record[] records = response.getData();
+                        if (records.length == 0) {
+                            throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
+                        }
+                        if (records.length > 1) {
+                            throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
+                        }
+                        Record record = records[0];
+                        editExistingRecord(record);
 
-                    // Now that all the widgets have been created and initialized, make everything visible.
-                    displayForm();
+                        // Now that all the widgets have been created and initialized, make everything visible.
+                        displayForm();
+                    }
                 }
             }
         });
@@ -398,13 +414,76 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
         for (int i = ID_NEW, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
             Record roleRecord = roleRecords[i];
-            roleListGridRecords[i] = (ListGridRecord)roleRecord;
+            roleListGridRecords[i] = (ListGridRecord) roleRecord;
         }
         return roleListGridRecords;
     }
-    
+
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(ID_NEW)) + itemTitle.substring(1);
     }
-    
+
+    protected class ButtonBar extends LocatableToolStrip {
+
+        private IButton saveButton;
+        private IButton resetButton;
+        private IButton cancelButton;
+
+        ButtonBar() {
+            super(AbstractRecordEditor.this.extendLocatorId("ButtonBar"));
+
+            setWidth100();
+            setHeight(35);
+
+            LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
+            vLayout.setAlign(VerticalAlignment.CENTER);
+            vLayout.setLayoutMargin(4);
+
+            LocatableHLayout hLayout = new LocatableHLayout(vLayout.extendLocatorId("HLayout"));
+            hLayout.setMembersMargin(10);
+            vLayout.addMember(hLayout);
+
+            saveButton = new LocatableIButton(extendLocatorId("Save"), MSG.common_button_save());
+            saveButton.setDisabled(true);
+            saveButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    save();
+                }
+            });
+            hLayout.addMember(saveButton);
+
+            resetButton = new LocatableIButton(extendLocatorId("Reset"), MSG.common_button_reset());
+            resetButton.setDisabled(true);
+            resetButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    reset();
+                    resetButton.disable();
+                }
+            });
+            hLayout.addMember(resetButton);
+
+            cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    CoreGUI.goToView(getListViewPath());
+                }
+            });
+            hLayout.addMember(cancelButton);
+
+            addMember(vLayout);
+        }
+
+        public IButton getCancelButton() {
+            return cancelButton;
+        }
+
+        public IButton getResetButton() {
+            return resetButton;
+        }
+
+        public IButton getSaveButton() {
+            return saveButton;
+        }
+    }
+
 }

@@ -39,7 +39,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     public static final String KEY = MSG.view_portlet_tagCloud_title();
 
     public TagCloudPortlet(String locatorId) {
-        super(locatorId, true);
+        super(locatorId);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

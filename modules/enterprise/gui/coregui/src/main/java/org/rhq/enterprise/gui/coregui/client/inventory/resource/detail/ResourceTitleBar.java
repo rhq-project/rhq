@@ -33,21 +33,18 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
@@ -56,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.O
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -71,9 +67,14 @@ public class ResourceTitleBar extends LocatableVLayout {
     private LocatableHLayout top;
     //represents normally closed region of Resource details[to verbosely describe resource across all tabs]
     private LocatableHLayout details;
-    private static String COMPONENT_ERROR_COUNT_MSG = MSG.common_title_component_errors();
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
+    private static final String EXPANDED_ICON = "[SKIN]/ListGrid/row_expanded.png";
+    private static final String COLLAPSED_ICON = "[SKIN]/ListGrid/row_collapsed.png";
+    private static final String COLLAPSED_TOOLTIP = MSG.view_portlet_inventory_tooltip_expand();
+    private static final String EXPANDED_TOOLTIP = MSG.view_portlet_inventory_tooltip_collapse();
+    private static final String PLUGIN_ERRORS_ICON = "[SKIN]/Dialog/warn.png";
+    private Img expandCollapseArrow;
 
     private Resource resource;
     private ResourceComposite resourceComposite;
@@ -85,26 +86,24 @@ public class ResourceTitleBar extends LocatableVLayout {
     private boolean favorite;
     private LocatableHLayout detailsForm;
     private OverviewForm detailsFormSummary;
-    private LinkItem pluginErrors;
+    private Img pluginErrors;
 
     public ResourceTitleBar(String locatorId) {
         super(locatorId);
         //define two rows of content
         top = new LocatableHLayout(locatorId + "_Top");
-        top.setPadding(5);
-        top.setMembersMargin(5);
+        top.setPadding(0);
+        top.setMembersMargin(0);
         top.setHeight(30);
 
         details = new LocatableHLayout(locatorId + "_Details");
         details.setWidth100();
-        details.setHeight(10);//initialize to small amount of pixels
 
         //modify VLayout settings
         setWidth100();
         setHeight(30);
-        setPadding(0);
         setMembersMargin(0);
-        setLayoutMargin(0);
+        setPadding(5);
     }
 
     public void update() {
@@ -116,7 +115,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         this.title = new HTMLFlow();
         this.title.setWidth("*");
 
-        this.availabilityImage = new Img("resources/availability_grey_24.png", 24, 24);
+        this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
         this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
 
@@ -127,7 +126,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             }
         });
 
-        badge = new Img("types/Service_up_24.png", 24, 24);
+        badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
 
         TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
             new TagsChangedCallback() {
@@ -152,10 +151,31 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         loadTags(tagEditorView);
 
-        //creating link to put in resource title bar
-        pluginErrors = new LinkItem("plugin-errors");
-        pluginErrors.setTitle("");
-        pluginErrors.setLinkTitle(COMPONENT_ERROR_COUNT_MSG + " (0)");
+        //add expand/collapse icon
+        expandCollapseArrow = new Img(COLLAPSED_ICON, 16, 16);
+        expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
+        expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
+        expandCollapseArrow.addClickHandler(new ClickHandler() {
+            private boolean collapsed = true;
+
+            @Override
+            public void onClick(ClickEvent event) {
+                collapsed = !collapsed;
+                if (collapsed) {
+                    expandCollapseArrow.setSrc(COLLAPSED_ICON);
+                    expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
+                    details.hide();
+                } else {
+                    expandCollapseArrow.setSrc(EXPANDED_ICON);
+                    expandCollapseArrow.setTooltip(EXPANDED_TOOLTIP);
+                    details.show();
+                }
+                ResourceTitleBar.this.markForRedraw();
+            }
+        });
+
+        pluginErrors = new Img(PLUGIN_ERRORS_ICON, 24, 24);
+        pluginErrors.hide();
         GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
             new AsyncCallback<List<ResourceError>>() {
                 public void onFailure(Throwable caught) {
@@ -165,11 +185,8 @@ public class ResourceTitleBar extends LocatableVLayout {
                 }
 
                 public void onSuccess(List<ResourceError> result) {
-                    if (result.isEmpty()) {
-                        pluginErrors.setLinkTitle(COMPONENT_ERROR_COUNT_MSG + " (" + result.size() + ")");
-                    } else {
-                        pluginErrors.setLinkTitle("<font color='red'>" + COMPONENT_ERROR_COUNT_MSG + " ("
-                            + result.size() + ")</font>");
+                    if (!result.isEmpty()) {
+                        pluginErrors.show();
                     }
                     markForRedraw();
                 }
@@ -177,11 +194,9 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         //define tool tip
         pluginErrors.setPrompt(MSG.view_resource_title_component_errors_tooltip());
-
-        //define click action to pop open detailed view of Component plugin errors
-        pluginErrors.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+        pluginErrors.addClickHandler(new ClickHandler() {
             @Override
-            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
+            public void onClick(ClickEvent event) {
                 final Window winModal = new Window();
                 winModal.setShowMinimizeButton(false);
                 winModal.setShowModalMask(true);
@@ -216,54 +231,27 @@ public class ResourceTitleBar extends LocatableVLayout {
         });
 
         //top information
+        top.addMember(expandCollapseArrow);
         top.addMember(badge);
         top.addMember(title);
-        top.addMember(tagEditorView);
-        DynamicForm wrappedPluginErrors = new DynamicForm();
-        wrappedPluginErrors.setFields(pluginErrors);
-        top.addMember(wrappedPluginErrors);
+        top.addMember(pluginErrors);
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
 
-        //detail information
-        //checkbox
-        final CheckboxItem displayMore = new CheckboxItem();
-        final String moreDetails = MSG.common_title_show_more();
-        displayMore.setName("resourceDetails");
-        displayMore.setTitle(moreDetails);
-        displayMore.setWidth(120);
-        //conditionally expand more details section.
-        displayMore.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent event) {
-                Boolean displayMoreDetails = (Boolean) event.getValue();
-                if (displayMoreDetails) {
-                    detailsFormSummary.show();
-                } else {
-                    detailsFormSummary.hide();
-                }
-                markForRedraw();
-            }
-        });
-
-        //wrap checkbox for inclusion in details form.
-        LocatableDynamicForm wrappedCheckbox = new LocatableDynamicForm(extendLocatorId("Title_Bar_Checkbox"));
-        wrappedCheckbox.setFields(displayMore);
         detailsForm = new LocatableHLayout(extendLocatorId("_Resource_Details"));
         detailsForm.setWidth100();
         detailsForm.setHeight(10);
         detailsForm.setAlign(Alignment.LEFT);
-        detailsForm.addMember(wrappedCheckbox);
 
         detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite);
         detailsFormSummary.setWidth100();
-        detailsFormSummary.setPadding(0);
-        detailsFormSummary.setMargin(0);
+        detailsFormSummary.setPadding(3);
+        detailsFormSummary.setMargin(3);
         detailsFormSummary.setLayoutAlign(Alignment.LEFT);
 
         //condense details for display
         detailsFormSummary.setHeaderEnabled(false);
         detailsFormSummary.setDisplayCondensed(true);
-        detailsFormSummary.hide();
         detailsForm.addMember(detailsFormSummary);
 
         SpacerItem widthSpace = new SpacerItem();
@@ -272,12 +260,13 @@ public class ResourceTitleBar extends LocatableVLayout {
         wrappedSpacer.setFields(widthSpace);
         detailsForm.addMember(wrappedSpacer);
         details.addChild(detailsForm);
+        details.hide();
 
         //order the components
         addMember(top);
+        addMember(tagEditorView);
         addMember(details);
-        top.markForRedraw();
-        details.markForRedraw();
+        ResourceTitleBar.this.markForRedraw();
     }
 
     private void loadTags(final TagEditorView tagEditorView) {
@@ -300,7 +289,7 @@ public class ResourceTitleBar extends LocatableVLayout {
     }
 
     public void setResource(ResourceComposite resourceComposite) {
-        if (this.resource == null || this.resource.getId() != resource.getId()) {
+        if (this.resourceComposite == null || resourceComposite.getResource().getId() != this.resource.getId()) {
             this.resource = resourceComposite.getResource();
             this.resourceComposite = resourceComposite;
             update();
@@ -312,16 +301,10 @@ public class ResourceTitleBar extends LocatableVLayout {
             this.favorite = favorites.contains(resource.getId());
             updateFavoriteButton();
 
-            this.availabilityImage.setSrc("resources/availability_"
-                + (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red")
-                + "_24.png");
+            this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
+                .getCurrentAvailability().getAvailabilityType()));
 
-            String category = this.resource.getResourceType().getCategory().getDisplayName();
-
-            String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
-                .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
-                .toLowerCase()) : "down";
-            badge.setSrc("types/" + category + "_" + avail + "_24.png");
+            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource));
 
             markForRedraw();
         }

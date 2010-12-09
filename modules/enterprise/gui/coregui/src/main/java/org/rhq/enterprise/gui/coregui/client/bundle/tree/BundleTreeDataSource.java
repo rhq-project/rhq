@@ -166,14 +166,14 @@ public class BundleTreeDataSource extends RPCDataSource {
     }
 
     @Override
-    public ListGridRecord[] buildRecords(Collection list) {
-        if (list == null) {
+    public ListGridRecord[] buildRecords(Collection dataObjects) {
+        if (dataObjects == null) {
             return null;
         }
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
-        for (Object item : list) {
+        for (Object item : dataObjects) {
             records.add(copyValues(item));
             if (item instanceof Bundle) {
                 Bundle bundle = (Bundle) item;

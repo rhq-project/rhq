@@ -50,7 +50,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -270,15 +269,19 @@ public abstract class RPCDataSource<T> extends DataSource {
         response.setTotalRows(totalRows);
     }
 
-    public ListGridRecord[] buildRecords(Collection<T> list) {
-        if (list == null) {
+    public ListGridRecord[] buildRecords(Collection<T> dataObjects) {
+        return buildRecords(dataObjects, true);
+    }
+
+    public ListGridRecord[] buildRecords(Collection<T> dataObjects, boolean cascade) {
+        if (dataObjects == null) {
             return null;
         }
 
-        ListGridRecord[] records = new ListGridRecord[list.size()];
+        ListGridRecord[] records = new ListGridRecord[dataObjects.size()];
         int i = 0;
-        for (T item : list) {
-            records[i++] = copyValues(item);
+        for (T item : dataObjects) {
+            records[i++] = copyValues(item, cascade);
         }
         return records;
     }
@@ -348,6 +351,10 @@ public abstract class RPCDataSource<T> extends DataSource {
     // TODO (ips): This really should return Records, rather than ListGridRecords, so the DataSource is not specific to
     //             ListGrids, but that will require a lot of refactoring at this point...
     public abstract ListGridRecord copyValues(T from);
+
+    public ListGridRecord copyValues(T from, boolean cascade) {
+        return copyValues(from);
+    }
 
     /**
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>
@@ -475,6 +482,8 @@ public abstract class RPCDataSource<T> extends DataSource {
                 result = (S) strValue;
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
+            } else if (type == Long.class) {
+                result = (S) Long.valueOf(strValue);
             } else if (type.isEnum()) {
                 result = (S) Enum.valueOf((Class<? extends Enum>) type, strValue);
             } else {
@@ -507,17 +516,9 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setRequired(required);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         valueMap.put(Boolean.TRUE.toString(), MSG.common_val_yes_lower());
-        valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());        
+        valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());
         textField.setValueMap(valueMap);
         return textField;
-    }
-
-    /** Quick method to determine if current user is still logged in.
-     *  
-     * @return boolean indication of logged in status.
-     */
-    protected boolean userStillLoggedIn() {
-        return UserSessionManager.isLoggedIn();
     }
 
 }

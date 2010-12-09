@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -37,6 +38,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
@@ -45,19 +47,23 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-public class InventorySummaryView extends LocatableVLayout implements Portlet {
+public class InventorySummaryPortlet extends LocatableVLayout implements AutoRefreshPortlet {
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
     public static final String KEY = MSG.common_title_summary_counts();
+    private Timer reloader;
 
-    public InventorySummaryView(String locatorId) {
+    public InventorySummaryPortlet(String locatorId) {
         super(locatorId);
 
         loadInventoryViewDiata();
     }
 
     private void loadInventoryViewDiata() {
+        for (Canvas child : getChildren()) {
+            child.destroy();
+        }
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_portlet_inventory_error1(), throwable);
@@ -145,8 +151,10 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
     @Override
     public void redraw() {
         super.redraw();
-        //destroy form
-        form.destroy();
+        if (form != null) {
+            //destroy form
+            form.destroy();
+        }
         //now reload the data
         loadInventoryViewDiata();
     }
@@ -156,7 +164,19 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
 
         public final Portlet getInstance(String locatorId) {
             // return GWT.create(InventorySummaryView.class);
-            return new InventorySummaryView(locatorId);
+            return new InventorySummaryPortlet(locatorId);
         }
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 }

@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * A JON resource category.
+ * An individual resource category.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +41,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -48,6 +50,7 @@ import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -59,6 +62,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
+
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(RoleManagerBean.class);
 
@@ -77,6 +81,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @EJB
     @IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
+
+    @EJB
+    @IgnoreDependency
+    private LdapGroupManagerLocal ldapGroupManager;
 
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesBySubject(int subjectId,PageControl pageControl)
@@ -130,8 +138,21 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Role createRole(Subject subject, Role newRole) {
+        // TODO (ips): Do we want to enforce uniqueness of the Role name?
+
+        if (newRole.getFsystem()) {
+            throw new IllegalArgumentException("Unable to create role [" + newRole.getName()
+                + "] - new system roles cannot be created.");
+        }
         processDependentPermissions(newRole);
+
+        Set<LdapGroup> ldapGroups = newRole.getLdapGroups();
+        for (LdapGroup ldapGroup : ldapGroups) {
+            ldapGroup.setRole(newRole);
+        }
+
         entityManager.persist(newRole);
+
         return newRole;
     }
 
@@ -332,12 +353,84 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#updateRole(Subject, Role)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Role updateRole(Subject subject, Role role) {
-        processDependentPermissions(role);
-        Role updatedRole = entityManager.merge(role);
-        // Load the roles
-        updatedRole.getResourceGroups().size();
-        return updatedRole;
+    public Role updateRole(Subject whoami, Role role) {
+        Role attachedRole = entityManager.find(Role.class, role.getId());
+        if (attachedRole == null) {
+            throw new IllegalStateException("Cannot update " + role + ", since no role exists with that id.");
+        }
+
+        // First update the simple fields and the permissions.
+        attachedRole.setName(role.getName());
+        attachedRole.setDescription(role.getDescription());
+        attachedRole.setPermissions(role.getPermissions());
+        processDependentPermissions(attachedRole);
+
+        // Then update the subjects, resourceGroups, and/or ldapGroups, but only if those fields are non-null on the
+        // passed-in Role.
+        Set<Subject> newSubjects = role.getSubjects();
+        if (newSubjects != null) {
+            Set<Subject> currentSubjects = attachedRole.getSubjects();
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<Subject> subjectsToRemove = new HashSet<Subject>(currentSubjects);
+            for (Subject subject : currentSubjects) {
+                // Never remove a system user.
+                if (subject.getFsystem()) {
+                    subjectsToRemove.remove(subject);
+                }
+            }
+            for (Subject subject : subjectsToRemove) {
+                attachedRole.removeSubject(subject);
+            }
+
+            for (Subject subject : newSubjects) {
+                Subject attachedSubject = entityManager.find(Subject.class, subject.getId());
+                attachedRole.addSubject(attachedSubject);
+            }
+        }
+
+        Set<ResourceGroup> newResourceGroups = role.getResourceGroups();
+        if (newResourceGroups != null) {
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<ResourceGroup> currentResourceGroups = new HashSet<ResourceGroup>(attachedRole.getResourceGroups());
+            for (ResourceGroup resourceGroup : currentResourceGroups) {
+                attachedRole.removeResourceGroup(resourceGroup);
+            }
+
+            for (ResourceGroup resourceGroup : newResourceGroups) {
+                ResourceGroup attachedResourceGroup = entityManager.find(ResourceGroup.class, resourceGroup.getId());
+                attachedRole.addResourceGroup(attachedResourceGroup);
+            }
+        }
+
+        Set<LdapGroup> newLdapGroups = role.getLdapGroups();
+        if (newLdapGroups != null) {
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<LdapGroup> currentLdapGroups = new HashSet<LdapGroup>(attachedRole.getLdapGroups());
+            for (LdapGroup ldapGroup : currentLdapGroups) {
+                if (!newLdapGroups.contains(ldapGroup)) {
+                    attachedRole.removeLdapGroup(ldapGroup);
+                    entityManager.remove(ldapGroup);
+                }
+            }
+
+            for (LdapGroup ldapGroup : newLdapGroups) {
+                LdapGroup attachedLdapGroup = (ldapGroup.getId() != 0) ?
+                    entityManager.find(LdapGroup.class, ldapGroup.getId()) : null;
+                if (attachedLdapGroup == null) {
+                    ldapGroup.setRole(attachedRole);
+                    entityManager.persist(ldapGroup);
+                    attachedLdapGroup = ldapGroup;
+                }
+                attachedRole.addLdapGroup(attachedLdapGroup);
+            }
+        }
+
+        // Fetch the lazy Sets on the Role to be returned.
+        attachedRole.getResourceGroups().size();
+        attachedRole.getSubjects().size();
+        attachedRole.getLdapGroups().size();
+
+        return attachedRole;
     }
 
     /**
@@ -489,7 +582,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds) {
-
         Role role = getRole(subject, roleId);
         List<Integer> currentGroups = new ArrayList<Integer>();
         for (ResourceGroup group : role.getResourceGroups()) {
@@ -498,26 +590,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         List<Integer> newGroups = ArrayUtils.wrapInList(groupIds); // members needing addition
         newGroups.removeAll(currentGroups);
-        if (newGroups.size() > 0) {
-            int[] newGroupIds = new int[newGroups.size()];
-            int i = 0;
-            for (Integer id : newGroups) {
-                newGroupIds[i++] = id;
-            }
-            roleManager.addResourceGroupsToRole(subject, roleId, newGroupIds);
-        }
+        int[] newGroupIds = ArrayUtils.unwrapCollection(newGroups);
+        roleManager.addResourceGroupsToRole(subject, roleId, newGroupIds);
 
         List<Integer> removedGroups = new ArrayList<Integer>(currentGroups); // members needing removal
         removedGroups.removeAll(ArrayUtils.wrapInList(groupIds));
-        if (removedGroups.size() > 0) {
-            int[] removedGroupIds = new int[removedGroups.size()];
-            int i = 0;
-            for (Integer id : removedGroups) {
-                removedGroupIds[i++] = id;
-            }
-
-            roleManager.removeResourceGroupsFromRole(subject, roleId, removedGroupIds);
-        }
+        int[] removedGroupIds = ArrayUtils.unwrapCollection(removedGroups);
+        roleManager.removeResourceGroupsFromRole(subject, roleId, removedGroupIds);
     }
 
     private void processDependentPermissions(Role role) {
@@ -526,14 +605,28 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
          * automagically give all permissions to users that are explicitly given the MANAGE_SECURITY permission
          */
         if (role.getPermissions().contains(Permission.MANAGE_SECURITY)) {
-            role.getPermissions().addAll(Arrays.asList(Permission.values()));
+            role.getPermissions().addAll(EnumSet.allOf(Permission.class));
+        }
+
+        /*
+         * similarly, MANAGE_INVENTORY implies all Resource perms
+         */
+        if (role.getPermissions().contains(Permission.MANAGE_INVENTORY)) {
+            role.getPermissions().addAll(Permission.RESOURCE_ALL);
         }
 
         /*
          * write-access implies read-access
          */
-        if ((role.getPermissions().contains(Permission.CONFIGURE_WRITE))) {
+        if (role.getPermissions().contains(Permission.CONFIGURE_WRITE)) {
             role.getPermissions().add(Permission.CONFIGURE_READ);
+        }
+
+        /*
+         * and lack of read-access implies lack of write-access
+         */
+        if (!role.getPermissions().contains(Permission.CONFIGURE_READ)) {
+            role.getPermissions().remove(Permission.CONFIGURE_WRITE);
         }
     }
 
@@ -656,9 +749,11 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner<Role>(criteria, generator, entityManager);
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        PageList<Role> roles = queryRunner.execute();
 
-        CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
-        return queryRunner.execute();
+        return roles;
     }
 
 }

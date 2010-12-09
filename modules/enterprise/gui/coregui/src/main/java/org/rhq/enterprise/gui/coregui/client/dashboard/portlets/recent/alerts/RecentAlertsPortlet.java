@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -59,10 +61,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  * @author Simeon Pinder
  * @author Greg Hinkle
  */
-public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet {
+public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     public static final String KEY = MSG.view_portlet_recentAlerts_title();
-    public static final String TITLE = KEY;
     //widget keys also used in form population
     public static final String ALERT_RANGE_DISPLAY_AMOUNT_VALUE = "alert-range-display-amount-value";
     public static final String ALERT_RANGE_PRIORITY_VALUE = "alert-range-priority-value";
@@ -100,6 +101,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     //instance ui widgets
     private Canvas containerCanvas;
     private LocatableHLayout resourceSelectionLabelRow;
+    private Timer reloader;
 
     public RecentAlertsPortlet(String locatorId) {
         super(locatorId);
@@ -111,6 +113,14 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowHeader(false);
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
+        setShowFilterForm(false); //disable filter form for portlet
+    }
+
+    @Override
+    public void showDetails(int id) {
+        // the way our superclass AlertDetailsView is impl'ed, we can't view details from portlet
+        // so disallow showing details
+        return;
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -512,7 +522,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
                 PropertySimple prop = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE);
 
                 //check to see if "Selected Resources" or "All Resources"
-                if (prop.getStringValue().equals(RESOURCES_SELECTED)) {
+                if (prop != null && RESOURCES_SELECTED.equals(prop.getStringValue())) {
                     //retrieve currentlyAssignedIds
                     Integer[] valuesToPersist = resourceSelector.getListGridValues();
                     resourceSelector.setCurrentlyAssignedIds(valuesToPersist);
@@ -561,6 +571,18 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         public final Portlet getInstance(String locatorId) {
             return new RecentAlertsPortlet(locatorId);
         }
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                refresh();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 }
 
@@ -631,11 +653,7 @@ class AlertResourceSelectorRegion {
                             }
                         }
                         //simulate 'add' button push.
-                        selector.addAvailableGridSelectionsToAssignedGrid();
-                        selector.getAssignedGrid().invalidateCache();
-                        selector.getAssignedGrid().markForRedraw();
-                    } else {//no selected resources found
-                        selector.getAvailableGrid().setEmptyMessage(MSG.common_msg_noItemsToShow());
+                        selector.addSelectedRows();
                     }
                 }
             });

@@ -207,7 +207,7 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
         // get all known architectures
         GWTServiceLookup.getContentService().getArchitectures(new AsyncCallback<List<Architecture>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to get available Architectures", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_infoStep_loadFail(), caught);
             }
 
             public void onSuccess(List<Architecture> result) {

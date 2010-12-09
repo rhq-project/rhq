@@ -26,7 +26,6 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -51,8 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceConfigurationEditView extends LocatableVLayout
-    implements PropertyValueChangeListener, RefreshableView {
+public class ResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
+    RefreshableView {
 
     private Resource resource;
     private ResourcePermission resourcePermission;
@@ -72,8 +71,9 @@ public class ResourceConfigurationEditView extends LocatableVLayout
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
         this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
@@ -87,8 +87,8 @@ public class ResourceConfigurationEditView extends LocatableVLayout
         refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
-            Message message = new Message(MSG.view_configurationDetails_noPermission(),
-                Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info, EnumSet
+                .of(Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -101,15 +101,15 @@ public class ResourceConfigurationEditView extends LocatableVLayout
             editor.destroy();
             removeMember(editor);
         }
-        editor = new ConfigurationEditor(this.extendLocatorId("Editor"), resource.getId(),
-            resource.getResourceType().getId());
+        editor = new ConfigurationEditor(this.extendLocatorId("Editor"), resource.getId(), resource.getResourceType()
+            .getId());
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-        addMember(editor);        
+        addMember(editor);
         // TODO (ips): If editor != null, use editor.reload() instead.
     }
-    
+
     private void save() {
         Configuration updatedConfiguration = editor.getConfiguration();
 
@@ -121,9 +121,8 @@ public class ResourceConfigurationEditView extends LocatableVLayout
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_configurationDetails_messageConcise(),
-                            MSG.view_configurationDetails_messageDetailed(resource.getName()),
-                            Message.Severity.Info));
+                        new Message(MSG.view_configurationDetails_messageConcise(), MSG
+                            .view_configurationDetails_messageDetailed(resource.getName()), Message.Severity.Info));
                     refresh();
                 }
             });
@@ -136,18 +135,18 @@ public class ResourceConfigurationEditView extends LocatableVLayout
         if (event.isValidationStateChanged()) {
             Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
-                this.saveButton.enable();                
-                message = new Message(MSG.view_configurationDetails_allPropertiesValid(),
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                this.saveButton.enable();
+                message = new Message(MSG.view_configurationDetails_allPropertiesValid(), Message.Severity.Info,
+                    EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message(MSG.view_configurationDetails_somePropertiesInvalid(invalidPropertyNames.toString()),
-                    Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                message = new Message(MSG.view_configurationDetails_somePropertiesInvalid(invalidPropertyNames
+                    .toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
         } else {
             this.saveButton.enable();
         }
     }
-    
+
 }

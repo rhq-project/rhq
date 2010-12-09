@@ -92,7 +92,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
         this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch traits for criteria " + criteria, caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_traits_failFetch(criteria.toString()), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

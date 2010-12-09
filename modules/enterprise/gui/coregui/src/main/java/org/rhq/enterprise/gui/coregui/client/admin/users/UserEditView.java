@@ -19,13 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -37,13 +37,15 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
@@ -67,20 +69,39 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
-        UserPermissionsManager.getInstance().loadGlobalPermissions(
-            new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
+
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                UserEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
                 Subject sessionSubject = UserSessionManager.getSessionSubject();
                 boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-                UserEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
                 boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
                 init(isReadOnly);
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                        .of(Message.Option.BackgroundJobResult)));
             }
         });
     }
 
     @Override
+    protected Record createNewRecord() {
+        Subject subject = new Subject();
+        subject.setFactive(true);
+        @SuppressWarnings( { "UnnecessaryLocalVariable" })
+        Record userRecord = UsersDataSource.getInstance().copyUserValues(subject, false);
+        return userRecord;
+    }
+
+    @Override
     protected void editRecord(Record record) {
+        super.editRecord(record);
+
         // Don't allow the rhqadmin account to be disabled.
         if (getRecordId() == SUBJECT_ID_RHQADMIN) {
             FormItem activeField = getForm().getField(UsersDataSource.Field.FACTIVE);
@@ -97,27 +118,14 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
             boolean isReadOnly = areRolesReadOnly(record);
 
-            roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
-            roleSelector.setWidth100();
-            roleSelector.setAlign(Alignment.LEFT);
-            roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
+            this.roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
-                    onItemChanged();
+                    UserEditView.this.onItemChanged();
                 }
             });
-            getBottomLayout().addMember(roleSelector);
+            getContentPane().addMember(this.roleSelector);
         }
-
-        super.editRecord(record);
-    }
-
-    @Override
-    protected void editNewRecord() {
-        super.editNewRecord();
-
-        // Make sure the new user is enabled by default.
-        FormItem enabledField = getForm().getField(UsersDataSource.Field.FACTIVE);
-        enabledField.setValue(Boolean.TRUE.toString());
     }
 
     //
@@ -129,15 +137,15 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     private boolean areRolesReadOnly(Record record) {
         boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);        
+        return (!this.hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
     }
 
     @Override
-    protected List<FormItem> createFormItems(boolean newUser) {
+    protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
-        if (newUser) {
+        if (form.isNewRecord()) {
             TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
             items.add(nameItem);
         } else {
@@ -157,7 +165,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             items.add(passwordItem);
 
             final PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
-            final boolean[] initialPasswordChange = {true};
+            final boolean[] initialPasswordChange = { true };
             passwordItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     if (initialPasswordChange[0]) {
@@ -189,22 +197,30 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         activeItem.setVertical(false);
         items.add(activeItem);
 
-        HiddenItem rolesItem = new HiddenItem(UsersDataSource.Field.ROLES);
-        items.add(rolesItem);
         return items;
     }
 
     @Override
     protected void save() {
-        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getRecords();
-        getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
+        // Grab the currently assigned roles from the selector and stick them into the corresponding canvas
+        // item on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
+        // to the datasource's add or update methods.
+        if (roleSelector != null) {
+            ListGridRecord[] roleRecords = this.roleSelector.getSelectedRecords();
+            getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
+        }
+
+        // Submit the form values to the datasource.
         super.save();
     }
 
     @Override
     protected void reset() {
         super.reset();
-        this.roleSelector.reset();
+
+        if (this.roleSelector != null) {
+            this.roleSelector.reset();
+        }
     }
-    
+
 }

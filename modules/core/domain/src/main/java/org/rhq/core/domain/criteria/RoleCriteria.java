@@ -37,6 +37,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class RoleCriteria extends Criteria {
+
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -101,6 +102,7 @@ public class RoleCriteria extends Criteria {
 
     /**
      * Requires MANAGE_SECURITY
+     *
      * @param fetchSubjects
      */
     public void fetchSubjects(boolean fetchSubjects) {
@@ -108,7 +110,7 @@ public class RoleCriteria extends Criteria {
     }
 
     /**
-     * Specify whether or not LDAP groups should be fetched.
+     * Specify whether or not LDAP groups should be fetched. Requires MANAGE_SECURITY.
      *
      * @param fetchLdapGroups true if LDAP groups should be fetched
      */
@@ -118,6 +120,7 @@ public class RoleCriteria extends Criteria {
 
     /**
      * Requires MANAGE_SECURITY
+     *
      * @param fetchResourceGroups
      */
     public void fetchResourceGroups(boolean fetchResourceGroups) {
@@ -139,6 +142,7 @@ public class RoleCriteria extends Criteria {
 
     /** subclasses should override as necessary */
     public boolean isSecurityManagerRequired() {
-        return (this.fetchSubjects || this.fetchResourceGroups);
+        return (this.fetchSubjects || this.fetchResourceGroups || this.fetchLdapGroups);
     }
+
 }

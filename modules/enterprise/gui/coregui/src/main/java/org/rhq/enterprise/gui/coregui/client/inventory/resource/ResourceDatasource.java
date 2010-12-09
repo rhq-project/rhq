@@ -25,7 +25,9 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -42,10 +44,14 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -124,11 +130,32 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         });
     }
 
-    protected void dataRetrieved(PageList<Resource> result, DSResponse response, DSRequest request) {
-        Record[] records = buildRecords(result);
-        response.setData(records);
-        response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-        processResponse(request.getRequestId(), response);
+    protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        for (Resource resource : result) {
+            ResourceType type = resource.getResourceType();
+            if (type != null) {
+                typesSet.add(type.getId());
+            }
+        }
+
+        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                Record[] records = buildRecords(result);
+                for (Record record : records) {
+                    Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
+                    ResourceType type = types.get(typeId);
+                    if (type != null) {
+                        record.setAttribute(TYPE.propertyName(), type.getName());
+                    }
+                }
+                response.setData(records);
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
@@ -168,12 +195,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
         record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
             + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
-
-        record
-            .setAttribute(
-                AVAILABILITY.propertyName(),
-                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
-                    : "/images/icons/availability_red_16.png");
+        record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
+            .getCurrentAvailability().getAvailabilityType()));
 
         return record;
     }

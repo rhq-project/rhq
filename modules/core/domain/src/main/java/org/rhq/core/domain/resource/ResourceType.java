@@ -196,9 +196,7 @@ import org.rhq.core.domain.util.Summary;
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
-        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, "
-        +         "crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, "
-        +         "crt.plugin_config_def_id, crt.res_config_def_id, crt.deleted "
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND crt.deleted = false "
@@ -209,10 +207,8 @@ import org.rhq.core.domain.util.Summary;
         +
         //               "ORDER BY crt.name " +
         "UNION "
-        + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, "
-        +                 "crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, "
-        +                 "crt2.mtime, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id, crt2.deleted "
-        + "FROM RHQ_resource_type crt2 " + "WHERE crt2.deleted = false AND 1 = "
+        + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
+        + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
         + "WHERE res2.id = ? "
@@ -224,9 +220,7 @@ import org.rhq.core.domain.util.Summary;
         + "AND crt2.deleted = false "
         + "AND crt2.category = ? " + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
-        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, "
-        +         "crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, "
-        +         "crt.plugin_config_def_id, crt.res_config_def_id, crt.deleted "
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND crt.deleted = false "
@@ -237,11 +231,8 @@ import org.rhq.core.domain.util.Summary;
         +
         //               "ORDER BY crt.name " +
         "UNION "
-        + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, "
-        +                   "crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, "
-        +                   "crt2.mtime, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id, "
-        +                   "crt2.deleted "
-        + "FROM RHQ_resource_type crt2 " + "WHERE crt2.deleted = false AND 1 = "
+        + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
+        + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
         + "WHERE res2.id = ? "

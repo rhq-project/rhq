@@ -78,7 +78,7 @@ public class RHQConstants {
     // How long do we keep data compressed in 1 day intervals?
     public static final String DataPurge1Day = "CAM_DATA_PURGE_1D";
 
-    // How often to perform database maintainence
+    // How often to perform database maintenance
     public static final String DataMaintenance = "CAM_DATA_MAINTENANCE";
 
     // Whether or not to reindex nightly

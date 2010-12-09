@@ -31,7 +31,6 @@ import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedCom
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.ExecutionSchedule;
 
 /**
  * @author Greg Hinkle
@@ -47,7 +46,10 @@ public interface OperationGWTService extends RemoteService {
 
     List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize);
 
-    void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
-        ExecutionSchedule schedule, String description, int timeout) throws RuntimeException;
+    public void invokeResourceOperation(int resourceId, String operationName, Configuration parameters,
+        String description, int timeout) throws RuntimeException;
+
+    public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
+        String description, int timeout, String cronString) throws RuntimeException;
 
 }

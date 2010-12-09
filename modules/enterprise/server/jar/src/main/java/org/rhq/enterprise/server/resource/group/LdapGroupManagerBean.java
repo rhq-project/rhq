@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.resource.group;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -64,6 +66,7 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
  * This bean provides functionality to manipulate the ldap auth/authz functionality.
  * That is, adding/modifying/deleting ldap group/users and their
  * associated subjects and permissions are performed by this manager.
+ *
  * @author paji
  * @author Simeon Pinder
  */
@@ -98,8 +101,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
     public Set<String> findAvailableGroupsFor(String userName) {
         Properties options = systemManager.getSystemConfiguration();
-        String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
-        String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
+        String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
+        String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
         //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
         String filter = "";
@@ -119,40 +122,63 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         return ldapSet;
     }
 
-    /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, int, int[])
-     */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addLdapGroupsToRole(Subject subject, int roleId, List<String> groupIds) {
-        if ((groupIds != null) && (groupIds.size() > 0)) {
+    public void setLdapGroupsOnRole(Subject subject, int roleId, Set<LdapGroup> groups) {
+        Role role = entityManager.find(Role.class, roleId);
+        if (role == null) {
+            throw new IllegalArgumentException("Role with id [" + roleId + "] does not exist.");
+        }
+
+        Set<LdapGroup> currentGroups = role.getLdapGroups();
+        List<String> currentGroupNames = new ArrayList<String>(currentGroups.size());
+        for (LdapGroup group : currentGroups) {
+            currentGroupNames.add(group.getName());
+        }
+
+        List<String> newGroupNames = new ArrayList<String>(groups.size());
+        for (LdapGroup group : groups) {
+            newGroupNames.add(group.getName());
+        }
+
+        List<String> namesOfGroupsToBeAdded = new ArrayList<String>(newGroupNames);
+        namesOfGroupsToBeAdded.removeAll(currentGroupNames);
+        addLdapGroupsToRole(subject, roleId, namesOfGroupsToBeAdded);
+
+        List<String> namesOfGroupsToBeRemoved = new ArrayList<String>(currentGroupNames);
+        namesOfGroupsToBeRemoved.removeAll(newGroupNames);
+        int[] idsOfGroupsToBeRemoved = new int[namesOfGroupsToBeRemoved.size()];
+        int i = 0;
+        for (LdapGroup group : currentGroups) {
+            if (namesOfGroupsToBeRemoved.contains(group.getName())) {
+                idsOfGroupsToBeRemoved[i++] = group.getId();
+            }
+        }
+        removeLdapGroupsFromRole(subject, roleId, idsOfGroupsToBeRemoved);
+    }
+
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void addLdapGroupsToRole(Subject subject, int roleId, List<String> groupNames) {
+        if ((groupNames != null) && (groupNames.size() > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {
-                throw new IllegalArgumentException("Could not find role[" + roleId + "] to add resourceGroups to");
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to add LDAP groups to.");
             }
             role.getLdapGroups().size(); // load them in
 
-            for (String groupId : groupIds) {
+            for (String groupId : groupNames) {
                 LdapGroup group = new LdapGroup();
                 group.setName(groupId);
-                if (role == null) {
-                    throw new IllegalArgumentException("Tried to add ldapGroup[" + groupId + "] to role[" + roleId
-                        + "], but resourceGroup was not found");
-                }
                 role.addLdapGroup(group);
             }
         }
     }
-
-    /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeLdapGroupsFromRole(Subject, int, int[])
-     */
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeLdapGroupsFromRole(Subject subject, int roleId, int[] groupIds) {
         if ((groupIds != null) && (groupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {
-                throw new IllegalArgumentException("Could not find role[" + roleId + "] to remove resourceGroups from");
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to remove LDAP groups from.");
             }
             role.getLdapGroups().size(); // load them in
 
@@ -276,7 +302,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             // each BaseDN, but for now the filter will apply to all.
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
             for (int x = 0; x < baseDNs.length; x++) {
-                NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
+                NamingEnumeration<SearchResult> answer = ctx.search(baseDNs[x], filter, searchControls);
                 if (!answer.hasMoreElements()) { //BZ:582471- ldap api bug change
                     log.debug("User " + userName + " not found for BaseDN " + baseDNs[x]);
                     // Nothing found for this DN, move to the next one if we have one.
@@ -284,7 +310,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 }
 
                 // We use the first match
-                SearchResult si = (SearchResult) answer.next();
+                SearchResult si = answer.next();
                 //generate the DN
                 String userDN = si.getName() + "," + baseDNs[x];
                 userDetails.put("dn", userDN);
@@ -344,13 +370,13 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
 
             for (int x = 0; x < baseDNs.length; x++) {
-                NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
+                NamingEnumeration<SearchResult> answer = ctx.search(baseDNs[x], filter, searchControls);
                 boolean ldapApiEnumerationBugEncountered = false;
                 while ((!ldapApiEnumerationBugEncountered) && answer.hasMoreElements()) {//BZ:582471- ldap api bug change
                     // We use the first match
                     SearchResult si = null;
                     try {
-                        si = (SearchResult) answer.next();
+                        si = answer.next();
                     } catch (NullPointerException npe) {
                         ldapApiEnumerationBugEncountered = true;
                         break;

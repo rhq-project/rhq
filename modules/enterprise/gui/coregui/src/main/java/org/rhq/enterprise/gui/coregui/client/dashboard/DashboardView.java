@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.ColorPickerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
+import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
@@ -119,11 +121,12 @@ public class DashboardView extends LocatableVLayout {
 
         TextItem nameItem = new TextItem("name", MSG.common_title_dashboard_name());
         nameItem.setValue(storedDashboard.getName());
-        nameItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent changedEvent) {
-                String val = (String) changedEvent.getValue();
-                if (!(null == val || "".equals(val.trim()))) {
-                    storedDashboard.setName(val.trim());
+        nameItem.addBlurHandler(new BlurHandler() {
+            public void onBlur(BlurEvent blurEvent) {
+                String val = (String) blurEvent.getItem().getValue();
+                val = (null == val) ? "" : val.trim();
+                if (!("".equals(val) || val.equals(storedDashboard.getName()))) {
+                    storedDashboard.setName(val);
                     save();
                     dashboardsView.updateNames();
                 }
@@ -309,7 +312,7 @@ public class DashboardView extends LocatableVLayout {
             GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(),
                 new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dashboardManager_deleteFail(), caught);
                     }
 
                     public void onSuccess(Void result) {

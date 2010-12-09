@@ -23,6 +23,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
@@ -45,14 +46,11 @@ public class CustomResourceTreeGrid extends LocatableTreeGrid {
                 ResourceTreeNode node = (ResourceTreeNode) record;
 
                 if (node.isLocked()) {
-                    return "global/Locked_16.png";
-
+                    return ImageManager.getLockedIcon();
                 } else {
                     Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) record).getResource();
-                    String category = resource.getResourceType().getCategory().getDisplayName();
                     boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
-
-                    return "types/" + category + "_" + (up ? "up" : "down") + "_16.png";
+                    return ImageManager.getResourceIcon(resource.getResourceType().getCategory(), up);
                 }
             } else {
                 return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";

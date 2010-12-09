@@ -552,7 +552,7 @@ public class ResourceGroup extends Group {
         this.roles.add(role);
     }
 
-    public void removeRole(Role role) {
+    public void removeRole(Role role) {        
         this.roles.remove(role);
     }
 

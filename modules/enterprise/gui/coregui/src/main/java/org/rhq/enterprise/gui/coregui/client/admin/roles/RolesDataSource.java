@@ -34,12 +34,13 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
@@ -70,12 +71,10 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public static final int ID_SUPERUSER = 1;
-    public static final int ID_ALL_RESOURCES = 2;
 
     private static RolesDataSource INSTANCE;
 
     private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
-    private Set<Permission> globalPermissions;
 
     public static RolesDataSource getInstance() {
         if (INSTANCE == null) {
@@ -84,18 +83,17 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return INSTANCE;
     }
 
+    public static boolean isSystemRoleId(int roleId) {
+        return (roleId == ID_SUPERUSER);
+    }
+
     public RolesDataSource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
-
-        UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> permissions) {
-                RolesDataSource.this.globalPermissions = permissions;
-            }
-        });
     }
 
+    // TODO: i18n field titles
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
@@ -112,11 +110,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
             100, false);
         fields.add(descriptionField);
 
-        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, "Resource Groups");
+        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY,
+            "Resource Groups");
         fields.add(resourceGroupsField);
 
         DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
-        //fields.add(permissionsField);
+        fields.add(permissionsField);
 
         DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
         fields.add(subjectsField);
@@ -148,16 +147,13 @@ public class RolesDataSource extends RPCDataSource<Role> {
         final String rolename = roleToAdd.getName();
         roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                Map<String, String> errorMessages = new HashMap<String, String>();
-                errorMessages.put(Field.NAME, MSG.view_adminRoles_roleExists(rolename));
-                sendValidationErrorResponse(request, response, errorMessages);
+                throw new RuntimeException(caught);
             }
 
             public void onSuccess(Role addedRole) {
-                sendSuccessResponse(request, response, addedRole, new Message(MSG.view_adminRoles_roleAdded(rolename)));
+                sendSuccessResponse(request, response, addedRole);
             }
         });
-
     }
 
     @Override
@@ -172,8 +168,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(Role updatedRole) {
-                sendSuccessResponse(request, response, updatedRole, new Message(MSG
-                    .view_adminRoles_roleUpdated(rolename)));
+                sendSuccessResponse(request, response, updatedRole);
             }
         });
     }
@@ -208,31 +203,53 @@ public class RolesDataSource extends RPCDataSource<Role> {
         Set<Permission> permissions = toPermissionSet(permissionRecords);
         to.setPermissions(permissions);
 
-        // TODO
-        /*to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
-        to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.SUBJECTS));
-        to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.LDAP_GROUPS));*/
+        Record[] resourceGroupRecords = from.getAttributeAsRecordArray(Field.RESOURCE_GROUPS);
+        Set<ResourceGroup> resourceGroups = ResourceGroupsDataSource.getInstance().buildDataObjects(
+            resourceGroupRecords);
+        to.setResourceGroups(resourceGroups);
+
+        Record[] subjectRecords = from.getAttributeAsRecordArray(Field.SUBJECTS);
+        Set<Subject> subjects = UsersDataSource.getInstance().buildDataObjects(subjectRecords);
+        to.setSubjects(subjects);
+
+        Record[] ldapGroupRecords = from.getAttributeAsRecordArray(Field.LDAP_GROUPS);
+        Set<LdapGroup> ldapGroups = new RoleLdapGroupSelector.LdapGroupsDataSource().buildDataObjects(ldapGroupRecords);
+        to.setLdapGroups(ldapGroups);
 
         return to;
     }
 
     public ListGridRecord copyValues(Role sourceRole) {
+        return copyValues(sourceRole, true);
+    }
+
+    @Override
+    public ListGridRecord copyValues(Role sourceRole, boolean cascade) {
         ListGridRecord targetRecord = new ListGridRecord();
 
         targetRecord.setAttribute(Field.ID, sourceRole.getId());
         targetRecord.setAttribute(Field.NAME, sourceRole.getName());
         targetRecord.setAttribute(Field.DESCRIPTION, sourceRole.getDescription());
 
-        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
-            sourceRole.getResourceGroups());
-        targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
-
         Set<Permission> permissions = sourceRole.getPermissions();
         ListGridRecord[] permissionRecords = toRecordArray(permissions);
         targetRecord.setAttribute(Field.PERMISSIONS, permissionRecords);
 
-        ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(sourceRole.getSubjects());
-        targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
+        if (cascade) {
+            Set<ResourceGroup> resourceGroups = sourceRole.getResourceGroups();
+            ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
+                resourceGroups, false);
+            targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
+
+            Set<Subject> subjects = sourceRole.getSubjects();
+            ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(subjects, false);
+            targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
+
+            Set<LdapGroup> ldapGroups = sourceRole.getLdapGroups();
+            ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource().buildRecords(
+                ldapGroups);
+            targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
+        }
 
         return targetRecord;
     }
@@ -275,12 +292,17 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         // Fetching
         criteria.fetchPermissions(true);
-        if (this.globalPermissions.contains(Permission.MANAGE_SECURITY)) {
+        if (id != null) {
+            // If we're fetching a single Role, then fetch all the related Sets.
             criteria.fetchSubjects(true);
             criteria.fetchResourceGroups(true);
+            criteria.fetchLdapGroups(true);
         }
+
+        // TODO: instead of fetching subjects and resource groups, use a composite object that will pull the subject
+        //       and resource group count across the wire.  these counts will not required permission checks at all. 
 
         return criteria;
     }
-    
+
 }

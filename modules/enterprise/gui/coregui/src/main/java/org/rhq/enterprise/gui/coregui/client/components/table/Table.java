@@ -108,6 +108,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showHeader = true;
     private boolean showFooter = true;
     private boolean showFooterRefresh = true;
+    private boolean showFilterForm = true;
 
     private String tableTitle;
     private Criteria criteria;
@@ -222,7 +223,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
-        return SelectionStyle.SIMPLE;
+        return SelectionStyle.MULTIPLE;
     }
 
     @Override
@@ -292,7 +293,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 drawFooter();
             }
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
     }
 
@@ -828,5 +829,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public void setTableInfo(Label tableInfo) {
         this.tableInfo = tableInfo;
+    }
+
+    public boolean isShowFilterForm() {
+        return showFilterForm;
+    }
+
+    public void setShowFilterForm(boolean showFilterForm) {
+        this.showFilterForm = showFilterForm;
     }
 }

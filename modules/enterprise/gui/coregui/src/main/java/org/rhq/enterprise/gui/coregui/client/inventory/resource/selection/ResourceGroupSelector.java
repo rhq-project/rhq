@@ -38,7 +38,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     public ResourceGroupSelector(String locatorId) {
-        super(locatorId);
+        this(locatorId, false);
+    }
+    
+    public ResourceGroupSelector(String locatorId, boolean isReadOnly) {
+        super(locatorId, isReadOnly);
     }
 
     protected DynamicForm getAvailableFilterForm() {
@@ -79,7 +83,7 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     @Override
     protected String getItemTitle() {
-        return "group";
+        return MSG.common_title_resourceGroups();
     }
 
     //    protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {

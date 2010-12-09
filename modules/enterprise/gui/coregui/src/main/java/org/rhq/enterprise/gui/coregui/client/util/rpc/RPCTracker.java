@@ -31,18 +31,17 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class RPCManager {
+public class RPCTracker {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
-    private static final RPCManager INSTANCE = new RPCManager();
-    private static int nextCallId = 0;
+    private static final RPCTracker INSTANCE = new RPCTracker();
 
-    private Set<MonitoringRequestCallback> inProgress = new HashSet<MonitoringRequestCallback>();
+    private Set<TrackingRequestCallback> inProgress = new HashSet<TrackingRequestCallback>();
 
     private Img activityIndicator;
 
-    private RPCManager() {
+    private RPCTracker() {
         activityIndicator = new Img("/coregui/images/ajax-loader.gif", 16, 16);
         activityIndicator.setZIndex(10000);
         activityIndicator.setLeft(10);
@@ -50,30 +49,26 @@ public class RPCManager {
         activityIndicator.draw();
     }
 
-    public static int nextCallId() {
-        return nextCallId++;
-    }
-
-    public static RPCManager getInstance() {
+    public static RPCTracker getInstance() {
         return INSTANCE;
     }
 
-    public void register(MonitoringRequestCallback callback) {
-        Log.debug("RPC register: " + callback);
+    public void register(TrackingRequestCallback callback) {
+        Log.debug("RPCTracker register: " + callback);
 
         inProgress.add(callback);
         refresh();
     }
 
-    public void failCall(MonitoringRequestCallback callback) {
-        Log.trace("RPC failure: " + callback);
+    public void failCall(TrackingRequestCallback callback) {
+        Log.trace("RPCTracker failure: " + callback);
 
         inProgress.remove(callback);
         refresh();
     }
 
-    public void succeedCall(MonitoringRequestCallback callback) {
-        Log.trace("RPC success: " + callback);
+    public void succeedCall(TrackingRequestCallback callback) {
+        Log.trace("RPCTracker success: " + callback);
 
         inProgress.remove(callback);
         refresh();
@@ -84,14 +79,14 @@ public class RPCManager {
     }
 
     public void refresh() {
-        Log.trace("RPC queue depth is " + getQueueDepth());
+        Log.trace("RPCTracker queue depth is " + getQueueDepth());
         if (getQueueDepth() > 0) {
             activityIndicator.show();
 
             int numberOfActiveRequests = inProgress.size();
             String message = MSG.util_rpcManager_activeRequests(String.valueOf(numberOfActiveRequests));
             StringBuilder buf = new StringBuilder().append("<b>").append(message).append("</b>");
-            for (MonitoringRequestCallback callback : inProgress) {
+            for (TrackingRequestCallback callback : inProgress) {
                 buf.append("<br/>");
                 buf.append(callback);
             }

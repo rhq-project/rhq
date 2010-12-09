@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.footer;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,9 +31,14 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
@@ -40,41 +46,71 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 /**
  * @author Greg Hinkle
  * @author Ian Springer
+ * @author John Mazzitelli
  */
 public class FavoritesButton extends LocatableIMenuButton {
 
     public FavoritesButton(String locatorId) {
-        super(locatorId, MSG.common_title_favorites());
+        super(locatorId, MSG.favorites());
 
+        // this is the main menu - the "favorites" button shown in the UI the user initially clicks 
         final Menu favoritesMenu = new Menu();
         setMenu(favoritesMenu);
         setShowMenuBelow(false);
         setAutoFit(true);
 
+        // these are the child menus directly under the main favorites button 
+        final Menu favoriteResourcesMenu = new Menu();
+        final Menu favoriteGroupsMenu = new Menu();
+        final Menu recentlyViewedMenu = new Menu();
+        MenuItem favoriteResourcesMenuItem = new MenuItem(MSG.favorites_resources(), "Favorite_Resource_16.png");
+        favoriteResourcesMenuItem.setSubmenu(favoriteResourcesMenu);
+        favoriteResourcesMenu.setEmptyMessage(MSG.common_val_none());
+
+        MenuItem favoriteGroupsMenuItem = new MenuItem(MSG.favorites_groups(), "Favorite_Group_16.png");
+        favoriteGroupsMenuItem.setSubmenu(favoriteGroupsMenu);
+        favoriteGroupsMenu.setEmptyMessage(MSG.common_val_none());
+
+        MenuItem recentlyViewedMenuItem = new MenuItem(MSG.favorites_recentlyViewed(), "global/Recent_16.png");
+        recentlyViewedMenuItem.setSubmenu(recentlyViewedMenu);
+        recentlyViewedMenu.setEmptyMessage(MSG.common_val_none());
+
+        favoritesMenu.setItems(favoriteResourcesMenuItem, favoriteGroupsMenuItem, recentlyViewedMenuItem);
+
         addClickHandler(new ClickHandler() {
+            private boolean contextMenuIsShown = false;
+
             public void onClick(ClickEvent clickEvent) {
                 // Cancel the click event. We'll call show() on the menu ourselves only if we're able to load the
                 // favorite Resources successfully.
                 clickEvent.cancel();
+                contextMenuIsShown = false; // so at least one of our two callbacks will show it
 
-                Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
+                Set<Integer> favoriteResources;
+                Set<Integer> favoriteGroups;
+                Set<Integer> recentlyViewed;
 
-                if (!favorites.isEmpty()) {
+                favoriteResources = UserSessionManager.getUserPreferences().getFavoriteResources();
+                favoriteGroups = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
+                recentlyViewed = new HashSet<Integer>(0); // TODO: get the IDs of the recently visited resources
 
-                    Integer[] resourceIds = new Integer[favorites.size()];
-                    final MenuItem[] items = new MenuItem[favorites.size()];
-                    final Map<Integer, MenuItem> idToMenuItemMap = new HashMap<Integer, MenuItem>(favorites.size());
+                if (!favoriteResources.isEmpty()) {
+
+                    Integer[] resourceIds = new Integer[favoriteResources.size()];
+                    final MenuItem[] items = new MenuItem[favoriteResources.size()];
+                    final Map<Integer, MenuItem> resIdToMenuItemMap = new HashMap<Integer, MenuItem>(favoriteResources
+                        .size());
                     int i = 0;
-                    for (final Integer resourceId : favorites) {
+                    for (final Integer resourceId : favoriteResources) {
                         resourceIds[i] = resourceId;
                         MenuItem item = new MenuItem(String.valueOf(resourceId));
                         item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                             public void onClick(MenuItemClickEvent event) {
-                                CoreGUI.goToView("Resource/" + resourceId);
+                                CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
                             }
                         });
                         items[i] = item;
-                        idToMenuItemMap.put(resourceId, item);
+                        resIdToMenuItemMap.put(resourceId, item);
                         i++;
                     }
 
@@ -88,22 +124,76 @@ public class FavoritesButton extends LocatableIMenuButton {
 
                             public void onSuccess(PageList<Resource> resources) {
                                 for (Resource resource : resources) {
-                                    MenuItem item = idToMenuItemMap.get(resource.getId());
+                                    MenuItem item = resIdToMenuItemMap.get(resource.getId());
                                     // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
                                     //       disambiguated Resource names.
                                     item.setTitle(resource.getName());
-
-                                    String category = resource.getResourceType().getCategory().getDisplayName();
-
-                                    String avail = (resource.getCurrentAvailability() != null && resource
-                                        .getCurrentAvailability().getAvailabilityType() != null) ? (resource
-                                        .getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-                                    item.setIcon("types/" + category + "_" + avail + "_16.png");
+                                    item.setIcon(ImageManager.getResourceIcon(resource));
                                 }
-                                favoritesMenu.setItems(items);
-                                favoritesMenu.showContextMenu();
+                                favoriteResourcesMenu.setItems(items);
+                                if (!contextMenuIsShown) {
+                                    contextMenuIsShown = true;
+                                    favoritesMenu.showContextMenu();
+                                }
                             }
                         });
+                }
+
+                if (!favoriteGroups.isEmpty()) {
+
+                    Integer[] groupIds = new Integer[favoriteGroups.size()];
+                    final MenuItem[] items = new MenuItem[favoriteGroups.size()];
+                    final Map<Integer, MenuItem> grpIdToMenuItemMap = new HashMap<Integer, MenuItem>(favoriteGroups
+                        .size());
+                    int i = 0;
+                    for (final Integer groupId : favoriteGroups) {
+                        groupIds[i] = groupId;
+                        MenuItem item = new MenuItem(String.valueOf(groupId));
+                        item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                            public void onClick(MenuItemClickEvent event) {
+                                CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                            }
+                        });
+                        items[i] = item;
+                        grpIdToMenuItemMap.put(groupId, item);
+                        i++;
+                    }
+
+                    ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                    criteria.addFilterIds(groupIds);
+                    GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+                        new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
+                            }
+
+                            public void onSuccess(PageList<ResourceGroupComposite> groups) {
+                                for (ResourceGroupComposite groupInfo : groups) {
+                                    ResourceGroup theGroup = groupInfo.getResourceGroup();
+                                    MenuItem item = grpIdToMenuItemMap.get(theGroup.getId());
+                                    item.setTitle(theGroup.getName());
+                                    item.setIcon(ImageManager.getGroupIcon(theGroup.getGroupCategory(), groupInfo
+                                        .getImplicitAvail()));
+                                }
+                                favoriteGroupsMenu.setItems(items);
+                                if (!contextMenuIsShown) {
+                                    contextMenuIsShown = true;
+                                    favoritesMenu.showContextMenu();
+                                }
+
+                            }
+                        });
+                }
+
+                if (!recentlyViewed.isEmpty()) {
+                    // TODO populate the menu. this is different than the other two because there could be a mix
+                    //      of both resources and groups in here. presumably, the user prefs will be able to tell
+                    //      us which is which so we can call the proper server API and use the proper icons
+                }
+
+                // if we have no menu items at all, then show the menu now
+                if (favoriteGroups.isEmpty() && favoriteResources.isEmpty() && recentlyViewed.isEmpty()) {
+                    favoritesMenu.showContextMenu();
                 }
             }
         });

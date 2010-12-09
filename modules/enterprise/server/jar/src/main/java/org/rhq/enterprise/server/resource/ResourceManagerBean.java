@@ -93,11 +93,11 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.FlyweightCache;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
@@ -2200,23 +2200,63 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
-        PageList<Resource> resources = findResourcesByCriteria(subject, criteria);
 
-        List<ResourceComposite> results = new ArrayList<ResourceComposite>();
-        for (Resource resource : resources) {
-            AvailabilityType availType = resource.getCurrentAvailability().getAvailabilityType();
-            Resource parent = resource.getParentResource();
-            ResourceComposite composite = new ResourceComposite(resource, parent, availType);
-            composite.setResourceFacets(typeManager.getResourceFacets(resource.getResourceType().getId()));
-            Set<Permission> permissions = authorizationManager
-                .getImplicitResourcePermissions(subject, resource.getId());
-            composite.setResourcePermission(new ResourcePermission(permissions));
-            // TODO: jmarques: Alter criteria projection to include permissions.
-            results.add(composite);
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
+
+        String compositeProjection;
+        if (isInventoryManager) {
+            compositeProjection = "" //
+                + "new org.rhq.core.domain.resource.composite.ResourceComposite(" //
+                + "   %alias%, " // Resource
+                + "   %alias%.currentAvailability.availabilityType ) "; // AvailabilityType
+        } else {
+            compositeProjection = ""
+                + " new org.rhq.core.domain.resource.composite.ResourceComposite(" //
+                + "   %alias%, " // Resource
+                + "   %alias%.currentAvailability.availabilityType, " // AvailabilityType
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 10 ), " // CONTROL
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 7 ), " // MANAGE_ALERTS
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 14 ), " // MANAGE_EVENTS
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 13 ), " // CONFIGURE_READ
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ))"; // DELETE_RESOURCES
+            compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
+        }
+        compositeProjection = compositeProjection.replace("%alias%", criteria.getAlias());
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        generator.alterProjection(compositeProjection);
+
+        if (isInventoryManager == false) {
+            if (criteria.isInventoryManagerRequired()) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] requires InventoryManager permission for requested query criteria.");
+            }
+
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
+                subject.getId());
         }
 
-        return new PageList<ResourceComposite>(results, resources.getTotalSize(), resources.getPageControl());
+        CriteriaQueryRunner<ResourceComposite> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager, false); // don't auto-init bags, we're returning composites not entities
+        PageList<ResourceComposite> results = queryRunner.execute();
+
+        for (ResourceComposite nextComposite : results) {
+            Resource nextResource = nextComposite.getResource();
+            ResourceType nextResourceType = nextResource.getResourceType();
+            ResourceFacets facets = typeManager.getResourceFacets(nextResourceType.getId());
+
+            queryRunner.initFetchFields(nextResource); // manual field fetch for composite-wrapped entity
+            nextComposite.setResourceFacets(facets);
+        }
+
+        return results;
     }
 
     @SuppressWarnings("unchecked")

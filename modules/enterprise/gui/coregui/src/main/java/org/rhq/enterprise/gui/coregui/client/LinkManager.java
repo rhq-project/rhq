@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+
 /**
  * @author Greg Hinkle
  */
@@ -46,14 +49,30 @@ public class LinkManager {
     }
 
     public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
-        return getResourceGroupLink(groupId) + "/Inventory/Connection Settings History";
+        return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroup%20Manager/" + groupDefinitionId;
+            return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;
         } else {
             return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
+        }
+    }
+
+    public static String getUserLink(int subjectId) {
+        if (GWT) {
+            return "#" + UsersView.VIEW_PATH + "/" + subjectId;
+        } else {
+            return "/admin/user/UserAdmin.do?mode=view&u=" + subjectId;
+        }
+    }
+
+    public static String getRoleLink(int roleId) {
+        if (GWT) {
+            return "#" + RolesView.VIEW_PATH + "/" + roleId;
+        } else {
+            return "/admin/role/RoleAdmin.do?mode=view&r=" + roleId;
         }
     }
 
@@ -65,8 +84,16 @@ public class LinkManager {
         return "/rhq/subsystem/oobHistory.xhtml";
     }
 
-    public static String getSubsystemOperationHistoryLink() {
-        return "/rhq/subsystem/operationHistory.xhtml";
+    public static String getSubsystemResourceOperationHistoryLink(int resourceId, int opHistoryId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Operations/History/" + opHistoryId;
+        } else {
+            link = "/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml?id=" + resourceId + "&opId="
+                + opHistoryId;
+
+        }
+        return link;
     }
 
     public static String getSubsystemAlertHistoryLink() {
@@ -143,7 +170,7 @@ public class LinkManager {
 
     public static String getHubGroupDefinitionsLink() {
         if (GWT) {
-            return "#Inventory/Groups/DynaGroup Manager";
+            return "#Inventory/Groups/DynagroupDefinitions";
         } else {
             return "/rhq/definition/group/list.xhtml";
         }

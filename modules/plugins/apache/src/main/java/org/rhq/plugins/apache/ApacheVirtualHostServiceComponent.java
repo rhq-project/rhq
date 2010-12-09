@@ -21,8 +21,6 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -338,13 +336,16 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
         String serverName = null;
         int pipeIdx = resourceKey.indexOf('|');
-        if (pipeIdx >= 0) {
+        //the resource key always contains the '|' so we're only checking for non-empty
+        //server names
+        if (pipeIdx > 0) {
             serverName = resourceKey.substring(0, pipeIdx);
         }
 
         String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
         List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
         List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
+
         boolean matching = false;
 
         for (AugeasNode node : nodes) {

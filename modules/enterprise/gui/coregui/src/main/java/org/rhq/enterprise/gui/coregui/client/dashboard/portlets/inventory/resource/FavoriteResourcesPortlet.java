@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resou
 
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -34,6 +35,7 @@ import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
@@ -42,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 /**
  * @author Greg Hinkle
  */
-public class FavoriteResourcesPortlet extends ResourceSearchView implements Portlet {
+public class FavoriteResourcesPortlet extends ResourceSearchView implements AutoRefreshPortlet {
 
     public static final String KEY = MSG.view_portlet_favoriteResources_title();
 
@@ -50,6 +52,8 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
     private DashboardPortlet storedPortlet;
     private PortletWindow portletWindow;
+
+    private Timer reloader;
 
     public FavoriteResourcesPortlet(String locatorId) {
         super(locatorId);
@@ -108,6 +112,18 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             //return GWT.create(FavoriteResourcesPortlet.class);
             return new FavoriteResourcesPortlet(locatorId);
         }
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        reloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                reloader.schedule(refreshCycle);
+            }
+        };
+        reloader.schedule(refreshCycle);
     }
 
 }

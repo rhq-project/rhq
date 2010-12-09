@@ -826,9 +826,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss z");
             else
                 dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
-            builder.append(AlertI18NFactory.getMessage(format, conditionCounter,
-                prettyPrintAlertCondition(aLog.getCondition(), shortVersion),
-                dateFormat.format(new Date(aLog.getCtime())), formattedValue));
+            builder.append(AlertI18NFactory.getMessage(format, conditionCounter, prettyPrintAlertCondition(aLog
+                .getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 
@@ -932,10 +931,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             builder.append("/");
         }
 
-        builder.append("alerts/Alerts.do?mode=viewAlert");
-
-        builder.append("&id=").append(alert.getAlertDefinition().getResource().getId());
-        builder.append("&a=").append(alert.getId());
+        builder.append("coregui/CoreGUI.html#Resource/");
+        builder.append(alert.getAlertDefinition().getResource().getId());
+        builder.append("/Alerts/History/");
+        builder.append(alert.getId());
 
         return builder.toString();
     }
@@ -952,8 +951,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 recoveryDefinitionId);
             boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
 
-            log.debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
-                + toBeRecoveredDefinition + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
+            log
+                .debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
+                    + toBeRecoveredDefinition
+                    + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
 
             if (!wasEnabled) {
                 /*

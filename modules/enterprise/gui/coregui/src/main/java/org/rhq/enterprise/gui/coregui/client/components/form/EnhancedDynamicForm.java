@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.BooleanItem;
@@ -62,7 +63,6 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     private static final String FIELD_ID = "id";
 
     private boolean isReadOnly;
-    private boolean isNewRecord;
 
     public EnhancedDynamicForm(String locatorId) {
         this(locatorId, false);
@@ -76,14 +76,18 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         super(locatorId);
 
         this.isReadOnly = readOnly;
-        this.isNewRecord = isNewRecord;
+        if (isNewRecord) {
+            setSaveOperationType(DSOperationType.ADD);
+        }
 
         // Layout Settings
-        setWidth(800);
-        setPadding(13);
+        //setWidth(640);
+        //setWidth100();
+        //setPadding(13);
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths("20%", "30%", "20%", "30%");
+        setColWidths(75, 200, 75, 200);
+        //setTitleWidth(100);
         setWrapItemTitles(false);
 
         // Other Display Settings
@@ -92,9 +96,9 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         // DataSource Settings        
         setUseAllDataSourceFields(false);
+        setAutoFetchData(false);
 
-        // Validation Settings
-        setValidateOnChange(!isNewRecord);
+        // Validation Settings        
         setStopOnError(false);
     }
 
@@ -192,6 +196,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 });
                 togglableTextItem.setShowIfCondition(new FormItemIfFunction() {
                     public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                        @SuppressWarnings({"UnnecessaryLocalVariable"})
                         boolean editing = staticTextItem.getAttributeAsBoolean("editing");
                         return editing;
                     }
@@ -205,7 +210,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         // If the dataSource has an "id" field, make sure the form does too.
         if (!hasIdField && getDataSource() != null && getDataSource().getField(FIELD_ID) != null) {
             FormItem idItem;
-            if (this.isNewRecord || !CoreGUI.isDebugMode()) {
+            if (isNewRecord() != null && isNewRecord() || !CoreGUI.isDebugMode()) {
                 idItem = new HiddenItem(FIELD_ID);
             } else {
                 idItem = new StaticTextItem(FIELD_ID, MSG.common_title_id());
@@ -214,12 +219,10 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         for (FormItem item : itemsList) {
-            if (this.isNewRecord && !(item instanceof StaticTextItem)) {
-                item.setValidateOnChange(true);
-            }
+            item.setValidateOnExit(true);
 
             //item.setWidth("*"); // this causes a JavaScript exception ...  :-(
-            item.setWidth(240);
+            item.setWidth(195);
         }
 
         super.setFields((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));
@@ -231,6 +234,10 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             String value = getValueAsString(name);
             setValue(getStaticTextItemName(name), value);
         }
+    }
+
+    public boolean isReadOnly() {
+        return isReadOnly;
     }
 
     private String getStaticTextItemName(String togglableTextItemName) {

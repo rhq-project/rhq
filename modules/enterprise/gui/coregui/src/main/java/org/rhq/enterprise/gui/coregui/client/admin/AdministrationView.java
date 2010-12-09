@@ -22,13 +22,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -86,11 +89,19 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         return sections;
     }
 
-    protected HTMLFlow defaultView() {
-        String contents = "<h1>" + MSG.view_admin_administration() + "</h1>\n" + MSG.view_admin_landing();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+    protected VLayout defaultView() {
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_admin_landing());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     private NavigationSection buildSecuritySection() {
@@ -110,33 +121,36 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildTopologySection() {
-        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
-                    "/rhq/ha/listServers-plain.xhtml?nomenu=true");
-            }
-        });
+        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, "types/Server_up_16.png",
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
+                        "/rhq/ha/listServers-plain.xhtml?nomenu=true");
+                }
+            });
 
-        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, null, new ViewFactory() {
+        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, "global/Agent_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID.getName()),
                     "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
             }
         });
 
-        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
-                    "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
-            }
-        });
+        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, "types/Group_up_16.png",
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
+                        "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
+                }
+            });
 
-        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
-                    "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
-            }
-        });
+        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID,
+            "subsystems/event/Events_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
+                        "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
+                }
+            });
 
         NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID,
             "global/Agent_16.png", new ViewFactory() {
@@ -150,40 +164,45 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildConfigurationSection() {
-        NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID.getName()),
-                    "/admin/config/Config.do?mode=edit&nomenu=true");
-            }
-        });
+        NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID,
+            "subsystems/configure/Configure_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID.getName()),
+                        "/admin/config/Config.do?mode=edit&nomenu=true");
+                }
+            });
 
-        NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new ResourceTypeTreeView(extendLocatorId(PAGE_TEMPLATES_VIEW_ID.getName()));
-            }
-        });
+        NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, ImageManager.getMetricEditIcon(),
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new ResourceTypeTreeView(extendLocatorId(PAGE_TEMPLATES_VIEW_ID.getName()));
+                }
+            });
         templatesItem.setRefreshRequired(true); // we always need a new page
 
-        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_DOWNLOADS_VIEW_ID.getName()),
-                    "/rhq/admin/downloads-body.xhtml?nomenu=true");
-            }
-        });
+        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID,
+            "subsystems/bundle/BundleDeployment_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_DOWNLOADS_VIEW_ID.getName()),
+                        "/rhq/admin/downloads-body.xhtml?nomenu=true");
+                }
+            });
 
-        NavigationItem licenseItem = new NavigationItem(PAGE_LICENSE_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_LICENSE_VIEW_ID.getName()),
-                    "/admin/license/LicenseAdmin.do?mode=view&nomenu=true");
-            }
-        });
+        NavigationItem licenseItem = new NavigationItem(PAGE_LICENSE_VIEW_ID, "subsystems/bundle/Details_11.png",
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_LICENSE_VIEW_ID.getName()),
+                        "/admin/license/LicenseAdmin.do?mode=view&nomenu=true");
+                }
+            });
 
-        NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, null, new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_PLUGINS_VIEW_ID.getName()),
-                    "/rhq/admin/plugin/plugin-list-plain.xhtml?nomenu=true");
-            }
-        });
+        NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, "global/Plugin_16.png",
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_PLUGINS_VIEW_ID.getName()),
+                        "/rhq/admin/plugin/plugin-list-plain.xhtml?nomenu=true");
+                }
+            });
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, templatesItem, downloadsItem,
             licenseItem, pluginsItem);

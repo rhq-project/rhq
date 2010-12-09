@@ -31,14 +31,16 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -49,9 +51,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class MenuBarView extends LocatableVLayout {
 
     public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
-        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID };
+        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID, HelpView.VIEW_ID };
 
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
+    private LocatableLabel userLabel;
 
     public MenuBarView(String locatorId) {
         super(locatorId);
@@ -74,6 +77,18 @@ public class MenuBarView extends LocatableVLayout {
         addMember(new SearchBarPane(this.extendLocatorId("Search")));
 
         markForRedraw();
+    }
+
+    // When redrawing, ensire the correct session infor is displayed
+    @Override
+    public void markForRedraw() {
+        String currentDisplayName = userLabel.getContents();
+        String currentUsername = UserSessionManager.getSessionSubject().getName();
+        if (!currentUsername.equals(currentDisplayName)) {
+            userLabel.setContents(currentUsername);
+        }
+
+        super.markForRedraw();
     }
 
     private Canvas getLogoSection() {
@@ -120,8 +135,8 @@ public class MenuBarView extends LocatableVLayout {
             }
 
             // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td id=\"").append(section).append("\" class=\"").append(styleClass).append(
-                "\" onclick=\"document.location='#").append(section).append("'\" >");
+            headerString.append("<td style=\"vertical-align:middle\" id=\"").append(section).append("\" class=\"")
+                .append(styleClass).append("\" onclick=\"document.location='#").append(section).append("'\" >");
             headerString.append(section.getTitle());
             headerString.append("</td>\n");
 
@@ -138,15 +153,20 @@ public class MenuBarView extends LocatableVLayout {
         layout.setMargin(10);
         layout.setAlign(Alignment.RIGHT);
 
-        LocatableImg helpImage = new LocatableImg("HelpImage", "[SKIN]/actions/help.png", 16, 16);
-        Hyperlink helpLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_help(), "Help"));
-        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_logout(), "LogOut"));
+        userLabel = new LocatableLabel(this.extendLocatorId("User"), UserSessionManager.getSessionSubject().getName());
+        userLabel.setAutoWidth();
 
-        layout.addMember(helpImage);
-        layout.addMember(helpLink);
+        LocatableLabel lineLabel = new LocatableLabel(this.extendLocatorId("Line"), " | ");
+        lineLabel.setWidth("10px");
+        lineLabel.setAlign(Alignment.CENTER);
+
+        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_logout(), "LogOut"));
+        logoutLink.setWidth("1px");
+
+        layout.addMember(userLabel);
+        layout.addMember(lineLabel);
         layout.addMember(logoutLink);
 
         return layout;
     }
-
 }

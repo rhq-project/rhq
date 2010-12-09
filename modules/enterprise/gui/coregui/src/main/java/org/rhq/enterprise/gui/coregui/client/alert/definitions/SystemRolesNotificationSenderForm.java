@@ -186,7 +186,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
 
         @Override
         protected String getItemTitle() {
-            return "role";
+            return MSG.common_title_roles();
         }
     }
 

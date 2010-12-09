@@ -49,11 +49,13 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -164,8 +166,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         ListGridField resourceIcon = new ListGridField("resourceAvailability", "");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put("UP", "types/Platform_up_16.png");
-        icons.put("DOWN", "types/Platform_down_16.png");
+        icons.put("UP", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
+        icons.put("DOWN", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
         resourceIcon.setCellFormatter(new CellFormatter() {

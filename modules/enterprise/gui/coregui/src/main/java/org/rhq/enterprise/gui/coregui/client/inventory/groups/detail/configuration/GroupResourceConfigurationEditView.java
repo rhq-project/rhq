@@ -29,7 +29,6 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -86,8 +85,9 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
         this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         this.saveButton.setTooltip(MSG.view_group_resConfig_edit_saveTooltip());
@@ -154,8 +154,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         this.configurationService.findResourceConfigurationsForGroup(group.getId(),
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Failed to retrieve member Resource configurations for [" + group + "]", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()),
+                        caught);
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

@@ -26,18 +26,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
@@ -50,10 +55,11 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
  * @author Ian Springer
  */
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
+
     public static final ViewName VIEW_ID = new ViewName("Reports", MSG.view_reportsTop_title());
 
-    private static final ViewName SUBSYSTEMS_SECTION_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
-    private static final ViewName INVENTORY_SECTION_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
+    public static final ViewName SECTION_SUBSYSTEMS_VIEW_ID = new ViewName("Subsystems", MSG.view_reports_subsystems());
+    public static final ViewName SECTION_INVENTORY_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     public ReportTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -74,15 +80,23 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
     @Override
-    protected HTMLFlow defaultView() {
-        String contents = "<h1>" + MSG.view_reportsTop_title() + "</h1>\n" + MSG.view_reportsTop_description();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+    protected VLayout defaultView() {
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_reportsTop_description());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     private NavigationSection buildSubsystemsSection() {
-        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Cloud_16.png", new ViewFactory() {
+        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Tag_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName()));
             }
@@ -112,7 +126,9 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new AlertHistoryView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()));
+                    // TODO: how do we know if the user is able to ack the alerts? right now, I hardcode false to not allow it
+                    return new SubsystemResourceAlertView(
+                        extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), false);
                 }
             });
 
@@ -123,7 +139,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(SUBSYSTEMS_SECTION_VIEW_ID, tagItem, suspectMetricsItem,
+        return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
             recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);
     }
 
@@ -136,13 +152,14 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID,
-            "types/Platform_up_16.png", new ViewFactory() {
-                public Canvas createView() {
-                    return new PlatformPortletView(extendLocatorId(PlatformPortletView.VIEW_ID.getName()));
-                }
-            });
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
+            .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
+            public Canvas createView() {
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
+            }
+        });
 
-        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
+        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }
+
 }

@@ -102,7 +102,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch groups data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_resourceGroups_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -121,7 +121,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterGroupCategory(getFilter(request, CATEGORY.propertyName(), GroupCategory.class));
-        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Integer.class));
+        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
 

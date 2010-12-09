@@ -136,8 +136,8 @@ fi
 mvn -version >/dev/null
 [ $? -ne 0 ] && abort "mvn --version failed with exit code $?."
 MAVEN_VERSION=`mvn -version | head -1 | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
-if echo $MAVEN_VERSION | grep -v "^2.[12]"; then
-   abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x or 2.2.x are supported. Please update the value of M2_HOME, then try again."
+if echo $MAVEN_VERSION | grep -Ev "^(2\.[12]|3\.0)"; then
+   abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x, 2.2.x, or 3.0.x is supported. Please update the value of M2_HOME, then try again."
 fi
 
 
@@ -170,7 +170,8 @@ if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"
-   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+#   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
    MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
 fi
 
@@ -259,11 +260,12 @@ if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
       echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
       #rm -rf "$MAVEN_LOCAL_REPO_DIR"
    else
-      OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-      if [ -n "$OUTPUT" ]; then       
-         echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-         rm -rf "$MAVEN_LOCAL_REPO_DIR"
-      fi
+      echo boo
+      #OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+      #if [ -n "$OUTPUT" ]; then       
+      #   echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+      #   rm -rf "$MAVEN_LOCAL_REPO_DIR"
+      #fi
    fi
    
 fi
@@ -298,6 +300,8 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+
+            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M</gwt-plugin.extraJvmArgs>
          </properties>
       </profile>
 

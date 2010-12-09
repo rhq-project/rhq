@@ -124,7 +124,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return MSG.view_bundle_createWizard_uploadStepName();
+        return MSG.view_bundle_createWizard_provideBundleDistro();
     }
 
     private DynamicForm createUrlForm() {

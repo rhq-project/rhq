@@ -106,7 +106,7 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
             new AsyncCallback<PageList<MeasurementSchedule>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to fetch measurement schedules for criteria " + criteria, caught);
+                        MSG.dataSource_schedules_loadFailedCriteria(criteria.toString()), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

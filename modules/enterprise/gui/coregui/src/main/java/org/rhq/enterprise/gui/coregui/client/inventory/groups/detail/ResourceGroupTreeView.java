@@ -53,6 +53,7 @@ import org.rhq.core.domain.resource.group.composite.ClusterKeyFlyweight;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -85,6 +86,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         setWidth(250);
         setHeight100();
+
+        setShowResizeBar(true);
     }
 
     @Override
@@ -156,7 +159,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             new AsyncCallback<PageList<ResourceGroup>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load group with id [" + groupId + "].", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_tree_common_loadFailed_group(String.valueOf(groupId)), caught);
                 }
 
                 @Override
@@ -171,6 +175,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         ResourceGroupTreeView.this.rootGroupId = rootResourceGroup.getId();
                         TreeNode fakeRoot = new TreeNode("fakeRootNode");
                         TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
+                        String icon = ImageManager.getGroupIcon(GroupCategory.MIXED);
+                        rootNode.setIcon(icon);
                         rootNode.setID(String.valueOf(rootResourceGroup.getId())); //getClusterKey().toString());
                         fakeRoot.setChildren(new TreeNode[] { rootNode });
                         Tree tree = new Tree();
@@ -200,7 +206,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             // TODO reselect tree to selected node
             TreeNode selectedNode;
             if (this.selectedGroup.getClusterKey() != null) {
-                selectedNode = treeGrid.getTree().findById(this.selectedGroup.getClusterKey());
+                //selectedNode = treeGrid.getTree().findById(this.selectedGroup.getClusterKey());
+                selectedNode = treeGrid.getTree().find("key", this.selectedGroup.getClusterKey());
             } else {
                 selectedNode = treeGrid.getTree().findById(String.valueOf(this.selectedGroup.getId()));
             }
@@ -213,7 +220,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             this.rootGroupId = groupId;
             GWTServiceLookup.getClusterService().getClusterTree(groupId, new AsyncCallback<ClusterFlyweight>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load group tree.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_groupTree(), caught);
                 }
 
                 public void onSuccess(ClusterFlyweight result) {
@@ -244,15 +251,24 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             new AsyncCallback<ResourceGroup>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create or update auto cluster group", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_createFailed_autoCluster(), caught);
                 }
 
                 @Override
                 public void onSuccess(ResourceGroup result) {
-                    int groupId = result.getId();
-                    History.newItem(ResourceGroupTopView.VIEW_ID + "/" + groupId);
+                    renderAutoCluster(result);
+                    //int groupId = result.getId();
+                    //History.newItem(ResourceGroupTopView.VIEW_ID + "/" + groupId);
                 }
             });
+    }
+
+    private void renderAutoCluster(ResourceGroup backingGroup) {
+        String viewPath = ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH + "/" + backingGroup.getId();
+        String currentViewPath = History.getToken();
+        if (!currentViewPath.startsWith(viewPath)) {
+            CoreGUI.goToView(viewPath);
+        }
     }
 
     private void loadTree(ClusterFlyweight root) {
@@ -263,7 +279,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         ResourceType rootResourceType = typeMap.get(rootResourceGroup.getResourceType().getId());
         rootNode.setAttribute("resourceType", rootResourceType);
-        String icon = "types/" + rootResourceType.getCategory().getDisplayName() + "_up_16.png";
+        String icon = ImageManager.getClusteredResourceIcon(rootResourceType.getCategory());
         rootNode.setIcon(icon);
 
         fakeRoot.setChildren(new TreeNode[] { rootNode });
@@ -277,6 +293,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         //TreeUtility.printTree(tree);
 
         treeGrid.setData(tree);
+        treeGrid.getTree().openFolder(rootNode);
         treeGrid.markForRedraw();
     }
 
@@ -383,7 +400,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         node.setAttribute("resourceType", type);
         node.setIsFolder(!child.getChildren().isEmpty());
 
-        String icon = "types/" + type.getCategory().getDisplayName() + "_up_16.png";
+        String icon = ImageManager.getClusteredResourceIcon(type.getCategory());
         node.setIcon(icon);
         return node;
     }
@@ -397,11 +414,20 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     }
 
     public void renderView(ViewPath viewPath) {
-        this.currentViewId = viewPath.getCurrent();
+        currentViewId = viewPath.getCurrent();
+        String currentViewIdPath = currentViewId.getPath();
         if (this.currentViewId != null) {
-            String groupIdString = this.currentViewId.getPath();
-            int groupId = Integer.parseInt(groupIdString);
-            setSelectedGroup(groupId);
+            if ("AutoCluster".equals(currentViewIdPath)) {
+                // Move the currentViewId to the ID portion to play better with other code
+                currentViewId = viewPath.getNext();
+                String clusterGroupIdString = currentViewId.getPath();
+                Integer clusterGroupId = Integer.parseInt(clusterGroupIdString);
+                setSelectedGroup(clusterGroupId);
+            } else {
+                String groupIdString = currentViewId.getPath();
+                int groupId = Integer.parseInt(groupIdString);
+                setSelectedGroup(groupId);
+            }
         }
     }
 

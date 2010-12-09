@@ -50,7 +50,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterAutoGroupParentResourceId; // requires overrides    
     private String filterPluginName; // requires overrides
     private GroupCategory filterGroupCategory;
-    private Integer filterDownMemberCount; // required overrides
+    private Long filterDownMemberCount; // required overrides
     private List<Integer> filterExplicitResourceIds; // requires overrides
     private List<Integer> filterImplicitResourceIds; // requires overrides
     private ResourceCategory filterExplicitResourceCategory; // requires overrides    
@@ -59,6 +59,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterGroupDefinitionId; // requires overrides
     private Boolean filterPrivate; /* if true, show only private groups for the calling user */
     private Boolean filterVisible = true; /* only show visible groups by default */
+    private List<Integer> filterIds; // requires overrides
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -114,6 +115,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "   JOIN res.explicitGroups explicitGroup " //
             + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
+        filterOverrides.put("ids", "id IN ( ? )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("pluginName", "resourceType.plugin");
@@ -131,7 +133,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     /**
      * Only returns groups with at least this many downed implicit resource members
      */
-    public void addFilterDownMemberCount(Integer filterDownMemberCount) {
+    public void addFilterDownMemberCount(Long filterDownMemberCount) {
         this.filterDownMemberCount = filterDownMemberCount;
     }
 
@@ -220,6 +222,10 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     public void addFilterVisible(Boolean filterVisible) {
         this.filterVisible = filterVisible;
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     public void fetchExplicitResources(boolean fetchExplicitResources) {

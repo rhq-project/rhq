@@ -417,7 +417,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
             this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
             false);
-        //resource.setResourceConfiguration(liveConfig.deepCopy(false));
+
+        // resource.setResourceConfiguration(liveConfig.deepCopy(false));
         resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
         return update;
     }
@@ -806,9 +807,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
-                    log
-                        .info("Group Resource configuration update request seems to have been orphaned - timing it out: "
-                            + request);
+
+                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
+                        + request);
+
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
                     request.setStatus(ConfigurationUpdateStatus.FAILURE);
@@ -964,7 +966,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a plugin configuration update audit trail for resource ["
                 + resource + "]");
@@ -994,7 +996,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a configuration update audit trail for resource [" + resource
                 + "]");
@@ -1699,7 +1701,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @SuppressWarnings("unchecked")
     public PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl) {
-        // will perform CONFIGURE_READ security check for us, no need to save the 
+
+        // will perform CONFIGURE_READ security check for us, no need to save the
+
         getGroupResourceConfigurationUpdate(subject, configurationUpdateId);
 
         pageControl.initDefaultOrderingField("cu.modifiedTime");
@@ -1898,7 +1902,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public int deleteGroupPluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupPluginConfigurationUpdateIds) {
-        //TODO: use subject and resourceGroupId to perform security check
+
+        // TODO: use subject and resourceGroupId to perform security check
+
+        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId) == false) {
+            log.error(subject + " attempted to delete " + groupPluginConfigurationUpdateIds.length
+                + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
+                + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
+            return 0;
+        }
+
         int removed = 0;
         for (Integer apcuId : groupPluginConfigurationUpdateIds) {
             /*
@@ -2002,9 +2015,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
-        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId) == false) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view group resourceConfiguration[id=" + configurationUpdateId + "]");
+
+        if (!authorizationManager.canViewGroup(subject, groupId)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view group Resource configuration for [" + update.getGroup() + "]");
+
         }
 
         return update;

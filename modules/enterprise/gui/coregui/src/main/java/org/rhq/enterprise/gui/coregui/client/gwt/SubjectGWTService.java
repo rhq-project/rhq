@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import javax.persistence.EntityExistsException;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SubjectException;
 
 /**
  * @see org.rhq.enterprise.server.auth.SubjectManagerLocal
@@ -48,6 +51,17 @@ public interface SubjectGWTService extends RemoteService {
      * @return the newly persisted {@link Subject}
      */
     Subject createSubject(Subject subjectToCreate);
+
+    /**
+     * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
+     * password.
+     *
+     * @param subjectToCreate the subject to be created (which will never be the same as <code>subject</code>)
+     * @param password the password for the principal to be created for the new user
+     *
+     * @return the persisted subject
+     */
+    Subject createSubject(Subject subjectToCreate, String password) throws Exception;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with
@@ -78,8 +92,18 @@ public interface SubjectGWTService extends RemoteService {
     void logout(Subject subject);
 
     /**
-     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
+     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles, but it will save
      * the subject's configuration.
+     *
+     * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
+     *
+     * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
+     */
+    Subject updateSubject(Subject subjectToModify);
+
+    /**
+     * Updates an existing subject with new data. This cascades changes to roles and LDAP roles, so the passed-in
+     * subject should be fully-fetched (i.e. both roles and LDAP roles should be fetched).
      *
      * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
      * @param newPassword if non-null, a new password to be set on the user's associated Principal

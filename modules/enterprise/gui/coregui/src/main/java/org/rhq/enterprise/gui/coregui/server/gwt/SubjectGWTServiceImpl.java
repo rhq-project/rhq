@@ -59,6 +59,15 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
+    public Subject createSubject(Subject subjectToCreate, String password) throws Exception {
+        try {
+            return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate, password),
+                "SubjectManager.createSubject");
+        } catch (RuntimeException e) {
+            throw new Exception(e);            
+        }
+    }
+
     public void deleteSubjects(int[] subjectIds) {
         try {
             subjectManager.deleteSubjects(getSessionSubject(), subjectIds);
@@ -83,6 +92,16 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             subjectManager.logout(subject.getSessionId());
         } catch (RuntimeException e) {
             handleException(e);
+        }
+    }
+
+    public Subject updateSubject(Subject subjectToModify) {
+        try {
+            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
+                "SubjectManager.updateSubject");
+        } catch (RuntimeException e) {
+            handleException(e);
+            return null;
         }
     }
 
@@ -150,4 +169,5 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         log.error("Unexpected error.", e);
         throw new RuntimeException(ThrowableUtil.getAllMessages(e));
     }
+    
 }

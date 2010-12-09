@@ -57,7 +57,7 @@ public class BundleSelector extends AbstractSelector<Bundle> {
         final SelectItem bundleTypeSelect = new SelectItem("bundleType", MSG.view_bundle_bundleType());
         bundleService.getAllBundleTypes(new AsyncCallback<ArrayList<BundleType>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load Bundle data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
             }
 
             public void onSuccess(ArrayList<BundleType> result) {
@@ -96,6 +96,6 @@ public class BundleSelector extends AbstractSelector<Bundle> {
 
     @Override
     protected String getItemTitle() {
-        return "bundle";
+        return MSG.common_title_bundles();
     }
 }

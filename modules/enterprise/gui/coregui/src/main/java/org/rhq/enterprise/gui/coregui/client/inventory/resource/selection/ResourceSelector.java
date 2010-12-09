@@ -76,7 +76,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             typeSelectItem.setCanSelectParentItems(true);
             typeSelectItem.setLoadDataOnDemand(false);
             typeSelectItem.setEmptyMenuMessage(MSG.common_msg_loading());
-            typeSelectItem.setShowIcons(true);
+            typeSelectItem.setShowIcons(false);
 
             if (this.forceResourceTypeFilter) {
                 typeSelectItem.setDisabled(true);
@@ -143,14 +143,6 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     @Override
     protected String getItemTitle() {
         return "resource";
-    }
-
-    /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.
-     */
-    public void addAvailableGridSelectionsToAssignedGrid() {
-        assignedGrid.transferSelectedData(availableGrid);
-        select(assignedGrid.getSelection());
-        updateButtonEnablement();
     }
 
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {

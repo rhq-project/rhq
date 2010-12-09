@@ -26,13 +26,16 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -106,10 +109,18 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>" + MSG.common_title_inventory() + "</h1>\n" + MSG.view_inventory_sectionHelp();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+        VLayout vLayout = new VLayout();
+        vLayout.setWidth100();
+
+        // TODO: Admin icon.
+        TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_inventory_sectionHelp());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     @Override
@@ -137,47 +148,51 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null, new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES.getName()), null, PAGE_ALL_RESOURCES
-                    .getTitle(), "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
+                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM, Boolean.TRUE),
+                    ImageManager.getResourceLargeIcon(ResourceCategory.SERVER, Boolean.TRUE), ImageManager
+                        .getResourceLargeIcon(ResourceCategory.SERVICE, Boolean.TRUE));
             }
         });
 
-        NavigationItem platformsItem = new NavigationItem(PAGE_PLATFORMS, "types/Platform_up_16.png",
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()), new Criteria(
-                        ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()),
-                        PAGE_PLATFORMS.getTitle(), "types/Platform_up_24.png");
-                }
-            });
+        NavigationItem platformsItem = new NavigationItem(PAGE_PLATFORMS, ImageManager.getResourceIcon(
+            ResourceCategory.PLATFORM, Boolean.TRUE), new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()), new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS
+                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
+            }
+        });
 
-        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, "types/Server_up_16.png", new ViewFactory() {
+        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, ImageManager.getResourceIcon(
+            ResourceCategory.SERVER, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_SERVERS.getName()), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS
-                    .getTitle(), "types/Server_up_24.png");
+                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER, Boolean.TRUE));
             }
         });
 
-        NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, "types/Service_up_16.png", new ViewFactory() {
+        NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, ImageManager.getResourceIcon(
+            ResourceCategory.SERVICE, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_SERVICES.getName()), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES
-                    .getTitle(), "types/Service_up_24.png");
+                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE, Boolean.TRUE));
             }
         });
 
-        NavigationItem downServersItem = new NavigationItem(PAGE_DOWN_SERVERS, "types/Server_down_16.png",
-            new ViewFactory() {
-                public Canvas createView() {
-                    Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
-                        AvailabilityType.DOWN.name());
-                    criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER
-                        .name());
-                    // TODO (ips, 10/28/10): Should we include down platforms too?
-                    return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS.getName()), criteria, MSG
-                        .view_inventory_downServers());
-                }
-            });
+        NavigationItem downServersItem = new NavigationItem(PAGE_DOWN_SERVERS, ImageManager.getResourceIcon(
+            ResourceCategory.SERVER, Boolean.FALSE), new ViewFactory() {
+            public Canvas createView() {
+                Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
+                    AvailabilityType.DOWN.name());
+                criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
+                // TODO (ips, 10/28/10): Should we include down platforms too?
+                return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS.getName()), criteria, MSG
+                    .view_inventory_downServers(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
+                    Boolean.FALSE));
+            }
+        });
 
         return new NavigationSection(RESOURCES_SECTION_VIEW_ID, autodiscoveryQueueItem, allResourcesItem,
             platformsItem, serversItem, servicesItem, downServersItem);
@@ -187,46 +202,48 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS,
             "types/GroupDefinition_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    // TODO: Do we have a 24x24 groupdef icon?
                     return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName()),
-                        "types/GroupDefinition_16.png");
+                        "types/GroupDefinition_24.png");
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, "types/Group_up_16.png", new ViewFactory() {
+        NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, ImageManager
+            .getGroupIcon(GroupCategory.MIXED), new ViewFactory() {
             public Canvas createView() {
                 return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS.getName()), null, PAGE_ALL_GROUPS
-                    .getTitle(), "types/Cluster_up_24.png", "types/Group_up_24.png");
+                    .getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.COMPATIBLE), ImageManager
+                    .getGroupLargeIcon(GroupCategory.MIXED));
             }
         });
 
-        NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_16.png",
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
-                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
-                        PAGE_COMPATIBLE_GROUPS.getTitle(), "types/Cluster_up_24.png");
-                }
-            });
+        NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, ImageManager
+            .getGroupIcon(GroupCategory.COMPATIBLE), new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
+                    PAGE_COMPATIBLE_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.COMPATIBLE));
+            }
+        });
 
-        NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, "types/Group_up_16.png",
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()), new Criteria(
-                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
-                        PAGE_MIXED_GROUPS.getTitle(), "types/Group_up_24.png");
-                }
-            });
+        NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, ImageManager
+            .getGroupIcon(GroupCategory.MIXED), new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()), new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
+                    PAGE_MIXED_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.MIXED));
+            }
+        });
 
-        NavigationItem problemGroupsItem = new NavigationItem(PAGE_PROBLEM_GROUPS, "types/Cluster_down_16.png",
-            new ViewFactory() {
-                public Canvas createView() {
-                    // TODO: There is no underlying support for this criteria. Also, there should not be an active New
-                    //       button on this page.
-                    return new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()), new Criteria(
-                        "availability", "down"), PAGE_PROBLEM_GROUPS.getTitle(), "types/Cluster_down_16.png");
-                }
-            });
+        NavigationItem problemGroupsItem = new NavigationItem(PAGE_PROBLEM_GROUPS, ImageManager.getGroupIcon(
+            GroupCategory.MIXED, 0.0d), new ViewFactory() {
+            public Canvas createView() {
+                ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()),
+                    new Criteria("downMemberCount", "1"), PAGE_PROBLEM_GROUPS.getTitle(), ImageManager
+                        .getGroupLargeIcon(GroupCategory.MIXED, 0.0d));
+                view.setShowNewButton(false);
+                return view;
+            }
+        });
 
         return new NavigationSection(GROUPS_SECTION_VIEW_ID, dynagroupDefinitionsItem, allGroupsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);

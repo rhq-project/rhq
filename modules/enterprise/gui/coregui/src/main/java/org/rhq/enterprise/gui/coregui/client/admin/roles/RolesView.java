@@ -18,19 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import java.util.EnumSet;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -40,11 +47,14 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Ian Springer
  */
 public class RolesView extends TableSection<RolesDataSource> implements BookmarkableView {
-    
-    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
 
-    // TODO: We need a 24x24 version of the Role icon.
-    private static final String HEADER_ICON = "global/Role_16.png";
+    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
+    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
+        + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
+    
+    private static final String HEADER_ICON = "global/Role_24.png";
+
+    private boolean hasManageSecurity;
 
     public RolesView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_roles());
@@ -53,14 +63,21 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
     }
-
+    
     @Override
     protected void configureTable() {
         super.configureTable();
 
         ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                Integer roleId = getId(record);
+                String roleUrl = LinkManager.getRoleLink(roleId);
+                return SeleniumUtility.getLocatableHref(roleUrl, value.toString(), null);
+            }
+        });
 
-        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 600);
+        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION);
 
         setListGridFields(nameField, descriptionField);
 
@@ -73,9 +90,9 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
                     }
 
                     for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
-                        if (id == RolesDataSource.ID_SUPERUSER || id == RolesDataSource.ID_ALL_RESOURCES) {
-                            // The superuser and all-resources roles cannot be deleted.
+                        int roleId = record.getAttributeAsInt(RolesDataSource.Field.ID);
+                        if (RolesDataSource.isSystemRoleId(roleId)) {
+                            // The superuser role cannot be deleted.
                             return false;
                         }
                     }
@@ -88,20 +105,36 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
             });
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
-            private boolean[] hasManageSecurityPermission = new boolean[] {false};
             public boolean isEnabled(ListGridRecord[] selection) {
-                UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
-                    public void onPermissionsLoaded(Set<Permission> globalPermissions) {
-                        hasManageSecurityPermission[0] = globalPermissions.contains(Permission.MANAGE_SECURITY);
-                    }
-                });
-                return hasManageSecurityPermission[0];
+                return hasManageSecurity;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
+
+        fetchManageSecurityPermissionAsync();
+    }
+
+    private void fetchManageSecurityPermissionAsync() {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+            new AsyncCallback<Set<Permission>>() {
+
+                @Override
+                public void onSuccess(Set<Permission> result) {
+                    hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+                    refresh();
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    hasManageSecurity = false;
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
+                            .of(Message.Option.BackgroundJobResult)));
+                }
+            });
     }
 
     @Override

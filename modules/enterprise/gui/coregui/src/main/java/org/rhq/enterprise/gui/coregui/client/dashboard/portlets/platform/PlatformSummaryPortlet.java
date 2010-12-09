@@ -36,7 +36,6 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -54,12 +53,13 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class PlatformPortletView extends LocatableListGrid implements Portlet {
+public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
     public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
@@ -68,7 +68,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
     public static final String KEY = MSG.view_portlet_platform_title();
 
-    public PlatformPortletView(String locatorId) {
+    public PlatformSummaryPortlet(String locatorId) {
         super(locatorId);
 
         setWidth100();
@@ -340,7 +340,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new PlatformPortletView(locatorId);
+            return new PlatformSummaryPortlet(locatorId);
         }
     }
 }

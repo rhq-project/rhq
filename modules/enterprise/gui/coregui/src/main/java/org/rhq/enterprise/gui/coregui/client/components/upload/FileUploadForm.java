@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -86,17 +87,17 @@ public class FileUploadForm extends DynamicCallbackForm {
         iconLoading.setHeight(16);
 
         iconGreen = new FormItemIcon();
-        iconGreen.setSrc("/images/icons/availability_green_16.png");
+        iconGreen.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
         iconGreen.setWidth(16);
         iconGreen.setHeight(16);
 
         iconRed = new FormItemIcon();
-        iconRed.setSrc("/images/icons/availability_red_16.png");
+        iconRed.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
         iconRed.setWidth(16);
         iconRed.setHeight(16);
 
         iconGrey = new FormItemIcon();
-        iconGrey.setSrc("/images/icons/availability_grey_16.png");
+        iconGrey.setSrc(ImageManager.getAvailabilityIcon(null));
         iconGrey.setWidth(16);
         iconGrey.setHeight(16);
     }

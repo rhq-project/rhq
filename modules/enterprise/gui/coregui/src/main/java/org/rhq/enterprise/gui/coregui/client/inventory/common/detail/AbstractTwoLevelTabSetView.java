@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
@@ -235,17 +236,20 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
                 this.tabSet.selectTab(tab);
             }
 
-            // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
             if (subView instanceof BookmarkableView) {
+                // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
                 ((BookmarkableView) subView).renderView(viewPath);
             } else if (subView instanceof RefreshableView) {
-                ((RefreshableView) subView).refresh();
+                if (subView.isDrawn()) {
+                    // Refresh the data on the subtab, so it's not stale.
+                    ((RefreshableView) subView).refresh();
+                }
             }
 
             this.tabSet.markForRedraw();
         } catch (Exception e) {
-            com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
+            Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
         }
     }
 

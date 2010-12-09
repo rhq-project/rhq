@@ -60,8 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
-    implements BookmarkableView, DetailsView {
+public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout implements
+    BookmarkableView, DetailsView {
 
     private static final Label LOADING_LABEL = new Label(MSG.widget_recordEditor_label_loading());
 
@@ -81,8 +81,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private LocatableVLayout contentPane;
     private boolean postFetchHandlerExecutedAlready;
 
-    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
-                                String headerIcon) {
+    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName, String headerIcon) {
         super(locatorId);
         this.dataSource = dataSource;
         this.recordId = recordId;
@@ -122,9 +121,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      */
     protected void init(boolean isReadOnly) {
         if (this.recordId == ID_NEW && isReadOnly) {
-            Message message =
-                new Message("You do not have the permissions required to create a new " + this.dataTypeName + ".",
-                    Message.Severity.Error);
+            Message message = new Message(MSG.widget_recordEditor_error_permissionCreate(this.dataTypeName),
+                Message.Severity.Error);
             CoreGUI.goToView(getListViewPath(), message);
         } else {
             this.isReadOnly = isReadOnly;
@@ -157,7 +155,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         contentPane.setOverflow(Overflow.AUTO);
         //contentPane.setPadding(7);
 
-        this.form = buildForm();        
+        this.form = buildForm();
         contentPane.addMember(this.form);
 
         return contentPane;
@@ -183,11 +181,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             public void onItemChanged(ItemChangedEvent event) {
                 AbstractRecordEditor.this.onItemChanged();
             }
-        });        
-                
+        });
+
         return form;
     }
-
 
     protected boolean isFormReadOnly() {
         return this.isReadOnly;
@@ -250,10 +247,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected void save() {
         if (!this.form.validate()) {
-            // TODO: i18n
-            Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
-                            + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
-                            Message.Option.Transient));
+            Message message = new Message(MSG.widget_recordEditor_warn_validation(this.dataTypeName),
+                Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
             CoreGUI.getMessageCenter().notify(message);
             return;
         }
@@ -280,32 +275,32 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                         }
                     }
                     switch (operationType) {
-                        case ADD:
-                            conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
-                            detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
-                            if (CoreGUI.isDebugMode()) {
-                                conciseMessage += " (" + FIELD_ID + "=" + id + ")";
-                                detailedMessage += " (" + FIELD_ID + "=" + id + ")";
-                            }
-                            break;
-                        case UPDATE:
-                            conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
-                            detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
-                            break;
-                        default:
-                            throw new IllegalStateException(
-                                MSG.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
+                    case ADD:
+                        conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
+                        detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
+                        if (CoreGUI.isDebugMode()) {
+                            conciseMessage += " (" + FIELD_ID + "=" + id + ")";
+                            detailedMessage += " (" + FIELD_ID + "=" + id + ")";
+                        }
+                        break;
+                    case UPDATE:
+                        conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
+                        detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
+                        break;
+                    default:
+                        throw new IllegalStateException(MSG
+                            .widget_recordEditor_error_unsupportedOperationType(operationType.name()));
                     }
 
                     message = new Message(conciseMessage, detailedMessage);
                     CoreGUI.goToView(getListViewPath(), message);
                 } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
-                    Message message = new Message("Operation failed - one or more fields have invalid values.",
+                    Message message = new Message(MSG.widget_recordEditor_error_operationInvalidValues(),
                         Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 } else {
                     // assume failure                    
-                    Message message = new Message("Operation failed - an error occurred.", Message.Severity.Error);
+                    Message message = new Message(MSG.widget_recordEditor_error_operation(), Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 }
             }
@@ -314,7 +309,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected void editNewRecord() {
         // Update the view title.
-        this.titleBar.setTitle("New " + this.dataTypeName);
+        this.titleBar.setTitle(MSG.widget_recordEditor_title_new(this.dataTypeName));
 
         // Create a new record.
         Record record = createNewRecord();
@@ -337,8 +332,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     protected void editExistingRecord(Record record) {
         // Update the view title.
         String recordName = record.getAttribute(getTitleFieldName());
-        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
-            MSG.widget_recordEditor_title_edit(this.dataTypeName, recordName);
+        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) : MSG
+            .widget_recordEditor_title_edit(this.dataTypeName, recordName);
         this.titleBar.setTitle(title);
 
         // Load the data into the form.
@@ -419,11 +414,11 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
         for (int i = ID_NEW, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
             Record roleRecord = roleRecords[i];
-            roleListGridRecords[i] = (ListGridRecord)roleRecord;
+            roleListGridRecords[i] = (ListGridRecord) roleRecord;
         }
         return roleListGridRecords;
     }
-    
+
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(ID_NEW)) + itemTitle.substring(1);
     }
@@ -490,5 +485,5 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             return saveButton;
         }
     }
-    
+
 }

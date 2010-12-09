@@ -158,6 +158,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 //
 @SuppressWarnings( { "UnnecessarySemicolon" })
 public class ConfigurationEditor extends LocatableVLayout {
+
     private static final String RHQ_PROPERTY_ATTRIBUTE_NAME = "rhq:property";
 
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
@@ -529,7 +530,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
         form.setValuesManager(valuesManager);
-        form.setValidateOnChange(true);
+        form.setValidateOnExit(true);
         form.setHiliteRequiredFields(true);
 
         form.addItemChangedHandler(new ItemChangedHandler() {
@@ -1651,4 +1652,5 @@ public class ConfigurationEditor extends LocatableVLayout {
             return valid;
         }
     }
+    
 }

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -28,11 +29,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Lukas Krejci
  */
-public class OverviewView extends LocatableVLayout {
+public class OverviewView extends LocatableVLayout implements RefreshableView {
+    private OverviewForm form;
 
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
-        OverviewForm form = new OverviewForm(extendLocatorId("form"), resourceComposite);
+        this.form = new OverviewForm(extendLocatorId("form"), resourceComposite);
         HTMLFlow separator = new HTMLFlow();
         separator.setContents("<hr>");
 
@@ -43,7 +45,7 @@ public class OverviewView extends LocatableVLayout {
     }
 
     @Override
-    public void onInit() {
-        super.onInit();
+    public void refresh() {
+        form.loadData();        
     }
 }

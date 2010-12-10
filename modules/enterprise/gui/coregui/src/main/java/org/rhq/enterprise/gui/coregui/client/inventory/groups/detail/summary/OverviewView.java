@@ -23,17 +23,16 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * The group Inventory>Overview subtab.
+ * The content pane for the group Inventory>Overview subtab.
  *
  * @author Ian Springer
  */
-public class OverviewView extends LocatableVLayout {
-    private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
+public class OverviewView extends LocatableVLayout implements RefreshableView {
+
     private ResourceGroupComposite groupComposite;
 
     public OverviewView(String locatorId, ResourceGroupComposite groupComposite) {
@@ -55,4 +54,10 @@ public class OverviewView extends LocatableVLayout {
         HTMLFlow html = new HTMLFlow("Activity information will go here");
         addMember(html);
     }
+
+    @Override
+    public void refresh() {
+        // TODO: Reload the data.
+    }
+
 }

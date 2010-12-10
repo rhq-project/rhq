@@ -108,18 +108,20 @@ public class OverviewForm extends EnhancedDynamicForm {
                 }
 
                 public void onSuccess(List<MeasurementDataTrait> result) {
-                    // TODO: Implement this method.
                     for (MeasurementDataTrait trait : result) {
-                        String formId = trait.getName().replaceAll("\\.", "_").replaceAll(" ", "__");
-                        FormItem item = getItem(formId);
-
+                        String formItemId = buildFormItemIdFromTraitDisplayName(trait.getName());
+                        FormItem item = getItem(formItemId);
                         if (item != null) {
-                            setValue(formId, trait.getValue());
+                            setValue(formItemId, trait.getValue());
                         }
                     }
                     markForRedraw();
                 }
             });
+    }
+
+    private static String buildFormItemIdFromTraitDisplayName(String traitName) {
+        return traitName.replaceAll("\\.", "_").replaceAll(" ", "__");
     }
 
     private void buildForm(ResourceType type) {
@@ -131,12 +133,6 @@ public class OverviewForm extends EnhancedDynamicForm {
             }
         }
 
-        Collections.sort(traits, new Comparator<MeasurementDefinition>() {
-            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
-            }
-        });
-
         List<FormItem> formItems = new ArrayList<FormItem>();
 
         if (isHeaderEnabled()) {//conditionally display header
@@ -145,6 +141,7 @@ public class OverviewForm extends EnhancedDynamicForm {
             formItems.add(headerItem);
         }
 
+        // Type
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
         typeItem.setTooltip(MSG.view_summaryOverviewForm_label_plugin() + type.getPlugin() + "\n<br>"
             + MSG.view_summaryOverviewForm_label_type() + type.getName());
@@ -154,6 +151,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         final Resource resource = this.resourceComposite.getResource();
         boolean modifiable = this.resourceComposite.getResourcePermission().isInventory();
 
+        // Name
         final FormItem nameItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
         nameItem.setName("name");
         nameItem.setTitle(MSG.view_summaryOverviewForm_field_name());
@@ -189,6 +187,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
         formItems.add(nameItem);
 
+        // Description
         final FormItem descriptionItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
         descriptionItem.setName("description");
         descriptionItem.setTitle(MSG.view_summaryOverviewForm_field_description());
@@ -226,6 +225,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
         formItems.add(descriptionItem);
 
+        // Location
         final FormItem locationItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
         locationItem.setName("location");
         locationItem.setTitle(MSG.view_summaryOverviewForm_field_location());
@@ -261,16 +261,25 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
         formItems.add(locationItem);
 
+        // Version
         StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
+        versionItem.setValue((resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
+            + "</i>");
         versionItem.setEndRow(true);
         formItems.add(versionItem);
 
-        for (MeasurementDefinition trait : traits) {
-            String id = trait.getDisplayName().replaceAll("\\.", "_").replaceAll(" ", "__");
+        // Traits
+        Collections.sort(traits, new Comparator<MeasurementDefinition>() {
+            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+            }
+        });
 
-            StaticTextItem item = new StaticTextItem(id, trait.getDisplayName());
-            item.setTooltip(trait.getDescription());
-            formItems.add(item);
+        for (MeasurementDefinition trait : traits) {
+            String formItemId = buildFormItemIdFromTraitDisplayName(trait.getDisplayName());
+            StaticTextItem formItem = new StaticTextItem(formItemId, trait.getDisplayName());
+            formItem.setTooltip(trait.getDescription());
+            formItems.add(formItem);
             //            item.setValue("?");
         }
 
@@ -284,14 +293,14 @@ public class OverviewForm extends EnhancedDynamicForm {
         if (!isDisplayCondensed()) {
             formItems.add(new SpacerItem());
         }
-        setItems(formItems.toArray(new FormItem[formItems.size()]));
 
-        setValue("type", type.getName() + " (" + type.getPlugin() + ")");
-        setValue("name", resource.getName());
-        setValue("description", resource.getDescription());
-        setValue("location", resource.getLocation());
-        setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
-            + "</i>");
+        setItems(formItems.toArray(new FormItem[formItems.size()]));        
+    }
+
+    public void loadData() {
+        // TODO: Reload the ResourceComposite too.        
+        loadTraitValues();
+        markForRedraw();
     }
 
     public boolean isHeaderEnabled() {

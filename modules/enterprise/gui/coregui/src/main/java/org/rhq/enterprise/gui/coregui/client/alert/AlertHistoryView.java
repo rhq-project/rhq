@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 
@@ -103,7 +104,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     @Override
     protected void configureTable() {
-        getListGrid().setFields(getDataSource().getListGridFields().toArray(new ListGridField[0]));
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
         setupTableInteractions();
     }
 

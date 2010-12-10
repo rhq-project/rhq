@@ -58,6 +58,9 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  */
 public class ResourceDatasource extends RPCDataSource<Resource> {
+
+    public static final String FILTER_GROUP_ID = "groupId";
+
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     private static ResourceDatasource INSTANCE;

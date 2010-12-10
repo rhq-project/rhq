@@ -44,7 +44,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, null, criteria, title, headerIcons);
     }
 
-    protected RPCDataSource<?> getDataSourceInstance() {
+    protected RPCDataSource getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
     }
 

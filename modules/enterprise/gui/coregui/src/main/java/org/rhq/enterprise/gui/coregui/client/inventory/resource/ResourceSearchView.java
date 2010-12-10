@@ -33,11 +33,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -50,12 +45,10 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -65,9 +58,6 @@ public class ResourceSearchView extends Table {
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
-
-    // our static factory method will set this to a non-null resource group ID if the user can modify that group's membership
-    private Integer groupIdToModify = null;
 
     /**
      * A list of all Resources in the system.
@@ -115,11 +105,11 @@ public class ResourceSearchView extends Table {
         //        searchPanel.setWrapItemTitles(false);
         //        searchPanel.setFields(searchBox);
 
-        final RPCDataSource<?> datasource = getDataSourceInstance();
+        final RPCDataSource datasource = getDataSourceInstance();
         setDataSource(datasource);
     }
 
-    protected RPCDataSource<?> getDataSourceInstance() {
+    protected RPCDataSource getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }
 
@@ -195,48 +185,6 @@ public class ResourceSearchView extends Table {
             }
         });
 
-        if (this.groupIdToModify != null) {
-            addTableAction(extendLocatorId("Members"), MSG.view_tabs_common_group_members() + "...",
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembersWindow"));
-                        winModal.setTitle(MSG.view_tabs_common_group_members());
-                        winModal.setOverflow(Overflow.VISIBLE);
-                        winModal.setShowMinimizeButton(false);
-                        winModal.setIsModal(true);
-                        winModal.setShowModalMask(true);
-                        winModal.setWidth(700);
-                        winModal.setHeight(450);
-                        winModal.setAutoCenter(true);
-                        winModal.setShowResizer(true);
-                        winModal.setCanDragResize(true);
-                        winModal.centerInPage();
-                        winModal.addCloseClickHandler(new CloseClickHandler() {
-                            @Override
-                            public void onCloseClick(CloseClientEvent event) {
-                                winModal.markForDestroy();
-                            }
-                        });
-
-                        ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(
-                            ResourceSearchView.this.extendLocatorId("View"), ResourceSearchView.this.groupIdToModify
-                                .intValue());
-
-                        membershipView.setSaveButtonHandler(new ClickHandler() {
-                            @Override
-                            public void onClick(ClickEvent event) {
-                                winModal.markForDestroy();
-                                CoreGUI.refresh();
-                            }
-                        });
-
-                        winModal.addItem(membershipView);
-                        winModal.show();
-                    }
-                });
-        }
-
         //        //load double click handler for this table
         //        configureDoubleClickHandler();
 
@@ -281,22 +229,6 @@ public class ResourceSearchView extends Table {
 
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);
-    }
-
-    // -------- Static Utility loaders ------------
-
-    public static ResourceSearchView getChildrenOf(String locatorId, int resourceId) {
-        return new ResourceSearchView(locatorId, new Criteria("parentId", String.valueOf(resourceId)), MSG
-            .view_inventory_resources_title_children());
-    }
-
-    public static ResourceSearchView getMembersOf(String locatorId, int groupId, boolean canModifyMembers) {
-        ResourceSearchView view = new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)),
-            MSG.view_inventory_resources_title_members());
-        if (canModifyMembers) {
-            view.groupIdToModify = Integer.valueOf(groupId);
-        }
-        return view;
     }
 
 }

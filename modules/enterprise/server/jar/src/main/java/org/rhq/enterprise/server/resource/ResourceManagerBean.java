@@ -2327,4 +2327,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager
             .getDuplicateTypeNames());
     }
+
+    @SuppressWarnings("unchecked")
+    public List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds) {
+        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
+            .setParameter("resourceTypeIds", resourceTypeIds)
+            .getResultList();
+    }
+
+    @Override
+    public Integer getResourceCount(List<Integer> resourceTypeIds) {
+        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES)
+            .setParameter("resourceTypeIds", resourceTypeIds)
+            .getSingleResult();
+    }
 }

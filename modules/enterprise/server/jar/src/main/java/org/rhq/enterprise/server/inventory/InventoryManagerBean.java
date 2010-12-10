@@ -55,9 +55,7 @@ public class InventoryManagerBean implements InventoryManagerLocal {
         int typesDeleted = 0;
         BatchIterator<Integer> batchIterator = new BatchIterator<Integer>(resourceTypeIds);
         for (List<Integer> typeIdsBatch : batchIterator) {
-            List<Integer> resourceIds = entityMgr.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
-                .setParameter("resourceTypeIds", typeIdsBatch)
-                .getResultList();
+            List<Integer> resourceIds = resourceMgr.findIdsByTypeIds(typeIdsBatch);
             resourceMgr.uninventoryResources(subjectMgr.getOverlord(), toIntArray(resourceIds));
 
             Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);

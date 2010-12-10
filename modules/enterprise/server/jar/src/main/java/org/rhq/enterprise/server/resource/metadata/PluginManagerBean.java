@@ -39,6 +39,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 @Stateless
@@ -65,6 +66,9 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeMgr;
+
+    @EJB
+    private ResourceManagerLocal resourceMgr;
 
     /**
      * Returns the information on the given plugin as found in the database.
@@ -241,7 +245,6 @@ public class PluginManagerBean implements PluginManagerLocal {
         for (Plugin plugin : plugins) {
             if (plugin.getStatus().equals(PluginStatusType.INSTALLED)) {
                 long startTime = System.currentTimeMillis();
-//                List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
                 List<Integer> resourceTypeIds = resourceTypeMgr.getResourceTypeIdsByPlugin(plugin.getName());
                 Plugin managedPlugin = entityManager.merge(plugin);
                 inventoryMgr.markTypesDeleted(resourceTypeIds);
@@ -252,6 +255,20 @@ public class PluginManagerBean implements PluginManagerLocal {
                 log.debug("Skipping " + plugin + ". It is already deleted.");
             }
         }
+    }
+
+    @Override
+    public List<PluginStats> getPluginStats(List<Integer> pluginIds) {
+        List<PluginStats> stats = new ArrayList<PluginStats>();
+        List<Plugin> plugins = getAllPluginsById(pluginIds);
+
+        for (Plugin plugin : plugins) {
+            List<Integer> resourceTypeIds = resourceTypeMgr.getResourceTypeIdsByPlugin(plugin.getName());
+            Integer resourceCount = resourceMgr.getResourceCount(resourceTypeIds);
+            stats.add(new PluginStats(plugin, resourceTypeIds.size(), resourceCount));
+        }
+
+        return stats;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

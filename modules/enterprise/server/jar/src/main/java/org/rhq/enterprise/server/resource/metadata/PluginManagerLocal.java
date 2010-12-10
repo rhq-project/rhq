@@ -49,6 +49,8 @@ public interface PluginManagerLocal {
 
     List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory);
 
+    List<PluginStats> getPluginStats(List<Integer> pluginIds);
+
     void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;

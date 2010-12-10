@@ -23,15 +23,15 @@ import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 /**
- * The Resource Summary>Dashboard tab.
+ * The content pane of the Resource Summary>Activity tab.
  *
  * @author Greg Hinkle
  */
-public class DashboardView extends FullHTMLPane implements ResourceSelectListener {
+public class ActivityView extends FullHTMLPane implements ResourceSelectListener {
 
     private ResourceComposite resourceComposite;
 
-    public DashboardView(String locatorId, ResourceComposite resourceComposite) {
+    public ActivityView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId, null);
         this.resourceComposite = resourceComposite;
     }

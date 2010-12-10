@@ -267,9 +267,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
 
         // Inventory tab is always visible and enabled.
-        enabled = !isAutoGroup() && !isAutoCluster() && globalPermissions.contains(Permission.MANAGE_INVENTORY); // true, then user can modify group membership
+        boolean canModifyMembers = !isAutoGroup() && !isAutoCluster()
+            && globalPermissions.contains(Permission.MANAGE_INVENTORY);
         updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryMembers
-            .extendLocatorId("View"), groupId, enabled), true, true);
+            .extendLocatorId("View"), groupId, canModifyMembers), true, true);
         updateSubTab(this.inventoryTab, this.inventoryConn, new CurrentGroupPluginConfigurationView(this.inventoryConn
             .extendLocatorId("View"), this.groupComposite), facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION),
             true);

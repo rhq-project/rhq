@@ -66,7 +66,7 @@ public class ResourceSearchView extends Table {
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
-    // our static factory method will set this to a non-null resource group ID iff the user can modify that group's membership
+    // our static factory method will set this to a non-null resource group ID if the user can modify that group's membership
     private Integer groupIdToModify = null;
 
     /**
@@ -196,12 +196,12 @@ public class ResourceSearchView extends Table {
         });
 
         if (this.groupIdToModify != null) {
-            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_group_membership() + "...",
+            addTableAction(extendLocatorId("Members"), MSG.view_tabs_common_group_members() + "...",
                 new AbstractTableAction(TableActionEnablement.ALWAYS) {
                     @Override
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
-                        winModal.setTitle(MSG.view_tabs_common_group_membership());
+                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembersWindow"));
+                        winModal.setTitle(MSG.view_tabs_common_group_members());
                         winModal.setOverflow(Overflow.VISIBLE);
                         winModal.setShowMinimizeButton(false);
                         winModal.setIsModal(true);
@@ -290,10 +290,10 @@ public class ResourceSearchView extends Table {
             .view_inventory_resources_title_children());
     }
 
-    public static ResourceSearchView getMembersOf(String locatorId, int groupId, boolean canModifyMembership) {
+    public static ResourceSearchView getMembersOf(String locatorId, int groupId, boolean canModifyMembers) {
         ResourceSearchView view = new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)),
             MSG.view_inventory_resources_title_members());
-        if (canModifyMembership) {
+        if (canModifyMembers) {
             view.groupIdToModify = Integer.valueOf(groupId);
         }
         return view;

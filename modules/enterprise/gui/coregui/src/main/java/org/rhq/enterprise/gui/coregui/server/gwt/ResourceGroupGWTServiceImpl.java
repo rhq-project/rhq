@@ -81,7 +81,8 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType) {
         try {
-            groupManager.setAssignedResources(getSessionSubject(), resourceId, resourceGroupIds, setType);
+            groupManager.setAssignedResourceGroupsForResource(getSessionSubject(), resourceId, resourceGroupIds,
+                setType);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

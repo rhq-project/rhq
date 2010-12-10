@@ -261,8 +261,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .extendLocatorId("View"), "/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId()), true, true);
     }
 
+    // Inventory Tab (always enabled and visible)
     private void updateInventoryTabContent(ResourceComposite resourceComposite, Resource resource,
-                                           Set<ResourceTypeFacet> facets) {
+        Set<ResourceTypeFacet> facets) {
+
         ResourceType type = this.resourceComposite.getResource().getResourceType();
         boolean visible = !type.getChildResourceTypes().isEmpty();
         Canvas canvas = (visible) ? ResourceCompositeSearchView.getChildrenOf(this.inventoryTab
@@ -280,13 +282,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         canvas = (visible) ? new Canvas() : null; // TODO: Add real canvas when visible
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, canvas, visible, true);
 
+        boolean canModifyMembership = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
-            .extendLocatorId("GroupsView"), resource.getId()), true, true);
-
-        //enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
-        //canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
-        //    resourceId) : null;
-        //updateSubTab(this.inventoryTab, this.inventoryGroupMembership, canvas, true, enabled);
+            .extendLocatorId("GroupsView"), resource.getId(), canModifyMembership), true, true);
 
         boolean enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceResourceAgentView(this.inventoryTab.extendLocatorId("AgentView"), resourceId)
@@ -355,7 +353,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     private void updateConfigurationTabContent(ResourceComposite resourceComposite, Resource resource,
-                                               ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
+        ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION), resourcePermissions
             .isConfigureRead())) {
 
@@ -366,7 +364,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 .extendLocatorId("ConfigHistView"), resource.getId()), true, true);
         }
     }
-        
+
     private void updateContentTabContent(Resource resource, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT), true)) {
 

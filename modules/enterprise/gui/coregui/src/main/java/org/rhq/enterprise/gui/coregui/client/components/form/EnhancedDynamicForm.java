@@ -46,6 +46,7 @@ import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -142,7 +143,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
                 FormItemIcon editIcon = new FormItemIcon();
                 editIcon.setName("Edit");
-                editIcon.setSrc("[SKIN]/actions/edit.png");
+                editIcon.setSrc(ImageManager.getEditIcon());
                 staticTextItem.setIcons(editIcon);
                 staticTextItem.setShowIcons(false);
 
@@ -196,7 +197,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 });
                 togglableTextItem.setShowIfCondition(new FormItemIfFunction() {
                     public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                        @SuppressWarnings({"UnnecessaryLocalVariable"})
+                        @SuppressWarnings( { "UnnecessaryLocalVariable" })
                         boolean editing = staticTextItem.getAttributeAsBoolean("editing");
                         return editing;
                     }

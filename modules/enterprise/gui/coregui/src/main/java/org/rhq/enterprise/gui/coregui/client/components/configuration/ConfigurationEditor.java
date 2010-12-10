@@ -128,6 +128,7 @@ import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConst
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -971,8 +972,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         ListGridField editField = new ListGridField("edit", 20);
         editField.setType(ListGridFieldType.ICON);
-        //        editField.setIcon(Window.getImgURL("[SKIN]/actions/edit.png"));
-        editField.setCellIcon(Window.getImgURL("[SKIN]/actions/edit.png"));
+        //        editField.setIcon(Window.getImgURL(ImageManager.getEditIcon()));
+        editField.setCellIcon(Window.getImgURL(ImageManager.getEditIcon()));
         editField.setCanEdit(false);
         editField.setCanGroupBy(false);
         editField.setCanSort(false);
@@ -1652,5 +1653,5 @@ public class ConfigurationEditor extends LocatableVLayout {
             return valid;
         }
     }
-    
+
 }

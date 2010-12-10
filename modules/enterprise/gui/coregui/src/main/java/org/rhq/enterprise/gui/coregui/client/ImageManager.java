@@ -24,6 +24,13 @@ public class ImageManager {
     public static final String IMAGES_DIR = "images/";
 
     /**
+     * Returns a generic edit icon.
+     */
+    public static String getEditIcon() {
+        return "[SKIN]/actions/edit.png";
+    }
+
+    /**
      * Returns the operation status icon. If status is null, returns
      * the plain, unbadged, operation icon.
      */

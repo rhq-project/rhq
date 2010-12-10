@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -29,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 // TODO: Implement this.
-public class ActivityView extends LocatableVLayout implements ResourceSelectListener {
+public class ActivityView extends LocatableVLayout implements ResourceSelectListener, RefreshableView {
 
     private ResourceComposite resourceComposite;
     private FullHTMLPane iFrame;
@@ -54,7 +55,14 @@ public class ActivityView extends LocatableVLayout implements ResourceSelectList
     @Override
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resourceComposite = resourceComposite;
-        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceComposite.getResource().getId());
     }
 
+    @Override
+    public void refresh() {
+        if (this.iFrame != null) {
+            this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" +
+                this.resourceComposite.getResource().getId());
+        }
+    }
+    
 }

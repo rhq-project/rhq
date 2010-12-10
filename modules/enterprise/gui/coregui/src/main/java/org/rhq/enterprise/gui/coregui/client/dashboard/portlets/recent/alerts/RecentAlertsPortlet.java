@@ -24,7 +24,6 @@ import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -100,7 +99,6 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     private AlertPortletDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
-    private LocatableHLayout resourceSelectionLabelRow;
     private Timer reloader;
 
     public RecentAlertsPortlet(String locatorId) {
@@ -269,7 +267,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         //root dynamic form instance
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
         form.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
-        form.setHeight(450);
+        form.setHeight(400);
         form.setMargin(5);
 
         //vertical container
@@ -412,16 +410,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
                 }
                 if (selectedItem.equals(RESOURCES_SELECTED)) {
                     containerCanvas.addChild(resourceSelector.getCanvas());
-                    resourceSelectionLabelRow.setVisible(true);
-                    for (Canvas c : resourceSelectionLabelRow.getMembers()) {
-                        c.setVisible(true);
-                    }
                 } else {
                     containerCanvas.addChild(new Canvas());
-                    resourceSelectionLabelRow.setVisible(false);
-                    for (Canvas c : resourceSelectionLabelRow.getMembers()) {
-                        c.setVisible(false);
-                    }
                 }
             }
         });
@@ -449,25 +439,6 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         row2.addMember(timeSelectionWrapper);
         row2.addMember(resourceSelectionWrapper);
 
-        //Row 3 of labels for the alert selected resources area
-        resourceSelectionLabelRow = new LocatableHLayout(extendLocatorId("resource-selection-label"));
-        resourceSelectionLabelRow.setHeight(30);
-        resourceSelectionLabelRow.setMembersMargin(5);
-        resourceSelectionLabelRow.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH);//ui size + fixed button widths
-        LocatableLabel availableResourcesLabel = new LocatableLabel(extendLocatorId("available-resources"), "<b>"
-            + ALERT_LABEL_AVAILABLE_RESOURCES + "</b>");
-        availableResourcesLabel.setHeight(20);
-        availableResourcesLabel.setWrap(false);
-        resourceSelectionLabelRow.addMember(availableResourcesLabel);
-        Label spacer = new Label("");
-        spacer.setWidth(400);
-        LocatableLabel selectedResourcesLabel = new LocatableLabel(extendLocatorId("selected-resources"), "<b>"
-            + ALERT_LABEL_SELECTED_RESOURCES + "</b>");
-        selectedResourcesLabel.setHeight(20);
-        selectedResourcesLabel.setWrap(false);
-        resourceSelectionLabelRow.addMember(spacer);
-        resourceSelectionLabelRow.addMember(selectedResourcesLabel);
-
         //if portlet config setting exist, then retrieve
         Integer[] alertFilterResourceIds = null;
         alertFilterResourceIds = getDataSource().extractFilterResourceIds(storedPortlet, alertFilterResourceIds);
@@ -489,10 +460,6 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
             containerCanvas.addChild(resourceSelector.getCanvas());
         } else {// define empty canvas
             containerCanvas.addChild(new Canvas());
-            //iterate over children of row3 and make invisible
-            for (Canvas c : resourceSelectionLabelRow.getMembers()) {
-                c.setVisible(false);
-            }
         }
 
         //add contain resource selection region.
@@ -506,7 +473,6 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         DynamicForm spacerWrapper = new DynamicForm();
         spacerWrapper.setItems(verticalSpace);
         column.addMember(spacerWrapper);
-        column.addMember(resourceSelectionLabelRow);
         column.addMember(resourceSelectionRegion);
         form.addChild(column);
 

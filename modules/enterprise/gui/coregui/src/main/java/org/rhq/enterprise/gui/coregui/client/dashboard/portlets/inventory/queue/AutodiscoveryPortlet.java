@@ -66,18 +66,10 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         super.onInit();
         //initialize the datasource to include Portlet instance
         this.dataSource = new AutodiscoveryQueueDataSource(getTreeGrid());
-        if ((getTreeGrid() != null) && (getDataSource() != null)) {
+        if (getTreeGrid() != null) {
             getTreeGrid().setDataSource(getDataSource());
         }
-    }
-
-    /** Implements configure action.  Stores reference to the initiating DashboardPortlet.
-     * Method loads i)initial portlet settings OR ii)retrieves previous settings and adds to 
-     * the datasource.
-    */
-    @Override
-    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+        //loads/retrieves initial portlet settings for datasource
         String retrieved = null;
         //if settings already exist for this portlet
         if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
@@ -88,21 +80,25 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
             retrieved = defaultValue;
         }
 
-        if (getDataSource() != null) {
-            if (retrieved.equals(unlimited)) {
-                getDataSource().setMaximumPlatformsToDisplay(-1);
-            } else {
-                getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
-            }
+        if (retrieved.equals(unlimited)) {
+            getDataSource().setMaximumPlatformsToDisplay(-1);
+        } else {
+            getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
         }
+    }
+
+    /** Implements configure action.  Stores reference to the initiating DashboardPortlet.
+    */
+    @Override
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+        this.storedPortlet = storedPortlet;
     }
 
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_autodiscovery_help_msg());
     }
 
-    /** Build custom for to dispaly the Portlet Configuration settings.
-    *
+    /** Build custom settings form.
     */
     public DynamicForm getCustomSettingsForm() {
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Settings"));
@@ -142,13 +138,16 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
         //default selected value to 'unlimited'(live lists) and check both combobox settings here.
         String selectedValue = defaultValue;
-        if (getDataSource() != null) {
-            if (getDataSource().getMaximumPlatformsToDisplay() == -1) {
+        PropertySimple simpleProperty = null;
+        if ((simpleProperty = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX)) != null) {
+            String retrieved = simpleProperty.getStringValue();
+            if (retrieved.equals(unlimited)) {
                 selectedValue = unlimited;
             } else {
-                selectedValue = String.valueOf(getDataSource().getMaximumPlatformsToDisplay());
+                selectedValue = String.valueOf(retrieved);
             }
         }
+
         //prepopulate the combobox with the previously stored selection
         maximumPlatformsComboBox.setDefaultValue(selectedValue);
 
@@ -162,6 +161,11 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
                     //persist this value to configuration
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, form.getValue(AUTODISCOVERY_PLATFORM_MAX)));
+                    //save to datasource
+                    String value = form.getValue(AUTODISCOVERY_PLATFORM_MAX) + "";
+                    int maximumPlatformsToDisplay = value.equals(unlimited) ? -1 : Integer.parseInt(value);
+                    getDataSource().setMaximumPlatformsToDisplay(maximumPlatformsToDisplay);
+                    markForRedraw();
                 }
             }
         });

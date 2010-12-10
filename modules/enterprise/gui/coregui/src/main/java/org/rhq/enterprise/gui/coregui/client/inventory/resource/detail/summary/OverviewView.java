@@ -28,8 +28,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * The Resource Summary>Overview tab.
  *
  * @author Lukas Krejci
+ *
+ * @deprecated This can be removed, since we now display the overview info in the collapsible pane above
+ *             the Resource tabs (ips, 12/10/10).
  */
+@Deprecated
 public class OverviewView extends LocatableVLayout implements RefreshableView {
+
     private OverviewForm form;
 
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
@@ -48,4 +53,5 @@ public class OverviewView extends LocatableVLayout implements RefreshableView {
     public void refresh() {
         form.loadData();        
     }
+
 }

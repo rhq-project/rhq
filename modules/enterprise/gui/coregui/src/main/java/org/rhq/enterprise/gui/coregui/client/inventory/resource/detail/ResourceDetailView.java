@@ -66,7 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * Right panel of the Resource view.
+ * Right panel of the Resource view (#Resource/*).
  *
  * @author Greg Hinkle
  * @author Ian Springer

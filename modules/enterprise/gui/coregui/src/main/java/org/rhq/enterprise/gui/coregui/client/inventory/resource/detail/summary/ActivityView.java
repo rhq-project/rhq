@@ -21,24 +21,30 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The content pane of the Resource Summary>Activity tab.
  *
- * @author Greg Hinkle
+ * @author Ian Springer
  */
-public class ActivityView extends FullHTMLPane implements ResourceSelectListener {
+// TODO: Implement this.
+public class ActivityView extends LocatableVLayout implements ResourceSelectListener {
 
     private ResourceComposite resourceComposite;
+    private FullHTMLPane iFrame;
 
     public ActivityView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, null);
+        super(locatorId);
         this.resourceComposite = resourceComposite;
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
+
+        this.iFrame = new FullHTMLPane(extendLocatorId("IFrame"), null);
+        addMember(this.iFrame);
 
         if (this.resourceComposite != null) {
             onResourceSelected(this.resourceComposite);
@@ -48,7 +54,7 @@ public class ActivityView extends FullHTMLPane implements ResourceSelectListener
     @Override
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resourceComposite = resourceComposite;
-        setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceComposite.getResource().getId());
+        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceComposite.getResource().getId());
     }
 
 }

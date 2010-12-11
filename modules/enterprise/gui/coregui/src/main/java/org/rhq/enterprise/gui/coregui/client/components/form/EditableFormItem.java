@@ -91,6 +91,9 @@ public class EditableFormItem extends CanvasItem {
             setValueEditedHandler(handler);
         }
 
+        final FormItemIcon blankIcon = createBlankIcon();
+        final FormItemIcon editIcon = createEditIcon();
+
         this.innerForm = new LocatableDynamicForm(getName() + "_innerForm");
         this.staticItem = prepareStaticFormItem();
         this.editItem = prepareEditFormItem();
@@ -102,7 +105,7 @@ public class EditableFormItem extends CanvasItem {
             @Override
             public void onMouseOut(MouseOutEvent event) {
                 if (!isEditing()) {
-                    EditableFormItem.this.staticItem.setShowIcons(false);
+                    EditableFormItem.this.staticItem.setIcons(blankIcon);
                     EditableFormItem.this.markForRedraw();
                 }
             }
@@ -111,7 +114,7 @@ public class EditableFormItem extends CanvasItem {
             @Override
             public void onMouseOver(MouseOverEvent event) {
                 if (!isEditing() && !isReadOnly()) {
-                    EditableFormItem.this.staticItem.setShowIcons(true);
+                    EditableFormItem.this.staticItem.setIcons(editIcon);
                     EditableFormItem.this.markForRedraw();
                 }
             }
@@ -122,14 +125,14 @@ public class EditableFormItem extends CanvasItem {
     }
 
     protected FormItem prepareStaticFormItem() {
-        FormItemIcon editIcon = createEditIcon();
+        FormItemIcon blankIcon = createBlankIcon();
         FormItem item = instantiateStaticFormItem();
         item.setShowTitle(false);
-        item.setIcons(editIcon);
+        item.setIcons(blankIcon);
         item.setIconVAlign(VerticalAlignment.CENTER);
         item.setIconHeight(16);
         item.setIconWidth(16);
-        item.setShowIcons(false);
+        item.setShowIcons(true);
         item.setShowIfCondition(new FormItemIfFunction() {
             @Override
             public boolean execute(FormItem item, Object value, DynamicForm form) {
@@ -239,6 +242,12 @@ public class EditableFormItem extends CanvasItem {
             }
         });
         return cancelIcon;
+    }
+
+    protected FormItemIcon createBlankIcon() {
+        FormItemIcon blankIcon = new FormItemIcon();
+        blankIcon.setSrc("blank.png");
+        return blankIcon;
     }
 
     /**

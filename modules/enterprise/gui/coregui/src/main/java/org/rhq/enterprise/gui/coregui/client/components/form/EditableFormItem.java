@@ -294,9 +294,9 @@ public class EditableFormItem extends CanvasItem {
      * @param newValue the new value just accepted by the user and validated by the system
      */
     protected void setApprovedNewValue(Object newValue) {
-        Object convertedValue = setStaticItemValue(this.staticItem, newValue);
+        setStaticItemValue(this.staticItem, newValue);
         if (this.valueEditedHandler != null) {
-            this.valueEditedHandler.editedValue(convertedValue);
+            this.valueEditedHandler.editedValue(newValue);
         }
     }
 

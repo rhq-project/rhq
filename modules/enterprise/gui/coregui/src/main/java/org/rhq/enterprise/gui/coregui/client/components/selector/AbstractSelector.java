@@ -528,10 +528,12 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     protected void updateButtonEnablement() {
-        addButton.setDisabled(!availableGrid.anySelected());
-        removeButton.setDisabled(!assignedGrid.anySelected());
-        addAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.availableGrid));
-        removeAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.assignedGrid));
+        if (!isReadOnly) {
+            addButton.setDisabled(!availableGrid.anySelected());
+            removeButton.setDisabled(!assignedGrid.anySelected());
+            addAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.availableGrid));
+            removeAllButton.setDisabled(!containsAtLeastOneEnabledRecord(this.assignedGrid));
+        }
     }
 
     @Deprecated

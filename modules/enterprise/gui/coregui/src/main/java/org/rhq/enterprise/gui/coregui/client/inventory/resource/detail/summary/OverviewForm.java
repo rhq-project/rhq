@@ -39,9 +39,10 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -133,6 +134,9 @@ public class OverviewForm extends EnhancedDynamicForm {
             }
         }
 
+        StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
+        StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
+
         List<FormItem> formItems = new ArrayList<FormItem>();
 
         if (isHeaderEnabled()) {//conditionally display header
@@ -152,14 +156,16 @@ public class OverviewForm extends EnhancedDynamicForm {
         boolean modifiable = this.resourceComposite.getResourcePermission().isInventory();
 
         // Name
-        final FormItem nameItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        final FormItem nameItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         nameItem.setName("name");
         nameItem.setTitle(MSG.view_summaryOverviewForm_field_name());
         nameItem.setValue(resource.getName());
-        if (nameItem instanceof TogglableTextItem) {
-            TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
-            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newName) {
+        if (nameItem instanceof EditableFormItem) {
+            EditableFormItem togglableNameItem = (EditableFormItem) nameItem;
+            togglableNameItem.setValidators(notEmptyOrNullValidator);
+            togglableNameItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    final String newName = newValue.toString();
                     final String oldName = resource.getName();
                     if (newName.equals(oldName)) {
                         return;
@@ -188,14 +194,16 @@ public class OverviewForm extends EnhancedDynamicForm {
         formItems.add(nameItem);
 
         // Description
-        final FormItem descriptionItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        final FormItem descriptionItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         descriptionItem.setName("description");
         descriptionItem.setTitle(MSG.view_summaryOverviewForm_field_description());
         descriptionItem.setValue(resource.getDescription());
-        if (descriptionItem instanceof TogglableTextItem) {
-            TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
-            togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newDescription) {
+        if (descriptionItem instanceof EditableFormItem) {
+            EditableFormItem togglableDescriptionItem = (EditableFormItem) descriptionItem;
+            togglableDescriptionItem.setValidators(notNullValidator);
+            togglableDescriptionItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    final String newDescription = newValue.toString();
                     final String oldDescription = resource.getDescription();
                     if (newDescription.equals(oldDescription)) {
                         return;
@@ -226,14 +234,16 @@ public class OverviewForm extends EnhancedDynamicForm {
         formItems.add(descriptionItem);
 
         // Location
-        final FormItem locationItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        final FormItem locationItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         locationItem.setName("location");
         locationItem.setTitle(MSG.view_summaryOverviewForm_field_location());
         locationItem.setValue(resource.getLocation());
-        if (locationItem instanceof TogglableTextItem) {
-            TogglableTextItem togglableNameItem = (TogglableTextItem) locationItem;
-            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newLocation) {
+        if (locationItem instanceof EditableFormItem) {
+            EditableFormItem togglableLocationItem = (EditableFormItem) locationItem;
+            togglableLocationItem.setValidators(notNullValidator);
+            togglableLocationItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    final String newLocation = newValue.toString();
                     final String oldLocation = resource.getLocation();
                     if (newLocation.equals(oldLocation)) {
                         return;
@@ -294,7 +304,7 @@ public class OverviewForm extends EnhancedDynamicForm {
             formItems.add(new SpacerItem());
         }
 
-        setItems(formItems.toArray(new FormItem[formItems.size()]));        
+        setItems(formItems.toArray(new FormItem[formItems.size()]));
     }
 
     public void loadData() {

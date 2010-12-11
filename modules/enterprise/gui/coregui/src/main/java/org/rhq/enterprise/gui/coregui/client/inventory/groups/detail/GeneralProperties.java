@@ -179,7 +179,20 @@ public class GeneralProperties extends LocatableVLayout {
         recursiveItem.setValueEditedHandler(new ValueEditedHandler() {
             @Override
             public void editedValue(Object newValue) {
-                CoreGUI.getMessageCenter().notify(new Message("TODO: set recursive flag to=" + newValue));
+                boolean isRecursive = (newValue != null) ? ((Boolean) newValue).booleanValue() : false;
+                resourceGroupService.setRecursive(group.getId(), isRecursive, new AsyncCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_group_detail_recursiveChange(group.getName())));
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_detail_failRecursiveChange(String.valueOf(group.getName())));
+                    }
+                });
             }
         });
         recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());

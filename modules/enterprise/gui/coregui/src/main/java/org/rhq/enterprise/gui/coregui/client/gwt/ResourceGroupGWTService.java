@@ -69,4 +69,5 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     void updateResourceGroup(ResourceGroup group, boolean updateMembership);
 
+    void setRecursive(int groupId, boolean isRecursive) throws Exception;
 }

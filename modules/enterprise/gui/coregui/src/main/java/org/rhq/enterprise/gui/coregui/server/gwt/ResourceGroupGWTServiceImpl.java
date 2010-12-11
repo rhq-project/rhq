@@ -172,4 +172,12 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
+    public void setRecursive(int groupId, boolean isRecursive) throws Exception {
+        try {
+            groupManager.setRecursive(getSessionSubject(), groupId, isRecursive);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
 }

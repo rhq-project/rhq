@@ -35,9 +35,12 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -164,7 +167,13 @@ public class GeneralProperties extends LocatableVLayout {
         dynamicItem.setValue(dynamic ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
         formItems.add(dynamicItem);
 
-        StaticTextItem recursiveItem = new StaticTextItem("recursive", MSG.view_group_summary_recursive());
+        EditableFormItem recursiveItem = new CheckboxEditableFormItem("recursive", MSG.view_group_summary_recursive());
+        recursiveItem.setValueEditedHandler(new ValueEditedHandler() {
+            @Override
+            public void editedValue(Object newValue) {
+                CoreGUI.getMessageCenter().notify(new Message("TODO: set recursive flag to=" + newValue));
+            }
+        });
         recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
         formItems.add(recursiveItem);
 

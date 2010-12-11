@@ -31,6 +31,20 @@ public class ImageManager {
     }
 
     /**
+     * Returns a generic approve (aka "ok") icon.
+     */
+    public static String getApproveIcon() {
+        return "[SKIN]/actions/approve.png";
+    }
+
+    /**
+     * Returns a generic cancel icon.
+     */
+    public static String getCancelIcon() {
+        return "[SKIN]/actions/undo.png";
+    }
+
+    /**
      * Returns the operation status icon. If status is null, returns
      * the plain, unbadged, operation icon.
      */

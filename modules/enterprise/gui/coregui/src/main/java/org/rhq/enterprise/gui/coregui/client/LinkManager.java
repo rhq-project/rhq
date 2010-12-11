@@ -34,7 +34,7 @@ public class LinkManager {
 
     public static String getResourceLink(int resourceId) {
         if (GWT) {
-            return "#Resource/" + resourceId + "/Summary/Overview";
+            return "#Resource/" + resourceId + "/Summary/Activity";
         } else {
             return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }

@@ -303,7 +303,7 @@ public class EditableFormItem extends CanvasItem {
      * @return the converted value that was set in the edit item
      */
     protected Object setEditItemValue(FormItem editItem, Object value) {
-        String convertedValue = value.toString();
+        String convertedValue = (value != null) ? value.toString() : null;
         editItem.setValue(convertedValue);
         return convertedValue;
     }
@@ -320,7 +320,7 @@ public class EditableFormItem extends CanvasItem {
      * @return the converted value that was set in the static item
      */
     protected Object setStaticItemValue(FormItem staticItem, Object value) {
-        String convertedValue = value.toString();
+        String convertedValue = (value != null) ? value.toString() : null;
         staticItem.setValue(convertedValue);
         return convertedValue;
     }

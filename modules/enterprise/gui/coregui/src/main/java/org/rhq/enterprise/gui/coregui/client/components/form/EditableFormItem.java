@@ -64,6 +64,7 @@ public class EditableFormItem extends CanvasItem {
 
     protected static Messages MSG = CoreGUI.getMessages();
 
+    private boolean readOnly = false;
     private boolean editing = false;
     private FormItem staticItem;
     private FormItem editItem;
@@ -109,7 +110,7 @@ public class EditableFormItem extends CanvasItem {
         this.innerForm.addMouseOverHandler(new MouseOverHandler() {
             @Override
             public void onMouseOver(MouseOverEvent event) {
-                if (!isEditing()) {
+                if (!isEditing() && !isReadOnly()) {
                     EditableFormItem.this.staticItem.setShowIcons(true);
                     EditableFormItem.this.markForRedraw();
                 }
@@ -201,7 +202,10 @@ public class EditableFormItem extends CanvasItem {
         editIcon.addFormItemClickHandler(new FormItemClickHandler() {
             @Override
             public void onFormItemClick(FormItemIconClickEvent event) {
-                switchToEditMode();
+                // should never get here if read-only (the icon is hidden) but just to be sure, check read-only status again
+                if (!isReadOnly()) {
+                    switchToEditMode();
+                }
             }
         });
         return editIcon;
@@ -373,6 +377,18 @@ public class EditableFormItem extends CanvasItem {
     @Override
     public void setValidators(Validator... validators) {
         this.editItem.setValidators(validators);
+    }
+
+    /**
+     * If the user is not allowed to edit this form item, <code>true</code> is returned.
+     * @return flag to indicate if the user is allowed to change the value or not
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
     /**

@@ -19,9 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
 import com.google.gwt.user.client.Timer;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.RecordList;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -31,9 +28,6 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
-import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.AlertPriority;
@@ -50,11 +44,11 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Simeon Pinder
@@ -442,13 +436,16 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         //if portlet config setting exist, then retrieve
         Integer[] alertFilterResourceIds = null;
         alertFilterResourceIds = getDataSource().extractFilterResourceIds(storedPortlet, alertFilterResourceIds);
-        if (alertFilterResourceIds != null) {
-            getDataSource().setAlertFilterResourceId(alertFilterResourceIds);
-        }
 
         LocatableHLayout resourceSelectionRegion = new LocatableHLayout(extendLocatorId("selection-canvas"));
-        resourceSelector = new AlertResourceSelectorRegion(alertFilterResourceIds);
+        resourceSelector = new AlertResourceSelectorRegion(extendLocatorId("ResourcesWithAlerts"),
+            alertFilterResourceIds);
         resourceSelectionRegion.setWidth100();
+
+        if (alertFilterResourceIds != null) {
+            getDataSource().setAlertFilterResourceId(alertFilterResourceIds);
+            resourceSelector.setCurrentlyAssignedIds(alertFilterResourceIds);
+        }
 
         //instantiate canvas area to display empty or rich resource selection based on dropdown selection
         containerCanvas = new Canvas();
@@ -555,9 +552,14 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 /** Bundles a ResourceSelector instance with labelling in Canvas for display.
  *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
  */
-class AlertResourceSelectorRegion {
+class AlertResourceSelectorRegion extends LocatableVLayout {
+    public AlertResourceSelectorRegion(String locatorId, Integer[] assigned) {
+        super(locatorId);
+        this.currentlyAssignedIds = assigned;
+    }
+
     private static final Messages MSG = CoreGUI.getMessages();
-    private ResourceSelector selector = null;
+    private PortletAlertSelector selector = null;
 
     private Integer[] currentlyAssignedIds;
 
@@ -567,62 +569,16 @@ class AlertResourceSelectorRegion {
 
     public Integer[] getListGridValues() {
         Integer[] listGridValues = new Integer[0];
-        if ((null != selector) && (null != selector.getAssignedGrid())) {
-            RecordList allRecords = selector.getAssignedGrid().getDataAsRecordList();
-            if (allRecords.getLength() > 0) {
-                listGridValues = new Integer[allRecords.getLength()];
-                for (int i = 0; i < allRecords.getLength(); i++) {
-                    Record record = allRecords.get(i);
-                    listGridValues[i] = record.getAttributeAsInt(RecentAlertsPortlet.ID);
-                }
-            }
+        if (null != selector) {
+            selector.getAssignedListGridValues();
         }
         return listGridValues;
     }
 
-    public AlertResourceSelectorRegion(Integer[] assigned) {
-        this.currentlyAssignedIds = assigned;
-    }
-
     public Canvas getCanvas() {
         if (selector == null) {
-            selector = new ResourceSelector(MSG.view_portlet_recentAlerts_config_members(),
-                ResourceType.ANY_PLATFORM_TYPE, true);
-            selector.setWidth100();
-            selector.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH);
-            //widget ui updates
-            selector.getAvailableGrid().setTitle(MSG.common_title_available_resources());
-            selector.getAvailableGrid().setEmptyMessage(MSG.common_msg_loading());
-            selector.getAssignedGrid().setTitle(MSG.common_title_selected_resources());
-            //disable display typeFilter.
-            selector.setDisplayResourceTypeFilter(false);
-
-            //populate fields for grid.
-            ListGridField nameField = new ListGridField("name", MSG.common_title_name());
-            ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 50);
-            iconField.setImageURLPrefix("types/");
-            iconField.setType(ListGridFieldType.ICON);
-            selector.getAssignedGrid().setFields(iconField, nameField);
-
-            //add listener to AvailableGrid, to act after successfully populated.
-            selector.getAvailableGrid().addDataArrivedHandler(new DataArrivedHandler() {
-                @Override
-                public void onDataArrived(DataArrivedEvent event) {
-                    if ((getCurrentlyAssignedIds() != null) && (getCurrentlyAssignedIds().length > 0)) {
-                        //retrieve the loaded data and add to the table itself
-                        RecordList recordList = selector.getAvailableGrid().getDataAsRecordList();
-                        //for each of the resource ids loaded from settings, select that row for transfer.
-                        for (int ci : getCurrentlyAssignedIds()) {
-                            int located = recordList.findIndex("id", ci);
-                            if (located > -1) {
-                                selector.getAvailableGrid().selectRecord(located);
-                            }
-                        }
-                        //simulate 'add' button push.
-                        selector.addSelectedRows();
-                    }
-                }
-            });
+            selector = new PortletAlertSelector(extendLocatorId("AlertSelector"), this.currentlyAssignedIds,
+                ResourceType.ANY_PLATFORM_TYPE, false);
         }
         return selector;
     }

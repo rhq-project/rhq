@@ -139,6 +139,8 @@ public class EditableFormItem extends CanvasItem {
                 return !isEditing();
             }
         });
+        item.setTextBoxStyle("editableText");
+
         return item;
     }
 
@@ -398,6 +400,8 @@ public class EditableFormItem extends CanvasItem {
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+        this.staticItem.setTextBoxStyle((!readOnly) ? "editableText" : null);
+        markForRedraw();
     }
 
     /**

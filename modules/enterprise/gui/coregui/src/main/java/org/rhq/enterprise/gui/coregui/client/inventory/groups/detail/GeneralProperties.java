@@ -172,7 +172,7 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(descriptionItem);
 
         StaticTextItem dynamicItem = new StaticTextItem("dynamic", MSG.view_group_summary_dynamic());
-        dynamicItem.setValue(dynamic ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
+        dynamicItem.setValue(dynamic ? MSG.common_val_yes() : MSG.common_val_no());
         formItems.add(dynamicItem);
 
         EditableFormItem recursiveItem = new CheckboxEditableFormItem("recursive", MSG.view_group_summary_recursive());
@@ -195,7 +195,7 @@ public class GeneralProperties extends LocatableVLayout {
                 });
             }
         });
-        recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
+        recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes() : MSG.common_val_no());
         formItems.add(recursiveItem);
 
         StaticTextItem createdItem = new StaticTextItem("created", MSG.common_title_dateCreated());

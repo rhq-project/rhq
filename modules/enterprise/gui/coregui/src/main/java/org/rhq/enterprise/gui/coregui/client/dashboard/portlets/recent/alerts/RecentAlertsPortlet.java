@@ -570,7 +570,7 @@ class AlertResourceSelectorRegion extends LocatableVLayout {
     public Integer[] getListGridValues() {
         Integer[] listGridValues = new Integer[0];
         if (null != selector) {
-            selector.getAssignedListGridValues();
+            listGridValues = selector.getAssignedListGridValues();
         }
         return listGridValues;
     }

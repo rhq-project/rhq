@@ -168,7 +168,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
-        criteria.addFilterResourceCategory(getFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
+        criteria.addFilterResourceCategories(getArrayFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
         criteria.addFilterIds(getArrayFilter(request, "resourceIds", Integer.class));
         criteria.addFilterImplicitGroupIds(getFilter(request, "groupId", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));

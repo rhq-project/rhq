@@ -92,7 +92,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
         addItem(new MenuItem("Type: " + resourceType.getName()));
 
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_pluginConfiguration());
+        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int groupId = group.getId();

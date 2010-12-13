@@ -40,6 +40,14 @@ public class LinkManager {
         }
     }
 
+    public static String getResourceTabLink(int resourceId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#Resource/" + resourceId + "/" + tabName + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+        }
+    }
+
     public static String getResourceGroupLink(int groupId) {
         if (GWT) {
             return "#ResourceGroup/" + groupId;

@@ -35,9 +35,6 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
@@ -64,20 +61,23 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
@@ -197,8 +197,14 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
-                event.getNode();
+                // stop the browser right-click menu
                 event.cancel();
+
+                // don't select the node on a right click, since we're not navigating to it
+                treeGrid.deselectRecord(event.getNode());
+                if (null != selectedNodeId) {
+                    treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                }
 
                 if (event.getNode() instanceof AutoGroupTreeNode) {
                     showContextMenu((AutoGroupTreeNode) event.getNode());
@@ -354,161 +360,183 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void showContextMenu(final ResourceTreeNode node) {
-        ResourceType type = node.getResource().getResourceType();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            type.getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
-                ResourceTypeRepository.MetadataType.subCategory,
-                ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
-                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(ResourceType type) {
-                    buildResourceContextMenu(node.getResource(), type);
-                    resourceContextMenu.showContextMenu();
+        final Resource resource = node.getResource();
+        final int resourceId = resource.getId();
+
+        // fetch the resource composite, we need resource permission info for enablement decisions
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterId(resourceId);
+        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                            Message.Severity.Warning));
+
+                    CoreGUI.goToView(InventoryView.VIEW_ID.getName());
+                }
+
+                public void onSuccess(PageList<ResourceComposite> result) {
+                    if (result.isEmpty()) {
+                        onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
+                    } else {
+                        final ResourceComposite resourceComposite = result.get(0);
+
+                        // make sure we have all the Type information necessary to render the menus
+                        ResourceType type = resource.getResourceType();
+                        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                            type.getId(),
+                            EnumSet.of(ResourceTypeRepository.MetadataType.operations,
+                                ResourceTypeRepository.MetadataType.children,
+                                ResourceTypeRepository.MetadataType.subCategory,
+                                ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
+                                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
+                                ResourceTypeRepository.MetadataType.measurements),
+                            new ResourceTypeRepository.TypeLoadedCallback() {
+                                public void onTypesLoaded(ResourceType type) {
+                                    buildResourceContextMenu(resourceComposite, type);
+                                    resourceContextMenu.showContextMenu();
+                                }
+                            });
+                    }
                 }
             });
     }
 
-    private void buildResourceContextMenu(final Resource resource, final ResourceType resourceType) {
+    private void buildResourceContextMenu(final ResourceComposite resourceComposite, final ResourceType resourceType) {
+        final Resource resource = resourceComposite.getResource();
+        final ResourcePermission resourcePermission = resourceComposite.getResourcePermission();
+
+        // resource name
         resourceContextMenu.setItems(new MenuItem(resource.getName()));
 
+        // resource type name
         resourceContextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(resourceType
             .getName())));
 
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_pluginConfiguration());
+        // separator
+        resourceContextMenu.addItem(new MenuItemSeparator());
+
+        // plugin config
+        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
-                int resourceId = resource.getId();
-                int resourceTypeId = resourceType.getId();
-
-                Window configEditor = new Window();
-                configEditor.setTitle(MSG.view_tree_common_contextMenu_editPluginConfiguration(resource.getName()));
-                configEditor.setWidth(800);
-                configEditor.setHeight(800);
-                configEditor.setIsModal(true);
-                configEditor.setShowModalMask(true);
-                configEditor.setCanDragResize(true);
-                configEditor.centerInPage();
-                configEditor.addItem(new ConfigurationEditor("PluginConfig-" + resource.getName(), resourceId,
-                    resourceTypeId, ConfigurationEditor.ConfigType.plugin));
-                configEditor.show();
-
+                CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
             }
         });
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
         resourceContextMenu.addItem(editPluginConfiguration);
 
+        // resource config
         MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
-        editResourceConfiguration.addClickHandler(new ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                int resourceId = resource.getId();
-                int resourceTypeId = resourceType.getId();
-
-                final Window configEditor = new Window();
-                configEditor.setTitle(MSG.view_tree_common_contextMenu_editResourceConfiguration(resource.getName()));
-                configEditor.setWidth(800);
-                configEditor.setHeight(800);
-                configEditor.setIsModal(true);
-                configEditor.setShowModalMask(true);
-                configEditor.setCanDragResize(true);
-                configEditor.setShowResizer(true);
-                configEditor.centerInPage();
-                configEditor.addCloseClickHandler(new CloseClickHandler() {
-                    public void onCloseClick(CloseClientEvent closeClientEvent) {
-                        configEditor.destroy();
-                    }
-                });
-                configEditor.addItem(new ConfigurationEditor("ResourceConfig-" + resource.getName(), resourceId,
-                    resourceTypeId, ConfigurationEditor.ConfigType.resource));
-                configEditor.show();
-
-            }
-        });
-        editResourceConfiguration.setEnabled(resourceType.getResourceConfigurationDefinition() != null);
+        boolean enabled = resourcePermission.isConfigureRead()
+            && resourceType.getResourceConfigurationDefinition() != null;
+        editResourceConfiguration.setEnabled(enabled);
+        if (enabled) {
+            editResourceConfiguration.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Configuration", "Current"));
+                }
+            });
+        }
         resourceContextMenu.addItem(editResourceConfiguration);
 
+        // separator
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        Menu opSubMenu = new Menu();
-        for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
-            MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
-            operationItem.addClickHandler(new ClickHandler() {
-                public void onClick(MenuItemClickEvent event) {
-                    int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId)).getResource()
-                        .getId();
+        enabled = (resourcePermission.isControl() && !resourceType.getOperationDefinitions().isEmpty());
+        operations.setEnabled(enabled);
+        if (enabled) {
+            Menu opSubMenu = new Menu();
+            for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
+                MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
+                operationItem.addClickHandler(new ClickHandler() {
+                    public void onClick(MenuItemClickEvent event) {
+                        int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId)).getResource()
+                            .getId();
 
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterId(resourceId);
+                        ResourceCriteria criteria = new ResourceCriteria();
+                        criteria.addFilterId(resourceId);
 
-                    GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                        new AsyncCallback<PageList<Resource>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_tree_common_contextMenu_operations_loadFailed(), caught);
-                            }
+                        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                            new AsyncCallback<PageList<Resource>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_tree_common_contextMenu_operations_loadFailed(), caught);
+                                }
 
-                            public void onSuccess(PageList<Resource> result) {
-                                new OperationCreateWizard(result.get(0), operationDefinition).startOperationWizard();
-                            }
-                        });
+                                public void onSuccess(PageList<Resource> result) {
+                                    new OperationCreateWizard(result.get(0), operationDefinition)
+                                        .startOperationWizard();
+                                }
+                            });
 
-                }
-            });
-            opSubMenu.addItem(operationItem);
-            // todo action
+                    }
+                });
+                opSubMenu.addItem(operationItem);
+                // todo action
+            }
+            operations.setSubmenu(opSubMenu);
         }
-        operations.setEnabled(!resourceType.getOperationDefinitions().isEmpty());
-        operations.setSubmenu(opSubMenu);
         resourceContextMenu.addItem(operations);
 
+        // Metric graph addition menu
         resourceContextMenu.addItem(buildMetricsMenu(resourceType));
 
-        // Create Menu
+        // Create Child Menu
         MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
-        Menu createChildSubMenu = new Menu();
-        for (final ResourceType childType : resourceType.getChildResourceTypes()) {
-            if (childType.isCreatable()) {
-                MenuItem createItem = new MenuItem(childType.getName());
+        enabled = resourcePermission.isCreateChildResources();
+        if (enabled) {
+            Menu createChildSubMenu = new Menu();
+            for (final ResourceType childType : resourceType.getChildResourceTypes()) {
+                if (childType.isCreatable()) {
+                    MenuItem createItem = new MenuItem(childType.getName());
 
-                createItem.addClickHandler(new ClickHandler() {
-                    public void onClick(MenuItemClickEvent event) {
-                        ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
-                    }
-                });
+                    createItem.addClickHandler(new ClickHandler() {
+                        public void onClick(MenuItemClickEvent event) {
+                            ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
+                        }
+                    });
 
-                createChildSubMenu.addItem(createItem);
+                    createChildSubMenu.addItem(createItem);
 
+                }
             }
+            createChildMenu.setSubmenu(createChildSubMenu);
+            enabled = createChildSubMenu.getItems().length > 0;
         }
-        createChildMenu.setSubmenu(createChildSubMenu);
-        createChildMenu.setEnabled(createChildSubMenu.getItems().length > 0);
+        createChildMenu.setEnabled(enabled);
         resourceContextMenu.addItem(createChildMenu);
 
-        // Manually Add Menu
+        // Manual Import Menu
         MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
-        Menu importChildSubMenu = new Menu();
-        for (final ResourceType childType : resourceType.getChildResourceTypes()) {
-            if (childType.isSupportsManualAdd()) {
-                MenuItem importItem = new MenuItem(childType.getName());
+        enabled = resourcePermission.isCreateChildResources();
+        if (enabled) {
+            Menu importChildSubMenu = new Menu();
+            for (final ResourceType childType : resourceType.getChildResourceTypes()) {
+                if (childType.isSupportsManualAdd()) {
+                    MenuItem importItem = new MenuItem(childType.getName());
 
-                importItem.addClickHandler(new ClickHandler() {
-                    public void onClick(MenuItemClickEvent event) {
-                        ResourceFactoryImportWizard.showImportWizard(resource, childType);
-                    }
-                });
+                    importItem.addClickHandler(new ClickHandler() {
+                        public void onClick(MenuItemClickEvent event) {
+                            ResourceFactoryImportWizard.showImportWizard(resource, childType);
+                        }
+                    });
 
-                importChildSubMenu.addItem(importItem);
+                    importChildSubMenu.addItem(importItem);
+                }
             }
-        }
 
-        if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
-            loadManuallyAddServersToPlatforms(importChildSubMenu, resource);
-        }
+            if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
+                loadManuallyAddServersToPlatforms(importChildSubMenu, resource);
+            }
 
-        importChildMenu.setSubmenu(importChildSubMenu);
-        importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
+            importChildMenu.setSubmenu(importChildSubMenu);
+            enabled = importChildSubMenu.getItems().length > 0;
+        }
+        importChildMenu.setEnabled(enabled);
         resourceContextMenu.addItem(importChildMenu);
     }
 

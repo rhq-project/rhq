@@ -191,7 +191,7 @@ public class NewResourceTreeView extends LocatableVLayout {
 
         contextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(resourceType.getName())));
 
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_pluginConfiguration());
+        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 int resourceId = resource.getId();

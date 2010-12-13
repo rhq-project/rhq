@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -476,7 +477,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public void refresh() {
-        if (null != this.listGrid) {
+        if (null != this.listGrid) {            
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }

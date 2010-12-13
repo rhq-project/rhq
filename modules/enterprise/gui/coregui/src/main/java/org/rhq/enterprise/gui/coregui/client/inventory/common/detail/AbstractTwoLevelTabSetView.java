@@ -240,11 +240,12 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             if (subView instanceof BookmarkableView) {
                 // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
                 ((BookmarkableView) subView).renderView(viewPath);
-            } else if (subView instanceof RefreshableView) {
-                if (subView.isDrawn()) {
-                    // Refresh the data on the subtab, so it's not stale.
-                    ((RefreshableView) subView).refresh();
-                }
+            }
+
+            if (subView instanceof RefreshableView && viewPath.isEnd() && subView.isDrawn()) {
+                // Refresh the data on the subtab, so it's not stale.
+                Log.debug("Refreshing data for [" + subView.getClass().getName() + "]...");
+                ((RefreshableView) subView).refresh();
             }
 
             this.tabSet.markForRedraw();

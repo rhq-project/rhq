@@ -29,6 +29,7 @@ import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -38,6 +39,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -112,8 +114,6 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     private void setupTableInteractions() {
         TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
-        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
-            : TableActionEnablement.NEVER;
 
         addTableAction("DeleteAlert", MSG.common_button_delete(), MSG.view_alerts_delete_confirm(),
             new AbstractTableAction(singleTargetEnablement) {
@@ -122,7 +122,12 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
                 }
             });
         addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
-            new AbstractTableAction(multipleTargetEnablement) {
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    return (hasWriteAccess && grid != null && (getListGrid().getRecords().length >= 1));
+                }
+
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     deleteAll();
                 }
@@ -134,7 +139,12 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
                 }
             });
         addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(),
-            new AbstractTableAction(multipleTargetEnablement) {
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    return (hasWriteAccess && grid != null && (grid.getRecords().length >= 1));
+                }
+
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     acknowledgeAll();
                 }

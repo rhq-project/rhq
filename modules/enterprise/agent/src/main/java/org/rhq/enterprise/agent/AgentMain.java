@@ -1713,7 +1713,7 @@ public class AgentMain {
                             start();
                         } catch (Throwable t1) {
                             LOG.error(t1, "Restarting the agent has failed. Please check the logs for errors and " +
-                                "and manually restart the agent as soon as possible");
+                                "manually restart the agent as soon as possible.");
                             return;
                         }
                     }

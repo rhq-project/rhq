@@ -99,6 +99,7 @@ public class EditableFormItem extends CanvasItem {
         this.editItem = prepareEditFormItem();
         this.innerForm.setItems(staticItem, editItem);
         this.innerForm.setCanFocus(true);
+        this.innerForm.setNumCols(1);
 
         // if we are not in edit-mode, we want to show the edit icon, but only if the mouse hovers over us
         this.innerForm.addMouseOutHandler(new MouseOutHandler() {

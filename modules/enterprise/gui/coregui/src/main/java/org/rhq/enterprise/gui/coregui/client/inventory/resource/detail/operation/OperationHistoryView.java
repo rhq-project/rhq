@@ -76,8 +76,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     public OperationHistoryView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, VIEW_ID.getTitle(), new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID, String
-            .valueOf(resourceComposite.getResource().getId())));
+        super(locatorId, VIEW_ID.getTitle(), new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID,
+            String.valueOf(resourceComposite.getResource().getId())));
         this.composite = resourceComposite;
 
         setDataSource(new OperationHistoryDataSource());
@@ -87,14 +87,14 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     protected void configureTable() {
         ListGridField idField = new ListGridField(OperationHistoryDataSource.Field.ID, MSG.common_title_id());
 
-        ListGridField opNameField = new ListGridField(OperationHistoryDataSource.Field.OPERATION_NAME, MSG
-            .dataSource_operationHistory_operationName());
+        ListGridField opNameField = new ListGridField(OperationHistoryDataSource.Field.OPERATION_NAME,
+            MSG.dataSource_operationHistory_operationName());
 
-        ListGridField subjectField = new ListGridField(OperationHistoryDataSource.Field.SUBJECT, MSG
-            .common_title_user());
+        ListGridField subjectField = new ListGridField(OperationHistoryDataSource.Field.SUBJECT,
+            MSG.common_title_user());
 
-        ListGridField statusField = new ListGridField(OperationHistoryDataSource.Field.STATUS, MSG
-            .common_title_status());
+        ListGridField statusField = new ListGridField(OperationHistoryDataSource.Field.STATUS,
+            MSG.common_title_status());
         statusField.setAlign(Alignment.CENTER);
         statusField.setCellAlign(Alignment.CENTER);
         statusField.setShowHover(true);
@@ -170,8 +170,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             }
         });
 
-        ListGridField startedTimeField = new ListGridField(OperationHistoryDataSource.Field.STARTED_TIME, MSG
-            .dataSource_operationHistory_startedTime());
+        ListGridField startedTimeField = new ListGridField(OperationHistoryDataSource.Field.STARTED_TIME,
+            MSG.dataSource_operationHistory_startedTime());
         startedTimeField.setType(ListGridFieldType.DATE);
         startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
         startedTimeField.setAlign(Alignment.LEFT);
@@ -180,8 +180,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         final Resource resource = this.composite.getResource();
 
         if (resource == null) { // if null, we aren't viewing op history for a single resource
-            ListGridField resourceField = new ListGridField(OperationHistoryDataSource.Field.RESOURCE, MSG
-                .common_title_resource());
+            ListGridField resourceField = new ListGridField(OperationHistoryDataSource.Field.RESOURCE,
+                MSG.common_title_resource());
             resourceField.setAlign(Alignment.LEFT);
             resourceField.setCellAlign(Alignment.LEFT);
             resourceField.setCellFormatter(new CellFormatter() {
@@ -227,8 +227,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                     }
                 });
 
-            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), MSG
-                .view_operationHistoryList_button_runOperation(), operationMenu);
+            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"),
+                MSG.view_operationHistoryList_button_runOperation(), operationMenu);
             operationsButton.setShowMenuBelow(false);
             operationsButton.setAutoFit(true);
             addExtraWidget(operationsButton);

@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.gui.configuration.resource;
 
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.configuration.AbstractAddNewOpenMapMemberPropertyUIBean;
@@ -25,14 +30,15 @@ import org.rhq.enterprise.gui.configuration.AbstractAddNewOpenMapMemberPropertyU
 /**
  * @author Ian Springer
  */
+@Name("AddNewOpenMapMemberPropertyToResourceConfigurationUIBean")
+@Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationAddNewOpenMapMemberPropertyUIBean extends
     AbstractAddNewOpenMapMemberPropertyUIBean {
+    
+    @In("configurationEditor")
+    private ResourceConfigurationEditor currentEditor;
+    
     protected Configuration getConfiguration() {
-        ExistingResourceConfigurationUIBean configUIBean = FacesContextUtility
-            .getManagedBean(ExistingResourceConfigurationUIBean.class);
-
-        // NOTE: We assume the config managed bean is in session, otherwise the changes we make here will be lost when the
-        // user gets redirected back to the main config page.
-        return configUIBean.getConfiguration();
+        return currentEditor.getResourceConfiguration();
     }
 }

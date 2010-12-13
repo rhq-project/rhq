@@ -236,8 +236,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
                 this.tabSet.selectTab(tab);
             }
 
-            Canvas subView = subtab.getCanvas();            
-            if (subView instanceof BookmarkableView && !viewPath.isEnd()) {
+            Canvas subView = subtab.getCanvas();
+            if (subView instanceof BookmarkableView) {
                 // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
                 ((BookmarkableView) subView).renderView(viewPath);
             } else if (subView instanceof RefreshableView) {

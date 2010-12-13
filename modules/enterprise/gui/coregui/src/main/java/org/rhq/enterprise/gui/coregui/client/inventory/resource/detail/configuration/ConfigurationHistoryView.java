@@ -24,7 +24,6 @@ import java.util.List;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -43,8 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
-    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
-        .view_configurationHistoryList_title());
+    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges",
+        MSG.view_configurationHistoryList_title());
 
     private Integer resourceId;
 
@@ -143,9 +142,8 @@ public class ConfigurationHistoryView extends TableSection {
     }
 
     @Override
-    protected ListGridField getNameField() {
-        ListGrid grid = getListGrid();
-        return (grid != null) ? grid.getField(FIELD_ID) : null;
+    protected String getDetailsLinkColumnName() {
+        return FIELD_ID;
     }
 
     @Override

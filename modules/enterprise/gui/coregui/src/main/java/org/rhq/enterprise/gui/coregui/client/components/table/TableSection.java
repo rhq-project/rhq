@@ -40,7 +40,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -111,13 +110,14 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void onDraw() {
         super.onDraw();
 
-        // Make the value of the name field a link to the details view for the corresponding record.
-        ListGridField nameField = getNameField();
-        if (nameField != null) {
-            nameField.setCellFormatter(new CellFormatter() {
+        // Make the value of some specific field a link to the details view for the corresponding record
+        ListGrid grid = getListGrid();
+        ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
+        if (field != null) {
+            field.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord record, int i, int i1) {
                     Integer recordId = getId(record);
-                    String detailsUrl = "#" + TableSection.this.basePath + "/" + recordId;
+                    String detailsUrl = "#" + getBasePath() + "/" + recordId;
                     return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
                 }
             });
@@ -132,9 +132,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         });
     }
 
-    protected ListGridField getNameField() {
-        ListGrid grid = getListGrid();
-        return (grid != null) ? grid.getField(FIELD_NAME) : null;
+    protected String getDetailsLinkColumnName() {
+        return FIELD_NAME;
     }
 
     /**

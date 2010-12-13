@@ -45,6 +45,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -460,6 +461,8 @@ public abstract class RPCDataSource<T> extends DataSource {
             return (S[]) new AlertPriority[size];
         } else if (genericEnumType == EventSeverity.class) {
             return (S[]) new EventSeverity[size];
+        } else if (genericEnumType == ResourceCategory.class) {
+            return (S[]) new ResourceCategory[size];
         } else {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }

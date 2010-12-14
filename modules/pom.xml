@@ -29,9 +29,15 @@
       <profile>
          <id>default</id>
          <activation>
+            <activeByDefault>true</activeByDefault>
+            <!--     The problem with the below approach is that the default modules are
+                     always activated. This causes duplicate module decls when trying to use other
+                     profiles, or adds the default modules when they are not wanted.
+                     
             <property>
-               <name>java.home</name>
+               <name>java.home</name>                
             </property>
+            -->
          </activation>
          <modules>
             <module>core</module>
@@ -73,10 +79,10 @@
       </profile>
 
       <profile>
-         <id>model</id>
+         <id>coregui</id>
          <activation>
             <property>
-               <name>model</name>
+               <name>coregui</name>
             </property>
          </activation>
          <modules>

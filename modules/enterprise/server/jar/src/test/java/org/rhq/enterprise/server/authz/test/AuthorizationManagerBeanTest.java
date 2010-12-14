@@ -27,7 +27,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;

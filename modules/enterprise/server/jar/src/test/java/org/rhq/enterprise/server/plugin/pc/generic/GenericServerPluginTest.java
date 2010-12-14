@@ -191,8 +191,10 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
     }
 
     private void deleteAllTestPluginJars() {
-        TestGenericServerPluginService pluginService1 = this.pluginService;
-        MasterServerPluginContainerConfiguration masterConfig = pluginService1.masterConfig;
+        MasterServerPluginContainerConfiguration masterConfig = this.pluginService.masterConfig;
+        if (masterConfig==null)
+            return;
+
         File pluginDirectory = masterConfig.getPluginDirectory();
 
         File[] files = pluginDirectory.listFiles();

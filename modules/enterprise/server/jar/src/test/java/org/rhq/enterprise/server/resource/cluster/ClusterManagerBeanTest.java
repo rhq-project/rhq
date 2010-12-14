@@ -23,7 +23,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -54,7 +54,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
     private ResourceGroupManagerLocal resourceGroupManager;
     private ResourceManagerLocal resourceManager;
 
-    @BeforeSuite
+    @BeforeMethod
     @SuppressWarnings( { "unused" })
     private void init() {
         clusterManager = LookupUtil.getClusterManager();
@@ -122,7 +122,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             assertEquals(backingGroup.getClusterKey(), clusterKey.toString());
             assertEquals(backingGroup.getClusterResourceGroup(), clusterGroup);
             //Set<Resource> backingGroupResources = backingGroup.getExplicitResources();
-            // explicitResources for backingGroup is lazy, so we need to hit resourceManager for the answer 
+            // explicitResources for backingGroup is lazy, so we need to hit resourceManager for the answer
             List<Resource> backingGroupResources = resourceManager.findExplicitResourcesByResourceGroup(subject,
                 backingGroup, PageControl.getUnlimitedInstance());
             assertEquals(backingGroupResources.size(), resources.size());

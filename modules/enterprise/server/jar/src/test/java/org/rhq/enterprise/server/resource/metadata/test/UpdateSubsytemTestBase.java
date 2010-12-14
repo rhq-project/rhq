@@ -39,7 +39,7 @@ import javax.xml.validation.SchemaFactory;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
@@ -87,7 +87,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
-    @BeforeSuite
+    @BeforeMethod
     protected void init() {
         try {
             metadataManager = LookupUtil.getResourceMetadataManager();

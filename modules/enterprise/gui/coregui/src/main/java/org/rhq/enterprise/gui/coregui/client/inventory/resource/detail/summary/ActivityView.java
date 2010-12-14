@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 // TODO: Implement this.
-public class ActivityView extends LocatableVLayout implements ResourceSelectListener, RefreshableView {
+public class ActivityView extends LocatableVLayout implements RefreshableView {
 
     private ResourceComposite resourceComposite;
     private FullHTMLPane iFrame;
@@ -47,22 +47,13 @@ public class ActivityView extends LocatableVLayout implements ResourceSelectList
         this.iFrame = new FullHTMLPane(extendLocatorId("IFrame"), null);
         addMember(this.iFrame);
 
-        if (this.resourceComposite != null) {
-            onResourceSelected(this.resourceComposite);
-        }
-    }
-
-    @Override
-    public void onResourceSelected(ResourceComposite resourceComposite) {
-        this.resourceComposite = resourceComposite;
+        refresh();
     }
 
     @Override
     public void refresh() {
-        if (this.iFrame != null) {
-            this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" +
-                this.resourceComposite.getResource().getId());
-        }
+        int resourceId = this.resourceComposite.getResource().getId();
+        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceId);
     }
     
 }

@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -315,7 +316,9 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void switchToTableView() {
         final Canvas contents = getTableContents();
         if (contents != null) {
-
+            // First refresh the table's data.
+            Log.debug("Refreshing data for [" + getClass().getName() + "]...");
+            refresh();
             if (detailsHolder != null && detailsHolder.isVisible()) {
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override

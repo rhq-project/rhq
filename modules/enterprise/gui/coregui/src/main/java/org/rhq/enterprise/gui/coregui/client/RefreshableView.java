@@ -29,4 +29,5 @@ public interface RefreshableView {
      * Refresh this view, i.e. reload its data from the Server.
      */
     void refresh();
+
 }

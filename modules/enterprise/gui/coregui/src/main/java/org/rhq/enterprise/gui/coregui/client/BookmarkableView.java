@@ -55,6 +55,10 @@ package org.rhq.enterprise.gui.coregui.client;
  * }
  * </code>
  *
+ * <b>NOTE:</b> If the view implementing BookmarkableView also implements {@link RefreshableView}, the
+ * {@link #renderView} implementation is responsible for invoking {@link RefreshableView#refresh()} to ensure the
+ * view's data is fresh.
+ *
  * @author Ian Springer
  */
 public interface BookmarkableView {

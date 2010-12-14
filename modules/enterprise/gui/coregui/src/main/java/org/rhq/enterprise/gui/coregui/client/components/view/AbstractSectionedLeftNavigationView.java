@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
@@ -54,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  */
 public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayout implements BookmarkableView,
     InitializableView {
+    
     private String viewId;
     private boolean initialized;
     private ViewId currentSectionViewId;
@@ -222,8 +224,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
-            }
-            if (this.currentContent instanceof RefreshableView) {
+            } else if (this.currentContent instanceof RefreshableView && this.currentContent.isDrawn()) {
+                // Refresh the data on the content pane, so it's not stale.
+                Log.debug("Refreshing data for [" + this.currentContent.getClass().getName() + "]...");
                 ((RefreshableView) this.currentContent).refresh();
             }
         }
@@ -245,4 +248,5 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             }
         }
     }
+
 }

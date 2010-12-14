@@ -144,7 +144,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             }
         }
 
-        start = stats.getQueryExecutionCount();
+        if (stats!=null)
+            start = stats.getQueryExecutionCount();
+        else
+            start = 0;
     }
 
     public static Connection getConnection() throws SQLException {

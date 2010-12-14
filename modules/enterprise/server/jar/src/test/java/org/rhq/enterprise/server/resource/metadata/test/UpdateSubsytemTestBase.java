@@ -48,7 +48,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -113,14 +112,15 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     public void afterClass() throws Exception {
         unprepareForTestAgents();
         unprepareScheduler();
-    }
-
-    @BeforeTest
-    public void beforeTest() throws Exception {
-        startTest();
-        // cleanup anything left over from a previous, interrupted run.
         cleanupTest();
     }
+
+//    @BeforeTest
+//    public void beforeTest() throws Exception {
+////        startTest(); Done in super.@BeforeMethod already ??
+//        // cleanup anything left over from a previous, interrupted run.
+//        cleanupTest();
+//    }
 
     protected ResourceType getResourceType(String typeName) {
         return getResourceType(typeName, PLUGIN_NAME);

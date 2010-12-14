@@ -8,7 +8,6 @@ import javax.persistence.Query;
 
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -42,15 +41,12 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
     }
 
     @BeforeMethod
-    public void beforeSuite() throws Exception {
+    public void init() throws Exception {
         viewManager = LookupUtil.getMeasurementViewManager();
         subjectManager = LookupUtil.getSubjectManager();
 
         overlord = subjectManager.getOverlord();
-    }
 
-    @BeforeTest
-    public void beforeTest() throws Exception {
         getTransactionManager().begin();
         try {
             EntityManager em = getEntityManager();

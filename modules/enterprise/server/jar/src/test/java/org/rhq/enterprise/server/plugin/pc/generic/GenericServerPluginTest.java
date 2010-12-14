@@ -38,6 +38,7 @@ import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.State;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericPluginManager;
@@ -190,7 +191,11 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
     }
 
     private void deleteAllTestPluginJars() {
-        File[] files = this.pluginService.masterConfig.getPluginDirectory().listFiles();
+        TestGenericServerPluginService pluginService1 = this.pluginService;
+        MasterServerPluginContainerConfiguration masterConfig = pluginService1.masterConfig;
+        File pluginDirectory = masterConfig.getPluginDirectory();
+
+        File[] files = pluginDirectory.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.getName().endsWith(".jar")) {

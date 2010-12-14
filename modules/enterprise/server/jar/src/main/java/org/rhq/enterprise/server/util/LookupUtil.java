@@ -630,10 +630,12 @@ public final class LookupUtil {
 
     @SuppressWarnings("unchecked")
     private static <T> T lookupLocal(Class<? super T> type) {
+        String localJNDIName = "-not initialized-";
         try {
-            return (T) lookup(getLocalJNDIName(type));
+            localJNDIName = getLocalJNDIName(type);
+            return (T) lookup(localJNDIName);
         } catch (NamingException e) {
-            throw new RuntimeException("Failed to lookup local interface to EJB " + type, e);
+            throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=[" + localJNDIName + "]", e);
         }
     }
 

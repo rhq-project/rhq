@@ -191,6 +191,10 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
     }
 
     private void deleteAllTestPluginJars() {
+        if (this.pluginService==null) {
+            System.err.println("Plugin service was null !!");
+            return;
+        }
         MasterServerPluginContainerConfiguration masterConfig = this.pluginService.masterConfig;
         if (masterConfig==null)
             return;

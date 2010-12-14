@@ -80,7 +80,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
@@ -104,8 +103,6 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private Menu resourceContextMenu;
     private ResourceGroupContextMenu autoGroupContextMenu;
-
-    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     // Maps autogroup/type backing group ids to the corresponding autogroup/type nodes.
     private Map<Integer, AutoGroupTreeNode> autoGroupNodeMap = new HashMap<Integer, AutoGroupTreeNode>();
@@ -300,7 +297,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private void updateSelection() {
 
-        TreeNode selectedNode = null;
+        TreeNode selectedNode;
         if (treeGrid != null && treeGrid.getTree() != null
             && (selectedNode = treeGrid.getTree().findById(selectedNodeId)) != null) {
 
@@ -820,10 +817,6 @@ public class ResourceTreeView extends LocatableVLayout {
         }
     */
 
-    public void addResourceSelectListener(ResourceSelectListener listener) {
-        this.selectListeners.add(listener);
-    }
-
     public void renderView(ViewPath viewPath) {
         currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
@@ -839,4 +832,5 @@ public class ResourceTreeView extends LocatableVLayout {
             setSelectedResource(resourceId);
         }
     }
+    
 }

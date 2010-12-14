@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwo
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
@@ -76,6 +77,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private Integer resourceId;
 
     private ResourceComposite resourceComposite;
+
+    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -221,6 +224,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     protected void updateTabContent(ResourceComposite resourceComposite) {
         this.resourceComposite = resourceComposite;
+        for (ResourceSelectListener selectListener : this.selectListeners) {
+            selectListener.onResourceSelected(this.resourceComposite);
+        }
         Resource resource = this.resourceComposite.getResource();
         getTitleBar().setResource(this.resourceComposite);
 
@@ -379,6 +385,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return this.resourceId;
     }
 
+    public void addResourceSelectListener(ResourceSelectListener listener) {
+        this.selectListeners.add(listener);
+    }
+
     @Override
     protected ResourceComposite getSelectedItem() {
         return this.resourceComposite;
@@ -423,7 +433,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
                     resourceComposite.getResource().setResourceType(type);
-                    ResourceDetailView.this.resourceComposite = resourceComposite;
                     updateTabContent(resourceComposite);
                     selectTab(getTabName(), getSubTabName(), viewPath);
                 }
@@ -440,4 +449,5 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
         return false;
     }
+
 }

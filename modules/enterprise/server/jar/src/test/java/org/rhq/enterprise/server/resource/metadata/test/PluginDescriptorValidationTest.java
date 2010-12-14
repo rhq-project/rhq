@@ -28,6 +28,7 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -36,7 +37,7 @@ import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 /**
  * Try to validate the rhq-plugin.xml plugin descriptors
  *
- * @author Heiko W. Rupp 
+ * @author Heiko W. Rupp
  * TODO get the plugins dynamically - see comment in {@link #testPluginDescriptors()}
  */
 public class PluginDescriptorValidationTest extends UpdateSubsytemTestBase {
@@ -49,7 +50,7 @@ public class PluginDescriptorValidationTest extends UpdateSubsytemTestBase {
      */
     String[] plugins = { "database", "postgres", "platform", "jmx", "rhq-agent", "apache" };
 
-    @BeforeSuite
+    @BeforeMethod
     @Override
     protected void init() {
         super.init();

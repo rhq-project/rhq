@@ -26,6 +26,7 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -44,7 +45,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
     private AuthorizationManagerLocal authorizationManager;
 
-    @BeforeSuite
+    @BeforeMethod
     @SuppressWarnings( { "unused" })
     private void init() {
         try {

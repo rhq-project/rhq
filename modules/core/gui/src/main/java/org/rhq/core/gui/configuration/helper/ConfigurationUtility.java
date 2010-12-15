@@ -26,6 +26,8 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
  * @author Ian Springer
@@ -42,7 +44,14 @@ public class ConfigurationUtility
         {
             Property subProperty = propertyHierarchy.get(i);
             if (propertyDefinition instanceof PropertyDefinitionMap) {
-                propertyDefinition = ((PropertyDefinitionMap)propertyDefinition).get(subProperty.getName());
+                if (((PropertyDefinitionMap)propertyDefinition).getPropertyDefinitions().isEmpty()) {
+                    //this is an open map, i.e. a map with no child definitions, meaning that any simple property
+                    //can go in it.
+                    //let's create a definition that mimics the current property...
+                    propertyDefinition = new PropertyDefinitionSimple(subProperty.getName(), null, false, PropertySimpleType.STRING);
+                } else {
+                    propertyDefinition = ((PropertyDefinitionMap)propertyDefinition).get(subProperty.getName());                    
+                }
             } else if (propertyDefinition instanceof PropertyDefinitionList) {
                 propertyDefinition = ((PropertyDefinitionList)propertyDefinition).getMemberDefinition();
             }

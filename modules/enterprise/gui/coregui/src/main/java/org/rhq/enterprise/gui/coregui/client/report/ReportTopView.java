@@ -43,9 +43,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
+import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 
 /**
@@ -116,10 +117,10 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.VIEW_ID,
+        NavigationItem recentOperationsItem = new NavigationItem(SubsystemOperationHistoryListView.VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new OperationHistoryView(extendLocatorId(OperationHistoryView.VIEW_ID.getName()));
+                    return new SubsystemOperationHistoryListView(extendLocatorId(SubsystemOperationHistoryListView.VIEW_ID.getName()));
                 }
             });
 

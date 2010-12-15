@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -72,6 +72,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceComposite, ResourceTitleBar> {
+
     private static final String BASE_VIEW_PATH = "Resource";
 
     private Integer resourceId;
@@ -103,8 +104,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryConnHistory;
     private SubTab inventoryGroups;
     private SubTab inventoryAgent;
-    private SubTab opHistory;
-    private SubTab opSched;
+    private SubTab operationsHistory;
+    private SubTab operationsSchedule;
     private SubTab alertHistory;
     private SubTab alertDef;
     private SubTab configCurrent;
@@ -186,11 +187,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
+        this.operationsSchedule = new SubTab(operationsTab.extendLocatorId("Schedule"), new ViewName("Schedule", MSG
+            .view_tabs_common_schedule()), null);
+        this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), new ViewName("Scheduled", MSG
-            .view_tabs_common_scheduled()), null);
-        operationsTab.registerSubTabs(this.opHistory, this.opSched);
+        operationsTab.registerSubTabs(this.operationsHistory, this.operationsSchedule);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
@@ -341,10 +342,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //     3) operation arguments/results become read-only configuration data in the history details pop-up
             //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
-            updateSubTab(this.operationsTab, this.opHistory, OperationHistoryView.getResourceHistoryView(operationsTab
+            updateSubTab(this.operationsTab, this.operationsHistory, new ResourceOperationHistoryListView(operationsTab
                 .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
 
-            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(this.opSched.extendLocatorId("View"),
+            updateSubTab(this.operationsTab, this.operationsSchedule, new FullHTMLPane(this.operationsSchedule.extendLocatorId("View"),
                 "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()), true, true);
         }
     }

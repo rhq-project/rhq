@@ -58,11 +58,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.M
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
- * Right panel of the Resource view (#ResourceGroup/*).
+ * Right panel of the Resource Group view (#ResourceGroup/*).
  *
  * @author Jay Shaughnessy
  * @author Ian Springer
@@ -94,8 +93,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab inventoryMembers;
     private SubTab inventoryConn;
     private SubTab inventoryConnHistory;
-    private SubTab opHistory;
-    private SubTab opSched;
+    private SubTab operationsHistory;
+    private SubTab operationsSchedule;
     private SubTab alertHistory;
     private SubTab alertDef;
     private SubTab configCurrent;
@@ -198,11 +197,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
+        this.operationsSchedule = new SubTab(operationsTab.extendLocatorId("Schedule"), new ViewName("Schedule", MSG
+            .view_tabs_common_schedule()), null);
+        this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), new ViewName("Scheduled", MSG
-            .view_tabs_common_scheduled()), null);
-        operationsTab.registerSubTabs(this.opHistory, this.opSched);
+        operationsTab.registerSubTabs(this.operationsHistory, this.operationsSchedule);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
@@ -296,10 +295,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private void updateOperationsTab(int groupId, GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
-            updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(this.opHistory.extendLocatorId("View"),
-                "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(this.opSched.extendLocatorId("View"),
+            updateSubTab(this.operationsTab, this.operationsSchedule, new FullHTMLPane(this.operationsSchedule.extendLocatorId("View"),
                 "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.operationsTab, this.operationsHistory, new FullHTMLPane(this.operationsHistory.extendLocatorId("View"),
+                "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
         }
     }
 

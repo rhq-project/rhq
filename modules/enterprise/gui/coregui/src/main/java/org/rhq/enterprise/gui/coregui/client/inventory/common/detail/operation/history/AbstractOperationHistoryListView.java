@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
-import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
@@ -36,62 +37,57 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-import com.smartgwt.client.widgets.menu.IMenuButton;
-import com.smartgwt.client.widgets.menu.Menu;
-import com.smartgwt.client.widgets.menu.MenuItem;
-import com.smartgwt.client.widgets.menu.events.ClickHandler;
-import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class OperationHistoryView extends TableSection<OperationHistoryDataSource> {
-    public static final ViewName VIEW_ID = new ViewName("RecentOperations", MSG.common_title_recent_operations());
+public abstract class AbstractOperationHistoryListView extends TableSection<OperationHistoryDataSource> {
 
-    private ResourceComposite composite;
+    private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
 
-    public OperationHistoryView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle());
-        setWidth100();
-        setHeight100();
-
-        setDataSource(new OperationHistoryDataSource());
+    public AbstractOperationHistoryListView(String locatorId, OperationHistoryDataSource dataSource, String title) {
+        super(locatorId, title);
+        setDataSource(dataSource);
+        setHeaderIcon(HEADER_ICON);
     }
 
-    public OperationHistoryView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, VIEW_ID.getTitle(), new Criteria(OperationHistoryDataSource.CriteriaField.RESOURCE_ID,
-            String.valueOf(resourceComposite.getResource().getId())));
-        this.composite = resourceComposite;
-
-        setDataSource(new OperationHistoryDataSource());
+    public AbstractOperationHistoryListView(String locatorId, OperationHistoryDataSource dataSource, String title,
+                                    Criteria criteria) {
+        super(locatorId, title, criteria);
+        setDataSource(dataSource);
     }
 
     @Override
     protected void configureTable() {
+        super.configureTable();
+
+        List<ListGridField> fields = createFields();
+        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
+    }
+
+    protected List<ListGridField> createFields() {
+        List<ListGridField> fields = new ArrayList<ListGridField>();
+
         ListGridField idField = new ListGridField(OperationHistoryDataSource.Field.ID, MSG.common_title_id());
+        idField.setWidth(38);
+        fields.add(idField);
 
         ListGridField opNameField = new ListGridField(OperationHistoryDataSource.Field.OPERATION_NAME,
             MSG.dataSource_operationHistory_operationName());
+        opNameField.setWidth("34%");
+        fields.add(opNameField);
 
         ListGridField subjectField = new ListGridField(OperationHistoryDataSource.Field.SUBJECT,
             MSG.common_title_user());
+        subjectField.setWidth("33%");
+        fields.add(subjectField);
 
         ListGridField statusField = new ListGridField(OperationHistoryDataSource.Field.STATUS,
             MSG.common_title_status());
@@ -134,7 +130,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                 String statusStr = record.getAttribute(OperationHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 if (status == OperationRequestStatus.FAILURE) {
-                    final Window winModal = new LocatableWindow(OperationHistoryView.this
+                    final Window winModal = new LocatableWindow(AbstractOperationHistoryListView.this
                         .extendLocatorId("statusDetailsWin"));
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
@@ -154,7 +150,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                         }
                     });
 
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(OperationHistoryView.this
+                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(AbstractOperationHistoryListView.this
                         .extendLocatorId("statusDetailsPane"));
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
@@ -169,6 +165,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                 }
             }
         });
+        statusField.setWidth(44);
+        fields.add(statusField);
 
         ListGridField startedTimeField = new ListGridField(OperationHistoryDataSource.Field.STARTED_TIME,
             MSG.dataSource_operationHistory_startedTime());
@@ -176,79 +174,15 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
+        startedTimeField.setWidth("33%");
+        fields.add(startedTimeField);
 
-        final Resource resource = this.composite.getResource();
-
-        if (resource == null) { // if null, we aren't viewing op history for a single resource
-            ListGridField resourceField = new ListGridField(OperationHistoryDataSource.Field.RESOURCE,
-                MSG.common_title_resource());
-            resourceField.setAlign(Alignment.LEFT);
-            resourceField.setCellAlign(Alignment.LEFT);
-            resourceField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    Resource res = (Resource) o;
-                    return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
-                }
-            });
-
-            idField.setWidth(10);
-            opNameField.setWidth("25%");
-            subjectField.setWidth("25%");
-            statusField.setWidth(50);
-            startedTimeField.setWidth("25%");
-            resourceField.setWidth("25%");
-
-            setListGridFields(idField, opNameField, startedTimeField, subjectField, statusField, resourceField);
-        } else {
-            idField.setWidth(10);
-            opNameField.setWidth("34%");
-            subjectField.setWidth("33%");
-            statusField.setWidth(50);
-            startedTimeField.setWidth("33%");
-
-            setListGridFields(idField, opNameField, startedTimeField, subjectField, statusField);
-        }
-
-        if (resource != null && composite.getResourcePermission().isControl()) {
-            final Menu operationMenu = new LocatableMenu(this.extendLocatorId("Operation"));
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.operations),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(ResourceType type) {
-                        for (final OperationDefinition od : type.getOperationDefinitions()) {
-                            MenuItem menuItem = new MenuItem(od.getDisplayName());
-                            operationMenu.addItem(menuItem);
-                            menuItem.addClickHandler(new ClickHandler() {
-                                public void onClick(MenuItemClickEvent event) {
-                                    new OperationCreateWizard(resource, od).startOperationWizard();
-                                }
-                            });
-                        }
-                    }
-                });
-
-            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"),
-                MSG.view_operationHistoryList_button_runOperation(), operationMenu);
-            operationsButton.setShowMenuBelow(false);
-            operationsButton.setAutoFit(true);
-            addExtraWidget(operationsButton);
-        }
-
+        return fields;
     }
 
     @Override
     protected String getDetailsLinkColumnName() {
         return OperationHistoryDataSource.Field.OPERATION_NAME;
-    }
-
-    @Override
-    public Canvas getDetailsView(int id) {
-        OperationDetailsView detailsView = new OperationDetailsView(this.extendLocatorId("Details"));
-        return detailsView;
-    }
-
-    public static OperationHistoryView getResourceHistoryView(String locatorId, ResourceComposite resource) {
-        return new OperationHistoryView(locatorId, resource);
     }
 
 }

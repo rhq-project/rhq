@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
+import javax.transaction.Status;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,8 +76,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @BeforeMethod
     public void beforeMethod() {
         try {
-            prepareScheduler();
-
             this.resourceManager = LookupUtil.getResourceManager();
             this.measurementDataManager = LookupUtil.getMeasurementDataManager();
             this.callTimeDataManager = LookupUtil.getCallTimeDataManager();
@@ -89,41 +88,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        try {
-            EntityManager em = getEntityManager();
-            getTransactionManager().begin();
-
-            MeasurementSchedule schedule1 = resource1.getSchedules().iterator().next();
-            MeasurementSchedule schedule2 = resource2.getSchedules().iterator().next();
-            schedule1 = em.find(MeasurementSchedule.class,schedule1.getId());
-            schedule2 = em.find(MeasurementSchedule.class,schedule2.getId());
-            em.remove(schedule1);
-            em.remove(schedule2);
-            resource1 = em.find(Resource.class,resource1.getId());
-            resource2 = em.find(Resource.class,resource2.getId());
-            em.remove(resource1);
-            em.remove(resource2);
-            theDefinition = em.find(MeasurementDefinition.class,theDefinition.getId());
-            em.remove(theDefinition);
-            theResourceType = em.find(ResourceType.class,theResourceType.getId());
-            em.remove(theResourceType);
-            theAgent = em.find(Agent.class,theAgent.getId());
-            em.remove(theAgent);
-
-            getTransactionManager().commit();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-
-        finally {
-            unprepareScheduler();
-        }
-    }
-
 
     @Test
     public void bz658491() throws Exception {
@@ -131,7 +95,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
         try {
             setupResources(em);
-            commitAndClose(em);
 
             MeasurementSchedule schedule1 = resource1.getSchedules().iterator().next();
             MeasurementSchedule schedule2 = resource2.getSchedules().iterator().next();
@@ -166,10 +129,11 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        }
-
-        finally {
-            unprepareScheduler();
+        } finally {
+            if (em != null) {
+                getTransactionManager().rollback();
+                em.close();
+            }
         }
     }
 
@@ -221,11 +185,5 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
         return em;
     }
-
-    private void commitAndClose(EntityManager em) throws Exception {
-        getTransactionManager().commit();
-        em.close();
-    }
-
 
 }

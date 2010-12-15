@@ -34,7 +34,7 @@ public class Trigger {
     // For the remaining fields in this class, only those that apply to the trigger's type will have non-null values.
     private StartType startType;
     private RecurrenceType recurrenceType;
-    // Note, this field will be null when recurrenceType=NONE, since is not applicable in that case.
+    // Note, this field will be null when recurrenceType=NONE, since it's not applicable in that case.
     private EndType endType;
 
     // Fields used by startType=DATETIME triggers
@@ -51,19 +51,45 @@ public class Trigger {
     private String cronExpression;
 
     public enum StartType {
+        /**
+         * Start the initial run now.
+         */
         NOW,
+        /**
+         * Start the initial run at a specified date-time in the future.
+         */
         DATETIME;
     }
 
     public enum RecurrenceType {
+        /**
+         * No recurrence - just run once.
+         */
         NONE,
+        /**
+         * Run every n seconds, starting at the start time of the initial run.
+         */
         REPEAT_INTERVAL,
+        /**
+         * Run on a schedule based on the specified cron expression. The expression must follow
+         * <a href="http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html">Quartz
+         * cron expression syntax</a>, which is a bit different than Unix cron expression syntax.
+         */
         CRON_EXPRESSION;
     }
 
     public enum EndType {
+        /**
+         * No end - recurrence is indefinite.
+         */
         NEVER,
+        /**
+         * End recurrence at a specified date/time in the future.
+         */
         DATETIME,
+        /**
+         * End recurrence after n repetitions.
+         */
         REPEAT_COUNT;
     }
 
@@ -172,9 +198,11 @@ public class Trigger {
     }
 
     /**
-     * Create a trigger that will run on the schedule specified by cron expression
+     * Create a trigger that will run on the schedule specified by a cron expression. The expression must follow
+     * <a href="http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html">Quartz
+     * cron expression syntax</a>, which is a bit different than Unix cron expression syntax.
      *
-     * @return a trigger that will run on the schedule specified by cron expression
+     * @return a trigger that will run on the schedule specified by a cron expression
      */
     public static Trigger createCronTrigger(String cronExpression) {
         return new Trigger(cronExpression);

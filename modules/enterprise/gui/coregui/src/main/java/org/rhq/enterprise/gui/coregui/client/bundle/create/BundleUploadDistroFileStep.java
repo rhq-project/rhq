@@ -203,6 +203,13 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private void processUrl() {
         String urlString = (String) this.urlTextItem.getValue();
 
+        if (urlString == null || urlString.trim().length() == 0) {
+            wizard.getView().showMessage(MSG.view_bundle_createWizard_enterUrl());
+            wizard.setBundleVersion(null);
+            setButtonsDisableMode(false);
+            return;
+        }
+
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
         bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
@@ -257,7 +264,16 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private void processRecipe() {
-        this.wizard.setRecipe((String) this.recipeForm.getItem("recipeText").getValue());
+        String recipeString = (String) this.recipeForm.getItem("recipeText").getValue();
+
+        if (recipeString == null || recipeString.trim().length() == 0) {
+            wizard.getView().showMessage(MSG.view_bundle_createWizard_enterRecipe());
+            wizard.setBundleVersion(null);
+            setButtonsDisableMode(false);
+            return;
+        }
+
+        this.wizard.setRecipe(recipeString);
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
         bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {

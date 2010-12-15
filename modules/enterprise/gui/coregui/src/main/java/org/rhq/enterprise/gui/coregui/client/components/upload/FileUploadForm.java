@@ -30,6 +30,8 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.UploadItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
@@ -185,9 +187,23 @@ public class FileUploadForm extends DynamicCallbackForm {
         onDrawItems.add(fileUploadItem);
 
         if (showUploadButton) {
-            fileUploadItem.setEndRow(false);
+            // this intercepts an enable request and only allows it if there is a file selected
+            class EnableInterceptingButtonItem extends ButtonItem {
+                EnableInterceptingButtonItem(String name) {
+                    super(name);
+                }
 
-            uploadButton = new ButtonItem(MSG.view_upload_upload());
+                @Override
+                public void enable() {
+                    String selectedFile = fileUploadItem.getValueAsString();
+                    if (selectedFile != null && selectedFile.length() > 0) {
+                        super.enable();
+                    }
+                }
+            }
+
+            uploadButton = new EnableInterceptingButtonItem(MSG.view_upload_upload());
+            uploadButton.setDisabled(true);
             uploadButton.setColSpan(1);
             uploadButton.setStartRow(false);
             uploadButton.setAutoFit(true);
@@ -197,6 +213,15 @@ public class FileUploadForm extends DynamicCallbackForm {
                     submitForm();
                 }
             });
+
+            fileUploadItem.setEndRow(false);
+            fileUploadItem.addChangeHandler(new ChangeHandler() {
+                @Override
+                public void onChange(ChangeEvent changeEvent) {
+                    uploadButton.setDisabled(false);
+                }
+            });
+
             onDrawItems.add(uploadButton);
         }
 

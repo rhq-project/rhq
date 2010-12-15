@@ -65,6 +65,7 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         setNumCols(4);
 
         textFile = new UploadItem("textFile", MSG.view_upload_prompt_2());
+        textFile.setColSpan(1);
         textFile.setEndRow(false);
         textFile.setWrapTitle(false);
 
@@ -89,12 +90,15 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
         uploadButton.setDisabled(true);
 
         textFile.addChangeHandler(new ChangeHandler() {
+            @Override
             public void onChange(ChangeEvent changeEvent) {
                 uploadButton.setDisabled(false);
+                uploadButton.setShowIcons(false);
             }
         });
 
         uploadButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 String selectedFile = textFile.getValueAsString();
                 if (selectedFile != null && selectedFile.length() > 0) {
@@ -103,6 +107,7 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
                     submitForm();
                 } else {
                     uploadButton.disable(); // no file selected, it shouldn't be able to be pressed
+                    uploadButton.setShowIcons(false);
                 }
             }
         });
@@ -125,18 +130,26 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
      */
     public void retrievalStatus(boolean ok) {
         if (uploadButton != null) {
-            FormItemIcon loadedIcon = new FormItemIcon();
+            String iconSrc;
+            Message msg;
+
             if (ok) {
-                loadedIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
-                CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_success(), Severity.Info));
+                iconSrc = ImageManager.getAvailabilityIcon(Boolean.TRUE);
+                msg = new Message(MSG.view_upload_success(), Severity.Info);
             } else {
-                loadedIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
-                CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_error_file(), Severity.Error));
+                iconSrc = ImageManager.getAvailabilityIcon(Boolean.FALSE);
+                msg = new Message(MSG.view_upload_error_file(), Severity.Error);
             }
+
+            FormItemIcon loadedIcon = new FormItemIcon();
+            loadedIcon.setSrc(iconSrc);
             loadedIcon.setWidth(16);
             loadedIcon.setHeight(16);
             uploadButton.setIcons(loadedIcon);
             uploadButton.setShowIcons(true);
+            markForRedraw();
+
+            CoreGUI.getMessageCenter().notify(msg);
         }
     }
 }

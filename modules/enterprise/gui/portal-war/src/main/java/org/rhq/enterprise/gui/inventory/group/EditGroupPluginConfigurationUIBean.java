@@ -66,7 +66,7 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
             // TODO: See if there's some way for the config renderer to handle calling applyGroupConfiguration(),
             //       so the managed bean doesn't have to worry about doing it.
             getConfigurationSet().unmask();
-            getConfigurationSet().applyGroupConfiguration();
+            getConfigurationSet().applyGroupConfigurationForUpdate();
             getConfigurationManager().scheduleGroupPluginConfigurationUpdate(
                 EnterpriseFacesContextUtility.getSubject(), getGroup().getId(), getPluginConfigurations());
         } catch (Exception e) {

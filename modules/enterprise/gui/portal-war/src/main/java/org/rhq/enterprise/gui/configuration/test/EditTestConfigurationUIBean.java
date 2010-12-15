@@ -34,7 +34,7 @@ public class EditTestConfigurationUIBean extends AbstractTestConfigurationUIBean
     public String updateConfiguration() {
         // Any values changed in the group config (i.e. via the inputs on the main page) need to be
         // applied to all member configs before persisting them.
-        getConfigurationSet().applyGroupConfiguration();
+        getConfigurationSet().applyGroupConfigurationForUpdate();
         // TODO (low priority): Persist the test config somewhere.
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration updated.");
         return Outcomes.SUCCESS;

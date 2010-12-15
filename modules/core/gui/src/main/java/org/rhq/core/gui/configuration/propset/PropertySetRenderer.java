@@ -97,7 +97,7 @@ public class PropertySetRenderer extends Renderer {
         // will not have been updated yet with any changes made to child UIInput values.
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
         if (refresh != null && refresh.equals(ConfigRenderer.PROPERTY_SET_COMPONENT_ID)) {
-            propertySetComponent.getConfigurationSet().applyGroupConfiguration();
+            propertySetComponent.getConfigurationSet().applyGroupConfigurationForView();
             component.getChildren().clear();
         }
 

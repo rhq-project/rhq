@@ -191,6 +191,7 @@ public class FileUploadForm extends DynamicCallbackForm {
             uploadButton.setColSpan(1);
             uploadButton.setStartRow(false);
             uploadButton.setAutoFit(true);
+            uploadButton.setIcon(ImageManager.getUploadIcon());
             uploadButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     submitForm();

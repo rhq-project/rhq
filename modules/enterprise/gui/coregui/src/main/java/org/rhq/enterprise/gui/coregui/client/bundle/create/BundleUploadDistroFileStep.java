@@ -25,8 +25,8 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -36,6 +36,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
 import org.rhq.enterprise.gui.coregui.client.components.upload.BundleDistributionFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackForm;
@@ -160,9 +161,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         recipeForm.setMargin(Integer.valueOf(20));
         recipeForm.setShowInlineErrors(false);
 
-        final LinkItem showUpload = new LinkItem("recipeUploadLink");
-        showUpload.setValue(MSG.view_bundle_createWizard_clickToUploadRecipe());
-        showUpload.setShowTitle(false);
+        final ButtonItem showUpload = new ButtonItem("recipeUploadLink", MSG
+            .view_bundle_createWizard_clickToUploadRecipe());
+        showUpload.setIcon(ImageManager.getUploadIcon());
 
         final CanvasItem upload = new CanvasItem("recipeUploadCanvas");
         upload.setShowTitle(false);
@@ -173,8 +174,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
         showUpload.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                recipeForm.hideItem(showUpload.getName());
-                recipeForm.showItem(upload.getName());
+                showUpload.hide();
+                upload.show();
+                recipeForm.markForRedraw();
             }
         });
 
@@ -190,8 +192,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 wizard.setRecipe(event.getResults());
                 recipe.setValue(event.getResults());
                 textFileRetrieverForm.retrievalStatus(true);
-                recipeForm.showItem(showUpload.getName());
-                recipeForm.hideItem(upload.getName());
+                showUpload.show();
+                upload.hide();
+                recipeForm.markForRedraw();
             }
         });
 

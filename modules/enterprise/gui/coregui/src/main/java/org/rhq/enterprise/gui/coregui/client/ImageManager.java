@@ -24,6 +24,13 @@ public class ImageManager {
     public static final String IMAGES_DIR = "images/";
 
     /**
+     * Returns a generic "upload" icon.
+     */
+    public static String getUploadIcon() {
+        return "global/upload.png";
+    }
+
+    /**
      * Returns a generic edit icon.
      */
     public static String getEditIcon() {

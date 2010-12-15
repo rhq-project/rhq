@@ -66,8 +66,25 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
 
         textFile = new UploadItem("textFile", MSG.view_upload_prompt_2());
         textFile.setEndRow(false);
+        textFile.setWrapTitle(false);
 
-        uploadButton = new ButtonItem("Upload");
+        // this intercepts an enable request and only allows it if there is a file selected
+        class EnableInterceptingButtonItem extends ButtonItem {
+            EnableInterceptingButtonItem(String name) {
+                super(name);
+            }
+
+            @Override
+            public void enable() {
+                String selectedFile = textFile.getValueAsString();
+                if (selectedFile != null && selectedFile.length() > 0) {
+                    super.enable();
+                }
+            }
+        }
+
+        uploadButton = new EnableInterceptingButtonItem(MSG.view_upload_upload());
+        uploadButton.setIcon(ImageManager.getUploadIcon());
         uploadButton.setStartRow(false);
         uploadButton.setDisabled(true);
 
@@ -79,9 +96,14 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
 
         uploadButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                uploadButton.setShowIcons(true);
-                markForRedraw();
-                submitForm();
+                String selectedFile = textFile.getValueAsString();
+                if (selectedFile != null && selectedFile.length() > 0) {
+                    uploadButton.setShowIcons(true);
+                    markForRedraw();
+                    submitForm();
+                } else {
+                    uploadButton.disable(); // no file selected, it shouldn't be able to be pressed
+                }
             }
         });
 

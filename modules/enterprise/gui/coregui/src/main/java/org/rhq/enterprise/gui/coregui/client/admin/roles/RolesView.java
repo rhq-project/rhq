@@ -18,23 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.EnumSet;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -48,7 +45,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
-    
+
     private static final String HEADER_ICON = "global/Role_24.png";
 
     private boolean hasManageSecurity;
@@ -60,7 +57,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
     }
-    
+
     @Override
     protected void configureTable() {
         super.configureTable();
@@ -108,23 +105,17 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     }
 
     private void fetchManageSecurityPermissionAsync() {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-            new AsyncCallback<Set<Permission>>() {
-
-                @Override
-                public void onSuccess(Set<Permission> result) {
-                    hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            @Override
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
                     refresh();
-                }
-
-                @Override
-                public void onFailure(Throwable caught) {
+                } else {
                     hasManageSecurity = false;
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                            .of(Message.Option.BackgroundJobResult)));
                 }
-            });
+            }
+        });
     }
 
     @Override

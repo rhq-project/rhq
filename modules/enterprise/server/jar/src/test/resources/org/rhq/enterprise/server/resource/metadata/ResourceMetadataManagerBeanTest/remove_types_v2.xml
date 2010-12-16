@@ -1,0 +1,8 @@
+<plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ServerD">
+        <service name="ServerD.GrandChild1"/>
+    </server>
+</plugin>

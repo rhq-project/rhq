@@ -22,6 +22,14 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 public class PluginDescriptorUtil {
 
+    public static PluginDescriptor loadPluginDescriptor(String file) {
+        URL pluginDescriptorURL = PluginDescriptorUtil.class.getClassLoader().getResource(file);
+        if (pluginDescriptorURL == null) {
+            throw new RuntimeException("File " + file + " not found");
+        }
+        return loadPluginDescriptor(pluginDescriptorURL);
+    }
+
     /**
      * Loads the plugin descriptor from the specified file. The file path specified should
      * be a class path relative path. For example, if the descriptor file is located at
@@ -31,13 +39,8 @@ public class PluginDescriptorUtil {
      * @param file The class path relative path of the descriptor file
      * @return The {@link PluginDescriptor}
      */
-    public static PluginDescriptor loadPluginDescriptor(String file) {
+    public static PluginDescriptor loadPluginDescriptor(URL pluginDescriptorURL) {
         try {
-            URL pluginDescriptorURL = PluginDescriptorUtil.class.getResource(file);
-            if (pluginDescriptorURL == null) {
-                throw new FileNotFoundException("File " + file + " not found");
-            }
-
             JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
             URL pluginSchemaURL = PluginDescriptorUtil.class.getClassLoader().getResource("rhq-plugin.xsd");
             Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(

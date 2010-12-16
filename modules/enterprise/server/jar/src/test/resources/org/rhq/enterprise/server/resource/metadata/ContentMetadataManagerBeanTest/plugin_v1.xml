@@ -1,0 +1,43 @@
+<plugin name="ContentMetadataManagerBeanTestPlugin"
+        displayName="ContentMetadataManagerBean Test Plugin"
+        package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ContentServer">
+        <bundle type="ContentServer.Bundle.1"/>
+
+        <content name="ContentServer.Content.1" category="deployable"/>
+    </server>
+
+    <server name="ContentServer1"/>
+
+    <server name="ContentServer2">
+        <content name="ContentServer2.Content.1" category="executableScript"/>
+    </server>
+
+    <server name="ContentServer3">
+        <content name="ContentServer3.Content.1" category="deployable"/>
+        <content name="ContentServer3.Content.2" category="deployable"/>
+        <content name="ContentServer3.Content.3" category="deployable"/>
+    </server>
+
+    <server name="ContentServer4">
+        <content name="ContentServer4.Content.1" category="deployable"/>
+    </server>
+
+    <server name="ContentServer5">
+        <content name="ContentServer5.Content.1" category="deployable">
+            <configuration>
+                <c:simple-property name="x"/>
+            </configuration>
+        </content>
+        <content name="ContentServer5.Content.2" category="deployable">
+            <configuration>
+                <c:simple-property name="x"/>
+            </configuration>
+        </content>
+    </server>
+
+    <server name="ContentServer6"/>
+</plugin>

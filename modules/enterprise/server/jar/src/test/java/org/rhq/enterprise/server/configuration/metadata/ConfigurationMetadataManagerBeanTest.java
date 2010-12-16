@@ -72,8 +72,8 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
         String version1 = pluginFileBaseName + "_v1.xml";
         String version2 = pluginFileBaseName + "_v2.xml";
 
-        originalDescriptor = loadPluginDescriptor(getPackagePath() + version1);
-        updatedDescriptor = loadPluginDescriptor(getPackagePath() + version2);
+        originalDescriptor = loadPluginDescriptor(getClass().getResource(version1));
+        updatedDescriptor = loadPluginDescriptor(getClass().getResource(version2));
     }
 
     @Test

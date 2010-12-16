@@ -1,0 +1,29 @@
+<plugin name="MeasurementMetadataManagerBeanTestPlugin"
+        displayName="MeasurementMetadataManagerBean Test Plugin"
+        package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="MetricServer1">
+        <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+        <metric displayName="metric2" property="metric2" dataType="measurement" displayType="detail"
+                description="Metric 2" category="performance" defaultInterval="30000" defaultOn="true"
+                units="megabytes" measurementType="trendsup"/>
+        <metric displayName="metric3" property="metric3" dataType="calltime" displayType="detail"
+                description="Metric 3" category="throughput" defaultInterval="30000" defaultOn="true"
+                units="milliseconds" destinationType="myMethod"/>
+    </server>
+    <server name="MetricServer2">
+        <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+    </server>
+    <server name="MetricServer3">
+        <metric displayName="metric1" property="metric1" dataType="measurement" displayType="detail"
+                description="Metric One" category="performance" defaultInterval="60000" defaultOn="false"
+                units="milliseconds" measurementType="trendsup"/>
+    </server>
+    <server name="MetricServer4"/>
+</plugin>

@@ -447,12 +447,12 @@
            <scope>test</scope>
        </dependency>
 
-        <dependency>
-         <groupId>org.codehaus.groovy</groupId>
-         <artifactId>groovy-all</artifactId>
-         <scope>test</scope>
-      </dependency>
-      
+       <dependency>
+           <groupId>commons-lang</groupId>
+           <artifactId>commons-lang</artifactId>
+           <version>2.4</version>
+           <scope>test</scope>
+       </dependency>
    </dependencies>
 
    <build>
@@ -585,20 +585,6 @@ Build-OS-Version=${os.version}
                </execution>
             </executions>
          </plugin>
-
-         <plugin>
-            <groupId>org.codehaus.groovy.maven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
-             <executions>
-                <execution>
-                   <goals>
-                      <goal>testCompile</goal>
-                   </goals>
-                </execution>
-             </executions>
-
-         </plugin>
-
       </plugins>
    </build>
 

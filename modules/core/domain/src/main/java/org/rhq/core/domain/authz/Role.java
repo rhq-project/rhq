@@ -108,16 +108,16 @@ public class Role implements Serializable {
     private Boolean fsystem;
 
     @ManyToMany(mappedBy = "roles")
-    private java.util.Set<Subject> subjects = new HashSet<Subject>();
+    private Set<Subject> subjects = new HashSet<Subject>();
 
     @ManyToMany(mappedBy = "ldapRoles")
-    private java.util.Set<Subject> ldapSubjects = new HashSet<Subject>();
+    private Set<Subject> ldapSubjects = new HashSet<Subject>();
 
     @OneToMany(mappedBy = "role", cascade = { CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.REFRESH })
     private Set<LdapGroup> ldapGroups = new HashSet<LdapGroup>();
 
     @ManyToMany(mappedBy = "roles")
-    private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
+    private Set<ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
 
     @Cascade( { org.hibernate.annotations.CascadeType.ALL })
     @CollectionOfElements(fetch = FetchType.EAGER)
@@ -241,7 +241,7 @@ public class Role implements Serializable {
         this.subjects.remove(subject);
     }
 
-    public java.util.Set<Subject> getLdapSubjects() {
+    public Set<Subject> getLdapSubjects() {
         return ldapSubjects;
     }
 
@@ -267,11 +267,11 @@ public class Role implements Serializable {
         this.ldapSubjects.remove(subject);
     }
 
-    public Set<org.rhq.core.domain.resource.group.ResourceGroup> getResourceGroups() {
+    public Set<ResourceGroup> getResourceGroups() {
         return resourceGroups;
     }
 
-    public void setResourceGroups(Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups) {
+    public void setResourceGroups(Set<ResourceGroup> resourceGroups) {
         if (resourceGroups == null) {
             this.resourceGroups = new HashSet<ResourceGroup>();
         } else {
@@ -283,18 +283,18 @@ public class Role implements Serializable {
         }
     }
 
-    public void addResourceGroup(org.rhq.core.domain.resource.group.ResourceGroup resourceGroup) {
+    public void addResourceGroup(ResourceGroup resourceGroup) {
         if (this.resourceGroups == null) {
-            this.resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
+            this.resourceGroups = new HashSet<ResourceGroup>();
         }
 
         resourceGroup.addRole(this);
         this.resourceGroups.add(resourceGroup);
     }
 
-    public void removeResourceGroup(org.rhq.core.domain.resource.group.ResourceGroup resourceGroup) {
+    public void removeResourceGroup(ResourceGroup resourceGroup) {
         if (this.resourceGroups == null) {
-            this.resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
+            this.resourceGroups = new HashSet<ResourceGroup>();
         }
 
         resourceGroup.removeRole(this);

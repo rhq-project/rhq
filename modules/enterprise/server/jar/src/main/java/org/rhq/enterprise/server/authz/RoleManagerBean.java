@@ -137,7 +137,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#createRole(Subject, Role)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Role createRole(Subject subject, Role newRole) {
+    public Role createRole(Subject whoami, Role newRole) {
         // TODO (ips): Do we want to enforce uniqueness of the Role name?
 
         if (newRole.getFsystem()) {
@@ -152,6 +152,16 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
 
         entityManager.persist(newRole);
+
+        // Now we must merge subjects and resource groups, since those fields in Role do not have persist cascade
+        // enabled.
+        for (Subject subject : newRole.getSubjects()) {
+            entityManager.merge(subject);
+        }
+
+        for (ResourceGroup resourceGroup : newRole.getResourceGroups()) {
+            entityManager.merge(resourceGroup);
+        }
 
         return newRole;
     }

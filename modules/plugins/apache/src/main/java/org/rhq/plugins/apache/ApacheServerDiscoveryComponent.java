@@ -21,6 +21,8 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,101 +70,130 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
+    private static class DiscoveryFailureException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public DiscoveryFailureException(String message) {
+            super(message);
+        }
+    }
+    
+    public Set<DiscoveredResourceDetails>
+        discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         // Process any PC-discovered OS processes...
         List<ProcessScanResult> processes = discoveryContext.getAutoDiscoveredProcesses();
         for (ProcessScanResult process : processes) {
-            //String executablePath = process.getProcessInfo().getName();
-            String executableName = getExecutableName(process);
-            File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
-            if (executablePath == null) {
-                log.error("Executable path could not be determined for Apache [" + process.getProcessInfo() + "].");
-                continue;
-            }
-            if (!executablePath.isAbsolute()) {
-                log.error("Executable path (" + executablePath + ") is not absolute for Apache [" +
-                        process.getProcessInfo() + "]." +
-                        "Please restart Apache specifying an absolute path for the executable.");
-                continue;
-            }
-            log.debug("Apache executable path: " + executablePath);
-            ApacheBinaryInfo binaryInfo;
             try {
-                binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(),
-                        discoveryContext.getSystemInformation());
+                DiscoveredResourceDetails apache = discoverSingleProcess(discoveryContext, process);
+                discoveredResources.add(apache);
+            } catch (DiscoveryFailureException e) {
+                log.warn("Discovery of Apache process [" + process.getProcessInfo() + "] failed: " + e.getMessage());
             } catch (Exception e) {
-                log.error("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
-                continue;
-            }
-
-            if (isSupportedVersion(binaryInfo.getVersion())) {
-                String serverRoot = getServerRoot(binaryInfo, process.getProcessInfo());
-                if (serverRoot == null) {
-                    log.error("Unable to determine server root for Apache process: " + process.getProcessInfo());
-                    continue;
-                }
-
-                File serverConfigFile = getServerConfigFile(binaryInfo, process.getProcessInfo(), serverRoot);
-                if (serverConfigFile == null) {
-                    log.error("Unable to determine server config file for Apache process: " + process.getProcessInfo());
-                    continue;
-                }
-
-                Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-
-                PropertySimple executablePathProp = new PropertySimple(
-                    ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
-                pluginConfig.put(executablePathProp);
-
-                PropertySimple serverRootProp = new PropertySimple(
-                    ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
-                pluginConfig.put(serverRootProp);
-
-                PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
-                    serverConfigFile);
-                pluginConfig.put(configFile);
-            
-                PropertySimple inclusionGlobs = new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
-                pluginConfig.put(inclusionGlobs);
-            
-                ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(),serverRoot);
-                
-                String serverUrl = null;
-                String vhostsGlobInclude = null;
-               
-                //now check if the httpd.conf doesn't redefine the ServerRoot
-                List<ApacheDirective> serverRoots = serverConfig.search("/ServerRoot");
-                if (!serverRoots.isEmpty()) {
-                    serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
-                    serverRootProp.setValue(serverRoot);
-                    //reparse the configuration with the new ServerRoot
-                    serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-                   }
-
-                   serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
-                   vhostsGlobInclude = scanForGlobInclude(serverConfig);
-                
-                if (serverUrl != null) {
-                    Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
-                    pluginConfig.put(urlProp);                    
-                }
-                
-                if (vhostsGlobInclude != null) {
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, vhostsGlobInclude));
-                }else
-                {
-                    if (serverConfigFile.exists())
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, serverConfigFile.getParent()+File.separator+"*"));
-                }
-                
-                discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
-                    binaryInfo));
+                log.error("Discovery of Apache process [" + process.getProcessInfo() + "] failed with an exception.", e);
             }
         }
 
         return discoveredResources;
+    }
+
+    /**
+     * Performs discovery on the single process scan result.
+     * 
+     * @param discoveryContext the discovery context
+     * @param process the process discovered by the scan
+     * @return resource details
+     * @throws DiscoveryFailureException if the discovery failed due to inability to detect necessary data from
+     * the process info.
+     * @throws Exception other unhandled exception
+     */
+    private DiscoveredResourceDetails discoverSingleProcess(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
+        ProcessScanResult process) throws DiscoveryFailureException, Exception {
+        //String executablePath = process.getProcessInfo().getName();
+        String executableName = getExecutableName(process);
+        File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
+        if (executablePath == null) {
+            throw new DiscoveryFailureException("Executable path could not be determined.");
+        }
+        if (!executablePath.isAbsolute()) {
+            throw new DiscoveryFailureException("Executable path (" + executablePath + ") is not absolute."
+                + "Please restart Apache specifying an absolute path for the executable.");
+        }
+        log.debug("Apache executable path: " + executablePath);
+        ApacheBinaryInfo binaryInfo;
+        try {
+            binaryInfo = ApacheBinaryInfo
+                .getInfo(executablePath.getPath(), discoveryContext.getSystemInformation());
+        } catch (Exception e) {
+            throw new DiscoveryFailureException("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
+        }
+
+        if (!isSupportedVersion(binaryInfo.getVersion())) {
+            throw new DiscoveryFailureException("Apache " + binaryInfo.getVersion() + " is not suppported.");
+        }
+        
+        String serverRoot = getServerRoot(binaryInfo, process.getProcessInfo());
+        if (serverRoot == null) {
+            throw new DiscoveryFailureException("Unable to determine server root.");
+        }
+
+        File serverConfigFile = getServerConfigFile(binaryInfo, process.getProcessInfo(), serverRoot);
+        if (serverConfigFile == null) {
+            throw new DiscoveryFailureException("Unable to determine server config file.");
+        }
+
+        Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
+
+        PropertySimple executablePathProp = new PropertySimple(
+            ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
+        pluginConfig.put(executablePathProp);
+
+        PropertySimple serverRootProp = new PropertySimple(
+            ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
+        pluginConfig.put(serverRootProp);
+
+        PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
+            serverConfigFile);
+        pluginConfig.put(configFile);
+
+        PropertySimple inclusionGlobs = new PropertySimple(
+            PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
+        pluginConfig.put(inclusionGlobs);
+
+        ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+
+        String serverUrl = null;
+        String vhostsGlobInclude = null;
+
+        //now check if the httpd.conf doesn't redefine the ServerRoot
+        List<ApacheDirective> serverRoots = serverConfig.search("/ServerRoot");
+        if (!serverRoots.isEmpty()) {
+            serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
+            serverRootProp.setValue(serverRoot);
+            //reparse the configuration with the new ServerRoot
+            serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+        }
+
+        serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
+        vhostsGlobInclude = scanForGlobInclude(serverConfig);
+
+        if (serverUrl != null) {
+            Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
+            pluginConfig.put(urlProp);
+        }
+
+        if (vhostsGlobInclude != null) {
+            pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
+                vhostsGlobInclude));
+        } else {
+            if (serverConfigFile.exists())
+                pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
+                    serverConfigFile.getParent() + File.separator + "*"));
+        }
+       
+        return createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
+            binaryInfo);
     }
 
 

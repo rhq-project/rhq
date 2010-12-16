@@ -73,6 +73,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -476,7 +477,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public void refresh() {
-        if (null != this.listGrid) {            
+        if (null != this.listGrid) {
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
@@ -681,9 +682,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     recordNames.add(name);
                 }
 
-                Message message = new Message(MSG
-                    .widget_recordEditor_info_recordsDeletedConcise(String.valueOf(deletedRecords.length),
-                    getDataTypeNamePlural()), MSG
+                Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
+                    .valueOf(deletedRecords.length), getDataTypeNamePlural()), MSG
                     .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
                         getDataTypeNamePlural(), recordNames.toString()));
                 CoreGUI.getMessageCenter().notify(message);
@@ -740,6 +740,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     nextFormItem.addKeyPressHandler(this);
                 } else if (nextFormItem instanceof SelectItem) {
                     nextFormItem.addChangedHandler(this);
+                } else if (nextFormItem instanceof SearchBarItem) {
+                    nextFormItem.addKeyPressHandler(this);
                 }
             }
         }

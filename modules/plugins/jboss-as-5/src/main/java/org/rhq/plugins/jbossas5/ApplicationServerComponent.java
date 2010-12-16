@@ -142,6 +142,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         AvailabilityType availability;
         if (this.connection != null) {
             try {
+                
                 ManagementView managementView = this.connection.getManagementView();
                 managementView.load();
 
@@ -346,10 +347,23 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     // ---------------------------------------------------------------
 
     private void connectToProfileService() {
-        if (this.connection != null) {
-            return;
+        if (connection!=null){
+           try {
+           //In rare cases (BZ 638216) connection becomes defunctional. The connection is than not null
+           //and operations on managementViews will end by timeout.
+            ManagementView managementView = this.connection.getManagementView();
+            managementView.load();
+            managementView.getComponentsForType(
+            new ComponentType("MCBean", "ServerConfig")).iterator().next();
+          
+          return;
+            }catch(Throwable e){
+                log.info("Connection has become defunct. Reconnecting...");
+                if (log.isDebugEnabled())
+                   log.debug("Connection has become defunct. Reconnecting...",e);
+            }
         }
-        // TODO: Check for a defunct connection and if found try to reconnect?
+       
         ProfileServiceConnectionProvider connectionProvider;
         if (runningEmbedded()) {
             connectionProvider = new LocalProfileServiceConnectionProvider();

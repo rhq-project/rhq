@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
-import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -44,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -93,7 +93,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     private AlertPortletDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
-    private Timer reloader;
+    private static Canvas componentToReload;
+    private static TableOrCanvasAutoRefresh defaultReloader;
 
     public RecentAlertsPortlet(String locatorId) {
         super(locatorId);
@@ -538,14 +539,15 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                refresh();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //lazy load
+        if (componentToReload == null) {
+            componentToReload = this;
+        }
+        //cancel the previous timer run
+        if (defaultReloader != null) {
+            defaultReloader.stopTimer();
+        }
+        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
     }
 }
 

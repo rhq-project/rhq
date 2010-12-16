@@ -25,18 +25,25 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
-/**
+/**An implementation of a shared portet refresh utility.
  * @author Simeon Pinder
  */
 public class TableOrCanvasAutoRefresh {
 
     private Timer reloader;
 
+    /** reloads the Table or Canvas page based on the pageRefreshInterval saved to the
+     *  current user's settings.
+     */
     public TableOrCanvasAutoRefresh(final Canvas toBeReloaded) {
         if (toBeReloaded != null) {
+            //current setting
             final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+            if (this.reloader != null) {
+                this.reloader.cancel();
+            }
             if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
-                reloader = new Timer() {
+                this.reloader = new Timer() {
                     public void run() {
                         if (toBeReloaded instanceof Table) {
                             ((Table) toBeReloaded).refresh();
@@ -44,14 +51,19 @@ public class TableOrCanvasAutoRefresh {
                             ((Canvas) toBeReloaded).redraw();
                         }
 
-                        //launch again until portlet reference and child references GC.
+                        //launch again until shedule stopped or GC.
                         reloader.schedule(retrievedRefreshInterval);
                     }
                 };
-                reloader.schedule(retrievedRefreshInterval);
-            } else {//disable timer
-                reloader = null;
+                this.reloader.schedule(retrievedRefreshInterval);
             }
+        }
+    }
+
+    //stops the timer from previous run.
+    public void stopTimer() {
+        if (this.reloader != null) {
+            this.reloader.cancel();
         }
     }
 }

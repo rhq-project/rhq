@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -52,7 +52,8 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     private LocatableDynamicForm form;
     public static final String KEY = MSG.common_title_summary_counts();
-    private Timer reloader;
+    private static Canvas componentToReload;
+    private static TableOrCanvasAutoRefresh defaultReloader;
 
     public InventorySummaryPortlet(String locatorId) {
         super(locatorId);
@@ -170,13 +171,14 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //lazy load
+        if (componentToReload == null) {
+            componentToReload = this;
+        }
+        //cancel the previous timer run
+        if (defaultReloader != null) {
+            defaultReloader.stopTimer();
+        }
+        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
     }
 }

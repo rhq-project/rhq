@@ -29,6 +29,8 @@ public interface AutoRefreshPortlet extends Portlet {
 
     int refreshCycle = 60000;//ms
 
+    /** Each portlet implements to define the refresh cycle. See
+     *  TableOrCanvasAutoRefresh for sample implementation.
+     */
     void startRefreshCycle();
-
 }

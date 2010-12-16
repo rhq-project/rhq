@@ -74,10 +74,10 @@ public class DashboardView extends LocatableVLayout {
     IMenuButton addPortlet;
 
     Set<PortletWindow> portlets = new HashSet<PortletWindow>();
-    private static String STOP = "Stop";
-    private static String REFRESH1 = "Refresh every 1 minute";
-    private static String REFRESH5 = "Refresh every 5 minutes";
-    private static String REFRESH10 = "Refresh every 10 minutes";
+    private static String STOP = MSG.common_title_stop();
+    private static String REFRESH1 = MSG.view_dashboards_portlets_refresh_one_min();
+    private static String REFRESH5 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(5));
+    private static String REFRESH10 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(10));
     private HashMap<Integer, String> refreshMenuMappings;
     private MenuItem[] refreshMenuItems;
     private int refreshInterval = 0;
@@ -273,8 +273,8 @@ public class DashboardView extends LocatableVLayout {
         }
 
         refreshMenu.setItems(refreshMenuItems);
-        refreshMenuButton = new LocatableIMenuButton(extendLocatorId("AutoRefreshButton"), "Change Refresh Time",
-            refreshMenu);
+        refreshMenuButton = new LocatableIMenuButton(extendLocatorId("AutoRefreshButton"), MSG
+            .common_title_change_refresh_time(), refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.setWidth(170);
         refreshMenuButton.setShowTitle(true);
@@ -282,7 +282,7 @@ public class DashboardView extends LocatableVLayout {
         refreshMenuButton.setIconOrientation("left");
 
         CanvasItem refreshCanvas = new CanvasItem();
-        refreshCanvas.setTitle("Portlets auto-refresh interval");
+        refreshCanvas.setTitle(MSG.common_title_portlet_auto_refresh());
         refreshCanvas.setWrapTitle(false);
         refreshCanvas.setCanvas(refreshMenuButton);
         refreshCanvas.setStartRow(false);
@@ -415,6 +415,7 @@ public class DashboardView extends LocatableVLayout {
                     if (portletWindow.getDashboardPortlet().getId() == portlet.getId()) {
                         portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
 
+                        //restarting port auto-refresh with newest settings
                         PortletViewFactory viewFactory = portletMap.get(portlet.getPortletKey());
 
                         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
@@ -424,7 +425,7 @@ public class DashboardView extends LocatableVLayout {
                             + "-" + Integer.toString(portlet.getId()));
 
                         //add code to re-initialize refresh cycle for portlets
-                        if (portlet instanceof AutoRefreshPortlet) {
+                        if (view instanceof AutoRefreshPortlet) {
                             ((AutoRefreshPortlet) view).startRefreshCycle();
                         }
                     }
@@ -472,9 +473,9 @@ public class DashboardView extends LocatableVLayout {
         public void onSuccess(Subject subject) {
             String m;
             if (refreshInterval > 0) {
-                m = "Updated interval for portlets that auto-refresh";
+                m = MSG.view_dashboards_portlets_refresh_success1();
             } else {
-                m = "Stopping reload for portlets that auto-refresh";
+                m = MSG.view_dashboards_portlets_refresh_success2();
             }
             CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Info));
             updateRefreshMenu();
@@ -484,9 +485,9 @@ public class DashboardView extends LocatableVLayout {
         public void onFailure(Throwable throwable) {
             String m;
             if (refreshInterval > 0) {
-                m = "Failed to updated interval for portlets that auto-refresh";
+                m = MSG.view_dashboards_portlets_refresh_fail1();
             } else {
-                m = "Failed to disable reload for portlets that auto-refresh";
+                m = MSG.view_dashboards_portlets_refresh_fail2();
             }
             CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Error));
             // Revert back to our original favorite status, since the server update failed.
@@ -498,7 +499,7 @@ public class DashboardView extends LocatableVLayout {
         if (refreshMenuItems != null) {
             int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
             String currentSelection = refreshMenuMappings.get(retrievedRefreshInterval);
-            if (currentSelection != null) {
+            if (currentSelection != null) {//iterate over menu items and update icon details
                 for (int i = 0; i < refreshMenuItems.length; i++) {
                     MenuItem menu = refreshMenuItems[i];
                     if (currentSelection.equals(menu.getTitle())) {

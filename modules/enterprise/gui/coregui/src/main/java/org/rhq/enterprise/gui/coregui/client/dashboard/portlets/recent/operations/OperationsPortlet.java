@@ -19,7 +19,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -76,10 +76,11 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     private DashboardPortlet storedPortlet = null;
     private RecentOperationsDataSource dataSourceCompleted;
     private ScheduledOperationsDataSource dataSourceScheduled;
-    private Timer reloader;
     public static String unlimited = MSG.common_label_unlimited();
     public static String defaultValue = unlimited;
     public static boolean defaultEnabled = true;
+    private static Canvas componentToReload;
+    private static TableOrCanvasAutoRefresh defaultReloader;
 
     //default no-args constructor for serialization.
     private OperationsPortlet() {
@@ -417,13 +418,14 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //lazy load
+        if (componentToReload == null) {
+            componentToReload = this;
+        }
+        //cancel the previous timer run
+        if (defaultReloader != null) {
+            defaultReloader.stopTimer();
+        }
+        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
     }
 }

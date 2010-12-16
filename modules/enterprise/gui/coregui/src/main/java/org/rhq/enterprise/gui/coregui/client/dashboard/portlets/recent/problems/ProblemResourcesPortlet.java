@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -71,6 +72,8 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     //constants
     public static final String unlimited = MSG.common_label_unlimited();
     public static final String defaultValue = unlimited;
+    private static Canvas componentToReload;
+    private static TableOrCanvasAutoRefresh defaultReloader;
 
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId, TITLE, true);
@@ -290,14 +293,15 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                refresh();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //lazy load
+        if (componentToReload == null) {
+            componentToReload = this;
+        }
+        //cancel the previous timer run
+        if (defaultReloader != null) {
+            defaultReloader.stopTimer();
+        }
+        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
     }
 }
 

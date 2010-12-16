@@ -40,10 +40,10 @@ public class RepoGWTServiceImpl extends AbstractGWTServiceImpl implements RepoGW
 
     private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
 
-    public PageList<Repo> findReposByCriteria(RepoCriteria criteria) {
+    public PageList<Repo> findReposByCriteria(RepoCriteria criteria) throws Exception {
         try {
             return SerialUtility.prepare(repoManager.findReposByCriteria(getSessionSubject(), criteria),
-                "ContentService.findReposByCriteria");
+                "RepoService.findReposByCriteria");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

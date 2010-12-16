@@ -39,10 +39,11 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 import org.rhq.core.domain.search.SavedSearch;
@@ -57,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox_v3;
 /**
  * @author Joseph Marques
  */
-public class SearchBar extends AbstractSearchBar {
+public class FlexSearchBar extends AbstractSearchBar {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
@@ -94,24 +95,11 @@ public class SearchBar extends AbstractSearchBar {
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
     private String defaultSavedSearchPatternId;
-    private String selectedTab;
 
     private Element searchButton;
 
-    public static boolean existsOnPage() {
-        return getSearchBarElement() != null;
-    }
-
-    private static Element getSearchBarElement() {
-        return DOM.getElementById("searchBar");
-    }
-
-    public void loadAdditionalDataFromDivAttributes() {
-        Element searchBarElement = getSearchBarElement();
-
-        String searchButtonId = searchBarElement.getAttribute("searchButtonId");
-        searchButton = DOM.getElementById(searchButtonId);
-
+    public void setupButton() {
+        searchButton = DOM.createButton();
         Event.addNativePreviewHandler(new NativePreviewHandler() {
             public void onPreviewNativeEvent(NativePreviewEvent event) {
                 if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
@@ -123,44 +111,89 @@ public class SearchBar extends AbstractSearchBar {
                 }
             }
         });
-
-        String searchSubsystem = searchBarElement.getAttribute("searchSubsystem");
-        setSearchSubsystem(SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
-
-        String defaultSearchText = searchBarElement.getAttribute("defaultSearchText");
-        setDefaultSearchText(defaultSearchText);
-
-        String defaultSavedSearchPatternId = searchBarElement.getAttribute("defaultSavedSearchPatternId");
-        setDefaultSavedSearchPatternId(defaultSavedSearchPatternId);
-
-        String tab = searchBarElement.getAttribute("subtab");
-        if (tab != null) {
-            tab = tab.trim().toLowerCase();
-            if (tab.equals("") || tab.equals("all")) {
-                tab = null;
-            }
-        }
-        this.selectedTab = tab;
     }
 
-    public SearchBar() {
+    HorizontalPanel sbc;
+    HorizontalPanel sbc_sbbgc;
+    HorizontalPanel sbc_sbbgc_sbcc;
+    HorizontalPanel sbc_sbbgc_sbcc_sbclhs_pfc;
+    HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_aic;
+    HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_sic;
+    HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_pnfc;
+    HorizontalPanel sbc_sbbgc_sbcc_sbcrhs;
+    HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_pnlc;
+    HorizontalPanel sbc_sbbc;
+    HorizontalPanel sbc_pfsc;
+    HorizontalPanel sbc_ssc;
+
+    public FlexSearchBar() {
         Log.info("Loading SearchBar...");
 
-        // in the future, will be instantiated directly from a higher-level widget
-        if (existsOnPage()) {
-            loadAdditionalDataFromDivAttributes();
-        }
+        // TODO: load default saved search pattern, if used has selected one
+        // populate default search text
+        // ensure that search subsystem is selected, probably want to force it to be a ctor argument
+
+        sbc = createHPanel(null, "searchBarContainer", null);
+        sbc_sbbgc = createHPanel(sbc, "searchBarBackgroundContainer", null);
+        sbc_sbbgc_sbcc = createHPanel(sbc_sbbgc, "searchBarComponentsContainer", null);
+        sbc_sbbgc_sbcc_sbclhs_pfc = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentLHS", "patternFieldContainer");
+        sbc_sbbgc_sbcc_sbcrhs_aic = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "arrowImageContainer");
+        sbc_sbbgc_sbcc_sbcrhs_sic = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "starImageContainer");
+        sbc_sbbgc_sbcc_sbcrhs_pnfc = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "starImageContainer");
+        sbc_sbbgc_sbcc_sbcrhs = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", null);
+        sbc_sbbgc_sbcc_sbcrhs_pnlc = createHPanel(sbc_sbbgc_sbcc_sbcrhs, "rounded", "patternNameLabelContainer");
+        sbc_sbbc = createHPanel(sbc, "searchBarButtonContainer", "searchButtonContainer");
+        sbc_pfsc = createHPanel(sbc, null, "patternFieldSuggestionsContainer");
+        sbc_ssc = createHPanel(sbc, null, "savedSearchesContainer");
+        initWidget(sbc);
 
         savedSearchManager = new SavedSearchManager(this);
     }
 
+    private Element createDiv(Element parentDiv, String className, String id) {
+        Element div = DOM.createDiv();
+        if (parentDiv != null) {
+            parentDiv.appendChild(div);
+        }
+        if (className != null) {
+            div.addClassName(className);
+        }
+        if (id != null) {
+            div.setId(id);
+        }
+        return div;
+    }
+
+    private HorizontalPanel createHPanel(Panel parent, String className, String id) {
+        HorizontalPanel panel = new HorizontalPanel();
+        if (parent != null) {
+            parent.add(panel);
+        }
+        if (className != null) {
+            panel.setStyleName(className);
+        }
+        if (id != null) {
+            panel.getElement().setId(id);
+        }
+        return panel;
+    }
+
     public void onSavedSearchManagerLoaded() {
+        /*
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
         RootPanel.get("patternNameFieldContainer").add(patternNameField);
         RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
         RootPanel.get("starImageContainer").add(starImage);
         RootPanel.get("arrowImageContainer").add(arrowImage);
         RootPanel.get("savedSearchesContainer").add(savedSearchesPanel);
+        */
+
+        sbc_sbbgc_sbcc_sbclhs_pfc.add(autoCompletePatternField);
+        sbc_sbbgc_sbcc_sbcrhs_pnfc.add(patternNameField);
+        sbc_sbbgc_sbcc_sbcrhs_pnlc.add(patternNameLabel);
+        sbc_sbbgc_sbcc_sbcrhs_sic.add(starImage);
+        sbc_sbbgc_sbcc_sbcrhs_aic.add(arrowImage);
+        sbc_ssc.add(savedSearchesPanel);
 
         setupAutoCompletingPatternField();
         setupPatternNameField();
@@ -225,10 +258,6 @@ public class SearchBar extends AbstractSearchBar {
         }
 
         this.defaultSavedSearchPatternId = defaultSavedSearchPatternId;
-    }
-
-    public String getSelectedTab() {
-        return selectedTab;
     }
 
     public String getDefaultSavedSearchPatternId() {
@@ -530,6 +559,10 @@ public class SearchBar extends AbstractSearchBar {
         turnNameFieldIntoLabel();
         savedSearchesPanel.hide();
         click(searchButton);
+    }
+
+    public String getSelectedTab() {
+        return null;
     }
 
 }

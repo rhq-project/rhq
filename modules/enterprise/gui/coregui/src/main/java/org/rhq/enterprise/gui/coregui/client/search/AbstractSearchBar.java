@@ -32,8 +32,6 @@ public abstract class AbstractSearchBar extends Composite {
 
     public abstract SearchSubsystem getSearchSubsystem();
 
-    public abstract String getWelcomeMessage();
-
     public abstract String getSelectedTab();
 
     public abstract void activateSavedSearch(String savedSearchName);

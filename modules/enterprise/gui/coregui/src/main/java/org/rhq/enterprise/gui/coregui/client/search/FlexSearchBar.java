@@ -62,8 +62,6 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
-    public String welcomeMessage;
-
     public static final String DEFAULT_PATTERN_NAME = MSG.view_searchBar_defaultPattern();
 
     private static final String IMAGE_DIR = "/coregui/images/search/";
@@ -106,7 +104,7 @@ public class FlexSearchBar extends AbstractSearchBar {
 
                     if (event.getNativeEvent().getEventTarget().equals(searchButton)
                         && event.getTypeInt() == Event.ONMOUSEDOWN) {
-                        prepareSearchExecution();
+                        //prepareSearchExecution();
                     }
                 }
             }
@@ -150,20 +148,6 @@ public class FlexSearchBar extends AbstractSearchBar {
         savedSearchManager = new SavedSearchManager(this);
     }
 
-    private Element createDiv(Element parentDiv, String className, String id) {
-        Element div = DOM.createDiv();
-        if (parentDiv != null) {
-            parentDiv.appendChild(div);
-        }
-        if (className != null) {
-            div.addClassName(className);
-        }
-        if (id != null) {
-            div.setId(id);
-        }
-        return div;
-    }
-
     private HorizontalPanel createHPanel(Panel parent, String className, String id) {
         HorizontalPanel panel = new HorizontalPanel();
         if (parent != null) {
@@ -179,15 +163,6 @@ public class FlexSearchBar extends AbstractSearchBar {
     }
 
     public void onSavedSearchManagerLoaded() {
-        /*
-        RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
-        RootPanel.get("patternNameFieldContainer").add(patternNameField);
-        RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
-        RootPanel.get("starImageContainer").add(starImage);
-        RootPanel.get("arrowImageContainer").add(arrowImage);
-        RootPanel.get("savedSearchesContainer").add(savedSearchesPanel);
-        */
-
         sbc_sbbgc_sbcc_sbclhs_pfc.add(autoCompletePatternField);
         sbc_sbbgc_sbcc_sbcrhs_pnfc.add(patternNameField);
         sbc_sbbgc_sbcc_sbcrhs_pnlc.add(patternNameLabel);
@@ -202,7 +177,6 @@ public class FlexSearchBar extends AbstractSearchBar {
         setupArrowImage();
         setupSavedSearches();
 
-        // 
         if (defaultSearchText != null) {
             this.autoCompletePatternField.setText(defaultSearchText);
             click(searchButton); // execute the search with this default search expression
@@ -230,10 +204,6 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     public void setSearchSubsystem(SearchSubsystem searchSubsystem) {
         this.searchSubsystem = searchSubsystem;
-
-        this.welcomeMessage = MSG.view_searchBar_welcomeMessage(this.searchSubsystem.getName());
-
-        this.autoCompletePatternField.setText(welcomeMessage);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -262,17 +232,6 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     public String getDefaultSavedSearchPatternId() {
         return defaultSavedSearchPatternId;
-    }
-
-    public String getWelcomeMessage() {
-        return welcomeMessage;
-    }
-
-    public void prepareSearchExecution() {
-        String searchTerms = autoCompletePatternField.getText().toLowerCase().trim();
-        if (searchTerms.equals(welcomeMessage)) {
-            autoCompletePatternField.setText("");
-        }
     }
 
     private void setupAutoCompletingPatternField() {
@@ -397,18 +356,11 @@ public class FlexSearchBar extends AbstractSearchBar {
         }
 
         public void onFocus(FocusEvent event) {
-            // clear default search text if necessary
-            if (autoCompletePatternField.getText().equals(welcomeMessage)) {
-                autoCompletePatternField.setValue("", true);
-            }
             autoCompletePatternField.showSuggestionList();
             savedSearchesPanel.hide();
         }
 
         public void onBlur(BlurEvent event) {
-            if (autoCompletePatternField.getText().equals("")) {
-                autoCompletePatternField.setValue(welcomeMessage, true);
-            }
             savedSearchesPanel.hide();
         }
     }

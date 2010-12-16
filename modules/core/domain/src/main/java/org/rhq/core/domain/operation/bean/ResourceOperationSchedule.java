@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.operation;
+package org.rhq.core.domain.operation.bean;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -24,6 +24,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.resource.Resource;
 
+/**
+ * A simple non-entity POJO that describes a particular scheduled Resource operation.
+ */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceOperationSchedule extends OperationSchedule {

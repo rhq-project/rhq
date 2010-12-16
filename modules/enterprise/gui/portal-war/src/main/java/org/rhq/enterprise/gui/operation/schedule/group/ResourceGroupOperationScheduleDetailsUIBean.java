@@ -23,11 +23,11 @@ import java.util.List;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupExecutionTypeUIBean;
 import org.rhq.enterprise.gui.operation.schedule.OperationScheduleDetailsUIBean;
-import org.rhq.enterprise.server.operation.GroupOperationSchedule;
-import org.rhq.enterprise.server.operation.OperationSchedule;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 
 public class ResourceGroupOperationScheduleDetailsUIBean extends OperationScheduleDetailsUIBean {
 

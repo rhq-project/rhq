@@ -27,6 +27,8 @@ import javax.persistence.EntityManager;
 
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;

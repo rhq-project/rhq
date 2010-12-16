@@ -72,6 +72,15 @@ public class UserPreferences {
         store(callback);
     }
 
+    public int getPageRefreshInterval() {
+        return getPreferenceAsInteger(UserPreferenceNames.PAGE_REFRESH_PERIOD);
+    }
+
+    public void setPageRefreshInterval(int refreshInterval, AsyncCallback<Subject> callback) {
+        setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(refreshInterval));
+        store(callback);
+    }
+
     protected String getPreference(String name) {
         return userConfiguration.getSimpleValue(name, null);
     }
@@ -142,6 +151,17 @@ public class UserPreferences {
         } catch (Exception e) {
             return new HashSet<Integer>();
         }
+    }
+
+    public Integer getPreferenceAsInteger(String key) {
+        String pref = null;
+        try {
+            pref = getPreference(key);
+        } catch (IllegalArgumentException e) {
+
+            //            log.debug("A user preference named '" + key + "' does not exist.");
+        }
+        return (pref != null) ? Integer.valueOf(pref) : Integer.valueOf(0);
     }
 
     public void addChangeListener(UserPreferenceChangeListener listener) {

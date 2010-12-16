@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -39,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
@@ -187,13 +189,19 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            reloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    reloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            reloader.schedule(retrievedRefreshInterval);
+        } else {//disable timer
+            reloader = null;
+        }
+        //        new TableOrCanvasAutoRefresh(this);
     }
 }

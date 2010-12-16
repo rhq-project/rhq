@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,17 +40,24 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.ItemClickEvent;
 import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -66,6 +74,15 @@ public class DashboardView extends LocatableVLayout {
     IMenuButton addPortlet;
 
     Set<PortletWindow> portlets = new HashSet<PortletWindow>();
+    private static String STOP = "Stop";
+    private static String REFRESH1 = "Refresh every 1 minute";
+    private static String REFRESH5 = "Refresh every 5 minutes";
+    private static String REFRESH10 = "Refresh every 10 minutes";
+    private HashMap<Integer, String> refreshMenuMappings;
+    private MenuItem[] refreshMenuItems;
+    private int refreshInterval = 0;
+    private LocatableIMenuButton refreshMenuButton;
+    private HashMap<String, PortletViewFactory> portletMap = null;
 
     public DashboardView(String locatorId, DashboardsView dashboardsView, Dashboard storedDashboard) {
         super(locatorId);
@@ -117,10 +134,11 @@ public class DashboardView extends LocatableVLayout {
     private DynamicForm buildEditForm() {
         editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
         editForm.setAutoWidth();
-        editForm.setNumCols(9);
+        editForm.setNumCols(12);
 
         TextItem nameItem = new TextItem("name", MSG.common_title_dashboard_name());
         nameItem.setValue(storedDashboard.getName());
+        nameItem.setWrapTitle(false);
         nameItem.addBlurHandler(new BlurHandler() {
             public void onBlur(BlurEvent blurEvent) {
                 String val = (String) blurEvent.getItem().getValue();
@@ -153,7 +171,6 @@ public class DashboardView extends LocatableVLayout {
         });
 
         ButtonItem removeColumn = new ButtonItem("removeColumn", MSG.common_title_remove_column());
-        //        removeColumn.setIcon("silk/application_side_contract.png");
         removeColumn.setAutoFit(true);
         removeColumn.setStartRow(false);
         removeColumn.setEndRow(false);
@@ -175,7 +192,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         Menu addPorletMenu = new Menu();
-        for (String portletName : PortletFactory.getRegisteredPortlets()) {
+        for (String portletName : PortletFactory.getRegisteredPortletKeys()) {
             addPorletMenu.addItem(new MenuItem(portletName));
         }
 
@@ -213,7 +230,66 @@ public class DashboardView extends LocatableVLayout {
         });
         picker.setValue(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        editForm.setItems(nameItem, numColItem, addCanvas, picker, addColumn, removeColumn);
+        //refresh interval
+        LocatableMenu refreshMenu = new LocatableMenu(extendLocatorId("AutoRefreshMenu"));
+        refreshMenu.setShowShadow(true);
+        refreshMenu.setShadowDepth(10);
+        refreshMenu.setAutoWidth();
+        refreshMenu.setHeight(15);
+        ClickHandler menuClick = new ClickHandler() {
+            @Override
+            public void onClick(MenuItemClickEvent event) {
+                String selection = event.getItem().getTitle();
+                refreshInterval = 0;
+                if (selection != null) {
+                    if (selection.equals(STOP)) {
+                        refreshInterval = 0;
+                    } else if (selection.equals(REFRESH1)) {
+                        refreshInterval = Long.valueOf(MeasurementUtility.MINUTES).intValue();
+                    } else if (selection.equals(REFRESH5)) {
+                        refreshInterval = 5 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+                    } else if (selection.equals(REFRESH10)) {
+                        refreshInterval = 10 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+                    } else {//unable to locate value disable refresh
+                        refreshInterval = 0;//
+                    }
+                    UserSessionManager.getUserPreferences().setPageRefreshInterval(refreshInterval,
+                        new UpdatePortletRefreshCallback());
+                }
+            }
+        };
+
+        String[] refreshIntervals = { STOP, REFRESH1, REFRESH5, REFRESH10 };
+        Integer[] refreshValues = { 0, 1 * Long.valueOf(MeasurementUtility.MINUTES).intValue(),
+            5 * Long.valueOf(MeasurementUtility.MINUTES).intValue(),
+            10 * Long.valueOf(MeasurementUtility.MINUTES).intValue() };
+        refreshMenuMappings = new HashMap<Integer, String>();
+        refreshMenuItems = new MenuItem[refreshIntervals.length];
+        for (int i = 0; i < refreshIntervals.length; i++) {
+            MenuItem item = new MenuItem(refreshIntervals[i], "");
+            item.addClickHandler(menuClick);
+            refreshMenuMappings.put(refreshValues[i], refreshIntervals[i]);
+            refreshMenuItems[i] = item;
+        }
+
+        refreshMenu.setItems(refreshMenuItems);
+        refreshMenuButton = new LocatableIMenuButton(extendLocatorId("AutoRefreshButton"), "Change Refresh Time",
+            refreshMenu);
+        refreshMenu.setAutoHeight();
+        refreshMenuButton.setWidth(170);
+        refreshMenuButton.setShowTitle(true);
+        refreshMenuButton.setTop(0);
+        refreshMenuButton.setIconOrientation("left");
+
+        CanvasItem refreshCanvas = new CanvasItem();
+        refreshCanvas.setTitle("Portlets auto-refresh interval");
+        refreshCanvas.setWrapTitle(false);
+        refreshCanvas.setCanvas(refreshMenuButton);
+        refreshCanvas.setStartRow(false);
+        refreshCanvas.setEndRow(false);
+
+        editForm.setItems(nameItem, numColItem, addCanvas, picker, addColumn, removeColumn, refreshCanvas);
+        updateRefreshMenu();
         return editForm;
     }
 
@@ -327,10 +403,31 @@ public class DashboardView extends LocatableVLayout {
     }
 
     private void updateConfigs(Dashboard result) {
-        for (PortletWindow portletWindow : portlets) {
-            for (DashboardPortlet portlet : result.getPortlets()) {
-                if (portletWindow.getDashboardPortlet().getId() == portlet.getId()) {
-                    portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
+        if (result != null) {
+            if (portletMap == null) {
+                portletMap = new HashMap<String, PortletViewFactory>();
+                for (String key : PortletFactory.getRegisteredPortletKeys()) {
+                    portletMap.put(key, PortletFactory.getRegisteredPortlet(key));
+                }
+            }
+            for (PortletWindow portletWindow : portlets) {
+                for (DashboardPortlet portlet : result.getPortlets()) {
+                    if (portletWindow.getDashboardPortlet().getId() == portlet.getId()) {
+                        portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
+
+                        PortletViewFactory viewFactory = portletMap.get(portlet.getPortletKey());
+
+                        // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
+                        // tests as a change in the number of default portlets, or a change in test order could make a test
+                        // non-repeatable. But, at the moment we lack the infrastructure to generate a unique, predictable id.
+                        Portlet view = viewFactory.getInstance(PortletFactory.replaceSpaces(portlet.getPortletKey())
+                            + "-" + Integer.toString(portlet.getId()));
+
+                        //add code to re-initialize refresh cycle for portlets
+                        if (portlet instanceof AutoRefreshPortlet) {
+                            ((AutoRefreshPortlet) view).startRefreshCycle();
+                        }
+                    }
                 }
             }
         }
@@ -369,5 +466,54 @@ public class DashboardView extends LocatableVLayout {
             this.editForm.hide();
         }
         markForRedraw();
+    }
+
+    public class UpdatePortletRefreshCallback implements AsyncCallback<Subject> {
+        public void onSuccess(Subject subject) {
+            String m;
+            if (refreshInterval > 0) {
+                m = "Updated interval for portlets that auto-refresh";
+            } else {
+                m = "Stopping reload for portlets that auto-refresh";
+            }
+            CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Info));
+            updateRefreshMenu();
+            save();
+        }
+
+        public void onFailure(Throwable throwable) {
+            String m;
+            if (refreshInterval > 0) {
+                m = "Failed to updated interval for portlets that auto-refresh";
+            } else {
+                m = "Failed to disable reload for portlets that auto-refresh";
+            }
+            CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Error));
+            // Revert back to our original favorite status, since the server update failed.
+            updateRefreshMenu();
+        }
+    }
+
+    public void updateRefreshMenu() {
+        if (refreshMenuItems != null) {
+            int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+            String currentSelection = refreshMenuMappings.get(retrievedRefreshInterval);
+            if (currentSelection != null) {
+                for (int i = 0; i < refreshMenuItems.length; i++) {
+                    MenuItem menu = refreshMenuItems[i];
+                    if (currentSelection.equals(menu.getTitle())) {
+                        menu.setIcon(ImageManager.getAvailabilityIcon(true));
+                    } else {
+                        menu.setIcon("");
+                    }
+                    refreshMenuItems[i] = menu;
+                }
+                //update the menu
+                refreshMenuButton.getMenu().setItems(refreshMenuItems);
+            }
+        }
+        if (this.refreshMenuButton != null) {
+            this.refreshMenuButton.markForRedraw();
+        }
     }
 }

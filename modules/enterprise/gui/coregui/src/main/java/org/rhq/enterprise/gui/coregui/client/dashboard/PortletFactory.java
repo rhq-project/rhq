@@ -92,7 +92,7 @@ public class PortletFactory {
      * @param portletKey
      * @return
      */
-    private static String replaceSpaces(String portletKey) {
+    public static String replaceSpaces(String portletKey) {
         String translated = portletKey;
         if (portletKey != null) {
             translated = portletKey.replaceAll(" ", "_");
@@ -101,11 +101,19 @@ public class PortletFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public static List<String> getRegisteredPortlets() {
+    public static List<String> getRegisteredPortletKeys() {
 
         ArrayList portlets = new ArrayList(registeredPortlets.keySet());
         Collections.sort(portlets);
         return portlets;
+    }
+
+    public static PortletViewFactory getRegisteredPortlet(String key) {
+        PortletViewFactory portletFactory = null;
+        if ((key != null) & (!key.trim().isEmpty())) {
+            portletFactory = registeredPortlets.get(key);
+        }
+        return portletFactory;
     }
 
 }

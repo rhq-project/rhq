@@ -253,8 +253,8 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.KEY, RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
 
-        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(), RecentlyAddedResourcesPortlet.KEY,
-            250);
+        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(),
+            RecentlyAddedResourcesPortlet.KEY, 250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 
         DashboardPortlet operations = new DashboardPortlet(MSG.common_title_operations(), OperationsPortlet.KEY, 500);

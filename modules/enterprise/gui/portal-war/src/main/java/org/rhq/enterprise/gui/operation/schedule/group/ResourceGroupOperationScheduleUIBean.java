@@ -35,7 +35,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupOperationDefinitionUIBean;
 import org.rhq.enterprise.gui.operation.schedule.OperationScheduleUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.operation.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QuartzUtil;

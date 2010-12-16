@@ -29,6 +29,7 @@ import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.exception.ThrowableUtil;

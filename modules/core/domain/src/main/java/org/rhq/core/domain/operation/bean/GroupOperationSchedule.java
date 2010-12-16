@@ -16,13 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.operation;
+package org.rhq.core.domain.operation.bean;
 
 import java.util.List;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
+/**
+ * A simple non-entity POJO that describes a particular scheduled Resource group operation.
+ */
 public class GroupOperationSchedule extends OperationSchedule {
     private static final long serialVersionUID = 1L;
 

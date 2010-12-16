@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;

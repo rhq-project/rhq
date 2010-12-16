@@ -33,6 +33,8 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;

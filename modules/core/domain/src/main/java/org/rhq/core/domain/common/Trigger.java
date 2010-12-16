@@ -19,6 +19,7 @@
  */
 package org.rhq.core.domain.common;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -28,7 +29,9 @@ import java.util.Date;
  *
  * @author Ian Springer
  */
-public class Trigger {
+public class Trigger implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     // Together, the startType, recurrenceType, and endType define what type of trigger this is.
     // For the remaining fields in this class, only those that apply to the trigger's type will have non-null values.
@@ -123,6 +126,22 @@ public class Trigger {
 
     public Integer getRepeatCount() {
         return repeatCount;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Trigger");
+        sb.append("[cronExpression='").append(cronExpression).append('\'');
+        sb.append(", startType=").append(startType);
+        sb.append(", recurrenceType=").append(recurrenceType);
+        sb.append(", endType=").append(endType);
+        sb.append(", startDate=").append(startDate);
+        sb.append(", repeatInterval=").append(repeatInterval);
+        sb.append(", endDate=").append(endDate);
+        sb.append(", repeatCount=").append(repeatCount);
+        sb.append(']');
+        return sb.toString();
     }
 
     /**

@@ -29,7 +29,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

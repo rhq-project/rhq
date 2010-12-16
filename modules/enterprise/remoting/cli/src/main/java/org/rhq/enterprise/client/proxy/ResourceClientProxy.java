@@ -64,7 +64,7 @@ import org.rhq.enterprise.client.utility.ShortOutput;
 import org.rhq.enterprise.client.utility.ConfigurationClassBuilder;
 import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**

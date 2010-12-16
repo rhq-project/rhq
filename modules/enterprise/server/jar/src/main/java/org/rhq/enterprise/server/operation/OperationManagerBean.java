@@ -61,6 +61,8 @@ import org.rhq.core.domain.operation.OperationScheduleEntity;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.operation.ScheduleJobId;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;

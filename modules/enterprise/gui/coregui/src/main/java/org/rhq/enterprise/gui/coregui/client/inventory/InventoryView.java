@@ -137,8 +137,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildResourcesSection() {
-        NavigationItem autodiscoveryQueueItem = new NavigationItem(PAGE_AUTODISCOVERY_QUEUE, "global/Recent_16.png",
-            new ViewFactory() {
+        NavigationItem autodiscoveryQueueItem = new NavigationItem(PAGE_AUTODISCOVERY_QUEUE,
+            "global/AutoDiscovery_16.png", new ViewFactory() {
                 public Canvas createView() {
                     return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE.getName()));
                 }

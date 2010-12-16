@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfiguratio
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestRemoteServiceStatisticsView;
+import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -47,13 +48,12 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
 
     // view IDs for Inventory section
     private static final ViewName INVENTORY_SECTION_VIEW_ID = new ViewName("Inventory");
-
     private static final ViewName PAGE_RESOURCE_SELECTOR = new ViewName("ResourceSelector");
     private static final ViewName PAGE_TYPE_TREE = new ViewName("TypeTree");
+    private static final ViewName PAGE_SEARCH_BAR = new ViewName("SearchBar");
 
     // view IDs for Configuration section
     private static final ViewName CONFIGURATION_SECTION_VIEW_ID = new ViewName("Configuration");
-
     private static final ViewName PAGE_CONFIG_EDITOR = new ViewName("ConfigEditor");
     private static final ViewName PAGE_GROUP_CONFIG_EDITOR = new ViewName("GroupConfigEditor");
 
@@ -103,7 +103,13 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, resourceSelectorItem, typeTreeItem);
+        NavigationItem searchBarItem = new NavigationItem(PAGE_SEARCH_BAR, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestSearchBarView(extendLocatorId(PAGE_SEARCH_BAR.getName()));
+            }
+        });
+
+        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, resourceSelectorItem, typeTreeItem, searchBarItem);
     }
 
     private NavigationSection buildConfigurationSection() {

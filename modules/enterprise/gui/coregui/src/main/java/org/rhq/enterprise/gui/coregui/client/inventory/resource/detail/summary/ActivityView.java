@@ -18,32 +18,42 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
-import com.smartgwt.client.widgets.HTMLFlow;
-
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * The Resource Summary>Overview tab.
+ * The content pane of the Resource Summary>Activity tab.
  *
- * @author Lukas Krejci
+ * @author Ian Springer
  */
-public class OverviewView extends LocatableVLayout {
+// TODO: Implement this.
+public class ActivityView extends LocatableVLayout implements RefreshableView {
 
-    public OverviewView(String locatorId, ResourceComposite resourceComposite) {
+    private ResourceComposite resourceComposite;
+    private FullHTMLPane iFrame;
+
+    public ActivityView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
-        OverviewForm form = new OverviewForm(extendLocatorId("form"), resourceComposite);
-        HTMLFlow separator = new HTMLFlow();
-        separator.setContents("<hr>");
-
-        form.setHeight("200");
-        setLeft("10%");
-
-        addMember(form);
+        this.resourceComposite = resourceComposite;
     }
 
     @Override
-    public void onInit() {
-        super.onInit();
+    protected void onDraw() {
+        super.onDraw();
+
+        this.iFrame = new FullHTMLPane(extendLocatorId("IFrame"), null);
+        addMember(this.iFrame);
+
+        refresh();
     }
+
+    @Override
+    public void refresh() {
+        int resourceId = this.resourceComposite.getResource().getId();
+        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceId);
+    }
+    
 }

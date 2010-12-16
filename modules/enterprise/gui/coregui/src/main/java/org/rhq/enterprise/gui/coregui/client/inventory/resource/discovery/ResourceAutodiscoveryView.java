@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout {
     private static final String TITLE = MSG.view_autoDiscoveryQ_title();
-    private static final String HEADER_ICON = "global/Recent_24.png";
+    private static final String HEADER_ICON = "global/AutoDiscovery_24.png";
 
     private boolean simple;
     private TreeGrid treeGrid;
@@ -152,6 +152,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         treeGrid.setShowSelectedStyle(false);
         treeGrid.setShowPartialSelection(true);
         treeGrid.setCascadeSelection(true);
+
+        // Do this last since it causes the TreeGrid to be initialized.
+        treeGrid.deselectAllRecords();
 
         addMember(treeGrid);
 

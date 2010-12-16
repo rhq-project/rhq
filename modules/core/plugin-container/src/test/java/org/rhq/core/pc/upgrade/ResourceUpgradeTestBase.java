@@ -93,33 +93,33 @@ public abstract class ResourceUpgradeTestBase {
         public String getResourceTypePluginName() {
             return resourceTypePluginName;
         }
-        
+
         @Override
         public int hashCode() {
             return resourceTypeName.hashCode() * resourceTypePluginName.hashCode();
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
                 return true;
             }
-            
+
             if (!(other instanceof ResType)) {
                 return false;
             }
-            
+
             ResType o = (ResType)other;
-            
+
             return resourceTypeName.equals(o.getResourceTypeName()) && resourceTypePluginName.equals(o.getResourceTypePluginName());
         }
-        
+
         @Override
         public String toString() {
             return "ResType[name='" + resourceTypeName + "', plugin='" + resourceTypePluginName + "']";
         }
     }
-    
+
     protected interface TestPayload {
         Expectations getExpectations(Mockery context) throws Exception;
 
@@ -315,6 +315,7 @@ public abstract class ResourceUpgradeTestBase {
 
         File pluginFile = FileUtils.toFile(url);
 
+        assert pluginFile!=null : "pluginFile was null";
         assertTrue(pluginFile.exists(), pluginFile.getAbsoluteFile() + " plugin jar could not be found.");
     }
 
@@ -362,7 +363,7 @@ public abstract class ResourceUpgradeTestBase {
             //execute full discovery
             InventoryManager im = PluginContainer.getInstance().getInventoryManager();
             im.executeServerScanImmediately();
-            
+
             //do the service scan a couple of times so that we can commit
             //the resources deep in the type hierarchy
             for(int i = 0; i < 10; ++i) {
@@ -370,12 +371,12 @@ public abstract class ResourceUpgradeTestBase {
             }
 
             Map<ResType, Set<Resource>> resources = new HashMap<ResType, Set<Resource>>();
-            
+
             for(ResType type : test.getExpectedResourceTypes()) {
                 Set<Resource> rs = getTestingResources(type.getResourceTypeName(), type.getResourceTypePluginName());
                 resources.put(type, rs);
             }
-            
+
             test.test(resources);
 
             context.assertIsSatisfied();
@@ -402,7 +403,7 @@ public abstract class ResourceUpgradeTestBase {
         expectations.allowing(getCurrentDiscoveryServerService()).getResources(
             expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
         expectations.will(getCurrentServerSideInventory().getResources());
-        
+
         expectations.allowing(getCurrentDiscoveryServerService()).postProcessNewlyCommittedResources(
             expectations.with(Expectations.any(Set.class)));
     }

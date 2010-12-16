@@ -2,20 +2,19 @@
         version="2.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin">
-  
+
    <server name="testServer1">
    	<!-- one is gone -->
-   	
+
    	<!-- two stays as is-->
    		<metric displayName="Two" property="connectionCount2" displayType="detail" />
    	<!-- three is changed (display type) -->
    		<metric displayName="Three" property="connectionCount3" displayType="summary" />
    	<!-- four is new -->
    		<metric displayName="Four" property="connectionCount4" displayType="detail" />
-    <!-- five is changed as well (defaultInterval) -->		
-   		<metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="30000" />
-   		
+    <!-- five is changed as well (defaultInterval) -->
+   		<metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="50000" />
+
    </server>
 
 </plugin>
-   

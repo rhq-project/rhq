@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.Date;
 import java.util.List;
@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationHistory> {
+public abstract class OperationHistoryDataSource extends RPCDataSource<ResourceOperationHistory> {
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -56,11 +56,7 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         public static final String PARAMETERS = "parameters";
     }
 
-    public static abstract class CriteriaField {
-        public static final String RESOURCE_ID = "resourceId";
-    }
-
-    private OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
+    protected OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
     public OperationHistoryDataSource() {
         List<DataSourceField> fields = addDataSourceFields();
@@ -93,30 +89,6 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         */
 
         return fields;
-    }
-
-    @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-
-        if (request.getCriteria().getValues().containsKey(CriteriaField.RESOURCE_ID)) {
-            criteria.addFilterResourceIds(Integer.parseInt((String) request.getCriteria().getValues().get(
-                CriteriaField.RESOURCE_ID)));
-        }
-
-        criteria.setPageControl(getPageControl(request));
-
-        operationService.findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
-                }
-
-                public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
-                }
-            });
     }
 
     @Override

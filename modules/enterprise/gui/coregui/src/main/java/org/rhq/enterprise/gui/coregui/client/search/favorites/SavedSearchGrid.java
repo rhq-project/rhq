@@ -27,6 +27,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Grid;
 
 import org.rhq.core.domain.search.SavedSearch;
+import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 
 /**
@@ -35,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 public class SavedSearchGrid extends Grid {
 
     private PatternSelectionHandler patternSelectionHandler;
-    private SearchBar searchBar;
+    private AbstractSearchBar searchBar;
 
     public interface PatternSelectionHandler {
         public void handleSelection(int rowIndex, int columnIndex, String patternName);
@@ -60,7 +61,7 @@ public class SavedSearchGrid extends Grid {
         }
     }
 
-    public SavedSearchGrid(SearchBar searchBar) {
+    public SavedSearchGrid(AbstractSearchBar searchBar) {
         super(0, 2); // assume no rows to start, but we'll always have 2 columns
 
         setRowFormatter(new SavedSearchRowFormatter());

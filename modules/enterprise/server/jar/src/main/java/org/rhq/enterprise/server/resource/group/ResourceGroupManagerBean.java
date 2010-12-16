@@ -187,7 +187,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group, RecursivityChangeType changeType)
         throws ResourceGroupUpdateException {
-        return updateResourceGroup(subject, group, null, true);
+        return updateResourceGroup(subject, group, changeType, true);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -29,6 +30,9 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
@@ -40,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -105,12 +110,31 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     @Override
     protected void onDraw() {
         super.onDraw();
+
+        // Make the value of some specific field a link to the details view for the corresponding record
+        ListGrid grid = getListGrid();
+        ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
+        if (field != null) {
+            field.setCellFormatter(new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int i, int i1) {
+                    Integer recordId = getId(record);
+                    String detailsUrl = "#" + getBasePath() + "/" + recordId;
+                    return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+                }
+            });
+        }
+
+        // Make double-clicking the row an alternate means to go to the details view.
         getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
             @Override
             public void onCellDoubleClick(CellDoubleClickEvent event) {
                 showDetails(event.getRecord());
             }
         });
+    }
+
+    protected String getDetailsLinkColumnName() {
+        return FIELD_NAME;
     }
 
     /**
@@ -292,7 +316,9 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void switchToTableView() {
         final Canvas contents = getTableContents();
         if (contents != null) {
-
+            // First refresh the table's data.
+            Log.debug("Refreshing data for [" + getClass().getName() + "]...");
+            refresh();
             if (detailsHolder != null && detailsHolder.isVisible()) {
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override

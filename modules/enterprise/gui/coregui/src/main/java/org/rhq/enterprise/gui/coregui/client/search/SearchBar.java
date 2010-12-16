@@ -43,7 +43,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 import org.rhq.core.domain.search.SavedSearch;
@@ -58,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox_v3;
 /**
  * @author Joseph Marques
  */
-public class SearchBar extends SimplePanel {
+public class SearchBar extends AbstractSearchBar {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
@@ -118,7 +117,7 @@ public class SearchBar extends SimplePanel {
                 if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
 
                     if (event.getNativeEvent().getEventTarget().equals(searchButton)
-                            && event.getTypeInt() == Event.ONMOUSEDOWN) {
+                        && event.getTypeInt() == Event.ONMOUSEDOWN) {
                         prepareSearchExecution();
                     }
                 }
@@ -473,8 +472,8 @@ public class SearchBar extends SimplePanel {
         }
 
         public void handleSelection(int rowIndex, int columnIndex, String patternName) {
-            Log.debug("SavedSearchesEventHandler.handleSelection(" + rowIndex + "," + columnIndex + ","
-                + patternName + ")");
+            Log.debug("SavedSearchesEventHandler.handleSelection(" + rowIndex + "," + columnIndex + "," + patternName
+                + ")");
             if (columnIndex == 1) {
                 savedSearchManager.removePatternByName(patternName);
 

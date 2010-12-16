@@ -54,6 +54,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -161,7 +162,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         final PropertySimple propertySimple, final FormItem dynamicItem) {
         FormItemIcon icon = new FormItemIcon();
 
-        icon.setSrc("[SKIN]/actions/edit.png");
+        icon.setSrc(ImageManager.getEditIcon());
         icon.setName("Edit Member Values");
         icon.setNeverDisable(true);
         icon.addFormItemClickHandler(new FormItemClickHandler() {

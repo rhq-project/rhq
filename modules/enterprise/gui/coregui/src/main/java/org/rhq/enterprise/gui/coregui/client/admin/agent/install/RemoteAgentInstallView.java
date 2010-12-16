@@ -63,7 +63,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     public static final ViewName VIEW_ID = new ViewName("RemoteAgentInstall", MSG
         .view_adminTopology_remoteAgentInstall());
 
-    private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService();
+    private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService(600000);
 
     private DynamicForm connectionForm;
     private DynamicForm buttonsForm;

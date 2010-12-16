@@ -1491,12 +1491,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     /**
-     * Given an attached history object, this will see if its has completed and if it is a resource history that is part
+     * Given the id of a history object, this will see if it has completed and if it is a resource history that is part
      * of an overall group operation and if so will see if all of its peer resource histories are also complete. If the
      * group members are all done, the group history object will have its status updated to reflect that the group
      * itself is done.
      *
-     * @param history an EJB3 managed (aka attached) history object
+     * @param historyId id of a history object
      */
     public void checkForCompletedGroupOperation(int historyId) {
         OperationHistory history = entityManager.find(OperationHistory.class, historyId);

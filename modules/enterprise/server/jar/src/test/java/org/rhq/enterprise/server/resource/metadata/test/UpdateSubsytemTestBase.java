@@ -18,6 +18,30 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
+import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.ejb.EJB;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Status;
+import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.util.ValidationEventCollector;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -37,32 +61,11 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-
-import javax.ejb.EJB;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.transaction.Status;
-import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.util.ValidationEventCollector;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import java.io.FileNotFoundException;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 // TODO: Fix typo in class name.
 public class UpdateSubsytemTestBase extends AbstractEJB3Test {
@@ -84,7 +87,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
-    @BeforeSuite
+    @BeforeMethod
     protected void init() {
         try {
             pluginMgr = LookupUtil.getPluginManager();
@@ -110,14 +113,15 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     public void afterClass() throws Exception {
         unprepareForTestAgents();
         unprepareScheduler();
-    }
-
-    @BeforeTest
-    public void beforeTest() throws Exception {
-        startTest();
-        // cleanup anything left over from a previous, interrupted run.
         cleanupTest();
     }
+
+//    @BeforeTest
+//    public void beforeTest() throws Exception {
+////        startTest(); Done in super.@BeforeMethod already ??
+//        // cleanup anything left over from a previous, interrupted run.
+//        cleanupTest();
+//    }
 
     protected ResourceType getResourceType(String typeName) {
         return getResourceType(typeName, PLUGIN_NAME);

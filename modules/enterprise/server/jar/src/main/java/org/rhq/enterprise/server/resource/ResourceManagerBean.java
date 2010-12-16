@@ -403,21 +403,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         // one more thing, delete any autogroup backing groups
-        List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
-        if (null != backingGroups && !backingGroups.isEmpty()) {
-            int size = backingGroups.size();
-            int[] backingGroupIds = new int[size];
-            for (int i = 0; (i < size); ++i) {
-                backingGroupIds[i] = backingGroups.get(i).getId();
-            }
-            try {
-                resourceGroupManager.deleteResourceGroups(user, backingGroupIds);
-            } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
-                    log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
-                } else {
-                    log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds + ": "
-                        + t.getMessage());
+        if (attachedResource!=null) {
+            List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
+            if (null != backingGroups && !backingGroups.isEmpty()) {
+                int size = backingGroups.size();
+                int[] backingGroupIds = new int[size];
+                for (int i = 0; (i < size); ++i) {
+                    backingGroupIds[i] = backingGroups.get(i).getId();
+                }
+                try {
+                    resourceGroupManager.deleteResourceGroups(user, backingGroupIds);
+                } catch (Throwable t) {
+                    if (log.isDebugEnabled()) {
+                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
+                    } else {
+                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds + ": "
+                            + t.getMessage());
+                    }
                 }
             }
         }
@@ -742,7 +744,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 resource.getId())));
         }
 
-        // fill out the tree, including only the direct ancestors and all viewable relations 
+        // fill out the tree, including only the direct ancestors and all viewable relations
         List<ResourceLineageComposite> result = new LinkedList<ResourceLineageComposite>();
 
         for (ResourceLineageComposite ancestor : resourceLineage) {
@@ -750,14 +752,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             result.add(ancestor);
 
             // if the ancestor is not locked, include relevant children. Also, always show viewable
-            // siblings of the target resource. 
+            // siblings of the target resource.
             if (!ancestor.isLocked() || ancestor.getResource() == parent) {
 
                 // get children
                 Set<Resource> children = ancestor.getResource().getChildResources();
                 // remove any that are in the ancestry to avoid repeated handling
                 children.removeAll(rawResourceLineage);
-                // only add the viewable children 
+                // only add the viewable children
                 List<Resource> viewableChildren = new ArrayList<Resource>(children.size());
                 for (Resource child : children) {
                     boolean isCommitted = (child.getInventoryStatus() == InventoryStatus.COMMITTED);
@@ -788,7 +790,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                         if (isCommitted && isViewable) {
                             // if not a direct ancestor add to the list (direct ancestors already added by default)
                             if (!rawResourceLineage.contains(grandChild)) {
-                                // ensure we have the parent in the entity                                
+                                // ensure we have the parent in the entity
                                 grandChild.getParentResource().getId();
                                 ResourceLineageComposite composite = new ResourceLineageComposite(grandChild, false);
                                 result.add(composite);
@@ -1827,7 +1829,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
             || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK
             || resourceError.getErrorType() == ResourceErrorType.UPGRADE) {
-            // there should be at most one invalid plugin configuration error, availability check 
+            // there should be at most one invalid plugin configuration error, availability check
             // or upgrade error per resource, so delete any currently existing ones before we add this new one
             List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());
 

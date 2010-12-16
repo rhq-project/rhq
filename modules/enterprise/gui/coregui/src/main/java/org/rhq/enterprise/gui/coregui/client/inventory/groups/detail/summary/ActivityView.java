@@ -18,25 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.Label;
 
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * The group Inventory>Overview subtab.
+ * The content pane for the group Summary>Activity subtab.
  *
  * @author Ian Springer
  */
-public class OverviewView extends LocatableVLayout {
-    private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
+// TODO: Implement this.
+public class ActivityView extends LocatableVLayout implements RefreshableView {
+
     private ResourceGroupComposite groupComposite;
 
-    public OverviewView(String locatorId, ResourceGroupComposite groupComposite) {
+    public ActivityView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
         this.groupComposite = groupComposite;
     }
@@ -45,14 +43,13 @@ public class OverviewView extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        final ResourceGroup group = this.groupComposite.getResourceGroup();
-
-        HLayout spacer = new HLayout();
-        spacer.setHeight(15);
-        addMember(spacer);
-
-        // TODO
-        HTMLFlow html = new HTMLFlow("Activity information will go here");
-        addMember(html);
+        Label label = new Label("<h3>Coming soon...</h3>");
+        addMember(label);
     }
+
+    @Override
+    public void refresh() {
+        // TODO: Reload the data.
+    }
+
 }

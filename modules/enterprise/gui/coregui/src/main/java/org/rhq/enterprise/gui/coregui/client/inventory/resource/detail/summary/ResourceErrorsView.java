@@ -57,8 +57,7 @@ public class ResourceErrorsView extends Table {
                 htmlPane.setMargin(10);
                 htmlPane.setDefaultWidth(550);
                 htmlPane.setDefaultHeight(550);
-                htmlPane.setContents("<pre>" + (event.getRecord().getAttribute(ResourceErrorsDataSource.Field.DETAIL))
-                    + "</pre>");
+                htmlPane.setContents((event.getRecord().getAttribute(ResourceErrorsDataSource.Field.DETAIL)));
                 winModal.addItem(htmlPane);
                 winModal.show();
             }

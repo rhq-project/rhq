@@ -20,8 +20,7 @@ package org.rhq.enterprise.server.resource.test;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -41,7 +40,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     private static ResourceGroupManagerLocal resourceGroupManager;
 
-    @BeforeClass
+    @BeforeMethod
     @SuppressWarnings("unused")
     private void init() {
         try {

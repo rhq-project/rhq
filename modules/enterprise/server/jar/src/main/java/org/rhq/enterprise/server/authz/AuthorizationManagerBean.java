@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -56,15 +56,15 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
     public Set<Permission> getExplicitGlobalPermissions(Subject subject) {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_GLOBAL_PERMISSIONS);
         query.setParameter("subject", subject);
-        List<Permission> results = query.getResultList();
-        EnumSet permissions = EnumSet.noneOf(Permission.class);
-        for (Permission permission : results) {
+        List<Permission> intermediate = query.getResultList();
+        Set<Permission> results = new HashSet<Permission>();
+        for (Permission permission : intermediate) {
             if (permission.getTarget() == Target.GLOBAL) {
-                permissions.add(permission);
+                results.add(permission);
             }
         }
 
-        return permissions;
+        return results;
     }
 
     @SuppressWarnings("unchecked")
@@ -72,13 +72,13 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID);
         query.setParameter("subject", subject);
         query.setParameter("groupId", groupId);
-        List<Permission> results = query.getResultList();
-        EnumSet permissions = EnumSet.noneOf(Permission.class);
-        for (Permission permission : results) {
-            permissions.add(permission);
+        List<Permission> intermediate = query.getResultList();
+        Set<Permission> results = new HashSet<Permission>();
+        for (Permission permission : intermediate) {
+            results.add(permission);
         }
 
-        return permissions;
+        return results;
     }
 
     public Set<Permission> getImplicitGroupPermissions(Subject subject, int groupId) {
@@ -92,13 +92,13 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_RESOURCE_ID);
         query.setParameter("subject", subject);
         query.setParameter("resourceId", resourceId);
-        List<Permission> results = query.getResultList();
-        EnumSet permissions = EnumSet.noneOf(Permission.class);
-        for (Permission permission : results) {
-            permissions.add(permission);
+        List<Permission> intermediate = query.getResultList();
+        Set<Permission> results = new HashSet<Permission>();
+        for (Permission permission : intermediate) {
+            results.add(permission);
         }
 
-        return permissions;
+        return results;
     }
 
     public Set<Permission> getImplicitResourcePermissions(Subject subject, int resourceId) {
@@ -285,5 +285,5 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
 
         return (subject.getId() == SUBJECT_ID_OVERLORD);
     }
-    
+
 }

@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -119,16 +120,32 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
                     canvas.getItem(key).clearValue();
                     canvas.getItem(key).redraw();
                 }
-                if (value != null && value instanceof DynamicForm) {
-                    if (!disabled.equals(value.isDisabled())) {
-                        value.setDisabled(disabled);
-                        for (FormItem item : ((DynamicForm) value).getFields()) {
-                            item.clearValue();
-                            item.redraw();
+                disableAllFormFields(value, disabled);
+            }
+        }
+
+        private void disableAllFormFields(Canvas value, Boolean disabled) {
+            if (value != null && value instanceof DynamicForm) {
+                for (FormItem item : ((DynamicForm) value).getFields()) {
+                    if (item instanceof CanvasItem) {
+                        // recursively drill down in case this is a dynamic form inside a dynamic form
+                        disableAllFormFields(((CanvasItem) item).getCanvas(), disabled);
+                    }
+
+                    if (disabled) {
+                        item.clearValue();
+                        item.redraw();
+                        if (item instanceof ButtonItem) {
+                            item.disable();
                         }
-                        value.markForRedraw();
+                    } else {
+                        if (item instanceof ButtonItem) {
+                            item.enable();
+                        }
                     }
                 }
+                value.setDisabled(disabled);
+                value.markForRedraw();
             }
         }
     }

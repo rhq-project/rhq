@@ -35,9 +35,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -74,14 +76,20 @@ public class GeneralProperties extends LocatableVLayout {
 
         boolean dynamic = (group.getGroupDefinition() != null);
 
-        final FormItem nameItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
+        StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
+        StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
+
+        final FormItem nameItem = (dynamic) ? new StaticTextItem() : new EditableFormItem();
         nameItem.setName("name");
         nameItem.setTitle(MSG.common_title_name());
         nameItem.setValue(group.getName());
-        if (nameItem instanceof TogglableTextItem) {
-            final TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
-            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newName) {
+        if (nameItem instanceof EditableFormItem) {
+            final EditableFormItem togglableNameItem = (EditableFormItem) nameItem;
+            togglableNameItem.setValidators(notEmptyOrNullValidator);
+            togglableNameItem.setValueEditedHandler(new ValueEditedHandler() {
+                @Override
+                public void editedValue(Object newValue) {
+                    final String newName = newValue.toString();
                     final String oldName = group.getName();
                     if (newName.equals(oldName)) {
                         return;
@@ -126,14 +134,17 @@ public class GeneralProperties extends LocatableVLayout {
         countItem.setValue(memberCount);
         formItems.add(countItem);
 
-        final FormItem descriptionItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
+        final FormItem descriptionItem = (dynamic) ? new StaticTextItem() : new EditableFormItem();
         descriptionItem.setName("description");
         descriptionItem.setTitle(MSG.common_title_description());
         descriptionItem.setValue(group.getDescription());
-        if (descriptionItem instanceof TogglableTextItem) {
-            final TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
-            togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newDescription) {
+        if (descriptionItem instanceof EditableFormItem) {
+            final EditableFormItem togglableDescriptionItem = (EditableFormItem) descriptionItem;
+            togglableDescriptionItem.setValidators(notNullValidator);
+            togglableDescriptionItem.setValueEditedHandler(new ValueEditedHandler() {
+                @Override
+                public void editedValue(Object newValue) {
+                    final String newDescription = newValue.toString();
                     final String oldDescription = group.getDescription();
                     if (newDescription.equals(oldDescription)) {
                         return;
@@ -161,11 +172,30 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(descriptionItem);
 
         StaticTextItem dynamicItem = new StaticTextItem("dynamic", MSG.view_group_summary_dynamic());
-        dynamicItem.setValue(dynamic ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
+        dynamicItem.setValue(dynamic ? MSG.common_val_yes() : MSG.common_val_no());
         formItems.add(dynamicItem);
 
-        StaticTextItem recursiveItem = new StaticTextItem("recursive", MSG.view_group_summary_recursive());
-        recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
+        EditableFormItem recursiveItem = new CheckboxEditableFormItem("recursive", MSG.view_group_summary_recursive());
+        recursiveItem.setValueEditedHandler(new ValueEditedHandler() {
+            @Override
+            public void editedValue(Object newValue) {
+                boolean isRecursive = (newValue != null) ? ((Boolean) newValue).booleanValue() : false;
+                resourceGroupService.setRecursive(group.getId(), isRecursive, new AsyncCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_group_detail_recursiveChange(group.getName())));
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_detail_failRecursiveChange(String.valueOf(group.getName())));
+                    }
+                });
+            }
+        });
+        recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes() : MSG.common_val_no());
         formItems.add(recursiveItem);
 
         StaticTextItem createdItem = new StaticTextItem("created", MSG.common_title_dateCreated());

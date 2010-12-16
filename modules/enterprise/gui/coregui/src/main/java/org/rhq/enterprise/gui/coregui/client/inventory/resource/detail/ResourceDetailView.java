@@ -53,31 +53,33 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwo
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * Right panel of the Resource view.
+ * Right panel of the Resource view (#Resource/*).
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
 public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceComposite, ResourceTitleBar> {
+
     private static final String BASE_VIEW_PATH = "Resource";
 
     private Integer resourceId;
 
     private ResourceComposite resourceComposite;
+
+    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -88,8 +90,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private TwoLevelTab eventsTab;
     private TwoLevelTab contentTab;
 
-    private SubTab summaryOverview;
-    private SubTab summaryDashboard;
+    private SubTab summaryActivity;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorTables;
@@ -102,10 +103,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryConn;
     private SubTab inventoryConnHistory;
     private SubTab inventoryGroups;
-    private SubTab inventoryGroupMembership;
     private SubTab inventoryAgent;
-    private SubTab opHistory;
-    private SubTab opSched;
+    private SubTab operationsHistory;
+    private SubTab operationsSchedule;
     private SubTab alertHistory;
     private SubTab alertDef;
     private SubTab configCurrent;
@@ -126,13 +126,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), new ViewName("Summary", MSG
             .view_tabs_common_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
-        summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), new ViewName("Overview", MSG
-            .view_tabs_common_overview()), null);
-        summaryDashboard = new SubTab(summaryTab.extendLocatorId("Dashboard"), new ViewName("Dashboard", MSG
-            .view_tabs_common_dashboard()), null);
+        summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity", MSG
+            .view_tabs_common_activity()), null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline", MSG
             .view_tabs_common_timeline()), null);
-        summaryTab.registerSubTabs(summaryOverview, summaryDashboard, summaryTimeline);
+        summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
@@ -147,12 +145,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
         inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
             .view_tabs_common_groups()), null);
-        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), new ViewName(
-            "GroupMembership", MSG.view_tabs_common_group_membership()), null);
         inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
             .view_tabs_common_agent()), null);
         inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
-            this.inventoryConnHistory, this.inventoryGroups, this.inventoryGroupMembership, this.inventoryAgent);
+            this.inventoryConnHistory, this.inventoryGroups, this.inventoryAgent);
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
@@ -191,11 +187,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
+        this.operationsSchedule = new SubTab(operationsTab.extendLocatorId("Schedule"), new ViewName("Schedule", MSG
+            .view_tabs_common_schedule()), null);
+        this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), new ViewName("Scheduled", MSG
-            .view_tabs_common_scheduled()), null);
-        operationsTab.registerSubTabs(this.opHistory, this.opSched);
+        operationsTab.registerSubTabs(this.operationsHistory, this.operationsSchedule);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
@@ -228,11 +224,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     protected void updateTabContent(ResourceComposite resourceComposite) {
-        boolean enabled;
-        boolean visible;
-        Canvas canvas;
-
         this.resourceComposite = resourceComposite;
+        for (ResourceSelectListener selectListener : this.selectListeners) {
+            selectListener.onResourceSelected(this.resourceComposite);
+        }
         Resource resource = this.resourceComposite.getResource();
         getTitleBar().setResource(this.resourceComposite);
 
@@ -243,20 +238,70 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
-        // Summary Tab
-        updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
-            .extendLocatorId("OverviewView"), this.resourceComposite), true, true);
+        updateSummaryTabContent(resource);
+        updateInventoryTabContent(resourceComposite, resource, facets);
+        updateAlertsTabContent(resourceComposite);
+        updateMonitoringTabContent(resource, facets);
+        updateEventsTabContent(resourceComposite, facets);
+        updateOperationsTabContent(resource, facets);
+        updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
+        updateContentTabContent(resource, facets);
 
-        updateSubTab(this.summaryTab, this.summaryDashboard, new DashboardView(this.summaryDashboard
+        this.show();
+        markForRedraw();
+    }
+
+    private void updateSummaryTabContent(Resource resource) {
+        updateSubTab(this.summaryTab, this.summaryActivity, new ActivityView(this.summaryActivity
             .extendLocatorId("View"), this.resourceComposite), true, true);
 
         updateSubTab(this.summaryTab, this.summaryTimeline, new FullHTMLPane(this.summaryTimeline
             .extendLocatorId("View"), "/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId()), true, true);
+    }
 
-        // Monitoring Tab
-        visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
+    // Inventory Tab (always enabled and visible)
+    private void updateInventoryTabContent(ResourceComposite resourceComposite, Resource resource,
+        Set<ResourceTypeFacet> facets) {
+
+        ResourceType type = this.resourceComposite.getResource().getResourceType();
+        boolean visible = !type.getChildResourceTypes().isEmpty();
+        Canvas canvas = (visible) ? ResourceCompositeSearchView.getChildrenOf(this.inventoryTab
+            .extendLocatorId("ChildrenView"), resourceComposite) : null;
+        updateSubTab(this.inventoryTab, this.inventoryChildren, canvas, visible, true);
+
+        updateSubTab(this.inventoryTab, this.inventoryChildHistory, new Canvas(), visible, true);
+
+        visible = facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION);
+        canvas = (visible) ? new PluginConfigurationEditView(this.inventoryTab.extendLocatorId("PluginConfigView"),
+            resourceComposite) : null;
+        updateSubTab(this.inventoryTab, this.inventoryConn, canvas, visible, true);
+
+        // same test, use above setting for 'visible'
+        canvas = (visible) ? new Canvas() : null; // TODO: Add real canvas when visible
+        updateSubTab(this.inventoryTab, this.inventoryConnHistory, canvas, visible, true);
+
+        boolean canModifyMembership = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
+            .extendLocatorId("GroupsView"), resource.getId(), canModifyMembership), true, true);
+
+        boolean enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        canvas = (enabled) ? new ResourceResourceAgentView(this.inventoryTab.extendLocatorId("AgentView"), resourceId)
+            : null;
+        updateSubTab(this.inventoryTab, this.inventoryAgent, canvas, true, enabled);
+    }
+
+    private void updateAlertsTabContent(ResourceComposite resourceComposite) {
+        updateSubTab(this.alertsTab, this.alertHistory, ResourceAlertHistoryView.get(this.alertHistory
+            .extendLocatorId("View"), resourceComposite), true, true);
+
+        updateSubTab(this.alertsTab, this.alertDef, new ResourceAlertDefinitionsView(alertsTab
+            .extendLocatorId("AlertDefView"), this.resourceComposite), true, true);
+    }
+
+    private void updateMonitoringTabContent(Resource resource, Set<ResourceTypeFacet> facets) {
+        boolean visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
         //canvas = (visible) ? new GraphListView(this.monitoringTab.extendLocatorId("GraphListView"), resource) : null;
-        canvas = (visible) ? new FullHTMLPane(this.monitorGraphs.extendLocatorId("View"),
+        Canvas canvas = (visible) ? new FullHTMLPane(this.monitorGraphs.extendLocatorId("View"),
             "/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
 
@@ -279,39 +324,17 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         canvas = (visible) ? new FullHTMLPane(this.monitorCallTime.extendLocatorId("View"),
             "/rhq/resource/monitor/response-plain.xhtml?id=" + resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorCallTime, canvas, visible, true);
+    }
 
-        // Inventory Tab
-        ResourceType type = this.resourceComposite.getResource().getResourceType();
-        visible = !type.getChildResourceTypes().isEmpty();
-        canvas = (visible) ? ResourceCompositeSearchView.getChildrenOf(this.inventoryTab
-            .extendLocatorId("ChildrenView"), resourceComposite) : null;
-        updateSubTab(this.inventoryTab, this.inventoryChildren, canvas, visible, true);
+    private void updateEventsTabContent(ResourceComposite resourceComposite, Set<ResourceTypeFacet> facets) {
+        if (updateTab(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT), true)) {
 
-        updateSubTab(this.inventoryTab, this.inventoryChildHistory, new Canvas(), visible, true);
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
+                .extendLocatorId("CompositeHistoryView"), resourceComposite), true, true);
+        }
+    }
 
-        visible = facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION);
-        canvas = (visible) ? new PluginConfigurationEditView(this.inventoryTab.extendLocatorId("PluginConfigView"),
-            resourceComposite) : null;
-        updateSubTab(this.inventoryTab, this.inventoryConn, canvas, visible, true);
-
-        // same test, use above setting for 'visible'
-        canvas = (visible) ? new Canvas() : null; // TODO: Add real canvas when visible        
-        updateSubTab(this.inventoryTab, this.inventoryConnHistory, canvas, visible, true);
-
-        updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
-            .extendLocatorId("GroupsView"), resource.getId()), true, true);
-
-        enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
-        canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
-            resourceId) : null;
-        updateSubTab(this.inventoryTab, this.inventoryGroupMembership, canvas, true, enabled);
-
-        //Agent subtab
-        canvas = (enabled) ? new ResourceResourceAgentView(this.inventoryTab.extendLocatorId("AgentView"), resourceId)
-            : null;
-        updateSubTab(this.inventoryTab, this.inventoryAgent, canvas, true, enabled);
-
-        // Operations Tab
+    private void updateOperationsTabContent(Resource resource, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION), true)) {
             // comment out GWT-based operation history until...
             //     1) user can delete history if they possess the appropriate permissions
@@ -319,21 +342,16 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //     3) operation arguments/results become read-only configuration data in the history details pop-up
             //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
-            updateSubTab(this.operationsTab, this.opHistory, OperationHistoryView.getResourceHistoryView(operationsTab
+            updateSubTab(this.operationsTab, this.operationsHistory, new ResourceOperationHistoryListView(operationsTab
                 .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
 
-            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(this.opSched.extendLocatorId("View"),
+            updateSubTab(this.operationsTab, this.operationsSchedule, new FullHTMLPane(this.operationsSchedule.extendLocatorId("View"),
                 "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()), true, true);
         }
+    }
 
-        // Alerts Tab
-        updateSubTab(this.alertsTab, this.alertHistory, ResourceAlertHistoryView.get(this.alertHistory
-            .extendLocatorId("View"), resourceComposite), true, true);
-
-        updateSubTab(this.alertsTab, this.alertDef, new ResourceAlertDefinitionsView(alertsTab
-            .extendLocatorId("AlertDefView"), this.resourceComposite), true, true);
-
-        // Configuration Tab
+    private void updateConfigurationTabContent(ResourceComposite resourceComposite, Resource resource,
+        ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION), resourcePermissions
             .isConfigureRead())) {
 
@@ -343,15 +361,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(this
                 .extendLocatorId("ConfigHistView"), resource.getId()), true, true);
         }
+    }
 
-        // Events Tab
-        if (updateTab(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT), true)) {
-
-            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
-                .extendLocatorId("CompositeHistoryView"), resourceComposite), true, true);
-        }
-
-        // Content Tab
+    private void updateContentTabContent(Resource resource, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT), true)) {
 
             updateSubTab(this.contentTab, this.contentDeployed, new FullHTMLPane(this.contentDeployed
@@ -368,13 +380,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 .extendLocatorId("View"), "/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()), true,
                 true);
         }
-
-        this.show();
-        markForRedraw();
     }
 
     public Integer getSelectedItemId() {
         return this.resourceId;
+    }
+
+    public void addResourceSelectListener(ResourceSelectListener listener) {
+        this.selectListeners.add(listener);
     }
 
     @Override
@@ -388,7 +401,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
         criteria.fetchTags(true);
-        criteria.fetchParentResource(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -422,7 +434,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
                     resourceComposite.getResource().setResourceType(type);
-                    ResourceDetailView.this.resourceComposite = resourceComposite;
                     updateTabContent(resourceComposite);
                     selectTab(getTabName(), getSubTabName(), viewPath);
                 }
@@ -439,4 +450,5 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
         return false;
     }
+
 }

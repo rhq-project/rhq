@@ -208,6 +208,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
+                        TemplateAlertDefinitionsView.this.refresh();
                     }
 
                     @Override
@@ -222,6 +223,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
+                        TemplateAlertDefinitionsView.this.refresh();
                     }
 
                     @Override

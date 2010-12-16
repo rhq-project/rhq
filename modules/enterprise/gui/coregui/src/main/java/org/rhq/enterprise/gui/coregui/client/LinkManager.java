@@ -34,7 +34,15 @@ public class LinkManager {
 
     public static String getResourceLink(int resourceId) {
         if (GWT) {
-            return "#Resource/" + resourceId + "/Summary/Overview";
+            return "#Resource/" + resourceId + "/Summary/Activity";
+        } else {
+            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+        }
+    }
+
+    public static String getResourceTabLink(int resourceId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#Resource/" + resourceId + "/" + tabName + ((null == subTabName) ? "" : ("/" + subTabName));
         } else {
             return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }

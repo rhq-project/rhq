@@ -2,7 +2,7 @@
         version="1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin">
-  
+
    <platform name="myPlatform4">
       <server name="testServer1">
          <metric displayName="One" property="connectionCount1" displayType="detail" />
@@ -14,4 +14,3 @@
       </server>
    </platform>
 </plugin>
-   

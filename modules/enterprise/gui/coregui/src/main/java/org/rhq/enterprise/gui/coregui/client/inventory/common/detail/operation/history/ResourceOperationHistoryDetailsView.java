@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.Date;
 
@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -51,18 +50,18 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 /**
  * @author Greg Hinkle
  */
-public class OperationDetailsView extends LocatableVLayout implements BookmarkableView {
+public class ResourceOperationHistoryDetailsView extends LocatableVLayout implements BookmarkableView {
 
     private OperationDefinition definition;
     private ResourceOperationHistory operationHistory;
 
     private DynamicForm form;
 
-    public OperationDetailsView(String locatorId) {
+    public ResourceOperationHistoryDetailsView(String locatorId) {
         super(locatorId);
     }
 
-    public OperationDetailsView(String locatorId, OperationDefinition definition,
+    public ResourceOperationHistoryDetailsView(String locatorId, OperationDefinition definition,
         ResourceOperationHistory operationHistory) {
         super(locatorId);
 
@@ -139,7 +138,7 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    final Window winModal = new LocatableWindow(OperationDetailsView.this.extendLocatorId("errorWin"));
+                    final Window winModal = new LocatableWindow(ResourceOperationHistoryDetailsView.this.extendLocatorId("errorWin"));
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
                     winModal.setShowMinimizeButton(false);
@@ -158,7 +157,7 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
                         }
                     });
 
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(OperationDetailsView.this
+                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(ResourceOperationHistoryDetailsView.this
                         .extendLocatorId("statusDetailsPane"));
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
@@ -256,4 +255,5 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
         }
         return errMsg;
     }
+    
 }

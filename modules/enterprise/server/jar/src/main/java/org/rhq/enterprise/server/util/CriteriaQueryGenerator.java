@@ -846,7 +846,7 @@ public final class CriteriaQueryGenerator {
 
     public static void testResourceCriteria() {
         ResourceCriteria resourceCriteria = new ResourceCriteria();
-        resourceCriteria.addFilterResourceCategory(ResourceCategory.SERVER);
+        resourceCriteria.addFilterResourceCategories(ResourceCategory.SERVER);
         resourceCriteria.addFilterName("marques");
         resourceCriteria.fetchAgent(true);
         resourceCriteria.addSortResourceTypeName(PageOrdering.ASC);

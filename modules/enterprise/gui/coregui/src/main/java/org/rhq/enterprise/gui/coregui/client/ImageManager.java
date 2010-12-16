@@ -24,6 +24,34 @@ public class ImageManager {
     public static final String IMAGES_DIR = "images/";
 
     /**
+     * Returns a generic "upload" icon.
+     */
+    public static String getUploadIcon() {
+        return "global/upload.png";
+    }
+
+    /**
+     * Returns a generic edit icon.
+     */
+    public static String getEditIcon() {
+        return "[SKIN]/actions/edit.png";
+    }
+
+    /**
+     * Returns a generic approve (aka "ok") icon.
+     */
+    public static String getApproveIcon() {
+        return "[SKIN]/actions/approve.png";
+    }
+
+    /**
+     * Returns a generic cancel icon.
+     */
+    public static String getCancelIcon() {
+        return "[SKIN]/actions/undo.png";
+    }
+
+    /**
      * Returns the operation status icon. If status is null, returns
      * the plain, unbadged, operation icon.
      */

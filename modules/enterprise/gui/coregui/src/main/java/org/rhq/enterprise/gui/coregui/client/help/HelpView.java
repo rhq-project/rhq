@@ -25,9 +25,12 @@ package org.rhq.enterprise.gui.coregui.client.help;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
@@ -35,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * The Help top-level view.
@@ -47,6 +51,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     private static final ViewName SECTION_DOC_VIEW_ID = new ViewName("Documentation", MSG
         .view_helpSection_documentation());
     private static final ViewName SECTION_TUTORIAL_VIEW_ID = new ViewName("Tutorial", MSG.view_helpSection_tutorial());
+    private static ProductInfo PRODUCT_INFO;
 
     public HelpView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -79,7 +84,21 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_docAbout()),
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
-                    AboutModalWindow aboutModalWindow = new AboutModalWindow();
+                    final AboutModalWindow aboutModalWindow = new AboutModalWindow();
+                    if (PRODUCT_INFO == null) {
+                        GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
+                            }
+
+                            public void onSuccess(ProductInfo result) {
+                                PRODUCT_INFO = result;
+                                aboutModalWindow.setTitle(MSG.view_aboutBox_title(PRODUCT_INFO.getFullName()));
+                            }
+                        });
+                    } else {
+                        aboutModalWindow.setTitle(MSG.view_aboutBox_title(PRODUCT_INFO.getFullName()));
+                    }
                     aboutModalWindow.show();
                     return aboutModalWindow;
                 }

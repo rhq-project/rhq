@@ -28,8 +28,7 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -48,7 +47,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Tests around the event subsystem 
+ * Tests around the event subsystem
  * @author Heiko W. Rupp
  */
 public class EventManagerTest extends AbstractEJB3Test {
@@ -56,7 +55,7 @@ public class EventManagerTest extends AbstractEJB3Test {
     EventManagerLocal eventManager;
     EntityManager em;
 
-    @BeforeClass
+    @BeforeMethod
     public void init() {
         try {
             eventManager = LookupUtil.getEventManager();
@@ -91,7 +90,7 @@ public class EventManagerTest extends AbstractEJB3Test {
             em.persist(ev);
             em.flush();
 
-            /* 
+            /*
              * do NOT use addEventData method until this test is refactored to support the fact that
              * insertions made via direct SQL won't be visible to the entity manager in this xaction
              */
@@ -143,7 +142,7 @@ public class EventManagerTest extends AbstractEJB3Test {
             //em.persist(ev);
             //em.flush();
 
-            /* 
+            /*
              * do NOT use addEventData method until this test is refactored to support the fact that
              * insertions made via direct SQL won't be visible to the entity manager in this xaction
              */

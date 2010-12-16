@@ -42,8 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
-    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
-        .view_configurationHistoryList_title());
+    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges",
+        MSG.view_configurationHistoryList_title());
 
     private Integer resourceId;
 
@@ -139,6 +139,11 @@ public class ConfigurationHistoryView extends TableSection {
             }
         });
 
+    }
+
+    @Override
+    protected String getDetailsLinkColumnName() {
+        return FIELD_ID;
     }
 
     @Override

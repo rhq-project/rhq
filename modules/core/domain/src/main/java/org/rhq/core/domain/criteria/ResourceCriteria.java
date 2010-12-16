@@ -52,7 +52,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private String filterDescription;
     private Integer filterResourceTypeId; // needs overrides
     private String filterResourceTypeName; // needs overrides
-    private ResourceCategory filterResourceCategory; // needs overrides
+    private List<ResourceCategory> filterResourceCategories; // needs overrides
     private String filterPluginName; // needs overrides
     private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
@@ -104,7 +104,7 @@ public class ResourceCriteria extends TaggedCriteria {
     public ResourceCriteria() {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
-        filterOverrides.put("resourceCategory", "resourceType.category = ?");
+        filterOverrides.put("resourceCategories", "resourceType.category IN ( ? )");
         filterOverrides.put("pluginName", "resourceType.plugin like ?");
         filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
@@ -172,8 +172,8 @@ public class ResourceCriteria extends TaggedCriteria {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
-    public void addFilterResourceCategory(ResourceCategory filterResourceCategory) {
-        this.filterResourceCategory = filterResourceCategory;
+    public void addFilterResourceCategories(ResourceCategory... filterResourceCategories) {
+        this.filterResourceCategories = CriteriaUtils.getListIgnoringNulls(filterResourceCategories);
     }
 
     public void addFilterPluginName(String filterPluginName) {

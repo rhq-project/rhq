@@ -226,8 +226,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
 
         if (sendToMessageCenter) {
             CoreGUI.getMessageCenter().notify(
-                new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile() + ": " + errorMessage,
-                    Severity.Error));
+                new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile(), errorMessage, Severity.Error));
         }
     }
 

@@ -33,7 +33,7 @@ import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
 
 /**
  * @author Joseph Marques
@@ -43,9 +43,9 @@ public class SavedSearchManager {
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
     private LinkedHashMap<String, SavedSearch> savedSearches = new LinkedHashMap<String, SavedSearch>();
-    private SearchBar searchBar;
+    private AbstractSearchBar searchBar;
 
-    public SavedSearchManager(SearchBar searchBar) {
+    public SavedSearchManager(AbstractSearchBar searchBar) {
         this.searchBar = searchBar;
         load();
     }

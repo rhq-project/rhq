@@ -39,9 +39,10 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
+import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -108,18 +109,20 @@ public class OverviewForm extends EnhancedDynamicForm {
                 }
 
                 public void onSuccess(List<MeasurementDataTrait> result) {
-                    // TODO: Implement this method.
                     for (MeasurementDataTrait trait : result) {
-                        String formId = trait.getName().replaceAll("\\.", "_").replaceAll(" ", "__");
-                        FormItem item = getItem(formId);
-
+                        String formItemId = buildFormItemIdFromTraitDisplayName(trait.getName());
+                        FormItem item = getItem(formItemId);
                         if (item != null) {
-                            setValue(formId, trait.getValue());
+                            setValue(formItemId, trait.getValue());
                         }
                     }
                     markForRedraw();
                 }
             });
+    }
+
+    private static String buildFormItemIdFromTraitDisplayName(String traitName) {
+        return traitName.replaceAll("\\.", "_").replaceAll(" ", "__");
     }
 
     private void buildForm(ResourceType type) {
@@ -131,11 +134,8 @@ public class OverviewForm extends EnhancedDynamicForm {
             }
         }
 
-        Collections.sort(traits, new Comparator<MeasurementDefinition>() {
-            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
-            }
-        });
+        StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
+        StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
 
         List<FormItem> formItems = new ArrayList<FormItem>();
 
@@ -145,6 +145,7 @@ public class OverviewForm extends EnhancedDynamicForm {
             formItems.add(headerItem);
         }
 
+        // Type
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
         typeItem.setTooltip(MSG.view_summaryOverviewForm_label_plugin() + type.getPlugin() + "\n<br>"
             + MSG.view_summaryOverviewForm_label_type() + type.getName());
@@ -154,14 +155,17 @@ public class OverviewForm extends EnhancedDynamicForm {
         final Resource resource = this.resourceComposite.getResource();
         boolean modifiable = this.resourceComposite.getResourcePermission().isInventory();
 
-        final FormItem nameItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        // Name
+        final FormItem nameItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         nameItem.setName("name");
         nameItem.setTitle(MSG.view_summaryOverviewForm_field_name());
         nameItem.setValue(resource.getName());
-        if (nameItem instanceof TogglableTextItem) {
-            TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
-            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newName) {
+        if (nameItem instanceof EditableFormItem) {
+            EditableFormItem togglableNameItem = (EditableFormItem) nameItem;
+            togglableNameItem.setValidators(notEmptyOrNullValidator);
+            togglableNameItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    final String newName = newValue.toString();
                     final String oldName = resource.getName();
                     if (newName.equals(oldName)) {
                         return;
@@ -189,14 +193,17 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
         formItems.add(nameItem);
 
-        final FormItem descriptionItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        // Description
+        final FormItem descriptionItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         descriptionItem.setName("description");
         descriptionItem.setTitle(MSG.view_summaryOverviewForm_field_description());
         descriptionItem.setValue(resource.getDescription());
-        if (descriptionItem instanceof TogglableTextItem) {
-            TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
-            togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newDescription) {
+        if (descriptionItem instanceof EditableFormItem) {
+            EditableFormItem togglableDescriptionItem = (EditableFormItem) descriptionItem;
+            togglableDescriptionItem.setValidators(notNullValidator);
+            togglableDescriptionItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    final String newDescription = newValue.toString();
                     final String oldDescription = resource.getDescription();
                     if (newDescription.equals(oldDescription)) {
                         return;
@@ -226,14 +233,17 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
         formItems.add(descriptionItem);
 
-        final FormItem locationItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        // Location
+        final FormItem locationItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         locationItem.setName("location");
         locationItem.setTitle(MSG.view_summaryOverviewForm_field_location());
         locationItem.setValue(resource.getLocation());
-        if (locationItem instanceof TogglableTextItem) {
-            TogglableTextItem togglableNameItem = (TogglableTextItem) locationItem;
-            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newLocation) {
+        if (locationItem instanceof EditableFormItem) {
+            EditableFormItem togglableLocationItem = (EditableFormItem) locationItem;
+            togglableLocationItem.setValidators(notNullValidator);
+            togglableLocationItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    final String newLocation = newValue.toString();
                     final String oldLocation = resource.getLocation();
                     if (newLocation.equals(oldLocation)) {
                         return;
@@ -261,18 +271,25 @@ public class OverviewForm extends EnhancedDynamicForm {
         }
         formItems.add(locationItem);
 
+        // Version
         StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
+        versionItem.setValue((resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
+            + "</i>");
+        versionItem.setEndRow(true);
         formItems.add(versionItem);
 
-        StaticTextItem parentItem = new StaticTextItem("parent", MSG.view_summaryOverviewForm_field_parent());
-        formItems.add(parentItem);
+        // Traits
+        Collections.sort(traits, new Comparator<MeasurementDefinition>() {
+            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+            }
+        });
 
         for (MeasurementDefinition trait : traits) {
-            String id = trait.getDisplayName().replaceAll("\\.", "_").replaceAll(" ", "__");
-
-            StaticTextItem item = new StaticTextItem(id, trait.getDisplayName());
-            item.setTooltip(trait.getDescription());
-            formItems.add(item);
+            String formItemId = buildFormItemIdFromTraitDisplayName(trait.getDisplayName());
+            StaticTextItem formItem = new StaticTextItem(formItemId, trait.getDisplayName());
+            formItem.setTooltip(trait.getDescription());
+            formItems.add(formItem);
             //            item.setValue("?");
         }
 
@@ -286,17 +303,14 @@ public class OverviewForm extends EnhancedDynamicForm {
         if (!isDisplayCondensed()) {
             formItems.add(new SpacerItem());
         }
-        setItems(formItems.toArray(new FormItem[formItems.size()]));
 
-        setValue("type", type.getName() + " (" + type.getPlugin() + ")");
-        setValue("name", resource.getName());
-        setValue("description", resource.getDescription());
-        setValue("location", resource.getLocation());
-        setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
-            + "</i>");
-        Resource parentResource = this.resourceComposite.getParent();
-        setValue("parent", parentResource != null ? ("<a href=\"#Resource/" + parentResource.getId() + "\">"
-            + parentResource.getName() + "</a>") : "<i>" + MSG.common_label_none() + "</i>");
+        setItems(formItems.toArray(new FormItem[formItems.size()]));
+    }
+
+    public void loadData() {
+        // TODO: Reload the ResourceComposite too.        
+        loadTraitValues();
+        markForRedraw();
     }
 
     public boolean isHeaderEnabled() {

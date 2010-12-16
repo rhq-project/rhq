@@ -3130,6 +3130,14 @@
                 <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="100" />
             </schemaSpec>
 
+            <schemaSpec version="2.92.4">
+                <schema-directSQL>
+                    <statement desc="Add index on measurement data 1d table timestamp">
+                        CREATE INDEX RHQ_MEAS_DATA_1D_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_1D (time_stamp)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
             <schemaSpec version="2.93">
                 <!-- the customizable dashboard storage system -->
 

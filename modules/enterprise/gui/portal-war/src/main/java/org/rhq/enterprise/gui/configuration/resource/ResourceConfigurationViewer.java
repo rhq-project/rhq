@@ -334,4 +334,7 @@ public class ResourceConfigurationViewer {
         return selectedRawUIBean.getContents();
     }
 
+    public Configuration getResourceConfiguration() {
+        return resourceConfiguration;
+    }
 }

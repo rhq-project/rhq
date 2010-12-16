@@ -263,7 +263,7 @@ public class ConfigRenderer extends Renderer {
         // Update member Configurations if this is a group config.
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
+            configurationSetComponent.getConfigurationSet().applyGroupConfigurationForView();
         }
 
         // Now add a new component to the JSF component tree.
@@ -310,7 +310,7 @@ public class ConfigRenderer extends Renderer {
         // ...and from member Configurations if this is a group config.
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
+            configurationSetComponent.getConfigurationSet().applyGroupConfigurationForView();
         }
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property at index " + listIndex
@@ -370,7 +370,7 @@ public class ConfigRenderer extends Renderer {
         // ...and from member Configurations if this is a group config.
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
+            configurationSetComponent.getConfigurationSet().applyGroupConfigurationForView();
         }
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property '" + memberName + "' deleted from map '"

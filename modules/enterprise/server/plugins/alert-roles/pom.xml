@@ -19,7 +19,6 @@
 
     <properties>
         <scm.module.path>modules/enterprise/server/plugins/alert-roles/</scm.module.path>
-        <seam.version>2.1.0.SP1</seam.version>
     </properties>
 
     <dependencies>

@@ -67,18 +67,26 @@ public class ConfigurationSet {
             calculateGroupProperty(childPropertyDefinition, sourceParentPropertyMaps, this.groupConfiguration);
     }
 
-    public void applyGroupConfiguration() {
+    public void applyGroupConfigurationForView() {
+        applyGroupConfiguration(true);
+    }
+
+    public void applyGroupConfigurationForUpdate() {
+        applyGroupConfiguration(false);
+    }
+    
+    private void applyGroupConfiguration(boolean forView) {
         if (this.members.isEmpty())
             return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition
             .getPropertyDefinitions();
-        List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList();
+        List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList<AbstractPropertyMap>();
         for (ConfigurationSetMember member : this.members)
             sourceParentPropertyMaps.add(member.getConfiguration());
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
-            mergeProperty(childPropertyDefinition, sourceParentPropertyMaps, this.groupConfiguration);
+            mergeProperty(childPropertyDefinition, sourceParentPropertyMaps, this.groupConfiguration, forView);
     }
-
+    
     public ConfigurationDefinition getConfigurationDefinition() {
         return configurationDefinition;
     }
@@ -172,8 +180,23 @@ public class ConfigurationSet {
             // Also add it to each of the source config maps that don't already contain it, so that they can be
             // rendered as unset on the propSet page.
             for (AbstractPropertyMap map : sourceParentPropertyMaps) {
-                if (map.get(memberName) == null)
-                    map.put(new PropertySimple(memberName, null));
+                if (map.get(memberName) == null) {
+                    PropertySimple sourceProperty = new PropertySimple(memberName, null);
+                    //ok, this is highly confusing but we have no other way of "marking"
+                    //this kind of property.
+                    //We need to mark the property as not present in the original source map.
+                    //This is different from having an unset value of course.
+                    
+                    //There is no other property on the Property class that we could use for this
+                    //than the override. The confusion here is that the override property is used
+                    //for the exact opposite reason on the target (i.e. the calculated group configuration),
+                    //where it marks the fact that all the properties in the different resource configuration
+                    //are set and have the same value.
+                    //This works, because a member property is never also a calculated one, it can just confuse
+                    //the casual reader of this code ;)
+                    sourceProperty.setOverride(true);
+                    map.put(sourceProperty);
+                }
             }
             Map<String, Integer> valueFrequencies = memberNameValueFrequenciesMap.get(memberName);
             if (valueFrequencies.size() == 1
@@ -187,7 +210,7 @@ public class ConfigurationSet {
     }
 
     private static void mergeProperty(PropertyDefinition propertyDefinition,
-        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap) {
+        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap, boolean forView) {
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             PropertySimple propertySimple = groupParentPropertyMap.getSimple(propertyDefinition.getName());
             if (propertySimple != null && propertySimple.getOverride() != null && propertySimple.getOverride()) {
@@ -212,7 +235,7 @@ public class ConfigurationSet {
             PropertyMap groupPropertyMap = groupParentPropertyMap.getMap(propertyDefinition.getName());
             groupParentPropertyMap.put(groupPropertyMap);
             mergePropertyMap((PropertyDefinitionMap) propertyDefinition, nestedSourceParentPropertyMaps,
-                groupPropertyMap);
+                groupPropertyMap, forView);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
             PropertyDefinition listMemberPropertyDefinition = propertyDefinitionList.getMemberDefinition();
@@ -225,18 +248,18 @@ public class ConfigurationSet {
     }
 
     private static void mergePropertyMap(PropertyDefinitionMap propertyDefinitionMap,
-        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap) {
+        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap, boolean forView) {
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
         if (!childPropertyDefinitions.isEmpty()) {
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
-                mergeProperty(childPropertyDefinition, memberParentPropertyMaps, groupParentPropertyMap);
+                mergeProperty(childPropertyDefinition, memberParentPropertyMaps, groupParentPropertyMap, forView);
         } else {
-            mergeOpenPropertyMap(memberParentPropertyMaps, groupParentPropertyMap);
+            mergeOpenPropertyMap(memberParentPropertyMaps, groupParentPropertyMap, forView);
         }
     }
 
     private static void mergeOpenPropertyMap(List<AbstractPropertyMap> memberParentPropertyMaps,
-        AbstractPropertyMap groupParentPropertyMap) {
+        AbstractPropertyMap groupParentPropertyMap, boolean forView) {
         for (String groupMemberPropertyName : groupParentPropertyMap.getMap().keySet()) {
             PropertySimple groupMemberProperty = groupParentPropertyMap.getSimple(groupMemberPropertyName);
             if (groupMemberProperty != null && groupMemberProperty.getOverride() != null
@@ -249,6 +272,34 @@ public class ConfigurationSet {
                         sourceParentPropertyMap.put(sourcePropertySimple);
                     } else {
                         sourcePropertySimple.setStringValue(groupMemberProperty.getStringValue());
+                    }
+                }
+            } else if (!forView) {
+                //we have a non-homogenic property here and want to update the underlying configurations
+                //for update. This means that we want to erradicate all the open map properties from the 
+                //underlying configs that are not assigned a value in the calculated group config.
+                //this to basically undo the appearance of there being all open map properties defined
+                //in all configurations in each of them. That is needed for the view purposes but leaving
+                //the configs like that will cause new properties with "empty" values introduced in all the
+                //resource configs in the group after update.
+                for (AbstractPropertyMap sourceParentPropertyMap : memberParentPropertyMaps) {
+                    PropertySimple sourcePropertySimple = sourceParentPropertyMap.getSimple(groupMemberPropertyName);
+                    if (sourcePropertySimple == null) {
+                        //there was no such property there - just add it
+                        sourcePropertySimple = new PropertySimple(groupMemberPropertyName, groupMemberProperty
+                            .getStringValue());
+                        sourceParentPropertyMap.put(sourcePropertySimple);
+                    } else {
+                        //the members of open map are marked with override to signify that they have
+                        //not been originally present in the member configuration.
+                        //If this is true and the group property has null value, it means
+                        //that the user has set no value for this property and thus it should
+                        //be removed again from the member config.
+                        if (groupMemberProperty.getStringValue() == null 
+                            && sourcePropertySimple.getOverride() != null && sourcePropertySimple.getOverride()) {
+                            
+                            sourceParentPropertyMap.getMap().remove(sourcePropertySimple.getName());
+                        }
                     }
                 }
             }

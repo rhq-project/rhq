@@ -193,11 +193,6 @@ public class FlexSearchBar extends AbstractSearchBar {
         // presume the enclosing page logic loads results without a button click
     }
 
-    public static native String getUserAgent()
-    /*-{
-        return navigator.userAgent.toLowerCase();
-    }-*/;
-
     public SavedSearchManager getSavedSearchManager() {
         return savedSearchManager;
     }

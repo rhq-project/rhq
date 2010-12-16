@@ -424,21 +424,36 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (value == null) {
             // nothing to do, result is already null
         } else if (type == Integer.class) {
-            int[] intermediates = criteria.getAttributeAsIntArray(paramName);
+            int[] intermediates;
+            if (type.getClass().isArray()) {
+                intermediates = criteria.getAttributeAsIntArray(paramName);
+            } else { // want array return, but only single instance of the type in the request
+                intermediates = new int[] { criteria.getAttributeAsInt(paramName) };
+            }
             resultArray = (S[]) new Integer[intermediates.length];
             int index = 0;
             for (int next : intermediates) {
                 resultArray[index++] = (S) Integer.valueOf(next);
             }
         } else if (type == String.class) {
-            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            String[] intermediates;
+            if (type.getClass().isArray()) {
+                intermediates = criteria.getAttributeAsStringArray(paramName);
+            } else { // want array return, but only single instance of the type in the request
+                intermediates = new String[] { criteria.getAttributeAsString(paramName) };
+            }
             resultArray = (S[]) new String[intermediates.length];
             int index = 0;
             for (String next : intermediates) {
                 resultArray[index++] = (S) next;
             }
         } else if (type.isEnum()) {
-            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            String[] intermediates;
+            if (type.getClass().isArray()) {
+                intermediates = criteria.getAttributeAsStringArray(paramName);
+            } else { // want array return, but only single instance of the type in the request
+                intermediates = new String[] { criteria.getAttributeAsString(paramName) };
+            }
             List<S> buffer = new ArrayList<S>();
             for (String next : intermediates) {
                 buffer.add((S) Enum.valueOf((Class<? extends Enum>) type, next));

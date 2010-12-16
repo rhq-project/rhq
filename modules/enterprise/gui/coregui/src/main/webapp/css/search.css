@@ -61,13 +61,12 @@ div {
 /*
  *
  * search container elements
- *
  */
  
 .searchBarContainer {
   width: 800px;
   position: relative;
-  background-color: rgb(233, 230, 225);
+  background-color: white;
   height: 34px;
   vertical-align: bottom;
   z-index: 999999;
@@ -79,10 +78,7 @@ div {
   left: 5px;
   background-color: white;
   border-style: inset;
-  border-top-color: rgb(222, 222, 222);
-  border-left-color: rgb(222, 222, 222);
-  border-bottom-color: white;
-  border-right-color: white;
+  border-color: gray;
   border-width: 1px 1px 1px 1px;
   padding: 0;
   width: 785px;

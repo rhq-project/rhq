@@ -115,18 +115,20 @@ public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployme
 
         setListGridFields(idField, nameField, descriptionField, bundleVersionField, deployTimeField, statusField);
 
-        setListGridDoubleClickHandler(new DoubleClickHandler() {
-            @Override
-            public void onDoubleClick(DoubleClickEvent event) {
-                ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
-                if (selectedRows != null && selectedRows.length == 1) {
-                    String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
-                    String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
-                    CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId), Integer
-                        .valueOf(selectedVersionId)));
+        if (canManageBundles) {
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
+                        String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
+                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId), Integer
+                            .valueOf(selectedVersionId)));
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 }

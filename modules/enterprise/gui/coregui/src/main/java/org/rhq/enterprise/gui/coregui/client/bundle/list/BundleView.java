@@ -140,6 +140,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 }
             });
         tagEditor.setAutoHeight();
+        tagEditor.setExtraSpace(10);
         return tagEditor;
     }
 
@@ -304,7 +305,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             if (viewPath.getCurrent().getPath().equals("versions")) {
                 if (!viewPath.isEnd()) {
                     // a specific version
-                    BundleVersionView view = new BundleVersionView(extendLocatorId("Version"));
+                    BundleVersionView view = new BundleVersionView(extendLocatorId("Version"), canManageBundles);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

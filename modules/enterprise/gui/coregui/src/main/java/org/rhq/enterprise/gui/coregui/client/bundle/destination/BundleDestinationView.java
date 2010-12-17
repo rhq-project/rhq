@@ -163,6 +163,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 }
             });
         tagEditor.setAutoHeight();
+        tagEditor.setExtraSpace(10);
         return tagEditor;
     }
 

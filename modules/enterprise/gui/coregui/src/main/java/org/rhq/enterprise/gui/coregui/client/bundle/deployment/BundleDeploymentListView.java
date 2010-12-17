@@ -47,8 +47,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployment>> {
 
-    public BundleDeploymentListView(String locatorId, Criteria criteria) {
+    private final boolean canManageBundles;
+
+    public BundleDeploymentListView(String locatorId, Criteria criteria, boolean canManageBundles) {
         super(locatorId, MSG.view_bundle_bundleDeployments(), criteria);
+        this.canManageBundles = canManageBundles;
         setDataSource(new BundleDeploymentDataSource());
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
@@ -70,14 +73,18 @@ public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployme
         deployTimeField.setType(ListGridFieldType.DATE);
         deployTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
 
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord record, int i, int i1) {
-                return "<a href=\""
-                    + LinkManager.getBundleDeploymentLink(record
-                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
-                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">" + String.valueOf(o) + "</a>";
-            }
-        });
+        // only users that are authorized can see deployments
+        if (canManageBundles) {
+            nameField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord record, int i, int i1) {
+                    return "<a href=\""
+                        + LinkManager.getBundleDeploymentLink(record
+                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
+                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">" + String.valueOf(o)
+                        + "</a>";
+                }
+            });
+        }
 
         bundleVersionField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
@@ -116,7 +123,7 @@ public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployme
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
                     String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
-                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(Integer.valueOf(selectedId), Integer
+                    CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId), Integer
                         .valueOf(selectedVersionId)));
                 }
             }

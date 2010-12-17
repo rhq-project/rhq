@@ -169,7 +169,8 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         Criteria criteria = new Criteria();
         criteria.setAttribute("bundleVersionId", version.getId());
 
-        tab.setPane(new BundleDeploymentListView(tab.getLocatorId(), criteria));
+        // TODO: get user perm, if has manage_bundle, pass true
+        tab.setPane(new BundleDeploymentListView(tab.getLocatorId(), criteria, false));
 
         return tab;
     }

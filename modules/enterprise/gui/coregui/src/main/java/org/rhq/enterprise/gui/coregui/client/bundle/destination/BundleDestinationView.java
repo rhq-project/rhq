@@ -197,7 +197,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     private Table createDeploymentsTable() {
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
-        BundleDeploymentListView deployments = new BundleDeploymentListView(extendLocatorId("Deployments"), criteria);
+        BundleDeploymentListView deployments = new BundleDeploymentListView(extendLocatorId("Deployments"), criteria,
+            canManageBundles);
         deployments.setHeight100();
         deployments.setShowResizeBar(true);
         return deployments;

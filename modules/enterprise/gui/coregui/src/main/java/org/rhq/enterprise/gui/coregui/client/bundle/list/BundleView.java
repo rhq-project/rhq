@@ -100,10 +100,10 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             BundleTopView.VIEW_ID.getTitle());
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
         tabs = new LocatableTabSet(getLocatorId());
-        destinationsTab = createDestinationsTab();
         versionsTab = createVersionsTab();
-        tabs.addTab(destinationsTab);
+        destinationsTab = createDestinationsTab();
         tabs.addTab(versionsTab);
+        tabs.addTab(destinationsTab);
 
         addMember(backButton);
         addMember(headerLabel);

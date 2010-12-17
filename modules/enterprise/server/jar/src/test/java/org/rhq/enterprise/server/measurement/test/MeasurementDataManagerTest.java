@@ -22,11 +22,7 @@ import java.util.Date;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Status;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -49,7 +45,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -60,23 +55,18 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
-    private final Log log = LogFactory.getLog(MeasurementDataManagerTest.class);
-
-    private ResourceManagerLocal resourceManager;
     private MeasurementDataManagerLocal measurementDataManager;
     private CallTimeDataManagerLocal callTimeDataManager;
 
     private Subject overlord;
 
     private Resource resource1,resource2;
-    private ResourceType theResourceType;
-    private Agent theAgent;
-    private MeasurementDefinition theDefinition;
+    private MeasurementDefinition definitionCt1;
+    private MeasurementDefinition definitionCt2;
 
     @BeforeMethod
     public void beforeMethod() {
         try {
-            this.resourceManager = LookupUtil.getResourceManager();
             this.measurementDataManager = LookupUtil.getMeasurementDataManager();
             this.callTimeDataManager = LookupUtil.getCallTimeDataManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -96,8 +86,18 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         try {
             setupResources(em);
 
-            MeasurementSchedule schedule1 = resource1.getSchedules().iterator().next();
-            MeasurementSchedule schedule2 = resource2.getSchedules().iterator().next();
+            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1,resource1);
+            em.persist(schedule1);
+            definitionCt1.addSchedule(schedule1);
+            resource1.addSchedule(schedule1);
+
+            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt1,resource2);
+            em.persist(schedule2);
+            definitionCt1.addSchedule(schedule2);
+            resource2.addSchedule(schedule2);
+
+            em.flush();
+
             MeasurementScheduleRequest request1 = new MeasurementScheduleRequest(schedule1);
             MeasurementScheduleRequest request2 = new MeasurementScheduleRequest(schedule2);
 
@@ -113,6 +113,66 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
             measurementDataManager.mergeMeasurementReport(report);
 
+            em.flush();
+
+            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule1.getId(),
+                0,System.currentTimeMillis(),new PageControl());
+            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule2.getId(),
+                0,System.currentTimeMillis(),new PageControl());
+
+            assert list1 != null;
+            assert list2 != null;
+
+            assert list1.size() == 1 : "List 1 returned " + list1.size() + " entries, expected was 1";
+            assert list2.size() == 1 : "List 2 returned " + list2.size() + " entries, expected was 1";
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (em != null) {
+                getTransactionManager().rollback();
+                em.close();
+            }
+        }
+    }
+
+    @Test(enabled = false)
+    public void bz658491OneResource() throws Exception {
+        EntityManager em = beginTx();
+
+        try {
+            setupResources(em);
+
+            MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1,resource1);
+            em.persist(schedule1);
+            definitionCt1.addSchedule(schedule1);
+            resource1.addSchedule(schedule1);
+
+            MeasurementSchedule schedule2 = new MeasurementSchedule(definitionCt2,resource1);
+            em.persist(schedule2);
+            definitionCt1.addSchedule(schedule2);
+            resource2.addSchedule(schedule2);
+
+            em.flush();
+
+            MeasurementScheduleRequest request1 = new MeasurementScheduleRequest(schedule1);
+            MeasurementScheduleRequest request2 = new MeasurementScheduleRequest(schedule2);
+
+            CallTimeData data1 = new CallTimeData(request1);
+            CallTimeData data2 = new CallTimeData(request2);
+
+            data1.addCallData("/foo", new Date(),100);
+            data2.addCallData("/bar", new Date(),200);
+
+            MeasurementReport report = new MeasurementReport();
+            report.addData(data1);
+            report.addData(data2);
+
+            measurementDataManager.mergeMeasurementReport(report);
+
+            em.flush();
 
             PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule1.getId(),
                 0,System.currentTimeMillis(),new PageControl());
@@ -139,23 +199,27 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
 
     /**
-     * Just set up a resource where we can attach the availabilities to
+     * Just set up two resources plus measurement definitions
      *
      * @param  em The EntityManager to use
      *
-     * @return A Resource ready to use
      */
     private void setupResources(EntityManager em) {
-        theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
+        Agent theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
         em.persist(theAgent);
 
-        theResourceType = new ResourceType("test-plat", "test-plugin", ResourceCategory.PLATFORM, null);
+        ResourceType theResourceType = new ResourceType("test-plat", "test-plugin", ResourceCategory.PLATFORM, null);
         em.persist(theResourceType);
 
-        theDefinition = new MeasurementDefinition("CT-Def", MeasurementCategory.PERFORMANCE,
+        definitionCt1 = new MeasurementDefinition("CT-Def1", MeasurementCategory.PERFORMANCE,
             MeasurementUnits.MILLISECONDS, DataType.CALLTIME,true,60000, DisplayType.SUMMARY);
-        theDefinition.setResourceType(theResourceType);
-        em.persist(theDefinition);
+        definitionCt1.setResourceType(theResourceType);
+        em.persist(definitionCt1);
+
+        definitionCt2 = new MeasurementDefinition("CT-Def2", MeasurementCategory.PERFORMANCE,
+            MeasurementUnits.MILLISECONDS, DataType.CALLTIME,true,60000, DisplayType.SUMMARY);
+        definitionCt2.setResourceType(theResourceType);
+        em.persist(definitionCt2);
 
 
         resource1 = new Resource("test-platform-key1", "test-platform-name", theResourceType);
@@ -166,18 +230,6 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         resource2.setUuid("" + new Random().nextInt());
         resource2.setAgent(theAgent);
         em.persist(resource2);
-
-        MeasurementSchedule schedule1 = new MeasurementSchedule(theDefinition,resource1);
-        em.persist(schedule1);
-        theDefinition.addSchedule(schedule1);
-        resource1.addSchedule(schedule1);
-
-        MeasurementSchedule schedule2 = new MeasurementSchedule(theDefinition,resource2);
-        em.persist(schedule2);
-        theDefinition.addSchedule(schedule2);
-        resource2.addSchedule(schedule2);
-
-        em.flush();
     }
 
     private EntityManager beginTx() throws Exception {
@@ -185,5 +237,4 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
         return em;
     }
-
 }

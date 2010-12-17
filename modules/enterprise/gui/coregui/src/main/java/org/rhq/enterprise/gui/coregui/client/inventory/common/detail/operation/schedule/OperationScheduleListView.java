@@ -58,7 +58,7 @@ public abstract class OperationScheduleListView extends TableSection<OperationSc
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                // TODO: wizard or details view
+                newDetails();
             }
         });
 

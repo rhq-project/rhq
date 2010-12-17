@@ -22,8 +22,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.ResourceOperationScheduleDetailsView;
 
 /**
  * @author Ian Springer
@@ -35,7 +35,7 @@ public class ResourceOperationScheduleListView extends OperationScheduleListView
     private ResourceComposite resourceComposite;
 
     public ResourceOperationScheduleListView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite.getResource().getId()), TITLE);
+        super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite), TITLE);
         this.resourceComposite = resourceComposite;
     }
 
@@ -45,8 +45,9 @@ public class ResourceOperationScheduleListView extends OperationScheduleListView
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
-        return new Canvas(); // TODO
+    public Canvas getDetailsView(int scheduleId) {
+        return new ResourceOperationScheduleDetailsView(extendLocatorId("DetailsView"), 
+            this.resourceComposite, scheduleId);
     }
 
 }

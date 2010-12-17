@@ -347,8 +347,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.operationsTab, this.operationsHistory, new ResourceOperationHistoryListView(operationsTab
                 .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
 
-            updateSubTab(this.operationsTab, this.operationsSchedule,new ResourceOperationScheduleListView(operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), 
-                true, true);
+            updateSubTab(this.operationsTab, this.operationsSchedule,new ResourceOperationScheduleListView(
+                operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), true, true);
         }
     }
 

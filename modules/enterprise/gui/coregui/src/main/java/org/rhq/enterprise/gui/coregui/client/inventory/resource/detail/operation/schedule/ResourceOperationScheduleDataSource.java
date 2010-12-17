@@ -28,6 +28,7 @@ import com.smartgwt.client.data.Record;
 
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
 
 /**
@@ -37,10 +38,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.s
  */
 public class ResourceOperationScheduleDataSource extends OperationScheduleDataSource<ResourceOperationSchedule> {
 
-    private int resourceId;
+    private ResourceComposite resourceComposite;
 
-    public ResourceOperationScheduleDataSource(int resourceId) {
-        this.resourceId = resourceId;
+    public ResourceOperationScheduleDataSource(ResourceComposite resourceComposite) {
+        super(resourceComposite.getResource().getResourceType());
+        this.resourceComposite = resourceComposite;
     }
 
     @Override
@@ -50,7 +52,7 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        operationService.findScheduledResourceOperations(this.resourceId,
+        operationService.findScheduledResourceOperations(this.resourceComposite.getResource().getId(),
             new AsyncCallback<List<ResourceOperationSchedule>>() {
                 public void onSuccess(List<ResourceOperationSchedule> result) {
                     Record[] records = buildRecords(result);
@@ -59,8 +61,8 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
                 }
 
                 public void onFailure(Throwable caught) {
-                    throw new RuntimeException("Failed to find scheduled operations for Resource with id ["
-                        + resourceId + "].", caught);
+                    throw new RuntimeException("Failed to find scheduled operations for "
+                        + resourceComposite.getResource() + ".", caught);
                 }
         });
     }

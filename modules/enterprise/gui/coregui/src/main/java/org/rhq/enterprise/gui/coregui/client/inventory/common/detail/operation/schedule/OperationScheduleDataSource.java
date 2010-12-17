@@ -19,7 +19,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
@@ -30,7 +32,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.bean.OperationSchedule;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -38,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Ian Springer
  */
-public abstract class OperationScheduleDataSource<T extends OperationSchedule> extends RPCDataSource<T> {
+public abstract class OperationScheduleDataSource<T extends OperationSchedule> extends RPCDataSource<T> {    
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -54,8 +58,11 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
 
     protected OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
-    public OperationScheduleDataSource() {
+    private ResourceType resourceType;
+
+    public OperationScheduleDataSource(ResourceType resourceType) {
         super();
+        this.resourceType = resourceType;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -70,13 +77,24 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         idField.setCanEdit(false);
         fields.add(idField);               
 
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation", null, 100, true);
+        fields.add(operationNameField);
+
         DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null, 100, true);
         fields.add(operationDisplayNameField);
 
+        Set<OperationDefinition> operationDefinitions = this.resourceType.getOperationDefinitions();
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+        for (OperationDefinition operationDefinition : operationDefinitions) {
+            valueMap.put(operationDefinition.getName(), operationDefinition.getDisplayName());
+        }
+        operationNameField.setValueMap(valueMap);
+
         DataSourceTextField subjectField = createTextField(Field.SUBJECT, "Owner", null, 100, true);
+        subjectField.setCanEdit(false);
         fields.add(subjectField);
 
-        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, "Description", null, 100, true);
+        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, "Notes", null, 100, false);
         fields.add(descriptionField);
 
         DataSourceTextField jobTriggerField = createTextField(Field.JOB_TRIGGER, "Schedule", null, 100, true);

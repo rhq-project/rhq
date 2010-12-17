@@ -53,7 +53,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -311,17 +310,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                                 }
 
                                 public void onSuccess(PageList<BundleResourceDeployment> result) {
-
                                     deployment.setResourceDeployments(result);
-
-                                    viewPath.getViewForIndex(2).getBreadcrumbs().set(0,
-                                        new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
-                                    viewId.getBreadcrumbs().set(0,
-                                        new Breadcrumb(String.valueOf(deployment.getId()), deployment.getName()));
-                                    CoreGUI.refreshBreadCrumbTrail();
-
                                     viewBundleDeployment(deployment, viewPath.getCurrent());
-
                                 }
                             });
 

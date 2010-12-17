@@ -85,7 +85,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /**
-     * A pattern that can be used for Datasource subclassing.  Each subclass can add it's own fields prior to
+     * A pattern that can be used for Datasource subclassing.  Each subclass can add its own fields prior to
      * all of the fields being added to the datasource. 
      */
     protected List<DataSourceField> addDataSourceFields() {

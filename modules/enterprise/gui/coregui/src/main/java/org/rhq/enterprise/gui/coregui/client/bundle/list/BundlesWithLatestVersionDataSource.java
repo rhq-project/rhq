@@ -25,15 +25,13 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceLinkField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -43,37 +41,19 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWithLatestVersionComposite> {
 
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_NAMELINK = "namelink";
+    public static final String FIELD_DESCRIPTION = "description";
+    public static final String FIELD_LATEST_VERSION = "latestVersion";
+    public static final String FIELD_VERSIONS_COUNT = "versionsCount";
+
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundlesWithLatestVersionDataSource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
-    }
-
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        List<DataSourceField> fields = super.addDataSourceFields();
-
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
-        idField.setPrimaryKey(true);
-        fields.add(idField);
-
-        DataSourceLinkField linkField = new DataSourceLinkField("link", MSG.common_title_name());
-        fields.add(linkField);
-
-        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
-        fields.add(descriptionField);
-
-        DataSourceTextField latestVersionField = new DataSourceTextField("latestVersion", MSG
-            .view_bundle_latestVersion());
-        fields.add(latestVersionField);
-
-        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("versionsCount", MSG
-            .view_bundle_list_versionsCount());
-        fields.add(deploymentCountField);
-
-        return fields;
     }
 
     @Override
@@ -112,29 +92,22 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
 
     @Override
     public BundleWithLatestVersionComposite copyValues(Record from) {
-        Integer idAttrib = from.getAttributeAsInt("id");
-        String nameAttrib = from.getAttribute("name");
-        String descriptionAttrib = from.getAttribute("description");
-        String latestVersionAttrib = from.getAttribute("latestVersion");
-        Integer versionsCountAttrib = from.getAttributeAsInt("versionsCount");
-
-        return new BundleWithLatestVersionComposite(idAttrib, nameAttrib, descriptionAttrib, latestVersionAttrib,
-            versionsCountAttrib.longValue());
+        return (BundleWithLatestVersionComposite) from.getAttributeAsObject("object");
     }
 
     @Override
     public ListGridRecord copyValues(BundleWithLatestVersionComposite from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute("id", from.getBundleId());
-        record.setAttribute("name", from.getBundleName());
+        record.setAttribute(FIELD_ID, from.getBundleId());
+        record.setAttribute(FIELD_NAME, from.getBundleName());
 
-        record.setAttribute("link", "#Bundles/Bundle/" + from.getBundleId());
+        record.setAttribute(FIELD_NAMELINK, LinkManager.getBundleLink(from.getBundleId()));
         record.setLinkText(from.getBundleName());
 
-        record.setAttribute("description", from.getBundleDescription());
-        record.setAttribute("latestVersion", from.getLatestVersion());
-        record.setAttribute("versionsCount", Integer.valueOf(from.getVersionsCount().intValue())); // want int, not long
+        record.setAttribute(FIELD_DESCRIPTION, from.getBundleDescription());
+        record.setAttribute(FIELD_LATEST_VERSION, from.getLatestVersion());
+        record.setAttribute(FIELD_VERSIONS_COUNT, Integer.valueOf(from.getVersionsCount().intValue())); // want int, not long
 
         record.setAttribute("object", from);
 

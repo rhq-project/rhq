@@ -49,6 +49,19 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class BundleDestinationDataSource extends RPCDataSource<BundleDestination> {
 
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_DESCRIPTION = "description";
+    public static final String FIELD_BUNDLE_ID = "bundleId";
+    public static final String FIELD_BUNDLE_NAME = "bundleName";
+    public static final String FIELD_GROUP_ID = "groupId";
+    public static final String FIELD_GROUP_NAME = "groupName";
+    public static final String FIELD_DEPLOY_DIR = "deployDir";
+    public static final String FIELD_LATEST_DEPLOY_VERSION = "latestDeploymentVersion";
+    public static final String FIELD_LATEST_DEPLOY_DATE = "latestDeploymentDate";
+    public static final String FIELD_LATEST_DEPLOY_STATUS = "latestDeploymentStatus";
+    public static final String FIELD_LATEST_DEPLOY = "latestDeployment";
+
     public BundleDestinationDataSource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
@@ -59,34 +72,34 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
+        DataSourceIntegerField idField = new DataSourceIntegerField(FIELD_ID, MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField name = new DataSourceTextField("name", MSG.common_title_name());
+        DataSourceTextField name = new DataSourceTextField(FIELD_NAME, MSG.common_title_name());
         fields.add(name);
 
-        DataSourceTextField description = new DataSourceTextField("description", MSG.common_title_description());
+        DataSourceTextField description = new DataSourceTextField(FIELD_DESCRIPTION, MSG.common_title_description());
         fields.add(description);
 
-        DataSourceTextField bundle = new DataSourceTextField("bundleName", MSG.view_bundle_bundle());
+        DataSourceTextField bundle = new DataSourceTextField(FIELD_BUNDLE_NAME, MSG.view_bundle_bundle());
         fields.add(bundle);
 
-        DataSourceTextField group = new DataSourceTextField("groupName", MSG.view_bundle_dest_group());
+        DataSourceTextField group = new DataSourceTextField(FIELD_GROUP_NAME, MSG.view_bundle_dest_group());
         fields.add(group);
 
-        DataSourceTextField deployDir = new DataSourceTextField("deployDir", MSG.view_bundle_dest_deployDir());
+        DataSourceTextField deployDir = new DataSourceTextField(FIELD_DEPLOY_DIR, MSG.view_bundle_dest_deployDir());
         fields.add(deployDir);
 
-        DataSourceTextField latestDeploymentVersion = new DataSourceTextField("latestDeploymentVersion", MSG
+        DataSourceTextField latestDeploymentVersion = new DataSourceTextField(FIELD_LATEST_DEPLOY_VERSION, MSG
             .view_bundle_dest_lastDeployedVersion());
         fields.add(latestDeploymentVersion);
 
-        DataSourceTextField latestDeploymentDate = new DataSourceTextField("latestDeploymentDate", MSG
+        DataSourceTextField latestDeploymentDate = new DataSourceTextField(FIELD_LATEST_DEPLOY_DATE, MSG
             .view_bundle_dest_lastDeploymentDate());
         fields.add(latestDeploymentDate);
 
-        DataSourceTextField latestDeploymentStatus = new DataSourceTextField("latestDeploymentStatus", MSG
+        DataSourceTextField latestDeploymentStatus = new DataSourceTextField(FIELD_LATEST_DEPLOY_STATUS, MSG
             .view_bundle_dest_lastDeploymentStatus());
         fields.add(latestDeploymentStatus);
 
@@ -97,8 +110,8 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         BundleDestinationCriteria criteria = new BundleDestinationCriteria();
 
-        if (request.getCriteria().getValues().containsKey("bundleId")) {
-            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString("bundleId")));
+        if (request.getCriteria().getValues().containsKey(FIELD_BUNDLE_ID)) {
+            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString(FIELD_BUNDLE_ID)));
         }
 
         if (request.getCriteria().getValues().get("tagNamespace") != null) {
@@ -125,11 +138,10 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
                 }
 
                 public void onSuccess(final PageList<BundleDestination> result) {
-
                     BundleVersionCriteria versionCriteria = new BundleVersionCriteria();
-                    if (request.getCriteria().getValues().containsKey("bundleId")) {
+                    if (request.getCriteria().getValues().containsKey(FIELD_BUNDLE_ID)) {
                         versionCriteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString(
-                            "bundleId")));
+                            FIELD_BUNDLE_ID)));
                     }
                     GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(versionCriteria,
                         new AsyncCallback<PageList<BundleVersion>>() {
@@ -139,11 +151,8 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
                             }
 
                             public void onSuccess(PageList<BundleVersion> versions) {
-
                                 for (BundleDestination dest : result) {
-
                                     for (BundleDeployment dep : dest.getDeployments()) {
-
                                         for (BundleVersion version : versions) {
                                             if (dep.getBundleVersion().getId() == version.getId()) {
                                                 dep.setBundleVersion(version);
@@ -151,10 +160,8 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
                                         }
                                     }
                                 }
-
                                 response.setData(buildRecords(result));
                                 processResponse(request.getRequestId(), response);
-
                             }
                         });
                 }
@@ -163,35 +170,32 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
 
     @Override
     public BundleDestination copyValues(Record from) {
-        return null;
+        return (BundleDestination) from.getAttributeAsObject("object");
     }
 
     @Override
     public ListGridRecord copyValues(BundleDestination from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute("id", from.getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("description", from.getDescription());
-        record.setAttribute("bundleId", from.getBundle().getId());
-        record.setAttribute("bundleName", from.getBundle().getName());
+        record.setAttribute(FIELD_ID, from.getId());
+        record.setAttribute(FIELD_NAME, from.getName());
+        record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
+        record.setAttribute(FIELD_BUNDLE_ID, from.getBundle().getId());
+        record.setAttribute(FIELD_BUNDLE_NAME, from.getBundle().getName());
+        record.setAttribute(FIELD_GROUP_ID, from.getGroup().getId());
+        record.setAttribute(FIELD_GROUP_NAME, from.getGroup().getName());
+        record.setAttribute(FIELD_DEPLOY_DIR, from.getDeployDir());
 
-        record.setAttribute("groupId", from.getGroup().getId());
-        record.setAttribute("groupName", from.getGroup().getName());
-
-        record.setAttribute("deployDir", from.getDeployDir());
-        record.setAttribute("entity", from);
+        record.setAttribute("object", from);
 
         long last = 0;
         for (BundleDeployment dep : from.getDeployments()) {
             if (last < dep.getCtime()) {
                 last = dep.getCtime();
-
-                record.setAttribute("latestDeployment", dep);
-                record.setAttribute("latestDeploymentVersion", dep.getBundleVersion().getVersion());
-                record.setAttribute("latestDeploymentDate", new Date(dep.getCtime()));
-                record.setAttribute("latestDeploymentStatus", dep.getStatus().name());
-
+                record.setAttribute(FIELD_LATEST_DEPLOY, dep);
+                record.setAttribute(FIELD_LATEST_DEPLOY_VERSION, dep.getBundleVersion().getVersion());
+                record.setAttribute(FIELD_LATEST_DEPLOY_DATE, new Date(dep.getCtime()));
+                record.setAttribute(FIELD_LATEST_DEPLOY_STATUS, dep.getStatus().name());
             }
         }
 

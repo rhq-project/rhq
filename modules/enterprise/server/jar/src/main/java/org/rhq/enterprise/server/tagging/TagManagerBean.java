@@ -69,12 +69,8 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
     private AuthorizationManagerLocal authorizationManager;
 
     public PageList<Tag> findTagsByCriteria(Subject subject, TagCriteria criteria) {
-
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<Tag> queryRunner = new CriteriaQueryRunner<Tag>(criteria, generator, entityManager);
-
         return queryRunner.execute();
     }
 
@@ -145,8 +141,7 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    // todo verify
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void updateBundleTags(Subject subject, int bundleId, Set<Tag> tags) {
 
         Set<Tag> definedTags = addTags(subject, tags);
@@ -163,8 +158,7 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    // todo verify
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void updateBundleVersionTags(Subject subject, int bundleVersionId, Set<Tag> tags) {
 
         Set<Tag> definedTags = addTags(subject, tags);
@@ -181,8 +175,7 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    // todo verify
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void updateBundleDeploymentTags(Subject subject, int bundleDeploymentId, Set<Tag> tags) {
 
         Set<Tag> definedTags = addTags(subject, tags);
@@ -199,8 +192,7 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    // todo verify
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags) {
 
         Set<Tag> definedTags = addTags(subject, tags);

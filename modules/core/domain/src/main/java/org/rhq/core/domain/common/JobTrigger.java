@@ -19,6 +19,7 @@
  */
 package org.rhq.core.domain.common;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -28,7 +29,9 @@ import java.util.Date;
  *
  * @author Ian Springer
  */
-public class Trigger {
+public class JobTrigger implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     // Together, the startType, recurrenceType, and endType define what type of trigger this is.
     // For the remaining fields in this class, only those that apply to the trigger's type will have non-null values.
@@ -125,13 +128,29 @@ public class Trigger {
         return repeatCount;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Trigger");
+        sb.append("[cronExpression='").append(cronExpression).append('\'');
+        sb.append(", startType=").append(startType);
+        sb.append(", recurrenceType=").append(recurrenceType);
+        sb.append(", endType=").append(endType);
+        sb.append(", startDate=").append(startDate);
+        sb.append(", repeatInterval=").append(repeatInterval);
+        sb.append(", endDate=").append(endDate);
+        sb.append(", repeatCount=").append(repeatCount);
+        sb.append(']');
+        return sb.toString();
+    }
+
     /**
      * Create a trigger that will run now, once.
      *
      * @return a trigger that will run now, once
      */
-    public static Trigger createNowTrigger() {
-        return new Trigger();
+    public static JobTrigger createNowTrigger() {
+        return new JobTrigger();
     }
 
     /**
@@ -139,8 +158,8 @@ public class Trigger {
      *
      * @return a trigger that will run now and repeat on interval indefinitely
      */
-    public static Trigger createNowAndRepeatTrigger(long repeatInterval) {        
-        return new Trigger(repeatInterval);
+    public static JobTrigger createNowAndRepeatTrigger(long repeatInterval) {
+        return new JobTrigger(repeatInterval);
     }
 
     /**
@@ -148,8 +167,8 @@ public class Trigger {
      *
      * @return a trigger that will run now and repeat on interval until end date/time
      */
-    public static Trigger createNowAndRepeatTrigger(long repeatInterval, Date endDate) {
-        return new Trigger(repeatInterval, endDate);
+    public static JobTrigger createNowAndRepeatTrigger(long repeatInterval, Date endDate) {
+        return new JobTrigger(repeatInterval, endDate);
     }
 
     /**
@@ -157,8 +176,8 @@ public class Trigger {
      *
      * @return a trigger that will run now and repeat on interval n times
      */
-    public static Trigger createNowAndRepeatTrigger(long repeatInterval, int repeatCount) {
-        return new Trigger(repeatInterval, repeatCount);
+    public static JobTrigger createNowAndRepeatTrigger(long repeatInterval, int repeatCount) {
+        return new JobTrigger(repeatInterval, repeatCount);
     }
 
     /**
@@ -166,8 +185,8 @@ public class Trigger {
      *
      * @return a trigger that will run at specified date/time, once
      */
-    public static Trigger createLaterTrigger(Date startDate) {
-        return new Trigger(startDate);
+    public static JobTrigger createLaterTrigger(Date startDate) {
+        return new JobTrigger(startDate);
     }
 
     /**
@@ -175,8 +194,8 @@ public class Trigger {
      *
      * @return a trigger that will run at specified date/time and then repeat on interval indefinitely
      */
-    public static Trigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval) {
-        return new Trigger(startDate, repeatInterval);
+    public static JobTrigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval) {
+        return new JobTrigger(startDate, repeatInterval);
     }
 
     /**
@@ -184,8 +203,8 @@ public class Trigger {
      *
      * @return a trigger that will run at specified date/time and then repeat on interval until end date/time
      */
-    public static Trigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval, Date endDate) {
-        return new Trigger(startDate, repeatInterval, endDate);
+    public static JobTrigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval, Date endDate) {
+        return new JobTrigger(startDate, repeatInterval, endDate);
     }
 
     /**
@@ -193,8 +212,8 @@ public class Trigger {
      *
      * @return a trigger that will run at specified date/time and then repeat on interval n times
      */
-    public static Trigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval, int repeatCount) {
-        return new Trigger(startDate, repeatInterval, repeatCount);
+    public static JobTrigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval, int repeatCount) {
+        return new JobTrigger(startDate, repeatInterval, repeatCount);
     }
 
     /**
@@ -204,58 +223,58 @@ public class Trigger {
      *
      * @return a trigger that will run on the schedule specified by a cron expression
      */
-    public static Trigger createCronTrigger(String cronExpression) {
-        return new Trigger(cronExpression);
+    public static JobTrigger createCronTrigger(String cronExpression) {
+        return new JobTrigger(cronExpression);
     }
 
 
-    private Trigger(StartType startType, RecurrenceType recurrenceType, EndType endType) {
+    private JobTrigger(StartType startType, RecurrenceType recurrenceType, EndType endType) {
         this.startType = startType;
         this.recurrenceType = recurrenceType;
         this.endType = endType;
     }
 
     // run now, once
-    private Trigger() {
+    private JobTrigger() {
         this(StartType.NOW, RecurrenceType.NONE, null);
     }
 
     // run now and repeat on interval indefinitely
-    private Trigger(long repeatInterval) {
+    private JobTrigger(long repeatInterval) {
         this(StartType.NOW, RecurrenceType.REPEAT_INTERVAL, EndType.REPEAT_COUNT);
         this.repeatInterval = repeatInterval;
     }
 
     // run now and repeat on interval until end date/time
-    private Trigger(long repeatInterval, Date endDate) {
+    private JobTrigger(long repeatInterval, Date endDate) {
         this(StartType.NOW, RecurrenceType.REPEAT_INTERVAL, EndType.DATETIME);
         this.repeatInterval = repeatInterval;
         this.endDate = endDate;
     }
 
     // run now and repeat on interval n times
-    private Trigger(long repeatInterval, int repeatCount) {
+    private JobTrigger(long repeatInterval, int repeatCount) {
         this(StartType.NOW, RecurrenceType.REPEAT_INTERVAL, EndType.REPEAT_COUNT);
         this.repeatInterval = repeatInterval;
         this.repeatCount = repeatCount;
     }
 
     // run at specified date/time, once
-    private Trigger(Date startDate) {
+    private JobTrigger(Date startDate) {
         this(StartType.DATETIME, RecurrenceType.NONE, EndType.REPEAT_COUNT);
         this.startDate = startDate;
         this.repeatCount = 1;
     }
 
     // run at specified date/time and then repeat on interval indefinitely
-    private Trigger(Date startDate, long repeatInterval) {
+    private JobTrigger(Date startDate, long repeatInterval) {
         this(StartType.DATETIME, RecurrenceType.REPEAT_INTERVAL, EndType.NEVER);
         this.startDate = startDate;
         this.repeatInterval = repeatInterval;
     }
 
     // run at specified date/time and then repeat on interval until end date/time
-    private Trigger(Date startDate, long repeatInterval, Date endDate) {
+    private JobTrigger(Date startDate, long repeatInterval, Date endDate) {
         this(StartType.DATETIME, RecurrenceType.REPEAT_INTERVAL, EndType.DATETIME);
         this.startDate = startDate;
         this.repeatInterval = repeatInterval;
@@ -263,7 +282,7 @@ public class Trigger {
     }
 
     // run at specified date/time and then repeat on interval n times
-    private Trigger(Date startDate, long repeatInterval, int repeatCount) {
+    private JobTrigger(Date startDate, long repeatInterval, int repeatCount) {
         this(StartType.DATETIME, RecurrenceType.REPEAT_INTERVAL, EndType.REPEAT_COUNT);
         this.startDate = startDate;
         this.repeatInterval = repeatInterval;
@@ -271,7 +290,7 @@ public class Trigger {
     }
 
     // run on the schedule specified by cron expression
-    private Trigger(String cronExpression) {
+    private JobTrigger(String cronExpression) {
         this(StartType.NOW, RecurrenceType.CRON_EXPRESSION, EndType.NEVER);
         this.cronExpression = cronExpression;
     }

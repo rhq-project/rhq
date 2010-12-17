@@ -88,6 +88,16 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
+        if (request.getCriteria().getValues().get("bundleType") != null) {
+            criteria.addFilterBundleTypeId(Integer.valueOf(request.getCriteria().getValues().get("bundleType")
+                .toString()));
+        }
+
+        // TODO: this doesn't work like I think it should, figure out how to search on the name column 
+        // if (request.getCriteria().getValues().get("search") != null) {
+        //       criteria.setSearchExpression(request.getCriteria().getValues().get("search").toString());
+        // }
+
         bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
@@ -106,7 +116,7 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
 
     @Override
     public Bundle copyValues(Record from) {
-        return null; // TODO: Implement this method.
+        return (Bundle) from.getAttributeAsObject("object");
     }
 
     @Override

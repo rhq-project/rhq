@@ -47,7 +47,8 @@ import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -66,7 +67,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
     private String basePath;
-    private ViewId viewId;
 
     // editable form
     private TextItem id;
@@ -207,14 +207,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         recursive.show();
         expression.show();
         recalculationInterval.show();
-
-        if (groupDefinitionId == 0) {
-            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_dynagroup_newGroupDefinition());
-        } else {
-            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_dynagroup_editing(name.getValue().toString()));
-        }
-        CoreGUI.refreshBreadCrumbTrail();
-
         markForRedraw();
     }
 
@@ -334,31 +326,23 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     @Override
     public void renderView(final ViewPath viewPath) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permUnknown(), caught);
-                handleAuthorizationFailure();
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null && permissions.contains(Permission.MANAGE_INVENTORY)) {
+                    groupDefinitionId = viewPath.getCurrentAsInt();
+                    basePath = viewPath.getPathToCurrent();
+                    lookupDetails(groupDefinitionId);
+                } else {
+                    handleAuthorizationFailure();
+                }
             }
 
             private void handleAuthorizationFailure() {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permDenied());
                 History.back();
             }
-
-            @Override
-            public void onSuccess(Set<Permission> result) {
-                if (result.contains(Permission.MANAGE_INVENTORY) == false) {
-                    handleAuthorizationFailure();
-                } else {
-                    groupDefinitionId = viewPath.getCurrentAsInt();
-                    viewId = viewPath.getCurrent();
-                    basePath = viewPath.getPathToCurrent();
-                    lookupDetails(groupDefinitionId);
-                }
-            }
         });
-
     }
 
 }

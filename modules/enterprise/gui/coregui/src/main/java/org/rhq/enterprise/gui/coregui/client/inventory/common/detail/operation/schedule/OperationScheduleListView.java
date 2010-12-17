@@ -28,15 +28,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 /**
  * @author Ian Springer
  */
-public abstract class OperationScheduleListView extends TableSection<OperationScheduleCompositeDataSource> {
+public abstract class OperationScheduleListView extends TableSection<OperationScheduleDataSource> {    
 
-    private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
-
-    public OperationScheduleListView(String locatorId, OperationScheduleCompositeDataSource dataSource, String title) {
+    public OperationScheduleListView(String locatorId, OperationScheduleDataSource dataSource, String title) {
         super(locatorId, title);
 
         setDataSource(dataSource);
-        setHeaderIcon(HEADER_ICON);
     }
 
     protected abstract boolean hasControlPermission();
@@ -45,11 +42,15 @@ public abstract class OperationScheduleListView extends TableSection<OperationSc
     protected void configureTable() {
         super.configureTable();
 
-        ListGridField nameField = new ListGridField(OperationScheduleCompositeDataSource.Field.OPERATION_NAME, 150);
+        ListGridField operationField = new ListGridField(OperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 150);
 
-        ListGridField nextFireTimeField = new ListGridField(OperationScheduleCompositeDataSource.Field.OPERATION_NEXT_FIRE_TIME);
+        //ListGridField subjectField = new ListGridField(OperationScheduleDataSource.Field.SUBJECT, 150);
 
-        setListGridFields(nameField, nextFireTimeField);
+        //ListGridField jobTriggerField = new ListGridField(OperationScheduleDataSource.Field.JOB_TRIGGER, 300);
+
+        ListGridField descriptionField = new ListGridField(OperationScheduleDataSource.Field.DESCRIPTION);
+
+        setListGridFields(operationField, descriptionField);
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {

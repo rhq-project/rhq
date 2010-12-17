@@ -44,7 +44,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.gwt.AuthorizationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 
@@ -65,7 +66,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-    private AuthorizationGWTServiceAsync authorizationService = GWTServiceLookup.getAuthorizationService();
+    private PermissionsLoader permissionsLoader = new PermissionsLoader();
     private TreeGrid dataContainerReference = null;
     private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;
 
@@ -141,40 +142,40 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         }
 
         //determine if has manage inventory perms, if so then chain and proceed with getting discovered resources
-        authorizationService.getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
-            public void onSuccess(Set<Permission> globalPermissions) {
-                Boolean accessGranted = globalPermissions.contains(MANAGE_INVENTORY);
-                if (accessGranted) {
-                    if (dataContainerReference != null) {
-                        dataContainerReference.setEmptyMessage(EMPTY_MESSAGE);
-                    }
-                    resourceService.getQueuedPlatformsAndServers(statuses, pc,
-                        new AsyncCallback<Map<Resource, List<Resource>>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
-                            }
+        permissionsLoader.loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            @Override
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    Boolean accessGranted = permissions.contains(MANAGE_INVENTORY);
+                    if (accessGranted) {
+                        if (dataContainerReference != null) {
+                            dataContainerReference.setEmptyMessage(EMPTY_MESSAGE);
+                        }
+                        resourceService.getQueuedPlatformsAndServers(statuses, pc,
+                            new AsyncCallback<Map<Resource, List<Resource>>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler()
+                                        .handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
+                                }
 
-                            public void onSuccess(Map<Resource, List<Resource>> result) {
-                                response.setData(buildNodes(result));
-                                processResponse(request.getRequestId(), response);
-                            }
-                        });
-                } else {
-                    Log.debug("(User does not have required managed inventory permissions. " + EMPTY_MESSAGE);
-                    response.setTotalRows(0);
-                    if (dataContainerReference != null) {
-                        Log.trace("Setting better empty container message." + NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
-                        dataContainerReference.setEmptyMessage(NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
+                                public void onSuccess(Map<Resource, List<Resource>> result) {
+                                    response.setData(buildNodes(result));
+                                    processResponse(request.getRequestId(), response);
+                                }
+                            });
+                    } else {
+                        Log.debug("(User does not have required managed inventory permissions. " + EMPTY_MESSAGE);
+                        response.setTotalRows(0);
+                        if (dataContainerReference != null) {
+                            Log.trace("Setting better empty container message."
+                                + NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
+                            dataContainerReference.setEmptyMessage(NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
+                        }
+                        processResponse(request.getRequestId(), response);
                     }
-                    processResponse(request.getRequestId(), response);
                 }
             }
-
-            public void onFailure(Throwable caught) {
-                Log.error("Unable to determine whether if user has manage inventory permissions - check server logs.");
-            }
         });
-
     }
 
     private TreeNode[] buildNodes(Map<Resource, List<Resource>> result) {

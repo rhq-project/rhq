@@ -30,34 +30,17 @@ package org.rhq.enterprise.gui.coregui.client;
 public class View {
     private ViewId id;
     private BookmarkableView descendantViewRenderer;
-    private Breadcrumb breadcrumb;
     private View parent;
 
     public View(ViewId id) {
-        this(id, null, null);
+        this(id, null);
     }
 
     public View(ViewId id, BookmarkableView descendantViewRenderer) {
-        this(id, descendantViewRenderer, null);
-    }
-
-    public View(ViewId id, Breadcrumb breadcrumb) {
-        this(id, null, breadcrumb);
-    }
-
-    public View(ViewId id, BookmarkableView descendantViewRenderer, Breadcrumb breadcrumb) {
         if (id == null) {
             throw new IllegalArgumentException("Id is null.");
         }
         this.id = id;
-        if (breadcrumb != null) {
-            if (!breadcrumb.getName().equals(id.getPath())) {
-                throw new IllegalArgumentException("Breadcrumb name is not equal to id name.");
-            }
-            this.breadcrumb = breadcrumb;
-        } else {
-            this.breadcrumb = new Breadcrumb(id.getPath());
-        }
         this.descendantViewRenderer = descendantViewRenderer;
     }
 
@@ -89,17 +72,6 @@ public class View {
         }
     }
 
-    /**
-     * Returns info that should be used when rendering a breadcrumb for this view in the
-     * breadcrumb trail, or null if a default breadcrumb should be used.
-     *
-     * @return info that should be used when rendering a breadcrumb for this view in the
-     *         breadcrumb trail, or null if a default breadcrumb should be used
-     */
-    public Breadcrumb getBreadcrumb() {
-        return this.breadcrumb;
-    }
-
     public View getParent() {
         return this.parent;
     }
@@ -110,11 +82,7 @@ public class View {
 
     @Override
     public String toString() {
-        return "View[" +
-                "id=" + id +
-                ", descendantViewRenderer=" +
-                ((this.descendantViewRenderer != null) ? this.descendantViewRenderer.getClass().getName() : null) +
-                ", breadcrumb=" + this.breadcrumb +
-                ']';
+        return "View[" + "id=" + id + ", descendantViewRenderer="
+            + ((this.descendantViewRenderer != null) ? this.descendantViewRenderer.getClass().getName() : null) + ']';
     }
 }

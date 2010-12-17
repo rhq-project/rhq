@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -36,6 +37,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
@@ -79,8 +81,11 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     private Bundle bundle;
 
-    public BundleView(String locatorId) {
+    private final boolean canManageBundles;
+
+    public BundleView(String locatorId, Set<Permission> perms) {
         super(locatorId);
+        this.canManageBundles = (perms != null) ? perms.contains(Permission.MANAGE_BUNDLE) : false;
         setWidth100();
         setHeight100();
         setPadding(10);
@@ -176,7 +181,9 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     private CanvasItem getTagItem() {
 
-        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("TagEditor"), bundle.getTags(), false,
+        boolean readOnly = !this.canManageBundles;
+
+        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("TagEditor"), bundle.getTags(), readOnly,
             new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags,
@@ -259,6 +266,11 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             }
         });
 
+        if (!canManageBundles) {
+            deleteButton.setDisabled(true);
+            deployButton.setDisabled(true);
+        }
+
         layout.addMember(deleteButton);
         layout.addMember(deployButton);
 
@@ -271,7 +283,6 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     public void renderView(final ViewPath viewPath) {
         int bundleId = Integer.parseInt(viewPath.getCurrent().getPath());
-        final ViewId viewId = viewPath.getCurrent();
 
         viewPath.next();
         if (viewPath.isEnd() || viewPath.isNextEnd()) {

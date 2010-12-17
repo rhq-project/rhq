@@ -314,9 +314,9 @@
          <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="720000"/>
          <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="600000"/>
          <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="600000"/>
-         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="1200000"/>
-         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="1440000"/>
-         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="1200000" units="milliseconds"/>
+         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3600000"/>
+         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="2400000"/>
+         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="2400000" units="milliseconds"/>
          <event name="PerfTestEventType" description="a test event type"/>
       </service>
    </server>

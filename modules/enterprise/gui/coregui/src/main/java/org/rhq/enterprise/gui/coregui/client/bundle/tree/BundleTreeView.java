@@ -44,7 +44,6 @@ public class BundleTreeView extends LocatableTreeGrid {
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);
-        //        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);

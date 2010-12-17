@@ -98,7 +98,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
             Tab tab;
 
-            BundlesListView bundlesView = new BundlesListView(getLocatorId(), criteria);
+            BundlesListView bundlesView = new BundlesListView(getLocatorId(), criteria, null);
             viewsWithTags.add(bundlesView);
             tab = new LocatableTab(extendLocatorId("bundleList"), MSG.view_bundle_bundles());
             tab.setPane(bundlesView);

@@ -319,4 +319,8 @@ public class LinkManager {
     public static String getTagLink(String tag) {
         return "#Reports/Subsystems/Tags/" + tag;
     }
+
+    public static String getBundleLink(int bundleId) {
+        return "#Bundles/Bundle/" + bundleId;
+    }
 }

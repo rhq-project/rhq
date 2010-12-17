@@ -169,8 +169,9 @@ public class GetDestinationStep extends AbstractWizardStep {
                     wizard.setDestination(result);
                     wizard.setNewDestination(true);
                     CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(), result
-                            .getDescription()), Severity.Info));
+                        new Message(MSG.view_bundle_deployWizard_destinationCreatedDetail_concise(result.getName()),
+                            MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(), result
+                                .getDescription()), Severity.Info));
                     createInProgress = false;
                     wizard.getView().incrementStep();
                 }

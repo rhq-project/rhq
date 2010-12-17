@@ -79,8 +79,9 @@ public class DeployStep extends AbstractWizardStep {
                         deployingImage.setSrc("/images/status_complete.gif");
                         deployingMessage.setText(MSG.view_bundle_deployWizard_deploymentCreated());
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_bundle_deployWizard_deploymentCreatedDetail(result.getName(), result
-                                .getDescription()), Severity.Info));
+                            new Message(MSG.view_bundle_deployWizard_deploymentCreatedDetail_concise(result.getName()),
+                                MSG.view_bundle_deployWizard_deploymentCreatedDetail(result.getName(), result
+                                    .getDescription()), Severity.Info));
                         wizard.setNewDeployment(result);
 
                         bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), wizard
@@ -90,8 +91,9 @@ public class DeployStep extends AbstractWizardStep {
                                     deployingImage.setSrc("/images/status_complete.gif");
                                     deployingMessage.setText(MSG.view_bundle_deployWizard_deploymentScheduled());
                                     CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_deployWizard_deploymentScheduledDetail(result
-                                            .getName(), result.getDestination().getGroup().getName()), Severity.Info));
+                                        new Message(MSG.view_bundle_deployWizard_deploymentScheduledDetail_concise(),
+                                            MSG.view_bundle_deployWizard_deploymentScheduledDetail(result.getName(),
+                                                result.getDestination().getGroup().getName()), Severity.Info));
                                     CoreGUI.refresh();
                                     wizard.setNewDeployment(result);
                                 }

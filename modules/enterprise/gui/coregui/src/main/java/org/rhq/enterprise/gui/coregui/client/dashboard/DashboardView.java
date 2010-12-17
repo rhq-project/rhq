@@ -269,10 +269,14 @@ public class DashboardView extends LocatableVLayout {
         Integer[] refreshValues = { STOP_VALUE, REFRESH1_VALUE, REFRESH5_VALUE, REFRESH10_VALUE };
         refreshMenuMappings = new HashMap<Integer, String>();
         refreshMenuItems = new MenuItem[refreshIntervals.length];
+        int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
         for (int i = 0; i < refreshIntervals.length; i++) {
             MenuItem item = new MenuItem(refreshIntervals[i], "");
             item.addClickHandler(menuClick);
             refreshMenuMappings.put(refreshValues[i], refreshIntervals[i]);
+            if (retrievedRefreshInterval == refreshValues[i]) {
+                item.setIcon(ImageManager.getAvailabilityIcon(true));
+            }
             refreshMenuItems[i] = item;
         }
 
@@ -280,6 +284,7 @@ public class DashboardView extends LocatableVLayout {
         refreshMenuButton = new LocatableIMenuButton(extendLocatorId("AutoRefreshButton"), MSG
             .common_title_change_refresh_time(), refreshMenu);
         refreshMenu.setAutoHeight();
+        refreshMenuButton.getMenu().setItems(refreshMenuItems);
         refreshMenuButton.setWidth(170);
         refreshMenuButton.setShowTitle(true);
         refreshMenuButton.setTop(0);
@@ -294,6 +299,8 @@ public class DashboardView extends LocatableVLayout {
 
         editForm.setItems(nameItem, numColItem, addCanvas, picker, addColumn, removeColumn, refreshCanvas);
         updateRefreshMenu();
+        this.refreshMenuButton.markForRedraw();
+        markForRedraw();
         return editForm;
     }
 

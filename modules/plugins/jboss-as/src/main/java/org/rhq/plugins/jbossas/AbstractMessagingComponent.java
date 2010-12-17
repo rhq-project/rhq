@@ -36,6 +36,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
@@ -71,7 +72,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
     ResourceType resourceType;
     protected String name;
 
-    protected Log LOG = null;
+    protected Log LOG =  LogFactory.getLog(AbstractMessagingComponent.class);;
 
     public void start(ResourceContext<JBossASServerComponent> resourceContext, XMLConfigurationEditor editor) {
         super.start(resourceContext);
@@ -83,7 +84,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
     protected void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests, String pattern) {
 
         Set<MeasurementScheduleRequest> others = new HashSet<MeasurementScheduleRequest>();
-
+       try { 
         for (MeasurementScheduleRequest request : requests) {
 
             // Handle stuff for the generic Messaging MBeans ourselves. Pass the remainder
@@ -116,6 +117,9 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
         }
 
         super.getValues(report, others);
+       }catch(Throwable e){
+           LOG.error("Failed to obtain measurement [" + name + "]", e);
+       }
     }
 
     @Override

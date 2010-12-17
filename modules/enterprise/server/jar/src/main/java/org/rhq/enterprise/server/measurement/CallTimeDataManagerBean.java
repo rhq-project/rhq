@@ -80,7 +80,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     private static final String DATA_VALUE_TABLE_NAME = "RHQ_CALLTIME_DATA_VALUE";
     private static final String DATA_KEY_TABLE_NAME = "RHQ_CALLTIME_DATA_KEY";
 
-    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_KEY_TABLE_NAME
+    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT INTO " + DATA_KEY_TABLE_NAME
         + "(id, schedule_id, call_destination) " + "SELECT %s, ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
@@ -88,7 +88,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(schedule_id, call_destination) " + "SELECT ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
-    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_VALUE_TABLE_NAME
+    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
         + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
         + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
@@ -316,26 +316,25 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 for (String callDestination : callDestinations) {
                     ps.setString(2, callDestination);
                     ps.setString(4, callDestination);
-//                    ps.addBatch();
-                    ps.execute();
+                    ps.addBatch();
                 }
             }
 
-//            results = ps.executeBatch();
+            results = ps.executeBatch();
 
             int insertedRowCount = 0;
-//            for (int i = 0; i < results.length; i++) {
-//                if (((results[i] < 0) || (results[i] > 1)) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
-//                {
-//                    throw new MeasurementStorageException("Failed to insert call-time data key rows - result ["
-//                        + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
-//                }
-//
-//                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row
-//            }
+            for (int i = 0; i < results.length; i++) {
+                if (((results[i] < 0) || (results[i] > 1)) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
+                {
+                    throw new MeasurementStorageException("Failed to insert call-time data key rows - result ["
+                        + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
+                }
 
-//            log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
-//                + " out of " + results.length + " reported key-value pairs.");
+                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row
+            }
+
+            log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
+                + " out of " + results.length + " reported key-value pairs.");
         } catch (SQLException e) {
             logSQLException("Failed to persist call-time data keys", e);
         } catch (Throwable t) {
@@ -393,23 +392,22 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                     ps.setDouble(5, callTimeDataValue.getTotal());
                     ps.setLong(6, callTimeDataValue.getCount());
                     ps.setString(8, callDestination);
-//                    ps.addBatch();
-                    ps.execute();
+                    ps.addBatch();
                 }
             }
 
-//            results = ps.executeBatch();
+            results = ps.executeBatch();
 
             int insertedRowCount = 0;
-//            for (int i = 0; i < results.length; i++) {
-//                if ((results[i] != 1) && (results[i] != -2)) // Oracle likes to return -2 becuase it doesn't track batch update counts
-//                {
-//                    throw new MeasurementStorageException("Failed to insert call-time data value rows - result ["
-//                        + results[i] + "] for batch command [" + i + "] does not equal 1.");
-//                }
-//
-//                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row;
-//            }
+            for (int i = 0; i < results.length; i++) {
+                if ((results[i] != 1) && (results[i] != -2)) // Oracle likes to return -2 becuase it doesn't track batch update counts
+                {
+                    throw new MeasurementStorageException("Failed to insert call-time data value rows - result ["
+                        + results[i] + "] for batch command [" + i + "] does not equal 1.");
+                }
+
+                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row;
+            }
 
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
                 .toArray(new CallTimeData[callTimeDataSet.size()]));

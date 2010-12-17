@@ -44,7 +44,6 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -58,7 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class AlertDetailsView extends LocatableVLayout implements BookmarkableView {
 
     private int alertId;
-    private ViewId viewId;
 
     private static AlertDetailsView INSTANCE = new AlertDetailsView("alertDetailsView");
 
@@ -91,11 +89,6 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     private void show(Alert alert) {
         for (Canvas child : getMembers()) {
             removeChild(child);
-        }
-
-        if (this.viewId != null) {
-            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_alert_details_breadcrumb());
-            CoreGUI.refreshBreadCrumbTrail();
         }
 
         Log.info("AlertDetailsView-Alert: " + alert);
@@ -251,7 +244,6 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     @Override
     public void renderView(ViewPath viewPath) {
         alertId = viewPath.getCurrentAsInt();
-        viewId = viewPath.getCurrent();
 
         show(alertId);
     }

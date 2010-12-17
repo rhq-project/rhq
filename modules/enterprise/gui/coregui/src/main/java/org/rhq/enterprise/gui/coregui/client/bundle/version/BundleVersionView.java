@@ -39,7 +39,6 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -207,11 +206,6 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
                 public void onSuccess(PageList<BundleVersion> result) {
                     BundleVersion version = result.get(0);
                     viewBundleVersion(version, viewPath.getCurrent());
-                    viewPath.getViewForIndex(2).getBreadcrumbs().set(0,
-                        new Breadcrumb(String.valueOf(version.getBundle().getId()), version.getBundle().getName()));
-                    viewId.getBreadcrumbs().set(0,
-                        new Breadcrumb(String.valueOf(version.getId()), version.getVersion()));
-                    CoreGUI.refreshBreadCrumbTrail();
                 }
             });
 

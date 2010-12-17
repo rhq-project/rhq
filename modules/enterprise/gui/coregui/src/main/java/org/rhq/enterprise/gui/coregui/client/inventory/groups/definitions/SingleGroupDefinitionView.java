@@ -49,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -68,7 +67,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
     private String basePath;
-    private ViewId viewId;
 
     // editable form
     private TextItem id;
@@ -209,14 +207,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         recursive.show();
         expression.show();
         recalculationInterval.show();
-
-        if (groupDefinitionId == 0) {
-            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_dynagroup_newGroupDefinition());
-        } else {
-            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_dynagroup_editing(name.getValue().toString()));
-        }
-        CoreGUI.refreshBreadCrumbTrail();
-
         markForRedraw();
     }
 
@@ -341,7 +331,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null && permissions.contains(Permission.MANAGE_INVENTORY)) {
                     groupDefinitionId = viewPath.getCurrentAsInt();
-                    viewId = viewPath.getCurrent();
                     basePath = viewPath.getPathToCurrent();
                     lookupDetails(groupDefinitionId);
                 } else {

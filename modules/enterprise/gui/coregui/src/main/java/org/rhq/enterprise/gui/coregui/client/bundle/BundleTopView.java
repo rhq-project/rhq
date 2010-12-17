@@ -118,7 +118,6 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
                         setContent(bundlesListView);
                     }
                 } else {
-                    viewPath.getCurrent().getBreadcrumbs().clear();
                     if (!viewPath.getNext().equals(currentNextPath)) {
                         currentNextPath = viewPath.getNext();
                         bundleView = new BundleView(extendLocatorId("Bundle"));

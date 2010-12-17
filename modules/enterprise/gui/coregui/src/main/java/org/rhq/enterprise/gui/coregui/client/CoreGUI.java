@@ -28,6 +28,7 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
@@ -83,8 +84,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static ErrorHandler errorHandler = new ErrorHandler();
 
     private static MessageBar messageBar;
-
-    private static BreadcrumbTrailPane breadCrumbTrailPane;
 
     private static MessageCenter messageCenter;
 
@@ -152,8 +151,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             menuBarView.setWidth("100%");
 
             messageBar = new MessageBar();
-
-            breadCrumbTrailPane = new BreadcrumbTrailPane();
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
             canvas.setWidth100();
@@ -303,14 +300,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
     }
 
-    /**
-     * @deprecated
-     */
-    @Deprecated
-    public static void refreshBreadCrumbTrail() {
-        //breadCrumbTrailPane.refresh(currentViewPath);
-    }
-
     public static Messages getMessages() {
         return MSG;
     }
@@ -324,7 +313,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             setHeight100();
         }
 
+        private String getViewPathTitle(ViewPath viewPath) {
+            // default title is the path minus any IDs we find. That should give a least some nice default title.
+            StringBuilder path = new StringBuilder();
+            for (ViewId view : viewPath.getViewPath()) {
+                // none of our path elements start with a digit that is NOT an ID; if we see an ID, skip it
+                if (!Character.isDigit(view.getPath().charAt(0))) {
+                    if (path.length() > 0) {
+                        path.append(" | ");
+                    }
+                    path.append(view.getPath());
+                }
+            }
+            if (path.length() == 0) {
+                path.append("Core Application");
+            }
+            return "RHQ: " + path.toString();
+        }
+
         public void renderView(final ViewPath viewPath) {
+            Window.setTitle(getViewPathTitle(viewPath));
+
             if (viewPath.isEnd()) {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);
@@ -363,8 +372,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         ((BookmarkableView) currentCanvas).renderView(viewPath.next());
                     }
                 }
-
-                refreshBreadCrumbTrail();
             }
         }
     }

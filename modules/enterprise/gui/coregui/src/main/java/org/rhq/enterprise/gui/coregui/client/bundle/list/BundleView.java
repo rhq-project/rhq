@@ -41,7 +41,6 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -294,10 +293,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
                         public void onSuccess(PageList<Bundle> result) {
                             Bundle bundle = result.get(0);
-                            viewId.getBreadcrumbs().set(0,
-                                new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                             viewBundle(bundle, viewPath.getCurrent());
-                            CoreGUI.refreshBreadCrumbTrail();
                         }
                     });
             } else if (!viewPath.isEnd()) {
@@ -307,10 +303,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 } else if ("destinations".equals(current)) {
                     tabs.selectTab(destinationsTab);
                 }
-                // The tab change forces an update so fix up the breadcrumb to use displayName and not just the path
-                viewId.getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                 viewBundle(bundle, viewPath.getCurrent());
-                CoreGUI.refreshBreadCrumbTrail();
             }
         } else {
             // Although still relevant the bundle is no longer being viewed. Set to 0 for re-fetch if needed

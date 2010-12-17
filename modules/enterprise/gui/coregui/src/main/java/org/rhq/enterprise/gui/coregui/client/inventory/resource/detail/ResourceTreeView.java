@@ -66,9 +66,7 @@ import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -78,11 +76,11 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -311,36 +309,6 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             treeGrid.markForRedraw();
-
-            // Update breadcrumbs
-            if (currentViewId != null) {
-                currentViewId.getBreadcrumbs().clear();
-                if (null != parents) {
-                    for (int i = parents.length - 1; i >= 0; i--) {
-                        TreeNode n = parents[i];
-                        adjustBreadcrumb(n, currentViewId);
-                    }
-                }
-                adjustBreadcrumb(selectedNode, currentViewId);
-                CoreGUI.refreshBreadCrumbTrail();
-            }
-        }
-    }
-
-    private void adjustBreadcrumb(TreeNode node, ViewId viewId) {
-        if (node instanceof ResourceTreeNode) {
-            Resource nr = ((ResourceTreeNode) node).getResource();
-            String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
-            String icon = ImageManager.getResourceIcon(nr.getResourceType().getCategory());
-
-            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
-
-        } else if (node instanceof AutoGroupTreeNode) {
-            String name = ((AutoGroupTreeNode) node).getBackingGroupName();
-            String display = node.getName() + " <span class=\"subtitle\">" + name + "</span>";
-            String icon = ImageManager.getResourceIcon(((AutoGroupTreeNode) node).getResourceType().getCategory());
-
-            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
         }
     }
 
@@ -832,5 +800,5 @@ public class ResourceTreeView extends LocatableVLayout {
             setSelectedResource(resourceId);
         }
     }
-    
+
 }

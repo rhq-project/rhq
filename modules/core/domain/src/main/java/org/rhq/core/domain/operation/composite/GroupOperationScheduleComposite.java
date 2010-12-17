@@ -22,8 +22,6 @@
   */
 package org.rhq.core.domain.operation.composite;
 
-import org.rhq.core.domain.operation.ScheduleJobId;
-
 /**
  * Provides some information on a compatible group's scheduled operation.
  *
@@ -31,15 +29,15 @@ import org.rhq.core.domain.operation.ScheduleJobId;
  */
 public class GroupOperationScheduleComposite extends OperationScheduleComposite {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private final int groupId;
     private final String groupName;
     private final String groupResourceTypeName;
 
-    public GroupOperationScheduleComposite(String jobName, String jobGroup, String operationName,
+    public GroupOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,
         long operationNextFireTime, int groupId, String groupName, String groupResourceTypeName) {
-        super(new ScheduleJobId(jobName, jobGroup), operationName, operationNextFireTime);
+        super(id, jobName, jobGroup, operationName, operationNextFireTime);
         this.groupId = groupId;
         this.groupName = groupName;
         this.groupResourceTypeName = groupResourceTypeName;

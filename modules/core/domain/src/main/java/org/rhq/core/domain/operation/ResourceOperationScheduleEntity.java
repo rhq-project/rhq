@@ -34,11 +34,10 @@ import javax.persistence.NamedQuery;
 import org.rhq.core.domain.resource.Resource;
 
 /**
- * Information on a specific operation schedule on a particular resource.
+ * Information on a specific operation schedule on a particular Resource.
  *
  * @author John Mazzitelli
  */
-
 @DiscriminatorValue("resource")
 @Entity
 @NamedQueries( {
@@ -47,6 +46,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceOperationScheduleEntity s "
         + " WHERE s.resource.id IN ( :resourceIds ) )") })
 public class ResourceOperationScheduleEntity extends OperationScheduleEntity {
+
     public static final String QUERY_DELETE_BY_RESOURCES = "ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceOperationScheduleEntity.findByResourceId";
 
@@ -80,4 +80,5 @@ public class ResourceOperationScheduleEntity extends OperationScheduleEntity {
         str.append("]");
         return str.toString();
     }
+
 }

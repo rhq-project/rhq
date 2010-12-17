@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -40,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public abstract class OperationScheduleDataSource<T extends OperationSchedule> extends RPCDataSource<T> {
 
     public static abstract class Field {
+        public static final String ID = "id";
         public static final String JOB_NAME = "jobName";
         public static final String JOB_GROUP = "jobGroup";
         public static final String OPERATION_NAME = "operationName";
@@ -63,6 +65,11 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, "ID");
+        idField.setPrimaryKey(true);
+        idField.setCanEdit(false);
+        fields.add(idField);               
+
         DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null, 100, true);
         fields.add(operationDisplayNameField);
 
@@ -84,14 +91,15 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
     public T copyValues(Record from) {
         T to = createOperationSchedule();
 
+        to.setId(from.getAttributeAsInt(Field.ID));
         to.setJobName(from.getAttribute(Field.JOB_NAME));        
         to.setJobGroup(from.getAttribute(Field.JOB_GROUP));
         to.setJobTrigger((JobTrigger)from.getAttributeAsObject(Field.JOB_TRIGGER));
-        to.setDescription(from.getAttribute(Field.DESCRIPTION));
-        to.setOperationDisplayName(from.getAttribute(Field.OPERATION_DISPLAY_NAME));
-        to.setOperationName(from.getAttribute(Field.OPERATION_NAME));
-        to.setParameters((Configuration)from.getAttributeAsObject(Field.PARAMETERS));
         to.setSubject((Subject)from.getAttributeAsObject(Field.SUBJECT));
+        to.setParameters((Configuration)from.getAttributeAsObject(Field.PARAMETERS));
+        to.setOperationName(from.getAttribute(Field.OPERATION_NAME));
+        to.setOperationDisplayName(from.getAttribute(Field.OPERATION_DISPLAY_NAME));
+        to.setDescription(from.getAttribute(Field.DESCRIPTION));
 
         return to;
     }
@@ -100,14 +108,15 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
     public ListGridRecord copyValues(T from) {
         ListGridRecord to = new ListGridRecord();
 
+        to.setAttribute(Field.ID, from.getId());
         to.setAttribute(Field.JOB_NAME, from.getJobName());
         to.setAttribute(Field.JOB_GROUP, from.getJobGroup());
         to.setAttribute(Field.JOB_TRIGGER, from.getJobTrigger());
-        to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());
-        to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
         to.setAttribute(Field.SUBJECT, from.getSubject());
-        to.setAttribute(Field.DESCRIPTION, from.getDescription());
         to.setAttribute(Field.PARAMETERS, from.getParameters());
+        to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
+        to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());        
+        to.setAttribute(Field.DESCRIPTION, from.getDescription());
 
         return to;
     }

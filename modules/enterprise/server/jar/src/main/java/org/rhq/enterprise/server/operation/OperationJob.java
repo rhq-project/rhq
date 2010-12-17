@@ -39,6 +39,8 @@ public abstract class OperationJob implements Job {
     public static final String DATAMAP_STRING_OPERATION_DISPLAY_NAME = "operationDisplayName";
     public static final String DATAMAP_INT_PARAMETERS_ID = "parametersId"; // the configuration ID
     public static final String DATAMAP_INT_SUBJECT_ID = "subjectId";
+    // id of the associated OperationScheduleEntity - may be null for jobs created prior to upgrading to RHQ 4.0
+    public static final String DATAMAP_INT_ENTITY_ID = "entityId";
 
     /**
      * For security purposes, we need to provide a subject with a valid login session. This creates such a subject by

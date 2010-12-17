@@ -28,12 +28,14 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
@@ -45,10 +47,8 @@ import javax.persistence.Table;
  *
  * @author John Mazzitelli
  */
-
 @DiscriminatorColumn(name = "DTYPE")
 @Entity
-@IdClass(ScheduleJobId.class)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
     @NamedQuery(name = OperationScheduleEntity.QUERY_FIND_BY_JOB_ID, query = "" //
@@ -58,6 +58,7 @@ import javax.persistence.Table;
         + "   AND s.jobGroup = :jobGroup "),
     @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE_ADMIN, query = "" //
         + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite( "
+        + "    ro.id, " //
         + "    ro.jobName, " //
         + "    ro.jobGroup, " //
         + "    '', " //
@@ -69,6 +70,7 @@ import javax.persistence.Table;
         + " WHERE ro.nextFireTime IS NOT NULL "), //
     @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE, query = "" //
         + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite( "
+        + "    ro.id, " //
         + "    ro.jobName, " //
         + "    ro.jobGroup, " //
         + "    '', " //
@@ -84,6 +86,7 @@ import javax.persistence.Table;
         + "   AND s = :subject "), //
     @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP_ADMIN, query = "" //
         + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite( "
+        + "    go.id, " //
         + "    go.jobName, " //
         + "    go.jobGroup, " //
         + "    '', " //
@@ -95,6 +98,7 @@ import javax.persistence.Table;
         + " WHERE go.nextFireTime IS NOT NULL "), //
     @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP, query = "" //
         + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite( "
+        + "    go.id, " //
         + "    go.jobName, " //
         + "    go.jobGroup, " //
         + "    '', " //
@@ -108,8 +112,10 @@ import javax.persistence.Table;
         + "  JOIN r.subjects s " //
         + " WHERE go.nextFireTime IS NOT NULL " //
         + "   AND s = :subject ") })
+@SequenceGenerator(name = "id", sequenceName = "RHQ_OPERATION_SCHEDULE_ID_SEQ")
 @Table(name = "RHQ_OPERATION_SCHEDULE")
 public abstract class OperationScheduleEntity implements Serializable {
+
     public static final String QUERY_FIND_BY_JOB_ID = "OperationScheduleEntity.findByJobId";
     public static final String QUERY_GET_SCHEDULE_RESOURCE = "OperationScheduleEntity.getScheduleResource";
     public static final String QUERY_GET_SCHEDULE_RESOURCE_ADMIN = "OperationScheduleEntity.getScheduleResource_admin";
@@ -118,10 +124,15 @@ public abstract class OperationScheduleEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
+    private int id;    
+
+    @Column(name = "JOB_NAME", nullable = false)
     private String jobName;
 
-    @Id
+    @Column(name = "JOB_GROUP", nullable = false)
     private String jobGroup;
 
     @Column(name = "NEXT_FIRE_TIME", nullable = true)
@@ -134,6 +145,10 @@ public abstract class OperationScheduleEntity implements Serializable {
         this.jobName = jobName;
         this.jobGroup = jobGroup;
         this.nextFireTime = (nextFireTime == null) ? null : nextFireTime.getTime();
+    }
+
+    public int getId() {
+        return id;
     }
 
     /**
@@ -184,9 +199,10 @@ public abstract class OperationScheduleEntity implements Serializable {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        buf.append("job-name=[" + jobName);
-        buf.append("], job-group=[" + jobGroup);
-        buf.append("], next-fire-time=[" + ((nextFireTime == null) ? "never" : new Date(nextFireTime)));
+        buf.append("id=" + id);
+        buf.append(", jobName=" + jobName);
+        buf.append(", jobGroup=" + jobGroup);
+        buf.append(", nextFireTime=" + ((nextFireTime == null) ? "never" : new Date(nextFireTime)));
 
         return buf.toString();
     }
@@ -210,4 +226,5 @@ public abstract class OperationScheduleEntity implements Serializable {
 
         return this.getJobId().equals(other.getJobId());
     }
+    
 }

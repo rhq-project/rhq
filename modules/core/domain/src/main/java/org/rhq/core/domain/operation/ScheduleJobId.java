@@ -23,8 +23,10 @@
 package org.rhq.core.domain.operation;
 
 /**
- * This class is a mutable version of {@link JobId} and is used as the primary key to the
- * {@link OperationScheduleEntity} entities.
+ * This class is a mutable version of {@link JobId}, which represents the unique identifier of the Quartz job
+ * for a scheduled RHQ operation. 
+ *
+ * NOTE: It is no longer used as the primary key to the {@link OperationScheduleEntity} entities.
  *
  * @author John Mazzitelli
  */

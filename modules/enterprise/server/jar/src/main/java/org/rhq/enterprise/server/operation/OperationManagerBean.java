@@ -203,13 +203,16 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         trigger.setJobName(jobDetail.getName());
         trigger.setJobGroup(jobDetail.getGroup());
 
-        // we need to create our own schedule tracking entity
+        // We need to create our own schedule tracking entity.
         ResourceOperationScheduleEntity schedule;
         schedule = new ResourceOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger
             .getStartTime(), resource);
         entityManager.persist(schedule);
 
-        // now actually schedule it
+        // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
+        jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
+
+        // Now actually schedule it.
         Date next = scheduler.scheduleJob(jobDetail, trigger);
         ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
 
@@ -282,6 +285,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         schedule = new GroupOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger.getStartTime(),
             group);
         entityManager.persist(schedule);
+
+        // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
+        jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
 
         // now actually schedule it
         Date next = scheduler.scheduleJob(jobDetail, trigger);
@@ -424,6 +430,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
+        String jobName = jobDetail.getName();
+        String jobGroup = jobDetail.getGroup();
         String description = jobDetail.getDescription();
         String operationName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME);
         String displayName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
@@ -438,6 +446,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         int resourceId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID);
         Resource resource = getResourceIfAuthorized(whoami, resourceId);
 
+        Integer entityId = getOperationScheduleEntityId(jobDetail);
+
         // note that we throw an exception if the subject does not exist!
         // this is by design to avoid a malicious user creating a dummy subject in the database,
         // scheduling a very bad operation, and deleting that subject thus removing all traces
@@ -445,8 +455,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // will need to be deleted and rescheduled.
 
         ResourceOperationSchedule sched = new ResourceOperationSchedule();
-        sched.setJobName(jobDetail.getName());
-        sched.setJobGroup(jobDetail.getGroup());
+        sched.setId(entityId);
+        sched.setJobName(jobName);
+        sched.setJobGroup(jobGroup);
         sched.setResource(resource);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
@@ -459,6 +470,25 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setJobTrigger(jobTrigger);
 
         return sched;
+    }
+
+    private int getOperationScheduleEntityId(JobDetail jobDetail) {
+        JobDataMap jobDataMap = jobDetail.getJobDataMap();
+        Object entityIdObj = jobDataMap.get(ResourceOperationJob.DATAMAP_INT_ENTITY_ID);
+        int entityId;
+        if (entityIdObj != null) {
+            // for jobs created using RHQ 4.0 or later, the map will contain an entityId entry
+            entityId = Integer.valueOf((String)entityIdObj);
+        } else {
+            // for jobs created prior to upgrading to RHQ 4.0, the map will not contain an entityId entry,
+            // so we'll need to lookup the entity id from the DB.
+            String jobName = jobDetail.getName();
+            String jobGroup = jobDetail.getGroup();
+            ScheduleJobId jobId = new ScheduleJobId(jobName, jobGroup);
+            OperationScheduleEntity operationScheduleEntity = findOperationScheduleEntity(jobId);
+            entityId = operationScheduleEntity.getId();
+        }
+        return entityId;
     }
 
     public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, String jobId)
@@ -1430,7 +1460,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (ResourceOperationScheduleComposite composite : results) {
             try {
-                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getOperationJobId()
+                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId()
                     .toString());
                 OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
                     .getOperationName(), false);
@@ -1484,7 +1514,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (GroupOperationScheduleComposite composite : results) {
             try {
-                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getOperationJobId()
+                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId()
                     .toString());
                 OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
                     .getOperationName(), false);
@@ -1765,7 +1795,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      */
     private OperationScheduleEntity findOperationScheduleEntity(ScheduleJobId jobId) {
         OperationScheduleEntity entity = entityManager.find(OperationScheduleEntity.class, jobId);
-        return entity;
+        Query query = entityManager.createNamedQuery(OperationScheduleEntity.QUERY_FIND_BY_JOB_ID);
+        String jobName = jobId.getJobName();
+        query.setParameter("jobName", jobName);
+        String jobGroup = jobId.getJobGroup();
+        query.setParameter("jobGroup", jobGroup);
+        OperationScheduleEntity operationScheduleEntity = (OperationScheduleEntity)query.getSingleResult();
+        return operationScheduleEntity;
     }
 
     public GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,

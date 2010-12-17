@@ -41,6 +41,7 @@ import org.rhq.core.domain.operation.JobId;
 public abstract class OperationSchedule implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private int id;
     private String jobName;
     private String jobGroup;
     private String operationName;
@@ -51,6 +52,14 @@ public abstract class OperationSchedule implements Serializable {
     private JobTrigger jobTrigger;
 
     public OperationSchedule() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getJobGroup() {

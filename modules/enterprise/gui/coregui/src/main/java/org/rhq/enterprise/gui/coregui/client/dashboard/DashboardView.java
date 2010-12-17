@@ -62,6 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Simeon Pinder
  */
 public class DashboardView extends LocatableVLayout {
     private DashboardsView dashboardsView;
@@ -78,6 +79,11 @@ public class DashboardView extends LocatableVLayout {
     private static String REFRESH1 = MSG.view_dashboards_portlets_refresh_one_min();
     private static String REFRESH5 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(5));
     private static String REFRESH10 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(10));
+    private static Integer STOP_VALUE = 0;
+    private static Integer REFRESH1_VALUE = 1 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+    private static Integer REFRESH5_VALUE = 5 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+    private static Integer REFRESH10_VALUE = 10 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+
     private HashMap<Integer, String> refreshMenuMappings;
     private MenuItem[] refreshMenuItems;
     private int refreshInterval = 0;
@@ -243,15 +249,15 @@ public class DashboardView extends LocatableVLayout {
                 refreshInterval = 0;
                 if (selection != null) {
                     if (selection.equals(STOP)) {
-                        refreshInterval = 0;
+                        refreshInterval = STOP_VALUE;
                     } else if (selection.equals(REFRESH1)) {
-                        refreshInterval = Long.valueOf(MeasurementUtility.MINUTES).intValue();
+                        refreshInterval = REFRESH1_VALUE;
                     } else if (selection.equals(REFRESH5)) {
-                        refreshInterval = 5 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+                        refreshInterval = REFRESH5_VALUE;
                     } else if (selection.equals(REFRESH10)) {
-                        refreshInterval = 10 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+                        refreshInterval = REFRESH10_VALUE;
                     } else {//unable to locate value disable refresh
-                        refreshInterval = 0;//
+                        refreshInterval = STOP_VALUE;//
                     }
                     UserSessionManager.getUserPreferences().setPageRefreshInterval(refreshInterval,
                         new UpdatePortletRefreshCallback());
@@ -260,9 +266,7 @@ public class DashboardView extends LocatableVLayout {
         };
 
         String[] refreshIntervals = { STOP, REFRESH1, REFRESH5, REFRESH10 };
-        Integer[] refreshValues = { 0, 1 * Long.valueOf(MeasurementUtility.MINUTES).intValue(),
-            5 * Long.valueOf(MeasurementUtility.MINUTES).intValue(),
-            10 * Long.valueOf(MeasurementUtility.MINUTES).intValue() };
+        Integer[] refreshValues = { STOP_VALUE, REFRESH1_VALUE, REFRESH5_VALUE, REFRESH10_VALUE };
         refreshMenuMappings = new HashMap<Integer, String>();
         refreshMenuItems = new MenuItem[refreshIntervals.length];
         for (int i = 0; i < refreshIntervals.length; i++) {

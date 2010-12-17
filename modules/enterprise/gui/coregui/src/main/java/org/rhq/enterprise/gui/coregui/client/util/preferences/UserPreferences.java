@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /**
  * @author Greg Hinkle
@@ -73,6 +74,9 @@ public class UserPreferences {
     }
 
     public int getPageRefreshInterval() {
+        if (getPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD) == null) {//default to 60 seconds
+            setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(MeasurementUtility.MINUTES));
+        }
         return getPreferenceAsInteger(UserPreferenceNames.PAGE_REFRESH_PERIOD);
     }
 

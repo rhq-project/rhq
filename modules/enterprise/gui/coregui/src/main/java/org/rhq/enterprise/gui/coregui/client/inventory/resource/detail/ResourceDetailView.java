@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -243,7 +244,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateAlertsTabContent(resourceComposite);
         updateMonitoringTabContent(resource, facets);
         updateEventsTabContent(resourceComposite, facets);
-        updateOperationsTabContent(resource, facets);
+        updateOperationsTabContent(facets);
         updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
         updateContentTabContent(resource, facets);
 
@@ -334,7 +335,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
     }
 
-    private void updateOperationsTabContent(Resource resource, Set<ResourceTypeFacet> facets) {
+    private void updateOperationsTabContent(Set<ResourceTypeFacet> facets) {
         if (updateTab(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION), true)) {
             // comment out GWT-based operation history until...
             //     1) user can delete history if they possess the appropriate permissions
@@ -342,11 +343,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //     3) operation arguments/results become read-only configuration data in the history details pop-up
             //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
+
             updateSubTab(this.operationsTab, this.operationsHistory, new ResourceOperationHistoryListView(operationsTab
                 .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
 
-            updateSubTab(this.operationsTab, this.operationsSchedule, new FullHTMLPane(this.operationsSchedule.extendLocatorId("View"),
-                "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()), true, true);
+            updateSubTab(this.operationsTab, this.operationsSchedule,new ResourceOperationScheduleListView(operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), 
+                true, true);
         }
     }
 

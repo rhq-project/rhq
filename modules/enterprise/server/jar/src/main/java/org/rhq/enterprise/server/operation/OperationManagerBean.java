@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.operation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+import org.quartz.CronTrigger;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
@@ -44,6 +46,7 @@ import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -418,7 +421,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
-    public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, JobDetail jobDetail) {
+    public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         String description = jobDetail.getDescription();
@@ -433,7 +436,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         int resourceId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID);
-        Resource resource = getResourceIfAuthorized(subject, resourceId);
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
 
         // note that we throw an exception if the subject does not exist!
         // this is by design to avoid a malicious user creating a dummy subject in the database,
@@ -447,9 +450,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setResource(resource);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
-        sched.setSubject(subjectManager.getSubjectById(subjectId));
+        Subject subject = subjectManager.getSubjectById(subjectId);
+        sched.setSubject(subject);
         sched.setParameters(parameters);
         sched.setDescription(description);
+        Trigger trigger = getTriggerOfJob(jobDetail);
+        JobTrigger jobTrigger = convertToJobTrigger(trigger);
+        sched.setJobTrigger(jobTrigger);
 
         return sched;
     }
@@ -515,6 +522,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
         sched.setHaltOnFailure(jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE));
+        Trigger trigger = getTriggerOfJob(jobDetail);
+        JobTrigger jobTrigger = convertToJobTrigger(trigger);
+        sched.setJobTrigger(jobTrigger);
 
         return sched;
     }
@@ -1828,4 +1838,78 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             entityManager);
         return queryRunner.execute();
     }
+
+    private Trigger getTriggerOfJob(JobDetail jobDetail) {
+        Trigger[] triggers;
+        try {
+            triggers = scheduler.getTriggersOfJob(jobDetail.getName(), jobDetail.getGroup());
+        }
+        catch (SchedulerException e) {
+            throw new RuntimeException("Failed to lookup trigger for job [" + jobDetail.getFullName() + "].", e);
+        }
+        if (triggers.length == 0) {
+            throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has no triggers.");
+        }
+        if (triggers.length > 1) {
+            throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has more than one trigger: "
+                + Arrays.asList(triggers));
+        }
+        return triggers[0];
+    }
+
+    private static JobTrigger convertToJobTrigger(Trigger trigger) {
+        JobTrigger schedule;
+        if (trigger instanceof SimpleTrigger) {
+            SimpleTrigger simpleTrigger = (SimpleTrigger)trigger;
+            Date startTime = simpleTrigger.getStartTime();
+            if (startTime != null) {
+                // later
+                int repeatCount = simpleTrigger.getRepeatCount();
+                if (repeatCount == 0) {
+                    // non-recurring
+                    schedule = JobTrigger.createLaterTrigger(startTime);
+                } else {
+                    // recurring
+                    long repeatInterval = simpleTrigger.getRepeatInterval();
+                    if (repeatCount == SimpleTrigger.REPEAT_INDEFINITELY) {
+                        Date endTime = simpleTrigger.getEndTime();
+                        if (endTime != null) {
+                            schedule = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval, endTime);
+                        } else {
+                            schedule = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval);
+                        }
+                    } else {
+                        schedule = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval, repeatCount);
+                    }
+                }
+            } else {
+                // now
+                int repeatCount = simpleTrigger.getRepeatCount();
+                if (repeatCount == 0) {
+                    // non-recurring
+                    schedule = JobTrigger.createNowTrigger();
+                } else {
+                    // recurring
+                    long repeatInterval = simpleTrigger.getRepeatInterval();
+                    if (repeatCount == SimpleTrigger.REPEAT_INDEFINITELY) {
+                        Date endTime = simpleTrigger.getEndTime();
+                        if (endTime != null) {
+                            schedule = JobTrigger.createNowAndRepeatTrigger(repeatInterval, endTime);
+                        } else {
+                            schedule = JobTrigger.createNowAndRepeatTrigger(repeatInterval);
+                        }
+                    } else {
+                        schedule = JobTrigger.createNowAndRepeatTrigger(repeatInterval, repeatCount);
+                    }
+                }
+            }
+        } else if (trigger instanceof CronTrigger) {
+            CronTrigger cronTrigger = (CronTrigger)trigger;
+            schedule = JobTrigger.createCronTrigger(cronTrigger.getCronExpression());
+        } else {
+            throw new IllegalStateException("Unsupported Quartz trigger type: " + trigger.getClass().getName());
+        }
+        return schedule;
+    }
+
 }

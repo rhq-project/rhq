@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -1003,82 +1004,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         return (int) count;
     }
 
-    /**
-     * This method adheres to all of the regular semantics of {@link Criteria}-based queries.  In other words,
-     * all of the methods on the {@link Criteria} object - including paging, sorting, filtering, fetching - will
-     * work with this method.  The only thing that differs is the ResultSet which, instead of being a collection
-     * of {@link ResourceGroup} objects is a collection of {@link ResourceGroupComposite} objects.
-     * 
-     * The extended data in the composite object, however, is treated differently:
-     * 
-     *   1) It is always fetched
-     *   2) It can not be a candidate for filtering
-     *   3) It must be sorted by using the zero-based positional ordinal within the projection
-     *   
-     * This method offers 4 new aggregates that you can sort on.  The 
-     * 
-     * explicitCount (ordinal 0) - the count of the number of children in the group
-     * explicitAvail (ordinal 1) - decimal percentage representing the number of UP children relative to the total
-     *                             number of children in the group
-     * implicitCount (ordinal 2) - the count of the number of descendents in the group
-     * implicitAvail (ordinal 3) - decimal percentage representing the number of UP descendents relative to the total
-     *                             number of descendents in the group
-     */
-    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
-        ResourceGroupCriteria criteria) {
-
-        Set<Permission> userGlobalPermissions = authorizationManager.getExplicitGlobalPermissions(subject);
-
-        String compositeProjection;
-        if (userGlobalPermissions.contains(Permission.MANAGE_INVENTORY)) {
-            compositeProjection = ""
-                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
-                + "    %alias% ) "; // ResourceGroup
-        } else {
-            compositeProjection = ""
-                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
-                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
-                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
-                + "    %alias%, " // ResourceGroup
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 10 ), " // CONTROL
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 7 ), " // MANAGE_ALERTS
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 14 ), " // MANAGE_EVENTS
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 13 ), " // CONFIGURE_READ
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
-                + "   ( SELECT count(p) FROM %alias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ))"; // DELETE_RESOURCES
-            compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
-        }
-        compositeProjection = compositeProjection.replace("%alias%", criteria.getAlias());
-
-        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, userGlobalPermissions);
-        generator.alterProjection(compositeProjection);
-
-        CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
-            criteria, generator, entityManager, false); // don't auto-init bags, we're returning composites not entities
-        PageList<ResourceGroupComposite> results = queryRunner.execute();
-
-        for (ResourceGroupComposite composite : results) {
-            ResourceGroup group = composite.getResourceGroup();
-            ResourceType type = group.getResourceType();
-            ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
-                : ResourceFacets.NONE;
-
-            queryRunner.initFetchFields(group); // manual field fetch for composite-wrapped entity
-            composite.setResourceFacets(facets);
-        }
-        return results;
-    }
-
     // note, resourceId and groupId can both be NULL, and so must use the numeric wrapper classes
     public PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
@@ -1503,32 +1428,151 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
 
-        Set<Permission> globalUserPerms = authorizationManager.getExplicitGlobalPermissions(subject);
-        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, globalUserPerms);
+        CriteriaAuthzType authzType = getCriteriaAuthzType(subject, criteria);
+
+        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, authzType);
 
         CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+
         PageList<ResourceGroup> result = queryRunner.execute();
+
         return result;
     }
 
-    private CriteriaQueryGenerator getCriteriaQueryGenerator(Subject subject, ResourceGroupCriteria criteria,
-        Set<Permission> globalUserPerms) {
+    /**
+     * This method adheres to all of the regular semantics of {@link Criteria}-based queries.  In other words,
+     * all of the methods on the {@link Criteria} object - including paging, sorting, filtering, fetching - will
+     * work with this method.  The only thing that differs is the ResultSet which, instead of being a collection
+     * of {@link ResourceGroup} objects is a collection of {@link ResourceGroupComposite} objects.
+     * 
+     * The extended data in the composite object, however, is treated differently:
+     * 
+     *   1) It is always fetched
+     *   2) It can not be a candidate for filtering
+     *   3) It must be sorted by using the zero-based positional ordinal within the projection
+     *   
+     * This method offers 4 new aggregates that you can sort on.  The 
+     * 
+     * explicitCount (ordinal 0) - the count of the number of children in the group
+     * explicitAvail (ordinal 1) - decimal percentage representing the number of UP children relative to the total
+     *                             number of children in the group
+     * implicitCount (ordinal 2) - the count of the number of descendents in the group
+     * implicitAvail (ordinal 3) - decimal percentage representing the number of UP descendents relative to the total
+     *                             number of descendents in the group
+     */
+    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
+        ResourceGroupCriteria criteria) {
+
+        CriteriaAuthzType authzType = getCriteriaAuthzType(subject, criteria);
+
+        String compositeProjection = null;
+        switch (authzType) {
+        case NONE:
+        case SUBJECT_OWNED:
+            compositeProjection = ""
+                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
+                + "    %alias% ) "; // ResourceGroup
+            break;
+        case ROLE_OWNED:
+        case AUTO_CLUSTER:
+            compositeProjection = ""
+                + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount," // explicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail," // explicit member availability
+                + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount," // implicit member count
+                + "   ( SELECT AVG(avail.availabilityType) FROM %alias%.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail," // implicit member availability
+                + "    %alias%, " // ResourceGroup
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 8 ), " // MANAGE_MEASUREMENTS
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 4 ), " // MODIFY_RESOURCE
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 10 ), " // CONTROL
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 7 ), " // MANAGE_ALERTS
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 14 ), " // MANAGE_EVENTS
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 13 ), " // CONFIGURE_READ
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ))"; // DELETE_RESOURCES
+            compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
+            break;
+        default:
+            throw new IllegalStateException("Unexpected CriteriaAuthzType: " + authzType);
+        }
+
+        String alias = criteria.getAlias();
+        compositeProjection = compositeProjection.replace("%alias%", alias);
+        String permAlias = alias + ((authzType == CriteriaAuthzType.AUTO_CLUSTER) ? ".clusterResourceGroup" : "");
+        compositeProjection = compositeProjection.replace("%permAlias%", permAlias);
+
+        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, authzType);
+        generator.alterProjection(compositeProjection);
+
+        CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
+            criteria, generator, entityManager, false); // don't auto-init bags, we're returning composites not entities
+        PageList<ResourceGroupComposite> results = queryRunner.execute();
+
+        results = getAuthorizedGroupComposites(subject, authzType, results);
+
+        for (ResourceGroupComposite composite : results) {
+            ResourceGroup group = composite.getResourceGroup();
+            ResourceType type = group.getResourceType();
+            ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
+                : ResourceFacets.NONE;
+
+            queryRunner.initFetchFields(group); // manual field fetch for composite-wrapped entity
+            composite.setResourceFacets(facets);
+        }
+        return results;
+    }
+
+    private enum CriteriaAuthzType {
+        // inv manager / no auth required
+        NONE,
+        // standard role-subject-group auth
+        ROLE_OWNED,
+        // private group auth
+        SUBJECT_OWNED,
+        // auto cluster backing group
+        AUTO_CLUSTER
+    }
+
+    private CriteriaAuthzType getCriteriaAuthzType(Subject subject, ResourceGroupCriteria criteria) {
+        Set<Permission> globalUserPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+
         if (criteria.isSecurityManagerRequired() && !globalUserPerms.contains(Permission.MANAGE_SECURITY)) {
             throw new PermissionException("Subject [" + subject.getName()
                 + "] requires SecurityManager permission for requested query criteria.");
         }
 
         boolean isInventoryManager = globalUserPerms.contains(Permission.MANAGE_INVENTORY);
-        boolean groupAuthzRequired = (!(criteria.isFilterPrivate() || isInventoryManager));
 
         if (criteria.isInventoryManagerRequired() && !isInventoryManager) {
             throw new PermissionException("Subject [" + subject.getName()
                 + "] requires InventoryManager permission for requested query criteria.");
         }
 
-        // if we're searching for private groups set the subject filter to the current user's subjectId
+        CriteriaAuthzType result = CriteriaAuthzType.ROLE_OWNED;
+
+        if (isInventoryManager) {
+            result = CriteriaAuthzType.NONE;
+        } else if (criteria.isFilterPrivate()) {
+            result = CriteriaAuthzType.SUBJECT_OWNED;
+        } else if (!criteria.isFilterVisible()) {
+            result = CriteriaAuthzType.AUTO_CLUSTER;
+        }
+
+        return result;
+    }
+
+    private CriteriaQueryGenerator getCriteriaQueryGenerator(Subject subject, ResourceGroupCriteria criteria,
+        CriteriaAuthzType authzType) {
+
+        // if we're searching for private groups set the subject filter to the current user's subjectId.
         // setting it here prevents the caller from spoofing a different user. This is why the subject and
-        // private filters are different. The suject filter can specifiy any use and therefore requires
+        // private filters are different. The subject filter can specify any user and therefore requires
         // inventory manager.
         if (criteria.isFilterPrivate()) {
             criteria.addFilterPrivate(null);
@@ -1536,12 +1580,47 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        if (groupAuthzRequired) {
+        if (authzType != CriteriaAuthzType.NONE) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
                 subject.getId());
         }
 
         return generator;
+    }
+
+    private PageList<ResourceGroupComposite> getAuthorizedGroupComposites(Subject subject, CriteriaAuthzType authzType,
+        PageList<ResourceGroupComposite> groupComposites) {
+
+        switch (authzType) {
+        case NONE:
+            // leave resourcePermissions unset on the assumption that it will not be checked for inv managers
+            break;
+        case ROLE_OWNED:
+            // the permissions are already set by the query projection
+            break;
+        case AUTO_CLUSTER:
+            // the permissions are already set by the query projection
+            break;
+        case SUBJECT_OWNED:
+            Iterator<ResourceGroupComposite> iterator = groupComposites.iterator();
+            while (iterator.hasNext()) {
+                ResourceGroupComposite groupComposite = iterator.next();
+                ResourceGroup group = groupComposite.getResourceGroup();
+                Subject groupOwner = group.getSubject();
+                if (null != groupOwner) {
+                    // private group, we need to set the group resource permissions since we couldn't do it in
+                    // the projection.
+                    groupComposite.setResourcePermission(new ResourcePermission(authorizationManager
+                        .getExplicitGroupPermissions(groupOwner, group.getId())));
+                } else {
+                    throw new IllegalStateException("Unexpected group, not subject owned: " + groupComposite);
+                }
+            }
+            break;
+        default:
+            throw new IllegalStateException("Unexpected CriteriaAuthzType: " + authzType);
+        }
+        return groupComposites;
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

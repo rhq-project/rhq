@@ -220,8 +220,18 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         return (Boolean.TRUE.equals(this.filterPrivate));
     }
 
+    /**
+     * @param filterVisible not null. A single fetch may be for visible or invisible groups, but not both.
+     */
     public void addFilterVisible(Boolean filterVisible) {
+        if (null == filterVisible) {
+            throw new IllegalArgumentException("A single fetch may be for visible or invisible groups, but not both.");
+        }
         this.filterVisible = filterVisible;
+    }
+
+    public boolean isFilterVisible() {
+        return (Boolean.TRUE.equals(this.filterVisible));
     }
 
     public void addFilterIds(Integer... filterIds) {

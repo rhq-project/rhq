@@ -147,12 +147,12 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
     }
 
-    public void setSelectedGroup(final int groupId) {
+    public void setSelectedGroup(final int groupId, boolean isAutoCluster) {
         this.selectedGroupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
-        criteria.addFilterVisible(null);
+        criteria.addFilterVisible(Boolean.valueOf(!isAutoCluster));
         criteria.fetchResourceType(true);
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
@@ -422,11 +422,11 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 currentViewId = viewPath.getNext();
                 String clusterGroupIdString = currentViewId.getPath();
                 Integer clusterGroupId = Integer.parseInt(clusterGroupIdString);
-                setSelectedGroup(clusterGroupId);
+                setSelectedGroup(clusterGroupId, true);
             } else {
                 String groupIdString = currentViewId.getPath();
                 int groupId = Integer.parseInt(groupIdString);
-                setSelectedGroup(groupId);
+                setSelectedGroup(groupId, false);
             }
         }
     }

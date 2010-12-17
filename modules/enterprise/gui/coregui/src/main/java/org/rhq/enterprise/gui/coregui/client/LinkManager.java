@@ -56,6 +56,24 @@ public class LinkManager {
         }
     }
 
+    public static String getAutoGroupTabLink(int autoGroupId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#Resource/AutoGroup/" + autoGroupId + "/" + tabName
+                + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + autoGroupId;
+        }
+    }
+
+    public static String getResourceGroupTabLink(int resourceGroupId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#ResourceGroup/" + resourceGroupId + "/" + tabName
+                + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + resourceGroupId;
+        }
+    }
+
     public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
         return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }

@@ -137,7 +137,7 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.setLeaveScrollbarGap(false);
 
         resourceContextMenu = new Menu();
-        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
+        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"), true);
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {

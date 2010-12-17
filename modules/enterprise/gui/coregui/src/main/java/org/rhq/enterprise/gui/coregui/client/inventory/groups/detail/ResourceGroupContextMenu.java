@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
@@ -57,8 +58,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  */
 public class ResourceGroupContextMenu extends LocatableMenu {
 
+    private boolean isAutoGroup = false;
+
     public ResourceGroupContextMenu(String locatorId) {
         super(locatorId);
+    }
+
+    public ResourceGroupContextMenu(String locatorId, boolean isAutoGroup) {
+        super(locatorId);
+        this.isAutoGroup = isAutoGroup;
     }
 
     private ResourceType currentType;
@@ -84,33 +92,28 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                     showContextMenu();
                 }
             });
-
     }
 
     private void buildResourceGroupContextMenu(final ResourceGroup group, final ResourceType resourceType) {
+        // name
         setItems(new MenuItem(group.getName()));
 
+        // type name
         addItem(new MenuItem("Type: " + resourceType.getName()));
 
+        // separator
+        addItem(new MenuItemSeparator());
+
+        // plugin config
         MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
         editPluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
-                int groupId = group.getId();
-                int resourceTypeId = resourceType.getId();
-
-                Window configEditor = new Window();
-                //                configEditor.setTitle("Edit " + group.getName() + " plugin configuration");
-                configEditor.setWidth(800);
-                configEditor.setHeight(800);
-                configEditor.setIsModal(true);
-                configEditor.setShowModalMask(true);
-                configEditor.setCanDragResize(true);
-                configEditor.centerInPage();
-                // TODO Group config editor
-                //                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
-                //                    ConfigurationEditor.ConfigType.plugin));
-                configEditor.show();
-
+                if (isAutoGroup) {
+                    CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                } else {
+                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
+                        "ConnectionSettings"));
+                }
             }
         });
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);

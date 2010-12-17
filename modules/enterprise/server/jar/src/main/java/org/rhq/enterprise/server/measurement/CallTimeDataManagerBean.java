@@ -88,7 +88,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(schedule_id, call_destination) " + "SELECT ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
-    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT INTO " + DATA_VALUE_TABLE_NAME
+    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
         + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
         + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";

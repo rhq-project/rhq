@@ -78,9 +78,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     private Tab destinationsTab;
 
     private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-
     private Bundle bundle;
-
     private final boolean canManageBundles;
 
     public BundleView(String locatorId, Set<Permission> perms) {
@@ -88,13 +86,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         this.canManageBundles = (perms != null) ? perms.contains(Permission.MANAGE_BUNDLE) : false;
         setWidth100();
         setHeight100();
-        setPadding(10);
+        setMargin(10);
         setOverflow(Overflow.AUTO);
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
     }
 
     public void viewBundle(Bundle bundle, ViewId nextViewId) {
@@ -103,24 +96,22 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID
-            .getTitle()));
-
+        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(),
+            BundleTopView.VIEW_ID.getTitle());
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
-
-        addMember(headerLabel);
-
-        addMember(createSummaryForm());
-
         tabs = new LocatableTabSet(getLocatorId());
+        destinationsTab = createDestinationsTab();
         versionsTab = createVersionsTab();
+        tabs.addTab(destinationsTab);
         tabs.addTab(versionsTab);
 
-        destinationsTab = createDestinationsTab();
-        tabs.addTab(destinationsTab);
-
+        addMember(backButton);
+        addMember(headerLabel);
+        addMember(createTagEditor());
+        addMember(createSummaryForm());
         addMember(tabs);
 
+        // select the correct tab based on what URL the user is going to (based on what tree node was selected)
         if ((null == nextViewId) || (nextViewId.getPath().equals("versions"))) {
             tabs.selectTab(versionsTab);
         } else if (nextViewId.getPath().equals("destinations")) {
@@ -130,60 +121,9 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         markForRedraw();
     }
 
-    private Tab createDestinationsTab() {
-        LocatableTab destinationsTab = new LocatableTab(extendLocatorId("Destinations"), MSG.view_bundle_destinations());
-
-        Criteria criteria = new Criteria();
-        criteria.addCriteria("bundleId", bundle.getId());
-
-        destinationsTab.setPane(new BundleDestinationListView(destinationsTab.getLocatorId(), criteria));
-
-        return destinationsTab;
-    }
-
-    private Tab createVersionsTab() {
-        LocatableTab versionsTab = new LocatableTab(extendLocatorId("Versions"), MSG.view_bundle_versions());
-
-        Criteria criteria = new Criteria();
-        criteria.addCriteria("bundleId", bundleBeingViewed);
-
-        bundleVersionsTable = new BundleVersionListView(versionsTab.getLocatorId(), criteria);
-
-        versionsTab.setPane(bundleVersionsTable);
-
-        return versionsTab;
-    }
-
-    private DynamicForm createSummaryForm() {
-
-        form = new LocatableDynamicForm(extendLocatorId("Summary"));
-        form.setWidth100();
-        form.setColWidths("20%", "30%", "25%", "25%");
-        form.setNumCols(4);
-        form.setWrapItemTitles(false);
-        form.setPadding(10);
-
-        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
-        descriptionItem.setWrap(false);
-        descriptionItem.setValue(bundle.getDescription());
-
-        StaticTextItem versionCountItem = new StaticTextItem("versionCount", MSG.view_bundle_list_versionsCount());
-        versionCountItem.setValue(bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
-
-        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount", MSG
-            .view_bundle_list_destinationsCount());
-        destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
-
-        form.setFields(descriptionItem, getTagItem(), getActionItem(), versionCountItem, destinationsCountItem);
-
-        return form;
-    }
-
-    private CanvasItem getTagItem() {
-
+    private TagEditorView createTagEditor() {
         boolean readOnly = !this.canManageBundles;
-
-        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("TagEditor"), bundle.getTags(), readOnly,
+        TagEditorView tagEditor = new TagEditorView(extendLocatorId("TagEditor"), bundle.getTags(), readOnly,
             new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags,
@@ -199,14 +139,52 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                         });
                 }
             });
-        tagEditor.setVertical(true);
+        tagEditor.setAutoHeight();
+        return tagEditor;
+    }
 
-        CanvasItem tagItem = new CanvasItem("tags");
-        tagItem.setShowTitle(false);
-        tagItem.setRowSpan(3);
-        tagItem.setCanvas(tagEditor);
+    private Tab createDestinationsTab() {
+        LocatableTab destinationsTab = new LocatableTab(extendLocatorId("Destinations"), MSG.view_bundle_destinations());
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleId", bundle.getId());
+        destinationsTab.setPane(new BundleDestinationListView(destinationsTab.getLocatorId(), criteria));
+        return destinationsTab;
+    }
 
-        return tagItem;
+    private Tab createVersionsTab() {
+        LocatableTab versionsTab = new LocatableTab(extendLocatorId("Versions"), MSG.view_bundle_versions());
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleId", bundleBeingViewed);
+        bundleVersionsTable = new BundleVersionListView(versionsTab.getLocatorId(), criteria);
+        versionsTab.setPane(bundleVersionsTable);
+        return versionsTab;
+    }
+
+    private DynamicForm createSummaryForm() {
+
+        form = new LocatableDynamicForm(extendLocatorId("Summary"));
+        form.setWidth100();
+        form.setColWidths("20%", "40%", "40%");
+        form.setNumCols(3);
+        form.setWrapItemTitles(false);
+        form.setExtraSpace(10);
+        form.setIsGroup(true);
+        form.setGroupTitle(MSG.common_title_summary());
+        form.setPadding(5);
+
+        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
+        descriptionItem.setValue(bundle.getDescription());
+
+        StaticTextItem versionCountItem = new StaticTextItem("versionCount", MSG.view_bundle_list_versionsCount());
+        versionCountItem.setValue(bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
+
+        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount", MSG
+            .view_bundle_list_destinationsCount());
+        destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
+
+        form.setFields(descriptionItem, getActionItem(), versionCountItem, destinationsCountItem);
+
+        return form;
     }
 
     private CanvasItem getActionItem() {
@@ -275,6 +253,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         layout.addMember(deployButton);
 
         CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
         actionItem.setRowSpan(3);
         actionItem.setShowTitle(false);
         actionItem.setCanvas(layout);

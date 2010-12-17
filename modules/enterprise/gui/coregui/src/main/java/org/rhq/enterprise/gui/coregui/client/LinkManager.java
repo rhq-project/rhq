@@ -323,4 +323,16 @@ public class LinkManager {
     public static String getBundleLink(int bundleId) {
         return "#Bundles/Bundle/" + bundleId;
     }
+
+    public static String getBundleVersionLink(int bundleId, int bundleVersionId) {
+        return "#Bundles/Bundle/" + bundleId + "/versions/" + bundleVersionId;
+    }
+
+    public static String getBundleDestinationLink(int bundleId, int bundleDestinationId) {
+        return "#Bundles/Bundle/" + bundleId + "/destinations/" + bundleDestinationId;
+    }
+
+    public static String getBundleDeploymentLink(int bundleId, int bundleDeploymentId) {
+        return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
+    }
 }

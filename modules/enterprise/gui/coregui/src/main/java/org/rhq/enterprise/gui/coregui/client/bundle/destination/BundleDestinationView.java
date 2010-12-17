@@ -77,7 +77,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
-        setMargin(10);
+        //setMargin(10); // do not set margin, we already have our margin set outside of us
     }
 
     private void viewBundleDestination(BundleDestination bundleDestination, ViewId current) {
@@ -87,15 +87,34 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle() + ": "
-            + bundle.getName(), "Bundles/Bundle/" + bundle.getId()));
+        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle()
+            + ": " + bundle.getName(), "Bundles/Bundle/" + bundle.getId());
 
-        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"), destination.getName()));
+        HeaderLabel header = new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"),
+            destination.getName());
 
-        LocatableDynamicForm form = new LocatableDynamicForm(getLocatorId());
+        detail = new Canvas();
+        detail.setHeight("50%");
+        detail.hide();
+
+        addMember(backButton);
+        addMember(header);
+        addMember(createTagEditor());
+        addMember(createSummaryForm());
+        addMember(createDeploymentsTable());
+        addMember(detail);
+    }
+
+    private LocatableDynamicForm createSummaryForm() {
+        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
         form.setWidth100();
-        form.setNumCols(4);
-        form.setColWidths("20%", "30%", "25%", "25%");
+        form.setColWidths("20%", "40%", "40%");
+        form.setNumCols(3);
+        form.setWrapItemTitles(false);
+        form.setExtraSpace(10);
+        form.setIsGroup(true);
+        form.setGroupTitle(MSG.common_title_summary());
+        form.setPadding(5);
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
@@ -103,10 +122,32 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         bundleName.setLinkTitle(bundle.getName());
         bundleName.setTarget("_self");
 
-        CanvasItem tagItem = new CanvasItem("tag");
-        tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("Tags"), destination.getTags(),
-            !canManageBundles, new TagsChangedCallback() {
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
+        actionItem.setRowSpan(4);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
+
+        StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
+        created.setValue(new Date(destination.getCtime()));
+
+        LinkItem destinationGroup = new LinkItem("group");
+        destinationGroup.setTitle(MSG.view_bundle_dest_group());
+        destinationGroup.setValue("#ResourceGroup/" + destination.getGroup().getId());
+        destinationGroup.setLinkTitle(destination.getGroup().getName());
+        destinationGroup.setTarget("_self");
+
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
+        path.setValue(destination.getDeployDir());
+
+        form.setFields(bundleName, actionItem, created, destinationGroup, path);
+        return form;
+    }
+
+    private TagEditorView createTagEditor() {
+        boolean readOnly = !this.canManageBundles;
+        TagEditorView tagEditor = new TagEditorView(extendLocatorId("Tags"), destination.getTags(), readOnly,
+            new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
                         new AsyncCallback<Void>() {
@@ -121,45 +162,12 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                         });
                 }
             });
-        tagEditor.setVertical(true);
-        tagItem.setCanvas(tagEditor);
-        tagItem.setRowSpan(4);
-
-        CanvasItem actionItem = new CanvasItem("actions");
-        actionItem.setShowTitle(false);
-        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
-        actionItem.setRowSpan(4);
-
-        StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
-        created.setValue(new Date(destination.getCtime()));
-
-        LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle(MSG.view_bundle_dest_group());
-        destinationGroup.setValue("#ResourceGroup/" + destination.getGroup().getId());
-        destinationGroup.setLinkTitle(destination.getGroup().getName());
-        destinationGroup.setTarget("_self");
-
-        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
-        path.setValue(destination.getDeployDir());
-
-        form.setFields(bundleName, tagItem, actionItem, created, destinationGroup, path);
-
-        addMember(form);
-
-        Table deployments = createDeploymentsTable();
-        deployments.setHeight100();
-        deployments.setShowResizeBar(true);
-        addMember(createDeploymentsTable());
-
-        detail = new Canvas();
-        detail.setHeight("50%");
-        detail.hide();
-        addMember(detail);
+        tagEditor.setAutoHeight();
+        return tagEditor;
     }
 
     private Canvas getActionLayout(String locatorId) {
-        LocatableVLayout actionLayout = new LocatableVLayout(locatorId);
-        actionLayout.setMembersMargin(10);
+        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
         IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {
@@ -189,7 +197,10 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     private Table createDeploymentsTable() {
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
-        return new BundleDeploymentListView(extendLocatorId("Deployments"), criteria);
+        BundleDeploymentListView deployments = new BundleDeploymentListView(extendLocatorId("Deployments"), criteria);
+        deployments.setHeight100();
+        deployments.setShowResizeBar(true);
+        return deployments;
     }
 
     public void renderView(final ViewPath viewPath) {

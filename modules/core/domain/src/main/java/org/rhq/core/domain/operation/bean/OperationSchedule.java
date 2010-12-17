@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
@@ -47,6 +48,7 @@ public abstract class OperationSchedule implements Serializable {
     private Configuration parameters;
     private Subject subject;
     private String description;
+    private JobTrigger jobTrigger;
 
     public OperationSchedule() {
     }
@@ -122,6 +124,14 @@ public abstract class OperationSchedule implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public JobTrigger getJobTrigger() {
+        return jobTrigger;
+    }
+
+    public void setJobTrigger(JobTrigger jobTrigger) {
+        this.jobTrigger = jobTrigger;
     }
 
     /**

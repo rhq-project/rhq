@@ -316,7 +316,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 } else {
                     // a specific deployment
                     //removeMembers(getMembers());
-                    BundleDeploymentView view = new BundleDeploymentView(extendLocatorId("Deployment"));
+                    BundleDeploymentView view = new BundleDeploymentView(extendLocatorId("Deployment"),
+                        canManageBundles);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

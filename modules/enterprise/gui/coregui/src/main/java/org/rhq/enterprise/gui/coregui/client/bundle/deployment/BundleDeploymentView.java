@@ -29,12 +29,14 @@ import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -49,6 +51,8 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
@@ -80,12 +84,14 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     private Bundle bundle;
 
     private VLayout detail;
+    private boolean canManageBundles;
 
-    public BundleDeploymentView(String locatorId) {
+    public BundleDeploymentView(String locatorId, boolean canManageBundles) {
         super(locatorId);
+        this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
-        setMargin(10);
+        //setMargin(10); // do not set margin, we already have our margin set outside of us
     }
 
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
@@ -97,23 +103,62 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
         addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_deploy_backButton() + ": "
-            + deployment.getDestination().getName(), "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/"
-            + deployment.getDestination().getId()));
-
+            + deployment.getDestination().getName(), LinkManager.getBundleDestinationLink(version.getBundle().getId(),
+            deployment.getDestination().getId())));
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
+        addMember(createTagEditor());
+        addMember(createSummaryForm());
+        addMemberDeploymentsTable();
 
+        detail = new VLayout();
+        detail.setAutoHeight();
+        detail.hide();
+        addMember(detail);
+    }
+
+    private LocatableDynamicForm createSummaryForm() {
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+        form.setWidth100();
+        form.setAutoHeight();
         form.setNumCols(4);
+        form.setWrapItemTitles(false);
+        form.setExtraSpace(10);
+        form.setIsGroup(true);
+        form.setGroupTitle(MSG.common_title_summary());
+        form.setPadding(5);
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
-        bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
+        bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
         bundleName.setLinkTitle(bundle.getName());
         bundleName.setTarget("_self");
 
-        CanvasItem tagItem = new CanvasItem("tag");
-        tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(form.getLocatorId(), version.getTags(), false,
+        LinkItem bundleVersionName = new LinkItem("bundleVersion");
+        bundleVersionName.setTitle(MSG.view_bundle_bundleVersion());
+        bundleVersionName.setValue(LinkManager.getBundleVersionLink(bundle.getId(), deployment.getBundleVersion()
+            .getId()));
+        bundleVersionName.setLinkTitle(deployment.getBundleVersion().getVersion());
+        bundleVersionName.setTarget("_self");
+
+        StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
+        deployed.setValue(new Date(deployment.getCtime()));
+
+        LinkItem destinationGroup = new LinkItem("group");
+        destinationGroup.setTitle(MSG.common_title_resource_group());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
+        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
+        destinationGroup.setTarget("_self");
+
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
+        path.setValue(deployment.getDestination().getDeployDir());
+
+        form.setFields(bundleName, bundleVersionName, deployed, destinationGroup, path);
+        return form;
+    }
+
+    private TagEditorView createTagEditor() {
+        boolean readOnly = !this.canManageBundles;
+        TagEditorView tagEditor = new TagEditorView(extendLocatorId("tagEditor"), version.getTags(), readOnly,
             new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
@@ -130,32 +175,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                         });
                 }
             });
-        tagEditor.setVertical(true);
-        tagItem.setCanvas(tagEditor);
-        tagItem.setRowSpan(4);
-
-        StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
-        deployed.setValue(new Date(deployment.getCtime()));
-
-        LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle(MSG.common_title_resource_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
-        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
-        destinationGroup.setTarget("_self");
-
-        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
-        path.setValue(deployment.getDestination().getDeployDir());
-
-        form.setFields(bundleName, tagItem, deployed, destinationGroup, path);
-
-        addMember(form);
-
-        addMemberDeploymentsTable();
-
-        detail = new VLayout();
-        detail.setAutoHeight();
-        detail.hide();
-        addMember(detail);
+        tagEditor.setAutoHeight();
+        tagEditor.setExtraSpace(10);
+        return tagEditor;
     }
 
     private Table addMemberDeploymentsTable() {
@@ -163,20 +185,20 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 
-        ListGridField resourceIcon = new ListGridField("resourceAvailability", "");
+        // resource icon field
+        ListGridField resourceIcon = new ListGridField("resourceAvailability");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put("UP", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
-        icons.put("DOWN", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
+        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
+        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
-        resourceIcon.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "";
-            }
-        });
-        resourceIcon.setWidth(30);
+        resourceIcon.setType(ListGridFieldType.ICON);
+        resourceIcon.setWidth(40);
 
+        // resource field
         ListGridField resource = new ListGridField("resource", MSG.common_title_platform());
+        resource.setAutoFitWidth(true);
+        resource.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         resource.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
@@ -184,49 +206,55 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
             }
         });
+
+        // resource version field
         ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.view_bundle_deploy_operatingSystem());
+        resourceVersion.setAutoFitWidth(true);
+        resourceVersion.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+
+        // status icon field
         ListGridField status = new ListGridField("status", MSG.common_title_status());
         HashMap<String, String> statusIcons = new HashMap<String, String>();
         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
         statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
-        status.setWidth(80);
+        status.setValueIconWidth(11);
+        status.setWidth("*");
 
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute("resource", rd.getResource().getName());
-
-            record.setAttribute("resourceAvailability", rd.getResource().getCurrentAvailability().getAvailabilityType()
-                .name());
-            record.setAttribute("resourceId", rd.getResource().getId());
-            record.setAttribute("resourceVersion", rd.getResource().getVersion());
+            Resource rr = rd.getResource();
+            record.setAttribute("resource", rr.getName());
+            record.setAttribute("resourceAvailability", rr.getCurrentAvailability().getAvailabilityType().name());
+            record.setAttribute("resourceId", rr.getId());
+            record.setAttribute("resourceVersion", rr.getVersion());
             record.setAttribute("status", rd.getStatus().name());
             record.setAttribute("id", rd.getId());
-            record.setAttribute("entity", rd);
+            record.setAttribute("object", rd);
             records.add(record);
         }
 
         // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
         table.setHeight("30%");
+        table.setWidth100();
         table.setShowResizeBar(true);
         table.setResizeBarTarget("next");
         addMember(table);
 
-        table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
-
-        table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
-
-        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
+        ListGrid listGrid = table.getListGrid();
+        listGrid.setFields(resourceIcon, resource, resourceVersion, status);
+        listGrid.setData(records.toArray(new ListGridRecord[records.size()]));
+        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
 
                     BundleResourceDeployment bundleResourceDeployment = (BundleResourceDeployment) selectionEvent
-                        .getRecord().getAttributeAsObject("entity");
+                        .getRecord().getAttributeAsObject("object");
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
                         "Detail", bundleResourceDeployment);
 
@@ -234,24 +262,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                     detail.addMember(detailView);
                     detail.setHeight("50%");
                     detail.animateShow(AnimationEffect.SLIDE);
-
-                    /*
-                                        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
-                                        criteria.addFilterId(selectionEvent.getRecord().getAttributeAsInt("id"));
-                                        criteria.fetchHistories(true);
-                                        criteria.fetchResource(true);
-                                        criteria.fetchBundleDeployment(true);
-                                        bundleService.findBundleResourceDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleResourceDeployment>>() {
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError("Failed to load resource deployment history details",caught);
-                                            }
-
-                                            public void onSuccess(PageList<BundleResourceDeployment> result) {
-
-                                            }
-                                        });
-                    */
-
                 } else {
                     detail.animateHide(AnimationEffect.SLIDE);
                 }
@@ -263,8 +273,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
     public void renderView(final ViewPath viewPath) {
         int bundleDeploymentId = Integer.parseInt(viewPath.getCurrent().getPath());
-
-        final ViewId viewId = viewPath.getCurrent();
 
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterId(bundleDeploymentId);
@@ -281,9 +289,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             }
 
             public void onSuccess(PageList<BundleDeployment> result) {
-
                 final BundleDeployment deployment = result.get(0);
-
                 BundleCriteria bundleCriteria = new BundleCriteria();
                 bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
                 bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
@@ -292,11 +298,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                     }
 
                     public void onSuccess(PageList<Bundle> result) {
-
                         final Bundle bundle = result.get(0);
-
                         deployment.getBundleVersion().setBundle(bundle);
-
                         BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
                         criteria.addFilterBundleDeploymentId(deployment.getId());
                         criteria.fetchHistories(true);
@@ -304,7 +307,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                         criteria.fetchBundleDeployment(true);
                         bundleService.findBundleResourceDeploymentsByCriteria(criteria,
                             new AsyncCallback<PageList<BundleResourceDeployment>>() {
-
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
                                 }
@@ -314,13 +316,10 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                                     viewBundleDeployment(deployment, viewPath.getCurrent());
                                 }
                             });
-
                     }
                 });
-
             }
         });
-
     }
 
 }

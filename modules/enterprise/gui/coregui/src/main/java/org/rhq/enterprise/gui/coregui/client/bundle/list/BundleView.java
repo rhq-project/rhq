@@ -343,7 +343,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             } else if (viewPath.getCurrent().getPath().equals("destinations")) {
                 if (!viewPath.isEnd()) {
                     // a specific destination
-                    BundleDestinationView view = new BundleDestinationView(extendLocatorId("Destination"));
+                    BundleDestinationView view = new BundleDestinationView(extendLocatorId("Destination"),
+                        canManageBundles);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

@@ -70,8 +70,11 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
     private Canvas detail;
 
-    public BundleDestinationView(String locatorId) {
+    private boolean canManageBundles;
+
+    public BundleDestinationView(String locatorId, boolean canManageBundles) {
         super(locatorId);
+        this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
         setMargin(10);
@@ -102,8 +105,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("Tags"), destination.getTags(), false,
-            new TagsChangedCallback() {
+        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("Tags"), destination.getTags(),
+            !canManageBundles, new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
                         new AsyncCallback<Void>() {
@@ -164,6 +167,9 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 new BundleDeployWizard(destination).startWizard();
             }
         });
+        if (!canManageBundles) {
+            deployButton.setDisabled(true);
+        }
         actionLayout.addMember(deployButton);
 
         IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG.view_bundle_revert());
@@ -173,68 +179,21 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 new BundleRevertWizard(destination).startWizard();
             }
         });
+        if (!canManageBundles) {
+            revertButton.setDisabled(true);
+        }
         actionLayout.addMember(revertButton);
         return actionLayout;
     }
 
     private Table createDeploymentsTable() {
-
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
-
         return new BundleDeploymentListView(extendLocatorId("Deployments"), criteria);
-
-        /* Table table = new Table("Deployment History");
-
-         ListGridField name = new ListGridField("name", "Name");
-         name.setCellFormatter(new CellFormatter() {
-             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                 return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/deployments/"
-                         + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-             }
-         });
-
-         ListGridField version = new ListGridField("version", "Version");
-         ListGridField description = new ListGridField("description", "Description");
-         ListGridField installDate = new ListGridField("installDate", "Install Date");
-         ListGridField status = new ListGridField("status", "Status");
-         HashMap<String, String> statusIcons = new HashMap<String, String>();
-         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-         statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
-         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-         statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
-         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
-         status.setValueIcons(statusIcons);
-         status.setValueIconHeight(11);
-         status.setWidth(80);
-
-
-         table.getListGrid().setFields(name, version, description, installDate, status);
-
-         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
-         for (BundleDeployment rd : destination.getDeployments()) {
-             ListGridRecord record = new ListGridRecord();
-
-             record.setAttribute("name", rd.getName());
-             record.setAttribute("description", rd.getDescription());
-             record.setAttribute("bundleId", bundle.getId());
-             record.setAttribute("version", rd.getBundleVersion().getName());
-             record.setAttribute("status", rd.getStatus().name());
-             record.setAttribute("id", rd.getId());
-             record.setAttribute("entity", rd);
-             record.setAttribute("installDate", new Date(rd.getCtime()));
-             records.add(record);
-         }
-
-         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
-
-         return table;*/
     }
 
     public void renderView(final ViewPath viewPath) {
         int bundleDestinationId = Integer.parseInt(viewPath.getCurrent().getPath());
-
-        final ViewId viewId = viewPath.getCurrent();
 
         BundleDestinationCriteria criteria = new BundleDestinationCriteria();
         criteria.addFilterId(bundleDestinationId);
@@ -253,7 +212,6 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 viewBundleDestination(destination, viewPath.getCurrent());
             }
         });
-
     }
 
 }

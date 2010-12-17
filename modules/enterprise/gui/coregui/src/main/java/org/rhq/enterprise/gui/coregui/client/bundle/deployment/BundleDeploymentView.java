@@ -30,11 +30,14 @@ import java.util.HashSet;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -58,6 +61,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -86,12 +90,21 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     private VLayout detail;
     private boolean canManageBundles;
 
+    private final HashMap<String, String> statusIcons;
+
     public BundleDeploymentView(String locatorId, boolean canManageBundles) {
         super(locatorId);
         this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
         //setMargin(10); // do not set margin, we already have our margin set outside of us
+
+        statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
+        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
     }
 
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
@@ -141,7 +154,32 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         bundleVersionName.setTarget("_self");
 
         StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
+        deployed.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
         deployed.setValue(new Date(deployment.getCtime()));
+
+        StaticTextItem deployedBy = new StaticTextItem("deployedBy", MSG.view_bundle_deploy_deployedBy());
+        deployedBy.setValue(deployment.getSubjectName());
+
+        StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
+        description.setValue(deployment.getDescription());
+
+        StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
+        status.setValue(deployment.getStatus().name());
+        status.setValueIcons(statusIcons);
+        status.setValueIconHeight(11);
+        status.setValueIconWidth(11);
+        status.setShowValueIconOnly(true);
+        if (deployment.getErrorMessage() != null) {
+            status.setTooltip(MSG.view_bundle_deploy_clickForError());
+            status.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"),
+                        MSG.common_title_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
+                    win.show();
+                }
+            });
+        }
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
@@ -152,7 +190,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
-        form.setFields(bundleName, bundleVersionName, deployed, destinationGroup, path);
+        form.setFields(bundleName, deployed, bundleVersionName, deployedBy, //
+            description, status, destinationGroup, path);
         return form;
     }
 
@@ -214,12 +253,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         // status icon field
         ListGridField status = new ListGridField("status", MSG.common_title_status());
-        HashMap<String, String> statusIcons = new HashMap<String, String>();
-        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
-        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setValueIconWidth(11);

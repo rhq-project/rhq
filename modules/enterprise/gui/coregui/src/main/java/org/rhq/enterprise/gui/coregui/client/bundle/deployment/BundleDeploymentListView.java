@@ -33,10 +33,13 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -105,6 +108,16 @@ public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployme
         statusField.setValueIcons(statusIcons);
         statusField.setValueIconWidth(11);
         statusField.setValueIconHeight(11);
+        statusField.addRecordClickHandler(new RecordClickHandler() {
+            @Override
+            public void onRecordClick(RecordClickEvent event) {
+                String err = event.getRecord().getAttribute(BundleDeploymentDataSource.FIELD_ERROR_MESSAGE);
+                if (err != null && err.length() > 0) {
+                    err = "<pre>" + err + "</pre>";
+                    new ErrorMessageWindow(extendLocatorId("errWin"), MSG.common_title_error(), err).show();
+                }
+            }
+        });
 
         idField.setWidth(50);
         nameField.setWidth("30%");

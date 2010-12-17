@@ -53,6 +53,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
     public static final String FIELD_DEPLOY_DIR = "deployDir";
     public static final String FIELD_DESCRIPTION = "description";
     public static final String FIELD_DEPLOY_TIME = "deploymentTime";
+    public static final String FIELD_ERROR_MESSAGE = "errorMessage";
     public static final String FIELD_CONFIG = "configuration";
     public static final String FIELD_STATUS = "status";
     public static final String FIELD_DEPLOYER = "deployer"; // a user name
@@ -153,6 +154,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         record.setAttribute(FIELD_NAME, from.getName());
         record.setAttribute(FIELD_DEPLOY_DIR, from.getDestination().getDeployDir());
         record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
+        record.setAttribute(FIELD_ERROR_MESSAGE, from.getErrorMessage());
         record.setAttribute(FIELD_DEPLOY_TIME, new Date(from.getCtime()));
         record.setAttribute(FIELD_CONFIG, from.getConfiguration());
         record.setAttribute(FIELD_STATUS, from.getStatus().name());

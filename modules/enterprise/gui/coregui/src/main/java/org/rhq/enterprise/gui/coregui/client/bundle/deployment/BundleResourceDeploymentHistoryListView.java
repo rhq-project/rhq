@@ -34,8 +34,6 @@ import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -51,10 +49,10 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -170,24 +168,10 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         form.setItems(timestamp, action, category, user, status, info, message, detail);
         form.editRecord(record);
 
-        final Window window = new LocatableWindow(extendLocatorId("detailsWin"));
-        window.setTitle(MSG.view_bundle_deploy_installDetails());
-        window.setAutoSize(true);
-        window.setWidth(500);
-        window.setAutoCenter(true);
-        window.setIsModal(true);
-        window.setShowModalMask(true);
-        window.setCanDragResize(true);
-        window.addItem(form);
-        window.setShowMinimizeButton(false);
-        window.setShowMaximizeButton(true);
-        window.addCloseClickHandler(new CloseClickHandler() {
-            @Override
-            public void onCloseClick(CloseClientEvent event) {
-                window.destroy();
-            }
-        });
-        window.show();
+        Window win = new ErrorMessageWindow(extendLocatorId("detailsWin"), MSG.view_bundle_deploy_installDetails(),
+            form);
+        win.setWidth(500);
+        win.show();
     }
 
     public ListGridRecord[] buildRecords() {

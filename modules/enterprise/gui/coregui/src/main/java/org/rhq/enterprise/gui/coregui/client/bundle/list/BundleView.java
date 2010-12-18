@@ -312,7 +312,11 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 }
             } else if (viewPath.getCurrent().getPath().equals("deployments")) {
                 if (viewPath.isEnd()) {
-                    // TODO: where to go? I don't think this is a valid url right now
+                    // today we do not have an uber-view showing all deployments for a bundle.
+                    // if we did, it would show all deployments to all destinations for all bundle versions.
+                    // because that would be a very large list with a lot of stuff to show, it was deemed
+                    // too complex to be useful for users. thus, we have no uber-deployments view. If we did,
+                    // we would render it here.
                 } else {
                     // a specific deployment
                     //removeMembers(getMembers());

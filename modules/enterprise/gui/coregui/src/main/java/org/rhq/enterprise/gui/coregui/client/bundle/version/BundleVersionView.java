@@ -26,7 +26,13 @@ import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
@@ -49,9 +55,11 @@ import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
+import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -61,6 +69,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class BundleVersionView extends LocatableVLayout implements BookmarkableView {
 
+    private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private BundleVersion version;
     private boolean canManageBundles = false;
 
@@ -111,15 +120,23 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     private LocatableDynamicForm createSummaryForm() {
+
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
         form.setWidth100();
+        form.setColWidths("20%", "40%", "40%");
+        form.setNumCols(3);
         form.setAutoHeight();
-        form.setNumCols(2);
         form.setWrapItemTitles(false);
         form.setExtraSpace(10);
         form.setIsGroup(true);
         form.setGroupTitle(MSG.common_title_summary());
         form.setPadding(5);
+
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
+        actionItem.setRowSpan(4);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
 
         StaticTextItem versionItem = new StaticTextItem("version", MSG.common_title_version());
         versionItem.setValue(version.getVersion());
@@ -133,8 +150,45 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
         descriptionItem.setValue(version.getDescription());
 
-        form.setFields(versionItem, liveDeploymentsItem, filesItems, descriptionItem);
+        form.setFields(versionItem, actionItem, liveDeploymentsItem, filesItems, descriptionItem);
         return form;
+    }
+
+    private Canvas getActionLayout(String locatorId) {
+        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
+        IButton deleteButton = new LocatableIButton(extendLocatorId("Delete"), MSG.common_button_delete());
+        deleteButton.setIcon("subsystems/bundle/BundleVersionAction_Delete_16.png");
+        deleteButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.ask(MSG.view_bundle_version_deleteConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            bundleManager.deleteBundleVersion(version.getId(), false, new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_version_deleteFailure(version.getVersion()), caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_version_deleteSuccessful(version.getVersion()),
+                                            Message.Severity.Info));
+                                    // Bundle version is deleted, go back to main bundle view
+                                    CoreGUI.goToView(LinkManager.getBundleLink(version.getBundle().getId()));
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(deleteButton);
+
+        if (!canManageBundles) {
+            deleteButton.setDisabled(true);
+        }
+
+        return actionLayout;
     }
 
     private TagEditorView createTagEditor() {
@@ -213,17 +267,16 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         criteria.fetchConfigurationDefinition(true);
         criteria.fetchTags(true);
 
-        GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
-            new AsyncCallback<PageList<BundleVersion>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
-                }
+        bundleManager.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
+            }
 
-                public void onSuccess(PageList<BundleVersion> result) {
-                    BundleVersion version = result.get(0);
-                    ViewId nextPath = viewPath.next().getCurrent();
-                    viewBundleVersion(version, nextPath);
-                }
-            });
+            public void onSuccess(PageList<BundleVersion> result) {
+                BundleVersion version = result.get(0);
+                ViewId nextPath = viewPath.next().getCurrent();
+                viewBundleVersion(version, nextPath);
+            }
+        });
     }
 }

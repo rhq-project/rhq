@@ -168,6 +168,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         form.setWidth100();
         form.setColWidths("20%", "40%", "40%");
         form.setNumCols(3);
+        form.setAutoHeight();
         form.setWrapItemTitles(false);
         form.setExtraSpace(10);
         form.setIsGroup(true);

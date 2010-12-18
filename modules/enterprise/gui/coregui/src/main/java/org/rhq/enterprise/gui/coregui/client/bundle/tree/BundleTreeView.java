@@ -64,9 +64,9 @@ public class BundleTreeView extends LocatableTreeGrid {
     }
 
     public void selectPath(ViewPath viewPath) {
-
         Tree theTree = getTree();
 
+        // TODO: how do we get the tree to load its nodes if they aren't loaded yet? 
         if (viewPath.viewsLeft() > 0) {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
@@ -89,7 +89,6 @@ public class BundleTreeView extends LocatableTreeGrid {
             final String finalKey = key;
             GWT.runAsync(new RunAsyncCallback() {
                 public void onFailure(Throwable reason) {
-
                 }
 
                 public void onSuccess() {

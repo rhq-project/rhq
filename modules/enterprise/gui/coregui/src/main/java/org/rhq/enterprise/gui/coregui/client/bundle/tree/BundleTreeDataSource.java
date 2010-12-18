@@ -226,40 +226,45 @@ public class BundleTreeDataSource extends RPCDataSource {
     }
 
     public ListGridRecord copyValuesForKnownBundle(Object from, Integer bundleId) {
+        String parentID;
         TreeNode node = new TreeNode();
         if (from instanceof Bundle) {
             Bundle bundle = (Bundle) from;
+            node.setIsFolder(true);
+            node.setIcon("subsystems/bundle/Bundle_16.png");
             node.setID(String.valueOf(bundle.getId()));
             node.setName(bundle.getName());
-            node.setIcon("subsystems/bundle/Bundle_16.png");
 
         } else if (from instanceof BundleVersion) {
             BundleVersion version = (BundleVersion) from;
-            node.setName(version.getVersion());
-            node.setID(version.getBundle().getId() + "_versions_" + version.getId());
-            node.setParentID(version.getBundle().getId() + "_versions");
             node.setIsFolder(false);
             node.setIcon("subsystems/bundle/BundleVersion_16.png");
+            parentID = version.getBundle().getId() + "_versions";
+            node.setParentID(parentID);
+            node.setID(parentID + '_' + version.getId());
+            node.setName(version.getVersion());
 
         } else if (from instanceof BundleDeployment) {
             BundleDeployment deployment = (BundleDeployment) from;
+            node.setIsFolder(false);
+            node.setIcon("subsystems/bundle/BundleDeployment_16.png");
+            parentID = bundleId + "_destinations_" + deployment.getDestination().getId();
+            node.setParentID(parentID);
+            node.setID(bundleId + "_deployments_" + deployment.getId());
             if (deployment.isLive()) {
                 node.setName("<span style=\"color: green; font-weight: bold\">(live)</span> " + deployment.getName());
             } else {
                 node.setName(deployment.getName());
             }
-            node.setID(bundleId + "_deployments_" + deployment.getId());
-            node.setParentID(bundleId + "_destinations_" + deployment.getDestination().getId());
-            node.setIsFolder(false);
-            node.setIcon("subsystems/bundle/BundleDeployment_16.png");
 
         } else if (from instanceof BundleDestination) {
             BundleDestination destination = (BundleDestination) from;
-            node.setName(destination.getName());
-            node.setID(destination.getBundle().getId() + "_destinations_" + destination.getId());
-            node.setParentID(destination.getBundle().getId() + "_destinations");
             node.setIsFolder(true);
             node.setIcon("subsystems/bundle/BundleDestination_16.png");
+            parentID = destination.getBundle().getId() + "_destinations";
+            node.setParentID(parentID);
+            node.setID(parentID + '_' + destination.getId());
+            node.setName(destination.getName());
         }
 
         return node;

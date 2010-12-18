@@ -26,6 +26,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
@@ -55,13 +56,16 @@ public class BundleTreeView extends LocatableTreeGrid {
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
-                String path = event.getNode().getAttribute("id").replaceAll("_", "/");
+                TreeNode node = event.getNode();
+                String path = node.getAttribute("id").replaceAll("_", "/");
                 History.newItem("Bundles/Bundle/" + path);
             }
         });
     }
 
     public void selectPath(ViewPath viewPath) {
+
+        Tree theTree = getTree();
 
         if (viewPath.viewsLeft() > 0) {
             String key = "";
@@ -71,9 +75,14 @@ public class BundleTreeView extends LocatableTreeGrid {
 
                 key += view.getPath();
 
-                TreeNode node = getTree().findById(key);
+                TreeNode node = theTree.findById(key);
                 if (node != null) {
-                    getTree().openFolder(node);
+                    // make sure all its parents are open as well as itself
+                    TreeNode parentNode = node; // prime the pump
+                    while (parentNode != null) {
+                        theTree.openFolder(parentNode);
+                        parentNode = theTree.getParent(parentNode);
+                    }
                 }
             }
 

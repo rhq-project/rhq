@@ -42,6 +42,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
@@ -118,13 +119,13 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
-        bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
+        bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
         bundleName.setLinkTitle(bundle.getName());
         bundleName.setTarget("_self");
 
         CanvasItem actionItem = new CanvasItem("actions");
         actionItem.setColSpan(1);
-        actionItem.setRowSpan(4);
+        actionItem.setRowSpan(5);
         actionItem.setShowTitle(false);
         actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
 
@@ -133,14 +134,17 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.view_bundle_dest_group());
-        destinationGroup.setValue("#ResourceGroup/" + destination.getGroup().getId());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(destination.getGroup().getId()));
         destinationGroup.setLinkTitle(destination.getGroup().getName());
         destinationGroup.setTarget("_self");
 
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
         path.setValue(destination.getDeployDir());
 
-        form.setFields(bundleName, actionItem, created, destinationGroup, path);
+        StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
+        description.setValue(destination.getDescription());
+
+        form.setFields(bundleName, actionItem, created, destinationGroup, path, description);
         return form;
     }
 
@@ -176,9 +180,6 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 new BundleDeployWizard(destination).startWizard();
             }
         });
-        if (!canManageBundles) {
-            deployButton.setDisabled(true);
-        }
         actionLayout.addMember(deployButton);
 
         IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG.view_bundle_revert());
@@ -188,10 +189,13 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 new BundleRevertWizard(destination).startWizard();
             }
         });
+        actionLayout.addMember(revertButton);
+
         if (!canManageBundles) {
+            deployButton.setDisabled(true);
             revertButton.setDisabled(true);
         }
-        actionLayout.addMember(revertButton);
+
         return actionLayout;
     }
 

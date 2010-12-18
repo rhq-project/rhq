@@ -124,16 +124,16 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         StaticTextItem versionItem = new StaticTextItem("version", MSG.common_title_version());
         versionItem.setValue(version.getVersion());
 
-        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
-        descriptionItem.setValue(version.getDescription());
-
         StaticTextItem liveDeploymentsItem = new StaticTextItem("deployments", MSG.view_bundle_deployments());
         liveDeploymentsItem.setValue(version.getBundleDeployments().size());
 
         StaticTextItem filesItems = new StaticTextItem("files", MSG.view_bundle_files());
         filesItems.setValue(version.getBundleFiles().size());
 
-        form.setFields(versionItem, descriptionItem, liveDeploymentsItem, filesItems);
+        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
+        descriptionItem.setValue(version.getDescription());
+
+        form.setFields(versionItem, liveDeploymentsItem, filesItems, descriptionItem);
         return form;
     }
 

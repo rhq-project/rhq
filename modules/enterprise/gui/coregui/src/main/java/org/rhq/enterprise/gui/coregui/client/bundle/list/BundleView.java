@@ -27,6 +27,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -173,8 +174,11 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         form.setGroupTitle(MSG.common_title_summary());
         form.setPadding(5);
 
-        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
-        descriptionItem.setValue(bundle.getDescription());
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
+        actionItem.setRowSpan(3);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionCanvas());
 
         StaticTextItem versionCountItem = new StaticTextItem("versionCount", MSG.view_bundle_list_versionsCount());
         versionCountItem.setValue(bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
@@ -183,39 +187,16 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             .view_bundle_list_destinationsCount());
         destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
 
-        form.setFields(descriptionItem, getActionItem(), versionCountItem, destinationsCountItem);
+        StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
+        descriptionItem.setValue(bundle.getDescription());
+
+        form.setFields(versionCountItem, actionItem, destinationsCountItem, descriptionItem);
 
         return form;
     }
 
-    private CanvasItem getActionItem() {
+    private Canvas getActionCanvas() {
         VLayout layout = new LocatableVLayout(form.extendLocatorId("Actions"), 10);
-
-        IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), MSG.common_button_delete());
-        deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
-        deleteButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                SC.ask(MSG.view_bundle_list_deleteConfirm(), new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_list_deleteFailure(bundle.getName()), caught);
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_list_deleteSuccessful(bundle.getName()),
-                                            Message.Severity.Info));
-                                    History.newItem("Bundles"); // Bundle is deleted, go back to all bundles view
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-        });
 
         IButton deployButton = new LocatableIButton(form.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
@@ -244,21 +225,41 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 });
             }
         });
-
-        if (!canManageBundles) {
-            deleteButton.setDisabled(true);
-            deployButton.setDisabled(true);
-        }
-
-        layout.addMember(deleteButton);
         layout.addMember(deployButton);
 
-        CanvasItem actionItem = new CanvasItem("actions");
-        actionItem.setColSpan(1);
-        actionItem.setRowSpan(3);
-        actionItem.setShowTitle(false);
-        actionItem.setCanvas(layout);
-        return actionItem;
+        IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), MSG.common_button_delete());
+        deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
+        deleteButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.ask(MSG.view_bundle_list_deleteConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_list_deleteFailure(bundle.getName()), caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_list_deleteSuccessful(bundle.getName()),
+                                            Message.Severity.Info));
+                                    History.newItem("Bundles"); // Bundle is deleted, go back to all bundles view
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        layout.addMember(deleteButton);
+
+        if (!canManageBundles) {
+            deployButton.setDisabled(true);
+            deleteButton.setDisabled(true);
+        }
+
+        return layout;
     }
 
     public void renderView(final ViewPath viewPath) {
@@ -311,8 +312,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 }
             } else if (viewPath.getCurrent().getPath().equals("deployments")) {
                 if (viewPath.isEnd()) {
-                    // TODO: go to deployments tab for the bundle                    
-                    // deployments list screen
+                    // TODO: where to go? I don't think this is a valid url right now
                 } else {
                     // a specific deployment
                     //removeMembers(getMembers());

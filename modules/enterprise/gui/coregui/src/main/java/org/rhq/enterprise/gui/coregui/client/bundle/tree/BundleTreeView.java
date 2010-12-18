@@ -67,7 +67,7 @@ public class BundleTreeView extends LocatableTreeGrid {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
                 if (key.length() > 0)
-                    key += ":";
+                    key += "_";
 
                 key += view.getPath();
 

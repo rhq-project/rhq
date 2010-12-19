@@ -83,10 +83,11 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      * This property's default value. This field should have a non-null value for properties whose
      * {@link PropertyDefinition#required} field is <code>false</code> (i.e. for optional properties). Conversely, this
      * field should be null for properties whose {@link PropertyDefinition#required} field is <code>true</code> (i.e. for
-     * required properties). 
-     * @deprecated Use the (default) template instead
+     * required properties).
+     * 
+     * This field is mainly used to help build default templates. You usually do not want to use this
+     * default value member variable directly - consider using the configuration definition's default template.
      */
-    @Deprecated
     @Column(name = "DEFAULT_VALUE", length = 2000)
     private String defaultValue;
 
@@ -201,12 +202,29 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
         this.allowCustomEnumeratedValue = allowCustomEnumValue;
     }
 
-    @Deprecated
+    /**
+     * Returns the default value that this property definition defines for its
+     * value. Note, however, you rarely want to use this directly. Under most
+     * circumstances, you should be using the configuration definition's
+     * {@link ConfigurationDefinition#getDefaultTemplate() default template}.
+     * 
+     * For an example of where this method is useful, see
+     * org.rhq.core.clientapi.agent.configuration.ConfigurationUtility.initializeDefaultTemplate(ConfigurationDefinition)
+     *
+     * @return property default value
+     */
     public String getDefaultValue() {
         return defaultValue;
     }
 
-    @Deprecated
+    /**
+     * Sets the default value for this property. Note that you normally call this
+     * only at times when you plan on building default templates with this
+     * property definition later. See {@link #getDefaultValue()} for more details
+     * on this default value.
+     * 
+     * @param defaultValue
+     */
     public void setDefaultValue(String defaultValue) {
         this.defaultValue = defaultValue;
     }

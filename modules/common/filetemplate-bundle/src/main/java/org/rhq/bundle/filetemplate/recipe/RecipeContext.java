@@ -49,6 +49,7 @@ public class RecipeContext {
     private final Map<String, String> files;
     private final Set<String> realizedFiles;
     private final Set<String> replacementVariables;
+    private final Map<String, String> replacementVariableDefaultValues;
     private Configuration replacementVariableValues;
     private final List<Script> scripts;
     private final List<Command> commands;
@@ -62,6 +63,7 @@ public class RecipeContext {
         this.files = new HashMap<String, String>();
         this.realizedFiles = new HashSet<String>();
         this.replacementVariables = new HashSet<String>();
+        this.replacementVariableDefaultValues = new HashMap<String, String>();
         this.scripts = new ArrayList<Script>();
         this.commands = new ArrayList<Command>();
         this.deploymentProperties = new DeploymentProperties();
@@ -169,6 +171,29 @@ public class RecipeContext {
 
     public void addReplacementVariables(Set<String> replacementVariables) {
         this.replacementVariables.addAll(replacementVariables);
+    }
+
+    /**
+     * If a replacement varaible is known to have a default value, call this
+     * to set that default value.
+     * 
+     * @param replacementVariable the variable whose default is being set
+     * @param defaultValue the value of the default for the given replacement variable
+     */
+    public void assignDefaultValueToReplacementVariable(String replacementVariable, String defaultValue) {
+        this.replacementVariableDefaultValues.put(replacementVariable, defaultValue);
+    }
+
+    /**
+     * Returns a map keyed on replacement variables whose values are the default
+     * values for the replacement variables. Note that not all replacement variables
+     * found in {@link #getReplacementVariables()} will have an associated entry
+     * in the returned map (that is, not all variables have a default value).
+     * 
+     * @return the map of all known default values for replacement variables
+     */
+    public Map<String, String> getReplacementVariableDefaultValues() {
+        return this.replacementVariableDefaultValues;
     }
 
     /**
@@ -284,6 +309,15 @@ public class RecipeContext {
             str.append("<none>");
         } else {
             str.append(values.getProperties());
+        }
+        str.append("\n");
+
+        str.append("Replacement Default Values: ");
+        Map<String, String> defaults = getReplacementVariableDefaultValues();
+        if (defaults == null) {
+            str.append("<none>");
+        } else {
+            str.append(defaults);
         }
         str.append("\n");
 

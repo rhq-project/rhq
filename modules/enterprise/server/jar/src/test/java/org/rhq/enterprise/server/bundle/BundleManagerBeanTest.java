@@ -57,6 +57,7 @@ import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.Architecture;
@@ -300,9 +301,30 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 bundleDescription);
 
             ConfigurationDefinition configDef = new ConfigurationDefinition("foo", null);
-            String propName = "prop1";
-            String propDescription = "prop1desc";
-            configDef.put(new PropertyDefinitionSimple(propName, propDescription, true, PropertySimpleType.INTEGER));
+            int propDefaultValue1 = 998877;
+            String propDefaultValue4 = "this.is.the.default";
+            String propName1 = "prop1requiredWithDefault";
+            String propName2 = "prop2";
+            String propName3 = "prop3requiredWithNoDefault";
+            String propName4 = "prop4notRequiredWithDefault";
+            String propDesc1 = "prop1desc";
+            String propDesc2 = "prop2desc";
+            String propDesc3 = "prop3desc";
+            String propDesc4 = "prop4desc";
+            PropertyDefinitionSimple propdef1requiredWithDefault = new PropertyDefinitionSimple(propName1, propDesc1,
+                true, PropertySimpleType.INTEGER);
+            PropertyDefinitionSimple propdef2 = new PropertyDefinitionSimple(propName2, propDesc2, false,
+                PropertySimpleType.STRING);
+            PropertyDefinitionSimple propdef3requiredWithNoDefault = new PropertyDefinitionSimple(propName3, propDesc3,
+                true, PropertySimpleType.STRING);
+            PropertyDefinitionSimple propdef4notRequiredWithDefault = new PropertyDefinitionSimple(propName4,
+                propDesc4, false, PropertySimpleType.STRING);
+            propdef1requiredWithDefault.setDefaultValue(String.valueOf(propDefaultValue1));
+            propdef4notRequiredWithDefault.setDefaultValue(propDefaultValue4);
+            configDef.put(propdef1requiredWithDefault);
+            configDef.put(propdef2);
+            configDef.put(propdef3requiredWithNoDefault);
+            configDef.put(propdef4notRequiredWithDefault);
 
             Map<String, File> bundleFiles = new HashMap<String, File>(3);
             bundleFiles.put(bundleFile1, new File(tmpDir, bundleFile1));
@@ -358,12 +380,41 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 assert bundleFileNames.contains(bundleFile2) : bv;
                 assert bundleFileNames.contains(bundleFile3) : bv;
                 assert bv.getBundleDeployments().isEmpty() : bv;
-                assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 1;
-                assert bv.getConfigurationDefinition().get(propName) != null;
-                assert bv.getConfigurationDefinition().get(propName).getDescription().equals(propDescription);
-                assert bv.getConfigurationDefinition().get(propName).isRequired();
-                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName).getType() == PropertySimpleType.INTEGER;
+                assert bv.getConfigurationDefinition().getPropertyDefinitions().size() == 4;
+                assert bv.getConfigurationDefinition().get(propName1) != null;
+                assert bv.getConfigurationDefinition().get(propName1).getDescription().equals(propDesc1);
+                assert bv.getConfigurationDefinition().get(propName1).isRequired() == true;
+                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName1).getType() == PropertySimpleType.INTEGER;
+                assert bv.getConfigurationDefinition().get(propName2) != null;
+                assert bv.getConfigurationDefinition().get(propName2).getDescription().equals(propDesc2);
+                assert bv.getConfigurationDefinition().get(propName2).isRequired() == false;
+                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName2).getType() == PropertySimpleType.STRING;
+                assert bv.getConfigurationDefinition().get(propName3) != null;
+                assert bv.getConfigurationDefinition().get(propName3).getDescription().equals(propDesc3);
+                assert bv.getConfigurationDefinition().get(propName3).isRequired() == true;
+                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName3).getType() == PropertySimpleType.STRING;
+                assert bv.getConfigurationDefinition().get(propName4) != null;
+                assert bv.getConfigurationDefinition().get(propName4).getDescription().equals(propDesc4);
+                assert bv.getConfigurationDefinition().get(propName4).isRequired() == false;
+                assert bv.getConfigurationDefinition().getPropertyDefinitionSimple(propName4).getType() == PropertySimpleType.STRING;
                 assert bv.getRecipe().equals(recipe);
+
+                // make sure the default template is correct
+                ConfigurationTemplate defaultTemplate = bv.getConfigurationDefinition().getDefaultTemplate();
+                Configuration defaultConfig = defaultTemplate.getConfiguration();
+                assert defaultConfig.getProperties().size() == 3; // prop2 is not required and has no default, thus is missing
+                PropertySimple prop1 = defaultConfig.getSimple(propName1);
+                PropertySimple prop2 = defaultConfig.getSimple(propName2);
+                PropertySimple prop3 = defaultConfig.getSimple(propName3);
+                PropertySimple prop4 = defaultConfig.getSimple(propName4);
+                assert prop1 != null;
+                assert prop2 == null : "prop2 was not required and has no default, it should not be in the default template config";
+                assert prop3 != null;
+                assert prop4 != null;
+                assert prop1.getIntegerValue() != null;
+                assert prop1.getIntegerValue().intValue() == propDefaultValue1;
+                assert prop3.getStringValue() == null : "prop3 was required but had no default, its template value should have been null";
+                assert prop4.getStringValue().equals(propDefaultValue4);
             }
         } finally {
             FileUtil.purge(tmpDir, true);

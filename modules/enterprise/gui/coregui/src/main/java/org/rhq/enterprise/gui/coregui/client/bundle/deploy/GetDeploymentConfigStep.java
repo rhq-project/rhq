@@ -23,6 +23,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
@@ -57,8 +58,17 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                 editor.addMember(label);
             } else {
                 // otherwise, pop up the config editor to get the needed config
-                Configuration startingConfig = (null == wizard.getLiveDeployment()) ? new Configuration()
-                    : getNormalizedLiveConfig(configDef);
+                Configuration startingConfig;
+                if (wizard.getLiveDeployment() == null) {
+                    ConfigurationTemplate defaultTemplate = configDef.getDefaultTemplate();
+                    if (defaultTemplate == null) {
+                        startingConfig = new Configuration();
+                    } else {
+                        startingConfig = defaultTemplate.getConfiguration();
+                    }
+                } else {
+                    startingConfig = getNormalizedLiveConfig(configDef);
+                }
                 editor = new ConfigurationEditor("BundleDeploymentConfig", configDef, startingConfig);
             }
         }

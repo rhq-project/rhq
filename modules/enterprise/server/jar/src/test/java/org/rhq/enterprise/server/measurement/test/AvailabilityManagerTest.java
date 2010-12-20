@@ -55,7 +55,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class AvailabilityManagerTest extends AbstractEJB3Test {
-    private static final boolean ENABLE_TESTS = false;
+    private static final boolean ENABLE_TESTS = true;
 
     private static final AvailabilityType UP = AvailabilityType.UP;
     private static final AvailabilityType DOWN = AvailabilityType.DOWN;
@@ -68,6 +68,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     private Agent theAgent;
     private Resource theResource;
     private ResourceType theResourceType;
+    private List<Resource> additionalResources;
     private Availability availability1;
     private Availability availability2;
     private Availability availability3;
@@ -81,6 +82,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             this.resourceAvailabilityManager = LookupUtil.getResourceAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
+            additionalResources = new ArrayList<Resource>();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -98,6 +100,19 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
                 resourceManager.uninventoryResource(overlord, theResource.getId());
                 resourceManager.uninventoryResourceAsyncWork(overlord, theResource.getId());
                 theResource = null;
+            }
+
+            if (additionalResources!=null) {
+                getTransactionManager().begin();
+                EntityManager em = getEntityManager();
+
+                for (Resource res : additionalResources) {
+                    Resource res2 = em.find(Resource.class, res.getId());
+                    resourceManager.uninventoryResource(overlord, res2.getId());
+                    resourceManager.uninventoryResourceAsyncWork(overlord, res2.getId());
+
+                }
+                getTransactionManager().commit();
             }
 
             if (theResourceType != null) {
@@ -392,8 +407,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             commitAndClose(em);
             em = null;
 
-            // add a report that says the resource was up 10 minutes ago
-            Availability avail = new Availability(theResource, new Date(System.currentTimeMillis() - 600000), UP);
+            // add a report that says the resource was up 20 minutes ago
+            Availability avail = new Availability(theResource, new Date(System.currentTimeMillis() - 12000000), UP);
             AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
             report.addAvailability(avail);
             availabilityManager.mergeAvailabilityReport(report);
@@ -402,12 +417,12 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
             commitAndClose(em);
             em = null;
 
             // the agent should be suspect and will be considered down
-            LookupUtil.getAgentManager().checkForSuspectAgents();
+            LookupUtil.getAgentManager().checkForSuspectAgents(); // checks for 15 mins !!
             AvailabilityType curAvail;
             curAvail = availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId());
             assert curAvail == AvailabilityType.DOWN : curAvail; // backfilled with "null" to mean "unknown"
@@ -484,7 +499,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
             commitAndClose(em);
             em = null;
 
@@ -516,7 +531,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's again pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18));
             commitAndClose(em);
             em = null;
 
@@ -844,7 +859,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
 
             // should have returned availability3
-            assert avail.getId() == availability3.getId();
+            // NOTE: availability3 never got an ID assigned, so we can't compare by id
+            //       assert avail.getId() == availability3.getId();
+            assert avail.getStartTime().equals(availability3.getStartTime());
             assert avail.getAvailabilityType() == availability3.getAvailabilityType();
             assert Math.abs(avail.getStartTime().getTime() - availability3.getStartTime().getTime()) < 1000;
             assert avail.getEndTime() == null;
@@ -1085,6 +1102,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         newResource.setAgent(theAgent);
         parentResource.addChildResource(newResource);
         em.persist(newResource);
+        additionalResources.add(newResource);
 
         return newResource;
     }
@@ -1137,7 +1155,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
     /**
      * Convenience method for persisting availability.  Availability data can no longer be directly merged
-     * by the EntityManager because it does not update the corresponding currentAvailability data on the 
+     * by the EntityManager because it does not update the corresponding currentAvailability data on the
      * Resource entity.  This method will update the necessary objects for you.
      */
     private void persistAvailability(Availability... availabilities) {

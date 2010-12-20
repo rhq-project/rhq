@@ -30,7 +30,6 @@ import org.testng.ITestClass;
 import org.testng.ITestMethodFinder;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
-import org.testng.TestClass;
 import org.testng.TestListenerAdapter;
 import org.testng.TestNG;
 import org.testng.annotations.Test;

@@ -19,6 +19,8 @@
 
 package org.rhq.helpers.perftest.support.testng;
 
+import org.rhq.helpers.perftest.support.replication.ReplicaCreationStrategy;
+
 /**
  * Specifies how to replicate the test data.
  * This annotation is only processed as a part of the {@link DatabaseState}
@@ -27,22 +29,32 @@ package org.rhq.helpers.perftest.support.testng;
  */
 public @interface DataReplication {
 
+    //TODO this is most likely insufficient. This is going to require similar configuration
+    //as Exporter so that we know what relationships to replicate and how.
     /**
      * The JPA entities to replicate (along with their dependent entities) 
      */
     Class<?>[] rootEntities();
     
+    //TODO this is going to disappear if we go for the replication configuration file
     /**
-     * If true (the default) the replicator will prepare a copy of the root
-     * entities for each thread the test is going to run in. 
+     * If defined, the method specified by this attribute can restrict the 
+     * entities to be replicated. It is provided by the class of the entities
+     * to be fetched and can return a WHERE SQL fragment to restrict what entities
+     * are going to be fetched (note that the fragment is SQL, *NOT* JPQL).
+     * <p>
+     * The method has to have the following signature:<br/>
+     * <code>
+     * String &lt;method-name&gt;(int replicaNumber, Class<?> entityClass)
+     * </code>
      */
-    boolean perThread() default true;
+    String replicaRestrictor() default "";
     
     /**
-     * If {@link #perThread()} is false, this specifies the number of replicas
-     * of the root entities to make. 
+     * How many replicas should be prepared and how they should be distributed
+     * among the test invocations. The default is a replica per invocation.
      */
-    int replicationCount() default -1;
+    ReplicaCreationStrategy replicaCreationStrategy() default ReplicaCreationStrategy.PER_INVOCATION;
     
     /**
      * The name of a method that is able to provide the next id to use for an entity
@@ -63,8 +75,8 @@ public @interface DataReplication {
      * <p>
      * The method must have the following signature:<br/>
      * <code>
-     * void &lt;method-name&gt;(Object original, Object replica)
+     * void &lt;method-name&gt;(int replicaNumber, Object original, Object replica, Class&lt;?&gt; entityType)
      * </code> 
      */
-    String replicaPreparer() default "";
+    String replicaModifier() default "";
 }

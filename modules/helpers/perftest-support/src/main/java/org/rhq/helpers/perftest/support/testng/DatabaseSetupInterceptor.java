@@ -24,12 +24,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.naming.InitialContext;
@@ -46,6 +49,10 @@ import org.rhq.helpers.perftest.support.Input;
 import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
 import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
 import org.rhq.helpers.perftest.support.input.InputStreamProvider;
+import org.rhq.helpers.perftest.support.replication.NextIdProvider;
+import org.rhq.helpers.perftest.support.replication.ReplicaModifier;
+import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
+
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
@@ -72,46 +79,51 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
     private static final Log LOG = LogFactory.getLog(DatabaseSetupInterceptor.class);
 
     private static final HashMap<Method, ReentrantLock> METHOD_LOCKS = new HashMap<Method, ReentrantLock>();
+
+    private static final Class<?>[] NEXT_ID_PROVIDER_METHOD_PARAMETER_TYPES = {Connection.class, Class.class};
+    
+    private static final Class<?>[] REPLICA_MODIFIER_METHOD_PARAMETER_TYPES = { int.class, Object.class, Object.class, Class.class };
+    private static final Class<?>[] REPLICA_RESTRICTOR_METHOD_PARAMTER_TYPES = { int.class, Class.class };
     
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
         ReentrantLock methodLock = null;
         boolean setupRanForThisMethod = false;
-        
+
         //ensure no-one else is messing with the method locks before we're finished acquiring the lock
         //for our method
-        synchronized(METHOD_LOCKS) {
+        synchronized (METHOD_LOCKS) {
             methodLock = METHOD_LOCKS.get(methodLock);
             setupRanForThisMethod = methodLock != null;
             if (methodLock == null) {
                 methodLock = new ReentrantLock();
                 METHOD_LOCKS.put(method.getTestMethod().getMethod(), methodLock);
             }
-            
-            methodLock.lock();
         }
-        
-        String dbUrl="-unknown-" ;
+
+        methodLock.lock();
+
+        String dbUrl = "-unknown-";
         Connection jdbcConnection = null;
         Statement statement = null;
         try {
             DatabaseState state = getRequiredDatabaseState(method);
-                        
+
             if (state == null) {
                 return;
             }
-    
+
             if (setupRanForThisMethod && !state.runForEachInvocation()) {
                 return;
             }
-                        
+
             Date now = new Date();
-            System.out.println(">> beforeInvocation(DBInterceptor) " + method.getTestMethod().getMethodName() + " == " + now.getTime());
+            System.out.println(">> beforeInvocation(DBInterceptor) " + method.getTestMethod().getMethodName() + " == "
+                + now.getTime());
 
             try {
                 InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
-                IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
-                        "java:/RHQDS");
-    
+                IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(), "java:/RHQDS");
+
                 jdbcConnection = connection.getConnection();
                 dbUrl = jdbcConnection.getMetaData().getURL();
                 System.out.println("Using database at " + dbUrl);
@@ -126,7 +138,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 } catch (SQLException e) {
                     System.out.println("Don't worry about : " + e.getMessage());
                 } finally {
-                    if (statement!=null)
+                    if (statement != null)
                         statement.close();
                 }
 
@@ -136,20 +148,24 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 } catch (SQLException e) {
                     System.out.println("Don't worry about : " + e.getMessage());
                 } finally {
-                    if (statement!=null)
+                    if (statement != null)
                         statement.close();
                 }
 
                 System.out.flush();
 
                 FileFormat format = state.format();
-    
+
                 Input input = format.getInput(streamProvider);
-    
+
                 try {
                     DbSetup dbSetup = new DbSetup(connection.getConnection());
                     dbSetup.setup(state.dbVersion());
+                    
                     Importer.run(connection, input);
+                    
+                    replicate(connection, method, testResult.getInstance(), state.replication());
+                                                            
                     dbSetup.upgrade(null);
                 } finally {
                     input.close();
@@ -159,13 +175,13 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             }
         } finally {
             methodLock.unlock();
-            if (statement!=null)
+            if (statement != null)
                 try {
                     statement.close();
                 } catch (SQLException e) {
                     LOG.error("Failed to close a statement: " + e.getMessage());
                 }
-            if (jdbcConnection!=null)
+            if (jdbcConnection != null)
                 try {
                     jdbcConnection.close();
                 } catch (SQLException e) {
@@ -184,15 +200,15 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         if (name.contains("postgres")) {
             type = new org.dbunit.ext.postgresql.PostgresqlDataTypeFactory();
         } else if (name.contains("oracle")) {
-            if (major>=10) {
+            if (major >= 10) {
                 type = new org.dbunit.ext.oracle.Oracle10DataTypeFactory();
             } else {
                 type = new org.dbunit.ext.oracle.OracleDataTypeFactory();
             }
         }
-        if (type!=null) {
+        if (type != null) {
             LOG.info("setting db type for dbunit to " + type.getClass().getCanonicalName());
-            config.setProperty("http://www.dbunit.org/properties/datatypeFactory",type);
+            config.setProperty("http://www.dbunit.org/properties/datatypeFactory", type);
         }
     }
 
@@ -203,31 +219,29 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             return;
         }
 
-        Connection jdbcConnection=null;
-        Statement statement=null;
+        Connection jdbcConnection = null;
+        Statement statement = null;
         try {
-            IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
-                    "java:/RHQDS");
+            IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(), "java:/RHQDS");
             jdbcConnection = connection.getConnection();
             statement = jdbcConnection.createStatement();
             statement.execute("DROP TABLE RHQ_SUBJECT CASCADE");
         } catch (Exception e) {
             System.err.println("== drop subject table failed: " + e.getMessage());
         } finally {
-            if (statement!=null)
+            if (statement != null)
                 try {
                     statement.close();
                 } catch (SQLException e) {
-                   LOG.error("Failed to close a statement: " + e.getMessage());
+                    LOG.error("Failed to close a statement: " + e.getMessage());
                 }
-            if (jdbcConnection!=null)
+            if (jdbcConnection != null)
                 try {
                     jdbcConnection.close();
                 } catch (SQLException e) {
                     LOG.error("Failed to close a JDBC connection: " + e.getMessage());
                 }
         }
-
 
     }
 
@@ -242,34 +256,30 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         Method javaMethod = method.getTestMethod().getMethod();
 
         DatabaseState annotation = javaMethod.getAnnotation(DatabaseState.class);
-        if (annotation==null) {
-//            System.out.println("Method : " + javaMethod.getName());
-
+        if (annotation == null) {
             boolean skip = false;
 
             // Filter out methods that are marked as setup/tear down
             Annotation[] annots = javaMethod.getAnnotations();
             for (Annotation an : annots) {
-//                System.out.println("       :  " + an.toString());
-                if (an.annotationType().equals(BeforeMethod.class) || an.annotationType().equals(AfterMethod.class) ||
-                        an.annotationType().equals(BeforeSuite.class) || an.annotationType().equals(AfterSuite.class) ||
-                        an.annotationType().equals(BeforeTest.class) || an.annotationType().equals(AfterTest.class)
-                )
+                if (an.annotationType().equals(BeforeMethod.class) || an.annotationType().equals(AfterMethod.class)
+                    || an.annotationType().equals(BeforeSuite.class) || an.annotationType().equals(AfterSuite.class)
+                    || an.annotationType().equals(BeforeTest.class) || an.annotationType().equals(AfterTest.class)) {
+                    
                     skip = true;
+                    break;
+                }
             }
 
-            if (!skip)
+            if (!skip) {
                 annotation = javaMethod.getDeclaringClass().getAnnotation(DatabaseState.class);
-//            else
-//                System.out.println("      ..... Skipped");
-
+            }
         }
         return annotation;
     }
 
-
-    private static InputStreamProvider getInputStreamProvider(final String url, DatabaseStateStorage storage, final IInvokedMethod method)
-        throws FileNotFoundException {
+    private static InputStreamProvider getInputStreamProvider(final String url, DatabaseStateStorage storage,
+        final IInvokedMethod method) throws FileNotFoundException {
         switch (storage) {
         case CLASSLOADER:
             return new InputStreamProvider() {
@@ -281,6 +291,69 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         case FILESYSTEM:
             return new FileInputStreamProvider(new File(url));
         default:
+            return null;
+        }
+    }
+    
+    private static void replicate(final IDatabaseConnection connection, IInvokedMethod method, final Object instance, DataReplication replicationSetup) {
+        ReplicationConfiguration config = new ReplicationConfiguration();
+                
+        config.setEntities(Arrays.asList(replicationSetup.rootEntities()));
+        
+        if (!replicationSetup.nextIdProvider().isEmpty()) {
+            final Method nextIdMethod = findMethod(instance.getClass(), replicationSetup.nextIdProvider(), NEXT_ID_PROVIDER_METHOD_PARAMETER_TYPES);
+            if (nextIdMethod != null) {
+                config.setNextIdProvider(new NextIdProvider() {
+                    public Object getNextId(Class<?> entity) throws Exception {
+                        return nextIdMethod.invoke(instance, connection.getConnection(), entity);
+                    }
+                });
+            }
+        }
+        
+        if (!replicationSetup.replicaModifier().isEmpty()) {
+            final Method modifierMethod = findMethod(instance.getClass(), replicationSetup.replicaModifier(), REPLICA_MODIFIER_METHOD_PARAMETER_TYPES);
+            if (modifierMethod != null) {
+                config.setModifier(new ReplicaModifier() {
+                    public <T> void modify(T original, T replica, Class<T> clazz) {
+                        try {
+                            modifierMethod.invoke(original, replica, clazz);
+                        } catch (InvocationTargetException e) {
+                            LOG.warn("Failed to invoke replica modifier method.", e);
+                        } catch (IllegalAccessException e) {
+                            LOG.warn("Failed to invoke replica modifier method.", e);
+                        }
+                    }
+                });
+            }
+        }
+        
+        if (!replicationSetup.replicaRestrictor().isEmpty()) {
+            Method restrictorMethod = findMethod(instance.getClass(), replicationSetup.replicaRestrictor(), REPLICA_RESTRICTOR_METHOD_PARAMTER_TYPES);
+            if (restrictorMethod != null) {
+                HashMap<Class<?>, String> limitingSql = new HashMap<Class<?>, String>();
+                for (Class<?> entity : replicationSetup.rootEntities()) {
+                    try {
+                        String sql = (String) restrictorMethod.invoke(instance, entity);
+                        limitingSql.put(entity, sql);                        
+                    } catch (InvocationTargetException e) {
+                        LOG.warn("Failed to invoke replica modifier method.", e);
+                    } catch (IllegalAccessException e) {
+                        LOG.warn("Failed to invoke replica modifier method.", e);
+                    }
+                }
+                
+                config.setLimitingSql(limitingSql);
+            }
+        }
+        
+        //TODO implement
+    }
+    
+    private static Method findMethod(Class<?> type, String name, Class<?>... params) {
+        try {
+            return type.getMethod(name, params);
+        } catch (NoSuchMethodException e) {
             return null;
         }
     }

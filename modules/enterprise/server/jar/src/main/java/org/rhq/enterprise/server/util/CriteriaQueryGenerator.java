@@ -192,51 +192,40 @@ public final class CriteriaQueryGenerator {
 
     private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id "
-            + NL //
-            + "                    FROM %alias% innerAlias "
-            + NL //
-            + "                    JOIN %innerAliasWithFragment%.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-            + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
             + "                   WHERE s.id = %subjectId% ) )" + NL; //
         String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
         String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
         customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
         customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
-        customAuthzFragment = customAuthzFragment.replace("%innerAliasWithFragment%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
         customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
         return customAuthzFragment;
     }
 
     private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id "
-            + NL //
-            + "                    FROM %alias% innerAlias "
-            + NL //
-            + "                    JOIN %innerAliasWithFragment%.roles r JOIN r.subjects s "
-            + NL //
-            + "                   WHERE s.id = %subjectId% )"
-            + NL //
-            + "  OR"
-            + NL //
-            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id "
-            + NL //
-            + "                    FROM %alias% innerAlias "
-            + NL //
-            + "                    JOIN %innerAliasWithFragment%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s "
-            + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
             + "                   WHERE crg.recursive = true AND s = %subjectId% )" + NL //
             + "  OR" + NL //
             + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
             + "                    FROM %alias% innerAlias " + NL //
-            + "                    JOIN %innerAliasWithFragment%.subject s" + NL //
+            + "                    JOIN %innerAlias%.subject s" + NL //
             + "                   WHERE s.id = %subjectId% ) ) " + NL;
         String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
         String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
         customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
         customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
-        customAuthzFragment = customAuthzFragment.replace("%innerAliasWithFragment%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
         customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
         return customAuthzFragment;
     }

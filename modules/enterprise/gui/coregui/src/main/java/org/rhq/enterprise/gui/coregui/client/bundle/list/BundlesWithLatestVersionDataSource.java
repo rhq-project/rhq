@@ -46,7 +46,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     public static final String FIELD_NAMELINK = "namelink";
     public static final String FIELD_DESCRIPTION = "description";
     public static final String FIELD_LATEST_VERSION = "latestVersion";
-    public static final String FIELD_VERSIONS_COUNT = "versionsCount";
+    public static final String FIELD_VERSIONS_COUNT = "deploymentCount";
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
@@ -101,10 +101,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
 
         record.setAttribute(FIELD_ID, from.getBundleId());
         record.setAttribute(FIELD_NAME, from.getBundleName());
-
         record.setAttribute(FIELD_NAMELINK, LinkManager.getBundleLink(from.getBundleId()));
-        record.setLinkText(from.getBundleName());
-
         record.setAttribute(FIELD_DESCRIPTION, from.getBundleDescription());
         record.setAttribute(FIELD_LATEST_VERSION, from.getLatestVersion());
         record.setAttribute(FIELD_VERSIONS_COUNT, Integer.valueOf(from.getVersionsCount().intValue())); // want int, not long

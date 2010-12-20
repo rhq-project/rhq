@@ -27,6 +27,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -85,11 +86,15 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth("50");
 
-        ListGridField nameField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_NAMELINK, MSG
+        ListGridField nameField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
             .common_title_name());
-        nameField.setType(ListGridFieldType.LINK);
-        nameField.setTarget("_self");
         nameField.setWidth("33%");
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord record, int i, int i1) {
+                return "<a href=\"" + record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK) + "\">"
+                    + String.valueOf(o) + "</a>";
+            }
+        });
 
         ListGridField descField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
@@ -99,12 +104,14 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
             MSG.view_bundle_latestVersion());
         latestVersionField.setWidth("20%");
         latestVersionField.setAlign(Alignment.CENTER);
+        latestVersionField.setCanSort(false); // need to figure out how we can sort on this projection field of the composite
 
         ListGridField versionsCountField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_VERSIONS_COUNT,
             MSG.view_bundle_list_versionsCount());
         versionsCountField.setType(ListGridFieldType.INTEGER);
         versionsCountField.setWidth("*");
         versionsCountField.setAlign(Alignment.CENTER);
+        versionsCountField.setCanSort(false); // need to figure out how we can sort on this projection field of the composite
 
         setListGridFields(idField, nameField, descField, latestVersionField, versionsCountField);
 

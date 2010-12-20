@@ -32,6 +32,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -160,8 +161,18 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         StaticTextItem deployedBy = new StaticTextItem("deployedBy", MSG.view_bundle_deploy_deployedBy());
         deployedBy.setValue(deployment.getSubjectName());
 
+        LinkItem destinationGroup = new LinkItem("group");
+        destinationGroup.setTitle(MSG.common_title_resource_group());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
+        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
+        destinationGroup.setTarget("_self");
+
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
+        path.setValue(deployment.getDestination().getDeployDir());
+
         StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
         description.setValue(deployment.getDescription());
+        description.setTitleVAlign(VerticalAlignment.TOP);
 
         StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
         status.setValue(deployment.getStatus().name());
@@ -181,17 +192,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             });
         }
 
-        LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle(MSG.common_title_resource_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
-        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
-        destinationGroup.setTarget("_self");
-
-        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
-        path.setValue(deployment.getDestination().getDeployDir());
-
         form.setFields(bundleName, deployed, bundleVersionName, deployedBy, //
-            description, status, destinationGroup, path);
+            destinationGroup, path, description, status);
+
         return form;
     }
 

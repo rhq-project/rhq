@@ -71,6 +71,10 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 // if we haven't done it yet, build the view components
                 if (bundleTreeView == null) {
+                    boolean canManageInventory = permissions != null
+                        && permissions.contains(Permission.MANAGE_INVENTORY);
+                    boolean canManageBundles = permissions != null && permissions.contains(Permission.MANAGE_BUNDLE);
+
                     SectionStack sectionStack = new LocatableSectionStack(getLocatorId());
                     sectionStack.setShowResizeBar(true);
                     sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
@@ -78,12 +82,12 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
                     sectionStack.setHeight100();
 
                     SectionStackSection bundlesSection = new SectionStackSection(MSG.view_bundle_bundles());
-                    bundleTreeView = new BundleTreeView(extendLocatorId("BundleTree"));
+                    bundleTreeView = new BundleTreeView(extendLocatorId("BundleTree"), canManageBundles);
                     bundlesSection.addItem(bundleTreeView);
                     sectionStack.addSection(bundlesSection);
 
                     // we only show repositories if the user has the global manage_inventory perms since that is required
-                    if (permissions != null && permissions.contains(Permission.MANAGE_INVENTORY)) {
+                    if (canManageInventory) {
                         SectionStackSection repositoriesSection = new SectionStackSection(MSG
                             .common_title_repositories());
                         ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView(extendLocatorId("RepoTree"));

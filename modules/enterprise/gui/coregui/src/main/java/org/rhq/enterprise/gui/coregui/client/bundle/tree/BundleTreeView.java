@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  */
 public class BundleTreeView extends LocatableTreeGrid {
 
-    public BundleTreeView(String locatorId) {
+    public BundleTreeView(String locatorId, boolean canManageBundles) {
         super(locatorId);
         setWidth100();
         setHeight100();
@@ -52,7 +52,7 @@ public class BundleTreeView extends LocatableTreeGrid {
         setSortField("name");
         setShowHeader(false);
 
-        setDataSource(new BundleTreeDataSource());
+        setDataSource(new BundleTreeDataSource(canManageBundles));
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {

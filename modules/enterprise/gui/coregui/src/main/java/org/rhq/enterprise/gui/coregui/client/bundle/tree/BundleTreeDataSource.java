@@ -56,9 +56,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleTreeDataSource extends RPCDataSource {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+    private final boolean canManageBundles;
 
-    public BundleTreeDataSource() {
+    public BundleTreeDataSource(boolean canManageBundles) {
         super();
+        this.canManageBundles = canManageBundles;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -207,12 +209,14 @@ public class BundleTreeDataSource extends RPCDataSource {
                 deploymentsNode.setName(MSG.view_bundle_destinations());
                 records.add(deploymentsNode);
             } else if (item instanceof BundleDestination) {
-                BundleDestination dest = (BundleDestination) item;
+                if (canManageBundles) {
+                    BundleDestination dest = (BundleDestination) item;
 
-                // each destination has 0, 1 or more deployments
-                if (dest.getDeployments() != null) {
-                    for (BundleDeployment deploy : dest.getDeployments()) {
-                        records.add(copyValuesForKnownBundle(deploy, bundleId));
+                    // each destination has 0, 1 or more deployments
+                    if (dest.getDeployments() != null) {
+                        for (BundleDeployment deploy : dest.getDeployments()) {
+                            records.add(copyValuesForKnownBundle(deploy, bundleId));
+                        }
                     }
                 }
             }

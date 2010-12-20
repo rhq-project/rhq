@@ -165,24 +165,9 @@ public final class CriteriaQueryGenerator {
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
-            if (fragment == null) {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            } else {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authRes " + NL //
-                    + "JOIN authRes.implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            }
+            setAuthorizationCustomConditionFragment(getEnhancedResourceAuthorizationWhereFragment(fragment, subjectId));
         } else if (type == AuthorizationTokenType.GROUP) {
-            /* 
-             * can no longer use JOIN-based filters for groups.  need to support 3 completely separate authorization
-             * chains: 1) role-based for groups, 2) role-based for containing cluster groups, 3) private groups.
-             * so, we need to support group token authorization using a more complicated where-filter.
-             */
+            // support for: 1) role-based for groups, 2) role-based for containing cluster groups, 3) private groups
             setAuthorizationCustomConditionFragment(getEnhancedGroupAuthorizationWhereFragment(fragment, subjectId));
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
@@ -206,21 +191,42 @@ public final class CriteriaQueryGenerator {
         }
     }
 
+    private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAliasWithFragment%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% ) )" + NL; //
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAliasWithFragment%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        return customAuthzFragment;
+    }
+
     private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %alias%.id IN ( SELECT %alias%.id " + NL //
-            + "                    FROM %alias%.roles r JOIN r.subjects s " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAliasWithFragment%.roles r JOIN r.subjects s " + NL //
             + "                   WHERE s.id = %subjectId% )" + NL //
             + "  OR" + NL //
-            + "  %alias%.id IN ( SELECT %alias%.id " + NL //
-            + "                    FROM %alias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAliasWithFragment%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
             + "                   WHERE crg.recursive = true AND s = %subjectId% )" + NL //
             + "  OR" + NL //
-            + "  %alias%.id IN ( SELECT %alias%.id" + NL //
-            + "                    FROM %alias%.subject s" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAliasWithFragment%.subject s" + NL //
             + "                   WHERE s.id = %subjectId% ) ) " + NL;
-        String aliasReplacement = (fragment != null ? fragment + "." : "") + criteria.getAlias();
-        customAuthzFragment = customAuthzFragment.replace("%alias%", aliasReplacement);
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAliasWithFragment%", innerAliasReplacement);
         customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
         return customAuthzFragment;
     }

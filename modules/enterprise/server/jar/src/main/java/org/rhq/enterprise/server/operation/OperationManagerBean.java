@@ -1356,7 +1356,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                  * the time this group operation was kicked off), the group operation was a success by definition
                  */
                 groupHistory.setStatus(OperationRequestStatus.SUCCESS);
-                continue;
             }
         } catch (Throwable t) {
             LOG.warn("Failed to check for memberless group operations. Cause: " + t);
@@ -1794,7 +1793,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      * @return a managed entity, attached to this bean's entity manager
      */
     private OperationScheduleEntity findOperationScheduleEntity(ScheduleJobId jobId) {
-        OperationScheduleEntity entity = entityManager.find(OperationScheduleEntity.class, jobId);
         Query query = entityManager.createNamedQuery(OperationScheduleEntity.QUERY_FIND_BY_JOB_ID);
         String jobName = jobId.getJobName();
         query.setParameter("jobName", jobName);
@@ -1838,7 +1836,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
 
         CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
             entityManager);
@@ -1849,7 +1846,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
                 .getId());
@@ -1864,7 +1860,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
                 .getId());

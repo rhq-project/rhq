@@ -63,7 +63,7 @@ public class ListDataPromptCommand implements AgentPromptCommand {
     }
 
     public String getDetailedHelp() {
-        return MSG.getMsg(AgentI18NResourceKeys.GC_DETAILED_HELP);
+        return MSG.getMsg(AgentI18NResourceKeys.LISTDATA_DETAILED_HELP);
     }
 
     private void processArguments(AgentMain agent, String[] args) {

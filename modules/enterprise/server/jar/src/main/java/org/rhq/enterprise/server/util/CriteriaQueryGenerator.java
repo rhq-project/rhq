@@ -192,9 +192,12 @@ public final class CriteriaQueryGenerator {
 
     private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
-            + "                    FROM %alias% innerAlias " + NL //
-            + "                    JOIN %innerAliasWithFragment%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id "
+            + NL //
+            + "                    FROM %alias% innerAlias "
+            + NL //
+            + "                    JOIN %innerAliasWithFragment%.implicitGroups g JOIN g.roles r JOIN r.subjects s "
+            + NL //
             + "                   WHERE s.id = %subjectId% ) )" + NL; //
         String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
         String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
@@ -207,14 +210,22 @@ public final class CriteriaQueryGenerator {
 
     private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
-            + "                    FROM %alias% innerAlias " + NL //
-            + "                    JOIN %innerAliasWithFragment%.roles r JOIN r.subjects s " + NL //
-            + "                   WHERE s.id = %subjectId% )" + NL //
-            + "  OR" + NL //
-            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
-            + "                    FROM %alias% innerAlias " + NL //
-            + "                    JOIN %innerAliasWithFragment%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id "
+            + NL //
+            + "                    FROM %alias% innerAlias "
+            + NL //
+            + "                    JOIN %innerAliasWithFragment%.roles r JOIN r.subjects s "
+            + NL //
+            + "                   WHERE s.id = %subjectId% )"
+            + NL //
+            + "  OR"
+            + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id "
+            + NL //
+            + "                    FROM %alias% innerAlias "
+            + NL //
+            + "                    JOIN %innerAliasWithFragment%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s "
+            + NL //
             + "                   WHERE crg.recursive = true AND s = %subjectId% )" + NL //
             + "  OR" + NL //
             + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
@@ -415,7 +426,8 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || searchExpressionWhereClause != null) {
+        if (filterFields.size() > 0 || authorizationPermsFragment != null
+            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
         }
 

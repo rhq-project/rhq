@@ -908,7 +908,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
 
             // should have returned availability3
-            assert avail.getId() == availability3.getId();
+            // NOTE: availability3 never got an ID assigned, so we can't compare by id
+            //       assert avail.getId() == availability3.getId();
+            assert avail.getStartTime().equals(availability3.getStartTime());
             assert avail.getAvailabilityType() == availability3.getAvailabilityType();
             assert Math.abs(avail.getStartTime().getTime() - availability3.getStartTime().getTime()) < 1000;
             assert avail.getEndTime() == null;

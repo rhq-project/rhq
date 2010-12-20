@@ -23,6 +23,7 @@ import java.util.Date;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
@@ -201,18 +202,22 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
         // params/results
 
         if (operationHistory.getParameters() != null) {
+            Label title = new Label(MSG.view_operationHistoryDetails_parameters());
+            addMember(title);
+
             ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"), definition
                 .getParametersConfigurationDefinition(), operationHistory.getParameters());
             editor.setReadOnly(true);
-            editor.setStructuredConfigTabTitle(MSG.view_operationHistoryDetails_parameters());
             addMember(editor);
         }
 
         if (status == OperationRequestStatus.SUCCESS && operationHistory.getResults() != null) {
+            Label title = new Label(MSG.view_operationHistoryDetails_results());
+            addMember(title);
+
             ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"), definition
                 .getResultsConfigurationDefinition(), operationHistory.getResults());
             editor.setReadOnly(true);
-            editor.setStructuredConfigTabTitle(MSG.view_operationHistoryDetails_results());
             addMember(editor);
         }
     }

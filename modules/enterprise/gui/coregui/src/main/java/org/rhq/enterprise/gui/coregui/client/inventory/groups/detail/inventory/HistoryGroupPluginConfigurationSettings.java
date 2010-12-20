@@ -25,6 +25,7 @@ import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
@@ -86,12 +87,14 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
+            Label title = new Label(MSG.view_group_pluginConfig_view_groupProperties() + " - "
+                + this.groupUpdateId);
+            addMember(title);
+            
             this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
                 this.memberConfigurations);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.setReadOnly(true);
-            this.editor.setStructuredConfigTabTitle(MSG.view_group_pluginConfig_view_groupProperties() + " - "
-                + this.groupUpdateId);
             addMember(this.editor);
         }
     }

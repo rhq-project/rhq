@@ -27,6 +27,7 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
@@ -125,12 +126,14 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
+            Label title = new Label(MSG.view_group_pluginConfig_edit_currentGroupProperties());
+            addMember(title);
+
             this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
                 this.memberConfigurations);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
-            this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-            this.editor.setStructuredConfigTabTitle(MSG.view_group_pluginConfig_edit_currentGroupProperties());
+            this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());            
             addMember(this.editor);
         }
     }

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.revert;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -27,7 +28,9 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
@@ -104,8 +107,8 @@ public class ConfirmationStep extends AbstractWizardStep {
 
     private void setLayout() {
 
-        BundleDeployment live = this.wizard.getLiveDeployment();
-        BundleDeployment prev = this.wizard.getPreviousDeployment();
+        final BundleDeployment live = this.wizard.getLiveDeployment();
+        final BundleDeployment prev = this.wizard.getPreviousDeployment();
 
         Label liveHeader = new Label();
         liveHeader.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_liveDeployment() + ":<b>");
@@ -120,6 +123,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         liveNameItem.setTitleAlign(Alignment.LEFT);
         liveNameItem.setAlign(Alignment.LEFT);
         liveNameItem.setWrap(false);
+        liveNameItem.setWrapTitle(false);
         liveNameItem.setValue(live.getName());
         liveNameItem.setLeft(20);
 
@@ -127,12 +131,15 @@ public class ConfirmationStep extends AbstractWizardStep {
         liveDescItem.setTitleAlign(Alignment.LEFT);
         liveDescItem.setAlign(Alignment.LEFT);
         liveDescItem.setWrap(false);
-        liveDescItem.setValue((null != live.getName()) ? live.getName() : MSG.common_val_none());
+        liveDescItem.setWrapTitle(false);
+        liveDescItem.setTitleVAlign(VerticalAlignment.TOP);
+        liveDescItem.setValue((null != live.getDescription()) ? live.getDescription() : MSG.common_val_none());
 
         StaticTextItem liveVersionItem = new StaticTextItem("liveVersion", MSG.view_bundle_bundleVersion());
         liveVersionItem.setTitleAlign(Alignment.LEFT);
         liveVersionItem.setAlign(Alignment.LEFT);
         liveVersionItem.setWrap(false);
+        liveVersionItem.setWrapTitle(false);
         liveVersionItem.setValue(live.getBundleVersion().getVersion());
 
         liveForm.setItems(liveNameItem, liveDescItem, liveVersionItem);
@@ -144,22 +151,53 @@ public class ConfirmationStep extends AbstractWizardStep {
         prevHeader.setWidth100();
         layout.addMember(prevHeader);
 
-        DynamicForm prevForm = new DynamicForm();
+        final DynamicForm prevForm = new DynamicForm();
         prevForm.setNumCols(2);
 
         StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
         prevNameItem.setTitleAlign(Alignment.LEFT);
         prevNameItem.setAlign(Alignment.LEFT);
         prevNameItem.setWrap(false);
+        prevNameItem.setWrapTitle(false);
         prevNameItem.setValue(prev.getName());
 
         StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
         prevDescItem.setTitleAlign(Alignment.LEFT);
         prevDescItem.setAlign(Alignment.LEFT);
         prevDescItem.setWrap(false);
-        prevDescItem.setValue((null != prev.getName()) ? prev.getName() : MSG.common_val_none());
+        prevDescItem.setWrapTitle(false);
+        prevDescItem.setTitleVAlign(VerticalAlignment.TOP);
+        prevDescItem.setValue((null != prev.getDescription()) ? prev.getDescription() : MSG.common_val_none());
 
-        prevForm.setItems(prevNameItem, prevDescItem);
+        final StaticTextItem prevVersionItem = new StaticTextItem("prevVersion", MSG.view_bundle_bundleVersion());
+        prevVersionItem.setTitleAlign(Alignment.LEFT);
+        prevVersionItem.setAlign(Alignment.LEFT);
+        prevVersionItem.setWrap(false);
+        prevVersionItem.setWrapTitle(false);
+        if (prev.getBundleVersion().getVersion() == null) {
+            BundleVersionCriteria c = new BundleVersionCriteria();
+            c.addFilterId(prev.getBundleVersion().getId());
+            bundleServer.findBundleVersionsByCriteria(c, new AsyncCallback<PageList<BundleVersion>>() {
+
+                @Override
+                public void onSuccess(PageList<BundleVersion> result) {
+                    if (result != null && result.size() == 1) {
+                        prevVersionItem.setValue(result.get(0).getVersion());
+                        prevForm.markForRedraw();
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    prevVersionItem.setValue("?");
+                    prevForm.markForRedraw();
+                }
+            });
+        } else {
+            prevVersionItem.setValue(prev.getBundleVersion().getVersion());
+        }
+
+        prevForm.setItems(prevNameItem, prevDescItem, prevVersionItem);
         layout.addMember(prevForm);
 
         Label confirmation = new Label();

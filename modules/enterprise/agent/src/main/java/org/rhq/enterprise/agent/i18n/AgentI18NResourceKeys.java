@@ -1662,15 +1662,15 @@ public interface AgentI18NResourceKeys {
     String LISTDATA_HELP = "PromptCommand.listdata.help";
 
     @I18NMessage("Lists files found in the data directory, optionally deleting them.\\n\\\n"
-        + "\\This is an advanced command for adminstrators use only.  You should not\\n\\\n"
-        + "\\delete data files unless you know what you are doing. You could render\\n\\\n"
-        + "\\the agent useless if you delete files that you should not.\\n\\\n"
-        + "\\  -v, --verbose={true|false} : enables/disables more detailed file lists\\n\\\n"
-        + "\\  -r, --recurse: recurse down subdirectories\\n\\\n"
+        + "This is an advanced command for administrators use only.  You should not\\n\\\n"
+        + "delete data files unless you know what you are doing. You could render\\n\\\n"
+        + "the agent useless if you delete files that you should not.\\n\\\n"
+        + "\\  -v, --verbose : enables more detailed file lists\\n\\\n"
+        + "\\  -r, --recurse : recurse into subdirectories\\n\\\n"
         + "\\  -d, --delete : delete the files that are listed\\n\\\n"
-        + "\\  'bundles'|path_name : the relative path under the data directory to list\\n\\\n"
-        + "\\                        If 'bundle', will list data files from the bundle\\n\\\n"
-        + "\\                        subsystem")
+        + "\\  'bundles'|path_name : the relative path under the data directory to list.\\n\\\n"
+        + "\\                        If 'bundles', will list data files from the bundle\\n\\\n"
+        + "\\                        subsystem.")
     String LISTDATA_DETAILED_HELP = "PromptCommand.listdata.detailed-help";
 
     @I18NMessage("You cannot use .. in the path - you can only list files within the data directory")

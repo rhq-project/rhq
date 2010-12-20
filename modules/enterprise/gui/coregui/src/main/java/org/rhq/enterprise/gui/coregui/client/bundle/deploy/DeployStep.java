@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -62,7 +63,7 @@ public class DeployStep extends AbstractWizardStep {
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);
 
-            final Img deployingImage = new Img("/images/status-bar.gif");
+            final Img deployingImage = new Img(ImageManager.getLoadingIcon());
             deployingImage.setLayoutAlign(Alignment.CENTER);
             deployingImage.setWidth(50);
             deployingImage.setHeight(15);

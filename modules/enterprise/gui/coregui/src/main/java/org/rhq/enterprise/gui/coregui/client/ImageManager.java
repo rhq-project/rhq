@@ -23,6 +23,10 @@ public class ImageManager {
 
     public static final String IMAGES_DIR = "images/";
 
+    public static String getLoadingIcon() {
+        return "ajax-loader.gif";
+    }
+
     /**
      * Returns a generic "upload" icon.
      */

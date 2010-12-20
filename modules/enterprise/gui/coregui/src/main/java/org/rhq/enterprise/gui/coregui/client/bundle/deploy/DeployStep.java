@@ -31,6 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -94,6 +95,7 @@ public class DeployStep extends AbstractWizardStep {
                                         new Message(MSG.view_bundle_deployWizard_deploymentScheduledDetail_concise(),
                                             MSG.view_bundle_deployWizard_deploymentScheduledDetail(result.getName(),
                                                 result.getDestination().getGroup().getName()), Severity.Info));
+                                    wizard.getView().hideMessage();
                                     CoreGUI.refresh();
                                     wizard.setNewDeployment(result);
                                 }
@@ -101,8 +103,12 @@ public class DeployStep extends AbstractWizardStep {
                                 public void onFailure(Throwable caught) {
                                     deployingImage.setSrc("/images/status_error.gif");
                                     deployingMessage.setText(MSG.view_bundle_deployWizard_error_3());
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_deployWizard_error_4(caught.getMessage()), caught);
+                                    String errMsg = MSG.view_bundle_deployWizard_error_4(ErrorHandler
+                                        .getAllMessages(caught));
+                                    wizard.getView().showMessage(errMsg);
+                                    Message msg = new Message(MSG.view_bundle_deployWizard_error_3(), errMsg,
+                                        Severity.Error);
+                                    CoreGUI.getMessageCenter().notify(msg);
                                 }
                             });
                     }
@@ -110,8 +116,10 @@ public class DeployStep extends AbstractWizardStep {
                     public void onFailure(Throwable caught) {
                         deployingImage.setSrc("/images/status_error.gif");
                         deployingMessage.setText(MSG.view_bundle_deployWizard_error_5());
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_bundle_deployWizard_error_6(caught.getMessage()), caught);
+                        String errMsg = MSG.view_bundle_deployWizard_error_6(ErrorHandler.getAllMessages(caught));
+                        wizard.getView().showMessage(errMsg);
+                        Message msg = new Message(MSG.view_bundle_deployWizard_error_5(), errMsg, Severity.Error);
+                        CoreGUI.getMessageCenter().notify(msg);
                     }
                 });
         }

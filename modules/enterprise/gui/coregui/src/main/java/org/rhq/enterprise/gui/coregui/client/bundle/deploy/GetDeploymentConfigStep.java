@@ -64,7 +64,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                     if (defaultTemplate == null) {
                         startingConfig = new Configuration();
                     } else {
-                        startingConfig = defaultTemplate.getConfiguration();
+                        startingConfig = defaultTemplate.createConfiguration();
                     }
                 } else {
                     startingConfig = getNormalizedLiveConfig(configDef);

@@ -151,54 +151,56 @@ public class ConfirmationStep extends AbstractWizardStep {
         prevHeader.setWidth100();
         layout.addMember(prevHeader);
 
-        final DynamicForm prevForm = new DynamicForm();
-        prevForm.setNumCols(2);
+        if (prev != null) {
+            final DynamicForm prevForm = new DynamicForm();
+            prevForm.setNumCols(2);
 
-        StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
-        prevNameItem.setTitleAlign(Alignment.LEFT);
-        prevNameItem.setAlign(Alignment.LEFT);
-        prevNameItem.setWrap(false);
-        prevNameItem.setWrapTitle(false);
-        prevNameItem.setValue(prev.getName());
+            StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
+            prevNameItem.setTitleAlign(Alignment.LEFT);
+            prevNameItem.setAlign(Alignment.LEFT);
+            prevNameItem.setWrap(false);
+            prevNameItem.setWrapTitle(false);
+            prevNameItem.setValue(prev.getName());
 
-        StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
-        prevDescItem.setTitleAlign(Alignment.LEFT);
-        prevDescItem.setAlign(Alignment.LEFT);
-        prevDescItem.setWrap(false);
-        prevDescItem.setWrapTitle(false);
-        prevDescItem.setTitleVAlign(VerticalAlignment.TOP);
-        prevDescItem.setValue((null != prev.getDescription()) ? prev.getDescription() : MSG.common_val_none());
+            StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
+            prevDescItem.setTitleAlign(Alignment.LEFT);
+            prevDescItem.setAlign(Alignment.LEFT);
+            prevDescItem.setWrap(false);
+            prevDescItem.setWrapTitle(false);
+            prevDescItem.setTitleVAlign(VerticalAlignment.TOP);
+            prevDescItem.setValue((null != prev.getDescription()) ? prev.getDescription() : MSG.common_val_none());
 
-        final StaticTextItem prevVersionItem = new StaticTextItem("prevVersion", MSG.view_bundle_bundleVersion());
-        prevVersionItem.setTitleAlign(Alignment.LEFT);
-        prevVersionItem.setAlign(Alignment.LEFT);
-        prevVersionItem.setWrap(false);
-        prevVersionItem.setWrapTitle(false);
-        if (prev.getBundleVersion().getVersion() == null) {
-            BundleVersionCriteria c = new BundleVersionCriteria();
-            c.addFilterId(prev.getBundleVersion().getId());
-            bundleServer.findBundleVersionsByCriteria(c, new AsyncCallback<PageList<BundleVersion>>() {
+            final StaticTextItem prevVersionItem = new StaticTextItem("prevVersion", MSG.view_bundle_bundleVersion());
+            prevVersionItem.setTitleAlign(Alignment.LEFT);
+            prevVersionItem.setAlign(Alignment.LEFT);
+            prevVersionItem.setWrap(false);
+            prevVersionItem.setWrapTitle(false);
+            if (prev.getBundleVersion().getVersion() == null) {
+                BundleVersionCriteria c = new BundleVersionCriteria();
+                c.addFilterId(prev.getBundleVersion().getId());
+                bundleServer.findBundleVersionsByCriteria(c, new AsyncCallback<PageList<BundleVersion>>() {
 
-                @Override
-                public void onSuccess(PageList<BundleVersion> result) {
-                    if (result != null && result.size() == 1) {
-                        prevVersionItem.setValue(result.get(0).getVersion());
+                    @Override
+                    public void onSuccess(PageList<BundleVersion> result) {
+                        if (result != null && result.size() == 1) {
+                            prevVersionItem.setValue(result.get(0).getVersion());
+                            prevForm.markForRedraw();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        prevVersionItem.setValue("?");
                         prevForm.markForRedraw();
                     }
-                }
+                });
+            } else {
+                prevVersionItem.setValue(prev.getBundleVersion().getVersion());
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    prevVersionItem.setValue("?");
-                    prevForm.markForRedraw();
-                }
-            });
-        } else {
-            prevVersionItem.setValue(prev.getBundleVersion().getVersion());
+            prevForm.setItems(prevNameItem, prevDescItem, prevVersionItem);
+            layout.addMember(prevForm);
         }
-
-        prevForm.setItems(prevNameItem, prevDescItem, prevVersionItem);
-        layout.addMember(prevForm);
 
         Label confirmation = new Label();
         confirmation.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_confirmation() + "</b>");

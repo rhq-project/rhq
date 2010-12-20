@@ -27,6 +27,8 @@ import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -192,9 +194,39 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         });
         actionLayout.addMember(revertButton);
 
+        IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
+        deleteButton.setIcon("subsystems/bundle/BundleDestinationAction_Delete_16.png");
+        deleteButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                SC.ask(MSG.view_bundle_dest_deleteConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            bundleService.deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_dest_deleteFailure(destination.getName()), caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_dest_deleteSuccessful(destination.getName()),
+                                            Message.Severity.Info));
+                                    // Bundle destination is deleted, go back to main bundle view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0));
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(deleteButton);
+
         if (!canManageBundles) {
             deployButton.setDisabled(true);
             revertButton.setDisabled(true);
+            deleteButton.setDisabled(true);
         }
 
         return actionLayout;

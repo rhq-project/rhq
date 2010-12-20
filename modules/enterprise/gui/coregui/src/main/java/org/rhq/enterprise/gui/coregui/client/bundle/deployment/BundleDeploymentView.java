@@ -32,9 +32,12 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -76,6 +79,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -134,7 +138,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
         form.setWidth100();
         form.setAutoHeight();
-        form.setNumCols(4);
+        form.setNumCols(5);
         form.setWrapItemTitles(false);
         form.setExtraSpace(10);
         form.setIsGroup(true);
@@ -146,6 +150,12 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
         bundleName.setLinkTitle(bundle.getName());
         bundleName.setTarget("_self");
+
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
+        actionItem.setRowSpan(4);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
 
         LinkItem bundleVersionName = new LinkItem("bundleVersion");
         bundleVersionName.setTitle(MSG.view_bundle_bundleVersion());
@@ -172,7 +182,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
         description.setValue(deployment.getDescription());
-        description.setTitleVAlign(VerticalAlignment.TOP);
 
         StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
         status.setValue(deployment.getStatus().name());
@@ -192,10 +201,49 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             });
         }
 
-        form.setFields(bundleName, deployed, bundleVersionName, deployedBy, //
-            destinationGroup, path, description, status);
+        form.setFields(bundleName, deployed, actionItem, bundleVersionName, deployedBy, destinationGroup, path,
+            description, status);
 
         return form;
+    }
+
+    private Canvas getActionLayout(String locatorId) {
+        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
+        IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
+        deleteButton.setIcon("subsystems/bundle/BundleDeploymentAction_Delete_16.png");
+        deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            @Override
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
+                SC.ask(MSG.view_bundle_deploy_deleteConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_deploy_deleteFailure(deployment.getName()), caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_deploy_deleteSuccessful(deployment.getName()),
+                                            Message.Severity.Info));
+                                    // Bundle deployment is deleted, go back to main bundle destinations view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), deployment
+                                        .getDestination().getId()));
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(deleteButton);
+
+        if (!canManageBundles) {
+            deleteButton.setDisabled(true);
+        }
+
+        return actionLayout;
     }
 
     private TagEditorView createTagEditor() {

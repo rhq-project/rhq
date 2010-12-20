@@ -183,7 +183,7 @@ public final class CriteriaQueryGenerator {
              * chains: 1) role-based for groups, 2) role-based for containing cluster groups, 3) private groups.
              * so, we need to support group token authorization using a more complicated where-filter.
              */
-            setAuthorizationCustomConditionFragment(getEnhancedGroupAuthorizationJoinFragment(fragment, subjectId));
+            setAuthorizationCustomConditionFragment(getEnhancedGroupAuthorizationWhereFragment(fragment, subjectId));
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
                 + " does not yet support generating queries for '" + type + "' token types");
@@ -206,19 +206,19 @@ public final class CriteriaQueryGenerator {
         }
     }
 
-    private String getEnhancedGroupAuthorizationJoinFragment(String fragment, int subjectId) {
+    private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %alias%.id IN ( SELECT %alias%.id " //
-            + "                    FROM %alias%.roles r JOIN r.subjects s " //
-            + "                   WHERE s.id = %subjectId% )" //
-            + "  OR" //
-            + "  %alias%.id IN ( SELECT %alias%.id " //
-            + "                    FROM %alias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " //
-            + "                   WHERE crg.recursive = true AND s = %subjectId% )" //
-            + "  OR" //
-            + "  %alias%.id IN ( SELECT %alias%.id" //
-            + "                    FROM %alias%.subject s" //
-            + "                   WHERE s.id = %subjectId% )";
+            + "( %alias%.id IN ( SELECT %alias%.id " + NL //
+            + "                    FROM %alias%.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %alias%.id IN ( SELECT %alias%.id " + NL //
+            + "                    FROM %alias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE crg.recursive = true AND s = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %alias%.id IN ( SELECT %alias%.id" + NL //
+            + "                    FROM %alias%.subject s" + NL //
+            + "                   WHERE s.id = %subjectId% ) ) " + NL;
         String aliasReplacement = (fragment != null ? fragment + "." : "") + criteria.getAlias();
         customAuthzFragment = customAuthzFragment.replace("%alias%", aliasReplacement);
         customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));

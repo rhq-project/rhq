@@ -73,19 +73,24 @@ public class ConfirmationStep extends AbstractWizardStep {
                     public void onSuccess(PageList<BundleDeployment> liveDeployments) {
                         if (1 != liveDeployments.size()) {
                             nextPage = false;
+                            String messageConcise = MSG.view_bundle_revertWizard_confirmStep_noLiveDeployment_concise();
                             String message = MSG.view_bundle_revertWizard_confirmStep_noLiveDeployment(wizard
                                 .getDestination().toString());
                             wizard.getView().showMessage(message);
-                            CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(messageConcise, message, Message.Severity.Warning));
                         }
                         wizard.setLiveDeployment(liveDeployments.get(0));
                         wizard.setPreviousDeployment(wizard.getLiveDeployment().getReplacedBundleDeployment());
                         if (null == wizard.getPreviousDeployment()) {
                             nextPage = false;
+                            String messageConcise = MSG
+                                .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
                             String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(wizard
                                 .getLiveDeployment().toString(), wizard.getDestination().toString());
                             wizard.getView().showMessage(message);
-                            CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(messageConcise, message, Message.Severity.Warning));
                         }
 
                         setLayout();

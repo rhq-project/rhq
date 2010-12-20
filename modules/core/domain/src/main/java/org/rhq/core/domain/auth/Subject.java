@@ -153,12 +153,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                                          JOIN r.permissions p " //
         + "                                          JOIN r.subjects s " //
         + "                                         WHERE s.id = :subjectId and p = :permission ) ) "),
-
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCE, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
 
-    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT DISTINCT COUNT(res) "
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT COUNT(DISTINCT res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id IN (:resourceIds)"),
 
@@ -247,6 +246,7 @@ public class Subject implements Serializable {
     public static final String QUERY_HAS_RESOURCE_PERMISSION = "Subject.hasResourcePermission";
     public static final String QUERY_HAS_AUTO_GROUP_PERMISSION = "Subject.hasAutoGroupPermission";
 
+    /** This query can return more than 1 if the resource is accessible via separate groups */
     public static final String QUERY_CAN_VIEW_RESOURCE = "Subject.canViewResource";
     public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";
     public static final String QUERY_CAN_VIEW_GROUP = "Subject.canViewGroup";

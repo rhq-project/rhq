@@ -210,6 +210,20 @@ public interface BundleManagerRemote {
         @WebParam(name = "distributionFileUrl") String distributionFileUrl) throws Exception;
 
     /**
+     * Remove everything associated with the Bundles with the exception of files laid down by related deployments.
+     * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
+     * the deployment of all bundles that have been deleted.
+     *    
+     * @param subject
+     * @param bundleIds IDs of all bundles to be deleted
+     * @throws Exception if any part of the removal fails. 
+     */
+    @WebMethod
+    void deleteBundles( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleIds") int[] bundleIds) throws Exception;
+
+    /**
      * Remove everything associated with the Bundle with the exception of files laid down by related deployments.
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment.

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -133,25 +135,37 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
             addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
                 new AbstractTableAction((hasAuth) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                        BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
-                        for (ListGridRecord selection : selections) {
-                            BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                            final BundleWithLatestVersionComposite object = ds.copyValues(selection);
-                            bundleManager.deleteBundle(object.getBundleId(), new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_bundle_list_deleteFailure(object.getBundleName()), caught);
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_bundle_list_deleteSuccessful(object.getBundleName()),
-                                            Severity.Info));
-
-                                    CoreGUI.refresh();
-                                }
-                            });
+                        if (selections == null || selections.length == 0) {
+                            return;
                         }
+
+                        BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
+                        final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
+                        int[] doomedIds = new int[selections.length];
+                        int i = 0;
+                        for (ListGridRecord selection : selections) {
+                            BundleWithLatestVersionComposite object = ds.copyValues(selection);
+                            doomedNames.add(object.getBundleName());
+                            doomedIds[i++] = object.getBundleId();
+                        }
+
+                        BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                        bundleManager.deleteBundles(doomedIds, new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                String names = doomedNames.toString();
+                                String error = ErrorHandler.getAllMessages(caught);
+                                Message m = new Message(MSG.view_bundle_list_deletesFailure(), names + "<br/>\n"
+                                    + error, Severity.Error);
+                                CoreGUI.getMessageCenter().notify(m);
+                            }
+
+                            public void onSuccess(Void result) {
+                                Message m = new Message(MSG.view_bundle_list_deletesSuccessful(), doomedNames
+                                    .toString(), Severity.Info);
+                                CoreGUI.getMessageCenter().notify(m);
+                                CoreGUI.refresh();
+                            }
+                        });
                     }
                 });
 
@@ -191,5 +205,4 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
         }
 
     }
-
 }

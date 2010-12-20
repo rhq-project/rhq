@@ -1219,6 +1219,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return results;
     }
 
+    // to avoid deadlocks, you cannot delete multiple bundles concurrently (see BZ 606530)
+    // instead, this simple method just loops over the given array and deletes them serially
+    // note they all get deleted in their own transaction; this method is never in a tx itself
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void deleteBundles(Subject subject, int[] bundleIds) throws Exception {
+        if (bundleIds != null) {
+            for (int bundleId : bundleIds) {
+                bundleManager.deleteBundle(subject, bundleId);
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {

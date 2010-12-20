@@ -55,6 +55,8 @@ public interface BundleGWTService extends RemoteService {
     BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
         int groupId) throws Exception;
 
+    void deleteBundles(int[] bundleIds) throws Exception;
+
     void deleteBundle(int bundleId) throws Exception;
 
     void deleteBundleDeployment(int bundleDeploymentId) throws Exception;

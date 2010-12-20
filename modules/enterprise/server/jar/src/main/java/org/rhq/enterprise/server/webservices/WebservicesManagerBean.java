@@ -105,6 +105,8 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -140,9 +142,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
@@ -305,6 +305,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
         return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
+    }
+
+    public void deleteBundles(Subject subject, int[] bundleIds) throws Exception {
+        bundleManager.deleteBundles(subject, bundleIds);
     }
 
     public void deleteBundle(Subject subject, int bundleId) throws Exception {

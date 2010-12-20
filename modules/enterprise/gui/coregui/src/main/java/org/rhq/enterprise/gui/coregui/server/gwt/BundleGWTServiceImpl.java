@@ -101,6 +101,14 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         }
     }
 
+    public void deleteBundles(int[] bundleIds) throws Exception {
+        try {
+            bundleManager.deleteBundles(getSessionSubject(), bundleIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void deleteBundle(int bundleId) throws Exception {
         try {
             bundleManager.deleteBundle(getSessionSubject(), bundleId);

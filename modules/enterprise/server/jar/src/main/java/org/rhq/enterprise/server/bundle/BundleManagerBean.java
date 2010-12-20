@@ -255,6 +255,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment deployment = new BundleDeployment(bundleVersion, bundleDestination, name);
         deployment.setDescription(description);
         deployment.setConfiguration(configuration);
+        deployment.setSubjectName(subject.getName());
 
         entityManager.persist(deployment);
 

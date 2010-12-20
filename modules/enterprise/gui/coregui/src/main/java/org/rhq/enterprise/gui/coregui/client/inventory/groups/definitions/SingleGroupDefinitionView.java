@@ -150,7 +150,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     form.saveData(new DSCallback() {
                         @Override
                         public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            GWTServiceLookup.getResourceGroupService().recalculateGroupDefinitions(
+                            GWTServiceLookup.getResourceGroupService(600000).recalculateGroupDefinitions(
                                 new int[] { groupDefinitionId }, new AsyncCallback<Void>() {
                                     @Override
                                     public void onFailure(Throwable caught) {

@@ -62,6 +62,10 @@ public class GWTServiceLookup {
         return secure(ResourceGroupGWTServiceAsync.Util.getInstance());
     }
 
+    public static ResourceGroupGWTServiceAsync getResourceGroupService(int timeout) {
+        return secure(ResourceGroupGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
     public static ResourceTypeGWTServiceAsync getResourceTypeGWTService() {
         return secure(ResourceTypeGWTServiceAsync.Util.getInstance());
     }

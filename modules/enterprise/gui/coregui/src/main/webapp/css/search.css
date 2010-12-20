@@ -59,7 +59,6 @@ div {
 
 
 /*
- *
  * search container elements
  */
  
@@ -74,8 +73,6 @@ div {
 
 .searchBarBackgroundContainer {
   position: absolute;
-  top: 5px;
-  left: 5px;
   background-color: white;
   border-style: inset;
   border-color: gray;

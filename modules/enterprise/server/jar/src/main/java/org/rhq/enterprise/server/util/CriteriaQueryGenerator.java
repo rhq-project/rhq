@@ -75,7 +75,6 @@ public final class CriteriaQueryGenerator {
     private String searchExpressionWhereClause;
 
     private Subject subject;
-    private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
     private int authorizationSubjectId;
@@ -356,9 +355,6 @@ public final class CriteriaQueryGenerator {
                 }
             }
         }
-        if (authorizationJoinFragment != null) {
-            results.append(authorizationJoinFragment);
-        }
 
         // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
         PageControl pc = getPageControl(criteria);
@@ -419,7 +415,7 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || authorizationJoinFragment != null || searchExpressionWhereClause != null) {
+        if (filterFields.size() > 0 || searchExpressionWhereClause != null) {
             results.append("WHERE ");
         }
 
@@ -463,17 +459,14 @@ public final class CriteriaQueryGenerator {
         }
 
         // authorization
-        if (authorizationJoinFragment != null) {
+        if (authorizationPermsFragment != null) {
             if (firstCrit) {
                 firstCrit = false;
             } else {
                 // always want AND for security, regardless of conjunctiveFragment
                 results.append(NL).append(" AND ");
             }
-            results.append("authSubject.id = " + authorizationSubjectId + " ");
-            if (null != this.authorizationPermsFragment) {
-                results.append(this.authorizationPermsFragment + " ");
-            }
+            results.append(this.authorizationPermsFragment + " ");
         }
 
         if (authorizationCustomConditionFragment != null) {

@@ -215,7 +215,7 @@ public final class CriteriaQueryGenerator {
             + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
-            + "                   WHERE crg.recursive = true AND s = %subjectId% )" + NL //
+            + "                   WHERE crg.recursive = true AND s.id = %subjectId% )" + NL //
             + "  OR" + NL //
             + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
             + "                    FROM %alias% innerAlias " + NL //

@@ -100,7 +100,7 @@ public class GroupDefinitionListView extends TableSection {
             TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
+                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
                 groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {

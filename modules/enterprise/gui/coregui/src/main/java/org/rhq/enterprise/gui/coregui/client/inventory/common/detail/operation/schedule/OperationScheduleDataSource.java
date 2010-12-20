@@ -77,7 +77,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         idField.setCanEdit(false);
         fields.add(idField);               
 
-        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation", null, 100, true);
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation Name", null, 100, true);
         fields.add(operationNameField);
 
         DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null, 100, true);
@@ -88,7 +88,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         for (OperationDefinition operationDefinition : operationDefinitions) {
             valueMap.put(operationDefinition.getName(), operationDefinition.getDisplayName());
         }
-        operationNameField.setValueMap(valueMap);
+        operationNameField.setValueMap(valueMap);        
 
         DataSourceTextField subjectField = createTextField(Field.SUBJECT, "Owner", null, 100, true);
         subjectField.setCanEdit(false);

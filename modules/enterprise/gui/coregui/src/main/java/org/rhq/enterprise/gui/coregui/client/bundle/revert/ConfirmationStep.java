@@ -93,7 +93,8 @@ public class ConfirmationStep extends AbstractWizardStep {
                         String message = MSG.view_bundle_revertWizard_confirmStep_failedToFindLiveDeployment() + ": "
                             + caught.getMessage();
                         wizard.getView().showMessage(message);
-                        CoreGUI.getErrorHandler().handleError(message, caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_bundle_revertWizard_confirmStep_failedToFindLiveDeployment(), caught);
                     }
                 });
         }

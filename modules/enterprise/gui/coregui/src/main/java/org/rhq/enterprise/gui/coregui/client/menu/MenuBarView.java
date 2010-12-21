@@ -161,7 +161,7 @@ public class MenuBarView extends LocatableVLayout {
         lineLabel.setAlign(Alignment.CENTER);
 
         Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_logout(), "LogOut"));
-        logoutLink.setWidth("1px");
+        logoutLink.setWidth("50px");
 
         layout.addMember(userLabel);
         layout.addMember(lineLabel);

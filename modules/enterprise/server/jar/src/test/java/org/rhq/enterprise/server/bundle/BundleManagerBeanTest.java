@@ -535,6 +535,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertNotNull(b1);
 
         BundleCriteria criteria = new BundleCriteria();
+        criteria.addSortName(PageOrdering.ASC);
         PageList<BundleWithLatestVersionComposite> results;
 
         // verify there are no bundle versions yet
@@ -922,33 +923,35 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleVersion bv3 = createBundleVersion(b1.getName(), "2.1", b1);
         BundleVersionCriteria c = new BundleVersionCriteria();
         PageList<BundleVersion> bvs = null;
-        BundleVersion bv = null;
+        BundleVersion bvOut = null;
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
-        bv = bvs.get(1);
-        EntityManager em = getEntityManager();
-        bv = em.merge(bv);
         assertNotNull(bvs);
         assertEquals(3, bvs.size());
-        assertEquals(bv2, bv);
+        assertFalse(bvs.get(0).equals(bvs.get(1)));
+        assertFalse(bvs.get(0).equals(bvs.get(2)));
+        assertFalse(bvs.get(1).equals(bvs.get(2)));
+        assertTrue(bvs.get(0).equals(bvs.get(0)));
+        assertTrue(bvs.get(0).equals(bv2) || bvs.get(1).equals(bv2) || bvs.get(2).equals(bv2));
 
         // return bundle version using all criteria and with all optional data
-        c.addFilterId(bv.getId());
-        c.addFilterName(bv.getName());
+        BundleVersion bvIn = bvs.get(1);
+        c.addFilterId(bvIn.getId());
+        c.addFilterName(bvIn.getName());
         c.addFilterBundleName("one");
-        c.addFilterVersion(bv.getVersion());
+        c.addFilterVersion(bvIn.getVersion());
         c.fetchBundle(true);
         c.fetchBundleDeployments(true);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         assertNotNull(bvs);
         assertEquals(1, bvs.size());
-        bv = bvs.get(0);
-        assertEquals(bv2, bv);
-        assertEquals(bv.getBundle(), b1);
-        assertNotNull(bv.getBundleDeployments());
-        assertTrue(bv.getBundleDeployments().isEmpty());
+        bvOut = bvs.get(0);
+        assertEquals(bvIn, bvOut);
+        assertEquals(bvOut.getBundle(), b1);
+        assertNotNull(bvOut.getBundleDeployments());
+        assertTrue(bvOut.getBundleDeployments().isEmpty());
     }
 
     @Test(enabled = DISABLED)

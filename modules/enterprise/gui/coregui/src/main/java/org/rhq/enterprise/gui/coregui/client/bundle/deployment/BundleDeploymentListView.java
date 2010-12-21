@@ -100,10 +100,10 @@ public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployme
         });
 
         HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.PENDING.name(), "subsystems/bundle/install-loader.gif");
         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
         statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
         statusField.setValueIcons(statusIcons);
         statusField.setValueIconWidth(11);

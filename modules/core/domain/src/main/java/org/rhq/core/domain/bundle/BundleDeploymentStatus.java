@@ -31,12 +31,12 @@ package org.rhq.core.domain.bundle;
  * @author Jay Shaughnessy
  */
 public enum BundleDeploymentStatus {
-    PENDING("Pending"), //
-    IN_PROGRESS("In Progress"), //    
+    PENDING("Pending"), // for future, when we support true scheduling of bundle deployments
+    IN_PROGRESS("In Progress"), //
     MIXED("Mixed"), //
     SUCCESS("Success"), //
-    FAILURE("Failure"), //
-    WARN("Warning");
+    FAILURE("Failure") //
+    ; // need this for GWT
 
     private String displayName;
 

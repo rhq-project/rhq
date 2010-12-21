@@ -1263,11 +1263,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == doomed) {
             return;
         }
-        if (!BundleDeploymentStatus.PENDING.equals(doomed.getStatus())) {
+        // only allow deployments to be deleted if they are finished
+        if (BundleDeploymentStatus.SUCCESS == doomed.getStatus()
+            || BundleDeploymentStatus.FAILURE == doomed.getStatus()
+            || BundleDeploymentStatus.MIXED == doomed.getStatus()) {
+            entityManager.remove(doomed);
+        } else {
             throw new IllegalArgumentException("Can not delete deployment with status [" + doomed.getStatus() + "]");
         }
-
-        entityManager.remove(doomed);
     }
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)

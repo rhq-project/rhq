@@ -352,42 +352,18 @@ public class ImageManager {
                 return "subsystems/configure/Configure_failed_16.png";
             }
             case INPROGRESS: {
-                return "subsystems/inventory/Configure_inprogress_16.png";
+                return "subsystems/configure/Configure_inprogress_16.png";
             }
             case NOCHANGE:
-                return "subsystems/inventory/Configure_16.png";
+                return "subsystems/configure/Configure_16.png";
             }
         }
 
-        return "subsystems/inventory/Configure_16.png";
+        return "subsystems/configure/Configure_16.png";
     }
 
     public static String getLockedIcon() {
         return "global/Locked_16.png";
-    }
-
-    /**
-     * Returns the configuration update status icon. If status is null, returns
-     * the plain, unbadged, configuration icon.
-     */
-    public static String getConfigurationUpdateResultsIcon(ConfigurationUpdateStatus status) {
-        String icon = "";
-        if (status != null) {
-            switch (status) {
-            case INPROGRESS:
-                icon = "_inprogress";
-                break;
-            case SUCCESS:
-                icon = "_ok";
-                break;
-            case FAILURE:
-                icon = "_failed";
-                break;
-            }
-        }
-
-        return "subsystems/configure/Configure" + icon + "_16.png";
-
     }
 
     public static String getEventSeverityIcon(EventSeverity severity) {

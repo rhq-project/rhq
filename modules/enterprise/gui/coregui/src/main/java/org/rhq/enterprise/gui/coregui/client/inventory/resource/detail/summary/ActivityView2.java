@@ -364,7 +364,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                             StaticTextItem iconItem = new StaticTextItem();
                             FormItemIcon img = new FormItemIcon();
-                            img.setSrc(ImageManager.getConfigurationUpdateResultsIcon(update.getStatus()));
+                            img.setSrc(ImageManager.getResourceConfigurationIcon(update.getStatus()));
                             img.setWidth(16);
                             img.setHeight(16);
                             iconItem.setIcons(img);

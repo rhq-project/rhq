@@ -33,6 +33,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ContentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -43,6 +44,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
     private static final long serialVersionUID = 1L;
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
+    private ContentUIManagerLocal contentUiManager = LookupUtil.getContentUIManager();
 
     public void deletePackageVersion(int packageVersionId) {
         try {
@@ -60,6 +62,16 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
+    //    public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count) {
+    //        try {
+    //            PageControl pc = new PageControl(0, count);
+    //            return SerialUtility.prepare(contentUiManager.getInstalledPackageHistoryForResource(resourceId, pc),
+    //                "ContentService.getInstalledPackageHistoryForResource");
+    //        } catch (Exception e) {
+    //            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+    //        }
+    //    }
 
     public List<Architecture> getArchitectures() {
         try {

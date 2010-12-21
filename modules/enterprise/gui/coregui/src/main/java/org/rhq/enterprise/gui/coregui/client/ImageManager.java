@@ -2,6 +2,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -363,5 +364,54 @@ public class ImageManager {
 
     public static String getLockedIcon() {
         return "global/Locked_16.png";
+    }
+
+    /**
+     * Returns the configuration update status icon. If status is null, returns
+     * the plain, unbadged, configuration icon.
+     */
+    public static String getConfigurationUpdateResultsIcon(ConfigurationUpdateStatus status) {
+        String icon = "";
+        if (status != null) {
+            switch (status) {
+            case INPROGRESS:
+                icon = "_inprogress";
+                break;
+            case SUCCESS:
+                icon = "_ok";
+                break;
+            case FAILURE:
+                icon = "_failed";
+                break;
+            }
+        }
+
+        return "subsystems/configure/Configure" + icon + "_16.png";
+
+    }
+
+    public static String getEventSeverityIcon(EventSeverity severity) {
+        String icon = "";
+        if (severity != null) {
+            switch (severity) {
+            case DEBUG:
+                icon = "_debug";
+                break;
+            case INFO:
+                icon = "_info";
+                break;
+            case WARN:
+                icon = "_warning";
+                break;
+            case ERROR:
+                icon = "_info";
+                break;
+            case FATAL:
+                icon = "_fatal";
+                break;
+            }
+        }
+
+        return "subsystems/event/Events" + icon + "_16.png";
     }
 }

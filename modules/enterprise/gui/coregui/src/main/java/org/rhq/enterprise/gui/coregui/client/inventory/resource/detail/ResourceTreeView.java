@@ -85,6 +85,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.Resource
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -136,8 +137,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.setLeaveScrollbarGap(false);
 
-        resourceContextMenu = new Menu();
-        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"), true);
+        resourceContextMenu = new LocatableMenu(extendLocatorId("resourceContextMenu"));
+        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
@@ -383,35 +384,36 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // plugin config
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
-        editPluginConfiguration.addClickHandler(new ClickHandler() {
+        MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
+        pluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
             }
         });
-        editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
-        resourceContextMenu.addItem(editPluginConfiguration);
+        pluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
+        resourceContextMenu.addItem(pluginConfiguration);
 
         // resource config
-        MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
+        MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
         boolean enabled = resourcePermission.isConfigureRead()
             && resourceType.getResourceConfigurationDefinition() != null;
-        editResourceConfiguration.setEnabled(enabled);
+        resourceConfiguration.setEnabled(enabled);
         if (enabled) {
-            editResourceConfiguration.addClickHandler(new ClickHandler() {
+            resourceConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
                     CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Configuration", "Current"));
                 }
             });
         }
-        resourceContextMenu.addItem(editResourceConfiguration);
+        resourceContextMenu.addItem(resourceConfiguration);
 
         // separator
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        enabled = (resourcePermission.isControl() && !resourceType.getOperationDefinitions().isEmpty());
+        enabled = (resourcePermission.isControl() && null == resourceType.getOperationDefinitions() && !resourceType
+            .getOperationDefinitions().isEmpty());
         operations.setEnabled(enabled);
         if (enabled) {
             Menu opSubMenu = new Menu();
@@ -419,29 +421,10 @@ public class ResourceTreeView extends LocatableVLayout {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId)).getResource()
-                            .getId();
-
-                        ResourceCriteria criteria = new ResourceCriteria();
-                        criteria.addFilterId(resourceId);
-
-                        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                            new AsyncCallback<PageList<Resource>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_tree_common_contextMenu_operations_loadFailed(), caught);
-                                }
-
-                                public void onSuccess(PageList<Resource> result) {
-                                    new OperationCreateWizard(result.get(0), operationDefinition)
-                                        .startOperationWizard();
-                                }
-                            });
-
+                        new OperationCreateWizard(resource, operationDefinition).startOperationWizard();
                     }
                 });
                 opSubMenu.addItem(operationItem);
-                // todo action
             }
             operations.setSubmenu(opSubMenu);
         }

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.authz;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +32,6 @@ import javax.persistence.Query;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Permission.Target;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 
@@ -69,16 +67,35 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
 
     @SuppressWarnings("unchecked")
     public Set<Permission> getExplicitGroupPermissions(Subject subject, int groupId) {
-        Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID);
-        query.setParameter("subject", subject);
-        query.setParameter("groupId", groupId);
-        List<Permission> intermediate = query.getResultList();
-        Set<Permission> results = new HashSet<Permission>();
-        for (Permission permission : intermediate) {
-            results.add(permission);
+        Set<Permission> result = new HashSet<Permission>();
+
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+        Subject owner = group.getSubject();
+
+        if (null == owner) {
+            // role-owned group
+            Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID);
+            query.setParameter("subject", subject);
+            query.setParameter("groupId", groupId);
+            List<Permission> resultList = query.getResultList();
+            for (Permission permission : resultList) {
+                result.add(permission);
+            }
+
+        } else {
+            // don't let a user other than the owner do anything with this group
+            if (subject.equals(owner)) {
+                Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_PRIVATE_GROUP_ID);
+                query.setParameter("subjectId", subject.getId());
+                query.setParameter("privateGroupId", groupId);
+                List<Object[]> resultList = query.getResultList();
+                for (Object[] row : resultList) {
+                    result.add((Permission) row[0]);
+                }
+            }
         }
 
-        return results;
+        return result;
     }
 
     public Set<Permission> getImplicitGroupPermissions(Subject subject, int groupId) {
@@ -119,6 +136,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    @SuppressWarnings("unchecked")
     public boolean hasGroupPermission(Subject subject, Permission permission, int groupId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -142,14 +160,12 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
                 return false;
             }
 
-            // subject-owned group, requires perm check against each group member
-            Set<Resource> members = group.getExplicitResources();
-            List<Integer> memberIds = new ArrayList<Integer>(members.size());
-            for (Resource member : members) {
-                memberIds.add(member.getId());
-            }
-
-            return hasResourcePermission(owner, permission, memberIds);
+            Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_PRIVATE_GROUP_PERMISSION);
+            query.setParameter("subjectId", subject.getId());
+            query.setParameter("permission", permission);
+            query.setParameter("privateGroupId", groupId);
+            List<Object[]> resultList = query.getResultList();
+            return (!resultList.isEmpty());
         }
     }
 

@@ -65,6 +65,15 @@ public class LinkManager {
         }
     }
 
+    public static String getAutoClusterTabLink(int autoClusterGroupId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#ResourceGroup/AutoCluster/" + autoClusterGroupId + "/" + tabName
+                + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + autoClusterGroupId;
+        }
+    }
+
     public static String getResourceGroupTabLink(int resourceGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#ResourceGroup/" + resourceGroupId + "/" + tabName

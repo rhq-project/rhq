@@ -224,10 +224,18 @@ public class BundleDestination implements Serializable {
 
     @Override
     public String toString() {
-        return "BundleDestination[id=" + id + ", bundle=" + bundle.getName() + ", group=" + group.getName() + ", name="
-            + name + "]";
+        return "BundleDestination[id=" + id //
+            + ((null != bundle) ? (", bundle=" + bundle.getName()) : "") //
+            + ((null != group) ? (", group=" + group.getName()) : "") //
+            + ", name=" + name + "]";
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -238,6 +246,12 @@ public class BundleDestination implements Serializable {
         return result;
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

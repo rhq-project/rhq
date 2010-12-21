@@ -217,7 +217,10 @@ public class Bundle implements Serializable {
 
     @Override
     public String toString() {
-        return "Bundle[id=" + id + ",name=" + name + ",bundleType=" + bundleType + ",packageType=" + packageType + "]";
+        return "Bundle[id=" + id //
+            + ",name=" + name //
+            + ",bundleType=" + bundleType //
+            + ",packageType=" + packageType + "]";
     }
 
     @Override

@@ -158,7 +158,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             // remove bundleversions which cascade remove bundlefiles and bundledeployments
             // bundlefiles cascaderemove packageversions
             // bundledeployments cascade remove bundleresourcedeployments
-            // bundleresourcedeployments cascade remove bundleresourcedeploymenthistory            
+            // bundleresourcedeployments cascade remove bundleresourcedeploymenthistory
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -172,7 +172,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleFile.class, ((BundleFile) removeMe).getId()));
             }
-            // remove any orphaned deployment history 
+            // remove any orphaned deployment history
             q = em
                 .createQuery("SELECT brdh FROM BundleResourceDeploymentHistory brdh WHERE brdh.resourceDeployment.bundleDeployment.name LIKE '"
                     + TEST_PREFIX + "%'");
@@ -198,7 +198,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
             // remove bundles which cascade remove packageTypes and destinations
             // packagetypes cascade remove packages
-            // package cascade remove packageversions            
+            // package cascade remove packageversions
             q = em.createQuery("SELECT b FROM Bundle b WHERE b.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -218,27 +218,27 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Package.class, ((Package) removeMe).getId()));
             }
-            // remove any orphaned packagetypes            
+            // remove any orphaned packagetypes
             q = em.createQuery("SELECT pt FROM PackageType pt WHERE pt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(PackageType.class, ((PackageType) removeMe).getId()));
             }
-            // remove any orphaned destinations            
+            // remove any orphaned destinations
             q = em.createQuery("SELECT bd FROM BundleDestination bd WHERE bd.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(BundleDestination.class, ((BundleDestination) removeMe).getId()));
             }
 
-            // remove repos no longer referenced by bundles            
+            // remove repos no longer referenced by bundles
             q = em.createQuery("SELECT r FROM Repo r WHERE r.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
             }
 
-            // remove Resource Groups left over from test deployments freeing up test resources           
+            // remove Resource Groups left over from test deployments freeing up test resources
             q = em.createQuery("SELECT rg FROM ResourceGroup rg WHERE rg.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -259,7 +259,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
                 em.remove(em.getReference(BundleType.class, ((BundleType) removeMe).getId()));
             }
 
-            // remove Agents left over from test resources            
+            // remove Agents left over from test resources
             q = em.createQuery("SELECT a FROM Agent a WHERE a.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
@@ -928,6 +928,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         c.addFilterName(TEST_PREFIX);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         bv = bvs.get(1);
+        EntityManager em = getEntityManager();
+        bv = em.merge(bv);
         assertNotNull(bvs);
         assertEquals(3, bvs.size());
         assertEquals(bv2, bv);

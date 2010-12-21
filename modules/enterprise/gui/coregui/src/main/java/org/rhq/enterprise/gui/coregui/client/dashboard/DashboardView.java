@@ -238,7 +238,11 @@ public class DashboardView extends LocatableVLayout {
         }
     }
 
-    private void addPortlet(String portletKey, String portletName) {
+    /**
+     * A synchronized call to ensure add/remove/save are exclusive.
+     * 
+     */
+    synchronized private void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
 
         final PortletWindow newPortlet = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
@@ -278,11 +282,32 @@ public class DashboardView extends LocatableVLayout {
                 newPortlet.show();
             }
         }, 750);
-        save();
+        save(storedDashboard);
+    }
+
+    /**
+     * A synchronized call to ensure the remove and save are atomic.
+     * 
+     * @param portlet
+     */
+    synchronized public void removePortlet(DashboardPortlet portlet) {
+        storedDashboard.removePortlet(portlet);
+        save(storedDashboard);
+    }
+
+    /**
+     * A synchronized call to ensure add/remove/save are exclusive.
+     */
+    synchronized private void setDashboard(Dashboard dashboard) {
+        storedDashboard = dashboard;
     }
 
     public void save() {
-        GWTServiceLookup.getDashboardService().storeDashboard(storedDashboard, new AsyncCallback<Dashboard>() {
+        save(storedDashboard);
+    }
+
+    private void save(Dashboard dashboard) {
+        GWTServiceLookup.getDashboardService().storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardManager_error(), caught);
             }
@@ -290,7 +315,11 @@ public class DashboardView extends LocatableVLayout {
             public void onSuccess(Dashboard result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_dashboardManager_saved(result.getName()), Message.Severity.Info));
-                storedDashboard = result;
+                // use the synchronized call to ensure add/delete portlet doesn't get interrupted. This is really
+                // just limited protection for add/remove portlet.  Since this now sets storedDashboard,
+                // anything using the old version could lose edits.  If we want to make this more robust we'll probably
+                // need a locking mechanism for editing the dashboard.
+                setDashboard(storedDashboard);
 
                 updateConfigs(result);
             }

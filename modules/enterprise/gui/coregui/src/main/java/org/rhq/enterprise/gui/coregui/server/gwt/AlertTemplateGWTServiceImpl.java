@@ -31,55 +31,55 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
 
     @Override
-    public int createAlertTemplate(AlertDefinition alertDefinition, Integer resourceTypeId) throws Exception {
+    public int createAlertTemplate(AlertDefinition alertDefinition, Integer resourceTypeId) throws RuntimeException {
         try {
             int results = alertTemplateManager
                 .createAlertTemplate(getSessionSubject(), alertDefinition, resourceTypeId);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
     public AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean purgeInternals)
-        throws Exception {
+        throws RuntimeException {
         try {
             AlertDefinition results = alertTemplateManager.updateAlertTemplate(getSessionSubject(), alertDefinition,
                 purgeInternals);
             return SerialUtility.prepare(results, "AlertTemplateService.updateAlertTemplate");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public void enableAlertTemplates(Integer[] alertDefinitionIds) throws Exception {
+    public void enableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException {
         try {
             alertTemplateManager.enableAlertTemplates(getSessionSubject(), alertDefinitionIds);
             return;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public void disableAlertTemplates(Integer[] alertDefinitionIds) throws Exception {
+    public void disableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException {
         try {
             alertTemplateManager.disableAlertTemplates(getSessionSubject(), alertDefinitionIds);
             return;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public void removeAlertTemplates(Integer[] alertDefinitionIds) throws Exception {
+    public void removeAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException {
         try {
             alertTemplateManager.removeAlertTemplates(getSessionSubject(), alertDefinitionIds);
             return;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

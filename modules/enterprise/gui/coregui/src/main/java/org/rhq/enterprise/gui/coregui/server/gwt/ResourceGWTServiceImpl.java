@@ -110,6 +110,12 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
     private static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
 
+    private static final IntExtractor<ProblemResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ProblemResourceComposite>() {
+        public int extract(ProblemResourceComposite object) {
+            return object.getResourceId();
+        }
+    };
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -119,19 +125,20 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public ResourceGWTServiceImpl() {
     }
 
-    public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) {
+    public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException {
         try {
             PageList<Resource> result = resourceManager.findResourcesByCriteria(getSessionSubject(), criteria);
 
             ObjectFilter.filterFieldsInCollection(result, importantFieldsSet);
 
             return SerialUtility.prepare(result, "ResourceService.findResourcesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria) {
+    public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
                 criteria);
@@ -142,15 +149,16 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             }
 
             return SerialUtility.prepare(result, "ResourceService.findResourceCompositesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
      *  Criteria passed in not currently used.
      */
-    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems) {
+    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems)
+        throws RuntimeException {
         try {
             List<ProblemResourceComposite> located = new ArrayList<ProblemResourceComposite>();
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
@@ -163,38 +171,33 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             List<DisambiguationReport<ProblemResourceComposite>> translated = resourceManager.disambiguate(located,
                 RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
             return translated;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    private static final IntExtractor<ProblemResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ProblemResourceComposite>() {
-        public int extract(ProblemResourceComposite object) {
-            return object.getResourceId();
-        }
-    };
-
-    public List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) {
+    public List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(
                 resourceManager.getResourceLineageAndSiblings(getSessionSubject(), resourceId),
                 "ResourceService.getResourceLineageAndSiblings");
 
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Resource getPlatformForResource(int resourceId) {
+    public Resource getPlatformForResource(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId),
                 "ResourceService.getPlatformForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) {
+    public List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems)
+        throws RuntimeException {
         try {
             List<RecentlyAddedResourceComposite> platforms = resourceManager.findRecentlyAddedPlatforms(
                 getSessionSubject(), ctime, maxItems);
@@ -206,32 +209,31 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             }
 
             return SerialUtility.prepare(platforms, "ResourceService.findRecentlyAddedResources");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<Integer> uninventoryResources(int[] resourceIds) {
+    public List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException {
         try {
             return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
                 "ResourceService.uninventoryResources");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateResource(Resource resource) {
+    public void updateResource(Resource resource) throws RuntimeException {
         try {
             resourceManager.updateResource(getSessionSubject(), resource);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration newResourceConfiguration) {
+        Configuration newResourceConfiguration) throws RuntimeException {
         try {
-
             ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
                 .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
             Configuration pluginConfig = null;
@@ -246,15 +248,14 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             resourceFactoryManager.createResource(getSessionSubject(), parentResourceId, newResourceTypeId,
                 newResourceName, pluginConfig, newResourceConfiguration);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration deploymentTimeConfiguration, int packageVersionId) {
+        Configuration deploymentTimeConfiguration, int packageVersionId) throws RuntimeException {
         try {
-
             ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
                 .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
             Configuration pluginConfig = null;
@@ -269,65 +270,71 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             resourceFactoryManager.createPackageBackedResourceViaPackageVersion(getSessionSubject(), parentResourceId,
                 newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<DeleteResourceHistory> deleteResources(int[] resourceIds) {
+    public List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException {
         try {
             return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
                 "ResourceService.deleteResources");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
+    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
                 .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void importResources(int[] resourceIds) {
+    public void importResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.importResources(getSessionSubject(), resourceIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void ignoreResources(int[] resourceIds) {
+    public void ignoreResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.ignoreResources(getSessionSubject(), resourceIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void unignoreResources(int[] resourceIds) {
+    public void unignoreResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<ResourceError> findResourceErrors(int resourceId) {
-        return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
-            "ResourceService.getResourceErrors");
+    public List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
+                "ResourceService.getResourceErrors");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
-    public Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration) {
+    public Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration)
+        throws RuntimeException {
         try {
             Resource result = discoveryBoss.manuallyAddResource(getSessionSubject(), resourceTypeId, parentResourceId,
                 pluginConfiguration);
             return SerialUtility.prepare(result, "ResourceService.manuallyAddResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

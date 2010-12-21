@@ -37,44 +37,44 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
-    public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) {
+    public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
                 "AlertService.findAlertsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int deleteAlerts(int[] alertIds) {
+    public int deleteAlerts(int[] alertIds) throws RuntimeException {
         try {
             return this.alertManager.deleteAlerts(getSessionSubject(), alertIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int deleteAlertsByContext(EntityContext context) {
+    public int deleteAlertsByContext(EntityContext context) throws RuntimeException {
         try {
             return this.alertManager.deleteAlertsByContext(getSessionSubject(), context);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int acknowledgeAlerts(int[] alertIds) {
+    public int acknowledgeAlerts(int[] alertIds) throws RuntimeException {
         try {
             return this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int acknowledgeAlertsByContext(EntityContext context) {
+    public int acknowledgeAlertsByContext(EntityContext context) throws RuntimeException {
         try {
             return this.alertManager.acknowledgeAlertsByContext(getSessionSubject(), context);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

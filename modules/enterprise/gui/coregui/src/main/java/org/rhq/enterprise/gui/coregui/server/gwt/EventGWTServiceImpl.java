@@ -46,32 +46,34 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
 
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
 
-    public EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets) {
+    public EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.getSeverityBuckets(getSessionSubject(), resourceId, begin, end,
                 numBuckets), "EventService.getSeverityBuckets");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin,
-        long end, int numBuckets) {
+        long end, int numBuckets) throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.getSeverityBucketsForAutoGroup(getSessionSubject(),
                 parentResourceId, resourceTypeId, begin, end, numBuckets),
                 "EventService.getSeverityBucketsForAutoGroup");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets) {
+    public EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.getSeverityBucketsForCompGroup(getSessionSubject(),
                 resourceGroupId, begin, end, numBuckets), "EventService.getSeverityBucketsForCompGroup");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -84,37 +86,37 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
     //        }
     //    }
 
-    public PageList<Event> findEventsByCriteria(EventCriteria criteria) {
+    public PageList<Event> findEventsByCriteria(EventCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.findEventsByCriteria(getSessionSubject(), criteria),
                 "EventService.findEventsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria) {
+    public PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.findEventCompositesByCriteria(getSessionSubject(), criteria),
                 "EventService.findEventsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int deleteEventsForContext(EntityContext context, List<Integer> eventIds) {
+    public int deleteEventsForContext(EntityContext context, List<Integer> eventIds) throws RuntimeException {
         try {
             return eventManager.deleteEventsForContext(getSessionSubject(), context, eventIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int purgeEventsForContext(EntityContext context) {
+    public int purgeEventsForContext(EntityContext context) throws RuntimeException {
         try {
             return eventManager.purgeEventsForContext(getSessionSubject(), context);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

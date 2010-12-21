@@ -44,11 +44,11 @@ public class ResourceBossGWTServiceImpl extends AbstractGWTServiceImpl implement
         return getInventorySummary(subject);
     }
 
-    public InventorySummary getInventorySummary(Subject user) {
+    public InventorySummary getInventorySummary(Subject user) throws RuntimeException {
         try {
             return resourceBoss.getInventorySummary(user);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

@@ -22,14 +22,14 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
     private static final long serialVersionUID = 1L;
 
     @Override
-    public PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) {
+    public PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
 
             return SerialUtility.prepare(typeManager.findResourceTypesByCriteria(getSessionSubject(), criteria),
                 "ResourceTypes.findResourceTypesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -37,7 +37,7 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
      * Given a resource ID, this gets all resource types for all ancestors in that resource's lineage.
      */
     @Override
-    public ArrayList<ResourceType> getResourceTypesForResourceAncestors(int resourceId) {
+    public ArrayList<ResourceType> getResourceTypesForResourceAncestors(int resourceId) throws RuntimeException {
         try {
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
             List<ResourceLineageComposite> lineage = manager.getResourceLineage(getSessionSubject(), resourceId);
@@ -46,43 +46,44 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
                 types.add(composite.getResource().getResourceType());
             }
             return SerialUtility.prepare(types, "ResourceTypes.getResourceTypesForResourceAncestors");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public ArrayList<ResourceType> getAllResourceTypeAncestors(int resourceTypeId) {
+    public ArrayList<ResourceType> getAllResourceTypeAncestors(int resourceTypeId) throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
             List<ResourceType> list = typeManager.getAllResourceTypeAncestors(getSessionSubject(), resourceTypeId);
             return SerialUtility
                 .prepare(new ArrayList<ResourceType>(list), "ResourceTypes.getAllResourceTypeAncestors");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public HashMap<Integer, String> getResourceTypeDescendantsWithOperations(int resourceTypeId) {
+    public HashMap<Integer, String> getResourceTypeDescendantsWithOperations(int resourceTypeId)
+        throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
             HashMap<Integer, String> map = typeManager.getResourceTypeDescendantsWithOperations(getSessionSubject(),
                 resourceTypeId);
             return SerialUtility.prepare(map, "ResourceTypes.getResourceTypeDescendantsWithOperations");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
+    public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
             Map<Integer, ResourceTypeTemplateCountComposite> map = typeManager.getTemplateCountCompositeMap();
             return SerialUtility.prepare(map, "ResourceTypes.getTemplateCountCompositeMap");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

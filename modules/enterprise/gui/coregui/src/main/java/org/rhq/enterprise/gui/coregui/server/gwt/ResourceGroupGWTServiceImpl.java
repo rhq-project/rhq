@@ -42,7 +42,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private GroupDefinitionManagerLocal definitionManager = LookupUtil.getGroupDefinitionManager();
 
-    public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) {
+    public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) throws RuntimeException {
         try {
             PageList<ResourceGroup> groups = groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(groups, "ResourceGroupService.findResourceGroupsByCriteria");
@@ -51,7 +51,8 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria) {
+    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<ResourceGroupComposite> composites = groupManager.findResourceGroupCompositesByCriteria(
                 getSessionSubject(), criteria);
@@ -61,7 +62,8 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria) {
+    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<GroupDefinition> definitions = definitionManager.findGroupDefinitionsByCriteria(
                 getSessionSubject(), criteria);
@@ -71,7 +73,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void setAssignedResources(int groupId, int[] resourceIds, boolean setType) {
+    public void setAssignedResources(int groupId, int[] resourceIds, boolean setType) throws RuntimeException {
         try {
             groupManager.setAssignedResources(getSessionSubject(), groupId, resourceIds, setType);
         } catch (Throwable t) {
@@ -79,7 +81,8 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType) {
+    public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType)
+        throws RuntimeException {
         try {
             groupManager.setAssignedResourceGroupsForResource(getSessionSubject(), resourceId, resourceGroupIds,
                 setType);
@@ -88,7 +91,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds) {
+    public ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds) throws RuntimeException {
         try {
             Subject user = getSessionSubject();
             group = groupManager.createPrivateResourceGroup(user, group);
@@ -99,7 +102,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) {
+    public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) throws RuntimeException {
         try {
             Subject user = getSessionSubject();
             group = groupManager.createResourceGroup(user, group);
@@ -110,7 +113,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void deleteResourceGroups(int[] groupIds) {
+    public void deleteResourceGroups(int[] groupIds) throws RuntimeException {
         try {
             groupManager.deleteResourceGroups(getSessionSubject(), groupIds);
         } catch (Throwable t) {
@@ -118,7 +121,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void updateResourceGroup(ResourceGroup group) {
+    public void updateResourceGroup(ResourceGroup group) throws RuntimeException {
         try {
             groupManager.updateResourceGroup(getSessionSubject(), group);
         } catch (Throwable t) {
@@ -126,7 +129,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void updateResourceGroup(ResourceGroup group, boolean updateMembership) {
+    public void updateResourceGroup(ResourceGroup group, boolean updateMembership) throws RuntimeException {
         try {
             groupManager.updateResourceGroup(getSessionSubject(), group, null, updateMembership);
         } catch (Throwable t) {
@@ -134,7 +137,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) {
+    public GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException {
         try {
             GroupDefinition results = definitionManager.createGroupDefinition(getSessionSubject(), groupDefinition);
 
@@ -144,7 +147,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void updateGroupDefinition(GroupDefinition groupDefinition) {
+    public void updateGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException {
         try {
             definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);
         } catch (Throwable t) {
@@ -152,7 +155,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void recalculateGroupDefinitions(int[] groupDefinitionIds) {
+    public void recalculateGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException {
         try {
             for (int nextGroupDefinitionId : groupDefinitionIds) {
                 definitionManager.calculateGroupMembership(getSessionSubject(), nextGroupDefinitionId);
@@ -162,7 +165,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void deleteGroupDefinitions(int[] groupDefinitionIds) {
+    public void deleteGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException {
         try {
             for (int nextGroupDefinitionId : groupDefinitionIds) {
                 definitionManager.removeGroupDefinition(getSessionSubject(), nextGroupDefinitionId);
@@ -173,7 +176,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
-    public void setRecursive(int groupId, boolean isRecursive) throws Exception {
+    public void setRecursive(int groupId, boolean isRecursive) throws RuntimeException {
         try {
             groupManager.setRecursive(getSessionSubject(), groupId, isRecursive);
         } catch (Throwable t) {

@@ -60,179 +60,189 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
     private MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
 
-    public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType) {
+    public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId,
                 displayType), "MeasurementDataService.findCurrentTraitsForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds) {
+    public Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds) throws RuntimeException {
         try {
             return SerialUtility.prepare(dataManager.findLiveData(getSessionSubject(), resourceId, definitionIds),
                 "MeasurementDataService.findLiveData");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
-        long beginTime, long endTime, int numPoints) {
+        long beginTime, long endTime, int numPoints) throws RuntimeException {
         try {
             return SerialUtility.prepare(dataManager.findDataForResource(getSessionSubject(), resourceId,
                 definitionIds, beginTime, endTime, numPoints), "MeasurementDataService.findDataForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
-        PageControl pageControl) {
+        PageControl pageControl) throws RuntimeException {
         try {
             return SerialUtility.prepare(callTimeDataManager.findCallTimeDataForResource(getSessionSubject(),
                 scheduleId, start, end, pageControl), "MeasurementDataService.findCallTimeDataForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria) {
+    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(definitionManager.findMeasurementDefinitionsByCriteria(getSessionSubject(),
                 criteria), "MeasurementDataService.findMeasurementDefinintionsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria) {
+    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(scheduleManager.findSchedulesByCriteria(getSessionSubject(), criteria),
                 "MeasurementDataService.findMeasurementSchedulesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context) {
+    public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(scheduleManager.getMeasurementScheduleCompositesByContext(getSessionSubject(),
                 context, PageControl.getUnlimitedInstance()),
                 "MeasurementDataService.getMeasurementScheduleCompositesByContext");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter, String resourceNameFilter,
-        String parentNameFilter, PageControl pc) {
+        String parentNameFilter, PageControl pc) throws RuntimeException {
         try {
             return SerialUtility.prepare(measurementOOBManager.getSchedulesWithOOBs(getSessionSubject(),
                 metricNameFilter, resourceNameFilter, parentNameFilter, pc),
                 "MeasurementDataService.getSchedulesWithOOBs");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) {
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) throws RuntimeException {
         try {
             return SerialUtility.prepare(measurementOOBManager.getHighestNOOBsForResource(getSessionSubject(),
                 resourceId, n), "MeasurementDataService.getHighestNOOBsForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) {
+    public void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException {
         try {
             scheduleManager.enableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) {
+    public void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException {
         try {
             scheduleManager.disableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval) {
+    public void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval)
+        throws RuntimeException {
         try {
             scheduleManager.updateSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds,
                 collectionInterval);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void enableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds) {
+    public void enableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds)
+        throws RuntimeException {
         try {
             scheduleManager.enableSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId,
                 measurementDefinitionIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void disableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds) {
+    public void disableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds)
+        throws RuntimeException {
         try {
             scheduleManager.disableSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId,
                 measurementDefinitionIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds,
-        long collectionInterval) {
+        long collectionInterval) throws RuntimeException {
         try {
             scheduleManager.updateSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId,
                 measurementDefinitionIds, collectionInterval);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules) {
+    public void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules)
+        throws RuntimeException {
         try {
             scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
                 measurementDefinitionIds, 0, updateExistingSchedules);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules) {
+    public void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules)
+        throws RuntimeException {
         try {
             scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
                 measurementDefinitionIds, -1, updateExistingSchedules);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void updateSchedulesForResourceType(int[] measurementDefinitionIds, long collectionInterval,
-                                           boolean updateExistingSchedules) {
+        boolean updateExistingSchedules) throws RuntimeException {
         try {
             scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
                 measurementDefinitionIds, collectionInterval, updateExistingSchedules);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria) {
+    public PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(dataManager.findTraitsByCriteria(getSessionSubject(), criteria),
                 "MeasurementDataService.findTraitsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

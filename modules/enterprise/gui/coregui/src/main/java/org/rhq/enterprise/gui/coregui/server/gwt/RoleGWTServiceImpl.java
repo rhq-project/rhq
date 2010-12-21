@@ -36,60 +36,60 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
 
     private RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
-    public PageList<Role> findRolesByCriteria(RoleCriteria criteria) {
+    public PageList<Role> findRolesByCriteria(RoleCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(roleManager.findRolesByCriteria(getSessionSubject(), criteria),
                 "RoleService.findRolesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Role createRole(Role role) {
+    public Role createRole(Role role) throws RuntimeException {
         try {
             return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role), "RoleService.createRole");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Role updateRole(Role role) {
+    public Role updateRole(Role role) throws RuntimeException {
         try {
             return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role), "RoleService.updateRole");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void removeRoles(int[] roleIds) {
+    public void removeRoles(int[] roleIds) throws RuntimeException {
         try {
             roleManager.deleteRoles(getSessionSubject(), roleIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void setAssignedResourceGroups(int roleId, int[] resourceGroupIds) {
+    public void setAssignedResourceGroups(int roleId, int[] resourceGroupIds) throws RuntimeException {
         try {
             roleManager.setAssignedResourceGroups(getSessionSubject(), roleId, resourceGroupIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void setAssignedSubjects(int roleId, int[] subjectIds) {
+    public void setAssignedSubjects(int roleId, int[] subjectIds) throws RuntimeException {
         try {
             roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void setAssignedRolesForSubject(int subjectId, int[] roleIds) {
+    public void setAssignedRolesForSubject(int subjectId, int[] roleIds) throws RuntimeException {
         try {
             roleManager.setAssignedSubjectRoles(getSessionSubject(), subjectId, roleIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

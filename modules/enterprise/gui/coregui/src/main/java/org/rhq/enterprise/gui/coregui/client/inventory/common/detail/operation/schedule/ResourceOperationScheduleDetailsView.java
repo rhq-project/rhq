@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -115,6 +116,11 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
         this.operationParametersConfigurationHolder.setVisible(false);
         contentPane.addMember(this.operationParametersConfigurationHolder);
 
+        if (isNewRecord()) {
+            JobTriggerEditor triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
+            contentPane.addMember(triggerEditor);
+        }
+        
         EnhancedDynamicForm notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");

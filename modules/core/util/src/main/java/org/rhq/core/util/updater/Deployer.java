@@ -340,7 +340,7 @@ public class Deployer {
 
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(), this.deploymentData
-            .getIgnoreRegex());
+            .getIgnoreRegex(), this.deploymentData.isManageRootDir());
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
 
         if (current.getUnknownContent() != null) {
@@ -439,6 +439,9 @@ public class Deployer {
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
 
+        // remember what files were skipped so we don't delete them during our purge below (only care about this if we are going to 'clean')
+        Set<String> skippedFiles = (clean) ? current.getSkipped() : null;
+
         // don't use this anymore - its underlying key set has been altered and this no longer is the full current files
         current = null;
 
@@ -487,7 +490,7 @@ public class Deployer {
         if (clean) {
             debug("Cleaning the existing deployment's files found in the destination directory. dryRun=", dryRun);
             if (!dryRun) {
-                purgeFileOrDirectory(this.deploymentData.getDestinationDir(), false);
+                purgeFileOrDirectory(this.deploymentData.getDestinationDir(), skippedFiles, 0, false);
             }
         }
         diff.setCleaned(clean);
@@ -816,8 +819,9 @@ public class Deployer {
                     restoreBackupFilesRecursive(child, base, destDir, map, diff, dryRun);
                 } else {
                     String childRelativePath = child.getAbsolutePath().substring(base.length());
+                    //if (this.deploymentData.isManageRootDir() || new File(childRelativePath).getParent() != null) {
                     File restoredFile = new File(destDir, childRelativePath);
-                    debug("Restoring backup file [" + child + "] to [" + restoredFile + "]. dryRun=" + dryRun);
+                    debug("Restoring backup file [", child, "] to [", restoredFile, "]. dryRun=", dryRun);
                     if (!dryRun) {
                         restoredFile.getParentFile().mkdirs();
                         String hashcode = copyFileAndCalcHashcode(child, restoredFile);
@@ -826,6 +830,10 @@ public class Deployer {
                         map.put(childRelativePath, MessageDigestGenerator.getDigestString(child));
                     }
                     diff.addRestoredFile(childRelativePath, child.getAbsolutePath());
+                    //} else {
+                    //    debug("Skipping the restoration of the backed up file [", childRelativePath,
+                    //        "] since this deployment was told to not manage the root directory");
+                    //}
                 }
             }
         }
@@ -843,7 +851,7 @@ public class Deployer {
                 } else {
                     String childRelativePath = child.getAbsolutePath().substring(base.length());
                     File restoredFile = new File(rootDir, childRelativePath);
-                    debug("Restoring backup file [" + child + "] to external location [" + restoredFile + "]. dryRun="
+                    debug("Restoring backup file [", child, "] to external location [", restoredFile, "]. dryRun="
                         + dryRun);
                     if (!dryRun) {
                         restoredFile.getParentFile().mkdirs();
@@ -882,14 +890,20 @@ public class Deployer {
         }
     }
 
-    private void purgeFileOrDirectory(File fileOrDir, boolean deleteIt) {
+    private void purgeFileOrDirectory(File fileOrDir, Set<String> skippedFiles, int level, boolean deleteIt) {
         // make sure we only purge deployment files, never the metadata directory or its files
+        // we also want to leave all skipped files alone - don't delete those since they are unrelated to our deployment
         if (fileOrDir != null && !fileOrDir.getName().equals(DeploymentsMetadata.METADATA_DIR)) {
             if (fileOrDir.isDirectory()) {
                 File[] doomedFiles = fileOrDir.listFiles();
                 if (doomedFiles != null) {
                     for (File doomedFile : doomedFiles) {
-                        purgeFileOrDirectory(doomedFile, true); // call this method recursively
+                        // Do not purge any skipped files - we want to skip them.
+                        // All our skipped files are always at the top root dir (level 0),
+                        // so we can ignore the skipped set if we are at levels 1 or below since there are no skipped files down there
+                        if (level != 0 || !skippedFiles.contains(doomedFile.getName())) {
+                            purgeFileOrDirectory(doomedFile, skippedFiles, level + 1, true); // call this method recursively
+                        }
                     }
                 }
             }

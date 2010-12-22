@@ -27,8 +27,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -39,10 +42,8 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
- * These attempt to mimic the same tests as {@link SimpleDeployerTest} except it uses
- * raw files at absolute paths, rather than using zip files.
- *
- * Individually tests these situations for raw, absolute path files:
+ * Individually tests these situations but with the "manageRootDir" flag off so we should not
+ * remove files not involved in the deployment that are found in the root destination dir:
  * 
  * (X, Y, Z, ? represent hashcodes; none means file doesn't exist):
  * 
@@ -61,43 +62,50 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author John Mazzitelli
  */
 @Test
-public class SimpleDeployerRawFileTest {
+public class ManageRootDirTest {
 
     private final String originalContent = "original content";
     private final String originalFileName = "original_file_name.txt";
+    private final String unrelatedContent = "unrelated file content";
+    private final String unrelatedFileName = "unrelated_file_name.txt";
+    private final String unrelatedDirName = "unrelated_dir";
     private File tmpDir;
-    private File extDir;
     private File deployDir;
-    private File sourceRawFile;
-    private Map<File, File> sourceRawFiles;
+    private File originalZipFile;
+    private Set<File> originalZipFiles;
     private DeploymentProperties originalDeployProps;
     private FileHashcodeMap originalFileHashcodeMap;
     private String originalHashcode;
     private File currentFile;
-    private String currentAbsPath;
     private DeploymentProperties newDeployProps;
     private DeployDifferences diff;
     private DeploymentsMetadata metadata;
+    private File unrelatedFile;
+    private String unrelatedFileHashcode;
+    private File unrelatedDir;
+    private File unrelatedDirFile;
+    private String unrelatedDirFileHashcode;
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        // tmpDir is where the source files will originally be located
         this.tmpDir = FileUtil.createTempDirectory("simpleDeployer_TMP", ".test", null);
-        // extDir is the external destination where we will write our source files
-        this.extDir = FileUtil.createTempDirectory("simpleDeployer_DEST", ".test", null);
-        // deployDir is where the metadata will be stored
         this.deployDir = FileUtil.createTempDirectory("simpleDeployer", ".test", null);
+        this.unrelatedFile = writeFile(unrelatedContent, deployDir, unrelatedFileName);
+        this.unrelatedFileHashcode = MessageDigestGenerator.getDigestString(unrelatedContent);
+        this.unrelatedDir = new File(this.deployDir, this.unrelatedDirName);
+        assert this.unrelatedDir.mkdirs() : "Failed to create a test dir";
+        this.unrelatedDirFile = writeFile(unrelatedContent, this.unrelatedDir, unrelatedFileName);
+        this.unrelatedDirFileHashcode = MessageDigestGenerator.getDigestString(unrelatedContent);
         this.originalHashcode = MessageDigestGenerator.getDigestString(originalContent);
-        this.sourceRawFile = writeFile(originalContent, tmpDir, "original-raw-file.txt");
-        this.sourceRawFiles = new HashMap<File, File>(1);
-        this.sourceRawFiles.put(sourceRawFile, new File(extDir, originalFileName)); // note we name it different than the source file
+        this.originalZipFile = createZip(originalContent, tmpDir, "original.zip", originalFileName);
+        this.originalZipFiles = new HashSet<File>(1);
+        this.originalZipFiles.add(originalZipFile);
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
-        DeploymentData dd = new DeploymentData(originalDeployProps, null, sourceRawFiles, deployDir, null, null, null,
-            null, true);
+        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, deployDir, null, null,
+            null, null, false);
         Deployer deployer = new Deployer(dd);
         this.originalFileHashcodeMap = deployer.deploy(null);
-        this.currentFile = sourceRawFiles.get(sourceRawFile);
-        this.currentAbsPath = this.currentFile.getAbsolutePath();
+        this.currentFile = new File(deployDir, originalFileName);
 
         this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment");
         this.diff = new DeployDifferences();
@@ -108,13 +116,14 @@ public class SimpleDeployerRawFileTest {
         assert this.originalHashcode.equals(MessageDigestGenerator.getDigestString(currentFile));
         assert this.metadata.getCurrentDeploymentProperties().equals(originalDeployProps);
         assert this.metadata.getCurrentDeploymentFileHashcodes().equals(originalFileHashcodeMap);
+        assert this.unrelatedFile.exists();
+        assert this.unrelatedDirFile.exists();
     }
 
     @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
         FileUtil.purge(this.tmpDir, true);
         FileUtil.purge(this.deployDir, true);
-        FileUtil.purge(this.extDir, true);
     }
 
     public void testX_X_X() throws Exception {
@@ -139,6 +148,10 @@ public class SimpleDeployerRawFileTest {
 
     public void testX_Y_Z_Restore() throws Exception {
         baseX_Y_Z_Restore(false);
+    }
+
+    public void testX_Y_Z_Clean() throws Exception {
+        baseX_Y_Z_Clean(false);
     }
 
     public void testNoOriginalNoCurrentWithNew() throws Exception {
@@ -185,6 +198,10 @@ public class SimpleDeployerRawFileTest {
         baseX_Y_Z_Restore(true);
     }
 
+    public void testX_Y_Z_Clean_DryRun() throws Exception {
+        baseX_Y_Z_Clean(true);
+    }
+
     public void testNoOriginalNoCurrentWithNew_DryRun() throws Exception {
         baseNoOriginalNoCurrentWithNew(true);
     }
@@ -205,9 +222,61 @@ public class SimpleDeployerRawFileTest {
         baseNoNewWithCurrentDifferentThanOriginal(true);
     }
 
+    public void testWithSubdirectories() throws Exception {
+        // this test is different than all the rest, start with clean tmp/dest dirs with no beforeMethod buildup
+        FileUtil.purge(this.tmpDir, false);
+        FileUtil.purge(this.deployDir, false);
+
+        // fill the deployDir with some unrelated content
+        File unrelated1 = writeFile("unrelated1", this.deployDir, "unrelated.txt");
+        File unrelated2 = writeFile("unrelated2", this.deployDir, "unrelateddir/unrelated.txt");
+        assert unrelated1.exists();
+        assert unrelated2.exists();
+
+        // deploy initial content
+        String origFileName1 = "original-file1.txt";
+        String origFileName2 = "subdir/original-file2.txt";
+        this.originalZipFile = createZip(new String[] { "content1", "content2" }, this.tmpDir, "original.zip",
+            new String[] { origFileName1, origFileName2 });
+        this.originalZipFiles = new HashSet<File>(1);
+        this.originalZipFiles.add(originalZipFile);
+        this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
+        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, deployDir, null, null,
+            null, null, false);
+        Deployer deployer = new Deployer(dd);
+        this.originalFileHashcodeMap = deployer.deploy(null);
+        assert new File(this.deployDir, origFileName1).exists();
+        assert new File(this.deployDir, origFileName2).exists();
+        assert unrelated1.exists() : "the deployment removed unrelated file1";
+        assert unrelated2.getParentFile().isDirectory() : "the deployment removed an unrelated dir";
+        assert unrelated2.exists() : "the deployment removed unrelated file2";
+
+        // deploy new content
+        this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment");
+        this.diff = new DeployDifferences();
+        this.metadata = new DeploymentsMetadata(this.deployDir);
+        String newFileName1 = "new-file1.txt";
+        String newFileName2 = "newsubdir/new-file2.txt";
+        File newZipFile = createZip(new String[] { "newcontent1", "newcontent2" }, this.tmpDir, "new.zip",
+            new String[] { newFileName1, newFileName2 });
+        HashSet<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
+        dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null, false);
+        deployer = new Deployer(dd);
+        FileHashcodeMap newFileHashcodeMap = deployer.deploy(this.diff);
+        assert new File(this.deployDir, newFileName1).exists();
+        assert new File(this.deployDir, newFileName2).exists();
+        assert !new File(this.deployDir, origFileName1).exists();
+        assert !new File(this.deployDir, origFileName2).exists();
+        assert unrelated1.exists() : "the deployment removed unrelated file1";
+        assert unrelated2.getParentFile().isDirectory() : "the deployment removed an unrelated dir";
+        assert unrelated2.exists() : "the deployment removed unrelated file2";
+        assert this.diff.getBackedUpFiles().size() == 0 : this.diff;
+    }
+
     private void baseX_X_X(boolean dryRun) throws Exception {
-        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, deployDir, null, null, null,
+            null, false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -223,6 +292,7 @@ public class SimpleDeployerRawFileTest {
         assert contentHash[0].equals(this.originalContent);
         assert contentHash[1].equals(this.originalHashcode);
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
@@ -245,12 +315,12 @@ public class SimpleDeployerRawFileTest {
     private void baseX_X_Y(boolean dryRun) throws Exception {
         String newContent = "testX_X_Y";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
-        File newRawFile = writeFile(newContent, tmpDir, "new-content.txt");
-        Map<File, File> newRawFiles = new HashMap<File, File>(1);
-        newRawFiles.put(newRawFile, this.currentFile);
+        File newZipFile = createZip(newContent, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -263,7 +333,7 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 1;
-        assert newFileHashcodeMap.get(currentAbsPath).equals(newHashcode);
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcode);
         String[] contentHash = getOriginalFilenameContentHashcode();
         if (dryRun) {
             assert contentHash[0].equals(originalContent);
@@ -273,10 +343,11 @@ public class SimpleDeployerRawFileTest {
             assert contentHash[1].equals(newHashcode);
         }
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().size() == 1 : this.diff;
-        assert this.diff.getChangedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
@@ -296,8 +367,8 @@ public class SimpleDeployerRawFileTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, deployDir, null, null, null,
+            null, false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -319,6 +390,7 @@ public class SimpleDeployerRawFileTest {
         assert contentHash[0].equals(newContent);
         assert contentHash[1].equals(newHashcode);
 
+        assertUnrelatedFiles();
         // note nothing changed - our current file remains as is
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
@@ -341,12 +413,12 @@ public class SimpleDeployerRawFileTest {
         String newContent = "testX_Y_Y";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
-        File newRawFile = writeFile(newContent, tmpDir, "new-content.txt");
-        Map<File, File> newRawFiles = new HashMap<File, File>(1);
-        newRawFiles.put(newRawFile, this.currentFile);
+        File newZipFile = createZip(newContent, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -361,11 +433,12 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 1;
-        assert newFileHashcodeMap.get(currentAbsPath).equals(newHashcode);
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcode);
         String[] contentHash = getOriginalFilenameContentHashcode();
         assert contentHash[0].equals(newContent);
         assert contentHash[1].equals(newHashcode);
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
@@ -390,12 +463,12 @@ public class SimpleDeployerRawFileTest {
 
         String newContentZ = "testX_Y_Z_ZZZ";
         String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
-        File newRawFile = writeFile(newContentZ, tmpDir, "new-content.txt");
-        Map<File, File> newRawFiles = new HashMap<File, File>(1);
-        newRawFiles.put(newRawFile, this.currentFile);
+        File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -411,7 +484,7 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 1;
-        assert newFileHashcodeMap.get(currentAbsPath).equals(newHashcodeZ);
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcodeZ);
         String[] contentHash = getOriginalFilenameContentHashcode();
         if (dryRun) {
             assert contentHash[0].equals(newContentY);
@@ -421,12 +494,13 @@ public class SimpleDeployerRawFileTest {
             assert contentHash[1].equals(newHashcodeZ);
         }
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().size() == 1 : this.diff;
-        assert this.diff.getChangedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
         assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
-        assert this.diff.getBackedUpFiles().containsKey(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
@@ -440,7 +514,7 @@ public class SimpleDeployerRawFileTest {
         }
 
         // verify the backup copy
-        File backupFile = new File(this.diff.getBackedUpFiles().get(this.diff.convertPath(currentAbsPath)));
+        File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
         if (dryRun) {
             assert !backupFile.exists() : "dry run should not create backup";
         } else {
@@ -452,14 +526,13 @@ public class SimpleDeployerRawFileTest {
         String newContent = "new content";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         String newFileName = "new_filename.new";
-        File newRawFile = writeFile(newContent, tmpDir, newFileName);
-        Map<File, File> newRawFiles = new HashMap<File, File>(2);
-        newRawFiles.put(sourceRawFile, this.currentFile);
-        File newDestRawFile = new File(extDir, newFileName);
-        newRawFiles.put(newRawFile, newDestRawFile);
+        File newZipFile = createZip(new String[] { originalContent, newContent }, tmpDir, "new.zip", new String[] {
+            originalFileName, newFileName });
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -472,13 +545,13 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 2;
-        assert newFileHashcodeMap.get(currentAbsPath).equals(originalHashcode);
-        assert newFileHashcodeMap.get(newDestRawFile.getAbsolutePath()).equals(newHashcode);
+        assert newFileHashcodeMap.get(originalFileName).equals(originalHashcode);
+        assert newFileHashcodeMap.get(newFileName).equals(newHashcode);
         String[] contentHash = getOriginalFilenameContentHashcode();
         assert contentHash[0].equals(originalContent);
         assert contentHash[1].equals(originalHashcode);
         try {
-            contentHash = getFilenameContentHashcode(newDestRawFile.getAbsolutePath());
+            contentHash = getFilenameContentHashcode(newFileName);
             assert contentHash[0].equals(newContent);
             assert contentHash[1].equals(newHashcode);
         } catch (FileNotFoundException e) {
@@ -488,8 +561,9 @@ public class SimpleDeployerRawFileTest {
             }
         }
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
+        assert this.diff.getAddedFiles().contains(newFileName) : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
@@ -510,19 +584,18 @@ public class SimpleDeployerRawFileTest {
         String newContent = "new content";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         String newFileName = "new_filename.new";
-        File newRawFile = writeFile(newContent, tmpDir, "new2.txt");
-        Map<File, File> newRawFiles = new HashMap<File, File>(2);
-        newRawFiles.put(sourceRawFile, this.currentFile);
-        File newDestRawFile = new File(extDir, newFileName);
-        newRawFiles.put(newRawFile, newDestRawFile);
+        File newZipFile = createZip(new String[] { originalContent, newContent }, tmpDir, "new.zip", new String[] {
+            originalFileName, newFileName });
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        File inTheWayFile = new File(this.extDir, newFileName);
+        File inTheWayFile = new File(this.deployDir, newFileName);
         String inTheWayContent = "this is in the way";
         String inTheWayHashcode = MessageDigestGenerator.getDigestString(inTheWayContent);
         writeFile(inTheWayContent, inTheWayFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -532,17 +605,21 @@ public class SimpleDeployerRawFileTest {
         }
 
         // The new deployment introduces a new file. However, there is already a current file at the new file location.
-        // That current file is unknown and in the way - it must be backed up and overwritten.
-        // This is considered a "change" not an "addition" since the file system already had the file, it just got changed.
+        // That current file is unknown and in the way.
+        // This normally is considered a "change" not an "addition" since the file system already had the file, it just got changed.
+        // Also, normally, it would be backed up.
+        // However, because we are not managing the root dir, that file "in the way" is simply skipped and not backed up.
+        // But because our new zip has the same file in it, it is considered "new" thus it will be "added" to the
+        // set of managed files.
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 2;
-        assert newFileHashcodeMap.get(currentAbsPath).equals(originalHashcode);
-        assert newFileHashcodeMap.get(newDestRawFile.getAbsolutePath()).equals(newHashcode);
+        assert newFileHashcodeMap.get(originalFileName).equals(originalHashcode);
+        assert newFileHashcodeMap.get(newFileName).equals(newHashcode);
         String[] contentHash = getOriginalFilenameContentHashcode();
         assert contentHash[0].equals(originalContent);
         assert contentHash[1].equals(originalHashcode);
-        contentHash = getFilenameContentHashcode(newDestRawFile.getAbsolutePath());
+        contentHash = getFilenameContentHashcode(newFileName);
         if (dryRun) {
             assert contentHash[0].equals(inTheWayContent);
             assert contentHash[1].equals(inTheWayHashcode);
@@ -551,12 +628,12 @@ public class SimpleDeployerRawFileTest {
             assert contentHash[1].equals(newHashcode);
         }
 
-        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assertUnrelatedFiles();
+        assert this.diff.getAddedFiles().size() == 1 : this.diff;
+        assert this.diff.getAddedFiles().contains(newFileName) : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
-        assert this.diff.getChangedFiles().size() == 1 : this.diff;
-        assert this.diff.getChangedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
-        assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
-        assert this.diff.getBackedUpFiles().containsKey(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
+        assert this.diff.getChangedFiles().size() == 0 : this.diff;
+        assert this.diff.getBackedUpFiles().size() == 0 : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
@@ -568,22 +645,13 @@ public class SimpleDeployerRawFileTest {
             assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
             assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
         }
-
-        // verify the backup copy
-        File backupFile = new File(this.diff.getBackedUpFiles().get(
-            this.diff.convertPath(newDestRawFile.getAbsolutePath())));
-        if (dryRun) {
-            assert !backupFile.exists() : "dry run should not create backup";
-        } else {
-            assert readFile(backupFile).equals(inTheWayContent) : "did not backup the correct file?";
-        }
     }
 
     private void baseNoCurrent(boolean dryRun) throws Exception {
         assert this.currentFile.delete() : "Failed to delete the current file, cannot prepare the test";
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, sourceRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, deployDir, null, null, null,
+            null, false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -607,8 +675,9 @@ public class SimpleDeployerRawFileTest {
             }
         }
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getAddedFiles().contains(this.originalFileName) : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
@@ -629,13 +698,12 @@ public class SimpleDeployerRawFileTest {
         String newContent = "new content";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         String newFileName = "new_filename.new";
-        File newRawFile = writeFile(newContent, tmpDir, "new2.txt");
-        Map<File, File> newRawFiles = new HashMap<File, File>(1);
-        File newDestRawFile = new File(extDir, newFileName);
-        newRawFiles.put(newRawFile, newDestRawFile);
+        File newZipFile = createZip(newContent, tmpDir, "new.zip", newFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -651,14 +719,14 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 1;
-        assert newFileHashcodeMap.get(newDestRawFile.getAbsolutePath()).equals(newHashcode);
+        assert newFileHashcodeMap.get(newFileName).equals(newHashcode);
         if (dryRun) {
             assert this.currentFile.exists() : "this should have been left as-is";
         } else {
             assert !this.currentFile.exists() : "this should have been deleted";
         }
         try {
-            String[] contentHash = getFilenameContentHashcode(newDestRawFile.getAbsolutePath());
+            String[] contentHash = getFilenameContentHashcode(newFileName);
             assert contentHash[0].equals(newContent);
             assert contentHash[1].equals(newHashcode);
         } catch (FileNotFoundException e) {
@@ -668,10 +736,11 @@ public class SimpleDeployerRawFileTest {
             }
         }
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
+        assert this.diff.getAddedFiles().contains(newFileName) : this.diff;
         assert this.diff.getDeletedFiles().size() == 1 : this.diff;
-        assert this.diff.getDeletedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getDeletedFiles().contains(originalFileName) : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
@@ -694,13 +763,12 @@ public class SimpleDeployerRawFileTest {
         String newContent = "new content";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         String newFileName = "new_filename.new";
-        File newRawFile = writeFile(newContent, tmpDir, "new2.zip");
-        Map<File, File> newRawFiles = new HashMap<File, File>(1);
-        File newDestRawFile = new File(extDir, newFileName);
-        newRawFiles.put(newRawFile, newDestRawFile);
+        File newZipFile = createZip(newContent, tmpDir, "new.zip", newFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -717,14 +785,14 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 1;
-        assert newFileHashcodeMap.get(newDestRawFile.getAbsolutePath()).equals(newHashcode);
+        assert newFileHashcodeMap.get(newFileName).equals(newHashcode);
         if (dryRun) {
             assert this.currentFile.exists() : "this should have been left as-is";
         } else {
             assert !this.currentFile.exists() : "this should have been deleted";
         }
         try {
-            String[] contentHash = getFilenameContentHashcode(newDestRawFile.getAbsolutePath());
+            String[] contentHash = getFilenameContentHashcode(newFileName);
             assert contentHash[0].equals(newContent);
             assert contentHash[1].equals(newHashcode);
         } catch (FileNotFoundException e) {
@@ -734,13 +802,14 @@ public class SimpleDeployerRawFileTest {
             }
         }
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().size() == 1 : this.diff;
-        assert this.diff.getAddedFiles().contains(this.diff.convertPath(newDestRawFile.getAbsolutePath())) : this.diff;
+        assert this.diff.getAddedFiles().contains(newFileName) : this.diff;
         assert this.diff.getDeletedFiles().size() == 1 : this.diff;
-        assert this.diff.getDeletedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getDeletedFiles().contains(originalFileName) : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
         assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
-        assert this.diff.getBackedUpFiles().containsKey(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
@@ -754,7 +823,7 @@ public class SimpleDeployerRawFileTest {
         }
 
         // verify the backup copy
-        File backupFile = new File(this.diff.getBackedUpFiles().get(this.diff.convertPath(currentAbsPath)));
+        File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
         if (dryRun) {
             assert !backupFile.exists() : "dry run should not create backup";
         } else {
@@ -769,12 +838,12 @@ public class SimpleDeployerRawFileTest {
 
         String newContentZ = "testX_Y_Z_ZZZ";
         String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
-        File newRawFile = writeFile(newContentZ, tmpDir, "new-content.txt");
-        Map<File, File> newRawFiles = new HashMap<File, File>(1);
-        newRawFiles.put(newRawFile, this.currentFile);
+        File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, null, newRawFiles, deployDir, null, null, null, null,
-            true);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
+            false);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         newFileHashcodeMap = deployer.deploy(this.diff); // no dry run - we need to do this to force backup file creation
@@ -786,17 +855,18 @@ public class SimpleDeployerRawFileTest {
 
         assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         assert newFileHashcodeMap.size() == 1;
-        assert newFileHashcodeMap.get(currentAbsPath).equals(newHashcodeZ);
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcodeZ);
         String[] contentHash = getOriginalFilenameContentHashcode();
         assert contentHash[0].equals(newContentZ);
         assert contentHash[1].equals(newHashcodeZ);
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().size() == 1 : this.diff;
-        assert this.diff.getChangedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
         assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
-        assert this.diff.getBackedUpFiles().containsKey(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
         assert this.diff.getRestoredFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
@@ -806,31 +876,32 @@ public class SimpleDeployerRawFileTest {
         assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
 
         // verify the backup copy
-        File backupFile = new File(this.diff.getBackedUpFiles().get(this.diff.convertPath(currentAbsPath)));
+        File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
         assert readFile(backupFile).equals(newContentY) : "did not backup the correct file?";
 
         // all we did so far was upgrade to v2 and created a backup file, now we need to redeploy v1 and see the backup restored
         DeploymentProperties v1Duplicate = new DeploymentProperties();
         v1Duplicate.putAll(this.originalDeployProps);
         v1Duplicate.setDeploymentId(3); // this is the same as v1, but it needs a unique deployment ID
-        dd = new DeploymentData(v1Duplicate, null, sourceRawFiles, deployDir, null, null, null, null, true);
+        dd = new DeploymentData(v1Duplicate, originalZipFiles, null, deployDir, null, null, null, null, false);
         deployer = new Deployer(dd);
         this.diff = new DeployDifferences();
         FileHashcodeMap restoreFileHashcodeMap;
         restoreFileHashcodeMap = deployer.redeployAndRestoreBackupFiles(this.diff, false, dryRun);
 
+        assertUnrelatedFiles();
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().size() == 1 : this.diff;
-        assert this.diff.getChangedFiles().contains(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
         assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getRestoredFiles().size() == 1 : this.diff;
-        assert this.diff.getRestoredFiles().containsKey(this.diff.convertPath(currentAbsPath)) : this.diff;
+        assert this.diff.getRestoredFiles().containsKey(originalFileName) : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
 
-        assert restoreFileHashcodeMap.get(this.diff.convertPath(currentAbsPath)).equals(newHashcodeY) : "hashcode doesn't reflect restored backup";
+        assert restoreFileHashcodeMap.get(originalFileName).equals(newHashcodeY) : "hashcode doesn't reflect restored backup";
 
         if (dryRun) {
             // still our v2
@@ -844,16 +915,94 @@ public class SimpleDeployerRawFileTest {
         }
     }
 
+    private void baseX_Y_Z_Clean(boolean dryRun) throws Exception {
+        String newContentY = "testX_Y_Z_YYY";
+        writeFile(newContentY, this.currentFile);
+        String newHashcodeY = MessageDigestGenerator.getDigestString(newContentY);
+
+        String newContentZ = "testX_Y_Z_ZZZ";
+        String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
+        File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
+        Set<File> newZipFiles = new HashSet<File>(1);
+        newZipFiles.add(newZipFile);
+
+        File ignoredSubdir = new File(this.deployDir, "ignoreSubdir");
+        File ignoredFile = new File(ignoredSubdir, "ignore-me.txt");
+        ignoredSubdir.mkdirs();
+        writeFile("ignored content", ignoredFile);
+        Pattern iRegex = Pattern.compile(".*ignoreSubdir.*"); // this matches the subdirectory name, thus everything under it is ignored
+        assert ignoredFile.exists() : "for some reason we couldn't create our test file; cannot know if clean worked";
+
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, iRegex,
+            false);
+        Deployer deployer = new Deployer(dd);
+        FileHashcodeMap newFileHashcodeMap;
+        newFileHashcodeMap = deployer.deploy(this.diff, true, dryRun); // note: clean is true
+
+        // The new file changed the original, and our current file has been manually updated
+        // but that current file's change does not match the new file. Therefore, the current file
+        // is out of date. The safest thing to do is backup the current and copy the new file
+        // to become the current file.
+
+        assert !newFileHashcodeMap.equals(this.originalFileHashcodeMap);
+        assert newFileHashcodeMap.size() == 1;
+        assert newFileHashcodeMap.get(originalFileName).equals(newHashcodeZ);
+        String[] contentHash = getOriginalFilenameContentHashcode();
+        if (dryRun) {
+            assert contentHash[0].equals(newContentY);
+            assert contentHash[1].equals(newHashcodeY);
+        } else {
+            assert contentHash[0].equals(newContentZ);
+            assert contentHash[1].equals(newHashcodeZ);
+        }
+
+        assertUnrelatedFiles();
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().isEmpty() : this.diff;
+        assert this.diff.getChangedFiles().size() == 1 : this.diff;
+        assert this.diff.getChangedFiles().contains(originalFileName) : this.diff;
+        assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
+        // because we are not managing the root dir, that ignore dir found at the root level is skipped
+        // so it never gets to the point where it matches the ignore regex therefore it doesn't count as ignored.
+        assert this.diff.getIgnoredFiles().size() == 0 : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.wasCleaned() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+
+        if (dryRun) {
+            assert this.metadata.getCurrentDeploymentProperties().equals(originalDeployProps);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(originalFileHashcodeMap);
+        } else {
+            assert this.metadata.getCurrentDeploymentProperties().equals(newDeployProps);
+            assert this.metadata.getCurrentDeploymentFileHashcodes().equals(newFileHashcodeMap);
+        }
+
+        // verify the backup copy
+        File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
+        if (dryRun) {
+            assert !backupFile.exists() : "dry run should not create backup";
+        } else {
+            assert readFile(backupFile).equals(newContentY) : "did not backup the correct file?";
+        }
+
+        // even though we cleaned, the ignored subdir and its file should have been skipped due to
+        // the fact were told the deployer not to manage the top root dir. Therefore, they should still exist.
+        if (dryRun) {
+            assert ignoredSubdir.isDirectory() : "dry run should not have really cleaned";
+            assert ignoredFile.exists() : "dry run should not have really cleaned";
+        } else {
+            assert ignoredSubdir.isDirectory() : "should not have really cleaned";
+            assert ignoredFile.exists() : "should not have really cleaned";
+        }
+    }
+
     private String[] getOriginalFilenameContentHashcode() throws Exception {
-        return getFilenameContentHashcode(this.currentAbsPath);
+        return getFilenameContentHashcode(this.originalFileName);
     }
 
     private String[] getFilenameContentHashcode(String filename) throws Exception {
-        File file = new File(filename);
-        if (!file.isAbsolute()) {
-            throw new Exception("This test requires full, absolute paths passes in");
-        }
-        String content = readFile(file);
+        String content = readFile(new File(this.deployDir, filename));
         String hashcode = MessageDigestGenerator.getDigestString(content);
         String[] contentHash = new String[] { content, hashcode };
         return contentHash;
@@ -867,8 +1016,8 @@ public class SimpleDeployerRawFileTest {
         FileOutputStream out = null;
 
         try {
-            out = new FileOutputStream(fileToOverwrite);
             fileToOverwrite.getParentFile().mkdirs();
+            out = new FileOutputStream(fileToOverwrite);
             out.write(content.getBytes());
             return fileToOverwrite;
         } finally {
@@ -881,5 +1030,72 @@ public class SimpleDeployerRawFileTest {
     private File writeFile(String content, File destDir, String fileName) throws Exception {
         File destFile = new File(destDir, fileName);
         return writeFile(content, destFile);
+    }
+
+    private File createZip(String content, File destDir, String zipName, String entryName) throws Exception {
+        FileOutputStream stream = null;
+        ZipOutputStream out = null;
+
+        try {
+            destDir.mkdirs();
+            File zipFile = new File(destDir, zipName);
+            stream = new FileOutputStream(zipFile);
+            out = new ZipOutputStream(stream);
+
+            ZipEntry zipAdd = new ZipEntry(entryName);
+            zipAdd.setTime(System.currentTimeMillis());
+            out.putNextEntry(zipAdd);
+            out.write(content.getBytes());
+            return zipFile;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            if (stream != null) {
+                stream.close();
+            }
+        }
+    }
+
+    private File createZip(String[] content, File destDir, String zipName, String[] entryName) throws Exception {
+        FileOutputStream stream = null;
+        ZipOutputStream out = null;
+
+        try {
+            destDir.mkdirs();
+            File zipFile = new File(destDir, zipName);
+            stream = new FileOutputStream(zipFile);
+            out = new ZipOutputStream(stream);
+
+            assert content.length == entryName.length;
+            for (int i = 0; i < content.length; i++) {
+                ZipEntry zipAdd = new ZipEntry(entryName[i]);
+                zipAdd.setTime(System.currentTimeMillis());
+                out.putNextEntry(zipAdd);
+                out.write(content[i].getBytes());
+            }
+            return zipFile;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            if (stream != null) {
+                stream.close();
+            }
+        }
+    }
+
+    private void assertUnrelatedFiles() throws Exception {
+        // make sure we didn't delete or alter the file or dir that are unrelated to the deployed content
+        // the dir and its file...
+        assert this.unrelatedDir.isDirectory() : "unrelated directory was deleted: " + this.unrelatedDir;
+        assert this.unrelatedDirFile.exists() : "unrelated dir file was deleted: " + this.unrelatedDirFile;
+        String hash = MessageDigestGenerator.getDigestString(this.unrelatedDirFile);
+        assert this.unrelatedDirFileHashcode.equals(hash) : "unrelated dir file was changed: " + this.unrelatedDirFile;
+
+        // the file located directly in the deployDir...
+        assert this.unrelatedFile.exists() : "unrelated file was deleted: " + this.unrelatedFile;
+        hash = MessageDigestGenerator.getDigestString(this.unrelatedFile);
+        assert this.unrelatedFileHashcode.equals(hash) : "unrelated file was changed: " + this.unrelatedFile;
     }
 }

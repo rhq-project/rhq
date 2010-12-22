@@ -47,6 +47,7 @@ public class DeploymentData {
     private final Set<File> rawFilesToRealize;
     private final TemplateEngine templateEngine;
     private final Pattern ignoreRegex;
+    private final boolean manageRootDir;
 
     /**
      * Constructors that prepares this object with the data that is necessary in order to deploy archive/file content
@@ -69,10 +70,17 @@ public class DeploymentData {
      * @param templateEngine if one or more filesToRealize are specified, this template engine is used to determine
      *                       the values that should replace all replacement variables found in those files
      * @param ignoreRegex the files/directories to ignore when updating an existing deployment
+     * @param manageRootDir if false, the top directory where the files will be deployed (i.e. the destinationDir)
+     *                      will be left alone. That is, if files already exist there, they will not be removed or
+     *                      otherwise merged with this deployment's root files. If true, this top root directory
+     *                      will be managed just as any subdirectory within the deployment will be managed.
+     *                      The purpose of this is to be able to write files to an existing directory that has other
+     *                      unrelated files in it that need to remain intact. e.g. the deploy/ directory of JBossAS. 
+     *                      Note: regardless of this setting, all subdirectories under the root dir will be managed.
      */
     public DeploymentData(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles,
         File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
-        TemplateEngine templateEngine, Pattern ignoreRegex) {
+        TemplateEngine templateEngine, Pattern ignoreRegex, boolean manageRootDir) {
 
         if (deploymentProps == null) {
             throw new IllegalArgumentException("deploymentProps == null");
@@ -96,6 +104,7 @@ public class DeploymentData {
         this.rawFiles = rawFiles;
         this.destinationDir = destinationDir;
         this.ignoreRegex = ignoreRegex;
+        this.manageRootDir = manageRootDir;
 
         // if there is nothing to realize or we have no template engine to obtain replacement values, then we null things out
         if (templateEngine == null || (zipEntriesToRealizeRegex == null && rawFilesToRealize == null)) {
@@ -143,4 +152,7 @@ public class DeploymentData {
         return ignoreRegex;
     }
 
+    public boolean isManageRootDir() {
+        return manageRootDir;
+    }
 }

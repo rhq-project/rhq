@@ -17,9 +17,19 @@
  */
 package org.rhq.bundle.ant.type;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
+
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -30,15 +40,6 @@ import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentData;
 import org.rhq.core.util.updater.DeploymentProperties;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
 /**
  * An Ant task for deploying a bundle or previewing the deployment.
  *
@@ -46,13 +47,13 @@ import java.util.regex.Pattern;
  */
 public class DeploymentUnitType extends AbstractBundleType {
     private String name;
+    private String manageRootDir = Boolean.TRUE.toString();
     private Map<File, File> files = new LinkedHashMap<File, File>();
     private Set<File> rawFilesToReplace = new LinkedHashSet<File>();
     private Set<File> archives = new LinkedHashSet<File>();
     private Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
     private SystemServiceType systemService;
     private Pattern ignorePattern;
-    private boolean preview;
     private String preinstallTarget;
     private String postinstallTarget;
 
@@ -78,7 +79,8 @@ public class DeploymentUnitType extends AbstractBundleType {
         TemplateEngine templateEngine = createTemplateEngine();
 
         if (this.files.isEmpty() && this.archives.isEmpty()) {
-            throw new BuildException("You must specify at least one file to deploy via nested rhq:file, rhq:archive, and/or rhq:system-service elements.");
+            throw new BuildException(
+                "You must specify at least one file to deploy via nested rhq:file, rhq:archive, and/or rhq:system-service elements.");
         }
         if (!this.files.isEmpty()) {
             log("Deploying files " + this.files + "...", Project.MSG_VERBOSE);
@@ -87,8 +89,17 @@ public class DeploymentUnitType extends AbstractBundleType {
             log("Deploying archives " + this.archives + "...", Project.MSG_VERBOSE);
         }
 
+        boolean willManageRootDir = Boolean.parseBoolean(this.manageRootDir);
+        if (willManageRootDir) {
+            log("Managing the root directory of this deployment unit - unrelated files found will be removed",
+                Project.MSG_VERBOSE);
+        } else {
+            log("Not managing the root directory of this deployment unit - unrelated files will remain intact",
+                Project.MSG_VERBOSE);
+        }
+
         DeploymentData deploymentData = new DeploymentData(deploymentProps, this.archives, this.files, deployDir,
-            this.archiveReplacePatterns, this.rawFilesToReplace, templateEngine, this.ignorePattern);
+            this.archiveReplacePatterns, this.rawFilesToReplace, templateEngine, this.ignorePattern, willManageRootDir);
         Deployer deployer = new Deployer(deploymentData);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();
@@ -98,7 +109,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             } else {
                 deployer.deploy(diffs, clean, dryRun);
             }
-            getProject().log("Results:\n" + diffs + "\n");            
+            getProject().log("Results:\n" + diffs + "\n");
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "
                 + getProject().getBundleVersion() + ": " + e, e);
@@ -111,7 +122,8 @@ public class DeploymentUnitType extends AbstractBundleType {
         if (this.postinstallTarget != null) {
             Target target = (Target) getProject().getTargets().get(this.postinstallTarget);
             if (target == null) {
-                throw new BuildException("Specified postinstall target (" + this.postinstallTarget + ") does not exist.");
+                throw new BuildException("Specified postinstall target (" + this.postinstallTarget
+                    + ") does not exist.");
             }
             target.performTasks();
         }
@@ -140,7 +152,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             this.systemService.uninstall();
         }
     }
-        
+
     public String getName() {
         return name;
     }
@@ -149,20 +161,24 @@ public class DeploymentUnitType extends AbstractBundleType {
         this.name = name;
     }
 
+    public String getManageRootDir() {
+        return manageRootDir;
+    }
+
+    public void setManageRootDir(String booleanString) {
+        if (!Boolean.TRUE.toString().equalsIgnoreCase(booleanString)
+            && !Boolean.FALSE.toString().equalsIgnoreCase(booleanString)) {
+            throw new BuildException("manageRootDir attribute must be 'true' or 'false': " + booleanString);
+        }
+        this.manageRootDir = booleanString;
+    }
+
     public Map<File, File> getFiles() {
         return files;
     }
 
     public Set<File> getArchives() {
         return archives;
-    }
-
-    public boolean isPreview() {
-        return this.preview;
-    }
-
-    public void setPreview(boolean preview) {
-        this.preview = preview;
     }
 
     public String getPreinstallTarget() {
@@ -183,7 +199,8 @@ public class DeploymentUnitType extends AbstractBundleType {
 
     public void addConfigured(SystemServiceType systemService) {
         if (this.systemService != null) {
-            throw new IllegalStateException("A rhq:deploymentUnit element can only have one rhq:system-service child element.");
+            throw new IllegalStateException(
+                "A rhq:deployment-unit element can only have one rhq:system-service child element.");
         }
         this.systemService = systemService;
         this.systemService.validate();
@@ -230,7 +247,7 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
         // And add the special rhq.deploy.dir prop.
         templateEngine.getTokens().put(DeployPropertyNames.DEPLOY_DIR,
-                getProject().getProperty(DeployPropertyNames.DEPLOY_DIR));
+            getProject().getProperty(DeployPropertyNames.DEPLOY_DIR));
         return templateEngine;
     }
 }

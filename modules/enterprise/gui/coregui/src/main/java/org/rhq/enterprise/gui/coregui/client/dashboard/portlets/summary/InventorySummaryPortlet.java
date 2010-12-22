@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -37,11 +38,11 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -52,8 +53,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     private LocatableDynamicForm form;
     public static final String KEY = MSG.common_title_summary_counts();
-    private static Canvas componentToReload;
-    private static TableOrCanvasAutoRefresh defaultReloader;
+    private Timer defaultReloader;
 
     public InventorySummaryPortlet(String locatorId) {
         super(locatorId);
@@ -171,14 +171,19 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     @Override
     public void startRefreshCycle() {
-        //lazy load
-        if (componentToReload == null) {
-            componentToReload = this;
-        }
-        //cancel the previous timer run
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
         if (defaultReloader != null) {
-            defaultReloader.stopTimer();
+            defaultReloader.cancel();
         }
-        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
+        defaultReloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                defaultReloader.schedule(retrievedRefreshInterval);
+            }
+        };
+        defaultReloader.schedule(retrievedRefreshInterval);
     }
 }

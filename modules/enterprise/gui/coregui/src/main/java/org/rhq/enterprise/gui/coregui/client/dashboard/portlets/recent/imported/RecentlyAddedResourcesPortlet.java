@@ -23,6 +23,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -36,13 +37,13 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
@@ -59,8 +60,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
     private static final String RECENTLY_ADDED_SHOW_HRS = "recently-added-time-range";
-    private static Canvas componentToReload;
-    private static TableOrCanvasAutoRefresh defaultReloader;
+    private Timer defaultReloader;
 
     public RecentlyAddedResourcesPortlet(String locatorId) {
         super(locatorId);
@@ -230,14 +230,19 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     @Override
     public void startRefreshCycle() {
-        //lazy load
-        if (componentToReload == null) {
-            componentToReload = this;
-        }
-        //cancel the previous timer run
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
         if (defaultReloader != null) {
-            defaultReloader.stopTimer();
+            defaultReloader.cancel();
         }
-        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
+        defaultReloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                defaultReloader.schedule(retrievedRefreshInterval);
+            }
+        };
+        defaultReloader.schedule(retrievedRefreshInterval);
     }
 }

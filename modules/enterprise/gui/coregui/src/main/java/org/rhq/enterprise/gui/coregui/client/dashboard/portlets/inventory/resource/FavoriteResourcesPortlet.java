@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resou
 
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,7 +39,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.TableOrCanvasAutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 
 /**
@@ -52,9 +52,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     private DashboardPortlet storedPortlet;
     private PortletWindow portletWindow;
-
-    private static Canvas componentToReload;
-    private static TableOrCanvasAutoRefresh defaultReloader;
+    private Timer defaultReloader;
 
     public FavoriteResourcesPortlet(String locatorId) {
         super(locatorId);
@@ -117,14 +115,19 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     @Override
     public void startRefreshCycle() {
-        //lazy load
-        if (componentToReload == null) {
-            componentToReload = this;
-        }
-        //cancel the previous timer run
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
         if (defaultReloader != null) {
-            defaultReloader.stopTimer();
+            defaultReloader.cancel();
         }
-        defaultReloader = new TableOrCanvasAutoRefresh(componentToReload);
+        defaultReloader = new Timer() {
+            public void run() {
+                redraw();
+                //launch again until portlet reference and child references GC.
+                defaultReloader.schedule(retrievedRefreshInterval);
+            }
+        };
+        defaultReloader.schedule(retrievedRefreshInterval);
     }
 }

@@ -33,17 +33,20 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -63,6 +66,7 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
     private LocatableHLayout operationParametersConfigurationHolder;
+    private JobTriggerEditor triggerEditor;
 
     public ResourceOperationScheduleDetailsView(String locatorId, ResourceComposite resourceComposite, int scheduleId) {
         super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite), scheduleId, "Scheduled Operation", null);
@@ -117,8 +121,8 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
         contentPane.addMember(this.operationParametersConfigurationHolder);
 
         if (isNewRecord()) {
-            JobTriggerEditor triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
-            contentPane.addMember(triggerEditor);
+            this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
+            contentPane.addMember(this.triggerEditor);
         }
         
         EnhancedDynamicForm notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
@@ -142,6 +146,21 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     @Override
     protected String getTitleFieldName() {
         return ResourceOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
+    }
+
+    @Override
+    protected void save() {
+        try {
+            JobTrigger trigger = this.triggerEditor.getJobTrigger();
+            System.out.println(trigger);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            CoreGUI.getMessageCenter().notify(new Message(e.getMessage(), Message.Severity.Warning));
+            return;
+        }
+
+        super.save();
     }
 
     private void refreshOperationDescriptionItem() {

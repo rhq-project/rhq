@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -87,7 +86,6 @@ import com.smartgwt.client.widgets.grid.events.CellSavedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -123,7 +121,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -166,7 +163,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     private int resourceId;
     private int resourceTypeId;
     private ConfigType configType;
-    private IButton saveButton;
 
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
@@ -361,61 +357,50 @@ public class ConfigurationEditor extends LocatableVLayout {
                 sectionStack.addSection(buildGroupSection(layout.extendLocatorId(definition.getName()), definition));
             }
 
-            toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
-            toolStrip.setBackgroundImage(null);
-            toolStrip.setWidth100();
-
-            toolStrip.addMember(new LayoutSpacer());
-            saveButton = new LocatableIButton(toolStrip.extendLocatorId("Save"), MSG.common_button_save());
-            saveButton.setAlign(Alignment.CENTER);
-            saveButton.setDisabled(true);
-            //toolStrip.addMember(saveButton);
-
-            IButton resetButton = new LocatableIButton(toolStrip.extendLocatorId("Reset"), MSG.common_button_reset());
-            resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    reload();
-                }
-            });
-            //toolStrip.addMember(resetButton);
-
-            toolStrip.addMember(new LayoutSpacer());
-
-            Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
-            for (SectionStackSection section : sectionStack.getSections()) {
-                MenuItem item = new MenuItem(section.getTitle());
-                item.addClickHandler(new ClickHandler() {
-                    public void onClick(MenuItemClickEvent event) {
-                        int x = event.getMenu().getItemNum(event.getItem());
-                        sectionStack.expandSection(x);
-                        sectionStack.showSection(x);
-                    }
-                });
-                menu.addItem(item);
-            }
-            menu.addItem(new MenuItemSeparator());
-
-            MenuItem hideAllItem = new MenuItem(MSG.view_configEdit_hideAll());
-            hideAllItem.addClickHandler(new ClickHandler() {
-                public void onClick(MenuItemClickEvent event) {
-                    for (int i = 0; i < sectionStack.getSections().length; i++) {
-                        sectionStack.collapseSection(i);
-                    }
-                }
-            });
-            menu.addItem(hideAllItem);
-
-            // TODO GH: Save button as saveListener() or remove the buttons from this form and have
-            //          the container provide them?
-
-            toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
-                .view_configEdit_jumpToSection(), menu));
-
+            this.toolStrip = buildToolStrip(layout, sectionStack);
             layout.addMember(toolStrip);
             layout.addMember(sectionStack);
         }
 
         return layout;
+    }
+
+    private LocatableToolStrip buildToolStrip(LocatableVLayout layout, final SectionStack sectionStack) {
+        LocatableToolStrip toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
+        toolStrip.setBackgroundImage(null);
+        toolStrip.setWidth100();
+
+        Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
+        for (SectionStackSection section : sectionStack.getSections()) {
+            MenuItem item = new MenuItem(section.getTitle());
+            item.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    int x = event.getMenu().getItemNum(event.getItem());
+                    sectionStack.expandSection(x);
+                    sectionStack.showSection(x);
+                }
+            });
+            menu.addItem(item);
+        }
+        menu.addItem(new MenuItemSeparator());
+
+        MenuItem hideAllItem = new MenuItem(MSG.view_configEdit_hideAll());
+        hideAllItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                for (int i = 0; i < sectionStack.getSections().length; i++) {
+                    sectionStack.collapseSection(i);
+                }
+            }
+        });
+        menu.addItem(hideAllItem);
+
+        // TODO GH: Save button as saveListener() or remove the buttons from this form and have
+        //          the container provide them?
+
+        toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
+            .view_configEdit_jumpToSection(), menu));
+
+        return toolStrip;
     }
 
     public SectionStackSection buildGroupSection(String locatorId, PropertyGroupDefinition group) {
@@ -451,17 +436,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         form.setValuesManager(valuesManager);
         form.setValidateOnExit(true);
         form.setHiliteRequiredFields(true);
-
-        form.addItemChangedHandler(new ItemChangedHandler() {
-            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                if (!changed) {
-                    changed = true;
-                    CanvasUtility.blink(saveButton);
-                    saveButton.setDisabled(false);
-                }
-            }
-        });
-
         form.setNumCols(4);
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
@@ -1123,7 +1097,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
                     okButton.disable();
-                    //        saveButton.setID("config_structured_button_save");
                     okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                         public void onClick(ClickEvent clickEvent) {
                             propertyList.add(newMemberPropertySimple);
@@ -1469,7 +1442,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
         okButton.disable();
-        //        saveButton.setID("config_structured_button_save");
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (newRow) {

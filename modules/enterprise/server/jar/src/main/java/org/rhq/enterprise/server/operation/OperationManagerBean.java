@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -161,6 +162,18 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
             return scheduleResourceOperation(subject, resourceId, operationName, parameters, trigger, notes);
         } catch (Exception e) {
+            throw new ScheduleException(e);
+        }
+    }
+
+    public ResourceOperationSchedule scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule)
+        throws ScheduleException {
+        JobTrigger jobTrigger = schedule.getJobTrigger();
+        Trigger trigger = convertToTrigger(jobTrigger);
+        try {
+            return scheduleResourceOperation(subject, schedule.getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+        }
+        catch (SchedulerException e) {
             throw new ScheduleException(e);
         }
     }
@@ -1941,6 +1954,38 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             throw new IllegalStateException("Unsupported Quartz trigger type: " + trigger.getClass().getName());
         }
         return schedule;
+    }
+
+    private static Trigger convertToTrigger(JobTrigger jobTrigger) {
+        Trigger trigger;
+        if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.CRON_EXPRESSION) {
+            CronTrigger cronTrigger = new CronTrigger();
+            try {
+                cronTrigger.setCronExpression(jobTrigger.getCronExpression());
+            }
+            catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            trigger = cronTrigger;
+        } else {
+            SimpleTrigger simpleTrigger = new SimpleTrigger();
+            Date startTime = null;
+            switch (jobTrigger.getStartType()) {
+                case NOW:
+                    startTime = new Date();
+                    break;
+                case DATETIME:
+                    startTime = jobTrigger.getStartDate();
+                    break;
+            }
+            simpleTrigger.setStartTime(startTime);
+
+            // TODO (ips): Finish implementing this.
+
+            trigger= simpleTrigger;
+        }
+
+        return trigger;
     }
 
 }

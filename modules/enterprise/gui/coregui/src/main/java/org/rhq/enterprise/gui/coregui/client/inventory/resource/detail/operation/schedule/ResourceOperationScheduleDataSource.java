@@ -67,4 +67,8 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
         });
     }
 
+    @Override
+    protected void executeAdd(Record recordToAdd, DSRequest request, DSResponse response) {
+        operationService.scheduleResourceOperation();
+    }
 }

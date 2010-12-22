@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
@@ -424,13 +425,15 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         if (defaultReloader != null) {
             defaultReloader.cancel();
         }
-        defaultReloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                defaultReloader.schedule(retrievedRefreshInterval);
-            }
-        };
-        defaultReloader.schedule(retrievedRefreshInterval);
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
@@ -197,13 +198,15 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         if (defaultReloader != null) {
             defaultReloader.cancel();
         }
-        defaultReloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                defaultReloader.schedule(retrievedRefreshInterval);
-            }
-        };
-        defaultReloader.schedule(retrievedRefreshInterval);
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

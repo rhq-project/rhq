@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
@@ -236,13 +237,15 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         if (defaultReloader != null) {
             defaultReloader.cancel();
         }
-        defaultReloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                defaultReloader.schedule(retrievedRefreshInterval);
-            }
-        };
-        defaultReloader.schedule(retrievedRefreshInterval);
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

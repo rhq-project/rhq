@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -177,13 +178,15 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
         if (defaultReloader != null) {
             defaultReloader.cancel();
         }
-        defaultReloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                defaultReloader.schedule(retrievedRefreshInterval);
-            }
-        };
-        defaultReloader.schedule(retrievedRefreshInterval);
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /**
  * @author Greg Hinkle
@@ -121,13 +122,15 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
         if (defaultReloader != null) {
             defaultReloader.cancel();
         }
-        defaultReloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                defaultReloader.schedule(retrievedRefreshInterval);
-            }
-        };
-        defaultReloader.schedule(retrievedRefreshInterval);
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

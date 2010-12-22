@@ -190,7 +190,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         }
 
-        updateFirstTabCanCloseState("update dashboards");
+        //updateFirstTabCanCloseState("update dashboards");
 
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
@@ -203,9 +203,12 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                                 dashboardsByName.remove(tabCloseClickEvent.getTab().getTitle());
                                 tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
+                                //                                if ( 0 == tabSet.getTabs().length) {
+                                //                                    
+                                //                                }
                                 History.newItem(VIEW_ID.getName());
 
-                                updateFirstTabCanCloseState("close handler");
+                                //updateFirstTabCanCloseState("close handler");
                             }
                         }
                     });
@@ -223,44 +226,40 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-        DashboardPortlet summary = new DashboardPortlet(MSG.view_dashboardsManager_inventory_title(),
-            InventorySummaryPortlet.KEY, 230);
+        DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 230);
         dashboard.addPortlet(summary, 0, 0);
 
-        DashboardPortlet tagCloud = new DashboardPortlet(MSG.view_dashboardsManager_tagcloud_title(),
-            TagCloudPortlet.KEY, 200);
+        DashboardPortlet tagCloud = new DashboardPortlet(TagCloudPortlet.NAME, TagCloudPortlet.KEY, 200);
         dashboard.addPortlet(tagCloud, 0, 1);
 
         // Experimental
         //        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
         //        col2.add(platformSummary);
 
-        DashboardPortlet welcome = new DashboardPortlet(MSG.view_dashboardsManager_message_title(), MessagePortlet.KEY,
-            180);
+        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 180);
         welcome.getConfiguration().put(
             new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
         dashboard.addPortlet(welcome, 1, 0);
 
-        DashboardPortlet news = new DashboardPortlet(MSG.view_dashboardsManager_mashup_title(), MashupPortlet.KEY, 320);
+        DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 320);
         news.getConfiguration().put(
             new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
         dashboard.addPortlet(news, 1, 1);
         //
-        DashboardPortlet discoveryQueue = new DashboardPortlet(MSG.view_portlet_autodiscovery_title(),
-            AutodiscoveryPortlet.KEY, 250);
+        DashboardPortlet discoveryQueue = new DashboardPortlet(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY, 250);
         dashboard.addPortlet(discoveryQueue, 1, 2);
 
-        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.KEY, RecentAlertsPortlet.KEY, 250);
+        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
 
-        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(),
+        DashboardPortlet recentlyAdded = new DashboardPortlet(RecentlyAddedResourcesPortlet.NAME,
             RecentlyAddedResourcesPortlet.KEY, 250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 
-        DashboardPortlet operations = new DashboardPortlet(MSG.common_title_operations(), OperationsPortlet.KEY, 500);
+        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 500);
         dashboard.addPortlet(operations, 1, 5);
 
-        DashboardPortlet problemResources = new DashboardPortlet(MSG.view_portlet_problem_resources_title(),
+        DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
             ProblemResourcesPortlet.KEY, 250);
         //initialize config for the problemResources portlet.
         problemResources.getConfiguration()
@@ -313,7 +312,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 editMode = true;
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
 
-                updateFirstTabCanCloseState("store dashboard");
+                //updateFirstTabCanCloseState("store dashboard");
             }
         });
     }
@@ -352,7 +351,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
         }
 
-        updateFirstTabCanCloseState("render view");
+        //updateFirstTabCanCloseState("render view");
 
         tabSet.selectTab(selectedTab);
     }
@@ -367,11 +366,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     // must be called when the tabset is first loaded (onInit), on each subsequent load, and whenever it changes
-    public void updateFirstTabCanCloseState(String comingFrom) {
-        // do not allow closing if there is only one dashboard tab remaining
-        boolean canClose = tabSet.getTabs().length > 1;
-        NamedTab firstTab = tabSet.getTabs()[0];
-        firstTab.setCanClose(canClose);
-    }
+    //public void updateFirstTabCanCloseState(String comingFrom) {
+    // do not allow closing if there is only one dashboard tab remaining
+    //    boolean canClose = tabSet.getTabs().length > 1;
+    //    NamedTab firstTab = tabSet.getTabs()[0];
+    //    firstTab.setCanClose(canClose);
+    //}
 
 }

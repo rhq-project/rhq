@@ -53,14 +53,17 @@ public class DashboardPortlet implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    // This is the only unique key. dashboard+portletKey+name does not have to be unique
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_PORTLET_ID_SEQ")
     @Id
     private int id;
 
+    // A non-displayed, persisted identifier for the portlet.
     @Column(name = "PORTLET_KEY")
     private String portletKey;
 
+    // A displayed, persisted, editable name for the portlet.
     @Column(name = "NAME")
     private String name;
 
@@ -166,5 +169,9 @@ public class DashboardPortlet implements Serializable {
         newPortlet.height = this.height;
         newPortlet.configuration = this.configuration != null ? this.configuration.deepCopy(keepIds) : null;
         return newPortlet;
+    }
+
+    public String toString() {
+        return "DashboardPortlet[id=" + id + ",key=" + portletKey + ",name=" + name + "]";
     }
 }

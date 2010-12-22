@@ -59,14 +59,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class OperationsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Operations";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_operations();
+
     //unique field/form identifiers
     public static final String OPERATIONS_RANGE_COMPLETED_ENABLED = "operations-completed-enabled";
     public static final String OPERATIONS_RANGE_SCHEDULED_ENABLED = "operations-scheduled-enabled";
     public static final String OPERATIONS_RANGE_COMPLETED = "operations-range-completed";
     public static final String OPERATIONS_RANGE_SCHEDULED = "operations-range-scheduled";
-    //portlet key
-    public static final String KEY = MSG.common_title_operations();
-    private static final String TITLE = KEY;
     private static String recentOperations = MSG.common_title_recent_operations();
     private static String scheduledOperations = MSG.common_title_scheduled_operations();
     public static String RANGE_DISABLED_MESSAGE = MSG.view_portlet_operations_disabled();
@@ -98,7 +100,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     protected void onInit() {
         super.onInit();
         //set title for larger container
-        setTitle(TITLE);
+        //setTitle(TITLE);
 
         this.recentOperationsGrid = new LocatableListGrid(recentOperations);
         recentOperationsGrid.setDataSource(getDataSourceCompleted());

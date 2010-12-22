@@ -60,11 +60,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  */
 public class ProblemResourcesPortlet extends Table implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "ProblemResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_problemResources();
+
     //keys for smart gwt elements. should be unique
     public static final String PROBLEM_RESOURCE_SHOW_HRS = "max-problems-query-span";
     public static final String PROBLEM_RESOURCE_SHOW_MAX = "max-problems-shown";
-    public static final String KEY = MSG.view_portlet_problem_resources_title();
-    private static final String TITLE = KEY;
     private DashboardPortlet storedPortlet;
     //reference to datasource
     private ProblemResourcesDataSource dataSource;
@@ -75,7 +78,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     private Timer defaultReloader;
 
     public ProblemResourcesPortlet(String locatorId) {
-        super(locatorId, TITLE, true);
+        super(locatorId, NAME, true);
 
         setShowHeader(false);
         setShowFooter(true);

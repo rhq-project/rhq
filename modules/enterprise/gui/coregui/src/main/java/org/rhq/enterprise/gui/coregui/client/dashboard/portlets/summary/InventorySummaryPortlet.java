@@ -50,11 +50,17 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class InventorySummaryPortlet extends LocatableVLayout implements AutoRefreshPortlet {
+
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "InventorySummary";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_inventorySummary();
+
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
-    public static final String KEY = MSG.common_title_summary_counts();
     private Timer defaultReloader;
+    private Timer reloader;
 
     public InventorySummaryPortlet(String locatorId) {
         super(locatorId);

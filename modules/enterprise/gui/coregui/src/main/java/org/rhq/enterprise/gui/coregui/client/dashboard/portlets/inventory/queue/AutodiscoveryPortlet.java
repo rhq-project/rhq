@@ -50,8 +50,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  */
 public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements CustomSettingsPortlet,
     AutoRefreshPortlet {
+
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Autodiscovery";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_autodiscovery();
+
     //ui attributes/properties/indentifiers
-    public static final String KEY = MSG.view_portlet_autodiscovery_title();
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
     private String unlimited = MSG.common_label_unlimited();
     private String defaultValue = unlimited;

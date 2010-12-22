@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.Inventor
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -49,7 +50,9 @@ public class PortletFactory {
         registeredPortlets = new HashMap<String, PortletViewFactory>();
 
         registeredPortlets.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
+
         registeredPortlets.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.Factory.INSTANCE);
+
         registeredPortlets.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
 
         registeredPortlets.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
@@ -63,8 +66,11 @@ public class PortletFactory {
         registeredPortlets.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
 
         registeredPortlets.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
+
         registeredPortlets.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
+
         registeredPortlets.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
+
         registeredPortlets.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
     }
 
@@ -75,7 +81,7 @@ public class PortletFactory {
         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
         // tests as a change in the number of default portlets, or a change in test order could make a test
         // non-repeatable. But, at the moment we lack the infrastructure to generate a unique, predictable id. 
-        Portlet view = viewFactory.getInstance(replaceSpaces(storedPortlet.getPortletKey()) + "-"
+        Portlet view = viewFactory.getInstance(SeleniumUtility.getSafeId(storedPortlet.getPortletKey()) + "-"
             + Integer.toString(storedPortlet.getId()));
         view.configure(portletWindow, storedPortlet);
 
@@ -85,19 +91,6 @@ public class PortletFactory {
         }
 
         return view;
-    }
-
-    /** Translated spaces to underscore. Spaces not allowed in locator ids.
-     * 
-     * @param portletKey
-     * @return
-     */
-    public static String replaceSpaces(String portletKey) {
-        String translated = portletKey;
-        if (portletKey != null) {
-            translated = portletKey.replaceAll(" ", "_");
-        }
-        return translated;
     }
 
     @SuppressWarnings("unchecked")

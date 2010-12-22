@@ -57,7 +57,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_recentAlerts_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "RecentAlerts";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
+
     //widget keys also used in form population
     public static final String ALERT_RANGE_DISPLAY_AMOUNT_VALUE = "alert-range-display-amount-value";
     public static final String ALERT_RANGE_PRIORITY_VALUE = "alert-range-priority-value";

@@ -50,7 +50,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_recentlyAdded_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "RecentlyAddedResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_recentlyAddedResources();
 
     private boolean simple = true;
     private DashboardPortlet storedPortlet;
@@ -75,7 +78,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid = new TreeGrid();
         treeGrid.setDataSource(getDataSource());
         treeGrid.setAutoFetchData(true);
-        treeGrid.setTitle(MSG.common_title_recently_added());
+        treeGrid.setTitle(MSG.view_portlet_defaultName_recentlyAddedResources());
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
@@ -92,7 +95,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid.setFields(resourceNameField, timestampField);
 
         if (!simple) {
-            addMember(new HeaderLabel(MSG.common_title_recently_added()));
+            addMember(new HeaderLabel(MSG.view_portlet_defaultName_recentlyAddedResources()));
         }
 
         addMember(treeGrid);

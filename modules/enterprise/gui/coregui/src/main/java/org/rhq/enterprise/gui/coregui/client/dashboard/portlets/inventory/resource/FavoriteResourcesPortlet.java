@@ -47,7 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
  */
 public class FavoriteResourcesPortlet extends ResourceSearchView implements AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_favoriteResources_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "FavoriteResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_favoriteResources();
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 

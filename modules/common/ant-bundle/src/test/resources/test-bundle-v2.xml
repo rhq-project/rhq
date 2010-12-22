@@ -2,14 +2,14 @@
 
 <project name="test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
 
-    <rhq:bundle name="example.com (JBoss EAP 4.3)" version="1.0"
-                description="example.com corporate website hosted on JBoss EAP 4.3">
+    <rhq:bundle name="example.com (JBoss EAP 4.3)" version="2.5"
+                description="updated bundle">
 
         <rhq:input-property
                 name="listener.port"
                 description="This is where the product will listen for incoming messages"
                 required="true"
-                defaultValue="8080"
+                defaultValue="9090"
                 type="integer"/>
 
         <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall">
@@ -33,13 +33,13 @@
     <target name="main"/>
 
     <target name="preinstall">
-        <echo>Deploying Test Bundle v1.0 to ${rhq.deploy.dir}...</echo>
-        <property name="preinstallTargetExecuted" value="true"/>
+        <echo>Deploying Test Bundle v2.5 to ${rhq.deploy.dir}...</echo>
+        <property name="preinstallTargetExecuted" value="2a"/>
     </target>
 
     <target name="postinstall">
-        <echo>Done deploying Test Bundle v1.0 to ${rhq.deploy.dir}.</echo>
-        <property name="postinstallTargetExecuted" value="true"/>
+        <echo>Done deploying Test Bundle v2.5 to ${rhq.deploy.dir}.</echo>
+        <property name="postinstallTargetExecuted" value="2b"/>
     </target>
 
 </project>

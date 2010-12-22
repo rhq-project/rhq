@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.DefaultLogger;
@@ -53,17 +54,26 @@ public class AntLauncherTest {
 
         BundleAntProject project = ant.parseBundleDeployFile(getBuildXml("test-bundle-v1.xml"));
         assert project != null;
-        /*Map<String, String> bundleFiles = project.getBundleFiles();
+        Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
-        assert bundleFiles.size() == 2 : bundleFiles;
-        assert bundleFiles.get("f").equals("test-v2.properties") : bundleFiles;
-        assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
+        assert bundleFiles.size() == 4 : bundleFiles;
+        assert bundleFiles.contains("test-v1.properties") : bundleFiles;
+        assert bundleFiles.contains("file.zip") : bundleFiles;
+        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
+        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+
+        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
+        assert project.getBundleVersion().equals("1.0");
+        assert project.getBundleDescription().equals("example.com corporate website hosted on JBoss EAP 4.3");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
         assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
         assert propDef != null;
         assert propDef.getType() == PropertySimpleType.INTEGER;
+        assert propDef.getDefaultValue().equals("8080");
+        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
+        assert propDef.isRequired();
     }
 
     public void testInstall() throws Exception {
@@ -75,27 +85,37 @@ public class AntLauncherTest {
         List<BuildListener> buildListeners = createBuildListeners();
 
         BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v1.xml"), inputProps,
-                buildListeners);
-        /*Map<String, String> bundleFiles = project.getBundleFiles();
+            buildListeners);
+        assert project != null;
+        Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
-        assert bundleFiles.size() == 2 : bundleFiles;
-        assert bundleFiles.get("f").equals("test-v2.properties") : bundleFiles;
-        assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
+        assert bundleFiles.size() == 4 : bundleFiles;
+        assert bundleFiles.contains("test-v1.properties") : bundleFiles;
+        assert bundleFiles.contains("file.zip") : bundleFiles;
+        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
+        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+
+        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
+        assert project.getBundleVersion().equals("1.0");
+        assert project.getBundleDescription().equals("example.com corporate website hosted on JBoss EAP 4.3");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
         assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
         assert propDef != null;
         assert propDef.getType() == PropertySimpleType.INTEGER;
+        assert propDef.getDefaultValue().equals("8080");
+        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
+        assert propDef.isRequired();
 
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1 : config.getProperties();
         assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
-        
+
         String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
-        assert preinstallTargetExecuted.equals("true");
+        assert preinstallTargetExecuted.equals("1a");
         String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
-        assert postinstallTargetExecuted.equals("true");
+        assert postinstallTargetExecuted.equals("1b");
     }
 
     private List<BuildListener> createBuildListeners() {
@@ -117,28 +137,43 @@ public class AntLauncherTest {
         List<BuildListener> buildListeners = createBuildListeners();
 
         BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2.xml"), inputProps,
-                buildListeners);
-        /*Map<String, String> bundleFiles = project.getBundleFiles();
+            buildListeners);
+        assert project != null;
+        Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
-        assert bundleFiles.size() == 2 : bundleFiles;
-        assert bundleFiles.get("f").equals("test-v2.properties") : bundleFiles;
-        assert bundleFiles.get("pkg").equals("package.zip") : bundleFiles;*/
+        assert bundleFiles.size() == 4 : bundleFiles;
+        assert bundleFiles.contains("test-v2.properties") : bundleFiles;
+        assert bundleFiles.contains("file.zip") : bundleFiles;
+        assert bundleFiles.contains("foo-script") : bundleFiles; // from install-system-service
+        assert bundleFiles.contains("foo-config") : bundleFiles; // from install-system-service
+
+        assert project.getBundleName().equals("example.com (JBoss EAP 4.3)");
+        assert project.getBundleVersion().equals("2.5");
+        assert project.getBundleDescription().equals("updated bundle");
 
         ConfigurationDefinition configDef = project.getConfigurationDefinition();
-        assert configDef.getPropertyDefinitions().size() == 1;
+        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
         PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
         assert propDef != null;
         assert propDef.getType() == PropertySimpleType.INTEGER;
+        assert propDef.getDefaultValue().equals("9090");
+        assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
+        assert propDef.isRequired();
 
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1;
         assert "20000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+
+        String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
+        assert preinstallTargetExecuted.equals("2a");
+        String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
+        assert postinstallTargetExecuted.equals("2b");
     }
 
     private Properties createInputProperties(String resourcePath) throws IOException {
         Properties inputProps = new Properties();
         inputProps.setProperty(DeployPropertyNames.DEPLOY_DIR, DEPLOY_DIR.getPath());
-        inputProps.setProperty(DeployPropertyNames.DEPLOY_ID, "100");        
+        inputProps.setProperty(DeployPropertyNames.DEPLOY_ID, "100");
         inputProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, DeploymentPhase.INSTALL.name());
         InputStream inputStream = this.getClass().getResourceAsStream(resourcePath);
         try {

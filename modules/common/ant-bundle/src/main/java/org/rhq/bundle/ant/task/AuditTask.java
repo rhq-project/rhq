@@ -18,10 +18,7 @@
  */
 package org.rhq.bundle.ant.task;
 
-import java.util.Date;
-
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
 
 /**
  * The rhq:audit task is a way recipe authors can add their own audit messages to the stream
@@ -34,7 +31,7 @@ import org.apache.tools.ant.Project;
  * @author John Mazzitelli
  */
 public class AuditTask extends AbstractBundleTask {
-    private String status = "SUCCESS"; // must match one of SUCCESS, WARN, or FAILURE (see BundleResourceDeploymentHistory.Status)
+    private AuditStatus status = AuditStatus.SUCCESS; // see BundleResourceDeploymentHistory.Status
     private String action = null;
     private String info = null;
     private String message = "";
@@ -43,34 +40,27 @@ public class AuditTask extends AbstractBundleTask {
     @Override
     public void maybeConfigure() throws BuildException {
         super.maybeConfigure(); // inits the attribute fields
-        validateAttributes();
     }
 
     @Override
     public void execute() throws BuildException {
-        // this will log a message with a very specific format that is understood
-        // by the agent-side build listener's messageLogged method:
-        // org.rhq.plugins.ant.DeploymentAuditorBuildListener.messageLogged(BuildEvent)
-        // RHQ_AUDIT_MESSAGE___<status>___<action>___<info>___<message>___<details>
-        StringBuilder str = new StringBuilder("RHQ_AUDIT_MESSAGE___");
-        str.append(this.status);
-        str.append("___");
-        str.append((this.action != null) ? this.action : "Audit Message");
-        str.append("___");
-        str.append((this.info != null) ? this.info : "Timestamp: " + new Date().toString());
-        str.append("___");
-        str.append(this.message);
-        str.append("___");
-        str.append(this.details);
-        getProject().log(str.toString(), Project.MSG_INFO);
+        auditLog(status, action, info, message, details);
     }
 
-    public String getStatus() {
+    public AuditStatus getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
-        this.status = status;
+        if (this.status == null) {
+            this.status = AuditStatus.SUCCESS;
+        } else {
+            try {
+                this.status = AuditStatus.valueOf(status.toUpperCase());
+            } catch (Exception e) {
+                throw new BuildException("The 'status' attribute must be either 'SUCCESS', 'WARN' or 'FAILURE'");
+            }
+        }
     }
 
     public String getAction() {
@@ -106,15 +96,4 @@ public class AuditTask extends AbstractBundleTask {
             this.details += getProject().replaceProperties(msg);
         }
     }
-
-    protected void validateAttributes() throws BuildException {
-        if (this.status == null) {
-            this.status = "SUCCESS";
-        } else if (!this.status.equalsIgnoreCase("SUCCESS") && !this.status.equalsIgnoreCase("FAILURE")
-            && !this.status.equalsIgnoreCase("WARN")) {
-            throw new BuildException("The 'result' attribute must be either 'SUCCESS', 'WARN' or 'FAILURE'");
-        }
-        this.status = this.status.toUpperCase();
-    }
-
 }

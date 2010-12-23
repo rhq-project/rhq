@@ -73,6 +73,7 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
@@ -181,7 +182,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         super.onInit();
 
         filterForm = new TableFilter(this);
-        configureTableFilters();
+
+        /*
+         * table filters and search bar are currently mutually exclusive
+         */
+        if (getSearchSubsystem() == null) {
+            configureTableFilters();
+        } else {
+            final SearchBarItem searchFilter = new SearchBarItem("search", "Search", getSearchSubsystem());
+            setFilterFormItems(searchFilter);
+        }
 
         listGrid = new LocatableListGrid(getLocatorId());
         listGrid.setAutoFetchData(autoFetchData);
@@ -862,5 +872,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public void setShowFilterForm(boolean showFilterForm) {
         this.showFilterForm = showFilterForm;
+    }
+
+    /*
+     * by default, no search bar is shown above this table.  if this table represents a subsystem that is capable
+     * of search, return the specific object here.
+     */
+    protected SearchSubsystem getSearchSubsystem() {
+        return null;
     }
 }

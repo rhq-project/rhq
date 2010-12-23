@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -229,6 +230,11 @@ public class ResourceSearchView extends Table {
 
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);
+    }
+
+    @Override
+    protected SearchSubsystem getSearchSubsystem() {
+        return SearchSubsystem.RESOURCE;
     }
 
 }

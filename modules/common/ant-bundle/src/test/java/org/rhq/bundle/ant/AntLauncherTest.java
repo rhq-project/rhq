@@ -486,6 +486,7 @@ public class AntLauncherTest {
         try {
             File subdir = new File(antBasedir, "subdir"); // must match the name in the recipe
             subdir.mkdirs();
+            writeFile("file0", subdir, "test0.txt"); // filename must match recipe
             writeFile("file1", subdir, "test1.txt"); // filename must match recipe
             writeFile("file2", subdir, "test2.txt"); // filename must match recipe
             createZip(new String[] { "one", "two" }, subdir, "test.zip", new String[] { "one.txt", "two.txt" });
@@ -506,13 +507,15 @@ public class AntLauncherTest {
             assert project != null;
             Set<String> bundleFiles = project.getBundleFileNames();
             assert bundleFiles != null;
-            assert bundleFiles.size() == 5 : bundleFiles;
+            assert bundleFiles.size() == 6 : bundleFiles;
+            assert bundleFiles.contains("subdir/test0.txt") : bundleFiles;
             assert bundleFiles.contains("subdir/test1.txt") : bundleFiles;
             assert bundleFiles.contains("subdir/test2.txt") : bundleFiles;
             assert bundleFiles.contains("subdir/test.zip") : bundleFiles;
             assert bundleFiles.contains("subdir/test-explode.zip") : bundleFiles;
             assert bundleFiles.contains("subdir/test-replace.zip") : bundleFiles;
 
+            assert new File(DEPLOY_DIR, "subdir/test0.txt").exists() : "missing raw file from default destination location";
             assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
             assert new File(DEPLOY_DIR, "second.dir/test2.txt").exists() : "missing raw file from the destinationDir";
             assert !new File(DEPLOY_DIR, "subdir/test1.zip").exists() : "should not be here because destinationFile was specified";

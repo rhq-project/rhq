@@ -7,6 +7,7 @@
         <rhq:input-property name="X" />
 
         <rhq:deployment-unit name="appserver">
+            <rhq:file name="subdir/test0.txt" replace="false" />
             <rhq:file name="subdir/test1.txt" destinationFile="another/foo.txt" replace="false"/>
             <rhq:file name="subdir/test2.txt" destinationDir="second.dir" replace="false"/>
             <rhq:archive name="subdir/test.zip" exploded="false" />

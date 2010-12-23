@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,12 +47,17 @@ import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
+import org.rhq.helpers.perftest.support.Replicator;
 import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
 import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
 import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 import org.rhq.helpers.perftest.support.replication.NextIdProvider;
+import org.rhq.helpers.perftest.support.replication.ReplicaDescriptor;
+import org.rhq.helpers.perftest.support.replication.ReplicaDispenser;
 import org.rhq.helpers.perftest.support.replication.ReplicaModifier;
+import org.rhq.helpers.perftest.support.replication.ReplicaProvider;
 import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
+import org.rhq.helpers.perftest.support.replication.ReplicationResult;
 
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
@@ -76,9 +82,14 @@ import org.testng.annotations.BeforeTest;
  */
 public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
+    private static class MethodRecord {
+        public ReentrantLock lock;
+        public ReplicaDispenser replicaDispenser;
+    }
+    
     private static final Log LOG = LogFactory.getLog(DatabaseSetupInterceptor.class);
 
-    private static final HashMap<Method, ReentrantLock> METHOD_LOCKS = new HashMap<Method, ReentrantLock>();
+    private static final HashMap<Method, MethodRecord> METHOD_RECORDS = new HashMap<Method, MethodRecord>();
 
     private static final Class<?>[] NEXT_ID_PROVIDER_METHOD_PARAMETER_TYPES = {Connection.class, Class.class};
     
@@ -86,21 +97,22 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
     private static final Class<?>[] REPLICA_RESTRICTOR_METHOD_PARAMTER_TYPES = { int.class, Class.class };
     
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-        ReentrantLock methodLock = null;
+        MethodRecord methodRecord = null;
         boolean setupRanForThisMethod = false;
 
         //ensure no-one else is messing with the method locks before we're finished acquiring the lock
         //for our method
-        synchronized (METHOD_LOCKS) {
-            methodLock = METHOD_LOCKS.get(methodLock);
-            setupRanForThisMethod = methodLock != null;
-            if (methodLock == null) {
-                methodLock = new ReentrantLock();
-                METHOD_LOCKS.put(method.getTestMethod().getMethod(), methodLock);
+        synchronized (METHOD_RECORDS) {
+            methodRecord = METHOD_RECORDS.get(methodRecord);
+            setupRanForThisMethod = methodRecord != null;
+            if (methodRecord == null) {
+                methodRecord = new MethodRecord();
+                methodRecord.lock = new ReentrantLock();
+                METHOD_RECORDS.put(method.getTestMethod().getMethod(), methodRecord);
             }
         }
 
-        methodLock.lock();
+        methodRecord.lock.lock();
 
         String dbUrl = "-unknown-";
         Connection jdbcConnection = null;
@@ -113,6 +125,8 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             }
 
             if (setupRanForThisMethod && !state.runForEachInvocation()) {
+                methodRecord.replicaDispenser.setCurrentTestInvocationNumber(method.getTestMethod().getCurrentInvocationCount());
+                ReplicaProvider.setDispenser(methodRecord.replicaDispenser);
                 return;
             }
 
@@ -164,7 +178,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                     
                     Importer.run(connection, input);
                     
-                    replicate(connection, method, testResult.getInstance(), state.replication());
+                    methodRecord.replicaDispenser = replicate(connection, method, testResult.getInstance(), state.replication());
                                                             
                     dbSetup.upgrade(null);
                 } finally {
@@ -174,7 +188,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 LOG.warn("Failed to setup a database for method '" + method.getTestMethod().getMethodName() + "'.", e);
             }
         } finally {
-            methodLock.unlock();
+            methodRecord.lock.unlock();
             if (statement != null)
                 try {
                     statement.close();
@@ -295,7 +309,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         }
     }
     
-    private static void replicate(final IDatabaseConnection connection, IInvokedMethod method, final Object instance, DataReplication replicationSetup) {
+    private static ReplicaDispenser replicate(final IDatabaseConnection connection, IInvokedMethod method, final Object instance, DataReplication replicationSetup) {
         ReplicationConfiguration config = new ReplicationConfiguration();
                 
         config.setEntities(Arrays.asList(replicationSetup.rootEntities()));
@@ -347,7 +361,23 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             }
         }
         
-        //TODO implement
+        List<ReplicationResult> results = new ArrayList<ReplicationResult>();
+        int replicaCount = 0;
+        switch (replicationSetup.replicaCreationStrategy()) {
+        case PER_INVOCATION:
+            replicaCount = method.getTestMethod().getInvocationCount();
+            break;
+        case PER_THREAD:
+            replicaCount = method.getTestMethod().getThreadPoolSize();
+            break;
+        default:;
+        }
+        
+        for(int i = 0; i < replicaCount; ++i) {
+            results.add(Replicator.run(config));
+        }
+                
+        return new ReplicaDispenser(results, replicationSetup.replicaCreationStrategy());
     }
     
     private static Method findMethod(Class<?> type, String name, Class<?>... params) {

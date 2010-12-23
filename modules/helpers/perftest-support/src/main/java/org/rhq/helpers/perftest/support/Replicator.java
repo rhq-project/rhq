@@ -19,10 +19,8 @@
 
 package org.rhq.helpers.perftest.support;
 
-import java.util.List;
-import java.util.Map;
-
 import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
+import org.rhq.helpers.perftest.support.replication.ReplicationResult;
 
 /**
  * 
@@ -31,7 +29,7 @@ import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
  */
 public class Replicator {
 
-    public static Map<Class<?>, List<Object>> run(ReplicationConfiguration configuration) {
+    public static ReplicationResult run(ReplicationConfiguration configuration) {
         //TODO implement
         return null;
     }

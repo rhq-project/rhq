@@ -19,9 +19,6 @@
 
 package org.rhq.helpers.perftest.support.replication;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * This class stores the current replicas for each test.
  * To use it, just call the {@link #get()} method inside your test.
@@ -30,22 +27,21 @@ import java.util.Map;
  */
 public class ReplicaProvider {
 
-    private static ThreadLocal<Map<Class<?>, List<Object>>> REPLICA = new ThreadLocal<Map<Class<?>,List<Object>>>();
+    private static final ThreadLocal<ReplicaDispenser> DISPENSER = new ThreadLocal<ReplicaDispenser>();
     
-    private ReplicaProvider() {
-        
+    /**
+     * This method is used during setup of the test execution. Don't call it from within the test.
+     * 
+     * @param dispenser
+     */
+    public static void setDispenser(ReplicaDispenser dispenser) {
+        DISPENSER.set(dispenser);
     }
     
     /**
-     * Retrieves the replicas set up for this test.
-     * 
-     * @return a map where keys are entity types and values are lists of IDs of the replicas.
+     * @return the replication results to be used by the current test.
      */
-    public static Map<Class<?>, List<Object>> get() {
-        return REPLICA.get();
-    }
-    
-    public static void set(Map<Class<?>, List<Object>> replica) {
-        REPLICA.set(replica);
+    public static ReplicationResult get() {
+        return DISPENSER.get().getResult();
     }
 }

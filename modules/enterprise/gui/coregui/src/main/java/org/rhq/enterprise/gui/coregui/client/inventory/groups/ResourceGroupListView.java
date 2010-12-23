@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -250,6 +251,11 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         return view;
+    }
+
+    @Override
+    protected SearchSubsystem getSearchSubsystem() {
+        return SearchSubsystem.GROUP;
     }
 
 }

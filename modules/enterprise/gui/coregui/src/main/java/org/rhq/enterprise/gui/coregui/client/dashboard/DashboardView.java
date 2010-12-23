@@ -59,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -197,19 +198,18 @@ public class DashboardView extends LocatableVLayout {
             }
         });
 
-        Menu addPorletMenu = new Menu();
+        Menu addPortletMenu = new Menu();
         for (String portletName : PortletFactory.getRegisteredPortletKeys()) {
-            addPorletMenu.addItem(new MenuItem(portletName));
+            addPortletMenu.addItem(new MenuItem(portletName));
         }
 
-        addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortal"), MSG.common_title_add_portlet(),
-            addPorletMenu);
+        addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
+            addPortletMenu);
 
-        //        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
         addPortlet.setIcon("[skin]/images/actions/add.png");
         addPortlet.setAutoFit(true);
 
-        addPorletMenu.addItemClickHandler(new ItemClickHandler() {
+        addPortletMenu.addItemClickHandler(new ItemClickHandler() {
             public void onItemClick(ItemClickEvent itemClickEvent) {
                 String portletTitle = itemClickEvent.getItem().getTitle();
                 addPortlet(portletTitle, portletTitle);
@@ -325,11 +325,7 @@ public class DashboardView extends LocatableVLayout {
         }
     }
 
-    /**
-     * A synchronized call to ensure add/remove/save are exclusive.
-     * 
-     */
-    synchronized private void addPortlet(String portletKey, String portletName) {
+    private void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
 
         final PortletWindow newPortlet = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
@@ -369,46 +365,39 @@ public class DashboardView extends LocatableVLayout {
                 newPortlet.show();
             }
         }, 750);
-        save(storedDashboard);
+        save();
     }
 
-    /**
-     * A synchronized call to ensure the remove and save are atomic.
-     * 
-     * @param portlet
-     */
-    synchronized public void removePortlet(DashboardPortlet portlet) {
+    public void removePortlet(DashboardPortlet portlet) {
         storedDashboard.removePortlet(portlet);
-        save(storedDashboard);
+        save();
     }
 
-    /**
-     * A synchronized call to ensure add/remove/save are exclusive.
-     */
-    synchronized private void setDashboard(Dashboard dashboard) {
-        storedDashboard = dashboard;
+    public void save(Dashboard dashboard) {
+        if (null != dashboard) {
+            storedDashboard = dashboard;
+            save();
+        }
     }
 
     public void save() {
-        save(storedDashboard);
-    }
+        // since we reset storedDashboard after the async update completes, block modification of the dashboard
+        // during that interval.
+        DashboardView.this.disable();
 
-    private void save(Dashboard dashboard) {
-        GWTServiceLookup.getDashboardService().storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
+        GWTServiceLookup.getDashboardService().storeDashboard(storedDashboard, new AsyncCallback<Dashboard>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardManager_error(), caught);
+                DashboardView.this.enable();
             }
 
             public void onSuccess(Dashboard result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_dashboardManager_saved(result.getName()), Message.Severity.Info));
-                // use the synchronized call to ensure add/delete portlet doesn't get interrupted. This is really
-                // just limited protection for add/remove portlet.  Since this now sets storedDashboard,
-                // anything using the old version could lose edits.  If we want to make this more robust we'll probably
-                // need a locking mechanism for editing the dashboard.
-                setDashboard(storedDashboard);
 
                 updateConfigs(result);
+                storedDashboard = result;
+                DashboardView.this.enable();
             }
         });
     }
@@ -432,8 +421,8 @@ public class DashboardView extends LocatableVLayout {
                         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
                         // tests as a change in the number of default portlets, or a change in test order could make a test
                         // non-repeatable. But, at the moment we lack the infrastructure to generate a unique, predictable id.
-                        Portlet view = viewFactory.getInstance(PortletFactory.replaceSpaces(portlet.getPortletKey())
-                            + "-" + Integer.toString(portlet.getId()));
+                        Portlet view = viewFactory.getInstance(SeleniumUtility.getSafeId(portlet.getPortletKey() + "-"
+                            + Integer.toString(portlet.getId())));
 
                         //add code to re-initialize refresh cycle for portlets
                         if (view instanceof AutoRefreshPortlet) {

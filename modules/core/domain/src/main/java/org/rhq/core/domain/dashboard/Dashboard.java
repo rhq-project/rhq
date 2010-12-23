@@ -183,7 +183,7 @@ public class Dashboard implements Serializable {
         portlets.add(storedPortlet);
     }
 
-    public Dashboard deepCoopy(boolean keepIds) {
+    public Dashboard deepCopy(boolean keepIds) {
 
         Dashboard newDashboard = new Dashboard();
         if (keepIds) {

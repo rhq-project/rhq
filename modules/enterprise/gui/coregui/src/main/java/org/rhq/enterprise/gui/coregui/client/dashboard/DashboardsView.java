@@ -76,7 +76,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     // Each NamedTab is a Dashboard, name=Dashboard.id, title=Dashboard.name
     private NamedTabSet tabSet;
 
-    // The ID (0 for default dash)
+    // The ID
     private String selectedTabName;
 
     private IButton editButton;
@@ -109,12 +109,31 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
             }
 
-            public void onSuccess(List<Dashboard> result) {
+            public void onSuccess(final List<Dashboard> result) {
                 initialized = true;
+
                 if (result.isEmpty()) {
-                    result.add(getDefaultDashboard());
+                    // if the user has no dashboards persist a default dashboard for him to work with. In
+                    // this way we're always working with a persisted dashboard and real entities.
+                    addDefaultDashboard();
+
+                } else {
+                    updateDashboards(result);
                 }
-                updateDashboards(result);
+            }
+        });
+    }
+
+    private void addDefaultDashboard() {
+        dashboardService.storeDashboard(getDefaultDashboard(), new AsyncCallback<Dashboard>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
+            }
+
+            public void onSuccess(Dashboard defaultDashboard) {
+                List<Dashboard> dashboards = new ArrayList<Dashboard>(1);
+                dashboards.add(defaultDashboard);
+                updateDashboards(dashboards);
             }
         });
     }
@@ -190,8 +209,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         }
 
-        //updateFirstTabCanCloseState("update dashboards");
-
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
                 tabCloseClickEvent.cancel();
@@ -203,12 +220,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                                 dashboardsByName.remove(tabCloseClickEvent.getTab().getTitle());
                                 tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
-                                //                                if ( 0 == tabSet.getTabs().length) {
-                                //                                    
-                                //                                }
-                                History.newItem(VIEW_ID.getName());
 
-                                //updateFirstTabCanCloseState("close handler");
+                                // if it's the last tab go back to a default tab
+                                if (0 == tabSet.getTabs().length) {
+                                    addDefaultDashboard();
+                                }
                             }
                         }
                     });
@@ -311,8 +327,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 tabSet.selectTab(tab);
                 editMode = true;
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
-
-                //updateFirstTabCanCloseState("store dashboard");
             }
         });
     }
@@ -325,15 +339,12 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     public void renderView(ViewPath viewPath) {
-        NamedTab[] tabs = tabSet.getTabs();
-
         // make sure we have at least a default dashboard tab
-        if (0 == tabs.length) {
-            List<Dashboard> defaultTabs = new ArrayList<Dashboard>(1);
-            defaultTabs.add(getDefaultDashboard());
-            updateDashboards(defaultTabs);
-            tabs = tabSet.getTabs();
+        if (null == tabSet || 0 == tabSet.getTabs().length) {
+            return;
         }
+
+        NamedTab[] tabs = tabSet.getTabs();
 
         // if nothing selected or pathtab does not exist, default to the first tab
         NamedTab selectedTab = tabs[0];
@@ -351,8 +362,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
         }
 
-        //updateFirstTabCanCloseState("render view");
-
         tabSet.selectTab(selectedTab);
     }
 
@@ -364,13 +373,4 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     public boolean isInitialized() {
         return initialized;
     }
-
-    // must be called when the tabset is first loaded (onInit), on each subsequent load, and whenever it changes
-    //public void updateFirstTabCanCloseState(String comingFrom) {
-    // do not allow closing if there is only one dashboard tab remaining
-    //    boolean canClose = tabSet.getTabs().length > 1;
-    //    NamedTab firstTab = tabSet.getTabs()[0];
-    //    firstTab.setCanClose(canClose);
-    //}
-
 }

@@ -17,5 +17,7 @@
     <typedef name="ignore" classname="org.rhq.bundle.ant.type.IgnoreType"/>
     <typedef name="fileset" classname="org.rhq.bundle.ant.type.FileSet"/>
     <typedef name="system-service" classname="org.rhq.bundle.ant.type.SystemServiceType"/>
-    
+
+    <!-- audit task used to send custom audit messages to server -->
+    <taskdef name="audit" classname="org.rhq.bundle.ant.task.AuditTask"/>
 </antlib>

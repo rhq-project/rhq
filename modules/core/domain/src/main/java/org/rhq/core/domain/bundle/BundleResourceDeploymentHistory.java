@@ -228,7 +228,8 @@ public class BundleResourceDeploymentHistory implements Serializable {
         FILE_ADD("File Add"), //
         FILE_CHANGE("File Change"), //
         FILE_DOWNLOAD("File Download"), //        
-        FILE_REMOVE("File Remove");
+        FILE_REMOVE("File Remove"), //
+        AUDIT_MESSAGE("Audit Message");
 
         private String displayName;
 

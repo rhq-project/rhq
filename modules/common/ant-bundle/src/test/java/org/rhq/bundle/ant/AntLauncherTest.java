@@ -140,6 +140,7 @@ public class AntLauncherTest {
         assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
         assert propDef.isRequired();
 
+        // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1 : config.getProperties();
         assert "10000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
@@ -193,6 +194,7 @@ public class AntLauncherTest {
         assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
         assert propDef.isRequired();
 
+        // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1;
         assert "20000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
@@ -249,6 +251,7 @@ public class AntLauncherTest {
         assert propDef.getDescription().equals("This is where the product will listen for incoming messages");
         assert propDef.isRequired();
 
+        // make sure our test infrastruction setup the input properties correctly
         Configuration config = project.getConfiguration();
         assert config.getProperties().size() == 1;
         assert "20000".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
@@ -429,6 +432,48 @@ public class AntLauncherTest {
                 // expected
             }
         }
+    }
+
+    // this doesn't verify the audit messages getting emitted are correct
+    // but it does verify the audit tag getting processed correctly.
+    // you have to look at the test logs to see the audit messages
+    // TODO: write a ant build listener to listen for this messages, parse them and verify they are correct
+    //       this test should then ask the listener at the end if everything was OK and assert false if not
+    public void testAuditMessages() throws Exception {
+        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
+        FileUtil.purge(DEPLOY_DIR, true);
+
+        AntLauncher ant = new AntLauncher();
+        Properties inputProps = createInputProperties("/test-audit-input.properties");
+        List<BuildListener> buildListeners = createBuildListeners();
+
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-audit.xml"), inputProps,
+            buildListeners);
+        assert project != null;
+        Set<String> bundleFiles = project.getBundleFileNames();
+        assert bundleFiles != null;
+        assert bundleFiles.size() == 1 : bundleFiles;
+        assert bundleFiles.contains("test-audit.properties") : bundleFiles;
+
+        // sanity check - make sure our recipe defined this property
+        ConfigurationDefinition configDef = project.getConfigurationDefinition();
+        assert configDef.getPropertyDefinitions().size() == 1 : configDef.getPropertyDefinitions();
+        PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("listener.port");
+        assert propDef != null;
+
+        // make sure our test infrastruction setup the input properties correctly
+        Configuration config = project.getConfiguration();
+        assert config.getProperties().size() == 1 : config.getProperties();
+        assert "777".equals(config.getSimpleValue("listener.port", null)) : config.getProperties();
+
+        String preinstallTargetExecuted = (String) project.getProperties().get("preinstallTargetExecuted");
+        assert preinstallTargetExecuted.equals("1a");
+        String postinstallTargetExecuted = (String) project.getProperties().get("postinstallTargetExecuted");
+        assert postinstallTargetExecuted.equals("1b");
+
+        assert new File(DEPLOY_DIR, "test-audit.properties").exists() : "missing file";
+        assert readPropsFile(new File(DEPLOY_DIR, "test-audit.properties")).getProperty("my.listener.port").equals(
+            "777");
     }
 
     private List<BuildListener> createBuildListeners() {

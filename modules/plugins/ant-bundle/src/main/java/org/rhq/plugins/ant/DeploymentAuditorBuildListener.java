@@ -75,22 +75,19 @@ public class DeploymentAuditorBuildListener implements BuildListener {
     }
 
     public void messageLogged(BuildEvent event) {
-        // this will see if this is an audit message (e.g. <rhq:audit>) and if so, send it up to the server
-        // see org.rhq.bundle.ant.task.AuditTask.execute()
-        // RHQ_AUDIT_MESSAGE___<status>___<action>___<info>___<message>___<details>
-
         try {
-            Status status = Status.SUCCESS;
-            String action = "Audit Message";
-            String info = "Recipe Audit Message";
-            String message = new Date().toString();
-            String details = null;
-            BundleResourceDeployment deployment = this.bundleResourceDeployment;
-            Category category = Category.AUDIT_MESSAGE;
-
+            // this will see if this is an audit message (e.g. <rhq:audit>) and if so, send it up to the server
+            // see org.rhq.bundle.ant.task.AuditTask.execute()
+            // RHQ_AUDIT_MESSAGE___<status>___<action>___<info>___<message>___<details>
             String[] eventStrings = event.getMessage().split("___");
             int index = 0;
             if (eventStrings[index++].equals("RHQ_AUDIT_MESSAGE")) {
+                Status status = Status.SUCCESS;
+                String action = "Audit Message";
+                String info = "Recipe Audit Message";
+                String message = new Date().toString();
+                String details = null;
+
                 try {
                     String statusStr = eventStrings[index++];
                     status = Status.valueOf(statusStr.toUpperCase());
@@ -101,9 +98,9 @@ public class DeploymentAuditorBuildListener implements BuildListener {
                 } catch (ArrayIndexOutOfBoundsException e) {
                     // the message didn't have all the info, just skip looking for the rest and log what we have
                 }
+                this.bundleManagerProvider.auditDeployment(this.bundleResourceDeployment, action, info,
+                    Category.AUDIT_MESSAGE, status, message, details);
             }
-
-            this.bundleManagerProvider.auditDeployment(deployment, action, info, category, status, message, details);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

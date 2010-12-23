@@ -20,6 +20,8 @@ package org.rhq.bundle.ant.task;
 
 import org.apache.tools.ant.BuildException;
 
+import org.rhq.bundle.ant.BundleAntProject.AuditStatus;
+
 /**
  * The rhq:audit task is a way recipe authors can add their own audit messages to the stream
  * of audit messages that the server gets to see how the progress went with the provisioning of a bundle.
@@ -44,7 +46,7 @@ public class AuditTask extends AbstractBundleTask {
 
     @Override
     public void execute() throws BuildException {
-        auditLog(status, action, info, message, details);
+        getProject().auditLog(status, action, info, message, details);
     }
 
     public AuditStatus getStatus() {

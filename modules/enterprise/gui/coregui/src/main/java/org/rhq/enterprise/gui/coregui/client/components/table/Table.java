@@ -432,6 +432,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public void setFilterFormItems(FormItem... formItems) {
+        setShowHeader(false);
         this.filterForm.setItems(formItems);
     }
 

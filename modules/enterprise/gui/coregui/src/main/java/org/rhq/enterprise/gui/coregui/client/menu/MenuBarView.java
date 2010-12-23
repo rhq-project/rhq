@@ -74,7 +74,7 @@ public class MenuBarView extends LocatableVLayout {
         topStrip.addMember(getActionsSection());
 
         addMember(topStrip);
-        addMember(new SearchBarPane(this.extendLocatorId("Search")));
+        //addMember(new SearchBarPane(this.extendLocatorId("Search")));
 
         markForRedraw();
     }

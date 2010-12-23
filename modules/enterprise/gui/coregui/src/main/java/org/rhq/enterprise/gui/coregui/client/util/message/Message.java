@@ -38,6 +38,7 @@ public class Message {
 
     // TODO: Add Debug severity?
     public enum Severity {
+        Blank("InfoBlank", "info/icn_info_blank.png"), //
         Info("InfoBlock", "info/icn_info_blue.png"), //
         Warning("WarnBlock", "info/icn_info_orange.png"), //
         Error("ErrorBlock", "info/icn_info_red.png"), //

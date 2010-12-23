@@ -35,10 +35,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  */
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
     private static final String LOCATOR_ID = "MessageBar";
-    private static final int AUTO_HIDE_DELAY_MILLIS = 15000; // 15 seconds
+    private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
 
-    private Label label;
+    private Label label = new Label();
     private Message stickyMessage;
+
+    private static final String NON_BREAKING_SPACE = "&nbsp;";
 
     public MessageBar() {
         super(LOCATOR_ID);
@@ -51,9 +53,14 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         super.onDraw();
 
         setWidth100();
-        setHeight(35);
-
         setAlign(Alignment.CENTER);
+
+        label.setAlign(Alignment.CENTER);
+        label.setWidth("400px");
+        label.setHeight("25px");
+
+        setLabelEmpty();
+        addMember(label);
 
         CoreGUI.getMessageCenter().addMessageListener(this);
     }
@@ -61,60 +68,47 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     @Override
     public void onMessage(Message message) {
         if (!message.isBackgroundJobResult()) {
-            // First clear any previous message.
-            clearMessage(message.isSticky());
-            displayMessage(message);
+            updateLabel(message);
 
-            // Auto-clear the message after 15 seconds unless it's been designated as sticky.
+            // Auto-clear the message after some time unless it's been designated as sticky.
             if (message.isSticky()) {
                 this.stickyMessage = message;
             } else {
-                Timer hideTimer = new Timer() {
+                new Timer() {
                     @Override
                     public void run() {
                         clearMessage(false);
                         if (stickyMessage != null) {
-                            displayMessage(stickyMessage);
+                            updateLabel(stickyMessage);
                         }
                     }
-                };
-                hideTimer.schedule(AUTO_HIDE_DELAY_MILLIS);
+                }.schedule(AUTO_HIDE_DELAY_MILLIS);
             }
         }
     }
 
-    public void clearMessage() {
-        clearMessage(true);
-    }
-
-    private void displayMessage(Message message) {
-        this.label = createLabel(message);
-        addMember(this.label);
-        markForRedraw();
-    }
-
     private void clearMessage(boolean clearSticky) {
-        if (this.label != null) {
-            this.label.destroy();
-            markForRedraw();
-        }
+        setLabelEmpty();
+        markForRedraw();
+
         if (clearSticky) {
             this.stickyMessage = null;
         }
     }
 
-    private Label createLabel(Message message) {
-        Label label = new Label();
+    private void setLabelEmpty() {
+        label.setContents(NON_BREAKING_SPACE);
+        label.setIcon(Message.Severity.Blank.getIcon());
+        label.setStyleName(Message.Severity.Blank.getStyle());
+    }
 
+    private void updateLabel(Message message) {
         String contents = (message.getConciseMessage() != null) ? message.getConciseMessage() : message
             .getDetailedMessage();
         label.setContents(contents);
-        label.setAlign(Alignment.CENTER);
 
         String styleName = (contents != null) ? message.getSeverity().getStyle() : null;
         label.setStyleName(styleName);
-
-        label.setWidth(400);
 
         // TODO: Create some custom edge images in greed, yellow, red, etc. so we can add nice rounded corners to the
         //       label.
@@ -123,6 +117,6 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         String icon = (contents != null) ? message.getSeverity().getIcon() : null;
         label.setIcon(icon);
 
-        return label;
+        markForRedraw();
     }
 }

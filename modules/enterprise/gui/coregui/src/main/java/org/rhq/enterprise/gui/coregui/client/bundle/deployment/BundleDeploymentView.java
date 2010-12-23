@@ -70,6 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -209,6 +210,23 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
     private Canvas getActionLayout(String locatorId) {
         LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
+
+        // we can only revert the live deployments, only show revert button when appropriate 
+        if (deployment.isLive()) {
+            IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG
+                .view_bundle_revert());
+            revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
+            revertButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
+                    new BundleRevertWizard(deployment.getDestination()).startWizard();
+                }
+            });
+            actionLayout.addMember(revertButton);
+            if (!canManageBundles) {
+                revertButton.setDisabled(true);
+            }
+        }
+
         IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
         deleteButton.setIcon("subsystems/bundle/BundleDeploymentAction_Delete_16.png");
         deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {

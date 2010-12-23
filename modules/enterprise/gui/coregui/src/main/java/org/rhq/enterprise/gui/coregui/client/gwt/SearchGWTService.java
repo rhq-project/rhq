@@ -36,18 +36,19 @@ public interface SearchGWTService extends RemoteService {
      * search suggestions
      */
     List<SearchSuggestion> getTabAwareSuggestions(SearchSubsystem searchSubsystem, String expression,
-        int caretPosition, String tab);
+        int caretPosition, String tab) throws RuntimeException;
 
-    List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition);
+    List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition)
+        throws RuntimeException;
 
     /*
      * saved searches
      */
-    int createSavedSearch(SavedSearch savedSearch);
+    int createSavedSearch(SavedSearch savedSearch) throws RuntimeException;
 
-    void updateSavedSearch(SavedSearch savedSearch);
+    void updateSavedSearch(SavedSearch savedSearch) throws RuntimeException;
 
-    void deleteSavedSearch(int savedSearchId);
+    void deleteSavedSearch(int savedSearchId) throws RuntimeException;
 
-    List<SavedSearch> findSavedSearchesByCriteria(SavedSearchCriteria criteria);
+    List<SavedSearch> findSavedSearchesByCriteria(SavedSearchCriteria criteria) throws RuntimeException;
 }

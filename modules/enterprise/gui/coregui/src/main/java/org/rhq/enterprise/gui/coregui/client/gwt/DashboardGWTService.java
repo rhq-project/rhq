@@ -26,7 +26,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.dashboard.Dashboard;
 
 /**
@@ -34,14 +33,12 @@ import org.rhq.core.domain.dashboard.Dashboard;
  */
 public interface DashboardGWTService extends RemoteService {
 
+    List<Dashboard> findDashboardsForSubject() throws RuntimeException;
 
-    List<Dashboard> findDashboardsForSubject();
+    List<Dashboard> findSharedDashboards() throws RuntimeException;
 
-    List<Dashboard> findSharedDashboards();
+    Dashboard storeDashboard(Dashboard dashboard) throws RuntimeException;
 
-    Dashboard storeDashboard(Dashboard dashboard);
-
-    void removeDashboard(int dashboardId);
-
+    void removeDashboard(int dashboardId) throws RuntimeException;
 
 }

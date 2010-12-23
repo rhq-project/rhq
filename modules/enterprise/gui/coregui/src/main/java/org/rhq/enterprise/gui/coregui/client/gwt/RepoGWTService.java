@@ -33,6 +33,6 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface RepoGWTService extends RemoteService {
 
-    PageList<Repo> findReposByCriteria(RepoCriteria criteria) throws Exception;
+    PageList<Repo> findReposByCriteria(RepoCriteria criteria) throws RuntimeException;
 
 }

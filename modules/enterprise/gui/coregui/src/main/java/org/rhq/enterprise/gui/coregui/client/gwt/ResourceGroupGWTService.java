@@ -35,7 +35,7 @@ import org.rhq.core.domain.util.PageList;
 @RemoteServiceRelativePath("ResourceGroupGWTService")
 public interface ResourceGroupGWTService extends RemoteService {
 
-    GroupDefinition createGroupDefinition(GroupDefinition groupDefinition);
+    GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException;
 
     /**
      * The owner will be set to the session subject.
@@ -43,31 +43,34 @@ public interface ResourceGroupGWTService extends RemoteService {
      * @param resourceIds initial members
      * @return
      */
-    ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds);
+    ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds) throws RuntimeException;
 
-    ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds);
+    ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) throws RuntimeException;
 
-    void deleteGroupDefinitions(int[] groupDefinitionIds);
+    void deleteGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException;
 
-    void deleteResourceGroups(int[] groupIds);
+    void deleteResourceGroups(int[] groupIds) throws RuntimeException;
 
-    PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria);
+    PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria)
+        throws RuntimeException;
 
-    PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria);
+    PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) throws RuntimeException;
 
-    PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria);
+    PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria)
+        throws RuntimeException;
 
-    void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType);
+    void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType)
+        throws RuntimeException;
 
-    void setAssignedResources(int groupId, int[] resourceIds, boolean setType);
+    void setAssignedResources(int groupId, int[] resourceIds, boolean setType) throws RuntimeException;
 
-    void recalculateGroupDefinitions(int[] groupDefinitionIds);
+    void recalculateGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException;
 
-    void updateGroupDefinition(GroupDefinition groupDefinition);
+    void updateGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException;
 
-    void updateResourceGroup(ResourceGroup group);
+    void updateResourceGroup(ResourceGroup group) throws RuntimeException;
 
-    void updateResourceGroup(ResourceGroup group, boolean updateMembership);
+    void updateResourceGroup(ResourceGroup group, boolean updateMembership) throws RuntimeException;
 
-    void setRecursive(int groupId, boolean isRecursive) throws Exception;
+    void setRecursive(int groupId, boolean isRecursive) throws RuntimeException;
 }

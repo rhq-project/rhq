@@ -39,12 +39,12 @@ public interface LdapGWTService extends RemoteService {
     /**
      * @return Map with all LDAP groups available
      */
-    Set<Map<String, String>> findAvailableGroups();
+    Set<Map<String, String>> findAvailableGroups() throws RuntimeException;
 
     /**
      * @return Map with LDAP details for user passed.
      */
-    Map<String, String> getLdapDetailsFor(String user);
+    Map<String, String> getLdapDetailsFor(String user) throws RuntimeException;
 
     /** In setting the LDAP groups for this role, all previous group
      *  assignments for this role are removed before most up to date
@@ -53,19 +53,19 @@ public interface LdapGWTService extends RemoteService {
      * @param roleId
      * @param groupIds
      */
-    void setLdapGroupsForRole(int roleId, List<String> groupIds);
+    void setLdapGroupsForRole(int roleId, List<String> groupIds) throws RuntimeException;
 
     /** Finds ldap groups already assigned to this role.
      * 
      * @param currentRoleId
      * @return
      */
-    PageList<LdapGroup> findLdapGroupsAssignedToRole(int currentRoleId);
+    PageList<LdapGroup> findLdapGroupsAssignedToRole(int currentRoleId) throws RuntimeException;
 
     /** Boolean response about whether ldap configured..
      * 
      * @return
      */
-    Boolean checkLdapConfiguredStatus();
+    Boolean checkLdapConfiguredStatus() throws RuntimeException;
 
 }

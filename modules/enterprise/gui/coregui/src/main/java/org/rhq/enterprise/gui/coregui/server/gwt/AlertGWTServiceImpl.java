@@ -37,7 +37,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
-    public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) throws RuntimeException {
+    public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) throws Exception {
         try {
             return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
                 "AlertService.findAlertsByCriteria");
@@ -46,7 +46,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         }
     }
 
-    public int deleteAlerts(int[] alertIds) throws RuntimeException {
+    public int deleteAlerts(int[] alertIds) throws Exception {
         try {
             return this.alertManager.deleteAlerts(getSessionSubject(), alertIds);
         } catch (Throwable t) {
@@ -54,7 +54,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         }
     }
 
-    public int deleteAlertsByContext(EntityContext context) throws RuntimeException {
+    public int deleteAlertsByContext(EntityContext context) throws Exception {
         try {
             return this.alertManager.deleteAlertsByContext(getSessionSubject(), context);
         } catch (Throwable t) {
@@ -62,7 +62,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         }
     }
 
-    public int acknowledgeAlerts(int[] alertIds) throws RuntimeException {
+    public int acknowledgeAlerts(int[] alertIds) throws Exception {
         try {
             return this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
         } catch (Throwable t) {
@@ -70,7 +70,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         }
     }
 
-    public int acknowledgeAlertsByContext(EntityContext context) throws RuntimeException {
+    public int acknowledgeAlertsByContext(EntityContext context) throws Exception {
         try {
             return this.alertManager.acknowledgeAlertsByContext(getSessionSubject(), context);
         } catch (Throwable t) {

@@ -18,15 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import javax.persistence.EntityExistsException;
-
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.auth.SubjectException;
 
 /**
  * @see org.rhq.enterprise.server.auth.SubjectManagerLocal
@@ -41,7 +38,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param password The password part ofthe principal
      * @throws Exception if the principal could not be added
      */
-    void createPrincipal(String username, String password);
+    void createPrincipal(String username, String password) throws RuntimeException;
 
     /**
      * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
@@ -50,7 +47,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectToCreate The subject to be created.
      * @return the newly persisted {@link Subject}
      */
-    Subject createSubject(Subject subjectToCreate);
+    Subject createSubject(Subject subjectToCreate) throws RuntimeException;
 
     /**
      * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
@@ -61,7 +58,7 @@ public interface SubjectGWTService extends RemoteService {
      *
      * @return the persisted subject
      */
-    Subject createSubject(Subject subjectToCreate, String password) throws Exception;
+    Subject createSubject(Subject subjectToCreate, String password) throws RuntimeException;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with
@@ -70,7 +67,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectIds identifies the subject IDs for all the users that are to be deleted
      * @throws Exception if failed to delete one or more users
      */
-    void deleteSubjects(int[] subjectIds);
+    void deleteSubjects(int[] subjectIds) throws RuntimeException;
 
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was
@@ -82,14 +79,14 @@ public interface SubjectGWTService extends RemoteService {
      * @throws org.rhq.enterprise.server.exception.LoginException
      *          if the login failed for some reason
      */
-    Subject login(String username, String password);
+    Subject login(String username, String password) throws RuntimeException;
 
     /**
      * Logs out a user.
      *
      * @param subject The username for the current user
      */
-    void logout(Subject subject);
+    void logout(Subject subject) throws RuntimeException;
 
     /**
      * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles, but it will save
@@ -99,7 +96,7 @@ public interface SubjectGWTService extends RemoteService {
      *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
-    Subject updateSubject(Subject subjectToModify);
+    Subject updateSubject(Subject subjectToModify) throws RuntimeException;
 
     /**
      * Updates an existing subject with new data. This cascades changes to roles and LDAP roles, so the passed-in
@@ -110,7 +107,7 @@ public interface SubjectGWTService extends RemoteService {
      *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
-    Subject updateSubject(Subject subjectToModify, String newPassword);
+    Subject updateSubject(Subject subjectToModify, String newPassword) throws RuntimeException;
 
     /**
      * Queries subjects using current logged in user.
@@ -118,7 +115,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param criteria details for the search
      * @return PageList<Subject> matching criteria.
      */
-    PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
+    PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) throws RuntimeException;
 
     /**
      * Checks the subject passed in for LDAP processing, to optionally:
@@ -129,7 +126,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectToModify the subject
      * @param password the LDAP password
      */
-    Subject processSubjectForLdap(Subject subjectToModify, String password);
+    Subject processSubjectForLdap(Subject subjectToModify, String password) throws RuntimeException;
 
     /**
      * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
@@ -140,5 +137,5 @@ public interface SubjectGWTService extends RemoteService {
      *
      * @return <code>true</code> if the user exists and has a {@link Principal}, <code>false</code> otherwise
      */
-    boolean isUserWithPrincipal(String username);
+    boolean isUserWithPrincipal(String username) throws RuntimeException;
 }

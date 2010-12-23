@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -30,7 +29,6 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface AvailabilityGWTService extends RemoteService {
 
-
-    PageList<Availability> findAvailabilityForResource(int resourceId, PageControl pc);
+    PageList<Availability> findAvailabilityForResource(int resourceId, PageControl pc) throws RuntimeException;
 
 }

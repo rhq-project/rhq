@@ -26,7 +26,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.tagging.compsite.TagReportComposite;
@@ -37,24 +36,23 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface TagGWTService extends RemoteService {
 
+    PageList<Tag> findTagsByCriteria(TagCriteria tagCriteria) throws RuntimeException;
 
-    PageList<Tag> findTagsByCriteria(TagCriteria tagCriteria);
+    Set<Tag> addTags(Set<Tag> tags) throws RuntimeException;
 
-    Set<Tag> addTags(Set<Tag> tags);
+    void removeTags(Set<Tag> tags) throws RuntimeException;
 
-    void removeTags(Set<Tag> tags);
+    void updateResourceTags(int resourceId, Set<Tag> tags) throws RuntimeException;
 
-    void updateResourceTags(int resourceId, Set<Tag> tags);
+    void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags) throws RuntimeException;
 
-    void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags);
+    void updateBundleTags(int bundleId, Set<Tag> tags) throws RuntimeException;
 
-    void updateBundleTags(int bundleId, Set<Tag> tags);
+    void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags) throws RuntimeException;
 
-    void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags);
+    void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags) throws RuntimeException;
 
-    void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags);
+    void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags) throws RuntimeException;
 
-    void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags);
-
-    PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria);
+    PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria) throws RuntimeException;
 }

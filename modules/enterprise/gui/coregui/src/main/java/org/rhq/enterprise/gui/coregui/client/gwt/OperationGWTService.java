@@ -33,7 +33,6 @@ import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedCom
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * @author Greg Hinkle
@@ -41,22 +40,25 @@ import org.rhq.core.util.exception.ThrowableUtil;
 public interface OperationGWTService extends RemoteService {
 
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
-        ResourceOperationHistoryCriteria criteria);
+        ResourceOperationHistoryCriteria criteria) throws RuntimeException;
 
-    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria);
+    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
+        throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int pageSize);
+    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int pageSize)
+        throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize);
+    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize)
+        throws RuntimeException;
 
-    void invokeResourceOperation(int resourceId, String operationName, Configuration parameters,
-        String description, int timeout) throws RuntimeException;
+    void invokeResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
+        int timeout) throws RuntimeException;
 
-    void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
-        String description, int timeout, String cronString) throws RuntimeException;
+    void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
+        int timeout, String cronString) throws RuntimeException;
 
     List<ResourceOperationSchedule> findScheduledResourceOperations(int resourceId) throws RuntimeException;
 
     List<GroupOperationSchedule> findScheduledGroupOperations(int groupId) throws RuntimeException;
-    
+
 }

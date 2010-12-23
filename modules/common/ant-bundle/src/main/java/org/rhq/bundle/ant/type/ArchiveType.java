@@ -25,15 +25,18 @@ package org.rhq.bundle.ant.type;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.tools.ant.BuildException;
+
 /**
- * An archive file to be exploded during the bundle deployment. Can optionally contain a rhq:replace child element
- * that specifies the set of files that contain template variables (e.g. @@http.port@@) which need to be replaced with
- * the value of the corresponding property.
+ * An archive file to be exploded during the bundle deployment (it could remain compressed if exploded="false" is specified)
+ * Can optionally contain a rhq:replace child element that specifies the set of files that contain
+ * template variables (e.g. @@http.port@@) which need to be replaced with the value of the corresponding property.
  *
  * @author Ian Springer
  */
 public class ArchiveType extends AbstractFileType {
     private Pattern replacePattern;
+    private String exploded = Boolean.TRUE.toString();
 
     public void addConfigured(ReplaceType replace) {
         List<FileSet> fileSets = replace.getFileSets();
@@ -42,5 +45,16 @@ public class ArchiveType extends AbstractFileType {
 
     public Pattern getReplacePattern() {
         return replacePattern;
+    }
+
+    public String getExploded() {
+        return exploded;
+    }
+
+    public void setExploded(String exploded) {
+        if (!Boolean.TRUE.toString().equalsIgnoreCase(exploded) && !Boolean.FALSE.toString().equalsIgnoreCase(exploded)) {
+            throw new BuildException("'exploded' attribute must be 'true' or 'false': " + exploded);
+        }
+        this.exploded = exploded;
     }
 }

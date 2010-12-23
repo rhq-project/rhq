@@ -101,8 +101,8 @@ public class ManageRootDirTest {
         this.originalZipFiles = new HashSet<File>(1);
         this.originalZipFiles.add(originalZipFile);
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
-        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, deployDir, null, null,
-            null, null, false);
+        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, tmpDir, deployDir, null,
+            null, null, null, false, null);
         Deployer deployer = new Deployer(dd);
         this.originalFileHashcodeMap = deployer.deploy(null);
         this.currentFile = new File(deployDir, originalFileName);
@@ -241,8 +241,8 @@ public class ManageRootDirTest {
         this.originalZipFiles = new HashSet<File>(1);
         this.originalZipFiles.add(originalZipFile);
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
-        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, deployDir, null, null,
-            null, null, false);
+        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, tmpDir, deployDir, null,
+            null, null, null, false, null);
         Deployer deployer = new Deployer(dd);
         this.originalFileHashcodeMap = deployer.deploy(null);
         assert new File(this.deployDir, origFileName1).exists();
@@ -261,7 +261,8 @@ public class ManageRootDirTest {
             new String[] { newFileName1, newFileName2 });
         HashSet<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
-        dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null, false);
+        dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null, null, false,
+            null);
         deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap = deployer.deploy(this.diff);
         assert new File(this.deployDir, newFileName1).exists();
@@ -275,8 +276,8 @@ public class ManageRootDirTest {
     }
 
     private void baseX_X_X(boolean dryRun) throws Exception {
-        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, deployDir, null, null, null,
-            null, false);
+        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, tmpDir, deployDir, null, null,
+            null, null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -319,8 +320,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -367,8 +368,8 @@ public class ManageRootDirTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, deployDir, null, null, null,
-            null, false);
+        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, tmpDir, deployDir, null, null,
+            null, null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -417,8 +418,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -467,8 +468,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -531,8 +532,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -594,8 +595,8 @@ public class ManageRootDirTest {
         String inTheWayHashcode = MessageDigestGenerator.getDigestString(inTheWayContent);
         writeFile(inTheWayContent, inTheWayFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -650,8 +651,8 @@ public class ManageRootDirTest {
     private void baseNoCurrent(boolean dryRun) throws Exception {
         assert this.currentFile.delete() : "Failed to delete the current file, cannot prepare the test";
 
-        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, deployDir, null, null, null,
-            null, false);
+        DeploymentData dd = new DeploymentData(newDeployProps, originalZipFiles, null, tmpDir, deployDir, null, null,
+            null, null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -702,8 +703,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -767,8 +768,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         if (dryRun) {
@@ -842,8 +843,8 @@ public class ManageRootDirTest {
         Set<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, null,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            null, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         newFileHashcodeMap = deployer.deploy(this.diff); // no dry run - we need to do this to force backup file creation
@@ -883,7 +884,8 @@ public class ManageRootDirTest {
         DeploymentProperties v1Duplicate = new DeploymentProperties();
         v1Duplicate.putAll(this.originalDeployProps);
         v1Duplicate.setDeploymentId(3); // this is the same as v1, but it needs a unique deployment ID
-        dd = new DeploymentData(v1Duplicate, originalZipFiles, null, deployDir, null, null, null, null, false);
+        dd = new DeploymentData(v1Duplicate, originalZipFiles, null, tmpDir, deployDir, null, null, null, null, false,
+            null);
         deployer = new Deployer(dd);
         this.diff = new DeployDifferences();
         FileHashcodeMap restoreFileHashcodeMap;
@@ -933,8 +935,8 @@ public class ManageRootDirTest {
         Pattern iRegex = Pattern.compile(".*ignoreSubdir.*"); // this matches the subdirectory name, thus everything under it is ignored
         assert ignoredFile.exists() : "for some reason we couldn't create our test file; cannot know if clean worked";
 
-        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, deployDir, null, null, null, iRegex,
-            false);
+        DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
+            iRegex, false, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
         newFileHashcodeMap = deployer.deploy(this.diff, true, dryRun); // note: clean is true

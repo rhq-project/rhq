@@ -51,6 +51,7 @@ public class DeploymentUnitType extends AbstractBundleType {
     private Map<File, File> files = new LinkedHashMap<File, File>();
     private Set<File> rawFilesToReplace = new LinkedHashSet<File>();
     private Set<File> archives = new LinkedHashSet<File>();
+    private Map<File, Boolean> archivesExploded = new HashMap<File, Boolean>();
     private Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
     private SystemServiceType systemService;
     private Pattern ignorePattern;
@@ -98,8 +99,9 @@ public class DeploymentUnitType extends AbstractBundleType {
                 Project.MSG_VERBOSE);
         }
 
-        DeploymentData deploymentData = new DeploymentData(deploymentProps, this.archives, this.files, deployDir,
-            this.archiveReplacePatterns, this.rawFilesToReplace, templateEngine, this.ignorePattern, willManageRootDir);
+        DeploymentData deploymentData = new DeploymentData(deploymentProps, this.archives, this.files, getProject()
+            .getBaseDir(), deployDir, this.archiveReplacePatterns, this.rawFilesToReplace, templateEngine,
+            this.ignorePattern, willManageRootDir, this.archivesExploded);
         Deployer deployer = new Deployer(deploymentData);
         try {
             DeployDifferences diffs = getProject().getDeployDifferences();
@@ -181,6 +183,17 @@ public class DeploymentUnitType extends AbstractBundleType {
         return archives;
     }
 
+    /**
+     * Returns a map keyed on {@link #getArchives() archive names} whose values
+     * are either true or false, where true means the archive is to be deployed exploded
+     * and false means the archive should be deployed in compressed form.
+     * 
+     * @return map showing how an archive should be deployed in its final form
+     */
+    public Map<File, Boolean> getArchivesExploded() {
+        return archivesExploded;
+    }
+
     public String getPreinstallTarget() {
         return preinstallTarget;
     }
@@ -231,6 +244,8 @@ public class DeploymentUnitType extends AbstractBundleType {
         if (replacePattern != null) {
             this.archiveReplacePatterns.put(archive.getSource(), replacePattern);
         }
+        Boolean exploded = Boolean.valueOf(archive.getExploded());
+        this.archivesExploded.put(archive.getSource(), exploded);
     }
 
     public void addConfigured(IgnoreType ignore) {

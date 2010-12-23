@@ -476,6 +476,71 @@ public class AntLauncherTest {
             "777");
     }
 
+    public void testSubdirectoriesInRecipe() throws Exception {
+        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
+        FileUtil.purge(DEPLOY_DIR, true);
+
+        // we need to create our own directory structure - let's build a temporary ant basedir
+        // and put our recipe in there as well as a subdirectory with a test raw file and test zip file
+        File antBasedir = FileUtil.createTempDirectory("anttest", ".test", null);
+        try {
+            File subdir = new File(antBasedir, "subdir"); // must match the name in the recipe
+            subdir.mkdirs();
+            writeFile("file1", subdir, "test1.txt"); // filename must match recipe
+            writeFile("file2", subdir, "test2.txt"); // filename must match recipe
+            createZip(new String[] { "one", "two" }, subdir, "test.zip", new String[] { "one.txt", "two.txt" });
+            createZip(new String[] { "3", "4" }, subdir, "test-explode.zip", new String[] { "three.txt", "four.txt" });
+            createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace.zip", new String[] { "template.txt" }); // will be exploded then recompressed
+            File recipeFile = new File(antBasedir, "deploy.xml");
+            FileUtil.copyFile(new File(ANT_BASEDIR, "test-bundle-subdir.xml"), recipeFile);
+
+            AntLauncher ant = new AntLauncher();
+            Properties inputProps = new Properties();
+            inputProps.setProperty(DeployPropertyNames.DEPLOY_DIR, DEPLOY_DIR.getPath());
+            inputProps.setProperty(DeployPropertyNames.DEPLOY_ID, String.valueOf(++this.deploymentId));
+            inputProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, DeploymentPhase.INSTALL.name());
+            inputProps.setProperty("X", "alpha-omega");
+            List<BuildListener> buildListeners = createBuildListeners();
+
+            BundleAntProject project = ant.executeBundleDeployFile(recipeFile, inputProps, buildListeners);
+            assert project != null;
+            Set<String> bundleFiles = project.getBundleFileNames();
+            assert bundleFiles != null;
+            assert bundleFiles.size() == 5 : bundleFiles;
+            assert bundleFiles.contains("subdir/test1.txt") : bundleFiles;
+            assert bundleFiles.contains("subdir/test2.txt") : bundleFiles;
+            assert bundleFiles.contains("subdir/test.zip") : bundleFiles;
+            assert bundleFiles.contains("subdir/test-explode.zip") : bundleFiles;
+            assert bundleFiles.contains("subdir/test-replace.zip") : bundleFiles;
+
+            assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
+            assert new File(DEPLOY_DIR, "second.dir/test2.txt").exists() : "missing raw file from the destinationDir";
+            assert !new File(DEPLOY_DIR, "subdir/test1.zip").exists() : "should not be here because destinationFile was specified";
+            assert !new File(DEPLOY_DIR, "subdir/test2.zip").exists() : "should not be here because destinationFile was specified";
+            assert new File(DEPLOY_DIR, "subdir/test.zip").exists() : "missing unexploded zip file";
+            assert new File(DEPLOY_DIR, "subdir/test-replace.zip").exists() : "missing unexploded zip file";
+            assert !new File(DEPLOY_DIR, "subdir/test-explode.zip").exists() : "should have been exploded";
+
+            // test that the file in the zip is realized
+            final String[] templateVarValue = new String[] { null };
+            ZipUtil.walkZipFile(new File(DEPLOY_DIR, "subdir/test-replace.zip"), new ZipUtil.ZipEntryVisitor() {
+                @Override
+                public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                    if (entry.getName().equals("template.txt")) {
+                        Properties props = new Properties();
+                        props.load(stream);
+                        templateVarValue[0] = props.getProperty("X");
+                    }
+                    return true;
+                }
+            });
+            assert templateVarValue[0] != null && templateVarValue[0].equals("alpha-omega") : templateVarValue[0];
+
+        } finally {
+            FileUtil.purge(antBasedir, true);
+        }
+    }
+
     private List<BuildListener> createBuildListeners() {
         List<BuildListener> buildListeners = new ArrayList<BuildListener>();
         DefaultLogger logger = new DefaultLogger();

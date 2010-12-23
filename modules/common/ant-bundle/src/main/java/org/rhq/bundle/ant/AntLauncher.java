@@ -238,13 +238,13 @@ public class AntLauncher {
                 "The bundle task must contain exactly one rhq:deploymentUnit child element.");
         }
         DeploymentUnitType deployment = deployments.iterator().next();
-        Map<File, File> files = deployment.getFiles();
-        for (File file : files.keySet()) {
-            project.getBundleFileNames().add(file.getName());
+        Map<File, String> files = deployment.getLocalFileNames();
+        for (String file : files.values()) {
+            project.getBundleFileNames().add(file);
         }
-        Set<File> archives = deployment.getArchives();
-        for (File archive : archives) {
-            project.getBundleFileNames().add(archive.getName());
+        Map<File, String> archives = deployment.getLocalArchiveNames();
+        for (String archive : archives.values()) {
+            project.getBundleFileNames().add(archive);
         }
     }
 

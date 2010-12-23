@@ -18,18 +18,18 @@
  */
 package org.rhq.bundle.ant.type;
 
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.taskdefs.Chmod;
-import org.apache.tools.ant.taskdefs.Copy;
-import org.apache.tools.ant.taskdefs.Execute;
-import org.apache.tools.ant.taskdefs.optional.unix.Symlink;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.taskdefs.Chmod;
+import org.apache.tools.ant.taskdefs.Copy;
+import org.apache.tools.ant.taskdefs.Execute;
+import org.apache.tools.ant.taskdefs.optional.unix.Symlink;
 
 /**
  * An Ant task that installs a system startup/shutdown service. Currently only Red Hat Linux versions are supported.
@@ -53,6 +53,8 @@ public class SystemServiceType extends AbstractBundleType {
     private String name;
     private File scriptFile;
     private File configFile;
+    private String scriptFileName;
+    private String configFileName;
     private boolean overwriteScript;
     private boolean overwriteConfig;
     private boolean overwriteLinks = true;
@@ -64,7 +66,7 @@ public class SystemServiceType extends AbstractBundleType {
      * before services with a higher priority number.
      */
     private Byte startPriority;
-    
+
     /**
      * An integer from 0-99 indicating the service's stop order - services with a lower priority number are stopped
      * before services with a higher priority number.
@@ -79,13 +81,13 @@ public class SystemServiceType extends AbstractBundleType {
 
     public void validate() throws BuildException {
         validateAttributes();
-        
+
         this.scriptDestFile = new File(getInitDir(), this.name);
         this.configDestFile = new File(getSysConfigDir(), this.name);
     }
 
     public void init() throws BuildException {
-        if (!OS_NAME.equals("Linux") || !REDHAT_RELEASE_FILE.exists() ) {
+        if (!OS_NAME.equals("Linux") || !REDHAT_RELEASE_FILE.exists()) {
             throw new BuildException("The system-service element is only supported on Red Hat Linux systems.");
         }
 
@@ -116,7 +118,7 @@ public class SystemServiceType extends AbstractBundleType {
         // Install the script itself (e.g. /etc/init.d/named).
         File initDir = getInitDir();
         if (!initDir.exists()) {
-           initDir.mkdirs();
+            initDir.mkdirs();
         }
         if (!initDir.canWrite()) {
             throw new BuildException(initDir + " directory is not writeable.");
@@ -150,23 +152,23 @@ public class SystemServiceType extends AbstractBundleType {
 
     public void start() throws BuildException {
         File scriptFile = getScriptDestFile();
-        String[] commandLine = {scriptFile.getAbsolutePath(), "start"};
+        String[] commandLine = { scriptFile.getAbsolutePath(), "start" };
         try {
             executeCommand(commandLine);
         } catch (IOException e) {
-            throw new BuildException("Failed to start " + this.name + " system service via command [" + Arrays.toString(commandLine)
-                    + "].", e);
+            throw new BuildException("Failed to start " + this.name + " system service via command ["
+                + Arrays.toString(commandLine) + "].", e);
         }
     }
 
     public void stop() throws BuildException {
         File scriptFile = getScriptDestFile();
-        String[] commandLine = {scriptFile.getAbsolutePath(), "stop"};
+        String[] commandLine = { scriptFile.getAbsolutePath(), "stop" };
         try {
             executeCommand(commandLine);
         } catch (IOException e) {
-            throw new BuildException("Failed to stop " + this.name + " system service via command [" + Arrays.toString(commandLine)
-                    + "].", e);
+            throw new BuildException("Failed to stop " + this.name + " system service via command ["
+                + Arrays.toString(commandLine) + "].", e);
         }
     }
 
@@ -182,6 +184,10 @@ public class SystemServiceType extends AbstractBundleType {
         this.name = name;
     }
 
+    public String getScriptFileName() {
+        return scriptFileName;
+    }
+
     public File getScriptFile() {
         return scriptFile;
     }
@@ -192,7 +198,12 @@ public class SystemServiceType extends AbstractBundleType {
             throw new BuildException("Path specified by 'scriptFile' attribute (" + scriptFile
                 + ") is not relative - it must be a relative path, relative to the Ant basedir.");
         }
+        this.scriptFileName = scriptFile;
         this.scriptFile = getProject().resolveFile(scriptFile);
+    }
+
+    public String getConfigFileName() {
+        return configFileName;
     }
 
     public File getConfigFile() {
@@ -205,6 +216,7 @@ public class SystemServiceType extends AbstractBundleType {
             throw new BuildException("Path specified by 'configFile' attribute (" + configFile
                 + ") is not relative - it must be a relative path, relative to the Ant basedir.");
         }
+        this.configFileName = configFile;
         this.configFile = getProject().resolveFile(configFile);
     }
 
@@ -290,7 +302,7 @@ public class SystemServiceType extends AbstractBundleType {
             throw new BuildException("The 'startLevels' attribute must have a non-empty value.");
         }
         this.startLevelChars = parseLevels(this.startLevels);
-        this.stopLevelChars = new TreeSet<Character>(); 
+        this.stopLevelChars = new TreeSet<Character>();
         for (char level : REDHAT_RUN_LEVELS) {
             if (!this.startLevelChars.contains(level)) {
                 this.stopLevelChars.add(level);
@@ -314,7 +326,7 @@ public class SystemServiceType extends AbstractBundleType {
             this.root.mkdirs();
             if (!this.root.exists()) {
                 throw new BuildException("Failed to create root directory " + this.root
-                        + " as specified by 'root' attribute.");
+                    + " as specified by 'root' attribute.");
             }
         }
         if (!this.root.isDirectory()) {
@@ -341,12 +353,15 @@ public class SystemServiceType extends AbstractBundleType {
                     }
 
                 } catch (Exception e) {
-                    throw new BuildException("Invalid run level: " + token
+                    throw new BuildException(
+                        "Invalid run level: "
+                            + token
                             + " - the 'startLevels' attribute must be a comma-separated list of run levels - the valid levels are "
                             + REDHAT_RUN_LEVELS + ".");
                 }
                 if (levelChars.contains(level)) {
-                    throw new BuildException("The 'startLevels' attribute defines run level " + level + " more than once.");
+                    throw new BuildException("The 'startLevels' attribute defines run level " + level
+                        + " more than once.");
                 }
                 levelChars.add(level);
             }
@@ -399,7 +414,7 @@ public class SystemServiceType extends AbstractBundleType {
 
     private int executeCommand(String[] commandLine) throws IOException {
         Execute executeTask = new Execute();
-        executeTask.setCommandline(commandLine);        
+        executeTask.setCommandline(commandLine);
         return executeTask.execute();
     }
 

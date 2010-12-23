@@ -49,8 +49,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     private String name;
     private String manageRootDir = Boolean.TRUE.toString();
     private Map<File, File> files = new LinkedHashMap<File, File>();
+    private Map<File, String> localFileNames = new LinkedHashMap<File, String>();
     private Set<File> rawFilesToReplace = new LinkedHashSet<File>();
     private Set<File> archives = new LinkedHashSet<File>();
+    private Map<File, String> localArchiveNames = new LinkedHashMap<File, String>();
     private Map<File, Boolean> archivesExploded = new HashMap<File, Boolean>();
     private Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
     private SystemServiceType systemService;
@@ -175,12 +177,47 @@ public class DeploymentUnitType extends AbstractBundleType {
         this.manageRootDir = booleanString;
     }
 
+    /**
+     * Returns a map of all raw files. The key is the full absolute path
+     * to the file as it does or would appear on the file system. The value
+     * is a path that is either absolute or relative - it is the destination
+     * where the file is to be placed when being deployed on the destination file system;
+     * if the value is relative, then it is relative to the root destination directory.
+     * 
+     * @return map of raw files
+     */
     public Map<File, File> getFiles() {
         return files;
     }
 
+    /**
+     * Returns a map of all raw files. The key is the full absolute path
+     * to the file as it does or would appear on the file system (the same key
+     * as the keys in map {@link #getFiles()}).
+     * The value is a path relative to the file as it is found in the bundle distro (this 
+     * is the "name" attribute of the "file" type tag).
+     * 
+     * @return map of local file names
+     */
+    public Map<File, String> getLocalFileNames() {
+        return localFileNames;
+    }
+
     public Set<File> getArchives() {
         return archives;
+    }
+
+    /**
+     * Returns a map of all archive files. The key is the full absolute path
+     * to the archive as it does or would appear on the file system (the same key
+     * as the keys in map {@link #getArchives()}).
+     * The value is a path relative to the file as it is found in the bundle distro (this 
+     * is the "name" attribute of the "archive" type tag).
+     * 
+     * @return map of local file names
+     */
+    public Map<File, String> getLocalArchiveNames() {
+        return localArchiveNames;
     }
 
     /**
@@ -220,8 +257,10 @@ public class DeploymentUnitType extends AbstractBundleType {
 
         // Add the init script and its config file to the list of bundle files.
         this.files.put(this.systemService.getScriptFile(), this.systemService.getScriptDestFile());
+        this.localFileNames.put(this.systemService.getScriptFile(), this.systemService.getScriptFileName());
         if (this.systemService.getConfigFile() != null) {
             this.files.put(this.systemService.getConfigFile(), this.systemService.getConfigDestFile());
+            this.localFileNames.put(this.systemService.getConfigFile(), this.systemService.getConfigFileName());
             this.rawFilesToReplace.add(this.systemService.getConfigFile());
         }
     }
@@ -232,7 +271,8 @@ public class DeploymentUnitType extends AbstractBundleType {
             File destDir = file.getDestinationDir();
             destFile = new File(destDir, file.getSource().getName());
         }
-        this.files.put(file.getSource(), destFile);
+        this.files.put(file.getSource(), destFile); // key=full absolute path, value=could be relative or absolute
+        this.localFileNames.put(file.getSource(), file.getName());
         if (file.isReplace()) {
             this.rawFilesToReplace.add(file.getSource());
         }
@@ -240,6 +280,7 @@ public class DeploymentUnitType extends AbstractBundleType {
 
     public void addConfigured(ArchiveType archive) {
         this.archives.add(archive.getSource());
+        this.localArchiveNames.put(archive.getSource(), archive.getName());
         Pattern replacePattern = archive.getReplacePattern();
         if (replacePattern != null) {
             this.archiveReplacePatterns.put(archive.getSource(), replacePattern);

@@ -29,6 +29,7 @@ import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -425,7 +426,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             // nothing to do, result is already null
         } else if (type == Integer.class) {
             int[] intermediates;
-            if (type.getClass().isArray()) {
+            if (isArray(value)) {
                 intermediates = criteria.getAttributeAsIntArray(paramName);
             } else { // want array return, but only single instance of the type in the request
                 intermediates = new int[] { criteria.getAttributeAsInt(paramName) };
@@ -437,7 +438,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             }
         } else if (type == String.class) {
             String[] intermediates;
-            if (type.getClass().isArray()) {
+            if (isArray(value)) {
                 intermediates = criteria.getAttributeAsStringArray(paramName);
             } else { // want array return, but only single instance of the type in the request
                 intermediates = new String[] { criteria.getAttributeAsString(paramName) };
@@ -449,7 +450,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             }
         } else if (type.isEnum()) {
             String[] intermediates;
-            if (type.getClass().isArray()) {
+            if (isArray(value)) {
                 intermediates = criteria.getAttributeAsStringArray(paramName);
             } else { // want array return, but only single instance of the type in the request
                 intermediates = new String[] { criteria.getAttributeAsString(paramName) };
@@ -468,6 +469,10 @@ public abstract class RPCDataSource<T> extends DataSource {
         return resultArray;
     }
 
+    private static boolean isArray(Object value) {
+        return value.getClass().isArray() || value.getClass().equals(ArrayList.class);
+    }
+
     @SuppressWarnings("unchecked")
     private static <S> S[] getEnumArray(Class<S> genericEnumType, int size) {
         // workaround until GWT implements reflection APIs, so we can do: 
@@ -484,8 +489,17 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     @SuppressWarnings("unchecked")
+    public static void printRequestCriteria(DSRequest request) {
+        Criteria criteria = request.getCriteria();
+        Map<String, Object> criteriaMap = criteria.getValues();
+
+        for (Map.Entry<String, Object> nextEntry : criteriaMap.entrySet()) {
+            Window.alert(nextEntry.getKey() + ":" + nextEntry.getValue());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        Log.debug("Fetching " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 

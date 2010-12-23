@@ -208,9 +208,13 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new RecentlyAddedResourcesPortlet(locatorId);
+            if (reference == null) {
+                reference = new RecentlyAddedResourcesPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

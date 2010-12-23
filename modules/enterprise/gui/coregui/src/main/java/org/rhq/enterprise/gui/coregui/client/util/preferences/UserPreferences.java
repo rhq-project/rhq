@@ -75,19 +75,14 @@ public class UserPreferences {
 
     public int getPageRefreshInterval() {
         if ((getPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD) == null)
-            || (Long.valueOf(getPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD)) < MeasurementUtility.MINUTES)) {
-            //default to 60 seconds
+            || (Integer.valueOf(getPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD)) == 60)) {//default to 60 seconds
             setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(MeasurementUtility.MINUTES));
         }
         return getPreferenceAsInteger(UserPreferenceNames.PAGE_REFRESH_PERIOD);
     }
 
     public void setPageRefreshInterval(int refreshInterval, AsyncCallback<Subject> callback) {
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-            setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(refreshInterval));
-        } else {
-            setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(MeasurementUtility.MINUTES));
-        }
+        setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(refreshInterval));
         store(callback);
     }
 

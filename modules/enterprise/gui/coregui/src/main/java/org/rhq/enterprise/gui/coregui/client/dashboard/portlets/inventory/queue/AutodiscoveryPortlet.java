@@ -180,9 +180,13 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private static Portlet reference = null;
 
         public final Portlet getInstance(String locatorId) {
-            return new AutodiscoveryPortlet(locatorId);
+            if (reference == null) {
+                reference = new AutodiscoveryPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

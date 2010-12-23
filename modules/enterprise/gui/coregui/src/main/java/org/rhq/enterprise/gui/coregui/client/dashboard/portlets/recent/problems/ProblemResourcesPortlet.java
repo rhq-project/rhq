@@ -239,9 +239,13 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new ProblemResourcesPortlet(locatorId);
+            if (reference == null) {
+                reference = new ProblemResourcesPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

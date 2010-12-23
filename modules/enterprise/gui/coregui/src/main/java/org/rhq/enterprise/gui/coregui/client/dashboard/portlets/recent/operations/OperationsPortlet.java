@@ -366,9 +366,13 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new OperationsPortlet(locatorId);
+            if (reference == null) {
+                reference = new OperationsPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

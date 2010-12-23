@@ -107,10 +107,14 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
             //return GWT.create(FavoriteResourcesPortlet.class);
-            return new FavoriteResourcesPortlet(locatorId);
+            if (reference == null) {
+                reference = new FavoriteResourcesPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

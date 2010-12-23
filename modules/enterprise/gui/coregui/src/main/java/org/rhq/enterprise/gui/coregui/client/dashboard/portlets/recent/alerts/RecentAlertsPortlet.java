@@ -531,9 +531,13 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new RecentAlertsPortlet(locatorId);
+            if (reference == null) {
+                reference = new RecentAlertsPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

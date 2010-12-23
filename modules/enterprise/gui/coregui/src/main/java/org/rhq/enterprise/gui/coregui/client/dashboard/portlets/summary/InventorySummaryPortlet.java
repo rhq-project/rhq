@@ -163,10 +163,14 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
             // return GWT.create(InventorySummaryView.class);
-            return new InventorySummaryPortlet(locatorId);
+            if (reference == null) {
+                reference = new InventorySummaryPortlet(locatorId);
+            }
+            return reference;
         }
     }
 

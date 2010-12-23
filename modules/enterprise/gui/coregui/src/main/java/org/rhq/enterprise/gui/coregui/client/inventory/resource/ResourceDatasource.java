@@ -164,7 +164,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
-
+        //printRequestCriteria(request);
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
@@ -177,6 +177,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
+        criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;
     }

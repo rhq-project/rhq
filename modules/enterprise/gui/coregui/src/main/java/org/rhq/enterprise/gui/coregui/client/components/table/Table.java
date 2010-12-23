@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -51,6 +52,7 @@ import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -715,9 +717,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
+    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler,
+        com.google.gwt.event.dom.client.KeyPressHandler {
 
         private Table table;
+        private SearchBarItem searchBarItem;
+        private HiddenItem hiddenItem;
 
         public TableFilter(Table table) {
             super();
@@ -728,12 +733,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         @Override
         public void setItems(FormItem... items) {
-            super.setItems(items);
-            setupFormItems(items);
-        }
-
-        private void setupFormItems(FormItem... formItems) {
-            for (FormItem nextFormItem : formItems) {
+            for (FormItem nextFormItem : items) {
                 nextFormItem.setWrapTitle(false);
                 nextFormItem.setWidth(300); // wider than default
                 if (nextFormItem instanceof TextItem) {
@@ -741,9 +741,22 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 } else if (nextFormItem instanceof SelectItem) {
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof SearchBarItem) {
-                    nextFormItem.addKeyPressHandler(this);
+                    searchBarItem = (SearchBarItem) nextFormItem;
+                    searchBarItem.getSearchBar().addKeyPressHandler(this);
+                    String name = searchBarItem.getName();
+                    searchBarItem.setName(name + "_hidden");
+                    hiddenItem = new HiddenItem(name);
                 }
             }
+
+            if (hiddenItem != null) {
+                FormItem[] tmpItems = new FormItem[items.length + 1];
+                System.arraycopy(items, 0, tmpItems, 0, items.length);
+                tmpItems[items.length] = hiddenItem;
+                items = tmpItems;
+            }
+
+            super.setItems(items);
         }
 
         private void fetchFilteredTableData() {
@@ -765,6 +778,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             return super.getFields().length != 0;
         }
 
+        @Override
+        public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
+            if (event.getCharCode() != KeyCodes.KEY_ENTER) {
+                return;
+            }
+            // TODO: figure out why this event is being sent twice
+            hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
+            fetchFilteredTableData();
+        }
     }
 
     public static class TableActionInfo {

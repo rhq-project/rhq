@@ -32,8 +32,8 @@ public class SearchBarItem extends CanvasItem {
     private Canvas canvas = new Canvas();
     private FlexSearchBar searchBar;
 
-    public SearchBarItem(SearchSubsystem subsystem) {
-        super("Search");
+    public SearchBarItem(String name, String title, SearchSubsystem subsystem) {
+        super(name, title);
 
         searchBar = new FlexSearchBar();
         searchBar.setSearchSubsystem(subsystem);
@@ -48,6 +48,10 @@ public class SearchBarItem extends CanvasItem {
     @Override
     public Canvas getCanvas() {
         return canvas;
+    }
+
+    public FlexSearchBar getSearchBar() {
+        return searchBar;
     }
 
 }

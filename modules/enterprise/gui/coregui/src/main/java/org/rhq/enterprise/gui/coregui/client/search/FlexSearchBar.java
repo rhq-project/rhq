@@ -34,11 +34,6 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -94,23 +89,6 @@ public class FlexSearchBar extends AbstractSearchBar {
     private String defaultSearchText;
     private String defaultSavedSearchPatternId;
 
-    private Element searchButton;
-
-    public void setupButton() {
-        searchButton = DOM.createButton();
-        Event.addNativePreviewHandler(new NativePreviewHandler() {
-            public void onPreviewNativeEvent(NativePreviewEvent event) {
-                if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
-
-                    if (event.getNativeEvent().getEventTarget().equals(searchButton)
-                        && event.getTypeInt() == Event.ONMOUSEDOWN) {
-                        //prepareSearchExecution();
-                    }
-                }
-            }
-        });
-    }
-
     HorizontalPanel sbc;
     HorizontalPanel sbc_sbbgc;
     HorizontalPanel sbc_sbbgc_sbcc;
@@ -143,6 +121,14 @@ public class FlexSearchBar extends AbstractSearchBar {
         sbc_sbbc = createHPanel(sbc, "searchBarButtonContainer", "searchButtonContainer");
         sbc_pfsc = createHPanel(sbc, null, "patternFieldSuggestionsContainer");
         sbc_ssc = createHPanel(sbc, null, "savedSearchesContainer");
+
+        sbc_sbbgc_sbcc_sbclhs_pfc.add(autoCompletePatternField);
+        sbc_sbbgc_sbcc_sbcrhs_pnfc.add(patternNameField);
+        sbc_sbbgc_sbcc_sbcrhs_pnlc.add(patternNameLabel);
+        sbc_sbbgc_sbcc_sbcrhs_sic.add(starImage);
+        sbc_sbbgc_sbcc_sbcrhs_aic.add(arrowImage);
+        sbc_ssc.add(savedSearchesPanel);
+
         initWidget(sbc);
 
         savedSearchManager = new SavedSearchManager(this);
@@ -163,13 +149,6 @@ public class FlexSearchBar extends AbstractSearchBar {
     }
 
     public void onSavedSearchManagerLoaded() {
-        sbc_sbbgc_sbcc_sbclhs_pfc.add(autoCompletePatternField);
-        sbc_sbbgc_sbcc_sbcrhs_pnfc.add(patternNameField);
-        sbc_sbbgc_sbcc_sbcrhs_pnlc.add(patternNameLabel);
-        sbc_sbbgc_sbcc_sbcrhs_sic.add(starImage);
-        sbc_sbbgc_sbcc_sbcrhs_aic.add(arrowImage);
-        sbc_ssc.add(savedSearchesPanel);
-
         setupAutoCompletingPatternField();
         setupPatternNameField();
         setupPatternNameLabel();
@@ -179,14 +158,12 @@ public class FlexSearchBar extends AbstractSearchBar {
 
         if (defaultSearchText != null) {
             this.autoCompletePatternField.setText(defaultSearchText);
-            click(searchButton); // execute the search with this default search expression
         } else if (defaultSavedSearchPatternId != null) {
             try {
                 Integer savedSearchId = Integer.valueOf(defaultSavedSearchPatternId);
                 activateSavedSearch(savedSearchId);
             } catch (Exception e) {
                 this.autoCompletePatternField.setText(MSG.view_searchBar_error_selectSavedSearch());
-                click(searchButton); // execute the search, which will help to further highlight the error
             }
         }
 
@@ -475,11 +452,6 @@ public class FlexSearchBar extends AbstractSearchBar {
         }
     }
 
-    private static native void click(Element button)
-    /*-{
-        button.click();
-    }-*/;
-
     public void activateSavedSearch(Integer savedSearchId) {
         SavedSearch savedSearch = savedSearchManager.getSavedSearchById(savedSearchId);
         if (savedSearch == null) {
@@ -505,11 +477,18 @@ public class FlexSearchBar extends AbstractSearchBar {
         Log.debug("search results change: [" + savedSearch.getName() + "," + savedSearch.getPattern() + "]");
         turnNameFieldIntoLabel();
         savedSearchesPanel.hide();
-        click(searchButton);
     }
 
     public String getSelectedTab() {
         return null;
+    }
+
+    public void addKeyPressHandler(KeyPressHandler handler) {
+        autoCompletePatternField.addKeyPressHandler(handler);
+    }
+
+    public String getValue() {
+        return autoCompletePatternField.getValue();
     }
 
 }

@@ -21,7 +21,7 @@ public class TestSearchBarView extends ResourceSearchView {
         final TextItem nameFilter = new TextItem(NAME.propertyName(), NAME.title());
         final EnumSelectItem categoryFilter = new EnumSelectItem(CATEGORY.propertyName(), CATEGORY.title(),
             ResourceCategory.class);
-        final SearchBarItem searchFilter = new SearchBarItem(SearchSubsystem.RESOURCE);
+        final SearchBarItem searchFilter = new SearchBarItem("search", "Search", SearchSubsystem.RESOURCE);
 
         setFilterFormItems(nameFilter, categoryFilter, searchFilter);
     }

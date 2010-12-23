@@ -19,10 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
@@ -44,39 +42,44 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class PortletFactory {
 
-    private static Map<String, PortletViewFactory> registeredPortlets;
+    private static HashMap<String, PortletViewFactory> registeredPortletFactoryMap;
+    private static HashMap<String, String> registeredPortletNameMap;
 
     static {
-        registeredPortlets = new HashMap<String, PortletViewFactory>();
+        registeredPortletFactoryMap = new HashMap<String, PortletViewFactory>();
+        registeredPortletFactoryMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(RecentlyAddedResourcesPortlet.KEY,
+            RecentlyAddedResourcesPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(GraphPortlet.KEY, GraphPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
 
-        registeredPortlets.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(GraphPortlet.KEY, GraphPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
-
-        registeredPortlets.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
+        registeredPortletNameMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
+        registeredPortletNameMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.NAME);
+        registeredPortletNameMap.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.NAME);
+        registeredPortletNameMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.NAME);
+        registeredPortletNameMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.NAME);
+        registeredPortletNameMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.NAME);
+        registeredPortletNameMap.put(GraphPortlet.KEY, GraphPortlet.NAME);
+        registeredPortletNameMap.put(TagCloudPortlet.KEY, TagCloudPortlet.NAME);
+        registeredPortletNameMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.NAME);
+        registeredPortletNameMap.put(MashupPortlet.KEY, MashupPortlet.NAME);
+        registeredPortletNameMap.put(MessagePortlet.KEY, MessagePortlet.NAME);
+        registeredPortletNameMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.NAME);
+        registeredPortletNameMap.put(OperationsPortlet.KEY, OperationsPortlet.NAME);
+        //registeredPortletNameMap = Collections.unmodifiableMap(registeredPortletNameMap);
     }
 
     public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
-        PortletViewFactory viewFactory = registeredPortlets.get(storedPortlet.getPortletKey());
+        PortletViewFactory viewFactory = registeredPortletFactoryMap.get(storedPortlet.getPortletKey());
 
         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
         // tests as a change in the number of default portlets, or a change in test order could make a test
@@ -93,18 +96,29 @@ public class PortletFactory {
         return view;
     }
 
-    @SuppressWarnings("unchecked")
     public static List<String> getRegisteredPortletKeys() {
 
-        ArrayList portlets = new ArrayList(registeredPortlets.keySet());
-        Collections.sort(portlets);
-        return portlets;
+        ArrayList<String> portletKeys = new ArrayList<String>(registeredPortletFactoryMap.keySet());
+        return portletKeys;
     }
 
-    public static PortletViewFactory getRegisteredPortlet(String key) {
+    /** 
+     * @return Unmodifiable Map of registered portlet keys to names
+     */
+    public static HashMap<String, String> getRegisteredPortletNameMap() {
+
+        return registeredPortletNameMap;
+    }
+
+    public static String getRegisteredPortletName(String key) {
+
+        return registeredPortletNameMap.get(key);
+    }
+
+    public static PortletViewFactory getRegisteredPortletFactory(String key) {
         PortletViewFactory portletFactory = null;
         if ((key != null) & (!key.trim().isEmpty())) {
-            portletFactory = registeredPortlets.get(key);
+            portletFactory = registeredPortletFactoryMap.get(key);
         }
         return portletFactory;
     }

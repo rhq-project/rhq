@@ -199,8 +199,11 @@ public class DashboardView extends LocatableVLayout {
         });
 
         Menu addPortletMenu = new Menu();
-        for (String portletName : PortletFactory.getRegisteredPortletKeys()) {
-            addPortletMenu.addItem(new MenuItem(portletName));
+        HashMap<String, String> keyNameMap = PortletFactory.getRegisteredPortletNameMap();
+        for (String portletKey : keyNameMap.keySet()) {
+            MenuItem menuItem = new MenuItem(keyNameMap.get(portletKey));
+            menuItem.setAttribute("portletKey", portletKey);
+            addPortletMenu.addItem(menuItem);
         }
 
         addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
@@ -211,8 +214,9 @@ public class DashboardView extends LocatableVLayout {
 
         addPortletMenu.addItemClickHandler(new ItemClickHandler() {
             public void onItemClick(ItemClickEvent itemClickEvent) {
-                String portletTitle = itemClickEvent.getItem().getTitle();
-                addPortlet(portletTitle, portletTitle);
+                String key = itemClickEvent.getItem().getAttribute("portletKey");
+                String name = itemClickEvent.getItem().getTitle();
+                addPortlet(key, name);
             }
         });
 
@@ -407,12 +411,12 @@ public class DashboardView extends LocatableVLayout {
             if (portletMap == null) {
                 portletMap = new HashMap<String, PortletViewFactory>();
                 for (String key : PortletFactory.getRegisteredPortletKeys()) {
-                    portletMap.put(key, PortletFactory.getRegisteredPortlet(key));
+                    portletMap.put(key, PortletFactory.getRegisteredPortletFactory(key));
                 }
             }
             for (PortletWindow portletWindow : portlets) {
                 for (DashboardPortlet portlet : result.getPortlets()) {
-                    if (portletWindow.getDashboardPortlet().getId() == portlet.getId()) {
+                    if (portletWindow.getDashboardPortlet().equals(portlet)) {
                         portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
 
                         //restarting port auto-refresh with newest settings

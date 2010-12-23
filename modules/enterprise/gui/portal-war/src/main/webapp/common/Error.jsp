@@ -62,10 +62,12 @@ int randomNum=(int)(Math.random()*1000);
 </c:if>
 
 <c:catch> 
-  <c:if test="${not empty exception}"> 
-      <div id="exception<%= randomNum %>" style="visibility:hidden"><%=StringUtil.getStackTrace(exception)%></div>
+  <c:if test="${not empty exception}">
+      <c:set var="stacktrace"><%=StringUtil.getStackTrace(exception)%></c:set>
+      <div id="exception<%= randomNum %>" style="visibility:hidden"><c:out value="${stacktrace}" /></div>
     <c:if test="${not empty root}"> 
-      <div id="root<%= randomNum %>" style="visibility:hidden"><%=StringUtil.getStackTrace(root)%></div>
+      <c:set var="rootStacktrace"><%=StringUtil.getStackTrace(root)%></c:set>
+      <div id="root<%= randomNum %>" style="visibility:hidden"><c:out value="${rootStacktrace}" /></div>
     </c:if> 
   </c:if> 
 </c:catch>

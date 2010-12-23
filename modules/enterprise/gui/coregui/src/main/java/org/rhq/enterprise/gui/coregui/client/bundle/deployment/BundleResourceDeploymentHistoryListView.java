@@ -164,6 +164,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
 
         AutoFitTextAreaItem detail = new AutoFitTextAreaItem("attachment", MSG.common_title_details());
         detail.setTitleVAlign(VerticalAlignment.TOP);
+        detail.setWidth("100%");
 
         form.setItems(timestamp, action, category, user, status, info, message, detail);
         form.editRecord(record);

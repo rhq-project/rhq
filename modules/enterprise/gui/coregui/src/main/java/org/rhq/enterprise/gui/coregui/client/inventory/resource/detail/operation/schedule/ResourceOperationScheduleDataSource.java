@@ -64,11 +64,11 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
                     throw new RuntimeException("Failed to find scheduled operations for "
                         + resourceComposite.getResource() + ".", caught);
                 }
-        });
+            });
     }
 
     @Override
     protected void executeAdd(Record recordToAdd, DSRequest request, DSResponse response) {
-        operationService.scheduleResourceOperation();
+        //operationService.scheduleResourceOperation();
     }
 }

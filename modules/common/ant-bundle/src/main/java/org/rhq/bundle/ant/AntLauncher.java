@@ -85,9 +85,9 @@ public class AntLauncher {
     public BundleAntProject executeBundleDeployFile(File buildFile, Properties buildProperties,
         List<BuildListener> buildListeners) throws InvalidBuildFileException {
         // Parse and validate the build file before even attempting to execute it.
-        BundleAntProject parsedProject = parseBundleDeployFile(buildFile);
+        BundleAntProject parsedProject = parseBundleDeployFile(buildFile, buildProperties);
 
-        BundleAntProject project = createProject(buildFile, false);
+        BundleAntProject project = createProject(buildFile, false, buildProperties);
 
         // The parse above got us all the bundle files names. The rest of this method
         // will be able to re-determine everything else for 'project' but these filenames.
@@ -96,17 +96,6 @@ public class AntLauncher {
         project.getBundleFileNames().addAll(parsedProject.getBundleFileNames());
 
         try {
-            if (buildProperties != null) {
-                for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
-                    // On the assumption that these properties will be slurped in via Properties.load we
-                    // need to escape backslashes to have them treated as literals
-                    project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
-                        "\\\\"));
-                }
-            }
-            project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
-            project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
-
             if (buildListeners != null) {
                 for (BuildListener buildListener : buildListeners) {
                     project.addBuildListener(buildListener);
@@ -131,8 +120,9 @@ public class AntLauncher {
         }
     }
 
-    public BundleAntProject parseBundleDeployFile(File buildFile) throws InvalidBuildFileException {
-        BundleAntProject project = createProject(buildFile, true);
+    public BundleAntProject parseBundleDeployFile(File buildFile, Properties buildProperties)
+        throws InvalidBuildFileException {
+        BundleAntProject project = createProject(buildFile, true, buildProperties);
 
         ProjectHelper2 projectHelper = new ProjectHelper2();
         try {
@@ -157,10 +147,23 @@ public class AntLauncher {
         return project;
     }
 
-    private BundleAntProject createProject(File buildFile, boolean parseOnly) {
+    private BundleAntProject createProject(File buildFile, boolean parseOnly, Properties buildProperties) {
+
         ClassLoader classLoader = getClass().getClassLoader();
 
         BundleAntProject project = new BundleAntProject(parseOnly);
+
+        if (buildProperties != null) {
+            for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
+                // On the assumption that these properties will be slurped in via Properties.load we
+                // need to escape backslashes to have them treated as literals
+                project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
+                    "\\\\"));
+            }
+        }
+        project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
+        project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
+
         project.setCoreLoader(classLoader);
         project.init();
         project.setBaseDir(buildFile.getParentFile());
@@ -246,6 +249,13 @@ public class AntLauncher {
         for (String archive : archives.values()) {
             project.getBundleFileNames().add(archive);
         }
+
+        // note that we do NOT add url-files and url-archives to the BundleFileNames because those are
+        // not true "bundle files" that are stored with the bundle version in the database. Those will
+        // be downloaded by the agents at the time the recipe is invoked. There is nothing server side
+        // that need to be known about the files/archives from URLs.
+
+        return;
     }
 
     private void abortIfTaskWithinTarget(Target target, Task task) throws InvalidBuildFileException {

@@ -78,7 +78,7 @@ public class AntLauncherTest {
 
         AntLauncher ant = new AntLauncher();
 
-        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml("test-bundle-v1.xml"));
+        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml("test-bundle-v1.xml"), null);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
@@ -518,8 +518,8 @@ public class AntLauncherTest {
             assert new File(DEPLOY_DIR, "subdir/test0.txt").exists() : "missing raw file from default destination location";
             assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
             assert new File(DEPLOY_DIR, "second.dir/test2.txt").exists() : "missing raw file from the destinationDir";
-            assert !new File(DEPLOY_DIR, "subdir/test1.zip").exists() : "should not be here because destinationFile was specified";
-            assert !new File(DEPLOY_DIR, "subdir/test2.zip").exists() : "should not be here because destinationFile was specified";
+            assert !new File(DEPLOY_DIR, "subdir/test1.txt").exists() : "should not be here because destinationFile was specified";
+            assert !new File(DEPLOY_DIR, "subdir/test2.txt").exists() : "should not be here because destinationFile was specified";
             assert new File(DEPLOY_DIR, "subdir/test.zip").exists() : "missing unexploded zip file";
             assert new File(DEPLOY_DIR, "subdir/test-replace.zip").exists() : "missing unexploded zip file";
             assert !new File(DEPLOY_DIR, "subdir/test-explode.zip").exists() : "should have been exploded";
@@ -541,6 +541,98 @@ public class AntLauncherTest {
 
         } finally {
             FileUtil.purge(antBasedir, true);
+        }
+    }
+
+    public void testUrlFilesAndArchives() throws Exception {
+        // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
+        FileUtil.purge(DEPLOY_DIR, true);
+
+        // we need to create our own directory structure so we can use file: URLs
+        File tmpUrlLocation = FileUtil.createTempDirectory("anttest", ".url", null);
+        Set<File> downloadedFiles = null;
+
+        try {
+            File subdir = new File(tmpUrlLocation, "subdir"); // must match the name in the recipe
+            subdir.mkdirs();
+            writeFile("file0", subdir, "test0.txt"); // filename must match recipe
+            writeFile("file1", subdir, "test1.txt"); // filename must match recipe
+            writeFile("X=@@X@@\n", subdir, "test2.txt"); // filename must match recipe
+            createZip(new String[] { "one", "two" }, subdir, "test.zip", new String[] { "one.txt", "two.txt" });
+            createZip(new String[] { "3", "4" }, subdir, "test-explode.zip", new String[] { "three.txt", "four.txt" });
+            createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace.zip", new String[] { "template.txt" }); // will be exploded then recompressed
+
+            AntLauncher ant = new AntLauncher();
+            Properties inputProps = createInputProperties("/test-bundle-url-input.properties");
+            inputProps.setProperty("rhq.test.url.dir", tmpUrlLocation.toURI().toURL().toString()); // we use this so our recipe can use URLs
+            List<BuildListener> buildListeners = createBuildListeners();
+
+            BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-url.xml"), inputProps,
+                buildListeners);
+            assert project != null;
+
+            Set<String> bundleFiles = project.getBundleFileNames();
+            assert bundleFiles != null;
+            assert bundleFiles.size() == 0 : "we don't have any bundle files - only downloaded files from URLs: "
+                + bundleFiles;
+
+            downloadedFiles = project.getDownloadedFiles();
+            assert downloadedFiles != null;
+            assert downloadedFiles.size() == 6 : downloadedFiles;
+            ArrayList<String> expectedDownloadedFileNames = new ArrayList<String>();
+            // remember, we store url downloaded files under the names of their destination file/dir, not source location
+            expectedDownloadedFileNames.add("test0.txt");
+            expectedDownloadedFileNames.add("foo.txt");
+            expectedDownloadedFileNames.add("test2.txt");
+            expectedDownloadedFileNames.add("test.zip");
+            expectedDownloadedFileNames.add("test-explode.zip");
+            expectedDownloadedFileNames.add("test-replace.zip");
+            for (File downloadedFile : downloadedFiles) {
+                assert expectedDownloadedFileNames.contains(downloadedFile.getName()) : "We downloaded a file but its not in the project's list: "
+                    + downloadedFile;
+            }
+
+            assert new File(DEPLOY_DIR, "test0.txt").exists() : "missing raw file from default destination location";
+            assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
+            assert new File(DEPLOY_DIR, "second.dir/test2.txt").exists() : "missing raw file from the destinationDir";
+            assert !new File(DEPLOY_DIR, "test1.txt").exists() : "should not be here because destinationFile was specified";
+            assert !new File(DEPLOY_DIR, "test2.txt").exists() : "should not be here because destinationFile was specified";
+            assert new File(DEPLOY_DIR, "test.zip").exists() : "missing unexploded zip file";
+            assert new File(DEPLOY_DIR, "test-replace.zip").exists() : "missing unexploded zip file";
+            assert !new File(DEPLOY_DIR, "test-explode.zip").exists() : "should have been exploded";
+
+            // test that the file in the zip is realized
+            final String[] templateVarValue = new String[] { null };
+            ZipUtil.walkZipFile(new File(DEPLOY_DIR, "test-replace.zip"), new ZipUtil.ZipEntryVisitor() {
+                @Override
+                public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                    if (entry.getName().equals("template.txt")) {
+                        Properties props = new Properties();
+                        props.load(stream);
+                        templateVarValue[0] = props.getProperty("X");
+                    }
+                    return true;
+                }
+            });
+            assert templateVarValue[0] != null && templateVarValue[0].equals("9876") : templateVarValue[0];
+
+            // test that our raw file was realized
+            File realizedFile = new File(DEPLOY_DIR, "second.dir/test2.txt");
+            Properties props = new Properties();
+            FileInputStream inStream = new FileInputStream(realizedFile);
+            try {
+                props.load(inStream);
+                assert props.getProperty("X", "<unset>").equals("9876");
+            } finally {
+                inStream.close();
+            }
+        } finally {
+            FileUtil.purge(tmpUrlLocation, true);
+            if (downloadedFiles != null) {
+                for (File doomed : downloadedFiles) {
+                    doomed.delete();
+                }
+            }
         }
     }
 

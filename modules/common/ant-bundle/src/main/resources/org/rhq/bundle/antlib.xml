@@ -13,6 +13,8 @@
     <!-- deployment type's child types -->
     <typedef name="file" classname="org.rhq.bundle.ant.type.FileType"/>
     <typedef name="archive" classname="org.rhq.bundle.ant.type.ArchiveType"/>
+    <typedef name="url-file" classname="org.rhq.bundle.ant.type.UrlFileType"/>
+    <typedef name="url-archive" classname="org.rhq.bundle.ant.type.UrlArchiveType"/>
     <typedef name="replace" classname="org.rhq.bundle.ant.type.ReplaceType"/>
     <typedef name="ignore" classname="org.rhq.bundle.ant.type.IgnoreType"/>
     <typedef name="fileset" classname="org.rhq.bundle.ant.type.FileSet"/>

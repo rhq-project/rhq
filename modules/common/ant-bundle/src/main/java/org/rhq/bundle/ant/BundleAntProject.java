@@ -69,8 +69,11 @@ public class BundleAntProject extends Project {
     private final Set<String> bundleFileNames = new HashSet<String>();
     private int deploymentId;
     private DeploymentPhase deploymentPhase;
-    private DeployDifferences deployDiffs = new DeployDifferences();
     private boolean dryRun;
+
+    // results of project execution
+    private DeployDifferences deployDiffs = new DeployDifferences();
+    private Set<File> downloadedFiles = new HashSet<File>();
 
     public BundleAntProject() {
         this(false);
@@ -150,16 +153,26 @@ public class BundleAntProject extends Project {
         this.deploymentPhase = deploymentPhase;
     }
 
-    public DeployDifferences getDeployDifferences() {
-        return deployDiffs;
-    }
-
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
     }
 
     public boolean isDryRun() {
         return dryRun;
+    }
+
+    public DeployDifferences getDeployDifferences() {
+        return deployDiffs;
+    }
+
+    /**
+     * If there were url-file or url-archives, this returns the set of files
+     * that were downloaded from the URLs.
+     * 
+     * @return downloaded files from remote URLs that contain our bundle content
+     */
+    public Set<File> getDownloadedFiles() {
+        return downloadedFiles;
     }
 
     /**

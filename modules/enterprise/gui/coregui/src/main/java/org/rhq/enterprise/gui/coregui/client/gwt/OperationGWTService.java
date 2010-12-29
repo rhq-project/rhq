@@ -32,6 +32,7 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -45,8 +46,8 @@ public interface OperationGWTService extends RemoteService {
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
         throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int pageSize)
-        throws RuntimeException;
+    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
+        PageControl pageControl) throws RuntimeException;
 
     List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize)
         throws RuntimeException;

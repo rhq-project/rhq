@@ -42,10 +42,12 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -87,6 +89,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     public ActivityView2(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
         this.resourceComposite = resourceComposite;
+        setID(locatorId);
         initializeUi();
     }
 
@@ -182,6 +185,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         getRecentEventUpdates();
         getRecentOobs();
         getRecentPkgHistory();
+        //        getRecentMetrics();
     }
 
     @Override
@@ -219,12 +223,17 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         }
     }
 
+    /** Fetches alerts and updates the DynamicForm instance with the latest
+     *  alert information.
+     */
     private void getRecentAlerts() {
         final int resourceId = this.resourceComposite.getResource().getId();
+        //fetches last five alerts for this resource
         AlertCriteria criteria = new AlertCriteria();
-        criteria.addFilterResourceIds(resourceId);
         PageControl pageControl = new PageControl(0, 5);
+        pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
         criteria.setPageControl(pageControl);
+        criteria.addFilterResourceIds(resourceId);
         GWTServiceLookup.getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             @Override
             public void onSuccess(PageList<Alert> result) {
@@ -241,19 +250,20 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                         img.setSrc(ImageManager.getAlertIcon(alert.getAlertDefinition().getPriority()));
                         img.setWidth(16);
                         img.setHeight(16);
+                        img.setPrompt(alert.getAlertDefinition().getPriority().getDisplayName());
                         iconItem.setIcons(img);
                         iconItem.setShowTitle(false);
 
                         LinkItem link = new LinkItem();
-                        link.setLinkTitle(alert.getAlertDefinition().getName());
+                        link.setLinkTitle(alert.getAlertDefinition().getName() + ": ");
                         link.setTitle(alert.getAlertDefinition().getName());
-                        link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/Definitions/"
-                            + alert.getAlertDefinition().getId());
+                        link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/History/"
+                            + alert.getId());
                         link.setTarget("_self");
                         link.setShowTitle(false);
 
                         StaticTextItem time = new StaticTextItem();
-                        time.setDefaultValue(new Date(alert.getAlertDefinition().getCtime()).toString());
+                        time.setDefaultValue(GwtRelativeDurationConverter.format(alert.getCtime()));
                         time.setShowTitle(false);
                         time.setShowPickerIcon(false);
                         time.setWrap(false);
@@ -279,9 +289,15 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         });
     }
 
+    /** Fetches operations and updates the DynamicForm instance with the latest
+     *  operation information.
+     */
     private void getRecentOperations() {
         final int resourceId = this.resourceComposite.getResource().getId();
-        GWTServiceLookup.getOperationService().findRecentCompletedOperations(5,
+        //fetches five most recent operations.
+        PageControl pageControl = new PageControl(0, 5);
+        pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
+        GWTServiceLookup.getOperationService().findRecentCompletedOperations(pageControl,
             new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
 
                 @Override
@@ -305,11 +321,12 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             img.setSrc(ImageManager.getOperationResultsIcon(report.getOriginal().getOperationStatus()));
                             img.setWidth(16);
                             img.setHeight(16);
+                            img.setPrompt(report.getOriginal().getOperationStatus().getDisplayName());
                             iconItem.setIcons(img);
                             iconItem.setShowTitle(false);
 
                             LinkItem link = new LinkItem();
-                            link.setLinkTitle(report.getOriginal().getOperationName());
+                            link.setLinkTitle(report.getOriginal().getOperationName() + ": ");
                             link.setTitle(report.getOriginal().getOperationName());
                             link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Operations/History/"
                                 + report.getOriginal().getOperationHistoryId());
@@ -317,7 +334,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             link.setShowTitle(false);
 
                             StaticTextItem time = new StaticTextItem();
-                            time.setDefaultValue(new Date(report.getOriginal().getOperationStartTime()).toString());
+                            time.setDefaultValue(GwtRelativeDurationConverter.format(report.getOriginal()
+                                .getOperationStartTime()));
                             time.setShowTitle(false);
                             time.setShowPickerIcon(false);
                             time.setWrap(false);
@@ -615,4 +633,139 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         //                }
         //            });
     }
+
+    //    private void getRecentMetrics() {
+    //        LocatableVLayout column = new LocatableVLayout(recentAlertsContent.extendLocatorId("Content"));
+    //        column.setHeight(10);
+    //
+    //        for (int i = 0; i < 1; i++) {
+    //            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId("ContentForm"));
+    //            row.setNumCols(3);
+    //            row.setBorder("1px dashed green");
+    //            HTMLFlow graph = new HTMLFlow();
+    //            //            graph.setContents("<span class='inlinebar'>1,3,4,8,50,5</span>");
+    //            graph.setContents("<span class='dynamicsparkline'>1,3,4,8,50,5</span>");
+    //            //            graph.setContentsType(ContentsType.FRAGMENT);
+    //            graph.setContentsType(ContentsType.PAGE);
+    //            graph.setBorder("1px dashed black");
+    //            //            graph.setSize("40", "40");
+    //            CanvasItem ci2 = new CanvasItem();
+    //            ci2.setCanvas(graph);
+    //            CanvasItem ci = new CanvasItem();
+    //            ci.setShowTitle(false);
+    //            //            ci.setDefaultValue("<span class='inlinesparkline'>1,3,4,8,50,5</span>");
+    //            ci.setDefaultValue("1,3,4,8,50,5");
+    //            ci.setValue("1,3,4,8,50,5");
+    //            String currentClass = ci.getAttribute("class");
+    //            Log.debug("+++++++++++:Current class for new canvas:" + currentClass);
+    //            ci.setAttribute("class", " dynamicsparkline");
+    //            currentClass = ci.getAttribute("class");
+    //            Log.debug("+++++++++++:Updated class for new canvas:" + currentClass);
+    //            //            ci.getAttribute(attribute);
+    //            //            RichTextItem rti = new RichTextItem();
+    //            BlurbItem rti = new BlurbItem();
+    //            //            rti.setContentsType(ContentsType.PAGE);
+    //            //            rti.setV
+    //            //            rti.setValue("<div class=\"inlinesparkline\">1,3,4,8,50,5</div>");
+    //            rti.setValue("<div id=\"dynamic1\" class=\"dynamicsparkline\">1,3,4,8,50,5</div>");
+    //            Log.debug("@@@@@@@@@@@@@@@@@@@ Blurb-class-attr:" + rti.getAttribute("class"));
+    //            //div id='dynamic1' class='dynamicsparkline'
+    //            Element newDiv = DOM.createDiv();
+    //            Log.debug("+++++++++++:" + newDiv);
+    //            newDiv.setClassName("dynamicsparkline");
+    //            newDiv.setId("dynamic1");
+    //            Log.debug("+++++++++++:" + newDiv + ":inH:" + newDiv.getInnerHTML());
+    //            Log.debug("+++++++ TO STR:" + DOM.toString(newDiv));
+    //            Log.debug("+++++++++++:ParentComponent id:" + recentMeasurementsContent.getID());
+    //            Log.debug("+++++++++++:ParentComponent id:" + recentMeasurementsContent.getLocatorId());
+    //            //            Element located = DOM.getElementById(recentMeasurementsContent.getLocatorId());
+    //            Element located = DOM.getElementById(this.getLocatorId());
+    //            Log.debug("+++++++++++ Parent Node Located:" + located);
+    //            if (located != null) {
+    //                DOM.appendChild(located, newDiv);
+    //            }
+    //
+    //            int[] data = { 1, 3, 4, 8, 50, 5 };
+    //            loadSparkLine(data);
+    //            //            display = loadSparkLine(data);
+    //            //            String loaded = loadSparkLine(data);
+    //            //            Log.debug("+++++++++++:loaded:" + loaded);
+    //            Log.debug("+++++++++++:Completed:" + newDiv.getInnerHTML());
+    //            //            Log.debug("+++++++++++:JSObject:" + display);
+    //            //            Log.debug("+++++++++++:JSObject-class:" + display.getClass());
+    //            Element body = DOM.createElement("body");
+    //            Element locatedBody = DOM.getChild(body, 0);
+    //            Log.debug("+++++++++++:DOM:" + locatedBody);
+    //            //            HTMLPane content = new HTMLPane(display);
+    //            //            rti = new BlurbItem(display);
+    //            //            rti.setDefaultValue("<span class='inlinebar'>1,3,4,8,50,5</span>");
+    //            //            ci.getCanvas().addChild(graph);
+    //            StaticTextItem link = new StaticTextItem();
+    //            link.setValue("(Insert NAME)");
+    //            link.setShowTitle(false);
+    //            StaticTextItem value = new StaticTextItem();
+    //            value.setShowTitle(false);
+    //            value.setValue("142.3");
+    //            //            row.setItems(graph,link,value);
+    //            //            row.setItems(ci, link, value);
+    //            //            row.setItems(rti, link, value);
+    //            row.setItems(ci, rti, link, value, ci2);
+    //
+    //            column.addMember(row);
+    //        }
+    //
+    //        for (Canvas child : recentMeasurementsContent.getChildren()) {
+    //            child.destroy();
+    //        }
+    //        recentMeasurementsContent.setContents("");
+    //        recentMeasurementsContent.addChild(column);
+    //        column.markForRedraw();
+    //        recentMeasurementsContent.markForRedraw();
+    //        int[] data = { 1, 3, 4, 8, 50, 5 };
+    //        loadSparkLine(data);
+    //        column.markForRedraw();
+    //        recentMeasurementsContent.markForRedraw();
+    //    }
+    //
+    //    //    private JavaScriptObject display;
+    //
+    //    /*
+    //     */
+    //    //    public static native void loadSparkLine(int[] data)
+    //    //    public static native JavaScriptObject loadSparkLine(int[] data)
+    //    //    public static native String loadSparkLine(int[] data)
+    //    public static native void loadSparkLine(int[] data)
+    //    /*-{
+    //        //alert(JSON.stringify($wnd.jQuery('.dynamicsparkline').sparkline(data)));
+    //        //alert(JSON.stringify($wnd.jQuery('.dynamicsparkline').sparkline(data)));
+    //    //        var index = 0;
+    //        //$wnd.jQuery('.dynamicsparkline').sparkline(data);
+    //        //return $wnd.jQuery('.dynamicsparkline').sparkline(data);
+    //        //$doc.write('<div id="spark1" class="dynamicsparkline"></div>');
+    //        //$wnd.jQuery('.dynamicsparkline').sparkline(data);
+    //        //var x=document.getElementById("spark1");
+    //        //return "X:";
+    //        //return x.innerHTML;
+    //
+    //        var x=$doc.getElementById("spark1");
+    //    //        alert("SPARK1-LOC:"+x);
+    //    //        alert("SPARK1-LOC-CL:"+x.className);
+    //        //alert("SPARK1-LOC-html:"+x.innerHTML);
+    //    //        alert("JQ obj:"+$wnd.jQuery('.dynamicsparkline'));
+    //    //        alert("JQ obj-JSON-Str:"+JSON.stringify($wnd.jQuery('.dynamicsparkline')));
+    //        $wnd.jQuery('.dynamicsparkline').sparkline();
+    //        $wnd.jQuery('#dynamic1').sparkline([1,2,3,4,5,4,3,2,1]);
+    //
+    //    //        alert("JQ obj-SP:"+$wnd.jQuery('.dynamicsparkline').sparkline());
+    //        //alert("JQ obj-SP-2:"+$wnd.jQuery('.dynamicsparkline').sparkline(data));
+    //         var x=$doc.getElementById("spark1");
+    //    //         alert("SPARK1-LOC-html:"+x.innerHTML);
+    //        //$wnd.jQuery('.dynamicsparkline').sparkline(data);
+    //        //alert();
+    //    //        alert('Window Name:'+$wnd.name);
+    //        //$doc.write('<div id="spark1" class="dynamicsparkline"></div>');
+    //        //var x=$doc.getElementById("spark1");
+    //        //alert("SPARK:"+x);
+    //        //alert(x.innerHTML);
+    //    }-*/;
 }

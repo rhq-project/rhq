@@ -37,6 +37,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
@@ -56,7 +57,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_recentAlerts_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "RecentAlerts";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
+
     //widget keys also used in form population
     public static final String ALERT_RANGE_DISPLAY_AMOUNT_VALUE = "alert-range-display-amount-value";
     public static final String ALERT_RANGE_PRIORITY_VALUE = "alert-range-priority-value";
@@ -93,7 +98,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     private AlertPortletDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
-    private Timer reloader;
+    private Timer defaultReloader;
 
     public RecentAlertsPortlet(String locatorId) {
         super(locatorId);
@@ -530,22 +535,34 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new RecentAlertsPortlet(locatorId);
+            if (reference == null) {
+                reference = new RecentAlertsPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                refresh();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    refresh();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }
 

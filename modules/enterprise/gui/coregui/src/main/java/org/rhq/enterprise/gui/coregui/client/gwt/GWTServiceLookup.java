@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
@@ -59,6 +60,10 @@ public class GWTServiceLookup {
 
     public static ResourceGroupGWTServiceAsync getResourceGroupService() {
         return secure(ResourceGroupGWTServiceAsync.Util.getInstance());
+    }
+
+    public static ResourceGroupGWTServiceAsync getResourceGroupService(int timeout) {
+        return secure(ResourceGroupGWTServiceAsync.Util.getInstance(), timeout);
     }
 
     public static ResourceTypeGWTServiceAsync getResourceTypeGWTService() {
@@ -101,6 +106,10 @@ public class GWTServiceLookup {
         return secure(ResourceBossGWTServiceAsync.Util.getInstance());
     }
 
+    /**
+     * Consider using {@link PermissionsLoader} instead of using
+     * this authorization service directly.
+     */
     public static AuthorizationGWTServiceAsync getAuthorizationService() {
         return secure(AuthorizationGWTServiceAsync.Util.getInstance());
     }

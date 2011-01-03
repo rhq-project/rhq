@@ -30,20 +30,20 @@ public interface AlertDefinitionGWTService extends RemoteService {
 
     PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria);
 
-    int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception;
+    int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException;
 
     AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
-        boolean updateInternals) throws Exception;
+        boolean updateInternals) throws RuntimeException;
 
-    int enableAlertDefinitions(int[] alertDefinitionIds) throws Exception;
+    int enableAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException;
 
-    int disableAlertDefinitions(int[] alertDefinitionIds) throws Exception;
+    int disableAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException;
 
-    int removeAlertDefinitions(int[] alertDefinitionIds) throws Exception;
+    int removeAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException;
 
-    String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws Exception;
+    String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws RuntimeException;
 
-    String[] getAllAlertSenders() throws Exception;
+    String[] getAllAlertSenders() throws RuntimeException;
 
-    ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws Exception;
+    ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws RuntimeException;
 }

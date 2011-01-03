@@ -24,7 +24,8 @@ import org.rhq.core.domain.alert.AlertDefinition;
 
 public interface GroupAlertDefinitionGWTService extends RemoteService {
 
-    int createGroupAlertDefinitions(AlertDefinition groupAlertDefinition, Integer resourceGroupId) throws Exception;
+    int createGroupAlertDefinitions(AlertDefinition groupAlertDefinition, Integer resourceGroupId)
+        throws RuntimeException;
 
     /**
      * Updates a group alert definition.
@@ -35,11 +36,11 @@ public interface GroupAlertDefinitionGWTService extends RemoteService {
      * @throws Exception
      */
     AlertDefinition updateGroupAlertDefinitions(AlertDefinition groupAlertDefinition, boolean purgeInternals)
-        throws Exception;
+        throws RuntimeException;
 
-    int enableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws Exception;
+    int enableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException;
 
-    int disableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws Exception;
+    int disableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException;
 
-    int removeGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws Exception;
+    int removeGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException;
 }

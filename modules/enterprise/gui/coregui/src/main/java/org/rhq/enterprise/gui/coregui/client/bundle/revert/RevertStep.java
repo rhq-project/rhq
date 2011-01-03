@@ -88,8 +88,7 @@ public class RevertStep extends AbstractWizardStep {
                         deployingImage.setSrc("/images/status_error.gif");
                         deployingMessage.setText(MSG.view_bundle_revertWizard_revertStep_scheduledFailure());
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_bundle_revertWizard_revertStep_scheduledFailure() + ": " + caught.getMessage(),
-                            caught);
+                            MSG.view_bundle_revertWizard_revertStep_scheduledFailure(), caught);
                     }
                 });
         }

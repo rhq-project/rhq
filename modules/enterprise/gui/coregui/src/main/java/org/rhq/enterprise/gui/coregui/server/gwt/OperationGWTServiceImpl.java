@@ -27,6 +27,8 @@ import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
@@ -37,7 +39,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -51,21 +52,22 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
-        ResourceOperationHistoryCriteria criteria) {
+        ResourceOperationHistoryCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(operationManager.findResourceOperationHistoriesByCriteria(getSessionSubject(),
                 criteria), "OperationService.findResourceOperationHistoriesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria) {
+    public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(operationManager.findGroupOperationHistoriesByCriteria(getSessionSubject(),
                 criteria), "OperationService.findGroupOperationHistoriesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -74,8 +76,8 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         try {
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
                 resourceId, operationName, 0, 0, 0, 0, parameters, description);
-        } catch (Exception e) {
-            throw new RuntimeException("Unabled to invoke operation: " + e.getMessage());
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -85,9 +87,8 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             CronTrigger ct = new CronTrigger("resource " + resourceId + "_" + operationName, "group", cronString);
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
                 resourceId, operationName, parameters, ct, description);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Unabled to schedule operation execution: " + e.getMessage());
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -95,7 +96,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
      * 
      */
     public List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
-        int pageSize) {
+        int pageSize) throws RuntimeException {
         try {
             PageControl pageControl = new PageControl(0, pageSize);
             PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = operationManager
@@ -107,15 +108,16 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
                     DefaultDisambiguationUpdateStrategies.getDefault());
 
             return disambiguatedLastCompletedResourceOps;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     /** Find scheduled operations, disambiguate them and return that list.
      * 
      */
-    public List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize) {
+    public List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize)
+        throws RuntimeException {
         try {
             PageControl pageControl = new PageControl(0, pageSize);
             PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
@@ -127,8 +129,28 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
                     DefaultDisambiguationUpdateStrategies.getDefault());
 
             return disambiguatedNextScheduledResourceOps;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public List<ResourceOperationSchedule> findScheduledResourceOperations(int resourceId) throws RuntimeException {
+        try {
+            List<ResourceOperationSchedule> resourceOperationSchedules = operationManager
+                .findScheduledResourceOperations(getSessionSubject(), resourceId);
+            return SerialUtility.prepare(resourceOperationSchedules, "findScheduledResourceOperations");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public List<GroupOperationSchedule> findScheduledGroupOperations(int groupId) throws RuntimeException {
+        try {
+            List<GroupOperationSchedule> groupOperationSchedules = operationManager.findScheduledGroupOperations(
+                getSessionSubject(), groupId);
+            return SerialUtility.prepare(groupOperationSchedules, "findScheduledGroupOperations");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

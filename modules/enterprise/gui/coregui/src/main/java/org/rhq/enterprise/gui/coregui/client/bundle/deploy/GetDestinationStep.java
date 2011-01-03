@@ -145,8 +145,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                     }
 
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_bundle_deployWizard_error_9(caught.getMessage()), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_9(), caught);
                         // try anyway and potentially fail again from there 
                         createDestination();
                     }
@@ -169,8 +168,9 @@ public class GetDestinationStep extends AbstractWizardStep {
                     wizard.setDestination(result);
                     wizard.setNewDestination(true);
                     CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(), result
-                            .getDescription()), Severity.Info));
+                        new Message(MSG.view_bundle_deployWizard_destinationCreatedDetail_concise(result.getName()),
+                            MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(), result
+                                .getDescription()), Severity.Info));
                     createInProgress = false;
                     wizard.getView().incrementStep();
                 }
@@ -178,7 +178,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                 public void onFailure(Throwable caught) {
                     String message = MSG.view_bundle_deployWizard_error_10();
                     wizard.getView().showMessage(message);
-                    CoreGUI.getErrorHandler().handleError(message + ": " + caught.getMessage(), caught);
+                    CoreGUI.getErrorHandler().handleError(message, caught);
                     createInProgress = false;
                     wizard.getView().decrementStep();
                 }

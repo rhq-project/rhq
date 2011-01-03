@@ -280,8 +280,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     private void updateInventoryTab(int groupId, Set<ResourceTypeFacet> facets) {
         // Inventory tab is always visible and enabled.
-        boolean canModifyMembers = (!isAutoGroup() && !isAutoCluster()
-            && globalPermissions.contains(Permission.MANAGE_INVENTORY));
+        boolean canModifyMembers = (!isAutoGroup() && !isAutoCluster() && globalPermissions
+            .contains(Permission.MANAGE_INVENTORY));
         updateSubTab(this.inventoryTab, this.inventoryMembers, new MembersView(this.inventoryMembers
             .extendLocatorId("View"), groupId, canModifyMembers), true, true);
         updateSubTab(this.inventoryTab, this.inventoryConn, new CurrentGroupPluginConfigurationView(this.inventoryConn
@@ -310,14 +310,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 .extendLocatorId("View"), groupComposite), true, true);
             // but alert definitions can only be created on compatible groups
             boolean visible = (groupCategory == GroupCategory.COMPATIBLE);
-            Canvas canvas = (visible) ? new GroupAlertDefinitionsView(alertDef.extendLocatorId("View"), this.groupComposite)
-                : null;
+            Canvas canvas = (visible) ? new GroupAlertDefinitionsView(alertDef.extendLocatorId("View"),
+                this.groupComposite) : null;
             updateSubTab(this.alertsTab, this.alertDef, canvas, visible, true);
         }
     }
 
     private void updateConfigurationTab(int groupId, GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
-        boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION));
+        boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets
+            .contains(ResourceTypeFacet.CONFIGURATION));
         Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
         if (updateTab(this.configurationTab, visible, visible && groupPermissions.contains(Permission.CONFIGURE_READ))) {
             //updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
@@ -331,10 +332,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     private void updateEventsTab(ResourceGroupComposite groupComposite, GroupCategory groupCategory,
-                                 Set<ResourceTypeFacet> facets) {
+        Set<ResourceTypeFacet> facets) {
         // allow mixed groups to show events from supporting resources
-        boolean visible = (groupCategory == GroupCategory.MIXED
-            || (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.EVENT)));
+        boolean visible = (groupCategory == GroupCategory.MIXED || (groupCategory == GroupCategory.COMPATIBLE && facets
+            .contains(ResourceTypeFacet.EVENT)));
         if (updateTab(this.eventsTab, visible, true)) {
             updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventHistory
                 .extendLocatorId("View"), groupComposite), true, true);
@@ -354,10 +355,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         // for autoclusters and autogroups we need to add more criteria
         if (isAutoCluster()) {
-            criteria.addFilterVisible(null);
+            criteria.addFilterVisible(false);
 
         } else if (isAutoGroup()) {
-            criteria.addFilterVisible(null);
+            criteria.addFilterVisible(false);
             criteria.addFilterPrivate(true);
         }
 

@@ -31,7 +31,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 import javax.script.Bindings;

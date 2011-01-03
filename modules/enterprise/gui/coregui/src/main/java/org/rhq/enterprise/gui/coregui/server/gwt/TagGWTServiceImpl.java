@@ -43,86 +43,87 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
 
     private TagManagerLocal tagManager = LookupUtil.getTagManager();
 
-    public PageList<Tag> findTagsByCriteria(TagCriteria tagCriteria) {
+    public PageList<Tag> findTagsByCriteria(TagCriteria tagCriteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(tagManager.findTagsByCriteria(getSessionSubject(), tagCriteria),
                 "TagService.findTagsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Set<Tag> addTags(Set<Tag> tags) {
+    public Set<Tag> addTags(Set<Tag> tags) throws RuntimeException {
         try {
             return SerialUtility.prepare(tagManager.addTags(getSessionSubject(), tags), "TagService.addTags");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void removeTags(Set<Tag> tags) {
+    public void removeTags(Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.removeTags(getSessionSubject(), tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateResourceTags(int resourceId, Set<Tag> tags) {
+    public void updateResourceTags(int resourceId, Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.updateResourceTags(getSessionSubject(), resourceId, tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags) {
+    public void updateResourceGroupTags(int resourceGroupId, Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.updateResourceGroupTags(getSessionSubject(), resourceGroupId, tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateBundleTags(int bundleId, Set<Tag> tags) {
+    public void updateBundleTags(int bundleId, Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.updateBundleTags(getSessionSubject(), bundleId, tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags) {
+    public void updateBundleVersionTags(int bundleVersionId, Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.updateBundleVersionTags(getSessionSubject(), bundleVersionId, tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags) {
+    public void updateBundleDeploymentTags(int bundleDeploymentId, Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.updateBundleDeploymentTags(getSessionSubject(), bundleDeploymentId, tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags) {
+    public void updateBundleDestinationTags(int bundleDestinationId, Set<Tag> tags) throws RuntimeException {
         try {
             tagManager.updateBundleDestinationTags(getSessionSubject(), bundleDestinationId, tags);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria) {
+    public PageList<TagReportComposite> findTagReportCompositesByCriteria(TagCriteria tagCriteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(
                 tagManager.findTagReportCompositesByCriteria(getSessionSubject(), tagCriteria),
                 "TagService.findTagReportCompositesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

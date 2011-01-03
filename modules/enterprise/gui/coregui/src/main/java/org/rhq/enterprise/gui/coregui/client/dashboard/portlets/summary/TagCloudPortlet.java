@@ -36,7 +36,10 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
  */
 public class TagCloudPortlet extends TagCloudView implements Portlet {
 
-    public static final String KEY = MSG.view_portlet_tagCloud_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "TagCloud";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_tagCloud();
 
     public TagCloudPortlet(String locatorId) {
         super(locatorId);

@@ -26,9 +26,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -36,18 +33,19 @@ import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
@@ -57,132 +55,147 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  */
 public class ResourceGroupContextMenu extends LocatableMenu {
 
+    private ResourceGroupComposite groupComposite;
+    private ResourceGroup group;
+    private ResourceType groupMemberType;
+
+    private boolean isAutoCluster = false;
+    private boolean isAutoGroup = false;
+
     public ResourceGroupContextMenu(String locatorId) {
         super(locatorId);
     }
 
-    private ResourceType currentType;
-    //private ResourceGroup group;
-    private ResourceGroup currentGroup;
+    public void showContextMenu(final ResourceGroup group) {
+        // we need the group composite to access permissions for context menu authz, so get it now
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(group.getId());
 
-    public void showContextMenu(ResourceGroup compatibleGroup) {
-        this.currentType = compatibleGroup.getResourceType();
-        this.currentGroup = compatibleGroup;
+        // for autoclusters and private groups (autogroups) we need to add more criteria
+        isAutoCluster = (null != group.getClusterResourceGroup());
+        isAutoGroup = (null != group.getSubject());
+
+        if (isAutoCluster) {
+            criteria.addFilterVisible(false);
+
+        } else if (isAutoGroup) {
+            criteria.addFilterVisible(false);
+            criteria.addFilterPrivate(true);
+        }
+
+        GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_group_detail_failLoadComp(String.valueOf(group.getId())), caught);
+                }
+
+                public void onSuccess(PageList<ResourceGroupComposite> result) {
+                    if (result.isEmpty()) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_detail_failLoadComp(String.valueOf(group.getId())));
+                    } else {
+                        showContextMenu(result.get(0));
+                    }
+                }
+            });
+    }
+
+    public void showContextMenu(ResourceGroupComposite groupComposite) {
+        this.groupComposite = groupComposite;
+        group = groupComposite.getResourceGroup();
+        groupMemberType = group.getResourceType();
+        isAutoCluster = (null != group.getClusterResourceGroup());
+        isAutoGroup = (null != group.getSubject());
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            currentType.getId(),
+            groupMemberType.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
+                    groupMemberType = type;
 
-                    currentType = type;
-
-                    buildResourceGroupContextMenu(currentGroup, type);
+                    buildResourceGroupContextMenu(group, type);
                     showContextMenu();
                 }
             });
-
     }
 
     private void buildResourceGroupContextMenu(final ResourceGroup group, final ResourceType resourceType) {
+        // name
         setItems(new MenuItem(group.getName()));
 
+        // type name
         addItem(new MenuItem("Type: " + resourceType.getName()));
 
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
-        editPluginConfiguration.addClickHandler(new ClickHandler() {
+        // separator
+        addItem(new MenuItemSeparator());
+
+        // plugin config
+        MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
+        pluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
-                int groupId = group.getId();
-                int resourceTypeId = resourceType.getId();
-
-                Window configEditor = new Window();
-                //                configEditor.setTitle("Edit " + group.getName() + " plugin configuration");
-                configEditor.setWidth(800);
-                configEditor.setHeight(800);
-                configEditor.setIsModal(true);
-                configEditor.setShowModalMask(true);
-                configEditor.setCanDragResize(true);
-                configEditor.centerInPage();
-                // TODO Group config editor
-                //                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
-                //                    ConfigurationEditor.ConfigType.plugin));
-                configEditor.show();
-
+                if (isAutoGroup) {
+                    CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                } else if (isAutoCluster) {
+                    CoreGUI.goToView(LinkManager
+                        .getAutoClusterTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                } else {
+                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
+                        "ConnectionSettings"));
+                }
             }
         });
-        editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
-        addItem(editPluginConfiguration);
+        pluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
+        addItem(pluginConfiguration);
 
-        MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
-        editResourceConfiguration.addClickHandler(new ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                int groupId = group.getId();
-                int resourceTypeId = resourceType.getId();
-
-                final Window configEditor = new Window();
-                configEditor.setTitle(MSG.view_tree_common_contextMenu_editResourceConfiguration(group.getName()));
-                configEditor.setWidth(800);
-                configEditor.setHeight(800);
-                configEditor.setIsModal(true);
-                configEditor.setShowModalMask(true);
-                configEditor.setCanDragResize(true);
-                configEditor.setShowResizer(true);
-                configEditor.centerInPage();
-                configEditor.addCloseClickHandler(new CloseClickHandler() {
-                    public void onCloseClick(CloseClientEvent closeClientEvent) {
-                        configEditor.destroy();
+        MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
+        boolean enabled = groupComposite.getResourcePermission().isConfigureRead()
+            && resourceType.getResourceConfigurationDefinition() != null;
+        resourceConfiguration.setEnabled(enabled);
+        if (enabled) {
+            resourceConfiguration.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    if (isAutoGroup) {
+                        CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Configuration", "Current"));
+                    } else if (isAutoCluster) {
+                        CoreGUI.goToView(LinkManager.getAutoClusterTabLink(group.getId(), "Configuration", "Current"));
+                    } else {
+                        CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
+                            "ConnectionSettings"));
                     }
-                });
-                // TODO group config editor
-                //                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
-                //                    ConfigurationEditor.ConfigType.resource));
-                configEditor.show();
+                }
+            });
+        }
+        addItem(resourceConfiguration);
 
-            }
-        });
-        editResourceConfiguration.setEnabled(resourceType.getResourceConfigurationDefinition() != null);
-        addItem(editResourceConfiguration);
-
+        // separator
         addItem(new MenuItemSeparator());
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        Menu opSubMenu = new Menu();
-        if (resourceType.getOperationDefinitions() != null) {
+        enabled = (groupComposite.getResourcePermission().isControl() && null != resourceType.getOperationDefinitions() && !resourceType
+            .getOperationDefinitions().isEmpty());
+        operations.setEnabled(enabled);
+        if (enabled) {
+            Menu opSubMenu = new Menu();
             for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-
-                        // TODO Group version
-                        //                    ResourceCriteria criteria = new ResourceCriteria();
-                        //                    criteria.addFilterId(selectedResourceId);
-                        //
-                        //                    GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                        //                        new AsyncCallback<PageList<Resource>>() {
-                        //                            public void onFailure(Throwable caught) {
-                        //                                CoreGUI.getErrorHandler()
-                        //                                    .handleError("Failed to get resource to run operation", caught);
-                        //                            }
-                        //
-                        //                            public void onSuccess(PageList<Resource> result) {
-                        //                                new OperationCreateWizard(result.get(0), operationDefinition).startOperationWizard();
-                        //                            }
-                        //                        });
-
+                        // TODO Group version, wizard invoke or tab nav?
                     }
                 });
                 opSubMenu.addItem(operationItem);
             }
+            operations.setSubmenu(opSubMenu);
         }
-        operations.setEnabled(resourceType.getOperationDefinitions() != null
-            && !resourceType.getOperationDefinitions().isEmpty());
-        operations.setSubmenu(opSubMenu);
         addItem(operations);
 
+        // Metric graph addition menu
         addItem(buildMetricsMenu(resourceType));
 
         /* TODO: We don't support group factory create
@@ -224,6 +237,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         */
     }
 
+    /*
     private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {
         ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
 
@@ -245,6 +259,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
             }
         });
     }
+    */
 
     private MenuItem buildMetricsMenu(final ResourceType type) {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
@@ -276,7 +291,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                     DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " "
                                         + MSG.view_tree_common_contextMenu_chart(), GraphPortlet.KEY, 250);
                                     p.getConfiguration().put(
-                                        new PropertySimple(GraphPortlet.CFG_RESOURCE_GROUP_ID, currentGroup.getId()));
+                                        new PropertySimple(GraphPortlet.CFG_RESOURCE_GROUP_ID, group.getId()));
                                     p.getConfiguration().put(
                                         new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 

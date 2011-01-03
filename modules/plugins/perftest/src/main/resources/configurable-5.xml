@@ -23,9 +23,9 @@
       <simpleNumericMeasurementGenerator/>
       <simpleTraitMeasurementGenerator/>
       <ConfigurableCallTimeDataGenerator
-               minMsgCount="1" maxMsgCount="500"
+               minMsgCount="1" maxMsgCount="100"
                minDuration="10" maxDuration="500"
-               numberSubPaths="100"/>
+               numberSubPaths="10"/>
    </resource>
 
 </scenario>

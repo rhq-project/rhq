@@ -40,20 +40,23 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /**
  * @author Greg Hinkle
  */
 public class FavoriteResourcesPortlet extends ResourceSearchView implements AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_favoriteResources_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "FavoriteResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_favoriteResources();
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 
     private DashboardPortlet storedPortlet;
     private PortletWindow portletWindow;
-
-    private Timer reloader;
+    private Timer defaultReloader;
 
     public FavoriteResourcesPortlet(String locatorId) {
         super(locatorId);
@@ -107,23 +110,34 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
             //return GWT.create(FavoriteResourcesPortlet.class);
-            return new FavoriteResourcesPortlet(locatorId);
+            if (reference == null) {
+                reference = new FavoriteResourcesPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
-
 }

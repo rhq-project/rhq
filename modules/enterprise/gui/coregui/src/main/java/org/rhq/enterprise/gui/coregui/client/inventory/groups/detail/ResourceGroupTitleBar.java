@@ -113,9 +113,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         criteria.addFilterId(this.group.getId());
         // for autoclusters and autogroups we need to add more criteria
         if (isAutoCluster) {
-            criteria.addFilterVisible(null);
+            criteria.addFilterVisible(false);
         } else if (isAutoGroup) {
-            criteria.addFilterVisible(null);
+            criteria.addFilterVisible(false);
             criteria.addFilterPrivate(true);
         }
 
@@ -200,7 +200,13 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private void loadTags(final TagEditorView tagEditorView) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(group.getId());
-        criteria.addFilterVisible(null); // default is only visible groups, null to support auto-cluster-groups
+        // for autoclusters and autogroups we need to add more criteria
+        if (isAutoCluster) {
+            criteria.addFilterVisible(false);
+        } else if (isAutoGroup) {
+            criteria.addFilterVisible(false);
+            criteria.addFilterPrivate(true);
+        }
         criteria.fetchTags(true);
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,

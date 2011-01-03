@@ -42,6 +42,13 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
 
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_BUNDLE_ID = "bundleId";
+    public static final String FIELD_VERSION = "version";
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_DESCRIPTION = "description";
+    public static final String FIELD_FILECOUNT = "fileCount";
+
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleVersionDataSource() {
@@ -54,22 +61,23 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField("id", MSG.common_title_id());
+        DataSourceIntegerField idField = new DataSourceIntegerField(FIELD_ID, MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField latestVersionField = new DataSourceTextField("version", MSG.common_title_version());
-        fields.add(latestVersionField);
+        DataSourceTextField versionField = new DataSourceTextField(FIELD_VERSION, MSG.common_title_version());
+        fields.add(versionField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
+        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.common_title_name());
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
+        DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, MSG
+            .common_title_description());
         fields.add(descriptionField);
 
-        DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", MSG
+        DataSourceIntegerField fileCountField = new DataSourceIntegerField(FIELD_FILECOUNT, MSG
             .view_bundle_bundleFiles());
-        fields.add(deploymentCountField);
+        fields.add(fileCountField);
 
         return fields;
     }
@@ -124,12 +132,12 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
     public ListGridRecord copyValues(BundleVersion from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute("id", from.getId());
-        record.setAttribute("bundleId", from.getBundle().getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("description", from.getDescription());
-        record.setAttribute("version", from.getVersion());
-        record.setAttribute("fileCount", Integer.valueOf(from.getBundleFiles().size()));
+        record.setAttribute(FIELD_ID, from.getId());
+        record.setAttribute(FIELD_BUNDLE_ID, from.getBundle().getId());
+        record.setAttribute(FIELD_NAME, from.getName());
+        record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
+        record.setAttribute(FIELD_VERSION, from.getVersion());
+        record.setAttribute(FIELD_FILECOUNT, Integer.valueOf(from.getBundleFiles().size()));
 
         record.setAttribute("object", from);
 

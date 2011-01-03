@@ -700,11 +700,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
         String currentText = getText().toLowerCase();
 
-        if (searchBar.getWelcomeMessage().equals(currentText)) {
-            setValue("", true);
-            return;
-        }
-
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions

@@ -30,6 +30,7 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ScheduleJobId;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -38,6 +39,8 @@ public abstract class OperationJob implements Job {
     public static final String DATAMAP_STRING_OPERATION_DISPLAY_NAME = "operationDisplayName";
     public static final String DATAMAP_INT_PARAMETERS_ID = "parametersId"; // the configuration ID
     public static final String DATAMAP_INT_SUBJECT_ID = "subjectId";
+    // id of the associated OperationScheduleEntity - may be null for jobs created prior to upgrading to RHQ 4.0
+    public static final String DATAMAP_INT_ENTITY_ID = "entityId";
 
     /**
      * For security purposes, we need to provide a subject with a valid login session. This creates such a subject by

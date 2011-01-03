@@ -38,66 +38,67 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private RemoteInstallManagerLocal remoteInstallManager = LookupUtil.getRemoteInstallManager();
 
-    public boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+    public boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.agentInstallCheck(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.agentInstallCheck");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath) {
+    public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo,
                 parentPath), "RemoteInstallService.installAgent");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+    public String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.startAgent(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.startAgent");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+    public String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.stopAgent(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.stopAgent");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+    public String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.agentStatus(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.agentStatus");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) {
+    public String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException {
         try {
             return SerialUtility.prepare((remoteInstallManager.findAgentInstallPath(getSessionSubject(),
                 remoteAccessInfo, parentPath)), "RemoteInstallService.findAgentInstallPath");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) {
+    public String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException {
         try {
             return SerialUtility.prepare((remoteInstallManager.remotePathDiscover(getSessionSubject(),
                 remoteAccessInfo, parentPath)), "RemoteInstallService.remotePathDiscover");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

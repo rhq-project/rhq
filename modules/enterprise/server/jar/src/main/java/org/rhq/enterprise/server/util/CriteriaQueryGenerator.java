@@ -75,7 +75,6 @@ public final class CriteriaQueryGenerator {
     private String searchExpressionWhereClause;
 
     private Subject subject;
-    private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
     private int authorizationSubjectId;
@@ -165,29 +164,10 @@ public final class CriteriaQueryGenerator {
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
-            if (fragment == null) {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            } else {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authRes " + NL //
-                    + "JOIN authRes.implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            }
+            setAuthorizationCustomConditionFragment(getEnhancedResourceAuthorizationWhereFragment(fragment, subjectId));
         } else if (type == AuthorizationTokenType.GROUP) {
-            if (fragment == null) {
-                this.authorizationJoinFragment = "" // 
-                    + "JOIN " + alias + ".roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            } else {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            }
+            // support for: 1) role-based for groups, 2) role-based for containing cluster groups, 3) private groups
+            setAuthorizationCustomConditionFragment(getEnhancedGroupAuthorizationWhereFragment(fragment, subjectId));
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
                 + " does not yet support generating queries for '" + type + "' token types");
@@ -208,6 +188,46 @@ public final class CriteriaQueryGenerator {
                 + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
                 + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
+    }
+
+    private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% ) )" + NL; //
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        return customAuthzFragment;
+    }
+
+    private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE crg.recursive = true AND s.id = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.subject s" + NL //
+            + "                   WHERE s.id = %subjectId% ) ) " + NL;
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        return customAuthzFragment;
     }
 
     public String getParameterReplacedQuery(boolean countQuery) {
@@ -335,9 +355,6 @@ public final class CriteriaQueryGenerator {
                 }
             }
         }
-        if (authorizationJoinFragment != null) {
-            results.append(authorizationJoinFragment);
-        }
 
         // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
         PageControl pc = getPageControl(criteria);
@@ -398,7 +415,8 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || authorizationJoinFragment != null || searchExpressionWhereClause != null) {
+        if (filterFields.size() > 0 || authorizationPermsFragment != null
+            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
         }
 
@@ -442,17 +460,14 @@ public final class CriteriaQueryGenerator {
         }
 
         // authorization
-        if (authorizationJoinFragment != null) {
+        if (authorizationPermsFragment != null) {
             if (firstCrit) {
                 firstCrit = false;
             } else {
                 // always want AND for security, regardless of conjunctiveFragment
                 results.append(NL).append(" AND ");
             }
-            results.append("authSubject.id = " + authorizationSubjectId + " ");
-            if (null != this.authorizationPermsFragment) {
-                results.append(this.authorizationPermsFragment + " ");
-            }
+            results.append(this.authorizationPermsFragment + " ");
         }
 
         if (authorizationCustomConditionFragment != null) {

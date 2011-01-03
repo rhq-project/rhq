@@ -37,6 +37,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
@@ -57,14 +59,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class OperationsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Operations";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_operations();
+
     //unique field/form identifiers
     public static final String OPERATIONS_RANGE_COMPLETED_ENABLED = "operations-completed-enabled";
     public static final String OPERATIONS_RANGE_SCHEDULED_ENABLED = "operations-scheduled-enabled";
     public static final String OPERATIONS_RANGE_COMPLETED = "operations-range-completed";
     public static final String OPERATIONS_RANGE_SCHEDULED = "operations-range-scheduled";
-    //portlet key
-    public static final String KEY = MSG.common_title_operations();
-    private static final String TITLE = KEY;
     private static String recentOperations = MSG.common_title_recent_operations();
     private static String scheduledOperations = MSG.common_title_scheduled_operations();
     public static String RANGE_DISABLED_MESSAGE = MSG.view_portlet_operations_disabled();
@@ -76,10 +80,10 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     private DashboardPortlet storedPortlet = null;
     private RecentOperationsDataSource dataSourceCompleted;
     private ScheduledOperationsDataSource dataSourceScheduled;
-    private Timer reloader;
     public static String unlimited = MSG.common_label_unlimited();
     public static String defaultValue = unlimited;
     public static boolean defaultEnabled = true;
+    private Timer defaultReloader;
 
     //default no-args constructor for serialization.
     private OperationsPortlet() {
@@ -96,7 +100,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     protected void onInit() {
         super.onInit();
         //set title for larger container
-        setTitle(TITLE);
+        //setTitle(TITLE);
 
         this.recentOperationsGrid = new LocatableListGrid(recentOperations);
         recentOperationsGrid.setDataSource(getDataSourceCompleted());
@@ -364,9 +368,13 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new OperationsPortlet(locatorId);
+            if (reference == null) {
+                reference = new OperationsPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
@@ -417,13 +425,21 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

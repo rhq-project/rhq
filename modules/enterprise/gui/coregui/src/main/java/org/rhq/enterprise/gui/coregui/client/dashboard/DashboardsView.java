@@ -76,7 +76,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     // Each NamedTab is a Dashboard, name=Dashboard.id, title=Dashboard.name
     private NamedTabSet tabSet;
 
-    // The ID (0 for default dash)
+    // The ID
     private String selectedTabName;
 
     private IButton editButton;
@@ -109,12 +109,31 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
             }
 
-            public void onSuccess(List<Dashboard> result) {
+            public void onSuccess(final List<Dashboard> result) {
                 initialized = true;
+
                 if (result.isEmpty()) {
-                    result.add(getDefaultDashboard());
+                    // if the user has no dashboards persist a default dashboard for him to work with. In
+                    // this way we're always working with a persisted dashboard and real entities.
+                    addDefaultDashboard();
+
+                } else {
+                    updateDashboards(result);
                 }
-                updateDashboards(result);
+            }
+        });
+    }
+
+    private void addDefaultDashboard() {
+        dashboardService.storeDashboard(getDefaultDashboard(), new AsyncCallback<Dashboard>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
+            }
+
+            public void onSuccess(Dashboard defaultDashboard) {
+                List<Dashboard> dashboards = new ArrayList<Dashboard>(1);
+                dashboards.add(defaultDashboard);
+                updateDashboards(dashboards);
             }
         });
     }
@@ -190,8 +209,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         }
 
-        updateFirstTabCanCloseState("update dashboards");
-
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
                 tabCloseClickEvent.cancel();
@@ -203,9 +220,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                                 dashboardsByName.remove(tabCloseClickEvent.getTab().getTitle());
                                 tabSet.removeTab(tabCloseClickEvent.getTab());
                                 dashboardView.delete();
-                                History.newItem(VIEW_ID.getName());
 
-                                updateFirstTabCanCloseState("close handler");
+                                // if it's the last tab go back to a default tab
+                                if (0 == tabSet.getTabs().length) {
+                                    addDefaultDashboard();
+                                }
                             }
                         }
                     });
@@ -223,44 +242,40 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-        DashboardPortlet summary = new DashboardPortlet(MSG.view_dashboardsManager_inventory_title(),
-            InventorySummaryPortlet.KEY, 230);
+        DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 230);
         dashboard.addPortlet(summary, 0, 0);
 
-        DashboardPortlet tagCloud = new DashboardPortlet(MSG.view_dashboardsManager_tagcloud_title(),
-            TagCloudPortlet.KEY, 200);
+        DashboardPortlet tagCloud = new DashboardPortlet(TagCloudPortlet.NAME, TagCloudPortlet.KEY, 200);
         dashboard.addPortlet(tagCloud, 0, 1);
 
         // Experimental
         //        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
         //        col2.add(platformSummary);
 
-        DashboardPortlet welcome = new DashboardPortlet(MSG.view_dashboardsManager_message_title(), MessagePortlet.KEY,
-            180);
+        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 180);
         welcome.getConfiguration().put(
             new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
         dashboard.addPortlet(welcome, 1, 0);
 
-        DashboardPortlet news = new DashboardPortlet(MSG.view_dashboardsManager_mashup_title(), MashupPortlet.KEY, 320);
+        DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 320);
         news.getConfiguration().put(
             new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
         dashboard.addPortlet(news, 1, 1);
         //
-        DashboardPortlet discoveryQueue = new DashboardPortlet(MSG.view_portlet_autodiscovery_title(),
-            AutodiscoveryPortlet.KEY, 250);
+        DashboardPortlet discoveryQueue = new DashboardPortlet(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY, 250);
         dashboard.addPortlet(discoveryQueue, 1, 2);
 
-        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.KEY, RecentAlertsPortlet.KEY, 250);
+        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
 
-        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(), RecentlyAddedResourcesPortlet.KEY,
-            250);
+        DashboardPortlet recentlyAdded = new DashboardPortlet(RecentlyAddedResourcesPortlet.NAME,
+            RecentlyAddedResourcesPortlet.KEY, 250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 
-        DashboardPortlet operations = new DashboardPortlet(MSG.common_title_operations(), OperationsPortlet.KEY, 500);
+        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 500);
         dashboard.addPortlet(operations, 1, 5);
 
-        DashboardPortlet problemResources = new DashboardPortlet(MSG.view_portlet_problem_resources_title(),
+        DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
             ProblemResourcesPortlet.KEY, 250);
         //initialize config for the problemResources portlet.
         problemResources.getConfiguration()
@@ -312,8 +327,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 tabSet.selectTab(tab);
                 editMode = true;
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
-
-                updateFirstTabCanCloseState("store dashboard");
             }
         });
     }
@@ -326,15 +339,12 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     public void renderView(ViewPath viewPath) {
-        NamedTab[] tabs = tabSet.getTabs();
-
         // make sure we have at least a default dashboard tab
-        if (0 == tabs.length) {
-            List<Dashboard> defaultTabs = new ArrayList<Dashboard>(1);
-            defaultTabs.add(getDefaultDashboard());
-            updateDashboards(defaultTabs);
-            tabs = tabSet.getTabs();
+        if (null == tabSet || 0 == tabSet.getTabs().length) {
+            return;
         }
+
+        NamedTab[] tabs = tabSet.getTabs();
 
         // if nothing selected or pathtab does not exist, default to the first tab
         NamedTab selectedTab = tabs[0];
@@ -352,8 +362,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
         }
 
-        updateFirstTabCanCloseState("render view");
-
         tabSet.selectTab(selectedTab);
     }
 
@@ -365,13 +373,4 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     public boolean isInitialized() {
         return initialized;
     }
-
-    // must be called when the tabset is first loaded (onInit), on each subsequent load, and whenever it changes
-    public void updateFirstTabCanCloseState(String comingFrom) {
-        // do not allow closing if there is only one dashboard tab remaining
-        boolean canClose = tabSet.getTabs().length > 1;
-        NamedTab firstTab = tabSet.getTabs()[0];
-        firstTab.setCanClose(canClose);
-    }
-
 }

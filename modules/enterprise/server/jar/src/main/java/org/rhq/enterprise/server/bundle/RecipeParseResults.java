@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.util.Set;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.updater.DeploymentProperties;
 
@@ -28,7 +29,8 @@ import org.rhq.core.util.updater.DeploymentProperties;
  * This class is general to all Bundle handling server side plugins.  It is returned by the SSP when parsing
  * a bundle's recipe and contains all of the information neded to create a bundle version.  
  * 
- * @author jay shaughnessy
+ * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 public class RecipeParseResults {
 
@@ -43,9 +45,9 @@ public class RecipeParseResults {
 
     public RecipeParseResults(DeploymentProperties bundleMetadata, ConfigurationDefinition configDef,
         Set<String> bundleFileNames) {
-        this.bundleMetadata = bundleMetadata;
-        this.configDef = configDef;
-        this.bundleFileNames = bundleFileNames;
+        setBundleMetadata(bundleMetadata);
+        setConfigurationDefinition(configDef);
+        setBundleFiles(bundleFileNames);
     }
 
     public DeploymentProperties getBundleMetadata() {
@@ -60,8 +62,9 @@ public class RecipeParseResults {
         return configDef;
     }
 
-    public void setConfigDef(ConfigurationDefinition configDef) {
+    public void setConfigurationDefinition(ConfigurationDefinition configDef) {
         this.configDef = configDef;
+        ConfigurationUtility.initializeDefaultTemplate(this.configDef);
     }
 
     public Set<String> getBundleFileNames() {
@@ -71,5 +74,4 @@ public class RecipeParseResults {
     public void setBundleFiles(Set<String> bundleFileNames) {
         this.bundleFileNames = bundleFileNames;
     }
-
 }

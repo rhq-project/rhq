@@ -19,11 +19,9 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
@@ -37,15 +35,14 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
@@ -70,21 +67,16 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onSuccess(Set<Permission> result) {
-                UserEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
-                Subject sessionSubject = UserSessionManager.getSessionSubject();
-                boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-                boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
-                init(isReadOnly);
-            }
-
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                        .of(Message.Option.BackgroundJobResult)));
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    UserEditView.this.hasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
+                    Subject sessionSubject = UserSessionManager.getSessionSubject();
+                    boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
+                    boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
+                    init(isReadOnly);
+                }
             }
         });
     }

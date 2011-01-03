@@ -34,7 +34,6 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -45,7 +44,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class EventCompositeDetailsView extends LocatableVLayout implements BookmarkableView {
 
     private int eventId;
-    private ViewId viewId;
 
     private static EventCompositeDetailsView INSTANCE = new EventCompositeDetailsView("eventCompositeDetailsView");
 
@@ -81,11 +79,6 @@ public class EventCompositeDetailsView extends LocatableVLayout implements Bookm
             removeChild(child);
         }
 
-        if (this.viewId != null) {
-            viewId.getBreadcrumbs().get(0).setDisplayName(MSG.view_inventory_eventHistory_details());
-            CoreGUI.refreshBreadCrumbTrail();
-        }
-
         DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
@@ -117,8 +110,6 @@ public class EventCompositeDetailsView extends LocatableVLayout implements Bookm
     @Override
     public void renderView(ViewPath viewPath) {
         eventId = viewPath.getCurrentAsInt();
-        viewId = viewPath.getCurrent();
-
         show(eventId);
     }
 

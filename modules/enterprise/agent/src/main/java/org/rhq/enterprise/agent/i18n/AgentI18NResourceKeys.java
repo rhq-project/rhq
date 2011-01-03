@@ -1652,6 +1652,57 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("days")
     String UNITS_DAYS = "units.days";
 
+    @I18NMessage("listdata")
+    String LISTDATA = "PromptCommand.listdata";
+
+    @I18NMessage("listdata [--delete] [--recurse] [--verbose] <'bundles'|path_name>")
+    String LISTDATA_SYNTAX = "PromptCommand.listdata.syntax";
+
+    @I18NMessage("Lists and optionally deletes agent data files. USE WITH CAUTION!")
+    String LISTDATA_HELP = "PromptCommand.listdata.help";
+
+    @I18NMessage("Lists files found in the data directory, optionally deleting them.\\n\\\n"
+        + "This is an advanced command for administrators use only.  You should not\\n\\\n"
+        + "delete data files unless you know what you are doing. You could render\\n\\\n"
+        + "the agent useless if you delete files that you should not.\\n\\\n"
+        + "\\  -v, --verbose : enables more detailed file lists\\n\\\n"
+        + "\\  -r, --recurse : recurse into subdirectories\\n\\\n"
+        + "\\  -d, --delete : delete the files that are listed\\n\\\n"
+        + "\\  'bundles'|path_name : the relative path under the data directory to list.\\n\\\n"
+        + "\\                        If 'bundles', will list data files from the bundle\\n\\\n"
+        + "\\                        subsystem.")
+    String LISTDATA_DETAILED_HELP = "PromptCommand.listdata.detailed-help";
+
+    @I18NMessage("You cannot use .. in the path - you can only list files within the data directory")
+    String LISTDATA_DOTDOT_NOT_ALLOWED = "PromptCommand.listdata.dotdot-not-allowed";
+
+    @I18NMessage("You can only list files within the data directory - no absolute paths allowed")
+    String LISTDATA_ABSOLUTE_NOT_ALLOWED = "PromptCommand.listdata.absolute-not-allowed";
+
+    @I18NMessage("Agent data directory: [{0}]")
+    String LISTDATA_DATA_DIR = "PromptCommand.listdata.data_dir";
+
+    @I18NMessage("File not found: [{0}]")
+    String LISTDATA_FILE_NOT_FOUND = "PromptCommand.listdata.file_not_found";
+
+    @I18NMessage("Deleted: [{0}]")
+    String LISTDATA_DELETED = "PromptCommand.listdata.deleted";
+
+    @I18NMessage("Delete failed: [{0}]")
+    String LISTDATA_DELETED_FAILED = "PromptCommand.listdata.deleted_failed";
+
+    @I18NMessage("{0}")
+    String LISTDATA_FILE_INFO = "PromptCommand.listdata.file_info";
+
+    @I18NMessage("{1,date,short} {1,time,short}\t{2} bytes\t{0}")
+    String LISTDATA_FILE_INFO_VERBOSE = "PromptCommand.listdata.file_info_verbose";
+
+    @I18NMessage("{0}")
+    String LISTDATA_DIR_INFO = "PromptCommand.listdata.dir_info";
+
+    @I18NMessage("{1,date,short} {1,time,short}\t{2} files\t{0}")
+    String LISTDATA_DIR_INFO_VERBOSE = "PromptCommand.listdata.dir_info_verbose";
+
     @I18NMessage("gc")
     String GC = "PromptCommand.gc";
 

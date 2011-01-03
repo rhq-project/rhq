@@ -66,9 +66,7 @@ import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -78,15 +76,16 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -138,7 +137,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.setLeaveScrollbarGap(false);
 
-        resourceContextMenu = new Menu();
+        resourceContextMenu = new LocatableMenu(extendLocatorId("resourceContextMenu"));
         autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
@@ -311,36 +310,6 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             treeGrid.markForRedraw();
-
-            // Update breadcrumbs
-            if (currentViewId != null) {
-                currentViewId.getBreadcrumbs().clear();
-                if (null != parents) {
-                    for (int i = parents.length - 1; i >= 0; i--) {
-                        TreeNode n = parents[i];
-                        adjustBreadcrumb(n, currentViewId);
-                    }
-                }
-                adjustBreadcrumb(selectedNode, currentViewId);
-                CoreGUI.refreshBreadCrumbTrail();
-            }
-        }
-    }
-
-    private void adjustBreadcrumb(TreeNode node, ViewId viewId) {
-        if (node instanceof ResourceTreeNode) {
-            Resource nr = ((ResourceTreeNode) node).getResource();
-            String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
-            String icon = ImageManager.getResourceIcon(nr.getResourceType().getCategory());
-
-            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
-
-        } else if (node instanceof AutoGroupTreeNode) {
-            String name = ((AutoGroupTreeNode) node).getBackingGroupName();
-            String display = node.getName() + " <span class=\"subtitle\">" + name + "</span>";
-            String icon = ImageManager.getResourceIcon(((AutoGroupTreeNode) node).getResourceType().getCategory());
-
-            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
         }
     }
 
@@ -415,35 +384,36 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // plugin config
-        MenuItem editPluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
-        editPluginConfiguration.addClickHandler(new ClickHandler() {
+        MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
+        pluginConfiguration.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
             }
         });
-        editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
-        resourceContextMenu.addItem(editPluginConfiguration);
+        pluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
+        resourceContextMenu.addItem(pluginConfiguration);
 
         // resource config
-        MenuItem editResourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
+        MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
         boolean enabled = resourcePermission.isConfigureRead()
             && resourceType.getResourceConfigurationDefinition() != null;
-        editResourceConfiguration.setEnabled(enabled);
+        resourceConfiguration.setEnabled(enabled);
         if (enabled) {
-            editResourceConfiguration.addClickHandler(new ClickHandler() {
+            resourceConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
                     CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Configuration", "Current"));
                 }
             });
         }
-        resourceContextMenu.addItem(editResourceConfiguration);
+        resourceContextMenu.addItem(resourceConfiguration);
 
         // separator
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        enabled = (resourcePermission.isControl() && !resourceType.getOperationDefinitions().isEmpty());
+        enabled = (resourcePermission.isControl() && null == resourceType.getOperationDefinitions() && !resourceType
+            .getOperationDefinitions().isEmpty());
         operations.setEnabled(enabled);
         if (enabled) {
             Menu opSubMenu = new Menu();
@@ -451,29 +421,10 @@ public class ResourceTreeView extends LocatableVLayout {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId)).getResource()
-                            .getId();
-
-                        ResourceCriteria criteria = new ResourceCriteria();
-                        criteria.addFilterId(resourceId);
-
-                        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                            new AsyncCallback<PageList<Resource>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_tree_common_contextMenu_operations_loadFailed(), caught);
-                                }
-
-                                public void onSuccess(PageList<Resource> result) {
-                                    new OperationCreateWizard(result.get(0), operationDefinition)
-                                        .startOperationWizard();
-                                }
-                            });
-
+                        new OperationCreateWizard(resource, operationDefinition).startOperationWizard();
                     }
                 });
                 opSubMenu.addItem(operationItem);
-                // todo action
             }
             operations.setSubmenu(opSubMenu);
         }
@@ -832,5 +783,5 @@ public class ResourceTreeView extends LocatableVLayout {
             setSelectedResource(resourceId);
         }
     }
-    
+
 }

@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.operation.schedule.resource;
 import org.quartz.SchedulerException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.operation.schedule.OperationScheduleDetailsUIBean;
-import org.rhq.enterprise.server.operation.OperationSchedule;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 
 public class ResourceOperationScheduleDetailsUIBean extends OperationScheduleDetailsUIBean {
     @Override

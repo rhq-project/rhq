@@ -71,6 +71,8 @@
     code special conditions into the session bean, we'll allow a short-lived NULL next fire time row.
     -->
     <table name="RHQ_OPERATION_SCHEDULE">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+
         <column name="JOB_NAME" type="VARCHAR2" required="true" size="100"/>
         <column name="JOB_GROUP" type="VARCHAR2" required="true" size="100"/>
         <column name="DTYPE" type="VARCHAR2" required="true" size="8"/>
@@ -83,16 +85,15 @@
         <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>
 
         <!--
-        Note that this is the same primary key that Quartz uses for its schedules (RHQ_qrtz_job_details).
-        We do not need to add DTYPE to the key, because we ensure the name/group are unique
-        across resource/group schedules
+        Note, this is the same as the primary key that Quartz uses for its schedules (RHQ_QRTZ_JOB_DETAILS).
+        We do not need to add DTYPE to the key, because we ensure the name/group are unique across resource/group
+        schedules
         -->
-        <constraint name="RHQ_OPERATION_SCHEDULE_KEY">
-            <primaryKey>
-                <field ref="JOB_NAME"/>
-                <field ref="JOB_GROUP"/>
-            </primaryKey>
-        </constraint>
+        <!-- === business key (JOB_NAME + JOB_GROUP) === -->
+        <index name="RHQ_OPERATION_SCHEDULE_KEY_IDX" unique="true">
+            <field ref="JOB_NAME"/>
+            <field ref="JOB_GROUP"/>
+        </index>
     </table>
 
 </dbsetup>

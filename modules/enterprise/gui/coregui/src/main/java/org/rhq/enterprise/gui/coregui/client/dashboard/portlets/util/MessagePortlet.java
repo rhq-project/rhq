@@ -41,7 +41,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
  */
 public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = MSG.view_portlet_message_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Message";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_message();
 
     public MessagePortlet(String locatorId) {
         super(locatorId);

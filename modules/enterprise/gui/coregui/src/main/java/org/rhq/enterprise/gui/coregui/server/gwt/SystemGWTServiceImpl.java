@@ -33,11 +33,11 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
 
-    public ProductInfo getProductInfo() {
+    public ProductInfo getProductInfo() throws RuntimeException {
         try {
             return this.systemManager.getProductInfo(getSessionSubject());
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

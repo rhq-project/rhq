@@ -43,10 +43,13 @@ public class DeploymentData {
     private final Set<File> zipFiles;
     private final Map<File, File> rawFiles;
     private final File destinationDir;
+    private final File sourceDir;
     private final Map<File, Pattern> zipEntriesToRealizeRegex;
     private final Set<File> rawFilesToRealize;
     private final TemplateEngine templateEngine;
     private final Pattern ignoreRegex;
+    private final boolean manageRootDir;
+    private final Map<File, Boolean> zipsExploded;
 
     /**
      * Constructors that prepares this object with the data that is necessary in order to deploy archive/file content
@@ -59,6 +62,7 @@ public class DeploymentData {
      *                 in which case they are relative to destDir and can have subdirectories and/or a different filename
      *                 than what the file is named currently)
      * @param destinationDir the root directory where the content is to be deployed
+     * @param sourceDir the root directory where the source files (zips and raw files) are located
      * @param zipEntriesToRealizeRegex the patterns of files (whose paths are relative to destDir) that
      *                                 must have replacement variables within them replaced with values
      *                                 obtained via the given template engine. The key is the name of the zip file
@@ -69,33 +73,52 @@ public class DeploymentData {
      * @param templateEngine if one or more filesToRealize are specified, this template engine is used to determine
      *                       the values that should replace all replacement variables found in those files
      * @param ignoreRegex the files/directories to ignore when updating an existing deployment
+     * @param manageRootDir if false, the top directory where the files will be deployed (i.e. the destinationDir)
+     *                      will be left alone. That is, if files already exist there, they will not be removed or
+     *                      otherwise merged with this deployment's root files. If true, this top root directory
+     *                      will be managed just as any subdirectory within the deployment will be managed.
+     *                      The purpose of this is to be able to write files to an existing directory that has other
+     *                      unrelated files in it that need to remain intact. e.g. the deploy/ directory of JBossAS. 
+     *                      Note: regardless of this setting, all subdirectories under the root dir will be managed.
+     * @param zipsExploded if not <code>null</code>, this is a map keyed on zip files whose values indicate
+     *                     if the zips should be exploded (true) or remain compressed after the deployment
+     *                     is finished (false). If a zip file is not found in this map, true is the default.
      */
     public DeploymentData(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles,
-        File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
-        TemplateEngine templateEngine, Pattern ignoreRegex) {
+        File sourceDir, File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
+        TemplateEngine templateEngine, Pattern ignoreRegex, boolean manageRootDir, Map<File, Boolean> zipsExploded) {
 
         if (deploymentProps == null) {
             throw new IllegalArgumentException("deploymentProps == null");
         }
         if (destinationDir == null) {
-            throw new IllegalArgumentException("destDir == null");
+            throw new IllegalArgumentException("destinationDir == null");
+        }
+        if (sourceDir == null) {
+            throw new IllegalArgumentException("sourceDir == null");
         }
 
         if (zipFiles == null) {
-            zipFiles = new HashSet<File>();
+            zipFiles = new HashSet<File>(0);
         }
         if (rawFiles == null) {
-            rawFiles = new HashMap<File, File>();
+            rawFiles = new HashMap<File, File>(0);
         }
         if ((zipFiles.size() == 0) && (rawFiles.size() == 0)) {
             throw new IllegalArgumentException("zipFiles/rawFiles are empty - nothing to do");
+        }
+        if (zipsExploded == null) {
+            zipsExploded = new HashMap<File, Boolean>(0);
         }
 
         this.deploymentProps = deploymentProps;
         this.zipFiles = zipFiles;
         this.rawFiles = rawFiles;
         this.destinationDir = destinationDir;
+        this.sourceDir = sourceDir;
         this.ignoreRegex = ignoreRegex;
+        this.manageRootDir = manageRootDir;
+        this.zipsExploded = zipsExploded;
 
         // if there is nothing to realize or we have no template engine to obtain replacement values, then we null things out
         if (templateEngine == null || (zipEntriesToRealizeRegex == null && rawFilesToRealize == null)) {
@@ -127,6 +150,10 @@ public class DeploymentData {
         return destinationDir;
     }
 
+    public File getSourceDir() {
+        return sourceDir;
+    }
+
     public Map<File, Pattern> getZipEntriesToRealizeRegex() {
         return zipEntriesToRealizeRegex;
     }
@@ -143,4 +170,11 @@ public class DeploymentData {
         return ignoreRegex;
     }
 
+    public boolean isManageRootDir() {
+        return manageRootDir;
+    }
+
+    public Map<File, Boolean> getZipsExploded() {
+        return zipsExploded;
+    }
 }

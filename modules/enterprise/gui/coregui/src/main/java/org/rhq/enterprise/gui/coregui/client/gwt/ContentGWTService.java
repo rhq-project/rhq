@@ -37,11 +37,11 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface ContentGWTService extends RemoteService {
 
-    void deletePackageVersion(int packageVersionId);
+    void deletePackageVersion(int packageVersionId) throws RuntimeException;
 
-    PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria);
+    PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) throws RuntimeException;
 
-    List<Architecture> getArchitectures();
+    List<Architecture> getArchitectures() throws RuntimeException;
 
-    PackageType getResourceCreationPackageType(int resourceTypeId);
+    PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException;
 }

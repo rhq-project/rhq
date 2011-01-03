@@ -36,17 +36,17 @@ import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 public interface RemoteInstallGWTService extends RemoteService {
 
     // --- RemoteInstallManagerRemote
-    boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
+    boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
-    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath);
+    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
 
-    String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
+    String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
-    String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
+    String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
-    String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath);
+    String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
-    String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath);
+    String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
 
-    String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath);
+    String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
 }

@@ -33,58 +33,58 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
 
     @Override
     public int createGroupAlertDefinitions(AlertDefinition groupAlertDefinition, Integer resourceGroupId)
-        throws Exception {
+        throws RuntimeException {
         try {
             int results = groupAlertDefManager.createGroupAlertDefinitions(getSessionSubject(), groupAlertDefinition,
                 resourceGroupId);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
     public AlertDefinition updateGroupAlertDefinitions(AlertDefinition groupAlertDefinition, boolean purgeInternals)
-        throws Exception {
+        throws RuntimeException {
         try {
             AlertDefinition results = groupAlertDefManager.updateGroupAlertDefinitions(getSessionSubject(),
                 groupAlertDefinition, purgeInternals);
             return SerialUtility.prepare(results, "updateGroupAlertDefinitions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int enableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws Exception {
+    public int enableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException {
         try {
             int results = groupAlertDefManager
                 .enableGroupAlertDefinitions(getSessionSubject(), groupAlertDefinitionIds);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int disableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws Exception {
+    public int disableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException {
         try {
             int results = groupAlertDefManager.disableGroupAlertDefinitions(getSessionSubject(),
                 groupAlertDefinitionIds);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int removeGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws Exception {
+    public int removeGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException {
         try {
             int results = groupAlertDefManager
                 .removeGroupAlertDefinitions(getSessionSubject(), groupAlertDefinitionIds);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

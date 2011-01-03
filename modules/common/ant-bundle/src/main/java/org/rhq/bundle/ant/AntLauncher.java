@@ -83,25 +83,19 @@ public class AntLauncher {
      * @throws InvalidBuildFileException if the build file is invalid
      */
     public BundleAntProject executeBundleDeployFile(File buildFile, Properties buildProperties,
-                                                    List<BuildListener> buildListeners)
-            throws InvalidBuildFileException {
+        List<BuildListener> buildListeners) throws InvalidBuildFileException {
         // Parse and validate the build file before even attempting to execute it.
-        parseBundleDeployFile(buildFile);
+        BundleAntProject parsedProject = parseBundleDeployFile(buildFile, buildProperties);
 
-        BundleAntProject project = createProject(buildFile, false);
+        BundleAntProject project = createProject(buildFile, false, buildProperties);
+
+        // The parse above got us all the bundle files names. The rest of this method
+        // will be able to re-determine everything else for 'project' but these filenames.
+        // Therefore, we need to copy those filenames from the parsedProject to project.
+        // The rest of project will be filled in later.
+        project.getBundleFileNames().addAll(parsedProject.getBundleFileNames());
 
         try {
-            if (buildProperties != null) {
-                for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
-                    // On the assumption that these properties will be slurped in via Properties.load we
-                    // need to escape backslashes to have them treated as literals
-                    project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
-                        "\\\\"));
-                }
-            }
-            project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
-            project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
-
             if (buildListeners != null) {
                 for (BuildListener buildListener : buildListeners) {
                     project.addBuildListener(buildListener);
@@ -126,17 +120,17 @@ public class AntLauncher {
         }
     }
 
-    public BundleAntProject parseBundleDeployFile(File buildFile) throws InvalidBuildFileException {
-        BundleAntProject project = createProject(buildFile, true);
+    public BundleAntProject parseBundleDeployFile(File buildFile, Properties buildProperties)
+        throws InvalidBuildFileException {
+        BundleAntProject project = createProject(buildFile, true, buildProperties);
 
         ProjectHelper2 projectHelper = new ProjectHelper2();
         try {
             // Use the 3-param version of parse(), rather than the 2-param version, or ProjectHelper.configureProject(),
             // to avoid actually executing the implicit target (which would cause the rhq:bundle task to be executed).
-            AntXMLContext context = (AntXMLContext) project.getReference(REFID_CONTEXT);            
-            projectHelper.parse(project, buildFile,
-                    new ProjectHelper2.RootHandler(context,
-                    new ProjectHelper2.MainHandler()));
+            AntXMLContext context = (AntXMLContext) project.getReference(REFID_CONTEXT);
+            projectHelper.parse(project, buildFile, new ProjectHelper2.RootHandler(context,
+                new ProjectHelper2.MainHandler()));
         } catch (BuildException e) {
             throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
         }
@@ -153,10 +147,23 @@ public class AntLauncher {
         return project;
     }
 
-    private BundleAntProject createProject(File buildFile, boolean parseOnly) {
+    private BundleAntProject createProject(File buildFile, boolean parseOnly, Properties buildProperties) {
+
         ClassLoader classLoader = getClass().getClassLoader();
 
         BundleAntProject project = new BundleAntProject(parseOnly);
+
+        if (buildProperties != null) {
+            for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
+                // On the assumption that these properties will be slurped in via Properties.load we
+                // need to escape backslashes to have them treated as literals
+                project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
+                    "\\\\"));
+            }
+        }
+        project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
+        project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
+
         project.setCoreLoader(classLoader);
         project.init();
         project.setBaseDir(buildFile.getParentFile());
@@ -210,7 +217,7 @@ public class AntLauncher {
         for (Object targetObj : targets) {
             Target target = (Target) targetObj;
             Task[] tasks = target.getTasks();
-            for (Task task : tasks) {                
+            for (Task task : tasks) {
                 if (task.getTaskName().equals(BUNDLE_TASK_NAME)) {
                     abortIfTaskWithinTarget(target, task);
                     bundleTaskCount++;
@@ -230,17 +237,25 @@ public class AntLauncher {
         BundleTask bundleTask = (BundleTask) preconfigureTask(unconfiguredBundleTask);
         Collection<DeploymentUnitType> deployments = bundleTask.getDeploymentUnits().values();
         if (deployments.isEmpty()) {
-            throw new InvalidBuildFileException("The bundle task must contain exactly one rhq:deploymentUnit child element.");
+            throw new InvalidBuildFileException(
+                "The bundle task must contain exactly one rhq:deploymentUnit child element.");
         }
         DeploymentUnitType deployment = deployments.iterator().next();
-        Map<File, File> files = deployment.getFiles();
-        for (File file : files.keySet()) {
-            project.getBundleFileNames().add(file.getName());
+        Map<File, String> files = deployment.getLocalFileNames();
+        for (String file : files.values()) {
+            project.getBundleFileNames().add(file);
         }
-        Set<File> archives = deployment.getArchives();
-        for (File archive : archives) {
-            project.getBundleFileNames().add(archive.getName());
+        Map<File, String> archives = deployment.getLocalArchiveNames();
+        for (String archive : archives.values()) {
+            project.getBundleFileNames().add(archive);
         }
+
+        // note that we do NOT add url-files and url-archives to the BundleFileNames because those are
+        // not true "bundle files" that are stored with the bundle version in the database. Those will
+        // be downloaded by the agents at the time the recipe is invoked. There is nothing server side
+        // that need to be known about the files/archives from URLs.
+
+        return;
     }
 
     private void abortIfTaskWithinTarget(Target target, Task task) throws InvalidBuildFileException {

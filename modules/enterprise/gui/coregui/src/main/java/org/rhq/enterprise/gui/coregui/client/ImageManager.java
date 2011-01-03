@@ -2,6 +2,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -22,6 +23,10 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 public class ImageManager {
 
     public static final String IMAGES_DIR = "images/";
+
+    public static String getLoadingIcon() {
+        return "ajax-loader.gif";
+    }
 
     /**
      * Returns a generic "upload" icon.
@@ -347,17 +352,42 @@ public class ImageManager {
                 return "subsystems/configure/Configure_failed_16.png";
             }
             case INPROGRESS: {
-                return "subsystems/inventory/Configure_inprogress_16.png";
+                return "subsystems/configure/Configure_inprogress_16.png";
             }
             case NOCHANGE:
-                return "subsystems/inventory/Configure_16.png";
+                return "subsystems/configure/Configure_16.png";
             }
         }
 
-        return "subsystems/inventory/Configure_16.png";
+        return "subsystems/configure/Configure_16.png";
     }
 
     public static String getLockedIcon() {
         return "global/Locked_16.png";
+    }
+
+    public static String getEventSeverityIcon(EventSeverity severity) {
+        String icon = "";
+        if (severity != null) {
+            switch (severity) {
+            case DEBUG:
+                icon = "_debug";
+                break;
+            case INFO:
+                icon = "_info";
+                break;
+            case WARN:
+                icon = "_warning";
+                break;
+            case ERROR:
+                icon = "_info";
+                break;
+            case FATAL:
+                icon = "_fatal";
+                break;
+            }
+        }
+
+        return "subsystems/event/Events" + icon + "_16.png";
     }
 }

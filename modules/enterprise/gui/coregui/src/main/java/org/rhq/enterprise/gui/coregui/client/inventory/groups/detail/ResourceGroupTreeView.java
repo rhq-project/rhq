@@ -74,6 +74,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     private ViewId currentViewId;
     private int rootGroupId;
     private int selectedGroupId;
+    private String selectedNodeId;
 
     private ResourceGroupTreeContextMenu contextMenu;
 
@@ -111,8 +112,9 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
+                if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     Record selectedNode = selectionEvent.getRecord();
+                    selectedNodeId = selectedNode.getAttribute("id");
                     com.allen_sauer.gwt.log.client.Log.info("Node selected in tree: " + selectedNode);
                     ResourceType type = (ResourceType) selectedNode.getAttributeAsObject("resourceType");
                     if (type != null) {
@@ -138,8 +140,14 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
-                event.getNode();
+                // stop the browser right-click menu
                 event.cancel();
+
+                // don't select the node on a right click, since we're not navigating to it
+                treeGrid.deselectRecord(event.getNode());
+                if (null != selectedNodeId) {
+                    treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                }
 
                 contextMenu.showContextMenu(event.getNode());
             }
@@ -147,12 +155,12 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
     }
 
-    public void setSelectedGroup(final int groupId) {
+    public void setSelectedGroup(final int groupId, boolean isAutoCluster) {
         this.selectedGroupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
-        criteria.addFilterVisible(null);
+        criteria.addFilterVisible(Boolean.valueOf(!isAutoCluster));
         criteria.fetchResourceType(true);
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
@@ -422,11 +430,11 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 currentViewId = viewPath.getNext();
                 String clusterGroupIdString = currentViewId.getPath();
                 Integer clusterGroupId = Integer.parseInt(clusterGroupIdString);
-                setSelectedGroup(clusterGroupId);
+                setSelectedGroup(clusterGroupId, true);
             } else {
                 String groupIdString = currentViewId.getPath();
                 int groupId = Integer.parseInt(groupIdString);
-                setSelectedGroup(groupId);
+                setSelectedGroup(groupId, false);
             }
         }
     }

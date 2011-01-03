@@ -255,6 +255,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment deployment = new BundleDeployment(bundleVersion, bundleDestination, name);
         deployment.setDescription(description);
         deployment.setConfiguration(configuration);
+        deployment.setSubjectName(subject.getName());
 
         entityManager.persist(deployment);
 
@@ -1218,6 +1219,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return results;
     }
 
+    // to avoid deadlocks, you cannot delete multiple bundles concurrently (see BZ 606530)
+    // instead, this simple method just loops over the given array and deletes them serially
+    // note they all get deleted in their own transaction; this method is never in a tx itself
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void deleteBundles(Subject subject, int[] bundleIds) throws Exception {
+        if (bundleIds != null) {
+            for (int bundleId : bundleIds) {
+                bundleManager.deleteBundle(subject, bundleId);
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
@@ -1250,11 +1263,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == doomed) {
             return;
         }
-        if (!BundleDeploymentStatus.PENDING.equals(doomed.getStatus())) {
+        // only allow deployments to be deleted if they are finished
+        if (BundleDeploymentStatus.SUCCESS == doomed.getStatus()
+            || BundleDeploymentStatus.FAILURE == doomed.getStatus()
+            || BundleDeploymentStatus.MIXED == doomed.getStatus()) {
+            entityManager.remove(doomed);
+        } else {
             throw new IllegalArgumentException("Can not delete deployment with status [" + doomed.getStatus() + "]");
         }
-
-        entityManager.remove(doomed);
     }
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)

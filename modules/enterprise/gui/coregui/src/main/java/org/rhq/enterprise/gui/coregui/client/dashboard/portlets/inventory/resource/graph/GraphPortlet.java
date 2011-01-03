@@ -47,7 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
  */
 public class GraphPortlet extends SmallGraphView implements CustomSettingsPortlet {
 
-    public static final String KEY = MSG.view_portlet_graph_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Graph";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_graph();
 
     private PortletWindow portletWindow;
     private DashboardPortlet storedPortlet;

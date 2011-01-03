@@ -38,20 +38,28 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class InventorySummaryPortlet extends LocatableVLayout implements AutoRefreshPortlet {
+
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "InventorySummary";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_inventorySummary();
+
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
-    public static final String KEY = MSG.common_title_summary_counts();
+    private Timer defaultReloader;
     private Timer reloader;
 
     public InventorySummaryPortlet(String locatorId) {
@@ -161,22 +169,34 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
             // return GWT.create(InventorySummaryView.class);
-            return new InventorySummaryPortlet(locatorId);
+            if (reference == null) {
+                reference = new InventorySummaryPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

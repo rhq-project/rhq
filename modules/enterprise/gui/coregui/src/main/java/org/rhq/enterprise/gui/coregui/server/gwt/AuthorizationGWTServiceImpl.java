@@ -37,49 +37,49 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
-    public Set<Permission> getExplicitResourcePermissions(int resourceId) {
+    public Set<Permission> getExplicitResourcePermissions(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Set<Permission> getImplicitResourcePermissions(int resourceId) {
+    public Set<Permission> getImplicitResourcePermissions(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Set<Permission> getExplicitGroupPermissions(int groupId) {
+    public Set<Permission> getExplicitGroupPermissions(int groupId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getExplicitGroupPermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Set<Permission> getImplicitGroupPermissions(int groupId) {
+    public Set<Permission> getImplicitGroupPermissions(int groupId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getImplicitGroupPermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Set<Permission> getExplicitGlobalPermissions() {
+    public Set<Permission> getExplicitGlobalPermissions() throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager
                 .getExplicitGlobalPermissions(getSessionSubject())),
                 "AuthorizationManager.getExplicitGlobalPermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

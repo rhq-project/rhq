@@ -25,7 +25,6 @@ package org.rhq.bundle.ant.type;
 import java.io.File;
 
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.types.DataType;
 
 /**
  * A base class for the functionality shared by {@link FileType} and {@link ArchiveType}.
@@ -33,6 +32,7 @@ import org.apache.tools.ant.types.DataType;
  * @author Ian Springer
  */
 public abstract class AbstractFileType extends AbstractBundleType {
+    private String name;
     private File source;
 
     // TODO: We currently do not call this method. Do we want to or should we just let the Deployer utility handle
@@ -43,7 +43,7 @@ public abstract class AbstractFileType extends AbstractBundleType {
         }
         if (this.source.isDirectory()) {
             throw new BuildException("File path specified by 'name' attribute (" + this.source
-                    + ") is a directory - it must be a regular file.");
+                + ") is a directory - it must be a regular file.");
         }
     }
 
@@ -51,7 +51,12 @@ public abstract class AbstractFileType extends AbstractBundleType {
         return this.source;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public void setName(String name) {
+        this.name = name;
         File file = new File(name);
         if (file.isAbsolute()) {
             throw new BuildException("Path specified by 'name' attribute (" + name

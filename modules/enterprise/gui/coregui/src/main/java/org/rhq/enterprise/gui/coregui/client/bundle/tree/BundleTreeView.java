@@ -26,6 +26,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
@@ -39,12 +40,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  */
 public class BundleTreeView extends LocatableTreeGrid {
 
-    public BundleTreeView(String locatorId) {
+    public BundleTreeView(String locatorId, boolean canManageBundles) {
         super(locatorId);
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);
-        //        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
@@ -52,36 +52,43 @@ public class BundleTreeView extends LocatableTreeGrid {
         setSortField("name");
         setShowHeader(false);
 
-        setDataSource(new BundleTreeDataSource());
+        setDataSource(new BundleTreeDataSource(canManageBundles));
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
-                String path = event.getNode().getAttribute("id").replaceAll("_", "/");
+                TreeNode node = event.getNode();
+                String path = node.getAttribute("id").replaceAll("_", "/");
                 History.newItem("Bundles/Bundle/" + path);
             }
         });
     }
 
     public void selectPath(ViewPath viewPath) {
+        Tree theTree = getTree();
 
+        // TODO: how do we get the tree to load its nodes if they aren't loaded yet? 
         if (viewPath.viewsLeft() > 0) {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
                 if (key.length() > 0)
-                    key += ":";
+                    key += "_";
 
                 key += view.getPath();
 
-                TreeNode node = getTree().findById(key);
+                TreeNode node = theTree.findById(key);
                 if (node != null) {
-                    getTree().openFolder(node);
+                    // make sure all its parents are open as well as itself
+                    TreeNode parentNode = node; // prime the pump
+                    while (parentNode != null) {
+                        theTree.openFolder(parentNode);
+                        parentNode = theTree.getParent(parentNode);
+                    }
                 }
             }
 
             final String finalKey = key;
             GWT.runAsync(new RunAsyncCallback() {
                 public void onFailure(Throwable reason) {
-
                 }
 
                 public void onSuccess() {

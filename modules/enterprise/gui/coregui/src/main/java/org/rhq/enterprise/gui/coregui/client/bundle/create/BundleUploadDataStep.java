@@ -98,11 +98,13 @@ public class BundleUploadDataStep extends AbstractWizardStep {
     public boolean previousPage() {
         wizard.getView().hideMessage();
 
-        for (BundleFileUploadForm uploadForm : this.uploadForms) {
-            if (uploadForm.isUploadInProgress()) {
-                handleUploadError("[" + uploadForm.getName() + "] " + MSG.view_bundle_createWizard_uploadInProgress(),
-                    false);
-                return false;
+        if (this.uploadForms != null) {
+            for (BundleFileUploadForm uploadForm : this.uploadForms) {
+                if (uploadForm.isUploadInProgress()) {
+                    handleUploadError("[" + uploadForm.getName() + "] "
+                        + MSG.view_bundle_createWizard_uploadInProgress(), false);
+                    return false;
+                }
             }
         }
 

@@ -41,56 +41,57 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
     public List<SearchSuggestion> getTabAwareSuggestions(SearchSubsystem searchSubsystem, String expression,
-        int caretPosition, String tab) {
+        int caretPosition, String tab) throws RuntimeException {
         try {
             SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
             List<SearchSuggestion> results = searchAssistManager.getTabAwareSuggestions(expression, caretPosition, tab);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition) {
+    public List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition)
+        throws RuntimeException {
         try {
             SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
             List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public int createSavedSearch(SavedSearch savedSearch) {
+    public int createSavedSearch(SavedSearch savedSearch) throws RuntimeException {
         try {
             return savedSearchManager.createSavedSearch(getSessionSubject(), savedSearch);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateSavedSearch(SavedSearch savedSearch) {
+    public void updateSavedSearch(SavedSearch savedSearch) throws RuntimeException {
         try {
             savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteSavedSearch(int savedSearchId) {
+    public void deleteSavedSearch(int savedSearchId) throws RuntimeException {
         try {
             savedSearchManager.deleteSavedSearch(getSessionSubject(), savedSearchId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<SavedSearch> findSavedSearchesByCriteria(SavedSearchCriteria criteria) {
+    public List<SavedSearch> findSavedSearchesByCriteria(SavedSearchCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(savedSearchManager.findSavedSearchesByCriteria(getSessionSubject(), criteria),
                 "SearchService.findRolesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

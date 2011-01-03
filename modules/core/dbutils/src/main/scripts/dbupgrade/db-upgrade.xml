@@ -3277,6 +3277,25 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="DELETED" nullable="FALSE" />
             </schemaSpec>
+
+            <schemaSpec version="2.102">
+                <!-- Create the ID column nullable. -->
+                <schema-addColumn table="RHQ_OPERATION_SCHEDULE" column="ID" columnType="INTEGER" />
+                <!-- Set values for ID column on all existing rows. -->
+                <schema-javaTask className="OperationScheduleIdSetterUpgradeTask" />
+                <!-- Now that all existing rows have IDs, switch the column to non-nullable. -->
+                <schema-alterColumn table="RHQ_OPERATION_SCHEDULE" column="ID" nullable="FALSE"  />
+                <!-- Finally, make ID the primary key, rather than (JOB_NAME, JOB_GROUP), and make
+                     (JOB_NAME, JOB_GROUP) a unique index instead. -->
+                <schema-directSQL>
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID...">
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE DROP CONSTRAINT RHQ_OPERATION_SCHEDULE_KEY;
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID);
+                        CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP);
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

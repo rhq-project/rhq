@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +36,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+import org.quartz.CronTrigger;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
@@ -44,6 +47,7 @@ import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -61,6 +65,8 @@ import org.rhq.core.domain.operation.OperationScheduleEntity;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.operation.ScheduleJobId;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
@@ -160,6 +166,18 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    public ResourceOperationSchedule scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule)
+        throws ScheduleException {
+        JobTrigger jobTrigger = schedule.getJobTrigger();
+        Trigger trigger = convertToTrigger(jobTrigger);
+        try {
+            return scheduleResourceOperation(subject, schedule.getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+        }
+        catch (SchedulerException e) {
+            throw new ScheduleException(e);
+        }
+    }
+
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         Configuration parameters, Trigger trigger, String notes) throws SchedulerException {
         Resource resource = getResourceIfAuthorized(subject, resourceId);
@@ -198,13 +216,16 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         trigger.setJobName(jobDetail.getName());
         trigger.setJobGroup(jobDetail.getGroup());
 
-        // we need to create our own schedule tracking entity
+        // We need to create our own schedule tracking entity.
         ResourceOperationScheduleEntity schedule;
         schedule = new ResourceOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger
             .getStartTime(), resource);
         entityManager.persist(schedule);
 
-        // now actually schedule it
+        // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
+        jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
+
+        // Now actually schedule it.
         Date next = scheduler.scheduleJob(jobDetail, trigger);
         ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
 
@@ -277,6 +298,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         schedule = new GroupOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger.getStartTime(),
             group);
         entityManager.persist(schedule);
+
+        // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
+        jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
 
         // now actually schedule it
         Date next = scheduler.scheduleJob(jobDetail, trigger);
@@ -416,9 +440,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
-    public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, JobDetail jobDetail) {
+    public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
+        String jobName = jobDetail.getName();
+        String jobGroup = jobDetail.getGroup();
         String description = jobDetail.getDescription();
         String operationName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME);
         String displayName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
@@ -431,7 +457,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         int resourceId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID);
-        Resource resource = getResourceIfAuthorized(subject, resourceId);
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+
+        Integer entityId = getOperationScheduleEntityId(jobDetail);
 
         // note that we throw an exception if the subject does not exist!
         // this is by design to avoid a malicious user creating a dummy subject in the database,
@@ -440,16 +468,40 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // will need to be deleted and rescheduled.
 
         ResourceOperationSchedule sched = new ResourceOperationSchedule();
-        sched.setJobName(jobDetail.getName());
-        sched.setJobGroup(jobDetail.getGroup());
+        sched.setId(entityId);
+        sched.setJobName(jobName);
+        sched.setJobGroup(jobGroup);
         sched.setResource(resource);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
-        sched.setSubject(subjectManager.getSubjectById(subjectId));
+        Subject subject = subjectManager.getSubjectById(subjectId);
+        sched.setSubject(subject);
         sched.setParameters(parameters);
         sched.setDescription(description);
+        Trigger trigger = getTriggerOfJob(jobDetail);
+        JobTrigger jobTrigger = convertToJobTrigger(trigger);
+        sched.setJobTrigger(jobTrigger);
 
         return sched;
+    }
+
+    private int getOperationScheduleEntityId(JobDetail jobDetail) {
+        JobDataMap jobDataMap = jobDetail.getJobDataMap();
+        Object entityIdObj = jobDataMap.get(ResourceOperationJob.DATAMAP_INT_ENTITY_ID);
+        int entityId;
+        if (entityIdObj != null) {
+            // for jobs created using RHQ 4.0 or later, the map will contain an entityId entry
+            entityId = Integer.valueOf((String)entityIdObj);
+        } else {
+            // for jobs created prior to upgrading to RHQ 4.0, the map will not contain an entityId entry,
+            // so we'll need to lookup the entity id from the DB.
+            String jobName = jobDetail.getName();
+            String jobGroup = jobDetail.getGroup();
+            ScheduleJobId jobId = new ScheduleJobId(jobName, jobGroup);
+            OperationScheduleEntity operationScheduleEntity = findOperationScheduleEntity(jobId);
+            entityId = operationScheduleEntity.getId();
+        }
+        return entityId;
     }
 
     public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, String jobId)
@@ -513,6 +565,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
         sched.setHaltOnFailure(jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE));
+        Trigger trigger = getTriggerOfJob(jobDetail);
+        JobTrigger jobTrigger = convertToJobTrigger(trigger);
+        sched.setJobTrigger(jobTrigger);
 
         return sched;
     }
@@ -1314,7 +1369,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                  * the time this group operation was kicked off), the group operation was a success by definition
                  */
                 groupHistory.setStatus(OperationRequestStatus.SUCCESS);
-                continue;
             }
         } catch (Throwable t) {
             LOG.warn("Failed to check for memberless group operations. Cause: " + t);
@@ -1418,7 +1472,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (ResourceOperationScheduleComposite composite : results) {
             try {
-                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getOperationJobId()
+                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId()
                     .toString());
                 OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
                     .getOperationName(), false);
@@ -1472,7 +1526,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (GroupOperationScheduleComposite composite : results) {
             try {
-                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getOperationJobId()
+                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId()
                     .toString());
                 OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
                     .getOperationName(), false);
@@ -1752,8 +1806,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      * @return a managed entity, attached to this bean's entity manager
      */
     private OperationScheduleEntity findOperationScheduleEntity(ScheduleJobId jobId) {
-        OperationScheduleEntity entity = entityManager.find(OperationScheduleEntity.class, jobId);
-        return entity;
+        Query query = entityManager.createNamedQuery(OperationScheduleEntity.QUERY_FIND_BY_JOB_ID);
+        String jobName = jobId.getJobName();
+        query.setParameter("jobName", jobName);
+        String jobGroup = jobId.getJobGroup();
+        query.setParameter("jobGroup", jobGroup);
+        OperationScheduleEntity operationScheduleEntity = (OperationScheduleEntity)query.getSingleResult();
+        return operationScheduleEntity;
     }
 
     public GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
@@ -1790,7 +1849,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
 
         CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
             entityManager);
@@ -1801,7 +1859,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
                 .getId());
@@ -1816,7 +1873,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
                 .getId());
@@ -1826,4 +1882,110 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             entityManager);
         return queryRunner.execute();
     }
+
+    private Trigger getTriggerOfJob(JobDetail jobDetail) {
+        Trigger[] triggers;
+        try {
+            triggers = scheduler.getTriggersOfJob(jobDetail.getName(), jobDetail.getGroup());
+        }
+        catch (SchedulerException e) {
+            throw new RuntimeException("Failed to lookup trigger for job [" + jobDetail.getFullName() + "].", e);
+        }
+        if (triggers.length == 0) {
+            throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has no triggers.");
+        }
+        if (triggers.length > 1) {
+            throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has more than one trigger: "
+                + Arrays.asList(triggers));
+        }
+        return triggers[0];
+    }
+
+    private static JobTrigger convertToJobTrigger(Trigger trigger) {
+        JobTrigger schedule;
+        if (trigger instanceof SimpleTrigger) {
+            SimpleTrigger simpleTrigger = (SimpleTrigger)trigger;
+            Date startTime = simpleTrigger.getStartTime();
+            if (startTime != null) {
+                // later
+                int repeatCount = simpleTrigger.getRepeatCount();
+                if (repeatCount == 0) {
+                    // non-recurring
+                    schedule = JobTrigger.createLaterTrigger(startTime);
+                } else {
+                    // recurring
+                    long repeatInterval = simpleTrigger.getRepeatInterval();
+                    if (repeatCount == SimpleTrigger.REPEAT_INDEFINITELY) {
+                        Date endTime = simpleTrigger.getEndTime();
+                        if (endTime != null) {
+                            schedule = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval, endTime);
+                        } else {
+                            schedule = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval);
+                        }
+                    } else {
+                        schedule = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval, repeatCount);
+                    }
+                }
+            } else {
+                // now
+                int repeatCount = simpleTrigger.getRepeatCount();
+                if (repeatCount == 0) {
+                    // non-recurring
+                    schedule = JobTrigger.createNowTrigger();
+                } else {
+                    // recurring
+                    long repeatInterval = simpleTrigger.getRepeatInterval();
+                    if (repeatCount == SimpleTrigger.REPEAT_INDEFINITELY) {
+                        Date endTime = simpleTrigger.getEndTime();
+                        if (endTime != null) {
+                            schedule = JobTrigger.createNowAndRepeatTrigger(repeatInterval, endTime);
+                        } else {
+                            schedule = JobTrigger.createNowAndRepeatTrigger(repeatInterval);
+                        }
+                    } else {
+                        schedule = JobTrigger.createNowAndRepeatTrigger(repeatInterval, repeatCount);
+                    }
+                }
+            }
+        } else if (trigger instanceof CronTrigger) {
+            CronTrigger cronTrigger = (CronTrigger)trigger;
+            schedule = JobTrigger.createCronTrigger(cronTrigger.getCronExpression());
+        } else {
+            throw new IllegalStateException("Unsupported Quartz trigger type: " + trigger.getClass().getName());
+        }
+        return schedule;
+    }
+
+    private static Trigger convertToTrigger(JobTrigger jobTrigger) {
+        Trigger trigger;
+        if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.CRON_EXPRESSION) {
+            CronTrigger cronTrigger = new CronTrigger();
+            try {
+                cronTrigger.setCronExpression(jobTrigger.getCronExpression());
+            }
+            catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            trigger = cronTrigger;
+        } else {
+            SimpleTrigger simpleTrigger = new SimpleTrigger();
+            Date startTime = null;
+            switch (jobTrigger.getStartType()) {
+                case NOW:
+                    startTime = new Date();
+                    break;
+                case DATETIME:
+                    startTime = jobTrigger.getStartDate();
+                    break;
+            }
+            simpleTrigger.setStartTime(startTime);
+
+            // TODO (ips): Finish implementing this.
+
+            trigger= simpleTrigger;
+        }
+
+        return trigger;
+    }
+
 }

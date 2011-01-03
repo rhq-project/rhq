@@ -56,6 +56,33 @@ public class LinkManager {
         }
     }
 
+    public static String getAutoGroupTabLink(int autoGroupId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#Resource/AutoGroup/" + autoGroupId + "/" + tabName
+                + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + autoGroupId;
+        }
+    }
+
+    public static String getAutoClusterTabLink(int autoClusterGroupId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#ResourceGroup/AutoCluster/" + autoClusterGroupId + "/" + tabName
+                + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + autoClusterGroupId;
+        }
+    }
+
+    public static String getResourceGroupTabLink(int resourceGroupId, String tabName, String subTabName) {
+        if (GWT) {
+            return "#ResourceGroup/" + resourceGroupId + "/" + tabName
+                + ((null == subTabName) ? "" : ("/" + subTabName));
+        } else {
+            return "/rhq/group/inventory/view.xhtml?groupId=" + resourceGroupId;
+        }
+    }
+
     public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
         return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
@@ -318,5 +345,22 @@ public class LinkManager {
 
     public static String getTagLink(String tag) {
         return "#Reports/Subsystems/Tags/" + tag;
+    }
+
+    public static String getBundleLink(int bundleId) {
+        return "#Bundles/Bundle/" + bundleId;
+    }
+
+    public static String getBundleVersionLink(int bundleId, int bundleVersionId) {
+        return "#Bundles/Bundle/" + bundleId + "/versions" + (bundleVersionId == 0 ? "" : ("/" + bundleVersionId));
+    }
+
+    public static String getBundleDestinationLink(int bundleId, int bundleDestinationId) {
+        return "#Bundles/Bundle/" + bundleId + "/destinations"
+            + (bundleDestinationId == 0 ? "" : ("/" + bundleDestinationId));
+    }
+
+    public static String getBundleDeploymentLink(int bundleId, int bundleDeploymentId) {
+        return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
     }
 }

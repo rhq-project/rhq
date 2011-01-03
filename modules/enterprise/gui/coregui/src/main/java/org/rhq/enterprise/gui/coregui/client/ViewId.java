@@ -18,38 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-/**
- *
- * @author Greg Hinkle
- */
 public class ViewId {
 
     private String path;
 
-    private List<Breadcrumb> breadcrumbs;
-
-    public ViewId(String path, Breadcrumb... breadcrumbs) {
-        this.path = path;
-        if ( breadcrumbs != null) {
-            this.breadcrumbs = Arrays.asList(breadcrumbs);
-        } else {
-            this.breadcrumbs = new ArrayList<Breadcrumb>();
-        }
-    }
-
     public ViewId(String path) {
         this.path = path;
-        breadcrumbs = new ArrayList<Breadcrumb>();
-
-        breadcrumbs.add(new Breadcrumb(path));
-    }
-
-    public List<Breadcrumb> getBreadcrumbs() {
-        return breadcrumbs;
     }
 
     public String getPath() {
@@ -63,12 +38,15 @@ public class ViewId {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         ViewId viewId = (ViewId) o;
 
-        if (!path.equals(viewId.path)) return false;
+        if (!path.equals(viewId.path))
+            return false;
 
         return true;
     }

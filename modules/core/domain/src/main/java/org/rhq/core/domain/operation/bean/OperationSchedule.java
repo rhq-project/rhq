@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.operation;
+package org.rhq.core.domain.operation.bean;
 
 import java.io.Serializable;
 
@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
@@ -40,6 +41,7 @@ import org.rhq.core.domain.operation.JobId;
 public abstract class OperationSchedule implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private int id;
     private String jobName;
     private String jobGroup;
     private String operationName;
@@ -47,8 +49,17 @@ public abstract class OperationSchedule implements Serializable {
     private Configuration parameters;
     private Subject subject;
     private String description;
+    private JobTrigger jobTrigger;
 
     public OperationSchedule() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getJobGroup() {
@@ -122,6 +133,14 @@ public abstract class OperationSchedule implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public JobTrigger getJobTrigger() {
+        return jobTrigger;
+    }
+
+    public void setJobTrigger(JobTrigger jobTrigger) {
+        this.jobTrigger = jobTrigger;
     }
 
     /**

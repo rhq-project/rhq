@@ -148,8 +148,7 @@ public class PortletWindow extends LocatableWindow {
 
         addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClientEvent closeClientEvent) {
-                PortletWindow.this.dashboardPortlet.getDashboard().removePortlet(PortletWindow.this.dashboardPortlet);
-                save();
+                PortletWindow.this.dashboardView.removePortlet(PortletWindow.this.dashboardPortlet);
                 destroy();
             }
         });

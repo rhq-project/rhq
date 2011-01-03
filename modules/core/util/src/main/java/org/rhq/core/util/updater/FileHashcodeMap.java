@@ -204,18 +204,22 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      * 
      * The root directory is also scanned for new files that are not in this original
      * map - if new files are found (and they do not match the ignoreRegex), they are added to the
-     * returned map.
+     * returned map. Note that if <code>reportNewRootFilesAsNew</code> is false, and if new files
+     * are found in the top root directory and they are not related to the deployment fileset,
+     * they will not be added to the returned map.
      *
      * @param rootDir directory where the relative paths are expected to be
      * @param ignoreRegex if relative paths of files under rootDir match this, they will be ignored.
      *                    This will eliminate files/directories from being considered "new" because
      *                    they aren't in original.
+     * @param reportNewRootFilesAsNew do not report as new any unrelated files found in the root dir
      * @return a map with current files/hashcodes, including files that were not found in original. 
      *         the returned object also has additional info such as those files that were added,
      *         deleted, changed from this original. It also indicates what was ignored during the rescan. 
      * @throws Exception
      */
-    public ChangesFileHashcodeMap rescan(File rootDir, Pattern ignoreRegex) throws Exception {
+    public ChangesFileHashcodeMap rescan(File rootDir, Pattern ignoreRegex, boolean reportNewRootFilesAsNew)
+        throws Exception {
         ChangesFileHashcodeMap current = new ChangesFileHashcodeMap(this);
 
         // go through our original files and recalculate their hashcodes
@@ -253,9 +257,12 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         // now recursively traverse the root directory and look for new files that aren't in our original map
         // files that have been added need to be put into our returned map and also marked as added
         FileHashcodeMap newFiles = new FileHashcodeMap();
-        lookForNewFilesRecursive(newFiles, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex, current.getIgnored());
+        Set<String> skippedFiles = new HashSet<String>();
+        lookForNewFilesRecursive(newFiles, skippedFiles, rootDir.getAbsolutePath(), 0, rootDir, ignoreRegex, current
+            .getIgnored(), reportNewRootFilesAsNew);
         current.putAll(newFiles);
         current.getAdditions().putAll(newFiles);
+        current.getSkipped().addAll(skippedFiles);
 
         return current;
     }
@@ -264,16 +271,24 @@ public class FileHashcodeMap extends TreeMap<String, String> {
      * This looks for new files under the given fileOrDir and adds them to <code>newFiles</code>.
      * 
      * @param newFiles    the map where the new, current file/hashcode data will be stored
-     * @param rootPath    the top root directory that is being scanned
-     * @param level       the level deep in the file hierarchy currently being processed (0==at top root dir)
-     * @param fileOrDir   existing directory/file to rescan
+     * @param skippedFiles a set where names of unrelated files/directories are stored. The names
+     *                     found here after this method returns are those files/dirs that were found
+     *                     in the top level root dir, but were skipped over and not processed. This will not
+     *                     contain paths with subdirectories - they will only be a filename with no paths
+     *                     because they are located directly under the root dir.
+     * @param rootPath the top root directory that is being scanned
+     * @param level the level deep in the file hierarchy currently being processed (0==at top root dir)
+     * @param fileOrDir existing directory/file to rescan
      * @param ignoreRegex a regular expression that indicates which files/directories should be ignored.
      *                    If a relative file/directory path matches this regex, it will be skipped.
-     * @param ignored a set that will contain those files/directories that were ignored while scanning the root dir 
+     * @param ignored a set that will contain those files/directories that were ignored while scanning the root dir
+     * @param reportNewRootFilesAsNew if false, ignore unrelated files at the root dir location (level=0)
+     *
      * @throws Exception 
      */
-    private void lookForNewFilesRecursive(FileHashcodeMap newFiles, String rootPath, int level, File fileOrDir,
-        Pattern ignoreRegex, Set<String> ignored) throws Exception {
+    private void lookForNewFilesRecursive(FileHashcodeMap newFiles, Set<String> skippedFiles, String rootPath,
+        int level, File fileOrDir, Pattern ignoreRegex, Set<String> ignored, boolean reportNewRootFilesAsNew)
+        throws Exception {
 
         if (fileOrDir == null || !fileOrDir.exists()) {
             throw new Exception("Non-existent file/directory provided: " + fileOrDir);
@@ -301,10 +316,41 @@ public class FileHashcodeMap extends TreeMap<String, String> {
                 return;
             }
 
+            // If we are currently at the top level and we are not to report unrelated files as new
+            // then we need to find out which files ARE related first. Related files are those files
+            // already in our Map at the root level (i.e. they are just a filename, no parent paths)
+            // plus those in our Map with a top parent dir name that match a child directory of
+            // fileOrDir (which is the root dir if we are at level=0).
+            // Note that we use File API to manipulate filenames/parents to ensure we do this right
+            // on Windows (taking care of relative paths with drive letters, e.g. C:subdir/file.txt).
+            HashSet<String> relatedTopLevelFiles = null;
+            if (level == 0 && !reportNewRootFilesAsNew) {
+                relatedTopLevelFiles = new HashSet<String>();
+                for (String relatedFilePath : keySet()) { // loop through our Map key entries, these are the "related" files
+                    File relatedFile = new File(relatedFilePath);
+                    if (!relatedFile.isAbsolute()) {
+                        String topLevelName = relatedFile.getName(); // prime the pump; if we have no parent, this is our file already at the top root dir
+                        File parent = relatedFile.getParentFile();
+                        // walk up the file hierarchy until we hit the top parent - this is the related dir found in our top root
+                        while (parent != null) {
+                            topLevelName = parent.getName();
+                            parent = parent.getParentFile();
+                        }
+                        relatedTopLevelFiles.add(topLevelName); // this is a file or dir at the top root dir                             
+                    }
+                }
+            }
+
             File[] children = fileOrDir.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    lookForNewFilesRecursive(newFiles, rootPath, level + 1, child, ignoreRegex, ignored);
+                    // skip this child if we are at the top root dir and it is not related to our fileset
+                    if (relatedTopLevelFiles == null || relatedTopLevelFiles.contains(child.getName())) {
+                        lookForNewFilesRecursive(newFiles, skippedFiles, rootPath, level + 1, child, ignoreRegex,
+                            ignored, reportNewRootFilesAsNew);
+                    } else {
+                        skippedFiles.add(child.getName());
+                    }
                 }
             }
         } else {

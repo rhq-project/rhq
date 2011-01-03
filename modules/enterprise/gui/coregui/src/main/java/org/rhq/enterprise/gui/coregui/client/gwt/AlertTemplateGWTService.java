@@ -34,11 +34,12 @@ public interface AlertTemplateGWTService extends RemoteService {
      * @return the updated definition
      * @throws Exception
      */
-    AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean purgeInternals) throws Exception;
+    AlertDefinition updateAlertTemplate(AlertDefinition alertDefinition, boolean purgeInternals)
+        throws RuntimeException;
 
-    void enableAlertTemplates(Integer[] alertDefinitionIds) throws Exception;
+    void enableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException;
 
-    void disableAlertTemplates(Integer[] alertDefinitionIds) throws Exception;
+    void disableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException;
 
-    void removeAlertTemplates(Integer[] alertDefinitionIds) throws Exception;
+    void removeAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException;
 }

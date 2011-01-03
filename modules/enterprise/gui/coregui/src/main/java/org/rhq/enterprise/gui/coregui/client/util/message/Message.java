@@ -38,6 +38,7 @@ public class Message {
 
     // TODO: Add Debug severity?
     public enum Severity {
+        Blank("InfoBlank", "info/icn_info_blank.png"), //
         Info("InfoBlock", "info/icn_info_blue.png"), //
         Warning("WarnBlock", "info/icn_info_orange.png"), //
         Error("ErrorBlock", "info/icn_info_red.png"), //
@@ -61,7 +62,21 @@ public class Message {
     };
 
     public enum Option {
-        Transient, Sticky, BackgroundJobResult
+        /**
+         * The message will not be persisted in the message center list.
+         */
+        Transient,
+
+        /**
+         * The message will not auto-clear after a delay - it remains on the screen until you navigate away.
+         */
+        Sticky,
+
+        /**
+         * The message will be persisted in the message center list,
+         * but will not show up in the main screen message area.
+         */
+        BackgroundJobResult
     };
 
     public Message(String conciseMessage) {

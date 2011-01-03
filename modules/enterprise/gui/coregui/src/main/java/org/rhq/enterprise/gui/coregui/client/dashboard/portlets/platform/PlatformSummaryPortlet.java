@@ -62,11 +62,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
     public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "PlatformSummary";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_platformSummary();
+
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
 
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
-    public static final String KEY = MSG.view_portlet_platform_title();
 
     public PlatformSummaryPortlet(String locatorId) {
         super(locatorId);

@@ -47,122 +47,125 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
-    public Configuration getPluginConfiguration(int resourceId) {
+    public Configuration getPluginConfiguration(int resourceId) throws RuntimeException {
         try {
             Configuration configuration = configurationManager.getPluginConfiguration(getSessionSubject(), resourceId);
             return SerialUtility.prepare(configuration, "PluginConfiguration");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) {
+    public ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) throws RuntimeException {
         try {
             ConfigurationDefinition definition = configurationManager.getPluginConfigurationDefinitionForResourceType(
                 getSessionSubject(), resourceTypeId);
             return SerialUtility.prepare(definition, "PluginDefinition");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public Configuration getResourceConfiguration(int resourceId) {
+    public Configuration getResourceConfiguration(int resourceId) throws RuntimeException {
         try {
             Configuration configuration = configurationManager
                 .getResourceConfiguration(getSessionSubject(), resourceId);
             return SerialUtility.prepare(configuration, "ResourceConfiguration");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId) {
+    public ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId) throws RuntimeException {
         try {
             ConfigurationDefinition definition = configurationManager
                 .getResourceConfigurationDefinitionWithTemplatesForResourceType(getSessionSubject(), resourceTypeId);
             return SerialUtility.prepare(definition, "ResourceDefinition");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Integer resourceId, Long beginDate,
-        Long endDate, boolean suppressOldest, PageControl pc) {
+        Long endDate, boolean suppressOldest, PageControl pc) throws RuntimeException {
         try {
             PageList<ResourceConfigurationUpdate> result = configurationManager.findResourceConfigurationUpdates(
                 getSessionSubject(), resourceId, beginDate, endDate, suppressOldest, pc);
             return SerialUtility.prepare(result, "ConfigurationService.findResourceConfigurationUpdates");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration) {
+    public ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration)
+        throws RuntimeException {
         try {
             ResourceConfigurationUpdate update = configurationManager.updateResourceConfiguration(getSessionSubject(),
                 resourceId, configuration);
             return SerialUtility.prepare(update, "ConfigurationService.updateResourceConfiguration");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration) {
+    public PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration)
+        throws RuntimeException {
         try {
             PluginConfigurationUpdate update = configurationManager.updatePluginConfiguration(getSessionSubject(),
                 resourceId, configuration);
             return SerialUtility.prepare(update, "ConfigurationService.updatePluginConfiguration");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
-        ResourceConfigurationUpdateCriteria criteria) {
+        ResourceConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
             PageList<ResourceConfigurationUpdate> updates = configurationManager
                 .findResourceConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(updates, "ConfigurationService.findResourceConfigurationUpdatesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(
-        PluginConfigurationUpdateCriteria criteria) {
+        PluginConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
             PageList<PluginConfigurationUpdate> updates = configurationManager
                 .findPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(updates, "ConfigurationService.findPluginConfigurationUpdatesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(
-        GroupResourceConfigurationUpdateCriteria criteria) {
+        GroupResourceConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
             PageList<GroupResourceConfigurationUpdate> updates = configurationManager
                 .findGroupResourceConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(updates,
                 "ConfigurationService.findGroupResourceConfigurationUpdatesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(
-        GroupPluginConfigurationUpdateCriteria criteria) {
+        GroupPluginConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
             PageList<GroupPluginConfigurationUpdate> updates = configurationManager
                 .findGroupPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(updates, "ConfigurationService.findGroupPluginConfigurationUpdatesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId) {
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId)
+        throws RuntimeException {
         try {
             ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
             Map<Integer, Configuration> configurations = this.configurationManager
@@ -176,12 +179,13 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findResourceConfigurationsForGroup");
-        } catch (RuntimeException e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId) {
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
+        throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = this.configurationManager
                 .getPluginConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
@@ -194,13 +198,13 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findPluginConfigurationsForGroup");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(
-        int groupUpdateId) {
+        int groupUpdateId) throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = this.configurationManager
                 .getPluginConfigurationMapForGroupUpdate(groupUpdateId);
@@ -213,76 +217,81 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findPluginConfigurationsForGroupUpdate");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void updateResourceConfigurationsForGroup(int groupId,
-        List<ResourceConfigurationComposite> resourceConfigurations) {
+        List<ResourceConfigurationComposite> resourceConfigurations) throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = convertToMap(resourceConfigurations);
             this.configurationManager.scheduleGroupResourceConfigurationUpdate(getSessionSubject(), groupId,
                 configurations);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void updatePluginConfigurationsForGroup(int groupId,
-        List<ResourceConfigurationComposite> pluginConfigurations) {
+        List<ResourceConfigurationComposite> pluginConfigurations) throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = convertToMap(pluginConfigurations);
             this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId,
                 configurations);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds) {
+    public void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds)
+        throws RuntimeException {
         try {
             this.configurationManager.deleteGroupPluginConfigurationUpdates(getSessionSubject(), groupId,
                 groupPluginConfigUpdateIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds) {
+    public void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
+        throws RuntimeException {
         try {
             this.configurationManager.deleteGroupResourceConfigurationUpdates(getSessionSubject(), groupId,
                 groupResourceConfigUpdateIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    /*
-        // Dummy method for gwt compiler
-        public RawConfiguration dummy(RawConfiguration config) {
-            Log.info(config.getPath());
-            return new RawConfiguration();
+    private List<ResourceConfigurationComposite> convertToCompositesList(Map<Integer, Configuration> configurations)
+        throws RuntimeException {
+        try {
+            List<ResourceConfigurationComposite> configurationComposites = new ArrayList<ResourceConfigurationComposite>(
+                configurations.size());
+            for (Integer resourceId : configurations.keySet()) {
+                Configuration configuration = configurations.get(resourceId);
+                ResourceConfigurationComposite configurationComposite = new ResourceConfigurationComposite(resourceId,
+                    configuration);
+                configurationComposites.add(configurationComposite);
+            }
+            return configurationComposites;
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
-    */
-
-    private List<ResourceConfigurationComposite> convertToCompositesList(Map<Integer, Configuration> configurations) {
-        List<ResourceConfigurationComposite> configurationComposites = new ArrayList<ResourceConfigurationComposite>(
-            configurations.size());
-        for (Integer resourceId : configurations.keySet()) {
-            Configuration configuration = configurations.get(resourceId);
-            ResourceConfigurationComposite configurationComposite = new ResourceConfigurationComposite(resourceId,
-                configuration);
-            configurationComposites.add(configurationComposite);
-        }
-        return configurationComposites;
     }
 
-    private Map<Integer, Configuration> convertToMap(List<ResourceConfigurationComposite> resourceConfigurations) {
-        Map<Integer, Configuration> configurations = new HashMap<Integer, Configuration>(resourceConfigurations.size());
-        for (ResourceConfigurationComposite resourceConfiguration : resourceConfigurations) {
-            configurations.put(resourceConfiguration.getResourceId(), resourceConfiguration.getConfiguration());
+    private Map<Integer, Configuration> convertToMap(List<ResourceConfigurationComposite> resourceConfigurations)
+        throws RuntimeException {
+        try {
+            Map<Integer, Configuration> configurations = new HashMap<Integer, Configuration>(resourceConfigurations
+                .size());
+            for (ResourceConfigurationComposite resourceConfiguration : resourceConfigurations) {
+                configurations.put(resourceConfiguration.getResourceId(), resourceConfiguration.getConfiguration());
+            }
+            return configurations;
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
-        return configurations;
     }
 }

@@ -19,12 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.Criterion;
-import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -61,9 +59,9 @@ public class BundleSelector extends AbstractSelector<Bundle> {
             }
 
             public void onSuccess(ArrayList<BundleType> result) {
-                String[] values = new String[result.size()];
-                for (int i = 0, size = result.size(); (i < size); ++i) {
-                    values[i] = result.get(i).getName();
+                LinkedHashMap<String, String> values = new LinkedHashMap<String, String>(result.size());
+                for (BundleType type : result) {
+                    values.put(String.valueOf(type.getId()), type.getName());
                 }
                 bundleTypeSelect.setValueMap(values);
             }
@@ -80,16 +78,11 @@ public class BundleSelector extends AbstractSelector<Bundle> {
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         String search = (String) availableFilterForm.getValue("search");
-        String bundleType = (String) availableFilterForm.getValue("bundleType");
-        ArrayList<Criterion> criteria = new ArrayList<Criterion>(2);
-        if (null != search) {
-            criteria.add(new Criterion("name", OperatorId.CONTAINS, search));
-        }
-        if (null != bundleType) {
-            criteria.add(new Criterion("bundleType", OperatorId.EQUALS, bundleType));
-        }
-        AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
-            .size()]));
+        String bundleType = (String) availableFilterForm.getValueAsString("bundleType");
+
+        Criteria latestCriteria = new Criteria();
+        latestCriteria.addCriteria("search", search);
+        latestCriteria.addCriteria("bundleType", bundleType);
 
         return latestCriteria;
     }

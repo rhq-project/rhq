@@ -28,6 +28,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ClusterGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
@@ -42,24 +43,41 @@ public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements Clu
 
     private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
 
-    public ResourceGroup createAutoClusterBackingGroup(ClusterKey clusterKey, boolean addResources) {
-        return SerialUtility.prepare(clusterManager.createAutoClusterBackingGroup(getSessionSubject(), clusterKey,
-            addResources), "ClusterGWTServiceImpl.createAutoClusterBackingGroup");
+    public ResourceGroup createAutoClusterBackingGroup(ClusterKey clusterKey, boolean addResources)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(clusterManager.createAutoClusterBackingGroup(getSessionSubject(), clusterKey,
+                addResources), "ClusterGWTServiceImpl.createAutoClusterBackingGroup");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
-    public ResourceGroup getAutoClusterBackingGroup(ClusterKey clusterKey) {
-        return SerialUtility.prepare(clusterManager.getAutoClusterBackingGroup(getSessionSubject(), clusterKey),
-            "ClusterGWTServiceImpl.getAutoClusterBackingGroup");
+    public ResourceGroup getAutoClusterBackingGroup(ClusterKey clusterKey) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(clusterManager.getAutoClusterBackingGroup(getSessionSubject(), clusterKey),
+                "ClusterGWTServiceImpl.getAutoClusterBackingGroup");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
-    public List<Resource> getAutoClusterResources(ClusterKey clusterKey) {
-        return SerialUtility.prepare(clusterManager.getAutoClusterResources(getSessionSubject(), clusterKey),
-            "ClusterGWTServiceImpl.getAutoClusterResources");
+    public List<Resource> getAutoClusterResources(ClusterKey clusterKey) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(clusterManager.getAutoClusterResources(getSessionSubject(), clusterKey),
+                "ClusterGWTServiceImpl.getAutoClusterResources");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
-    public ClusterFlyweight getClusterTree(int groupId) {
-        return SerialUtility.prepare(clusterManager.getClusterTree(getSessionSubject(), groupId),
-            "ClusterGWTServiceImpl.getClusterTree");
+    public ClusterFlyweight getClusterTree(int groupId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(clusterManager.getClusterTree(getSessionSubject(), groupId),
+                "ClusterGWTServiceImpl.getClusterTree");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
 
     }
 }

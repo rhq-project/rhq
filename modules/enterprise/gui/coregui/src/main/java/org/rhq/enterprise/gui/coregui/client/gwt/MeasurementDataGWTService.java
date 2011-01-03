@@ -24,7 +24,6 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
@@ -47,46 +46,55 @@ import org.rhq.core.domain.util.PageList;
 @RemoteServiceRelativePath("MeasurementDataGWTService")
 public interface MeasurementDataGWTService extends RemoteService {
 
-    List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType);
+    List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType)
+        throws RuntimeException;
 
-    Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds);
+    Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds) throws RuntimeException;
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
-        long beginTime, long endTime, int numPoints);
+        long beginTime, long endTime, int numPoints) throws RuntimeException;
 
     PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
-        PageControl pageControl);
+        PageControl pageControl) throws RuntimeException;
 
-    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
+    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria)
+        throws RuntimeException;
 
-    PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
+    PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria)
+        throws RuntimeException;
 
-    PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context);
+    PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context)
+        throws RuntimeException;
 
-    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter,
-        String resourceNameFilter, String parentNameFilter, PageControl pc);
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter, String resourceNameFilter,
+        String parentNameFilter, PageControl pc) throws RuntimeException;
 
-    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n);
+    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) throws RuntimeException;
 
-    void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds);
+    void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException;
 
-    void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds);
+    void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException;
 
-    void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval);
+    void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval)
+        throws RuntimeException;
 
-    void enableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds);
+    void enableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds) throws RuntimeException;
 
-    void disableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds);
+    void disableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds)
+        throws RuntimeException;
 
-    void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds, long collectionInterval);
+    void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds, long collectionInterval)
+        throws RuntimeException;
 
-    void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules);
+    void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules)
+        throws RuntimeException;
 
-    void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules);
+    void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules)
+        throws RuntimeException;
 
     void updateSchedulesForResourceType(int[] measurementDefinitionIds, long collectionInterval,
-                                    boolean updateExistingSchedules);
+        boolean updateExistingSchedules) throws RuntimeException;
 
-    PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria);
-    
+    PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria) throws RuntimeException;
+
 }

@@ -116,6 +116,7 @@ import org.rhq.enterprise.agent.promptcmd.GetConfigPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.HelpPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.IdentifyPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.InventoryPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.ListDataPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.LogPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.MetricsPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.NativePromptCommand;
@@ -1629,7 +1630,7 @@ public class AgentMain {
         //the next thing is to setup the conditional restart of the PC if it fails to merge
         //the upgrade results with the server due to some network glitch
         m_clientSender.addStateListener(new PluginContainerConditionalRestartListener(), false);
-        
+
         return register;
     }
 
@@ -3124,7 +3125,7 @@ public class AgentMain {
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),
             new UpdatePromptCommand(), new DebugPromptCommand(), new SleepPromptCommand(), new GCPromptCommand(),
-            new SchedulesPromptCommand() };
+            new SchedulesPromptCommand(), new ListDataPromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();
@@ -3500,15 +3501,16 @@ public class AgentMain {
             try {
                 InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
                 if (inventoryManager != null && inventoryManager.hasUpgradeMergeFailed()) {
-                    m_output.println(MSG.getMsg(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE));
+                    m_output.println(MSG
+                        .getMsg(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE));
                     LOG.info(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE);
-                    
+
                     PluginContainerPromptCommand pcCommand = new PluginContainerPromptCommand();
                     pcCommand.execute(AgentMain.this, new String[] { "stop" });
                     pcCommand.execute(AgentMain.this, new String[] { "start" });
                 }
             } catch (Exception e) {
-                LOG.error("Failed to restart the plugin container when server connection established.");                
+                LOG.error("Failed to restart the plugin container when server connection established.");
             }
             return true;
         }
@@ -3518,7 +3520,7 @@ public class AgentMain {
             return true;
         }
     }
-    
+
     /**
      * When the agent starts up, it needs to create the communications servers before starting the plugin container;
      * however, the agent must not process any incoming commands until after the plugin container fully starts. This

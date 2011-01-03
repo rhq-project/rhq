@@ -22,11 +22,9 @@
  */
 package org.rhq.core.domain.operation.composite;
 
-import org.rhq.core.domain.operation.ScheduleJobId;
-
 public class ResourceOperationScheduleComposite extends OperationScheduleComposite {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private int resourceId;
     private String resourceName;
@@ -40,9 +38,9 @@ public class ResourceOperationScheduleComposite extends OperationScheduleComposi
         this.resourceId = 0;
     }
 
-    public ResourceOperationScheduleComposite(String jobName, String jobGroup, String operationName,
+    public ResourceOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,
         long operationNextFireTime, int resourceId, String resourceName, String resourceTypeName) {
-        super(new ScheduleJobId(jobName, jobGroup), operationName, operationNextFireTime);
+        super(id, jobName, jobGroup, operationName, operationNextFireTime);
         this.resourceId = resourceId;
         this.resourceName = resourceName;
         this.resourceTypeName = resourceTypeName;

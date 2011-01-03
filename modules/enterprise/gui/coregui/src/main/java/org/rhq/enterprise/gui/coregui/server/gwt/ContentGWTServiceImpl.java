@@ -44,38 +44,51 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
-    public void deletePackageVersion(int packageVersionId) {
+    //private ContentUIManagerLocal contentUiManager = LookupUtil.getContentUIManager();
+
+    public void deletePackageVersion(int packageVersionId) throws RuntimeException {
         try {
             contentManager.deletePackageVersion(getSessionSubject(), packageVersionId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) {
+    public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),
                 "ContentService.findPackageVersionsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public List<Architecture> getArchitectures() {
+    //    public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count) throws RuntimeException {
+    //        try {
+    //            PageControl pc = new PageControl(0, count);
+    //            return SerialUtility.prepare(contentUiManager.getInstalledPackageHistoryForResource(resourceId, pc),
+    //                "ContentService.getInstalledPackageHistoryForResource");
+    //        } catch (Throwable t) {
+    //            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+    //        }
+    //    }
+
+    public List<Architecture> getArchitectures() throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.findArchitectures(getSessionSubject()),
                 "ContentService.getArchitectures");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PackageType getResourceCreationPackageType(int resourceTypeId) {
+    public PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.getResourceCreationPackageType(resourceTypeId),
                 "ContentService.getResourceCreationPackageType");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

@@ -37,7 +37,7 @@ public class ErrorHandler {
     }
 
     public void handleError(String message, Throwable t) {
-        Message errorMessage = new Message(message, t, Message.Severity.Fatal);
+        Message errorMessage = new Message(message, t, Message.Severity.Error);
         CoreGUI.getMessageCenter().notify(errorMessage);
 
         if (t != null) {
@@ -81,5 +81,5 @@ public class ErrorHandler {
 
         return list.toArray(new String[list.size()]);
     }
-    
+
 }

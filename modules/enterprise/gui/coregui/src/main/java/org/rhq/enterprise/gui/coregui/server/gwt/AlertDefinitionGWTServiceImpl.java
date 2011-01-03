@@ -39,98 +39,99 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     private AlertNotificationManagerLocal alertNotifManager = LookupUtil.getAlertNotificationManager();
 
     @Override
-    public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) {
+    public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<AlertDefinition> results = this.alertDefManager.findAlertDefinitionsByCriteria(
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findAlertDefinitionsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception {
+    public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException {
         try {
             int results = alertDefManager.createAlertDefinition(getSessionSubject(), alertDefinition, resourceId);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
     public AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
-        boolean updateInternals) throws Exception {
+        boolean updateInternals) throws RuntimeException {
         try {
             AlertDefinition results = alertDefManager.updateAlertDefinition(getSessionSubject(), alertDefinitionId,
                 alertDefinition, updateInternals);
             return SerialUtility.prepare(results, "updateAlertDefinition");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int enableAlertDefinitions(int[] alertDefinitionIds) throws Exception {
+    public int enableAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException {
         try {
             int results = alertDefManager.enableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int disableAlertDefinitions(int[] alertDefinitionIds) throws Exception {
+    public int disableAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException {
         try {
             int results = alertDefManager.disableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public int removeAlertDefinitions(int[] alertDefinitionIds) throws Exception {
+    public int removeAlertDefinitions(int[] alertDefinitionIds) throws RuntimeException {
         try {
             int results = alertDefManager.removeAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws Exception {
+    public String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws RuntimeException {
         try {
             String[] results = alertDefManager.getAlertNotificationConfigurationPreview(getSessionSubject(), notifs);
             return SerialUtility.prepare(results, "getAlertNotificationConfigurationPreview");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public String[] getAllAlertSenders() throws Exception {
+    public String[] getAllAlertSenders() throws RuntimeException {
         try {
             List<String> results = alertNotifManager.listAllAlertSenders();
             if (results == null) {
                 return null;
             }
             return SerialUtility.prepare(results.toArray(new String[results.size()]), "getAllAlertSenders");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws Exception {
+    public ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws RuntimeException {
         try {
             ConfigurationDefinition results = alertNotifManager.getConfigurationDefinitionForSender(sender);
             return SerialUtility.prepare(results, "getConfigurationDefinitionForSender");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

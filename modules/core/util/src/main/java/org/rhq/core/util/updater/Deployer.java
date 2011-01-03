@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -340,7 +341,7 @@ public class Deployer {
 
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(), this.deploymentData
-            .getIgnoreRegex());
+            .getIgnoreRegex(), this.deploymentData.isManageRootDir());
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
 
         if (current.getUnknownContent() != null) {
@@ -439,6 +440,9 @@ public class Deployer {
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
 
+        // remember what files were skipped so we don't delete them during our purge below (only care about this if we are going to 'clean')
+        Set<String> skippedFiles = (clean) ? current.getSkipped() : null;
+
         // don't use this anymore - its underlying key set has been altered and this no longer is the full current files
         current = null;
 
@@ -487,7 +491,7 @@ public class Deployer {
         if (clean) {
             debug("Cleaning the existing deployment's files found in the destination directory. dryRun=", dryRun);
             if (!dryRun) {
-                purgeFileOrDirectory(this.deploymentData.getDestinationDir(), false);
+                purgeFileOrDirectory(this.deploymentData.getDestinationDir(), skippedFiles, 0, false);
             }
         }
         diff.setCleaned(clean);
@@ -563,22 +567,76 @@ public class Deployer {
         boolean dryRun) throws Exception {
 
         // NOTE: right now, this only adds to the "realized" set of files is diff, no need to track "added" or "changed" here
-
         FileHashcodeMap newFileHashCodeMap = new FileHashcodeMap();
+
+        // get information about the source dir - will be needed if we were told to not explode a zip
+        String sourceDirAbsPath = this.deploymentData.getSourceDir().getAbsolutePath();
+        int sourceDirLength = sourceDirAbsPath.length();
 
         // extract all zip files
         ExtractorZipFileVisitor visitor;
         for (File zipFile : this.deploymentData.getZipFiles()) {
-            debug("Extracting zip [", zipFile, "] entries. dryRun=", dryRun);
+            Boolean exploded = this.deploymentData.getZipsExploded().get(zipFile);
+            if (exploded == null) {
+                exploded = Boolean.TRUE; // the default is to explode the archive
+            }
+
+            debug("Extracting zip [", zipFile, "] entries. exploded=", exploded, ", dryRun=", dryRun);
 
             Pattern realizeRegex = null;
             if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {
                 realizeRegex = this.deploymentData.getZipEntriesToRealizeRegex().get(zipFile);
             }
-            visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
-                this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
-            ZipUtil.walkZipFile(zipFile, visitor);
-            newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
+
+            if (exploded.booleanValue()) {
+                // EXPLODED
+                visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
+                    this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
+                ZipUtil.walkZipFile(zipFile, visitor);
+                newFileHashCodeMap.putAll(visitor.getFileHashcodeMap()); // exploded into individual files
+            } else {
+                // COMPRESSED
+
+                // Note: there is a requirement that all zip files must be located in the sourceDir - this is why. We need
+                // the path of the zip relative to the source dir so we can copy it to the same relative location
+                // under the destination dir. Without doing this, if the zip is in a subdirectory, we won't know where to
+                // put it under the destination dir. 
+                String zipRelativePath = zipFile.getAbsolutePath().substring(sourceDirLength);
+                if (zipRelativePath.startsWith("/") || zipRelativePath.startsWith("\\")) {
+                    zipRelativePath = zipRelativePath.substring(1);
+                }
+                File compressedFile = new File(this.deploymentData.getDestinationDir(), zipRelativePath);
+
+                if (this.deploymentData.getTemplateEngine() != null && realizeRegex != null) {
+                    // we need to explode it to perform the realization of templatized variables
+                    // TODO: can we do this in another tmp location and build the zip in the dest dir?
+                    visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
+                        this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
+                    ZipUtil.walkZipFile(zipFile, visitor);
+                    // we have to compress the file again - our new compressed file will have the new realized files in them
+                    if (!dryRun) {
+                        createZipFile(compressedFile, this.deploymentData.getDestinationDir(), visitor
+                            .getFileHashcodeMap());
+                    }
+                }
+
+                // Copy the archive to the destination dir if we need to. Generate its hashcode and add it to the new file hashcode map
+                MessageDigestGenerator hashcodeGenerator = new MessageDigestGenerator();
+                String compressedFileHashcode;
+                if (!dryRun) {
+                    if (!compressedFile.exists()) {
+                        if (compressedFile.getParentFile() != null) {
+                            compressedFile.getParentFile().mkdirs();
+                        }
+                        FileUtil.copyFile(zipFile, compressedFile);
+                    }
+                    compressedFileHashcode = hashcodeGenerator.calcDigestString(compressedFile);
+                } else {
+                    // use source zip for hash - should be the same as the would-be compressed file since we aren't realizing files in it
+                    compressedFileHashcode = hashcodeGenerator.calcDigestString(zipFile);
+                }
+                newFileHashCodeMap.put(zipRelativePath, compressedFileHashcode);
+            }
         }
 
         // copy all raw files
@@ -675,6 +733,73 @@ public class Deployer {
         }
 
         return newFileHashCodeMap;
+    }
+
+    /**
+     * Create a zip file by adding all the files found in the file hashcode map. The
+     * relative paths found in the map's key set are relative to the rootDir directory.
+     * The files are stored in the given zipFile.
+     * 
+     * @param zipFile where to zip up all the files
+     * @param rootDir all relative file paths are relative to this root directory
+     * @param fileHashcodeMap the key set tells us all the files that need to be zipped up
+     *
+     * @throws Exception 
+     */
+    private void createZipFile(File zipFile, File rootDir, FileHashcodeMap fileHashcodeMap) throws Exception {
+        if (zipFile.getParentFile() != null) {
+            zipFile.getParentFile().mkdirs();
+        }
+
+        Set<File> childrenOfRootToDelete = new HashSet<File>();
+
+        ZipOutputStream zos = null;
+        try {
+            zos = new ZipOutputStream(new FileOutputStream(zipFile));
+
+            for (String relativeFileToZip : fileHashcodeMap.keySet()) {
+                File fileToZip = new File(rootDir, relativeFileToZip);
+                FileInputStream fis = null;
+                try {
+                    fis = new FileInputStream(fileToZip);
+                    ZipEntry zipEntry = new ZipEntry(relativeFileToZip);
+                    zos.putNextEntry(zipEntry);
+                    StreamUtil.copy(fis, zos, false);
+                } finally {
+                    if (fis != null) {
+                        fis.close();
+                    }
+
+                    // Remember the location to delete it later. To speed up the deletes, we only remember
+                    // the locations of the direct children under the rootDir. Since we know all zip content
+                    // is located under those locations, we'll recursively delete everything under those
+                    // rootDir children. We obviously can't delete everything under rootDir because there
+                    // could be files in there not related to our zip file.
+                    File childOfRoot = fileToZip;
+                    while (childOfRoot != null) {
+                        File parent = childOfRoot.getParentFile();
+                        if (parent.equals(rootDir)) {
+                            childrenOfRootToDelete.add(childOfRoot);
+                            break;
+                        } else {
+                            childOfRoot = parent;
+                        }
+                    }
+                }
+            }
+
+        } finally {
+            if (zos != null) {
+                zos.close();
+            }
+        }
+
+        // we are done zipping up all files, delete all the individual files that are exploded that are now in the zip
+        for (File childOfRootToDelete : childrenOfRootToDelete) {
+            FileUtil.purge(childOfRootToDelete, true);
+        }
+
+        return;
     }
 
     /**
@@ -816,8 +941,9 @@ public class Deployer {
                     restoreBackupFilesRecursive(child, base, destDir, map, diff, dryRun);
                 } else {
                     String childRelativePath = child.getAbsolutePath().substring(base.length());
+                    //if (this.deploymentData.isManageRootDir() || new File(childRelativePath).getParent() != null) {
                     File restoredFile = new File(destDir, childRelativePath);
-                    debug("Restoring backup file [" + child + "] to [" + restoredFile + "]. dryRun=" + dryRun);
+                    debug("Restoring backup file [", child, "] to [", restoredFile, "]. dryRun=", dryRun);
                     if (!dryRun) {
                         restoredFile.getParentFile().mkdirs();
                         String hashcode = copyFileAndCalcHashcode(child, restoredFile);
@@ -826,6 +952,10 @@ public class Deployer {
                         map.put(childRelativePath, MessageDigestGenerator.getDigestString(child));
                     }
                     diff.addRestoredFile(childRelativePath, child.getAbsolutePath());
+                    //} else {
+                    //    debug("Skipping the restoration of the backed up file [", childRelativePath,
+                    //        "] since this deployment was told to not manage the root directory");
+                    //}
                 }
             }
         }
@@ -843,7 +973,7 @@ public class Deployer {
                 } else {
                     String childRelativePath = child.getAbsolutePath().substring(base.length());
                     File restoredFile = new File(rootDir, childRelativePath);
-                    debug("Restoring backup file [" + child + "] to external location [" + restoredFile + "]. dryRun="
+                    debug("Restoring backup file [", child, "] to external location [", restoredFile, "]. dryRun="
                         + dryRun);
                     if (!dryRun) {
                         restoredFile.getParentFile().mkdirs();
@@ -882,14 +1012,20 @@ public class Deployer {
         }
     }
 
-    private void purgeFileOrDirectory(File fileOrDir, boolean deleteIt) {
+    private void purgeFileOrDirectory(File fileOrDir, Set<String> skippedFiles, int level, boolean deleteIt) {
         // make sure we only purge deployment files, never the metadata directory or its files
+        // we also want to leave all skipped files alone - don't delete those since they are unrelated to our deployment
         if (fileOrDir != null && !fileOrDir.getName().equals(DeploymentsMetadata.METADATA_DIR)) {
             if (fileOrDir.isDirectory()) {
                 File[] doomedFiles = fileOrDir.listFiles();
                 if (doomedFiles != null) {
                     for (File doomedFile : doomedFiles) {
-                        purgeFileOrDirectory(doomedFile, true); // call this method recursively
+                        // Do not purge any skipped files - we want to skip them.
+                        // All our skipped files are always at the top root dir (level 0),
+                        // so we can ignore the skipped set if we are at levels 1 or below since there are no skipped files down there
+                        if (level != 0 || !skippedFiles.contains(doomedFile.getName())) {
+                            purgeFileOrDirectory(doomedFile, skippedFiles, level + 1, true); // call this method recursively
+                        }
                     }
                 }
             }

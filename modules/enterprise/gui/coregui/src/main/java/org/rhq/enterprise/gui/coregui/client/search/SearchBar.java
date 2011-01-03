@@ -61,8 +61,6 @@ public class SearchBar extends AbstractSearchBar {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
-    public String welcomeMessage;
-
     public static final String DEFAULT_PATTERN_NAME = MSG.view_searchBar_defaultPattern();
 
     private static final String IMAGE_DIR = "/coregui/images/search/";
@@ -118,7 +116,7 @@ public class SearchBar extends AbstractSearchBar {
 
                     if (event.getNativeEvent().getEventTarget().equals(searchButton)
                         && event.getTypeInt() == Event.ONMOUSEDOWN) {
-                        prepareSearchExecution();
+                        //prepareSearchExecution();
                     }
                 }
             }
@@ -186,21 +184,12 @@ public class SearchBar extends AbstractSearchBar {
         // presume the enclosing page logic loads results without a button click
     }
 
-    public static native String getUserAgent()
-    /*-{
-        return navigator.userAgent.toLowerCase();
-    }-*/;
-
     public SavedSearchManager getSavedSearchManager() {
         return savedSearchManager;
     }
 
     public void setSearchSubsystem(SearchSubsystem searchSubsystem) {
         this.searchSubsystem = searchSubsystem;
-
-        this.welcomeMessage = MSG.view_searchBar_welcomeMessage(this.searchSubsystem.getName());
-
-        this.autoCompletePatternField.setText(welcomeMessage);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -233,17 +222,6 @@ public class SearchBar extends AbstractSearchBar {
 
     public String getDefaultSavedSearchPatternId() {
         return defaultSavedSearchPatternId;
-    }
-
-    public String getWelcomeMessage() {
-        return welcomeMessage;
-    }
-
-    public void prepareSearchExecution() {
-        String searchTerms = autoCompletePatternField.getText().toLowerCase().trim();
-        if (searchTerms.equals(welcomeMessage)) {
-            autoCompletePatternField.setText("");
-        }
     }
 
     private void setupAutoCompletingPatternField() {
@@ -368,18 +346,11 @@ public class SearchBar extends AbstractSearchBar {
         }
 
         public void onFocus(FocusEvent event) {
-            // clear default search text if necessary
-            if (autoCompletePatternField.getText().equals(welcomeMessage)) {
-                autoCompletePatternField.setValue("", true);
-            }
             autoCompletePatternField.showSuggestionList();
             savedSearchesPanel.hide();
         }
 
         public void onBlur(BlurEvent event) {
-            if (autoCompletePatternField.getText().equals("")) {
-                autoCompletePatternField.setValue(welcomeMessage, true);
-            }
             savedSearchesPanel.hide();
         }
     }

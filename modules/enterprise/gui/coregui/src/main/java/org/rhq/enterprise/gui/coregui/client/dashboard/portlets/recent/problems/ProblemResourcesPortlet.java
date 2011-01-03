@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
@@ -59,11 +60,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  */
 public class ProblemResourcesPortlet extends Table implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "ProblemResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_problemResources();
+
     //keys for smart gwt elements. should be unique
     public static final String PROBLEM_RESOURCE_SHOW_HRS = "max-problems-query-span";
     public static final String PROBLEM_RESOURCE_SHOW_MAX = "max-problems-shown";
-    public static final String KEY = MSG.view_portlet_problem_resources_title();
-    private static final String TITLE = KEY;
     private DashboardPortlet storedPortlet;
     //reference to datasource
     private ProblemResourcesDataSource dataSource;
@@ -71,9 +75,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     //constants
     public static final String unlimited = MSG.common_label_unlimited();
     public static final String defaultValue = unlimited;
+    private Timer defaultReloader;
 
     public ProblemResourcesPortlet(String locatorId) {
-        super(locatorId, TITLE, true);
+        super(locatorId, NAME, true);
 
         setShowHeader(false);
         setShowFooter(true);
@@ -237,9 +242,13 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new ProblemResourcesPortlet(locatorId);
+            if (reference == null) {
+                reference = new ProblemResourcesPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
@@ -290,14 +299,22 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                refresh();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    refresh();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }
 

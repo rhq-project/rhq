@@ -128,6 +128,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
+        criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;
     }

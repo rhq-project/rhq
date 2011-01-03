@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,6 +39,8 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
@@ -49,7 +50,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsCh
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -89,18 +89,13 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         this.isSystemRole = RolesDataSource.isSystemRoleId(getRecordId());
 
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onSuccess(Set<Permission> result) {
-                RoleEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
-                checkIfLdapConfigured();
-            }
-
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                        .of(Message.Option.BackgroundJobResult)));
+            public void onPermissionsLoaded(Set<Permission> perms) {
+                if (perms != null) {
+                    RoleEditView.this.hasManageSecurityPermission = perms.contains(Permission.MANAGE_SECURITY);
+                    checkIfLdapConfigured();
+                }
             }
         });
     }

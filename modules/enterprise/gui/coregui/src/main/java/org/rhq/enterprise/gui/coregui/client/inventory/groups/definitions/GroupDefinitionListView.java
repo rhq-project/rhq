@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -98,7 +100,7 @@ public class GroupDefinitionListView extends TableSection {
             TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
+                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
                 groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
@@ -153,25 +155,20 @@ public class GroupDefinitionListView extends TableSection {
 
     @Override
     public void renderView(final ViewPath viewPath) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permUnknown(), caught);
-                handleAuthorizationFailure();
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null && permissions.contains(Permission.MANAGE_INVENTORY)) {
+                    GroupDefinitionListView.super.renderView(viewPath);
+                } else {
+                    handleAuthorizationFailure();
+                }
             }
 
             private void handleAuthorizationFailure() {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permDenied());
                 History.back();
-            }
-
-            @Override
-            public void onSuccess(Set<Permission> result) {
-                if (result.contains(Permission.MANAGE_INVENTORY) == false) {
-                    handleAuthorizationFailure();
-                } else {
-                    GroupDefinitionListView.super.renderView(viewPath);
-                }
             }
         });
     }

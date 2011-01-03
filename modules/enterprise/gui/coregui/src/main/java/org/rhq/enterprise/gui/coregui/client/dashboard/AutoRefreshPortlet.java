@@ -27,8 +27,10 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
  */
 public interface AutoRefreshPortlet extends Portlet {
 
-    int refreshCycle = 40000;//ms
+    int refreshCycle = 60000;//ms
 
+    /** Each portlet implements to define the refresh cycle. See
+     *  TableOrCanvasAutoRefresh for sample implementation.
+     */
     void startRefreshCycle();
-
 }

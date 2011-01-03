@@ -26,5 +26,5 @@ import org.rhq.core.domain.common.ProductInfo;
  * @author Ian Springer
  */
 public interface SystemGWTService extends RemoteService {
-    ProductInfo getProductInfo();
+    ProductInfo getProductInfo() throws RuntimeException;
 }

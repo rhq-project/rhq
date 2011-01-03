@@ -27,7 +27,9 @@ import com.smartgwt.client.widgets.Canvas;
 public class CanvasUtility {
 
     public static void blink(Canvas canvas) {
-        canvas.animateFade(10, new FadeAnimationCallback(3,canvas,false));
+        if (canvas != null) {
+            canvas.animateFade(10, new FadeAnimationCallback(3, canvas, false));
+        }
     }
 
     private static class FadeAnimationCallback implements AnimationCallback {

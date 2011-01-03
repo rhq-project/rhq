@@ -54,6 +54,7 @@
 #                                      is mainly used to augment the Server's
 #                                      default set of options. This can be
 #                                      left unset if it is not needed.
+#RHQ_SERVER_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
 #
 #    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
 #                              arguments that will be passed to the RHQ Server

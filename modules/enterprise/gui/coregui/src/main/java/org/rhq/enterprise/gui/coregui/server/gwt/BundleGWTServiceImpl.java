@@ -48,210 +48,222 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
     private BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
 
-    public BundleVersion createBundleVersionViaURL(String url) throws Exception {
+    public BundleVersion createBundleVersionViaURL(String url) throws RuntimeException {
         try {
             BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url);
             return SerialUtility.prepare(results, "createBundleVersionViaURL");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public BundleVersion createBundleVersionViaRecipe(String recipe) throws Exception {
+    public BundleVersion createBundleVersionViaRecipe(String recipe) throws RuntimeException {
         try {
             BundleVersion results = bundleManager.createBundleVersionViaRecipe(getSessionSubject(), recipe);
             return SerialUtility.prepare(results, "createBundleVersionViaRecipe");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String description,
         Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
-        throws Exception {
+        throws RuntimeException {
 
         try {
             BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId,
                 bundleDestinationId, description, configuration);
             return SerialUtility.prepare(result, "createBundleDeployment");
-        } catch (Exception e) {
-            throw new Exception(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
-        int groupId) throws Exception {
+        int groupId) throws RuntimeException {
 
         try {
             BundleDestination result = bundleManager.createBundleDestination(getSessionSubject(), bundleId, name,
                 description, deployDir, groupId);
             return SerialUtility.prepare(result, "createBundleDestination");
-        } catch (Exception e) {
-            throw new Exception(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws Exception {
+    public BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe)
+        throws RuntimeException {
         try {
             BundleVersion results = bundleManager.createBundleVersion(getSessionSubject(), bundleId, name, null,
                 version, recipe);
             return SerialUtility.prepare(results, "createBundleVersion");
-        } catch (Exception e) {
-            throw new Exception(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteBundle(int bundleId) throws Exception {
+    public void deleteBundles(int[] bundleIds) throws RuntimeException {
+        try {
+            bundleManager.deleteBundles(getSessionSubject(), bundleIds);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void deleteBundle(int bundleId) throws RuntimeException {
         try {
             bundleManager.deleteBundle(getSessionSubject(), bundleId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteBundleDeployment(int bundleDeploymentId) throws Exception {
+    public void deleteBundleDeployment(int bundleDeploymentId) throws RuntimeException {
         try {
             bundleManager.deleteBundleDeployment(getSessionSubject(), bundleDeploymentId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteBundleDestination(int bundleDestinationId) throws Exception {
+    public void deleteBundleDestination(int bundleDestinationId) throws RuntimeException {
         try {
             bundleManager.deleteBundleDestination(getSessionSubject(), bundleDestinationId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
+    public void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws RuntimeException {
         try {
             bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId, deleteBundleIfEmpty);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public ArrayList<BundleType> getAllBundleTypes() throws Exception {
+    public ArrayList<BundleType> getAllBundleTypes() throws RuntimeException {
         try {
             ArrayList<BundleType> bundleTypes = new ArrayList<BundleType>();
             bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));
             return SerialUtility.prepare(bundleTypes, "getAllBundleTypes");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws Exception {
+    public HashMap<String, Boolean> getAllBundleVersionFilenames(int bundleVersionId) throws RuntimeException {
         HashMap<String, Boolean> results = new HashMap<String, Boolean>();
         try {
             results.putAll(bundleManager.getAllBundleVersionFilenames(getSessionSubject(), bundleVersionId));
             return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public String getBundleDeploymentName(int bundleDestinationId, int bundleVersionId, int prevDeploymentId) {
+    public String getBundleDeploymentName(int bundleDestinationId, int bundleVersionId, int prevDeploymentId)
+        throws RuntimeException {
         String result;
         try {
             result = bundleManager.getBundleDeploymentName(getSessionSubject(), bundleDestinationId, bundleVersionId,
                 prevDeploymentId);
             return SerialUtility.prepare(result, "getBundleDeploymentName");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public BundleDeployment scheduleBundleDeployment(int bundleDeploymentId, boolean isCleanDeployment)
-        throws Exception {
+        throws RuntimeException {
         try {
             BundleDeployment result = bundleManager.scheduleBundleDeployment(getSessionSubject(), bundleDeploymentId,
                 isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleBundleDeployment");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public BundleDeployment scheduleRevertBundleDeployment(int bundleDeploymentId, String deploymentDescription,
-        boolean isCleanDeployment) throws Exception {
+        boolean isCleanDeployment) throws RuntimeException {
         try {
             BundleDeployment result = bundleManager.scheduleRevertBundleDeployment(getSessionSubject(),
                 bundleDeploymentId, deploymentDescription, isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleRevertBundleDeployment");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws Exception {
+    public PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws RuntimeException {
         try {
             PageList<Bundle> results = bundleManager.findBundlesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundlesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<BundleDeployment> result = bundleManager.findBundleDeploymentsByCriteria(getSessionSubject(),
                 criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleDeploymentsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria) {
+    public PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<BundleDestination> result = bundleManager.findBundleDestinationsByCriteria(getSessionSubject(),
                 criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleDestinationsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria) {
+    public PageList<BundleFile> findBundleFilesByCriteria(BundleFileCriteria criteria) throws RuntimeException {
         try {
             PageList<BundleFile> result = bundleManager.findBundleFilesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleFilesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(
-        BundleResourceDeploymentCriteria criteria) {
+        BundleResourceDeploymentCriteria criteria) throws RuntimeException {
         try {
             PageList<BundleResourceDeployment> result = bundleManager.findBundleResourceDeploymentsByCriteria(
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleResourceDeploymentsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws Exception {
+    public PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws RuntimeException {
         try {
             PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(
-        BundleCriteria criteria) throws Exception {
+        BundleCriteria criteria) throws RuntimeException {
         try {
             PageList<BundleWithLatestVersionComposite> results;
             results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundlesWithLatestVersionCompositesByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 }

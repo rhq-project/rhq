@@ -56,9 +56,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleTreeDataSource extends RPCDataSource {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+    private final boolean canManageBundles;
 
-    public BundleTreeDataSource() {
+    public BundleTreeDataSource(boolean canManageBundles) {
         super();
+        this.canManageBundles = canManageBundles;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -86,10 +88,11 @@ public class BundleTreeDataSource extends RPCDataSource {
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
         String p = request.getCriteria().getAttribute("parentId");
-        // load the bundles
 
         if (p == null) {
 
+            // there is no parent - we are at the root of the tree
+            // get the top nodes (the bundles)
             BundleCriteria criteria = new BundleCriteria();
             criteria.fetchDestinations(true);
             criteria.setPageControl(getPageControl(request));
@@ -107,7 +110,10 @@ public class BundleTreeDataSource extends RPCDataSource {
                     processResponse(request.getRequestId(), response);
                 }
             });
+
         } else {
+
+            // we are at an inner node, being asked to get the children of it
             if (p.endsWith("_versions")) {
                 int bundleId = Integer.parseInt(p.substring(0, p.indexOf("_")));
                 BundleVersionCriteria criteria = new BundleVersionCriteria();
@@ -125,6 +131,7 @@ public class BundleTreeDataSource extends RPCDataSource {
                         processResponse(request.getRequestId(), response);
                     }
                 });
+
             } else if (p.endsWith("_deployments")) {
                 int bundleId = Integer.parseInt(p.substring(0, p.indexOf("_")));
                 BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
@@ -141,10 +148,12 @@ public class BundleTreeDataSource extends RPCDataSource {
                             processResponse(request.getRequestId(), response);
                         }
                     });
+
             } else if (p.endsWith("_destinations")) {
-                int bundleId = Integer.parseInt(p.substring(0, p.indexOf("_")));
+                final int bundleId = Integer.parseInt(p.substring(0, p.indexOf("_")));
                 BundleDestinationCriteria criteria = new BundleDestinationCriteria();
                 criteria.addFilterBundleId(bundleId);
+                criteria.fetchDeployments(true);
                 bundleService.findBundleDestinationsByCriteria(criteria,
                     new AsyncCallback<PageList<BundleDestination>>() {
                         public void onFailure(Throwable caught) {
@@ -152,7 +161,7 @@ public class BundleTreeDataSource extends RPCDataSource {
                         }
 
                         public void onSuccess(PageList<BundleDestination> result) {
-                            response.setData(buildRecords(result));
+                            response.setData(buildRecordsForKnownBundle(result, bundleId));
                             processResponse(request.getRequestId(), response);
                         }
                     });
@@ -162,22 +171,31 @@ public class BundleTreeDataSource extends RPCDataSource {
 
     @Override
     public Object copyValues(Record from) {
-        return null; // TODO: Implement this method.
+        return null; // don't need this method.
     }
 
     @Override
     public ListGridRecord[] buildRecords(Collection dataObjects) {
+        return buildRecordsForKnownBundle(dataObjects, null);
+    }
+
+    public ListGridRecord[] buildRecordsForKnownBundle(Collection dataObjects, Integer bundleId) {
         if (dataObjects == null) {
             return null;
         }
 
-        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        final List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
         for (Object item : dataObjects) {
+
+            // the resultant item is a direct node to build
             records.add(copyValues(item));
+
+            // now build the children of the node
             if (item instanceof Bundle) {
                 Bundle bundle = (Bundle) item;
 
+                // each bundle has two direct children - the versions and destinations folders
                 TreeNode versionNode = new TreeNode(MSG.view_bundle_versions());
                 versionNode.setID(bundle.getId() + "_versions");
                 versionNode.setParentID(String.valueOf(bundle.getId()));
@@ -190,6 +208,17 @@ public class BundleTreeDataSource extends RPCDataSource {
                 deploymentsNode.setParentID(String.valueOf(bundle.getId()));
                 deploymentsNode.setName(MSG.view_bundle_destinations());
                 records.add(deploymentsNode);
+            } else if (item instanceof BundleDestination) {
+                if (canManageBundles) {
+                    BundleDestination dest = (BundleDestination) item;
+
+                    // each destination has 0, 1 or more deployments
+                    if (dest.getDeployments() != null) {
+                        for (BundleDeployment deploy : dest.getDeployments()) {
+                            records.add(copyValuesForKnownBundle(deploy, bundleId));
+                        }
+                    }
+                }
             }
         }
         return records.toArray(new ListGridRecord[records.size()]);
@@ -197,36 +226,51 @@ public class BundleTreeDataSource extends RPCDataSource {
 
     @Override
     public ListGridRecord copyValues(Object from) {
+        return copyValuesForKnownBundle(from, null);
+    }
+
+    public ListGridRecord copyValuesForKnownBundle(Object from, Integer bundleId) {
+        String parentID;
         TreeNode node = new TreeNode();
         if (from instanceof Bundle) {
             Bundle bundle = (Bundle) from;
+            node.setIsFolder(true);
+            node.setIcon("subsystems/bundle/Bundle_16.png");
             node.setID(String.valueOf(bundle.getId()));
             node.setName(bundle.getName());
-            node.setIcon("subsystems/bundle/Bundle_16.png");
 
         } else if (from instanceof BundleVersion) {
             BundleVersion version = (BundleVersion) from;
-            node.setName(version.getVersion());
-            node.setID(version.getBundle().getId() + "_versions_" + version.getId());
-            node.setParentID(version.getBundle().getId() + "_versions");
             node.setIsFolder(false);
             node.setIcon("subsystems/bundle/BundleVersion_16.png");
+            parentID = version.getBundle().getId() + "_versions";
+            node.setParentID(parentID);
+            node.setID(parentID + '_' + version.getId());
+            node.setName(version.getVersion());
 
         } else if (from instanceof BundleDeployment) {
             BundleDeployment deployment = (BundleDeployment) from;
-            node.setName(deployment.getName() + " (" + deployment.getBundleVersion().getVersion() + ")");
-            node.setID(deployment.getBundleVersion().getBundle().getId() + "_deployments_" + deployment.getId());
-            node.setParentID(deployment.getBundleVersion().getBundle().getId() + "_deployments");
             node.setIsFolder(false);
             node.setIcon("subsystems/bundle/BundleDeployment_16.png");
+            parentID = bundleId + "_destinations_" + deployment.getDestination().getId();
+            node.setParentID(parentID);
+            node.setID(bundleId + "_deployments_" + deployment.getId());
+            if (deployment.isLive()) {
+                node.setName("<span style=\"color: green; font-weight: bold\">(live)</span> " + deployment.getName());
+            } else {
+                node.setName(deployment.getName());
+            }
+
         } else if (from instanceof BundleDestination) {
             BundleDestination destination = (BundleDestination) from;
-            node.setName(destination.getName());
-            node.setID(destination.getBundle().getId() + "_destinations_" + destination.getId());
-            node.setParentID(destination.getBundle().getId() + "_destinations");
-            node.setIsFolder(false);
+            node.setIsFolder(true);
             node.setIcon("subsystems/bundle/BundleDestination_16.png");
+            parentID = destination.getBundle().getId() + "_destinations";
+            node.setParentID(parentID);
+            node.setID(parentID + '_' + destination.getId());
+            node.setName(destination.getName());
         }
+
         return node;
     }
 }

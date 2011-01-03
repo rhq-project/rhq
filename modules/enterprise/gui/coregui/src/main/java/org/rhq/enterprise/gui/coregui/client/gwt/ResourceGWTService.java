@@ -44,39 +44,42 @@ import org.rhq.core.domain.util.PageList;
 public interface ResourceGWTService extends RemoteService {
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration newResourceConfiguration);
+        Configuration newResourceConfiguration) throws RuntimeException;
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration deploymentTimeConfiguration, int packageVersionId);
+        Configuration deploymentTimeConfiguration, int packageVersionId) throws RuntimeException;
 
-    List<DeleteResourceHistory> deleteResources(int[] resourceIds);
+    List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException;
 
-    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
+    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) throws RuntimeException;
 
-    PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
+    PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException;
 
-    PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
+    PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria) throws RuntimeException;
 
-    List<ResourceError> findResourceErrors(int resourceId);
+    List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException;
 
-    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems);
+    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems)
+        throws RuntimeException;
 
-    Resource getPlatformForResource(int resourceId);
+    Resource getPlatformForResource(int resourceId) throws RuntimeException;
 
-    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
+    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
+        throws RuntimeException;
 
-    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) throws RuntimeException;
 
-    void ignoreResources(int[] resourceIds);
+    void ignoreResources(int[] resourceIds) throws RuntimeException;
 
-    void importResources(int[] resourceIds);
+    void importResources(int[] resourceIds) throws RuntimeException;
 
-    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
+    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration)
+        throws RuntimeException;
 
-    void updateResource(Resource resource);
+    void updateResource(Resource resource) throws RuntimeException;
 
-    void unignoreResources(int[] resourceIds);
+    void unignoreResources(int[] resourceIds) throws RuntimeException;
 
-    List<Integer> uninventoryResources(int[] resourceIds);
+    List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException;
 
 }

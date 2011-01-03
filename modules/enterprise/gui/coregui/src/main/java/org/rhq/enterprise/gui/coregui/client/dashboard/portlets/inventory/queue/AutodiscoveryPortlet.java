@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -39,23 +40,30 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
+ * @author Simeon Pinder
  * @author Greg Hinkle
  */
 public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements CustomSettingsPortlet,
     AutoRefreshPortlet {
+
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Autodiscovery";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_autodiscovery();
+
     //ui attributes/properties/indentifiers
-    public static final String KEY = MSG.view_portlet_autodiscovery_title();
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
     private String unlimited = MSG.common_label_unlimited();
     private String defaultValue = unlimited;
     //portlet settings and datasource elements
     private DashboardPortlet storedPortlet;
     private AutodiscoveryQueueDataSource dataSource;
-    private Timer reloader;
+    private Timer defaultReloader;
 
     public AutodiscoveryPortlet(String locatorId) {
         super(locatorId, true);
@@ -69,21 +77,23 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         if (getTreeGrid() != null) {
             getTreeGrid().setDataSource(getDataSource());
         }
-        //loads/retrieves initial portlet settings for datasource
-        String retrieved = null;
-        //if settings already exist for this portlet
-        if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
-            //retrieve and translate to int
-            retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
-            retrieved = defaultValue;
-        }
+        if ((storedPortlet != null) && (storedPortlet.getConfiguration() != null)) {
+            //loads/retrieves initial portlet settings for datasource
+            String retrieved = null;
+            //if settings already exist for this portlet
+            if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
+                //retrieve and translate to int
+                retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
+            } else {//create setting
+                storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
+                retrieved = defaultValue;
+            }
 
-        if (retrieved.equals(unlimited)) {
-            getDataSource().setMaximumPlatformsToDisplay(-1);
-        } else {
-            getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
+            if (retrieved.equals(unlimited)) {
+                getDataSource().setMaximumPlatformsToDisplay(-1);
+            } else {
+                getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
+            }
         }
     }
 
@@ -175,9 +185,13 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private static Portlet reference = null;
 
         public final Portlet getInstance(String locatorId) {
-            return new AutodiscoveryPortlet(locatorId);
+            if (reference == null) {
+                reference = new AutodiscoveryPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
@@ -187,13 +201,21 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

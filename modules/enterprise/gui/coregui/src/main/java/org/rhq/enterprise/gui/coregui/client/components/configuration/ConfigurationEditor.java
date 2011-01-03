@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -40,7 +39,6 @@ import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TreeModelType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -87,10 +85,7 @@ import com.smartgwt.client.widgets.grid.events.CellSavedEvent;
 import com.smartgwt.client.widgets.grid.events.CellSavedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -99,12 +94,7 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-import com.smartgwt.client.widgets.tab.Tab;
-import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-import com.smartgwt.client.widgets.tree.Tree;
-import com.smartgwt.client.widgets.tree.TreeGrid;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
@@ -112,7 +102,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
@@ -132,18 +121,13 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -164,15 +148,11 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
-    private TabSet tabSet;
     private LocatableToolStrip toolStrip;
 
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
     private Configuration originalConfiguration;
-
-    private String structConfigTabTitle = MSG.view_configEdit_properties();
-    private String rawConfigTabTitle = MSG.view_configEdit_files();
 
     private ValuesManager valuesManager = new ValuesManager();
 
@@ -183,7 +163,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     private int resourceId;
     private int resourceTypeId;
     private ConfigType configType;
-    private IButton saveButton;
 
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
@@ -234,22 +213,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void showError(String message) {
         addMember(new Label(message));
-    }
-
-    public String getRawConfigTabTitle() {
-        return this.rawConfigTabTitle;
-    }
-
-    public void setRawConfigTabTitle(String title) {
-        this.rawConfigTabTitle = title;
-    }
-
-    public String getStructuredConfigTabTitle() {
-        return this.structConfigTabTitle;
-    }
-
-    public void setStructuredConfigTabTitle(String title) {
-        this.structConfigTabTitle = title;
     }
 
     public boolean validate() {
@@ -335,35 +298,25 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void reload() {
         if (configurationDefinition == null || configuration == null) {
-            // Wait for both to load
+            // Wait for both to load.
             return;
         }
 
         originalConfiguration = configuration.deepCopy();
 
-        tabSet = new LocatableTabSet(getLocatorId());
-
-        if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.RAW
-            || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            com.allen_sauer.gwt.log.client.Log.info("Loading files view...");
-            Tab tab = new LocatableTab("Files", getRawConfigTabTitle());
-            tab.setPane(buildRawPane());
-            tabSet.addTab(tab);
+        for (Canvas childCanvas : getChildren()) {
+            childCanvas.destroy();
         }
 
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            com.allen_sauer.gwt.log.client.Log.info("Loading properties view...");
-            Tab tab = new LocatableTab("Properties", getStructuredConfigTabTitle());
-            tab.setPane(buildStructuredPane());
-            tabSet.addTab(tab);
+            Log.info("Building structured configuration editor...");
+            LocatableVLayout structuredConfigLayout = buildStructuredPane();
+            addMember(structuredConfigLayout);
+        } else {
+            Label label = new Label("Structured configuration is not supported.");
+            addMember(label);
         }
-
-        for (Canvas c : getChildren()) {
-            c.destroy();
-        }
-
-        addMember(tabSet);
 
         this.markForRedraw();
     }
@@ -373,96 +326,49 @@ public class ConfigurationEditor extends LocatableVLayout {
         reload();
     }
 
-    protected HLayout buildRawPane() {
-
-        LocatableHLayout layout = new LocatableHLayout(extendLocatorId("Raw"));
-        final HashMap<String, RawConfiguration> filesMap = new HashMap<String, RawConfiguration>();
-
-        TreeGrid fileTree = new LocatableTreeGrid(layout.extendLocatorId("Files"));
-        fileTree.setShowResizeBar(true);
-
-        Tree files = new Tree();
-        files.setModelType(TreeModelType.CHILDREN);
-        TreeNode root = new TreeNode("root");
-        TreeNode[] children = new TreeNode[configuration.getRawConfigurations().size()];
-        int i = 0;
-        for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
-            children[i++] = new TreeNode(rawConfiguration.getPath());
-            filesMap.put(rawConfiguration.getPath(), rawConfiguration);
-        }
-        root.setChildren(children);
-        files.setRoot(root);
-        fileTree.setData(files);
-        fileTree.setWidth(250);
-
-        DynamicForm form = new LocatableDynamicForm(layout.extendLocatorId("Editor"));
-        final TextAreaItem rawEditor = new TextAreaItem();
-        //        rawEditor.setValue("This is a test");
-        rawEditor.setShowTitle(false);
-        form.setItems(rawEditor);
-        form.setHeight100();
-        form.setWidth100();
-
-        fileTree.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                String path = selectionEvent.getRecord().getAttribute("name");
-                com.allen_sauer.gwt.log.client.Log.info("Getting Path: " + path);
-                rawEditor.setValue(filesMap.get(path).getContents());
-                rawEditor.redraw();
-                com.allen_sauer.gwt.log.client.Log.info("Data: " + filesMap.get(path).getContents());
-            }
-        });
-
-        if (children.length > 0) {
-            fileTree.selectRecord(children[0]);
-            rawEditor.setValue(filesMap.get(children[0].getName()).getContents());
-        }
-
-        layout.setMembers(fileTree, form);
-        return layout;
-    }
-
-    protected VLayout buildStructuredPane() {
+    protected LocatableVLayout buildStructuredPane() {
 
         LocatableVLayout layout = new LocatableVLayout(extendLocatorId("Structured"));
         List<PropertyGroupDefinition> groupDefinitions = configurationDefinition.getGroupDefinitions();
 
-        final SectionStack sectionStack = new LocatableSectionStack(layout.extendLocatorId("Sections"));
-        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
-        sectionStack.setWidth100();
-        sectionStack.setHeight100();
-        sectionStack.setScrollSectionIntoView(true);
-        sectionStack.setOverflow(Overflow.AUTO);
+        if (groupDefinitions.isEmpty()) {
+            // No prop groups, so we just need a single form for the non-grouped props.
+            List<PropertyDefinition> propertyDefinitions =
+                new ArrayList<PropertyDefinition>(configurationDefinition.getNonGroupedProperties());
 
-        if (!configurationDefinition.getNonGroupedProperties().isEmpty()) {
-            sectionStack.addSection(buildGroupSection(layout.extendLocatorId("NoGroup"), null));
-        }
+            DynamicForm form = buildPropertiesForm(layout.extendLocatorId("Props"), propertyDefinitions, configuration);
+            form.setBorder("1px solid #AAA");
+            layout.addMember(form);
+        } else {
+            // One or more prop groups, so create a section stack with one section per group.
+            final SectionStack sectionStack = new LocatableSectionStack(layout.extendLocatorId("Sections"));
+            sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
+            sectionStack.setWidth100();
+            sectionStack.setHeight100();
+            sectionStack.setScrollSectionIntoView(true);
+            sectionStack.setOverflow(Overflow.AUTO);
 
-        for (PropertyGroupDefinition definition : groupDefinitions) {
-            //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
-            sectionStack.addSection(buildGroupSection(layout.extendLocatorId(definition.getName()), definition));
-        }
-
-        // TODO GH: Save button as saveListener() or remove the buttons from this form and have
-        // the container provide them?
-
-        toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
-        toolStrip.setBackgroundImage(null);
-
-        toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
-        saveButton = new LocatableIButton(toolStrip.extendLocatorId("Save"), MSG.common_button_save());
-        saveButton.setAlign(Alignment.CENTER);
-        saveButton.setDisabled(true);
-        //        toolStrip.addMember(saveButton);
-
-        IButton resetButton = new LocatableIButton(toolStrip.extendLocatorId("Reset"), MSG.common_button_reset());
-        resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                reload();
+            if (!configurationDefinition.getNonGroupedProperties().isEmpty()) {
+                sectionStack.addSection(buildGroupSection(layout.extendLocatorId("NoGroup"), null));
             }
-        });
+
+            for (PropertyGroupDefinition definition : groupDefinitions) {
+                //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
+                sectionStack.addSection(buildGroupSection(layout.extendLocatorId(definition.getName()), definition));
+            }
+
+            this.toolStrip = buildToolStrip(layout, sectionStack);
+            layout.addMember(toolStrip);
+            layout.addMember(sectionStack);
+        }
+
+        return layout;
+    }
+
+    private LocatableToolStrip buildToolStrip(LocatableVLayout layout, final SectionStack sectionStack) {
+        LocatableToolStrip toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
+        toolStrip.setBackgroundImage(null);
+        toolStrip.setWidth100();
 
         Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
         for (SectionStackSection section : sectionStack.getSections()) {
@@ -488,16 +394,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         });
         menu.addItem(hideAllItem);
 
-        //        toolStrip.addMember(resetButton);
-        toolStrip.addMember(new LayoutSpacer());
+        // TODO GH: Save button as saveListener() or remove the buttons from this form and have
+        //          the container provide them?
+
         toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
             .view_configEdit_jumpToSection(), menu));
 
-        layout.addMember(toolStrip);
-
-        layout.addMember(sectionStack);
-
-        return layout;
+        return toolStrip;
     }
 
     public SectionStackSection buildGroupSection(String locatorId, PropertyGroupDefinition group) {
@@ -533,17 +436,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         form.setValuesManager(valuesManager);
         form.setValidateOnExit(true);
         form.setHiliteRequiredFields(true);
-
-        form.addItemChangedHandler(new ItemChangedHandler() {
-            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                if (!changed) {
-                    changed = true;
-                    CanvasUtility.blink(saveButton);
-                    saveButton.setDisabled(false);
-                }
-            }
-        });
-
         form.setNumCols(4);
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
@@ -1205,7 +1097,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
                     okButton.disable();
-                    //        saveButton.setID("config_structured_button_save");
                     okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                         public void onClick(ClickEvent clickEvent) {
                             propertyList.add(newMemberPropertySimple);
@@ -1551,7 +1442,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
         okButton.disable();
-        //        saveButton.setID("config_structured_button_save");
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (newRow) {

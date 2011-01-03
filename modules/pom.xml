@@ -87,6 +87,7 @@
          </activation>
          <modules>
             <module>core/domain</module>
+            <module>core/client-api</module>
             <module>enterprise/server/jar</module>
             <module>enterprise/gui/coregui</module>
          </modules>

@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @NamedQueries( { @NamedQuery(name = GroupOperationScheduleEntity.QUERY_FIND_BY_GROUP_ID, query = "SELECT s "
     + "  FROM GroupOperationScheduleEntity s " + " WHERE s.group.id = :groupId ") })
 public class GroupOperationScheduleEntity extends OperationScheduleEntity {
+
     public static final String QUERY_FIND_BY_GROUP_ID = "GroupOperationScheduleEntity.findByGroupId";
 
     private static final long serialVersionUID = 1L;
@@ -68,4 +69,5 @@ public class GroupOperationScheduleEntity extends OperationScheduleEntity {
         str.append("]");
         return str.toString();
     }
+    
 }

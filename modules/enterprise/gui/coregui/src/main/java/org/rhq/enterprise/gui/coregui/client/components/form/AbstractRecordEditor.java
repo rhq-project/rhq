@@ -214,6 +214,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return this.recordId;
     }
 
+    public boolean isNewRecord() {
+        return (getRecordId() == ID_NEW);
+    }
+
     public String getListViewPath() {
         return this.listViewPath;
     }

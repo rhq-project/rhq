@@ -80,7 +80,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     private static final String DATA_VALUE_TABLE_NAME = "RHQ_CALLTIME_DATA_VALUE";
     private static final String DATA_KEY_TABLE_NAME = "RHQ_CALLTIME_DATA_KEY";
 
-    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_KEY_TABLE_NAME
+    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT INTO " + DATA_KEY_TABLE_NAME
         + "(id, schedule_id, call_destination) " + "SELECT %s, ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 

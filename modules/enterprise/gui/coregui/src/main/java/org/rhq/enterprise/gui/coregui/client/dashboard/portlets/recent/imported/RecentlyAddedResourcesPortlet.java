@@ -37,18 +37,23 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_recentlyAdded_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "RecentlyAddedResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_recentlyAddedResources();
 
     private boolean simple = true;
     private DashboardPortlet storedPortlet;
@@ -59,7 +64,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
     private static final String RECENTLY_ADDED_SHOW_HRS = "recently-added-time-range";
-    private Timer reloader;
+    private Timer defaultReloader;
 
     public RecentlyAddedResourcesPortlet(String locatorId) {
         super(locatorId);
@@ -73,7 +78,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid = new TreeGrid();
         treeGrid.setDataSource(getDataSource());
         treeGrid.setAutoFetchData(true);
-        treeGrid.setTitle(MSG.common_title_recently_added());
+        treeGrid.setTitle(MSG.view_portlet_defaultName_recentlyAddedResources());
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
@@ -90,7 +95,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid.setFields(resourceNameField, timestampField);
 
         if (!simple) {
-            addMember(new HeaderLabel(MSG.common_title_recently_added()));
+            addMember(new HeaderLabel(MSG.view_portlet_defaultName_recentlyAddedResources()));
         }
 
         addMember(treeGrid);
@@ -206,9 +211,13 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
+        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            return new RecentlyAddedResourcesPortlet(locatorId);
+            if (reference == null) {
+                reference = new RecentlyAddedResourcesPortlet(locatorId);
+            }
+            return reference;
         }
     }
 
@@ -229,13 +238,21 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     @Override
     public void startRefreshCycle() {
-        reloader = new Timer() {
-            public void run() {
-                redraw();
-                //launch again until portlet reference and child references GC.
-                reloader.schedule(refreshCycle);
-            }
-        };
-        reloader.schedule(refreshCycle);
+        //current setting
+        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        //cancel previous operation
+        if (defaultReloader != null) {
+            defaultReloader.cancel();
+        }
+        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
+            defaultReloader = new Timer() {
+                public void run() {
+                    redraw();
+                    //launch again until portlet reference and child references GC.
+                    defaultReloader.schedule(retrievedRefreshInterval);
+                }
+            };
+            defaultReloader.schedule(retrievedRefreshInterval);
+        }
     }
 }

@@ -360,6 +360,12 @@ public class BundleDeployment implements Serializable {
         return "BundleDeployment[id=" + id + ", name=" + name + "]";
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -367,10 +373,15 @@ public class BundleDeployment implements Serializable {
         result = prime * result + ((this.bundleVersion == null) ? 0 : this.bundleVersion.hashCode());
         result = prime * result + ((this.destination == null) ? 0 : this.destination.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
-        result = prime * result + ((this.ctime == null) ? 0 : this.ctime.hashCode());
         return result;
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -403,14 +414,6 @@ public class BundleDeployment implements Serializable {
                 return false;
             }
         } else if (!this.name.equals(other.name)) {
-            return false;
-        }
-
-        if (this.ctime == null) {
-            if (other.ctime != null) {
-                return false;
-            }
-        } else if (!this.ctime.equals(other.ctime)) {
             return false;
         }
 

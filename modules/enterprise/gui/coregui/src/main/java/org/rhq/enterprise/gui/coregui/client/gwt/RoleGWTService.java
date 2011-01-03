@@ -29,17 +29,17 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface RoleGWTService extends RemoteService {
 
-    PageList<Role> findRolesByCriteria(RoleCriteria criteria);
+    PageList<Role> findRolesByCriteria(RoleCriteria criteria) throws RuntimeException;
 
-    Role createRole(Role role);
+    Role createRole(Role role) throws RuntimeException;
 
-    Role updateRole(Role role);
+    Role updateRole(Role role) throws RuntimeException;
 
-    void removeRoles(int[] roleIds);
+    void removeRoles(int[] roleIds) throws RuntimeException;
 
-    void setAssignedResourceGroups(int roleId, int[] resourceGroupIds);
+    void setAssignedResourceGroups(int roleId, int[] resourceGroupIds) throws RuntimeException;
 
-    void setAssignedSubjects(int roleId, int[] subjectIds);
+    void setAssignedSubjects(int roleId, int[] subjectIds) throws RuntimeException;
 
-    void setAssignedRolesForSubject(int subjectId, int[] roleIds);
+    void setAssignedRolesForSubject(int subjectId, int[] roleIds) throws RuntimeException;
 }

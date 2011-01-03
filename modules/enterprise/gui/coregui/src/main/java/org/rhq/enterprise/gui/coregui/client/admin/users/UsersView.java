@@ -19,23 +19,20 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -78,20 +75,17 @@ public class UsersView extends TableSection<UsersDataSource> {
     }
 
     private void fetchManageSecurityPermissionAsync() {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-            new AsyncCallback<Set<Permission>>() {
-                public void onSuccess(Set<Permission> result) {
-                    hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            @Override
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
                     refresh();
-                }
-
-                public void onFailure(Throwable caught) {
+                } else {
                     hasManageSecurity = false;
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                            .of(Message.Option.BackgroundJobResult)));
                 }
-            });
+            }
+        });
     }
 
     private List<ListGridField> createFields() {

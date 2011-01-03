@@ -36,7 +36,7 @@ public interface AuthorizationGWTService extends RemoteService {
      *
      * @return the set of permissions that the current user possesses for the specified {@link org.rhq.core.domain.resource.Resource} - never null
      */
-    Set<Permission> getExplicitResourcePermissions(int resourceId);
+    Set<Permission> getExplicitResourcePermissions(int resourceId) throws RuntimeException;
 
     /**
      * Gets the set of permissions that the current user implicitly possesses for the specified {@link org.rhq.core.domain.resource.Resource}.
@@ -45,7 +45,7 @@ public interface AuthorizationGWTService extends RemoteService {
      *
      * @return the set of permissions that the current user implicitly possesses for the specified {@link org.rhq.core.domain.resource.Resource} - never null
      */
-    Set<Permission> getImplicitResourcePermissions(int resourceId);
+    Set<Permission> getImplicitResourcePermissions(int resourceId) throws RuntimeException;
 
     /**
      * Gets the set of permissions that the current user explicitly possesses for the specified {@link org.rhq.core.domain.resource.group.Group}.
@@ -54,7 +54,7 @@ public interface AuthorizationGWTService extends RemoteService {
      *
      * @return the set of permissions that the current user explicitly possesses for the specified {@link org.rhq.core.domain.resource.group.Group} - never null
      */
-    Set<Permission> getExplicitGroupPermissions(int groupId);
+    Set<Permission> getExplicitGroupPermissions(int groupId) throws RuntimeException;
 
     /**
      * Gets the set of permissions that the current user implicitly possesses for the specified {@link org.rhq.core.domain.resource.group.Group}.
@@ -63,13 +63,13 @@ public interface AuthorizationGWTService extends RemoteService {
      *
      * @return the set of permissions that the current user implicitly possesses for the specified {@link org.rhq.core.domain.resource.group.Group}
      */
-    Set<Permission> getImplicitGroupPermissions(int groupId);
+    Set<Permission> getImplicitGroupPermissions(int groupId) throws RuntimeException;
 
     /**
      * Gets the set of global permissions that the current user explicitly possesses.
      *
      * @return the set of global permissions that the current user possesses - never null
      */
-    Set<Permission> getExplicitGlobalPermissions();
+    Set<Permission> getExplicitGlobalPermissions() throws RuntimeException;
 
 }

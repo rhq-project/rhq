@@ -74,8 +74,12 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         setWrapItemTitles(false);
 
         // Other Display Settings
-        setHiliteRequiredFields(true);
-        setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
+        if (readOnly) {
+            setHiliteRequiredFields(false);
+        } else {
+            setHiliteRequiredFields(true);
+            setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
+        }
 
         // DataSource Settings        
         setUseAllDataSourceFields(false);
@@ -106,6 +110,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());
                     staticItem.setTooltip(item.getTooltip());
                     staticItem.setValue(item.getValue());
+                    staticItem.setColSpan(item.getAttribute("colSpan"));
                     // TODO: Any other fields we should copy? icons?
 
                     if (item instanceof BooleanItem) {

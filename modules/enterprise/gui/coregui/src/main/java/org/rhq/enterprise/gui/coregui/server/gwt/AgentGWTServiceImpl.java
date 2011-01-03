@@ -35,24 +35,24 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
 
     @Override
-    public Agent getAgentForResource(int resourceId) {
+    public Agent getAgentForResource(int resourceId) throws RuntimeException {
         try {
             //security handled in AgentManagerBean. requires View_Resource. 
             return SerialUtility.prepare(agentManager.getAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.getAgentForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     @Override
-    public Boolean pingAgentForResource(int resourceId) {
+    public Boolean pingAgentForResource(int resourceId) throws RuntimeException {
         try {
             //security handled in AgentManagerBean. requires View_Resource. 
             return SerialUtility.prepare(agentManager.pingAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.pingAgentForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -60,8 +60,8 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     //        try {
     //            return SerialUtility.prepare(availabilityManager.findAvailabilityForResource(getSessionSubject(),
     //                resourceId, pc), "AvailabilityService.findAvailabilityForResource");
-    //        } catch (Exception e) {
-    //            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+    //        } catch (Throwable t) {
+    //            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
     //        }
     //    }
 }

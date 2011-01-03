@@ -41,7 +41,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
  */
 public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = MSG.common_title_mashup();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Mashup";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_mashup();
 
     public MashupPortlet(String locatorId) {
         super(locatorId);

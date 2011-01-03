@@ -124,7 +124,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         assertTrue("Expected plugin status to be set to DELETED", plugin2.getStatus() == PluginStatusType.DELETED);
     }
 
-    @Test(groups = {"plugin.metadata", "PluginManagerBean"}, dependsOnMethods = {"deletePlugins"})
+    @Test(enabled = false, groups = {"plugin.metadata", "PluginManagerBean"}, dependsOnMethods = {"deletePlugins"})
     public void purgePlugins() throws Exception {
         Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1",
             "Deleting a plugin should not remove it from the database");

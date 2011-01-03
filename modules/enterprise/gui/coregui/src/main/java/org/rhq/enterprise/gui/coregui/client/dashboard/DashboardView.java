@@ -399,14 +399,16 @@ public class DashboardView extends LocatableVLayout {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_dashboardManager_saved(result.getName()), Message.Severity.Info));
 
-                updateConfigs(result);
+                // The portlet definitions have been merged and updated, reset the portlet windows with the
+                // up to date portlets.
+                updatePortletWindows(result);
                 storedDashboard = result;
                 DashboardView.this.enable();
             }
         });
     }
 
-    private void updateConfigs(Dashboard result) {
+    private void updatePortletWindows(Dashboard result) {
         if (result != null) {
             if (portletMap == null) {
                 portletMap = new HashMap<String, PortletViewFactory>();
@@ -417,9 +419,9 @@ public class DashboardView extends LocatableVLayout {
             for (PortletWindow portletWindow : portlets) {
                 for (DashboardPortlet portlet : result.getPortlets()) {
                     if (portletWindow.getDashboardPortlet().equals(portlet)) {
-                        portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
+                        portletWindow.setDashboardPortlet(portlet);
 
-                        //restarting port auto-refresh with newest settings
+                        //restarting portlet auto-refresh with newest settings
                         PortletViewFactory viewFactory = portletMap.get(portlet.getPortletKey());
 
                         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
@@ -428,7 +430,6 @@ public class DashboardView extends LocatableVLayout {
                         Portlet view = viewFactory.getInstance(SeleniumUtility.getSafeId(portlet.getPortletKey() + "-"
                             + Integer.toString(portlet.getId())));
 
-                        //add code to re-initialize refresh cycle for portlets
                         if (view instanceof AutoRefreshPortlet) {
                             ((AutoRefreshPortlet) view).startRefreshCycle();
                         }

@@ -657,21 +657,28 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 }
             }
             
-            if (!found) {
+            //only try harder on the control script path on OSes with UNIX file system layout
+            if (!found && resourceContext.getSystemInformation().getOperatingSystemType() != OperatingSystemType.WINDOWS) {
                 String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
                 if (executablePath != null) {
-                    // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
-                    int i = executablePath.lastIndexOf('/');
-                    executablePath = executablePath.substring(0, i);
-                    i = executablePath.lastIndexOf('/');
-                    executablePath = executablePath.substring(0, i);
-                    for (String path : CONTROL_SCRIPT_PATHS) {
-                        controlScriptFile = new File(executablePath, path);
-                        if (controlScriptFile.exists()) {
-                            found = true;
-                            break;
-                        }
+                    // this is now something like /usr/sbin/httpd .. trim off the last 2 parts
+                    int i = executablePath.lastIndexOf(File.separatorChar);
+                    
+                    if (i >= 0) {
+                        executablePath = executablePath.substring(0, i);
+                        i = executablePath.lastIndexOf(File.separatorChar);
                     }
+                    
+                    if (i >= 0) {
+                        executablePath = executablePath.substring(0, i);
+                        for (String path : CONTROL_SCRIPT_PATHS) {
+                            controlScriptFile = new File(executablePath, path);
+                            if (controlScriptFile.exists()) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }                    
                 }
             }
             

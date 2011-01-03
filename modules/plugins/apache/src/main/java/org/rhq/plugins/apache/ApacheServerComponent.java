@@ -633,48 +633,51 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         File controlScriptFile = null;
         if (controlScriptPath != null) {
             controlScriptFile = resolvePathRelativeToServerRoot(controlScriptPath);
-        } else {         
-                boolean found = false;
-                // First try server root as base
-                String serverRoot=null; 
-                try {
+        } else {
+            boolean found = false;
+            // First try server root as base
+            String serverRoot = null;
+            try {
                 ApacheDirectiveTree tree = loadParser();
                 List<ApacheDirective> directives = tree.search("/ServerRoot");
                 if (!directives.isEmpty())
-                   if (!directives.get(0).getValues().isEmpty())    
-                     serverRoot = directives.get(0).getValues().get(0);
-                
-                }catch(Exception e){
-                    log.error("Could not load configuration parser.",e);
-                }
-                if (serverRoot!=null)
-                 for (String path : CONTROL_SCRIPT_PATHS) {
+                    if (!directives.get(0).getValues().isEmpty())
+                        serverRoot = directives.get(0).getValues().get(0);
+
+            } catch (Exception e) {
+                log.error("Could not load configuration parser.", e);
+            }
+            if (serverRoot != null) {
+                for (String path : CONTROL_SCRIPT_PATHS) {
                     controlScriptFile = new File(serverRoot, path);
                     if (controlScriptFile.exists()) {
                         found = true;
                         break;
                     }
-                  }
-                if (!found) {
-                    String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-                    if (executablePath != null) {
-                        // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
-                        int i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0, i);
-                        i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0, i);
-                        for (String path : CONTROL_SCRIPT_PATHS) {
-                            controlScriptFile = new File(executablePath, path);
-                            if (controlScriptFile.exists()) {
-                                found = true;
-                                break;
-                            }
+                }
+            }
+            
+            if (!found) {
+                String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
+                if (executablePath != null) {
+                    // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
+                    int i = executablePath.lastIndexOf('/');
+                    executablePath = executablePath.substring(0, i);
+                    i = executablePath.lastIndexOf('/');
+                    executablePath = executablePath.substring(0, i);
+                    for (String path : CONTROL_SCRIPT_PATHS) {
+                        controlScriptFile = new File(executablePath, path);
+                        if (controlScriptFile.exists()) {
+                            found = true;
+                            break;
                         }
                     }
                 }
-                if (!found) {
-                    controlScriptFile = getExecutablePath(); // fall back to the httpd binary
-                }          
+            }
+            
+            if (!found) {
+                controlScriptFile = getExecutablePath(); // fall back to the httpd binary
+            }
         }
 
         return controlScriptFile;

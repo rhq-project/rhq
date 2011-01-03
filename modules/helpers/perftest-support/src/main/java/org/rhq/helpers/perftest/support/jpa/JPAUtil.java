@@ -98,17 +98,19 @@ public class JPAUtil {
      * This returns also the fields declared in the class' super classes.
      * 
      * @param clazz
-     * @param desiredAnnotation
+     * @param desiredAnnotations
      * @return
      */
-    public static Set<Field> getJPAFields(Class<?> clazz, Class<? extends Annotation> desiredAnnotation) {
+    public static Set<Field> getJPAFields(Class<?> clazz, Class<? extends Annotation>... desiredAnnotations) {
         HashSet<Field> ret = new HashSet<Field>();
 
         for (Field f : getAllFields(clazz)) {
-            if (f.getAnnotation(desiredAnnotation) != null) {
-                ret.add(f);
-            } else if (f.getAnnotation(Embedded.class) != null) {
-                ret.addAll(getJPAFields(f.getType(), desiredAnnotation));
+            for (Class<? extends Annotation> an : desiredAnnotations) {
+                if (f.getAnnotation(an) != null) {
+                    ret.add(f);
+                } else if (f.getAnnotation(Embedded.class) != null) {
+                    ret.addAll(getJPAFields(f.getType(), desiredAnnotations));
+                }
             }
         }
 

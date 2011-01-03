@@ -19,6 +19,9 @@
 
 package org.rhq.helpers.perftest.support;
 
+import org.dbunit.database.IDatabaseConnection;
+
+import org.rhq.helpers.perftest.support.dbunit.ReplicatingDataSetConsumer;
 import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
 import org.rhq.helpers.perftest.support.replication.ReplicationResult;
 
@@ -29,8 +32,11 @@ import org.rhq.helpers.perftest.support.replication.ReplicationResult;
  */
 public class Replicator {
 
-    public static ReplicationResult run(ReplicationConfiguration configuration) {
-        //TODO implement
-        return null;
-    }
+    public static ReplicationResult run(ReplicationConfiguration configuration, IDatabaseConnection connection) throws Exception {
+        ReplicatingDataSetConsumer consumer = new ReplicatingDataSetConsumer(connection, configuration);
+                
+        Exporter.run(configuration.getReplicationConfiguration(), consumer, connection);
+        
+        return consumer.getResult();
+    }    
 }

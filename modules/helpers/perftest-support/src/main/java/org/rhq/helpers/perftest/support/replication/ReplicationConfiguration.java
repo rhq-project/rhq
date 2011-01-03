@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.helpers.perftest.support.config.ExportConfiguration;
+
 /**
  * A configuration object to describe the replication.
  *
@@ -32,10 +34,8 @@ import java.util.Map;
  */
 public class ReplicationConfiguration {
 
-    private List<Class<?>> entities;
-    
-    private Map<Class<?>, String> limitingSql;
-    
+    private ExportConfiguration replicationConfiguration;
+       
     private NextIdProvider nextIdProvider;
     
     private ReplicaModifier modifier;
@@ -43,35 +43,15 @@ public class ReplicationConfiguration {
     /**
      * @return the entities
      */
-    public List<Class<?>> getEntities() {
-        if (entities == null) {
-            entities = new ArrayList<Class<?>>();
-        }
-        return entities;
+    public ExportConfiguration getReplicationConfiguration() {
+        return replicationConfiguration;
     }
 
     /**
      * @param entities the entities to set
      */
-    public void setEntities(List<Class<?>> entities) {
-        this.entities = entities;
-    }
-
-    /**
-     * @return the limitingSql
-     */
-    public Map<Class<?>, String> getLimitingSql() {
-        if (limitingSql == null) {
-            limitingSql = new HashMap<Class<?>, String>();
-        }
-        return limitingSql;
-    }
-
-    /**
-     * @param limitingSql the limitingSql to set
-     */
-    public void setLimitingSql(Map<Class<?>, String> limitingSql) {
-        this.limitingSql = limitingSql;
+    public void setReplicationConfiguration(ExportConfiguration replicationConfiguration) {
+        this.replicationConfiguration = replicationConfiguration;
     }
 
     /**

@@ -29,26 +29,15 @@ import org.rhq.helpers.perftest.support.replication.ReplicaCreationStrategy;
  */
 public @interface DataReplication {
 
-    //TODO this is most likely insufficient. This is going to require similar configuration
-    //as Exporter so that we know what relationships to replicate and how.
     /**
-     * The JPA entities to replicate (along with their dependent entities) 
+     * The path to the replication configuration. 
      */
-    Class<?>[] rootEntities();
-    
-    //TODO this is going to disappear if we go for the replication configuration file
+    String url();
+
     /**
-     * If defined, the method specified by this attribute can restrict the 
-     * entities to be replicated. It is provided by the class of the entities
-     * to be fetched and can return a WHERE SQL fragment to restrict what entities
-     * are going to be fetched (note that the fragment is SQL, *NOT* JPQL).
-     * <p>
-     * The method has to have the following signature:<br/>
-     * <code>
-     * String &lt;method-name&gt;(int replicaNumber, Class<?> entityClass)
-     * </code>
+     * Where does the {@link #url()} point to. 
      */
-    String replicaRestrictor() default "";
+    DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;
     
     /**
      * How many replicas should be prepared and how they should be distributed

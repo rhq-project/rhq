@@ -21,6 +21,7 @@ package org.rhq.helpers.perftest.support.testng;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -37,6 +38,9 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.naming.InitialContext;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +52,7 @@ import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
 import org.rhq.helpers.perftest.support.Replicator;
+import org.rhq.helpers.perftest.support.config.ExportConfiguration;
 import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
 import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
 import org.rhq.helpers.perftest.support.input.InputStreamProvider;
@@ -309,10 +314,14 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         }
     }
     
-    private static ReplicaDispenser replicate(final IDatabaseConnection connection, IInvokedMethod method, final Object instance, DataReplication replicationSetup) {
+    private static ReplicaDispenser replicate(final IDatabaseConnection connection, IInvokedMethod method, final Object instance, DataReplication replicationSetup) throws Exception {
         ReplicationConfiguration config = new ReplicationConfiguration();
                 
-        config.setEntities(Arrays.asList(replicationSetup.rootEntities()));
+        InputStreamProvider configFileStream = getInputStreamProvider(replicationSetup.url(), replicationSetup.storage(), method);
+        
+        ExportConfiguration replicationConfiguration = getReplicationConfiguration(configFileStream);
+        
+        config.setReplicationConfiguration(replicationConfiguration);
         
         if (!replicationSetup.nextIdProvider().isEmpty()) {
             final Method nextIdMethod = findMethod(instance.getClass(), replicationSetup.nextIdProvider(), NEXT_ID_PROVIDER_METHOD_PARAMETER_TYPES);
@@ -342,25 +351,6 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             }
         }
         
-        if (!replicationSetup.replicaRestrictor().isEmpty()) {
-            Method restrictorMethod = findMethod(instance.getClass(), replicationSetup.replicaRestrictor(), REPLICA_RESTRICTOR_METHOD_PARAMTER_TYPES);
-            if (restrictorMethod != null) {
-                HashMap<Class<?>, String> limitingSql = new HashMap<Class<?>, String>();
-                for (Class<?> entity : replicationSetup.rootEntities()) {
-                    try {
-                        String sql = (String) restrictorMethod.invoke(instance, entity);
-                        limitingSql.put(entity, sql);                        
-                    } catch (InvocationTargetException e) {
-                        LOG.warn("Failed to invoke replica modifier method.", e);
-                    } catch (IllegalAccessException e) {
-                        LOG.warn("Failed to invoke replica modifier method.", e);
-                    }
-                }
-                
-                config.setLimitingSql(limitingSql);
-            }
-        }
-        
         List<ReplicationResult> results = new ArrayList<ReplicationResult>();
         int replicaCount = 0;
         switch (replicationSetup.replicaCreationStrategy()) {
@@ -385,6 +375,30 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             return type.getMethod(name, params);
         } catch (NoSuchMethodException e) {
             return null;
+        }
+    }
+    
+    private static ExportConfiguration getReplicationConfiguration(InputStreamProvider input) {
+        InputStream str = null;
+        try {
+            str = input.createInputStream();
+            JAXBContext c = ExportConfiguration.getJAXBContext();
+            Unmarshaller um = c.createUnmarshaller();
+            return (ExportConfiguration) um.unmarshal(str);
+        } catch (JAXBException e) {
+            LOG.error("Failed to unmarshal replication configuration.", e);
+            return null;
+        } catch (IOException e) {
+            LOG.error("Failed to unmarshal replication configuration.", e);
+            return null;
+        } finally {
+            if (str != null) {
+                try {
+                    str.close();
+                } catch (IOException e) {
+                    LOG.error("Failed to close the input stream for replication configuration.", e);
+                }
+            }
         }
     }
 }

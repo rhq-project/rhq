@@ -19,6 +19,8 @@
 
 package org.rhq.helpers.perftest.support.replication;
 
+import java.sql.Connection;
+
 /**
  * An interface to provide a next id for an entity so that it can be persisted.
  *
@@ -26,5 +28,5 @@ package org.rhq.helpers.perftest.support.replication;
  */
 public interface NextIdProvider {
 
-    Object getNextId(Class<?> entity) throws Exception;
+    Object getNextId(Connection connection, Class<?> entity) throws Exception;
 }

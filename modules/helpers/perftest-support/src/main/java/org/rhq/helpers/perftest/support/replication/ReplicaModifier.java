@@ -27,5 +27,5 @@ package org.rhq.helpers.perftest.support.replication;
  */
 public interface ReplicaModifier {
 
-    <T> void modify(T original, T replica, Class<T> clazz);
+    void modify(Object original, Object replica, Class<?> clazz);
 }

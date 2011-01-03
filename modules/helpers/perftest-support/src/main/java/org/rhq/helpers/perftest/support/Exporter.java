@@ -19,18 +19,11 @@
 
 package org.rhq.helpers.perftest.support;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.Column;
-import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.FilteredDataSet;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ReplacementDataSet;
@@ -61,106 +54,56 @@ public class Exporter {
      *
      * @param config
      * @param consumer
+     * @param connection
+     * @throws Exception
+     */
+    public static void run(ExportConfiguration config, IDataSetConsumer consumer, IDatabaseConnection connection)
+        throws Exception {
+        Map<Entity, String> entityQueries = Util.getEntityQueries(config);
+
+        Map<Class<?>, Set<ColumnValues>> pksToLoad = new HashMap<Class<?>, Set<ColumnValues>>();
+        for (Map.Entry<Entity, String> entry : entityQueries.entrySet()) {
+            Entity entity = entry.getKey();
+            String query = entry.getValue();
+
+            String tableName = MappingTranslator.getTableName(config.getClassForEntity(entity));
+
+            Set<ColumnValues> pks = Util.getPksFromQuery(connection, tableName, query);
+            pksToLoad.put(config.getClassForEntity(entity), pks);
+        }
+
+        IDataSet data = null;
+
+        if (pksToLoad.isEmpty()) {
+            data = connection.createDataSet();
+        } else {
+            EntityRelationshipFilter filter = new EntityRelationshipFilter(connection, pksToLoad,
+                new ConfigurableDependencyInclusionResolver(config));
+            data = new FilteredDataSet(filter, connection.createDataSet());
+        }
+
+        ReplacementDataSet nullReplacingData = new ReplacementDataSet(data);
+        nullReplacingData.addReplacementObject(null, Settings.NULL_REPLACEMENT);
+
+        DataSetProducerAdapter producer = new DataSetProducerAdapter(nullReplacingData);
+        producer.setConsumer(consumer);
+        producer.produce();
+    }
+
+    /**
+     * Calls {@link #run(ExportConfiguration, IDataSetConsumer, IDatabaseConnection)} with the database connection
+     * obtained using {@link ExportConfiguration#getSettings()}.
+     * 
+     * @param config
+     * @param consumer
      * @throws Exception
      */
     public static void run(ExportConfiguration config, IDataSetConsumer consumer) throws Exception {
         IDatabaseConnection connection = DbUnitUtil.getConnection(config.getSettings());
         try {
-            Map<Entity, String> entityQueries = getEntityQueries(config);
-
-            Map<Class<?>, Set<ColumnValues>> pksToLoad = new HashMap<Class<?>, Set<ColumnValues>>();
-            for (Map.Entry<Entity, String> entry : entityQueries.entrySet()) {
-                Entity entity = entry.getKey();
-                String query = entry.getValue();
-
-                String tableName = MappingTranslator.getTableName(config.getClassForEntity(entity));
-
-                Set<ColumnValues> pks = getPksFromQuery(connection, tableName, query);
-                pksToLoad.put(config.getClassForEntity(entity), pks);
-            }
-
-            IDataSet data = null;
-
-            if (pksToLoad.isEmpty()) {
-                data = connection.createDataSet();
-            } else {
-                EntityRelationshipFilter filter = new EntityRelationshipFilter(connection, pksToLoad, new ConfigurableDependencyInclusionResolver(config));
-                data = new FilteredDataSet(filter, connection.createDataSet());
-            }
-
-            ReplacementDataSet nullReplacingData = new ReplacementDataSet(data);
-            nullReplacingData.addReplacementObject(null, Settings.NULL_REPLACEMENT);
-
-            DataSetProducerAdapter producer = new DataSetProducerAdapter(nullReplacingData);
-            producer.setConsumer(consumer);
-            producer.produce();
+            run(config, consumer, connection);
         } finally {
             connection.close();
         }
-    }
-
-    private static Set<ColumnValues> getPksFromQuery(IDatabaseConnection connection, String table, String query)
-        throws DataSetException, SQLException {
-
-        Set<ColumnValues> ret = new HashSet<ColumnValues>();
-
-        if (query == null) {
-            return null;
-        }
-
-        IDataSet data = connection.createDataSet(new String[] { table });
-
-        Column[] tablePks = data.getTableMetaData(table).getPrimaryKeys();
-
-        String pkName = tablePks[0].getColumnName();
-
-        //the connection shouldn't be closed here, because we're just reusing an already existing one.
-        Connection jdbcConnection = connection.getConnection();
-
-        Statement statement = null;
-        ResultSet results = null;
-        try {
-            statement = jdbcConnection.createStatement();
-            results = statement.executeQuery(query);
-
-            while (results.next()) {
-                ColumnValues pks = new ColumnValues();
-                for(Column pk : tablePks) {
-                    Object pkVal = results.getObject(pkName);
-                    pks.add(pk.getColumnName(), pkVal);
-                }
-
-                ret.add(pks);
-            }
-        } finally {
-            if (results!=null) {
-                try {
-                    results.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();  // TODO: Customise this generated block
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();  // TODO: Customise this generated block
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    private static Map<Entity, String> getEntityQueries(ExportConfiguration config) {
-        Map<Entity, String> ret = new HashMap<Entity, String>();
-
-        for (Entity e : config.getEntities()) {
-            if (e.isRoot()) {
-                ret.put(e, e.getFilter());
-            }
-        }
-
-        return ret;
     }
 }

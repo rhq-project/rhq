@@ -11,7 +11,6 @@ import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
-import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
 
 public class ResourceSearchTranslator extends AbstractSearchTranslator {
 
@@ -27,29 +26,29 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
         String filter = term.getValue();
 
         if (path.equals("availability")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForEnum(alias + ".currentAvailability.availabilityType", op, filter, AvailabilityType.class,
                     true));
 
         } else if (path.equals("category")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForEnum(alias + ".resourceType.category", op, filter, ResourceCategory.class, false));
 
         } else if (path.equals("type")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".resourceType.name", op, filter));
 
         } else if (path.equals("plugin")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".resourceType.plugin", op, filter));
 
         } else if (path.equals("name")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".name", op, filter));
 
         } else if (path.equals("alerts")) {
             return new SearchFragment( //
-                SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
+                SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
                     + "  FROM Resource res " //
                     + "  JOIN res.alertDefinitions alertDef " //
                     + "  JOIN alertDef.alerts alert " //
@@ -62,7 +61,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
 
         } else if (path.equals("trait")) {
             return new SearchFragment( //
-                SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
+                SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
                     + "  FROM Resource res, MeasurementDataTrait trait " //
                     + "  JOIN res.schedules schedule " //
                     + " WHERE trait.schedule = schedule " //
@@ -72,7 +71,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
 
         } else if (path.equals("connection")) {
             return new SearchFragment( //
-                SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
+                SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
                     + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                     + "  JOIN res.resourceType.pluginConfigurationDefinition.propertyDefinitions definition " //
                     + "  JOIN res.pluginConfiguration.properties property " //
@@ -85,7 +84,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
 
         } else if (path.equals("configuration")) {
             return new SearchFragment( //
-                SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
+                SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
                     + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                     + "  JOIN res.resourceType.resourceConfigurationDefinition.propertyDefinitions definition " //
                     + "  JOIN res.resourceConfiguration.properties property " //

@@ -24,7 +24,6 @@ import org.rhq.enterprise.server.search.translation.antlr.RHQLSimpleTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTreeOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
-import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
 
 public class SearchTranslationManager {
 
@@ -128,8 +127,8 @@ public class SearchTranslationManager {
                 }
 
                 SearchFragment searchFragment = translator.getSearchFragment(alias, advancedTerm);
-                String jpqlFragment = searchFragment.getFragment();
-                if (searchFragment.getType() == SearchFragmentType.PRIMARY_KEY_SUBQUERY) {
+                String jpqlFragment = searchFragment.getJPQLFragment();
+                if (searchFragment.getType() == SearchFragment.Type.PRIMARY_KEY_SUBQUERY) {
                     jpqlFragment = " " + alias + ".id IN (" + jpqlFragment + ")";
                 }
 

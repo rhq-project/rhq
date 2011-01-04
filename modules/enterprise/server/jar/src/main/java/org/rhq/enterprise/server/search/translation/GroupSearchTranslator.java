@@ -8,7 +8,6 @@ import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
-import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
 
 public class GroupSearchTranslator extends AbstractSearchTranslator {
 
@@ -25,7 +24,7 @@ public class GroupSearchTranslator extends AbstractSearchTranslator {
 
         if (path.equals("availability")) {
             if (op == RHQLComparisonOperator.NOT_NULL || op == RHQLComparisonOperator.NULL) {
-                return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, "true");
+                return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, "true");
             }
 
             String numericAvailabilityFragment = null;
@@ -42,26 +41,26 @@ public class GroupSearchTranslator extends AbstractSearchTranslator {
             }
 
             return new SearchFragment( //
-                SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT rg.id" //
+                SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT rg.id" //
                     + "  FROM ResourceGroup rg " //
                     + " WHERE ( SELECT AVG( iavail.availabilityType ) " //
                     + "           FROM rg.explicitResources ires " //
                     + "           JOIN ires.currentAvailability iavail ) " + numericAvailabilityFragment);
 
         } else if (path.equals("category")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForEnum(alias + ".resourceType.category", op, filter, ResourceCategory.class, false));
 
         } else if (path.equals("type")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".resourceType.name", op, filter));
 
         } else if (path.equals("plugin")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".resourceType.plugin", op, filter));
 
         } else if (path.equals("name")) {
-            return new SearchFragment(SearchFragmentType.WHERE_CLAUSE, //
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".name", op, filter));
 
         } else {

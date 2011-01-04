@@ -62,11 +62,11 @@ public class SearchTranslationManager {
 
     private Subject subject;
 
-    public SearchTranslationManager(Subject subject, SearchSubsystem context) {
+    public SearchTranslationManager(String alias, Subject subject, SearchSubsystem context) {
         this.subject = subject;
         this.context = context;
         this.entity = this.context.getEntityClass().getSimpleName();
-        this.alias = this.entity.toLowerCase();
+        this.alias = alias;
     }
 
     public void setExpression(String expression) {

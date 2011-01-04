@@ -30,6 +30,7 @@ public class PortalColumn extends VStack {
 
         // leave some space between portlets
         setMembersMargin(6);
+        this.setBorder("1px solid #999999");
 
         // enable predefined component animation
         setAnimateMembers(true);
@@ -48,7 +49,7 @@ public class PortalColumn extends VStack {
         setShowDragPlaceHolder(true);
 
         Canvas placeHolderProperties = new Canvas();
-        placeHolderProperties.setBorder("2px solid 4A5D75");
+        placeHolderProperties.setBorder("2px solid #4A5D75");
         setPlaceHolderProperties(placeHolderProperties);
     }
 }

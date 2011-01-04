@@ -191,6 +191,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
                 selectedDashboardView = (DashboardView) selectedTab.getPane();
                 selectedDashboard = selectedDashboardView.getDashboard();
+                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
                 selectedDashboardView.setEditMode(editMode);
             }
         });
@@ -320,11 +321,10 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 
-                tabSet.addTab(tab);
-
-                tabSet.selectTab(tab);
                 editMode = true;
-                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
+
+                tabSet.addTab(tab);
+                tabSet.selectTab(tab);
             }
         });
     }

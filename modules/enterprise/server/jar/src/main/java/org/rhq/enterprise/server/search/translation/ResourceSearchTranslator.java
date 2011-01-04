@@ -22,6 +22,7 @@ import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtili
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
@@ -133,7 +134,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
             + "   JOIN irole.subjects isubject " //
             + "   JOIN irole.permissions iperm " //
             + "  WHERE isubject.id = " + getSubjectId() //
-            + "    AND iperm = 11)";
+            + "    AND iperm = " + Permission.CONFIGURE_READ.ordinal() + ")";
     }
 
 }

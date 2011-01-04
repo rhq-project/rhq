@@ -133,6 +133,10 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
+
+      <index name="RHQ_MEAS_DATA_1D_TIME_IDX">
+         <field ref="TIME_STAMP" />
+      </index>
    </table>
 
 

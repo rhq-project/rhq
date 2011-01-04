@@ -120,8 +120,10 @@ if (exception != null) {
     while (exception != null) {
 
 %>
-        <div id="exceptionMessage<%=i%>" style="visibility:hidden"><%=exception.getLocalizedMessage()%></div>
-        <div id="exception<%=i++%>" style="visibility:hidden"><%=StringUtil.getFirstStackTrace(exception)%></div>
+        <c:set var="message"><%=exception.getLocalizedMessage()%></c:set>
+        <c:set var="stacktrace"><%=StringUtil.getFirstStackTrace(exception)%></c:set>
+        <div id="exceptionMessage<%=i%>" style="visibility:hidden"><c:out value="${message}" /></div>
+        <div id="exception<%=i++%>" style="visibility:hidden"><c:out value="${stacktrace}" /></div>
 <%
         exception = exception.getCause();
     }

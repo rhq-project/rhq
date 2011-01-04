@@ -18,10 +18,18 @@ import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 public class PerformanceMonitorInterceptor {
     @AroundInvoke
     public Object monitorHibernatePerformance(InvocationContext context) throws Exception {
-        String prefix = context.getMethod().getDeclaringClass().getSimpleName() + "." + context.getMethod().getName();
-        long monitorId = HibernatePerformanceMonitor.get().start();
-        Object results = context.proceed();
-        HibernatePerformanceMonitor.get().stop(monitorId, "SLSB:" + prefix);
-        return results;
+        if (HibernatePerformanceMonitor.isLoggingEnabled()) {
+            String prefix = context.getMethod().getDeclaringClass().getSimpleName() + "."
+                + context.getMethod().getName();
+            long monitorId = HibernatePerformanceMonitor.get().start();
+            try {
+                Object results = context.proceed();
+                return results;
+            } finally {
+                HibernatePerformanceMonitor.get().stop(monitorId, "SLSB:" + prefix);
+            }
+        } else {
+            return context.proceed();
+        }
     }
 }

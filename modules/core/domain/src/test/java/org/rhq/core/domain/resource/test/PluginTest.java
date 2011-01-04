@@ -46,7 +46,7 @@ import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 
-@Test
+@Test(groups = "integration.ejb3")
 public class PluginTest extends AbstractEJB3Test {
     public void testUpdate() throws Throwable {
         boolean done = false;

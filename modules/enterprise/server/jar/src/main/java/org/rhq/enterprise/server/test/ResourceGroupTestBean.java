@@ -47,9 +47,11 @@ public class ResourceGroupTestBean implements ResourceGroupTestBeanLocal {
 
     @SuppressWarnings("unchecked")
     public void setupCompatibleGroups() {
-        List<ResourceType> types = entityManager.createQuery("SELECT rt FROM ResourceType rt").getResultList();
+        List<ResourceType> types = entityManager
+            .createQuery("SELECT rt FROM ResourceType rt WHERE rt.deleted = false")
+            .getResultList();
         for (ResourceType type : types) {
-            Query query = entityManager.createQuery("SELECT res FROM Resource res WHERE res.resourceType = :type");
+            Query query = entityManager.createQuery("SELECT res FROM Resource res WHERE res.resourceType = :type AND res.resourceType.deleted = false");
             query.setParameter("type", type);
             List<Resource> resources = query.getResultList();
             ResourceGroup compatGroup = new ResourceGroup("Compat Group - " + getNextCompat(), type);

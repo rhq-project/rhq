@@ -1,0 +1,84 @@
+<dataset>
+    <rhq_resource_type id="-1"
+                       name="TestServer1"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin1"
+                       deleted="false"/>
+    <rhq_resource_type id="-2"
+                       name="TestServer2"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin1"
+                       deleted="true"/>
+    <rhq_resource_type id="-3"
+                       name="TestServer1"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin2"
+                       deleted="true"/>
+    <rhq_resource_type id="-4"
+                       name="ParentServer1"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin3"
+                       deleted="false"/>
+    <rhq_resource_type id="-5"
+                       name="ChildService1"
+                       category="SERVICE"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin3"
+                       deleted="false"/>
+    <rhq_resource_type id="-6"
+                       name="ChildService2"
+                       category="SERVICE"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin3"
+                       deleted="false"/>
+    <rhq_resource_type id="-7"
+                       name="ChildService3"
+                       category="SERVICE"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin3"
+                       deleted="true"/>
+
+    <rhq_resource_type_parents resource_type_id="-5"
+                               parent_resource_type_id="-4"/>
+    <rhq_resource_type_parents resource_type_id="-6"
+                               parent_resource_type_id="-4"/>
+    <rhq_resource_type_parents resource_type_id="-7"
+                               parent_resource_type_id="-4"/>
+
+    <rhq_package_type/>
+    <rhq_measurement_def/>
+    <rhq_event_def/>
+    <rhq_operation_def/>
+    <rhq_process_scan/>
+    <rhq_config_def/>
+    <rhq_config_prop_def/>
+    <rhq_conf_prop_def_enum/>
+    <rhq_config_prop_constr/>
+    <rhq_config_template/>
+    <rhq_resource/>
+</dataset>

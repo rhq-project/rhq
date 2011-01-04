@@ -75,6 +75,7 @@ import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
@@ -85,6 +86,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.BatchIterator;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -150,9 +152,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         int updated = 0;
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIdList);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
-
+        for (List<Integer> nextBatch : batchIter) {
             // need to delete related objects before deleting alerts
             deleteConditionLogsQuery.setParameter("alertIds", nextBatch);
             deleteConditionLogsQuery.executeUpdate();
@@ -190,15 +190,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         int modified = 0;
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIdList);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
+        for (List<Integer> nextBatch : batchIter) {
             ackAlertsQuery.setParameter("alertIds", nextBatch);
             modified += ackAlertsQuery.executeUpdate();
         }
-
         return modified;
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public int deleteAlertsByContext(Subject subject, EntityContext context) {
         Query deleteConditionLogsQuery = null;
         Query deleteNotificationLogsQuery = null;
@@ -243,6 +242,18 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_ALL);
             deleteNotificationLogsQuery = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ALL);
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_ALL);
+        } else if (context.type == EntityContext.Type.ResourceTemplate) {
+            // TODO Need to determine what security check(s) need to be performed here
+            deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteAlertsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
+            deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteConditionLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
+            deleteNotificationLogsQuery = entityManager.createNamedQuery(
+                AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteNotificationLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
         } else {
             throw new IllegalArgumentException("No support for deleting alerts for " + context);
         }
@@ -331,42 +342,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
     }
 
-    class BatchIterator<T> {
-        public static final int DEFAULT_BATCH_SIZE = 1000;
-
-        private int batchSize;
-        private int index;
-        private List<T> data;
-
-        public BatchIterator(List<T> data) {
-            this(data, DEFAULT_BATCH_SIZE);
-        }
-
-        public BatchIterator(List<T> data, int batchSize) {
-            this.batchSize = batchSize;
-            this.index = 0;
-            this.data = data;
-        }
-
-        public boolean hasMoreBatches() {
-            return index < data.size();
-        }
-
-        public List<T> getNextBatch() {
-            List<T> batch = null;
-
-            if (index + batchSize < data.size()) {
-                batch = data.subList(index, index + batchSize);
-                index += batchSize;
-            } else {
-                batch = data.subList(index, data.size());
-                index = data.size();
-            }
-
-            return batch;
-        }
-    }
-
     private long checkAuthz(Subject subject, List<Integer> alertIds) {
         /* 
          * get the count of the number of these alerts for which user
@@ -378,9 +353,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         long canModifyCount = 0;
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
-
+        for (List<Integer> nextBatch : batchIter) {
             authzQuery.setParameter("alertIds", nextBatch);
             canModifyCount += (Long) authzQuery.getSingleResult();
         }
@@ -398,13 +371,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         List<Integer> existingAlertIds = new ArrayList<Integer>();
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
-
+        for (List<Integer> nextBatch : batchIter) {
             authzQuery.setParameter("alertIds", nextBatch);
             existingAlertIds.addAll((List<Integer>) authzQuery.getResultList());
         }
-
         return existingAlertIds;
     }
 

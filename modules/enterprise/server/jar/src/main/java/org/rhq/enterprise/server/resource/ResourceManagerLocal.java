@@ -470,4 +470,8 @@ public interface ResourceManagerLocal {
      */
     <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
         DisambiguationUpdateStrategy updateStrategy);
+
+    List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds);
+
+    Integer getResourceCount(List<Integer> resourceTypeIds);
 }

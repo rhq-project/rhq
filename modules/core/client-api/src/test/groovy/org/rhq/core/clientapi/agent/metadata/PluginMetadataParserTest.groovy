@@ -20,16 +20,10 @@ package org.rhq.core.clientapi.agent.metadata
 
 import static org.testng.Assert.*
 
-import javax.xml.XMLConstants
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.Unmarshaller
-import javax.xml.bind.util.ValidationEventCollector
-import javax.xml.validation.Schema
-import javax.xml.validation.SchemaFactory
-import org.rhq.core.clientapi.descriptor.DescriptorPackages
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 import org.testng.annotations.Test
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat
+
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
 
 class PluginMetadataParserTest {
 
@@ -374,19 +368,19 @@ class PluginMetadataParserTest {
     
   }
 
-  static PluginDescriptor toPluginDescriptor(String string) {
-    JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
-    URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")
-    Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL)
-
-    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller()
-    ValidationEventCollector vec = new ValidationEventCollector()
-    unmarshaller.setEventHandler(vec)
-    unmarshaller.setSchema(pluginSchema)
-
-    StringReader reader = new StringReader(string)
-
-    return (PluginDescriptor) unmarshaller.unmarshal(reader);
-  }
+//  static PluginDescriptor toPluginDescriptor(String string) {
+//    JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
+//    URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")
+//    Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL)
+//
+//    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller()
+//    ValidationEventCollector vec = new ValidationEventCollector()
+//    unmarshaller.setEventHandler(vec)
+//    unmarshaller.setSchema(pluginSchema)
+//
+//    StringReader reader = new StringReader(string)
+//
+//    return (PluginDescriptor) unmarshaller.unmarshal(reader);
+//  }
 
 }

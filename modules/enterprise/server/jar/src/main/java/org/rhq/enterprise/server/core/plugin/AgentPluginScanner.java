@@ -54,6 +54,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployer.DeploymentInfo;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -115,6 +116,7 @@ public class AgentPluginScanner {
 
         // ensure that the filesystem and database are in a consistent state
         List<File> updatedFiles1 = agentPluginScanFilesystem();
+        removeDeletedPluginsFromFileSystem();
         List<File> updatedFiles2 = agentPluginScanDatabase();
 
         // process any newly detected plugins
@@ -228,6 +230,26 @@ public class AgentPluginScanner {
         }
 
         return updated;
+    }
+
+    void removeDeletedPluginsFromFileSystem() {
+        List<Plugin> deletedPlugins = getDeletedPlugins();
+        for (Plugin plugin : deletedPlugins) {
+            File pluginFile = new File(agentPluginDeployer.getPluginDir(), plugin.getPath());
+            if (agentPluginsOnFilesystem.containsKey(pluginFile)) {
+                agentPluginsOnFilesystem.remove(pluginFile);
+                if (pluginFile.delete()) {
+                    log.info("Plugin file [" + pluginFile + "] has been deleted from the file system.");
+                } else {
+                    log.warn("Failed to delete plugin file [" + pluginFile + "] from the file system");
+                }
+            }
+        }
+    }
+
+    List<Plugin> getDeletedPlugins() {
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+        return pluginMgr.findAllDeletedPlugins();
     }
 
     /**

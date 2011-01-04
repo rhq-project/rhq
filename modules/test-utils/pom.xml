@@ -32,6 +32,57 @@
       <version>1.9.4.1</version>       
       <scope>test</scope>
      </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-dbunit</artifactId>
+       <version>3.1</version>
+     </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-orm</artifactId>
+       <version>3.1</version>
+     </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-dbmaintainer</artifactId>
+       <version>3.1</version>
+       <exclusions>
+         <!--
+           Unitils depends on hibernate 3.2.5 and we are using a
+           an earlier 3.2 build. The 3.2.5 version causes some
+           dependencies clashes around asm which gets pulled
+           in by cobertura. We are excluding hibernate here to
+           avoid the dependency clash and to force unitils into
+           using the version that we use else where.
+
+           jsanda 10/20/2010
+         -->
+         <exclusion>
+           <groupId>org.hibernate</groupId>
+           <artifactId>hibernate</artifactId>
+         </exclusion>
+       </exclusions>
+     </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-easymock</artifactId>
+       <version>3.1</version>
+     </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-testng</artifactId>
+       <version>3.1</version>
+     </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-inject</artifactId>
+       <version>3.1</version>
+     </dependency>
+     <dependency>
+       <groupId>org.unitils</groupId>
+       <artifactId>unitils-mock</artifactId>
+       <version>3.1</version>
+     </dependency>
   </dependencies>
   
   <profiles>

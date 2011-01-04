@@ -65,9 +65,9 @@ import org.jetbrains.annotations.Nullable;
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID, query = "SELECT cd FROM PackageType pt JOIN pt.deploymentConfigurationDefinition cd "
         + "WHERE pt.id = :packageTypeId"),
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID, query = "SELECT cd FROM ResourceType rt JOIN rt.resourceConfigurationDefinition cd "
-        + "WHERE rt.id = :resourceTypeId"),
+        + "WHERE rt.id = :resourceTypeId AND rt.deleted = false"),
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID, query = "SELECT cd FROM ResourceType rt JOIN rt.pluginConfigurationDefinition cd "
-        + "WHERE rt.id = :resourceTypeId") })
+        + "WHERE rt.id = :resourceTypeId AND rt.deleted = false") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_DEF_ID_SEQ")
 @Table(name = "RHQ_CONFIG_DEF")
 @XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })

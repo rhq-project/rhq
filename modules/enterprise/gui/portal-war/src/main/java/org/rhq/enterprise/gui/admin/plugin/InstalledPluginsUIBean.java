@@ -18,29 +18,11 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
-
-import javax.faces.application.FacesMessage;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.richfaces.event.UploadEvent;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.plugin.AbstractPlugin;
-import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.plugin.PluginKey;
-import org.rhq.core.domain.plugin.PluginStatusType;
-import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.core.domain.plugin.*;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -49,8 +31,16 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.richfaces.event.UploadEvent;
+
+import javax.faces.application.FacesMessage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.*;
 
 /**
  */
@@ -59,7 +49,7 @@ public class InstalledPluginsUIBean {
 
     public static final String MANAGED_BEAN_NAME = InstalledPluginsUIBean.class.getSimpleName();
 
-    private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
+    private PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
     private ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
 
     public InstalledPluginsUIBean() {
@@ -79,11 +69,16 @@ public class InstalledPluginsUIBean {
     }
 
     public Collection<Plugin> getInstalledAgentPlugins() {
-
         hasPermission();
-        List<Plugin> plugins = resourceMetadataManagerBean.getPlugins();
-        plugins = sort(plugins);
-        return plugins;
+        List<Plugin> plugins;
+
+        InstalledPluginsSessionUIBean session = FacesContextUtility.getManagedBean(InstalledPluginsSessionUIBean.class);
+        if (session.isShowAllAgentPlugins()) {
+            plugins = pluginMgr.getPlugins();
+        } else {
+            plugins = pluginMgr.getInstalledPlugins();
+        }
+        return sort(plugins);
     }
 
     public Collection<ServerPlugin> getInstalledServerPlugins() {
@@ -172,7 +167,7 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            resourceMetadataManagerBean.enablePlugins(subject, getIds(pluginsToEnable));
+            pluginMgr.enablePlugins(subject, getIds(pluginsToEnable));
             FacesContextUtility
                 .addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
         } catch (Exception e) {
@@ -201,10 +196,34 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            resourceMetadataManagerBean.disablePlugins(subject, getIds(pluginsToDisable));
+            pluginMgr.disablePlugins(subject, getIds(pluginsToDisable));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled plugins: " + selectedPluginNames);
         } catch (Exception e) {
             processException("Failed to disable agent plugins", e);
+        }
+        return;
+    }
+
+    public void deleteAgentPlugins() {
+        if (getSelectedPluginIds().length == 0) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No plugins were selected. Nothing to delete");
+            return;
+        }
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            List<Plugin> pluginsToDelete = getSelectedAgentPlugins();
+            List<String> pluginNames = new ArrayList<String>();
+
+            for (Plugin plugin : pluginsToDelete) {
+                pluginNames.add(plugin.getDisplayName());
+            }
+
+            pluginMgr.deletePlugins(subject, Arrays.asList(getSelectedPluginIds()));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted plugins: " + pluginNames);
+        } catch (Exception e) {
+            processException("Failed to delete agent plugins", e);
         }
         return;
     }
@@ -339,6 +358,29 @@ public class InstalledPluginsUIBean {
         return;
     }
 
+    public void purgeAgentPlugins() {
+        try {
+            List<Plugin> selectedPlugins = getSelectedAgentPlugins();
+
+            if (selectedPlugins.isEmpty()) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                        "No plugins were selected. Nothing to purge");
+                return;
+            }
+
+            List<String> pluginNames = new ArrayList<String>();
+            for (Plugin plugin : selectedPlugins) {
+                pluginNames.add(plugin.getName());
+            }
+
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            pluginMgr.purgePlugins(subject, getIds(getSelectedAgentPlugins()));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Purged server plugins: " + pluginNames);
+        } catch (Exception e) {
+            processException("Failed to purge agent plugins", e);
+        }
+    }
+
     private List<Integer> getIds(List<? extends AbstractPlugin> plugins) {
         ArrayList<Integer> ids = new ArrayList<Integer>(plugins.size());
         for (AbstractPlugin plugin : plugins) {
@@ -350,7 +392,7 @@ public class InstalledPluginsUIBean {
     private List<Plugin> getSelectedAgentPlugins() {
         Integer[] integerItems = getSelectedPluginIds();
         List<Integer> ids = Arrays.asList(integerItems);
-        List<Plugin> plugins = resourceMetadataManagerBean.getAllPluginsById(ids);
+        List<Plugin> plugins = pluginMgr.getAllPluginsById(ids);
         return plugins;
     }
 

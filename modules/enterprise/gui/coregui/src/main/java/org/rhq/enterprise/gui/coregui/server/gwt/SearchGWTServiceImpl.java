@@ -70,8 +70,20 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
         }
     }
 
-    public void updateSavedSearch(SavedSearch savedSearch) throws RuntimeException {
+    public void updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException {
         try {
+            SavedSearch savedSearch = getSubjectSavedSearch(savedSearchId);
+            savedSearch.setName(newName);
+            savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException {
+        try {
+            SavedSearch savedSearch = getSubjectSavedSearch(savedSearchId);
+            savedSearch.setPattern(newPattern);
             savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
@@ -92,6 +104,18 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
                 "SearchService.findRolesByCriteria");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    private SavedSearch getSubjectSavedSearch(int savedSearchId) {
+        SavedSearchCriteria criteria = new SavedSearchCriteria();
+        criteria.addFilterSubjectId(getSessionSubject().getId()); // ensure user can only fetch his/her own
+        criteria.addFilterId(savedSearchId);
+        List<SavedSearch> results = findSavedSearchesByCriteria(criteria);
+        if (results.isEmpty()) {
+            return null;
+        } else {
+            return results.get(0);
         }
     }
 

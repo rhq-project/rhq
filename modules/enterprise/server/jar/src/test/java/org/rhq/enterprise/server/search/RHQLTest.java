@@ -37,9 +37,7 @@ import java.util.concurrent.TimeoutException;
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.testng.AssertJUnit;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import org.rhq.enterprise.server.search.RHQLParser.searchExpression_return;
 
@@ -79,12 +77,12 @@ public class RHQLTest extends AssertJUnit {
 
     private ExecutorService executor;
 
-    @BeforeSuite
+    @BeforeClass
     public void init() {
         executor = Executors.newSingleThreadExecutor();
     }
 
-    @AfterSuite
+    @AfterClass
     public void teardown() {
         executor.shutdownNow();
     }

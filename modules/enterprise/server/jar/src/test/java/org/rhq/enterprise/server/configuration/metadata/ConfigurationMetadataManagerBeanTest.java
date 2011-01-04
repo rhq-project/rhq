@@ -32,7 +32,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
@@ -44,8 +43,8 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginConfigDefFor;
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginDescriptor;
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginConfigDefFor;
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
 import static java.util.Arrays.asList;
 
 /**
@@ -73,8 +72,8 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
         String version1 = pluginFileBaseName + "_v1.xml";
         String version2 = pluginFileBaseName + "_v2.xml";
 
-        originalDescriptor = loadPluginDescriptor(getPackagePath() + version1);
-        updatedDescriptor = loadPluginDescriptor(getPackagePath() + version2);
+        originalDescriptor = loadPluginDescriptor(getClass().getResource(version1));
+        updatedDescriptor = loadPluginDescriptor(getClass().getResource(version2));
     }
 
     @Test

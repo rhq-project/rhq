@@ -448,6 +448,20 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     }
 
     @SuppressWarnings("unchecked")
+    public List<Integer> getResourceTypeIdsByPlugin(String plugin) {
+        return entityManager.createNamedQuery(ResourceType.QUERY_FIND_IDS_BY_PLUGIN)
+            .setParameter("plugin", plugin)
+            .getResultList();
+    }
+
+    @Override
+    public Integer getResourceTypeCountByPlugin(String plugin) {
+        return (Integer) entityManager.createNamedQuery(ResourceType.QUERY_FIND_COUNT_BY_PLUGIN)
+            .setParameter("plugin", plugin)
+            .getSingleResult();
+    }
+
+    @SuppressWarnings("unchecked")
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<ResourceType> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);

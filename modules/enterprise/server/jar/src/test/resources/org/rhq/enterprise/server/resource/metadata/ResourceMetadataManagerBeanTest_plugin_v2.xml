@@ -1,0 +1,73 @@
+<plugin name="TestPlugin" displayName="Test Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ServerA" description="Server A description">
+
+        <subcategories>
+            <subcategory name="Resources" description="Resources subcategory"/>
+            <subcategory name="Applications" description="Applications subcategory"/>
+        </subcategories>
+
+        <plugin-configuration>
+            <c:simple-property name="connectionPropertyX" default="x"/>
+            <c:simple-property name="connectionPropertyY" default="y"/>
+        </plugin-configuration>
+
+        <process-scan name="processA" query="process|basename|match=^java.*,arg|org.jboss.MainA|match=.*"/>
+        <process-scan name="processB" query="process|basename|match=^java.*,arg|org.jboss.MainB|match=.*"/>
+
+        <operation name="start">
+            <parameters>
+                <c:simple-property name="immediate" type="boolean"/>
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer"/>
+            </results>
+        </operation>
+
+        <operation name="shutdown">
+            <parameters>
+                <c:simple-property name="immediate" type="boolean"/>
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer"/>
+            </results>
+        </operation>
+
+        <operation name="restart">
+            <parameters>
+                <c:simple-property name="immediate" type="boolean"/>
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer"/>
+            </results>
+        </operation>
+
+        <metric displayName="Metric 1" property="metric1" displayType="summary" defaultInterval="300000"/>
+        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000"/>
+
+        <event name="logAEntry" description="an entry was appended to a log file"/>
+        <event name="logCEntry" description="an entry was appended to a log file"/>
+
+        <content name="ServerA.Content.1" category="configuration">
+            <configuration>
+                <c:simple-property name="ServerA.Content.1.property1"/>
+                <c:simple-property name="ServerA.Content.1.property2"/>
+            </configuration>
+        </content>
+
+        <content name="ServerA.Content.3" category="deployable">
+            <configuration>
+                <c:simple-property name="ServerA.Content.3.version"/>
+            </configuration>
+        </content>
+
+        <service name="Child1"/>
+        <service name="Child3"/>
+    </server>
+
+    <server name="ServerB" description="Server B description">
+        <service name="Child2"/>
+    </server>
+</plugin>

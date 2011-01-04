@@ -29,6 +29,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
+import org.rhq.core.domain.criteria.Criteria.Restriction;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.search.SavedSearch;
@@ -69,6 +70,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
 
                 if (next.getSearchSubsystem() == SearchSubsystem.RESOURCE) {
                     ResourceCriteria criteria = new ResourceCriteria();
+                    criteria.setRestriction(Restriction.COUNT_ONLY);
                     criteria.setSearchExpression(next.getPattern());
 
                     totalMillis -= System.currentTimeMillis();
@@ -81,6 +83,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
 
                 } else if (next.getSearchSubsystem() == SearchSubsystem.GROUP) {
                     ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                    criteria.setRestriction(Restriction.COUNT_ONLY);
                     criteria.setSearchExpression(next.getPattern());
 
                     totalMillis -= System.currentTimeMillis();

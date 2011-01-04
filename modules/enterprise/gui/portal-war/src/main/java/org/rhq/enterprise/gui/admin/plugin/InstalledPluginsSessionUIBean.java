@@ -19,7 +19,8 @@
 package org.rhq.enterprise.gui.admin.plugin;
 
 public class InstalledPluginsSessionUIBean {
-    private boolean showAllServerPlugins = false;
+    private boolean showAllServerPlugins;
+    private boolean showAllAgentPlugins;
     private String selectedTab;
 
     public InstalledPluginsSessionUIBean() {
@@ -33,12 +34,28 @@ public class InstalledPluginsSessionUIBean {
         this.showAllServerPlugins = showDeletedServerPlugins;
     }
 
+    public boolean isShowAllAgentPlugins() {
+        return showAllAgentPlugins;
+    }
+
+    public void setShowAllAgentPlugins(boolean showDeletedAgentPlugins) {
+        showAllAgentPlugins = showDeletedAgentPlugins;
+    }
+
     public void showUndeployedServerPlugins() {
         setShowAllServerPlugins(true);
     }
 
+    public void showDeletedAgentPlugins() {
+        setShowAllAgentPlugins(true);
+    }
+
     public void hideUndeployedServerPlugins() {
         setShowAllServerPlugins(false);
+    }
+
+    public void hideDeletedAgentPlugins() {
+        setShowAllAgentPlugins(false);
     }
 
     public String getSelectedTab() {

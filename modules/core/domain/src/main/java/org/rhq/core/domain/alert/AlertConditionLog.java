@@ -69,6 +69,12 @@ import javax.persistence.Table;
         + "                             FROM AlertDefinition ad " //
         + "                             JOIN ad.alerts alert " //
         + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE,
+    query = "DELETE AlertConditionLog log "
+        + "  WHERE  log.alert.id IN (SELECT alert.id "
+        + "                          FROM   AlertDefinition alertDef "
+        + "                          JOIN   alertDef.alerts alert "
+        + "                          WHERE  alertDef.resourceType.id = :resourceTypeId)"),
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE_GROUPS, //
     query = "DELETE AlertConditionLog acl " //
         + "   WHERE acl.alert.id IN ( SELECT alert.id " //
@@ -97,6 +103,7 @@ public class AlertConditionLog implements Serializable {
     public static final String QUERY_DELETE_ALL = "AlertConditionLog.deleteByAll";
     public static final String QUERY_DELETE_BY_ALERT_IDS = "AlertConditionLog.deleteByAlertIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertConditionLog.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "AlertConditionLog.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertConditionLog.deleteByResourceGroups";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";
     public static final String QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID = "AlertConditionLog.deleteUnmatchedByAlertDefinitionId";

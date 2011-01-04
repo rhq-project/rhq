@@ -38,7 +38,7 @@ import org.rhq.core.domain.test.AbstractEJB3Test;
  *
  * @author John Mazzitelli
  */
-@Test
+@Test(groups = "integration.ejb3")
 public class ConfigurationCompareTest extends AbstractEJB3Test {
     public void testNullCompare() {
         Configuration c1 = new Configuration();
@@ -198,6 +198,7 @@ public class ConfigurationCompareTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(groups = "integration.ejb3")
     public void testSimpleCompare() {
         Configuration c1 = new Configuration();
         Configuration c2 = new Configuration();

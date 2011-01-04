@@ -113,6 +113,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     @Override
     @BeforeClass
     public void beforeClass() {
+        super.beforeClass();
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.bundleService = new TestAgentClient(null, new TestServerCommunicationsService());
     }
@@ -124,7 +125,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
@@ -246,7 +246,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             }
 
             // remove ResourceTypes which cascade remove BundleTypes
-            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.deleted = false and rt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(ResourceType.class, ((ResourceType) removeMe).getId()));

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -76,7 +77,7 @@ public class DashboardView extends LocatableVLayout {
     IMenuButton addPortlet;
 
     Set<PortletWindow> portlets = new HashSet<PortletWindow>();
-    private static String STOP = MSG.common_title_stop();
+    private static String STOP = MSG.view_dashboards_portlets_refresh_none();
     private static String REFRESH1 = MSG.view_dashboards_portlets_refresh_one_min();
     private static String REFRESH5 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(5));
     private static String REFRESH10 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(10));
@@ -133,9 +134,7 @@ public class DashboardView extends LocatableVLayout {
         loadPortlets();
 
         addMember(editForm);
-        editForm.hide();
         addMember(portalLayout);
-
     }
 
     private DynamicForm buildEditForm() {
@@ -185,27 +184,37 @@ public class DashboardView extends LocatableVLayout {
         removeColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
 
-                Canvas[] canvases = portalLayout.getMembers();
-                int numMembers = canvases.length;
-                if (numMembers > 0) {
-                    Canvas lastMember = canvases[numMembers - 1];
-                    portalLayout.removeMember(lastMember);
-                    numColItem.setValue(numMembers - 1);
+                Canvas[] columns = portalLayout.getMembers();
+                int numColumns = columns.length;
+                if (numColumns > 0) {
+                    PortalColumn lastColumn = (PortalColumn) columns[numColumns - 1];
+                    for (Canvas portlet : lastColumn.getMembers()) {
+                        boolean removed = storedDashboard
+                            .removePortlet(((PortletWindow) portlet).getDashboardPortlet());
+                    }
+                    portalLayout.removeMember(lastColumn);
+                    numColItem.setValue(numColumns - 1);
                     storedDashboard.setColumns(storedDashboard.getColumns() - 1);
                     save();
                 }
-                save();
             }
         });
 
         Menu addPortletMenu = new Menu();
         HashMap<String, String> keyNameMap = PortletFactory.getRegisteredPortletNameMap();
+        // the assumption here is that the portlet names are unique. we want a sorted menu here, so create a
+        // sorted map from portlet name to portlet key and use that to generate the menu. It would be nice if you
+        // could just call Menu.sort() but it's not supported (yet?).
+        TreeMap<String, String> nameKeyMap = new TreeMap<String, String>();
         for (String portletKey : keyNameMap.keySet()) {
-            MenuItem menuItem = new MenuItem(keyNameMap.get(portletKey));
-            menuItem.setAttribute("portletKey", portletKey);
+            nameKeyMap.put(keyNameMap.get(portletKey), portletKey);
+        }
+        // now use the reversed map for the menu generation
+        for (String portletName : nameKeyMap.keySet()) {
+            MenuItem menuItem = new MenuItem(portletName);
+            menuItem.setAttribute("portletKey", nameKeyMap.get(portletName));
             addPortletMenu.addItem(menuItem);
         }
-
         addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
             addPortletMenu);
 
@@ -227,7 +236,6 @@ public class DashboardView extends LocatableVLayout {
         addCanvas.setEndRow(false);
 
         ColorPickerItem picker = new ColorPickerItem();
-
         picker.setTitle(MSG.common_title_background());
         picker.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
@@ -289,7 +297,7 @@ public class DashboardView extends LocatableVLayout {
             .common_title_change_refresh_time(), refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.getMenu().setItems(refreshMenuItems);
-        refreshMenuButton.setWidth(170);
+        refreshMenuButton.setWidth(140);
         refreshMenuButton.setShowTitle(true);
         refreshMenuButton.setTop(0);
         refreshMenuButton.setIconOrientation("left");
@@ -301,10 +309,11 @@ public class DashboardView extends LocatableVLayout {
         refreshCanvas.setStartRow(false);
         refreshCanvas.setEndRow(false);
 
-        editForm.setItems(nameItem, numColItem, addCanvas, picker, addColumn, removeColumn, refreshCanvas);
+        editForm.setItems(nameItem, addCanvas, numColItem, addColumn, removeColumn, picker, refreshCanvas);
         updateRefreshMenu();
         this.refreshMenuButton.markForRedraw();
         markForRedraw();
+
         return editForm;
     }
 
@@ -333,16 +342,16 @@ public class DashboardView extends LocatableVLayout {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
 
         final PortletWindow newPortlet = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
-        portlets.add(newPortlet);
-
-        storedDashboard.addPortlet(storedPortlet, 0, 0);
-
         newPortlet.setTitle(portletName);
-
         newPortlet.setHeight(350);
         newPortlet.setVisible(false);
 
-        PortalColumn column = portalLayout.addPortlet(newPortlet, 0);
+        portlets.add(newPortlet);
+
+        int columnIndex = portalLayout.addPortlet(newPortlet);
+        PortalColumn column = portalLayout.getPortalColumn(columnIndex);
+
+        storedDashboard.addPortlet(storedPortlet, columnIndex, column.getMembers().length - 1);
 
         // also insert a blank spacer element, which will trigger the built-in
         //  animateMembers layout animation
@@ -399,14 +408,16 @@ public class DashboardView extends LocatableVLayout {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_dashboardManager_saved(result.getName()), Message.Severity.Info));
 
-                updateConfigs(result);
+                // The portlet definitions have been merged and updated, reset the portlet windows with the
+                // up to date portlets.
+                updatePortletWindows(result);
                 storedDashboard = result;
                 DashboardView.this.enable();
             }
         });
     }
 
-    private void updateConfigs(Dashboard result) {
+    private void updatePortletWindows(Dashboard result) {
         if (result != null) {
             if (portletMap == null) {
                 portletMap = new HashMap<String, PortletViewFactory>();
@@ -416,10 +427,10 @@ public class DashboardView extends LocatableVLayout {
             }
             for (PortletWindow portletWindow : portlets) {
                 for (DashboardPortlet portlet : result.getPortlets()) {
-                    if (portletWindow.getDashboardPortlet().equals(portlet)) {
-                        portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
+                    if (equalsDashboardPortlet(portletWindow.getDashboardPortlet(), portlet)) {
+                        portletWindow.setDashboardPortlet(portlet);
 
-                        //restarting port auto-refresh with newest settings
+                        //restarting portlet auto-refresh with newest settings
                         PortletViewFactory viewFactory = portletMap.get(portlet.getPortletKey());
 
                         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
@@ -428,7 +439,6 @@ public class DashboardView extends LocatableVLayout {
                         Portlet view = viewFactory.getInstance(SeleniumUtility.getSafeId(portlet.getPortletKey() + "-"
                             + Integer.toString(portlet.getId())));
 
-                        //add code to re-initialize refresh cycle for portlets
                         if (view instanceof AutoRefreshPortlet) {
                             ((AutoRefreshPortlet) view).startRefreshCycle();
                         }
@@ -436,6 +446,44 @@ public class DashboardView extends LocatableVLayout {
                 }
             }
         }
+    }
+
+    /**
+     * This an enhanced equals for portlets that allows equality for unpersisted portlets. At times (like addPortlet)
+     * a portlet may have been associated with its window prior to being persisted. In this case we can consider
+     * it equal if it is associated with the same dashboard and has the same positioning. Note that key-name pairing
+     * can not be used for equality as a dashboard is allowed to have the same portlet multiple times, with a default
+     * name.  But they can not hold the same position. 
+     * 
+     * @param portlet1
+     * @param portlet2
+     * @return
+     */
+    private boolean equalsDashboardPortlet(DashboardPortlet portlet1, DashboardPortlet portlet2) {
+
+        if (portlet1.equals(portlet2)) {
+            return true;
+        }
+
+        // make sure at least one portlet is not persisted
+        if (portlet1.getId() > 0 && portlet2.getId() > 0) {
+            return false;
+        }
+
+        // must match dash and position for psuedo-equality
+        if (portlet1.getDashboard().getId() != portlet2.getDashboard().getId()) {
+            return false;
+        }
+
+        if (portlet1.getColumn() != portlet2.getColumn()) {
+            return false;
+        }
+
+        if (portlet1.getIndex() != portlet2.getIndex()) {
+            return false;
+        }
+
+        return true;
     }
 
     public void delete() {

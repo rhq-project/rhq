@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
-@Test
+@Test(groups = "integration.ejb3")
 public class RepoTest extends AbstractEJB3Test {
     public void testInsert() throws Exception {
         getTransactionManager().begin();

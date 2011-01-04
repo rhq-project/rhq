@@ -191,6 +191,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
                 selectedDashboardView = (DashboardView) selectedTab.getPane();
                 selectedDashboard = selectedDashboardView.getDashboard();
+                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
                 selectedDashboardView.setEditMode(editMode);
             }
         });
@@ -242,41 +243,31 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-        DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 230);
+        // Left Column
+        DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 210);
         dashboard.addPortlet(summary, 0, 0);
 
-        DashboardPortlet tagCloud = new DashboardPortlet(TagCloudPortlet.NAME, TagCloudPortlet.KEY, 200);
-        dashboard.addPortlet(tagCloud, 0, 1);
+        DashboardPortlet discoveryQueue = new DashboardPortlet(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY, 230);
+        dashboard.addPortlet(discoveryQueue, 0, 1);
 
-        // Experimental
-        //        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
-        //        col2.add(platformSummary);
+        DashboardPortlet recentlyAdded = new DashboardPortlet(RecentlyAddedResourcesPortlet.NAME,
+            RecentlyAddedResourcesPortlet.KEY, 230);
+        dashboard.addPortlet(recentlyAdded, 0, 2);
 
-        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 180);
+        DashboardPortlet tagCloud = new DashboardPortlet(TagCloudPortlet.NAME, TagCloudPortlet.KEY, 230);
+        dashboard.addPortlet(tagCloud, 0, 3);
+
+        // Right Column
+        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 210);
         welcome.getConfiguration().put(
             new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
         dashboard.addPortlet(welcome, 1, 0);
 
-        DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 320);
-        news.getConfiguration().put(
-            new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
-        dashboard.addPortlet(news, 1, 1);
-        //
-        DashboardPortlet discoveryQueue = new DashboardPortlet(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY, 250);
-        dashboard.addPortlet(discoveryQueue, 1, 2);
-
-        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
-        dashboard.addPortlet(recentAlerts, 1, 3);
-
-        DashboardPortlet recentlyAdded = new DashboardPortlet(RecentlyAddedResourcesPortlet.NAME,
-            RecentlyAddedResourcesPortlet.KEY, 250);
-        dashboard.addPortlet(recentlyAdded, 1, 4);
-
-        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 500);
-        dashboard.addPortlet(operations, 1, 5);
+        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 230);
+        dashboard.addPortlet(recentAlerts, 1, 1);
 
         DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
-            ProblemResourcesPortlet.KEY, 250);
+            ProblemResourcesPortlet.KEY, 230);
         //initialize config for the problemResources portlet.
         problemResources.getConfiguration()
             .put(
@@ -286,7 +277,15 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             .put(
                 new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
                     ProblemResourcesPortlet.defaultValue));
-        dashboard.addPortlet(problemResources, 1, 6);
+        dashboard.addPortlet(problemResources, 1, 2);
+
+        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 420);
+        dashboard.addPortlet(operations, 1, 3);
+
+        DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 350);
+        news.getConfiguration().put(
+            new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
+        dashboard.addPortlet(news, 1, 4);
 
         return dashboard;
 
@@ -322,11 +321,10 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 
-                tabSet.addTab(tab);
-
-                tabSet.selectTab(tab);
                 editMode = true;
-                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
+
+                tabSet.addTab(tab);
+                tabSet.selectTab(tab);
             }
         });
     }

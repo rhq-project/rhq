@@ -1,0 +1,23 @@
+<plugin name="EventMetadataManagerBeanTestPlugin"
+        displayName="ContentMetadataManagerBean Test Plugin"
+        package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="EventServer1">
+        <event name="event1" description="Event 1"/>
+        <event name="event2" description="Event 2"/>
+    </server>
+
+    <server name="EventServer2">
+        <event name="event1" description="Event 1"/>
+        <event name="event2" description="Event 2"/>
+    </server>
+
+    <server name="EventServer3"/>
+
+    <server name="EventServer4">
+        <event name="event1" description="EVENT ONE"/>
+        <event name="event3" description="Event 3"/>
+    </server>
+</plugin>

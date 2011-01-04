@@ -89,7 +89,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             // somewhere else.
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         /*
          * Now update / delete contained groups We need to be careful here, as groups are present in PropertyDefinition
@@ -119,7 +119,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             entityManager.remove(group);
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         // update existing groups that stay
         for (PropertyGroupDefinition group : toUpdate) {
@@ -143,7 +143,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 .getPropertiesInGroup(groupName));
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         // persist new groups
         for (PropertyGroupDefinition group : toPersist) {
@@ -190,7 +190,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         for (String name : toRemove) {
             existingTemplates.remove(name);
         }
-        entityManager.flush();
+//        entityManager.flush();
 
         for (String name : newTemplates.keySet()) {
             // add completely new templates
@@ -207,7 +207,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         return updateReport;
     }
@@ -403,7 +403,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // handle <constraint> [0..*]
 
-                entityManager.flush();
+//                entityManager.flush();
                 Set<Constraint> exCon = existingPDS.getConstraints();
                 if (exCon.size() > 0) {
                     for (Constraint con : exCon) {
@@ -442,7 +442,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         entityManager.remove(existingProperty);
         entityManager.merge(configDef);
-        entityManager.flush();
+//        entityManager.flush();
     }
 
     /**
@@ -477,7 +477,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         entityManager.merge(exList);
-        entityManager.flush();
+//        entityManager.flush();
     }
 
     /**

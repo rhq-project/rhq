@@ -90,6 +90,7 @@ import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.RebootRequestListener;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
@@ -1661,6 +1662,93 @@ public class AgentMain {
         if (plugin_container.isStarted()) {
             return true;
         }
+
+        plugin_container.setRebootRequestListener(new RebootRequestListener() {
+            public void reboot() {
+                try {
+                    shutdown();
+                } catch (Throwable t) {
+                    LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown " +
+                        "operation failed.");
+                }
+                if (isStarted()) {
+                    // Pause for a few seconds and try to shut down one more time.
+                    try {
+                        Thread.sleep(3000);
+                        shutdown();
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown " +
+                            "operation failed again.");
+                    }
+                }
+                if (isStarted()) {
+                    // At this point agent shut down failed twice. We can get by with rebooting the plugin container
+                    // so we will try that as last ditch effort.
+
+                    LOG.warn("The agent shut down operation has failed twice. Attempting to reboot the plugin " +
+                        "container so that stale resource types and deleted plugins are removed.");
+                    try {
+                        rebootPluginContainer();
+                    } catch (Throwable t) {
+                        // If rebooting the plugin container fails as well, there is not much else we can do besides
+                        // reporting the failures. Manual intervention is needed.
+                        LOG.error("The agent could not be shut down and rebooting the plugin container failed. " +
+                            "Please check the logs for errors and manually restart the agent as soon as " +
+                            "possible.");
+                        return;
+                    }
+                } else {
+                    try {
+                        cleanDataDirectory();
+                    } catch (Throwable t) {
+                        LOG.warn(t, "The plugin container has requested the agent be restarted but purging the " +
+                            "data directory failed.");
+                    }
+                    try {
+                        start();
+                    } catch (Throwable t) {
+                        LOG.warn(t, "An error occurred while trying to restart the agent. Attempting restart " +
+                            "one more time");
+                        try {
+                            shutdown();
+                            start();
+                        } catch (Throwable t1) {
+                            LOG.error(t1, "Restarting the agent has failed. Please check the logs for errors and " +
+                                "manually restart the agent as soon as possible.");
+                            return;
+                        }
+                    }
+                    getAgentRestartCounter().restartedAgent(AgentRestartReason.STALE_INVENTORY);
+                }
+            }
+
+            private void rebootPluginContainer() throws Throwable {
+                PluginContainer pc = PluginContainer.getInstance();
+
+                if (pc.isStarted()) {
+                    try {
+                        shutdownPluginContainer();
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container shut down operation failed.");
+                        throw t;
+                    }
+                    try {
+                        startPluginContainer(0L);
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container was shut down but an error occurred trying to restart it.");
+                        throw t;
+                    }
+                } else {
+                    LOG.warn("The plugin container is already shut down. Attempting to restart it...");
+                    try {
+                        startPluginContainer(0L);
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container was shut down but an error occurred trying to restart it.");
+                        throw t;
+                    }
+                }
+            }
+        });
 
         // if wait param is <=0 this BLOCKS INDEFINITELY! If the server is down, this will never return until it comes back up
         try {

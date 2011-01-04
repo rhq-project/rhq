@@ -110,6 +110,12 @@
       -->
 
       <!--================ Test Deps ================-->
+      <dependency>
+          <groupId>${groupId}</groupId>
+          <artifactId>test-utils</artifactId>
+          <version>${version}</version>
+          <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>javassist</groupId>
@@ -272,6 +278,9 @@
                   <value>${rhq.test.ds.hibernate-dialect}</value>
                 </property>
               </systemProperties>
+              <excludes>
+                <exclude>**/ResourceTypeTest.java</exclude>
+              </excludes>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>
                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
@@ -279,6 +288,23 @@
             </configuration>
          </plugin>
 
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+                  <configuration>
+                     <includes>
+                        <include>org/rhq/core/domain/shared/**</include>
+                     </includes>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 

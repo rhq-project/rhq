@@ -87,27 +87,33 @@ public class PortalLayout extends LocatableHLayout {
         }
     }
 
-    public PortalColumn addPortlet(PortletWindow portlet) {
-        // find the column with the fewest portlets
-        int fewestPortlets = Integer.MAX_VALUE;
-        PortalColumn fewestPortletsColumn = null;
-        for (int i = 0; i < getMembers().length; i++) {
-            int numPortlets = ((PortalColumn) getMember(i)).getMembers().length;
-            if (numPortlets < fewestPortlets) {
-                fewestPortlets = numPortlets;
-                fewestPortletsColumn = (PortalColumn) getMember(i);
-            }
-        }
-        fewestPortletsColumn.addMember(portlet);
-        return fewestPortletsColumn;
+    public PortalColumn getPortalColumn(int column) {
+        return ((PortalColumn) getMember(column));
     }
 
-    public PortalColumn addPortlet(PortletWindow portlet, int column) {
-        PortalColumn fewestPortletsColumn = (PortalColumn) getMember(column);
+    public int addPortlet(PortletWindow portlet) {
+        int fewestPortletsColumnIndex = -1;
+        int fewestPortletsColumnCount = Integer.MAX_VALUE;
+        for (int i = 0, numColumns = getMembers().length; (i < numColumns); ++i) {
+            PortalColumn portletColumn = (PortalColumn) getMember(i);
+            int memberCount = portletColumn.getMembers().length;
+            if (fewestPortletsColumnCount > memberCount) {
+                fewestPortletsColumnIndex = i;
+                fewestPortletsColumnCount = memberCount;
+            }
+        }
 
-        fewestPortletsColumn.addMember(portlet);
+        addPortlet(portlet, fewestPortletsColumnIndex);
 
-        return fewestPortletsColumn;
+        return fewestPortletsColumnIndex;
+    }
+
+    public PortalColumn addPortlet(PortletWindow portlet, int columnIndex) {
+
+        PortalColumn portalColumn = (PortalColumn) getMember(columnIndex);
+        portalColumn.addMember(portlet);
+
+        return portalColumn;
     }
 
     public void save() {

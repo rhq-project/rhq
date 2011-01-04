@@ -21,22 +21,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client;
+package org.rhq.core.domain.shared;
+
+import java.util.HashSet;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * ResourceTypeBuilder is a builder that creates ResourceType objects. The builder ensures that the ResourceType is
  * created in a valid state, specifically fields that are not nullable are required to have non-null values. Using the
  * builder should help make the intent of tests clearer and more self-documenting.
  * <br/><br/>
- * A couple things need to be pointed out. First, this class currently does not yet provide support for all
- * ResourceType fields/properties. Secondly, this class will likely be moved to a test utility module in a subsequent
- * commit so that it can be reused by other tests in other modules.
+ * Note that this class currently does not yet provide support for all ResourceType fields/properties.
  *
  * @author John Sanda
  */
@@ -81,6 +78,16 @@ public class ResourceTypeBuilder {
 
     public ResourceTypeBuilder withCategory(ResourceCategory category) {
         resourceType.setCategory(category);
+        return this;
+    }
+
+    public ResourceTypeBuilder thatIsDeleted() {
+        resourceType.setDeleted(true);
+        return this;
+    }
+
+    public ResourceTypeBuilder thatIsNotDeleted() {
+        resourceType.setDeleted(false);
         return this;
     }
 

@@ -63,7 +63,8 @@ public interface DiscoveryServerService {
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
     @Timeout(1000L * 60 * 30)
-    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport) throws InvalidInventoryReportException;
+    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport)
+        throws InvalidInventoryReportException, StaleTypeException;
 
     /**
      * Merges a new availability report from the agent into the server. This updates the availability statuses of known

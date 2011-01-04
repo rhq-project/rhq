@@ -118,7 +118,7 @@ public class ConfigurationTest extends AbstractEJB3Test {
         }
     }
 
-    @Test
+    @Test(groups = "integration.ejb3")
     public void testConfigurationSerialization() throws Exception {
         Configuration c = new Configuration();
         c.setId(1);

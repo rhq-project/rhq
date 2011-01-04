@@ -123,6 +123,12 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "                       FROM AlertDefinition ad " //
         + "                       JOIN ad.alerts innerA " //
         + "                      WHERE ad.resource.id IN ( :resourceIds ) )"),
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE_TEMPLATE, query =
+          "DELETE FROM Alert alert "
+        + "WHERE alert.id IN (SELECT innerAlerts.id "
+        + "                   FROM AlertDefinition alertDef "
+        + "                   JOIN alertDef.alerts innerAlerts "
+        + "                   WHERE alertDef.resourceType.id = :resourceTypeId)"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE_GROUPS, query = "" //
         + "DELETE FROM Alert alert " //
         + " WHERE alert.id IN ( SELECT innerA.id " //
@@ -217,6 +223,7 @@ public class Alert implements Serializable {
     public static final String QUERY_DELETE_ALL = "Alert.deleteByAll";
     public static final String QUERY_DELETE_BY_IDS = "Alert.deleteByIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "Alert.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "Alert.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "Alert.deleteByResourceGroups";
     public static final String QUERY_ACKNOWLEDGE_ALL = "Alert.acknowledgeByAll";
     public static final String QUERY_ACKNOWLEDGE_BY_IDS = "Alert.acknowledgeByIds";

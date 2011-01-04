@@ -74,7 +74,6 @@ public class PortletFactory {
         registeredPortletNameMap.put(MessagePortlet.KEY, MessagePortlet.NAME);
         registeredPortletNameMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.NAME);
         registeredPortletNameMap.put(OperationsPortlet.KEY, OperationsPortlet.NAME);
-        //registeredPortletNameMap = Collections.unmodifiableMap(registeredPortletNameMap);
     }
 
     public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

@@ -33,6 +33,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -60,7 +61,8 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
-    ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
+    ResourceSyncInfo mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException;
 
     /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not

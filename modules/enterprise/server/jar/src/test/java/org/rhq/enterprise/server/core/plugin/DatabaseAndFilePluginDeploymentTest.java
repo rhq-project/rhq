@@ -18,38 +18,28 @@
  */
 package org.rhq.enterprise.server.core.plugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.transaction.TransactionManager;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.testng.annotations.*;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
+import javax.transaction.TransactionManager;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Test
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
@@ -67,7 +57,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     private final Map<String, Plugin> testPlugins = new HashMap<String, Plugin>();
     private final Map<String, Date> testTimestamps = new HashMap<String, Date>();
     private final Map<String, PluginDescriptor> testPluginDescriptors = new HashMap<String, PluginDescriptor>();
-    private ResourceMetadataManagerLocal metadataManager;
+    private PluginManagerLocal pluginMgr;
     private SubjectManagerLocal subjectManager;
 
     // Here is a matrix of scenarios we are going to test.
@@ -340,7 +330,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         testTimestamps.put(TESTPLUGIN_1_1_JUN, juneDate);
         testTimestamps.put(TESTPLUGIN_1_0_FEB2, febDate);
 
-        metadataManager = LookupUtil.getResourceMetadataManager();
+        pluginMgr = LookupUtil.getPluginManager();
         subjectManager = LookupUtil.getSubjectManager();
 
         File deployDir = new File(DEPLOY_LOCATION);
@@ -501,7 +491,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
             pluginDup.setVersion(plugin.getVersion());
             PluginDescriptor pluginDescriptor = this.testPluginDescriptors.get(pluginId);
             File localPluginFile = this.testPluginFiles.get(pluginId);
-            metadataManager.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile,
+            pluginMgr.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile,
                 false);
         }
         return;

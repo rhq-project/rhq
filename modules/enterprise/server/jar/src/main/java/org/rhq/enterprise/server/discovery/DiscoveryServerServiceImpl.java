@@ -30,6 +30,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -65,7 +66,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     /**
      * @see DiscoveryServerService#mergeInventoryReport(InventoryReport)
      */
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException, StaleTypeException {
         long start = System.currentTimeMillis();
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         ResourceSyncInfo syncInfo;

@@ -30,6 +30,8 @@
 
       <!-- dependency versions -->
       <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+
+      <clean.db>true</clean.db>
    </properties>
 
    <dependencies>
@@ -83,6 +85,15 @@
          <groupId>org.rhq</groupId>
          <artifactId>test-utils</artifactId>
          <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
       </dependency>
 
       <!-- 3rd Party Deps -->
@@ -347,6 +358,14 @@
       <!--================ Test Deps ================-->
 
       <dependency>
+          <groupId>${groupId}</groupId>
+          <artifactId>rhq-core-client-api</artifactId>
+          <version>${version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
          <version>${jboss-embeddable-ejb3.version}</version>
@@ -402,15 +421,24 @@
            <artifactId>opencsv</artifactId>
            <version>1.8</version>
            <scope>test</scope>
-       </dependency>
+       </dependency>       
 
        <dependency>
        	<groupId>org.rhq.helpers</groupId>
        	<artifactId>perftest-support</artifactId>
        	<version>${project.version}</version>
        	<scope>test</scope>
+       	<exclusions>
+       	  <exclusion>
+       	    <groupId>ant</groupId>
+       	    <artifactId>ant</artifactId>
+       	  </exclusion>
+       	  <exclusion>
+       	    <groupId>ant</groupId>
+       	    <artifactId>ant-launcher</artifactId>
+       	  </exclusion>
+       	</exclusions>
        </dependency>
-
 
        <dependency>
            <groupId>commons-jxpath</groupId>
@@ -419,6 +447,12 @@
            <scope>test</scope>
        </dependency>
 
+       <dependency>
+           <groupId>commons-lang</groupId>
+           <artifactId>commons-lang</artifactId>
+           <version>2.4</version>
+           <scope>test</scope>
+       </dependency>
    </dependencies>
 
    <build>
@@ -500,6 +534,7 @@ Build-OS-Version=${os.version}
            <configuration>
                <excludes>
                   <exclude>com/**/*.java</exclude>
+                  <exclude>org/rhq/**/performance/**/*.java</exclude>
                </excludes>
                <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                <groups>${rhq.testng.includedGroups}</groups>
@@ -507,6 +542,7 @@ Build-OS-Version=${os.version}
                   <embeddedDeployment>true</embeddedDeployment>
                   <deploymentDirectory>target/classes</deploymentDirectory>
                   <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                  <clean.db>${clean.db}</clean.db>
                </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->
@@ -549,7 +585,6 @@ Build-OS-Version=${os.version}
                </execution>
             </executions>
          </plugin>
-
       </plugins>
    </build>
 

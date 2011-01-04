@@ -1,0 +1,42 @@
+<plugin name="OperationMetadataManagerBeanTestPlugin"
+        displayName="OperationMetadataManagerBean Test Plugin"
+        package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="OperationServer1">
+        <operation name="OperationServer1.Operation1"/>
+    </server>
+    <server name="OperationServer11">
+        <operation name="OperationServer11.Operation1">
+            <parameters>
+                <c:simple-property name="param1"/>
+                <c:simple-property name="param2"/>
+            </parameters>
+        </operation>
+    </server>
+
+    <server name="OperationServer2"/>
+    <server name="OperationServer21">
+        <operation name="OperationServer21.Operation1"/>
+    </server>
+    <server name="OperationServer22">
+        <operation name="OperationServer22.Operation1">
+            <parameters>
+                <c:simple-property name="param1"/>
+                <c:simple-property name="param2"/>
+            </parameters>
+        </operation>
+    </server>
+    <server name="OperationServer23">
+        <operation name="OperationServer23.Operation1"/>
+    </server>
+    <server name="OperationServer24">
+        <operation name="OperationServer24.Operation1"/>
+        <operation name="OperationServer24.Operation2">
+            <results>
+                <c:simple-property name="exitCode"/>
+            </results>
+        </operation>
+    </server>
+</plugin>

@@ -47,6 +47,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -78,6 +79,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -114,8 +116,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private SystemManagerLocal systemManager;
 
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    @EJB
+    private PluginManagerLocal pluginManager;
+
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException {
         validateInventoryReport(report);
+
+        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager,
+            pluginManager);
+        if (!filter.accept(report)) {
+            throw new StaleTypeException("The report contains one or more resource types that have been marked for " +
+                "deletion.");
+        }
+
         Agent agent = report.getAgent();
         long start = System.currentTimeMillis();
 

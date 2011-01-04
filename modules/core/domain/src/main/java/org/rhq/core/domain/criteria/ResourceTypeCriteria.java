@@ -55,7 +55,10 @@ public class ResourceTypeCriteria extends Criteria {
     private CreateDeletePolicy filterCreateDeletePolicy;
     private Boolean filterSupportsManualAdd;
     private String filterPluginName; // needs overrides
-    private Integer filterBundleTypeId; // needs overrides    
+    private Integer filterBundleTypeId; // needs overrides
+    // by default, we don't want to fetch resource types that
+    // are marked deleted
+    private Boolean filterDeleted = false;
 
     private boolean fetchSubCategory;
     private boolean fetchChildResourceTypes;
@@ -70,6 +73,7 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchSubCategories;
     private boolean fetchProductVersions;
     private boolean fetchBundleType;
+    private boolean fetchResources;
 
     private PageOrdering sortName;
     private PageOrdering sortCategory;
@@ -138,6 +142,10 @@ public class ResourceTypeCriteria extends Criteria {
         this.filterBundleTypeId = filterBundleTypeId;
     }
 
+    public void addFilterDeleted(boolean deleted) {
+        this.filterDeleted = deleted;
+    }
+
     public void fetchSubCategory(boolean fetchSubCategory) {
         this.fetchSubCategory = fetchSubCategory;
     }
@@ -188,6 +196,10 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchBundleType(boolean fetchBundleType) {
         this.fetchBundleType = fetchBundleType;
+    }
+
+    public void fetchResources(boolean fetchResources) {
+        this.fetchResources = fetchResources;
     }
 
     public void addSortName(PageOrdering sortName) {

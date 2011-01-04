@@ -18,16 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search.favorites;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Grid;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
-import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
+import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 
 /**
@@ -35,21 +42,33 @@ import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
  */
 public class SavedSearchGrid extends Grid {
 
-    private PatternSelectionHandler patternSelectionHandler;
-    private AbstractSearchBar searchBar;
+    private SavedSearchSelectionHandler patternSelectionHandler;
+    private SearchSubsystem searchSubsystem;
+    private List<SavedSearch> data = new ArrayList<SavedSearch>();
 
-    public interface PatternSelectionHandler {
-        public void handleSelection(int rowIndex, int columnIndex, String patternName);
+    public interface SavedSearchSelectionHandler {
+        public void handleSelection(int rowIndex, int columnIndex, SavedSearch savedSearch);
     }
 
-    public void setPatternSelectionHandler(PatternSelectionHandler handler) {
+    public void setSavedSearchSelectionHandler(SavedSearchSelectionHandler handler) {
         this.patternSelectionHandler = handler;
     }
 
     class SavedSearchRowFormatter extends RowFormatter {
+        private int savedSearchCount;
+
+        public SavedSearchRowFormatter() {
+            this(0);
+        }
+
+        public SavedSearchRowFormatter(int savedSearchCount) {
+            this.savedSearchCount = savedSearchCount;
+        }
+
         @Override
         public String getStyleName(int row) {
-            if (row < count()) {
+            // add -bottom decoration for all rows except last
+            if (row < savedSearchCount) {
                 return " savedSearchesPanel-row";
             }
             return "";
@@ -61,7 +80,7 @@ public class SavedSearchGrid extends Grid {
         }
     }
 
-    public SavedSearchGrid(AbstractSearchBar searchBar) {
+    public SavedSearchGrid(SearchSubsystem searchSubsystem) {
         super(0, 2); // assume no rows to start, but we'll always have 2 columns
 
         setRowFormatter(new SavedSearchRowFormatter());
@@ -70,7 +89,7 @@ public class SavedSearchGrid extends Grid {
         setCellPadding(5);
         setStyleName("savedSearchesGrid");
 
-        this.searchBar = searchBar;
+        this.searchSubsystem = searchSubsystem;
     }
 
     @Override
@@ -85,12 +104,8 @@ public class SavedSearchGrid extends Grid {
         case Event.ONCLICK: {
             int columnIndex = DOM.getChildIndex(tr, td);
             int rowIndex = DOM.getChildIndex(table, tr);
-            String text = getHTML(rowIndex, 0);
-            int startIndex = text.indexOf('>') + 1;
-            int endIndex = text.toLowerCase().indexOf("</span>", startIndex);
-            String patternName = text.substring(startIndex, endIndex);
-            Log.debug("Selected '" + patternName + " at row=" + rowIndex + ", col=" + columnIndex);
-            patternSelectionHandler.handleSelection(rowIndex, columnIndex, patternName);
+            SavedSearch savedSearch = data.get(rowIndex); // get request-cached element that should be in that row
+            patternSelectionHandler.handleSelection(rowIndex, columnIndex, savedSearch);
             if (columnIndex == 0) {
                 onRowOut(tr);
             }
@@ -123,19 +138,40 @@ public class SavedSearchGrid extends Grid {
         DOM.setStyleAttribute(row, "backgroundColor", "rgb(222,222,222)");
     }
 
-    public void updateModel() {
-        List<String> names = searchBar.getSavedSearchManager().getPatternNamesMRU();
+    public void updateModel(final AsyncCallback<List<SavedSearch>> callback) {
+        Subject subject = UserSessionManager.getSessionSubject();
+        SavedSearchCriteria criteria = new SavedSearchCriteria();
+        criteria.addFilterSubjectId(subject.getId());
+        criteria.addFilterSearchSubsystem(searchSubsystem);
+        criteria.addSortName(PageOrdering.ASC);
 
-        clear(true);
-        resizeRows(names.size());
+        GWTServiceLookup.getSearchService().findSavedSearchesByCriteria(criteria,
+            new AsyncCallback<List<SavedSearch>>() {
+                @Override
+                public void onSuccess(List<SavedSearch> userSavedSearches) {
+                    data = userSavedSearches; // cache for correct client-side lookup on selection event
+                    clear(true);
+                    resizeRows(userSavedSearches.size());
 
-        for (int i = 0; i < names.size(); i++) {
-            String name = names.get(i);
-            SavedSearch savedSearch = searchBar.getSavedSearchManager().getSavedSearchByName(name);
-            setHTML(i, 0, stylize(savedSearch));
-            setHTML(i, 1, trashify());
-        }
-        setRowFormatter(new SavedSearchRowFormatter());
+                    int i = 0;
+                    SavedSearchRowFormatter rowFormatter = new SavedSearchRowFormatter(data.size());
+                    for (SavedSearch nextSavedSearch : userSavedSearches) {
+                        setHTML(i, 0, stylize(nextSavedSearch));
+                        setHTML(i, 1, trashify());
+                        i++;
+                    }
+                    setRowFormatter(rowFormatter);
+
+                    callback.onSuccess(userSavedSearches);
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Could not load saved searches", caught);
+
+                    callback.onFailure(caught);
+                }
+            });
     }
 
     private static String stylize(SavedSearch savedSearch) {
@@ -150,11 +186,11 @@ public class SavedSearchGrid extends Grid {
         return "<div name=\"action\"></div>";
     }
 
-    private int count() {
-        return searchBar.getSavedSearchManager().getSavedSearchCount();
-    }
-
     public String getSelectedItem() {
         return "";
+    }
+
+    public int size() {
+        return data.size();
     }
 }

@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.search;
 import com.google.gwt.user.client.ui.Composite;
 
 import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchManager;
 
 /**
  * Abstract class for SearchBar, so that a separate implementation can be written alongside the original. 
@@ -35,8 +34,4 @@ public abstract class AbstractSearchBar extends Composite {
     public abstract String getSelectedTab();
 
     public abstract void activateSavedSearch(String savedSearchName);
-
-    public abstract void onSavedSearchManagerLoaded();
-
-    public abstract SavedSearchManager getSavedSearchManager();
 }

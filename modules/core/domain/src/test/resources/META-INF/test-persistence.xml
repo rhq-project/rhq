@@ -1,0 +1,144 @@
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2008 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software
+  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  -->
+
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="1.0">
+  <persistence-unit name="rhq-test" transaction-type="RESOURCE_LOCAL">
+    <!--<jar-file>target/classes</jar-file>-->
+    <provider>org.hibernate.ejb.HibernatePersistence</provider>
+    <class>org.rhq.core.domain.resource.ResourceType</class>
+    <class>org.rhq.core.domain.resource.Resource</class>
+    <class>org.rhq.core.domain.configuration.definition.ConfigurationDefinition</class>
+    <class>org.rhq.core.domain.resource.ResourceSubCategory</class>
+    <class>org.rhq.core.domain.resource.ProcessScan</class>
+    <class>org.rhq.core.domain.measurement.MeasurementDefinition</class>
+    <class>org.rhq.core.domain.event.EventDefinition</class>
+    <class>org.rhq.core.domain.configuration.Configuration</class>
+    <class>org.rhq.core.domain.resource.ProductVersion</class>
+    <class>org.rhq.core.domain.resource.Agent</class>
+    <class>org.rhq.core.domain.cloud.AffinityGroup</class>
+    <class>org.rhq.core.domain.cloud.Server</class>
+    <class>org.rhq.core.domain.operation.OperationDefinition</class>
+    <class>org.rhq.core.domain.content.PackageType</class>
+    <class>org.rhq.core.domain.resource.group.ResourceGroup</class>
+    <class>org.rhq.core.domain.auth.Subject</class>
+    <class>org.rhq.core.domain.resource.group.GroupDefinition</class>
+    <class>org.rhq.core.domain.authz.Role</class>
+    <class>org.rhq.core.domain.bundle.BundleType</class>
+    <class>org.rhq.core.domain.alert.AlertDefinition</class>
+    <class>org.rhq.core.domain.configuration.ResourceConfigurationUpdate</class>
+    <class>org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate</class>
+    <class>org.rhq.core.domain.configuration.PluginConfigurationUpdate</class>
+    <class>org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate</class>
+    <class>org.rhq.core.domain.content.ContentServiceRequest</class>
+    <class>org.rhq.core.domain.resource.CreateResourceHistory</class>
+    <class>org.rhq.core.domain.resource.DeleteResourceHistory</class>
+    <class>org.rhq.core.domain.content.InstalledPackage</class>
+    <class>org.rhq.core.domain.content.PackageVersion</class>
+    <class>org.rhq.core.domain.content.PackageBits</class>
+    <class>org.rhq.core.domain.content.Architecture</class>
+    <class>org.rhq.core.domain.content.Package</class>
+    <class>org.rhq.core.domain.operation.ResourceOperationHistory</class>
+    <class>org.rhq.core.domain.operation.GroupOperationHistory</class>
+    <class>org.rhq.core.domain.content.InstalledPackageHistory</class>
+    <class>org.rhq.core.domain.content.ResourceRepo</class>
+    <class>org.rhq.core.domain.content.Repo</class>
+    <class>org.rhq.core.domain.measurement.MeasurementSchedule</class>
+    <class>org.rhq.core.domain.measurement.Availability</class>
+    <class>org.rhq.core.domain.measurement.ResourceAvailability</class>
+    <class>org.rhq.core.domain.resource.ResourceError</class>
+    <class>org.rhq.core.domain.event.EventSource</class>
+    <class>org.rhq.core.domain.tagging.Tag</class>
+    <class>org.rhq.core.domain.bundle.BundleDestination</class>
+    <class>org.rhq.core.domain.bundle.Bundle</class>
+    <class>org.rhq.core.domain.bundle.BundleDeployment</class>
+    <class>org.rhq.core.domain.bundle.BundleVersion</class>
+    <class>org.rhq.core.domain.configuration.definition.PropertyDefinition</class>
+    <class>org.rhq.core.domain.configuration.definition.PropertyDefinitionMap</class>
+    <class>org.rhq.core.domain.configuration.definition.PropertyDefinitionList</class>
+    <class>org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple</class>
+    <class>org.rhq.core.domain.configuration.Property</class>
+    <class>org.rhq.core.domain.configuration.PropertyMap</class>
+    <class>org.rhq.core.domain.configuration.PropertyList</class>
+    <class>org.rhq.core.domain.configuration.PropertySimple</class>
+    <class>org.rhq.core.domain.configuration.definition.PropertyGroupDefinition</class>
+    <class>org.rhq.core.domain.configuration.definition.ConfigurationTemplate</class>
+    <class>org.rhq.core.domain.alert.AlertCondition</class>
+    <class>org.rhq.core.domain.configuration.RawConfiguration</class>
+    <class>org.rhq.core.domain.content.ProductVersionPackageVersion</class>
+    <class>org.rhq.core.domain.resource.group.LdapGroup</class>
+    <class>org.rhq.core.domain.alert.AlertDampeningEvent</class>
+    <class>org.rhq.core.domain.alert.notification.AlertNotification</class>
+    <class>org.rhq.core.domain.alert.Alert</class>
+    <class>org.rhq.core.domain.content.RepoPackageVersion</class>
+    <class>org.rhq.core.domain.content.PackageInstallationStep</class>
+    <class>org.rhq.core.domain.content.RepoContentSource</class>
+    <class>org.rhq.core.domain.content.ContentSource</class>
+    <class>org.rhq.core.domain.content.ContentSourceType</class>
+    <class>org.rhq.core.domain.content.RepoRepoGroup</class>
+    <class>org.rhq.core.domain.content.RepoGroup</class>
+    <class>org.rhq.core.domain.content.RepoGroupType</class>
+    <class>org.rhq.core.domain.content.RepoRepoRelationship</class>
+    <class>org.rhq.core.domain.content.RepoRelationship</class>
+    <class>org.rhq.core.domain.content.RepoRelationshipType</class>
+    <class>org.rhq.core.domain.content.RepoSyncResults</class>
+    <class>org.rhq.core.domain.content.RepoDistribution</class>
+    <class>org.rhq.core.domain.content.Distribution</class>
+    <class>org.rhq.core.domain.content.DistributionType</class>
+    <class>org.rhq.core.domain.content.RepoAdvisory</class>
+    <class>org.rhq.core.domain.content.Advisory</class>
+    <class>org.rhq.core.domain.measurement.MeasurementBaseline</class>
+    <class>org.rhq.core.domain.event.Event</class>
+    <class>org.rhq.core.domain.bundle.BundleResourceDeployment</class>
+    <class>org.rhq.core.domain.bundle.BundleFile</class>
+    <class>org.rhq.core.domain.configuration.definition.constraint.Constraint</class>
+    <class>org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration</class>
+    <class>org.rhq.core.domain.alert.AlertConditionLog</class>
+    <class>org.rhq.core.domain.alert.notification.AlertNotificationLog</class>
+    <class>org.rhq.core.domain.content.ContentSourceSyncResults</class>
+    <class>org.rhq.core.domain.content.DistributionFile</class>
+    <class>org.rhq.core.domain.content.AdvisoryPackage</class>
+    <class>org.rhq.core.domain.content.AdvisoryBuglist</class>
+    <class>org.rhq.core.domain.bundle.BundleResourceDeploymentHistory</class>
+    <class>org.rhq.core.domain.content.PackageBitsBlob</class>
+    <class>org.rhq.core.domain.content.PackageVersionContentSource</class>
+    <class>org.rhq.core.domain.measurement.MeasurementDataTrait</class>
+    <properties>
+      <property name="hibernate.connection.provider_class" value="org.hibernate.connection.DriverManagerConnectionProvider"/>
+      <!--
+        Setting the autodetection property is supposed to cause hibernate to scan
+        for entity classes alleviating the need to list out all of the classes as
+        was done above. The autoscan however has not been working.
+
+        jsanda 10/20/2010
+      -->
+      <property name="hibernate.archive.autodetection" value="class"/>      
+      <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+      <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
+      <property name="hibernate.connection.username" value="rhqadmin"/>
+      <property name="hibernate.connection.password" value="rhqadmin"/>
+      <property name="hibernate.connection.url" value="jdbc:postgresql://127.0.0.1:5432/rhq"/>
+      <property name="hibernate.jdbc.batch_size" value="30"/>
+      <property name="hibernate.cache.use_second_level_cache" value="false"/>
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+      <property name="hibernate.use_sql_comments" value="true" />
+      <property name="hibernate.connection.autocommit" value="false"/>
+    </properties>
+  </persistence-unit>
+</persistence>

@@ -606,8 +606,8 @@ public final class CriteriaQueryGenerator {
 
         try {
             Class<?> entityClass = criteria.getPersistentClass();
-            SearchTranslationManager searchManager = new SearchTranslationManager(subject, SearchSubsystem
-                .get(entityClass));
+            SearchTranslationManager searchManager = new SearchTranslationManager(criteria.getAlias(), subject,
+                SearchSubsystem.get(entityClass));
             searchManager.setExpression(searchExpression);
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause

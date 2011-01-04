@@ -109,6 +109,8 @@ import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerBean;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerLocal;
+import org.rhq.enterprise.server.inventory.InventoryManagerBean;
+import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -163,6 +165,8 @@ import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpres
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerBean;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerBean;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
@@ -478,6 +482,10 @@ public final class LookupUtil {
         return lookupLocal(RemoteInstallManagerBean.class);
     }
 
+    public static PluginManagerLocal getPluginManager() {
+        return lookupLocal(PluginManagerBean.class);
+    }
+
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {
         return lookupLocal(ResourceMetadataManagerBean.class);
     }
@@ -560,6 +568,10 @@ public final class LookupUtil {
 
     public static TagManagerLocal getTagManager() {
         return lookupLocal(TagManagerBean.class);
+    }
+
+    public static InventoryManagerLocal getInventoryManager() {
+        return lookupLocal(InventoryManagerBean.class);
     }
 
     public static DashboardManagerLocal getDashboardManagerLocal() {

@@ -46,7 +46,7 @@ import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
 import org.rhq.enterprise.server.license.LicenseManager;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -335,10 +335,10 @@ public class ProductPluginDeployer {
                 + " ] - it should have been initialized by preprocessPlugin().");
         }
 
-        ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Plugin plugin;
         try {
-            plugin = metadataManager.getPlugin(pluginName);
+            plugin = pluginMgr.getPlugin(pluginName);
         } catch (RuntimeException e) {
             log.debug("New plugin [" + pluginName + "] detected.");
             return true;
@@ -430,7 +430,7 @@ public class ProductPluginDeployer {
     /*
     private List<String> getRegisteredPluginNames() {
         ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
-        Collection<Plugin> plugins = metadataManager.getPlugins();
+        Collection<Plugin> plugins = metadataManager.getInstalledPlugins();
         List<String> pluginNames = new ArrayList<String>();
 
         for (Plugin plugin : plugins) {
@@ -499,9 +499,9 @@ public class ProductPluginDeployer {
             // this manager is responsible for handling the munging of plugins that depend on other plugins
             // since we assume we are called in the proper deployment order, this should not fail
             // if we are called when hot-deploying a plugin whose dependencies aren't deployed, this will fail
-            ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
+            PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            metadataManager.registerPlugin(subjectManager.getOverlord(), plugin, pluginDescriptor, localPluginFile,
+            pluginMgr.registerPlugin(subjectManager.getOverlord(), plugin, pluginDescriptor, localPluginFile,
                 forceUpdate);
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + deploymentInfo.url + "]", e);

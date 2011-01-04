@@ -227,7 +227,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         int alertDefinitionsPurged = 0;
 
         try {
-            alertDefinitionsPurged = alertDefinitionManager.purgeUnusedAlertDefinition();
+            alertDefinitionsPurged = alertDefinitionManager.purgeUnusedAlertDefinitions();
         } catch (Exception e) {
             LOG.error("Failed to purge alert definition data. Cause: " + e, e);
         } finally {

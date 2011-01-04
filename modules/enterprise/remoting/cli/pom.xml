@@ -32,7 +32,15 @@
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
          <version>${project.version}</version>         
-      </dependency>   
+      </dependency>
+
+      <dependency>
+          <groupId>${groupId}</groupId>
+          <artifactId>rhq-core-domain</artifactId>
+          <version>${version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>commons-logging</groupId>

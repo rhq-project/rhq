@@ -165,7 +165,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
 
         // setup the Plugin drop-down
         List<String> pluginNames = new ArrayList<String>();
-        for (Plugin plugin : LookupUtil.getResourceMetadataManager().getPlugins()) {
+        for (Plugin plugin : LookupUtil.getPluginManager().getInstalledPlugins()) {
             // TODO: do we want to do this only when plugin.isEnabled() is true?
             pluginNames.add(plugin.getName());
         }
@@ -378,7 +378,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         selectedPlugin = newPlugin;
 
         try {
-            Plugin plugin = LookupUtil.getResourceMetadataManager().getPlugin(selectedPlugin);
+            Plugin plugin = LookupUtil.getPluginManager().getPlugin(selectedPlugin);
             List<ResourceType> types = LookupUtil.getResourceTypeManager().getResourceTypesByPlugin(plugin.getName());
 
             List<String> typeNames = new ArrayList<String>();

@@ -349,6 +349,10 @@
                <c:simple-property name="tableName" readOnly="true" />
             </plugin-configuration>
 
+            <operation name="vacuum" description="Vacuum the table">
+                 <!--TODO add options like analyze-->
+            </operation>
+
             <metric displayName="Sequential Scans" property="seq_scan" measurementType="trendsup"
                     description="Number of sequential scans done against this table (when an index scan was not possible)"/>
             <metric displayName="Sequential Rows Read" property="seq_tup_read" measurementType="trendsup"

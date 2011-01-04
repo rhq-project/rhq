@@ -26,6 +26,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
@@ -114,7 +115,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM MeasurementSchedule ms, Resource res " //
                 + "  JOIN ms.definition def " //
                 + " WHERE ms.resource = res " // only suggest names that exist for resources in inventory
-                + "   AND def.dataType = 1 " // trait types
+                + "   AND def.dataType = " + DataType.TRAIT.ordinal() // trait types
                 + conditionallyAddJPQLString("ms.definition.name", filter) //
                 + conditionallyAddJPQLString("res.resourceType.category", tab) //
                 + conditionallyAddAuthzFragment(getAuthzFragment()) //

@@ -24,6 +24,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
 import org.rhq.enterprise.server.search.SearchExpressionException;
@@ -87,7 +88,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
                     + "  FROM Resource res, MeasurementDataTrait trait " //
                     + "  JOIN res.schedules schedule " //
                     + " WHERE trait.schedule = schedule " //
-                    + "   AND schedule.definition.dataType = 1 " //
+                    + "   AND schedule.definition.dataType = " + DataType.TRAIT.ordinal() //
                     + "   AND " + getJPQLForString("schedule.definition.name", RHQLComparisonOperator.EQUALS, param) //
                     + "   AND " + getJPQLForString("trait.value", op, filter));
 

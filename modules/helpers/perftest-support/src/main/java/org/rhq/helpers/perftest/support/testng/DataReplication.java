@@ -44,19 +44,7 @@ public @interface DataReplication {
      * among the test invocations. The default is a replica per invocation.
      */
     ReplicaCreationStrategy replicaCreationStrategy() default ReplicaCreationStrategy.PER_INVOCATION;
-    
-    /**
-     * The name of a method that is able to provide the next id to use for an entity
-     * when creating the replicas. If empty (the default), it is assumed that JPA
-     * is setup to generate the ids on its own.
-     * <p>
-     * The method must have the following signature:<br/>
-     * <code>
-     * Object &lt;method-name&gt;(Connection jdbcConnection, Class<?> entityClass)
-     * </code> 
-     */
-    String nextIdProvider() default "";
-    
+        
     /**
      * This callback can be used to modify the replica before it is persisted to the database.
      * This can be used to modify the "names", "descriptions" and other data that is not significant

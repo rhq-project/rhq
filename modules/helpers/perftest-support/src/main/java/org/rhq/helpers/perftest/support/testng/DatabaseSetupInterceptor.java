@@ -21,7 +21,6 @@ package org.rhq.helpers.perftest.support.testng;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -31,7 +30,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -48,22 +47,6 @@ import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseDataSourceConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.datatype.IDataTypeFactory;
-import org.rhq.helpers.perftest.support.FileFormat;
-import org.rhq.helpers.perftest.support.Importer;
-import org.rhq.helpers.perftest.support.Input;
-import org.rhq.helpers.perftest.support.Replicator;
-import org.rhq.helpers.perftest.support.config.ExportConfiguration;
-import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
-import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
-import org.rhq.helpers.perftest.support.input.InputStreamProvider;
-import org.rhq.helpers.perftest.support.replication.NextIdProvider;
-import org.rhq.helpers.perftest.support.replication.ReplicaDescriptor;
-import org.rhq.helpers.perftest.support.replication.ReplicaDispenser;
-import org.rhq.helpers.perftest.support.replication.ReplicaModifier;
-import org.rhq.helpers.perftest.support.replication.ReplicaProvider;
-import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
-import org.rhq.helpers.perftest.support.replication.ReplicationResult;
-
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
@@ -73,6 +56,21 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
+
+import org.rhq.helpers.perftest.support.FileFormat;
+import org.rhq.helpers.perftest.support.Importer;
+import org.rhq.helpers.perftest.support.Input;
+import org.rhq.helpers.perftest.support.Replicator;
+import org.rhq.helpers.perftest.support.config.ExportConfiguration;
+import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
+import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
+import org.rhq.helpers.perftest.support.input.InputStreamProvider;
+import org.rhq.helpers.perftest.support.jpa.HibernateFacade;
+import org.rhq.helpers.perftest.support.replication.ReplicaDispenser;
+import org.rhq.helpers.perftest.support.replication.ReplicaModifier;
+import org.rhq.helpers.perftest.support.replication.ReplicaProvider;
+import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
+import org.rhq.helpers.perftest.support.replication.ReplicationResult;
 
 /**
  * An {@link IInvokedMethodListener method listener} that performs the database setup
@@ -96,10 +94,17 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     private static final HashMap<Method, MethodRecord> METHOD_RECORDS = new HashMap<Method, MethodRecord>();
 
-    private static final Class<?>[] NEXT_ID_PROVIDER_METHOD_PARAMETER_TYPES = {Connection.class, Class.class};
-    
     private static final Class<?>[] REPLICA_MODIFIER_METHOD_PARAMETER_TYPES = { int.class, Object.class, Object.class, Class.class };
-    private static final Class<?>[] REPLICA_RESTRICTOR_METHOD_PARAMTER_TYPES = { int.class, Class.class };
+    
+    private static HibernateFacade hibernateFacade = new HibernateFacade();
+    
+    static {
+        try {
+            hibernateFacade.initialize(Collections.emptyMap());
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to initialize the Hibernate facade, this should not happen.", e);
+        }
+    }
     
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
         MethodRecord methodRecord = null;
@@ -323,28 +328,17 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         
         config.setReplicationConfiguration(replicationConfiguration);
         
-        if (!replicationSetup.nextIdProvider().isEmpty()) {
-            final Method nextIdMethod = findMethod(instance.getClass(), replicationSetup.nextIdProvider(), NEXT_ID_PROVIDER_METHOD_PARAMETER_TYPES);
-            if (nextIdMethod != null) {
-                config.setNextIdProvider(new NextIdProvider() {
-                    public Object getNextId(Class<?> entity) throws Exception {
-                        return nextIdMethod.invoke(instance, connection.getConnection(), entity);
-                    }
-                });
-            }
-        }
-        
         if (!replicationSetup.replicaModifier().isEmpty()) {
             final Method modifierMethod = findMethod(instance.getClass(), replicationSetup.replicaModifier(), REPLICA_MODIFIER_METHOD_PARAMETER_TYPES);
             if (modifierMethod != null) {
                 config.setModifier(new ReplicaModifier() {
-                    public <T> void modify(T original, T replica, Class<T> clazz) {
+                    public void modify(Object original, Object replica, Class<?> clazz) {
                         try {
                             modifierMethod.invoke(original, replica, clazz);
                         } catch (InvocationTargetException e) {
-                            LOG.warn("Failed to invoke replica modifier method.", e);
+                            LOG.error("Failed to invoke replica modifier method.", e);
                         } catch (IllegalAccessException e) {
-                            LOG.warn("Failed to invoke replica modifier method.", e);
+                            LOG.error("Failed to invoke replica modifier method.", e);
                         }
                     }
                 });
@@ -364,7 +358,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         }
         
         for(int i = 0; i < replicaCount; ++i) {
-            results.add(Replicator.run(config));
+            results.add(Replicator.run(config, connection, hibernateFacade));
         }
                 
         return new ReplicaDispenser(results, replicationSetup.replicaCreationStrategy());

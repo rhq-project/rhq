@@ -86,6 +86,26 @@
           <version>3.7</version>
       </dependency>
 
+      <dependency>
+      	<groupId>hibernate</groupId>
+      	<artifactId>hibernate3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      	<scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>compile</scope>
+      </dependency>
     </dependencies>
     <build>
         <plugins>

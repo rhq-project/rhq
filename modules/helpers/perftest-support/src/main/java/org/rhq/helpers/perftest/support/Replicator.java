@@ -19,9 +19,13 @@
 
 package org.rhq.helpers.perftest.support;
 
+import java.util.Collections;
+
 import org.dbunit.database.IDatabaseConnection;
 
+import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
 import org.rhq.helpers.perftest.support.dbunit.ReplicatingDataSetConsumer;
+import org.rhq.helpers.perftest.support.jpa.HibernateFacade;
 import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
 import org.rhq.helpers.perftest.support.replication.ReplicationResult;
 
@@ -32,8 +36,17 @@ import org.rhq.helpers.perftest.support.replication.ReplicationResult;
  */
 public class Replicator {
 
-    public static ReplicationResult run(ReplicationConfiguration configuration, IDatabaseConnection connection) throws Exception {
-        ReplicatingDataSetConsumer consumer = new ReplicatingDataSetConsumer(connection, configuration);
+    public static ReplicationResult run(ReplicationConfiguration configuration) throws Exception {
+        HibernateFacade facade = new HibernateFacade();
+        facade.initialize(Collections.emptyMap());
+        
+        IDatabaseConnection connection = DbUnitUtil.getConnection(configuration.getReplicationConfiguration().getSettings());
+        
+        return run(configuration, connection, facade);
+    }
+    
+    public static ReplicationResult run(ReplicationConfiguration configuration, IDatabaseConnection connection, HibernateFacade hibernateFacade) throws Exception {
+        ReplicatingDataSetConsumer consumer = new ReplicatingDataSetConsumer(connection, configuration, hibernateFacade);
                 
         Exporter.run(configuration.getReplicationConfiguration(), consumer, connection);
         

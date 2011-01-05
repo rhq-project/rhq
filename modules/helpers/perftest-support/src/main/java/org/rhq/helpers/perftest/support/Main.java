@@ -34,6 +34,7 @@ import javax.xml.bind.Unmarshaller;
 import org.rhq.helpers.perftest.support.config.Entity;
 import org.rhq.helpers.perftest.support.config.ExportConfiguration;
 import org.rhq.helpers.perftest.support.jpa.mapping.MappingTranslator;
+import org.rhq.helpers.perftest.support.replication.ReplicationConfiguration;
 
 /**
  *
@@ -55,11 +56,12 @@ public class Main {
         longOptions[4] = new LongOpt("config-file", LongOpt.REQUIRED_ARGUMENT, null, 'c');
         longOptions[5] = new LongOpt("export", LongOpt.NO_ARGUMENT, null, 'e');
         longOptions[6] = new LongOpt("import", LongOpt.NO_ARGUMENT, null, 'i');
-        longOptions[7] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
-        longOptions[8] = new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f');
-        longOptions[9] = new LongOpt("format", LongOpt.REQUIRED_ARGUMENT, null, 'o');
+        longOptions[7] = new LongOpt("replicate", LongOpt.NO_ARGUMENT, null, 'l');
+        longOptions[8] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
+        longOptions[9] = new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f');
+        longOptions[10] = new LongOpt("format", LongOpt.REQUIRED_ARGUMENT, null, 'o');
         
-        Getopt options = new Getopt("data", args, "eihr:u:p:d:c:f:o:", longOptions);
+        Getopt options = new Getopt("data", args, "eihlr:u:p:d:c:f:o:", longOptions);
         
         String url = null;
         String user = null;
@@ -70,6 +72,7 @@ public class Main {
         String format = "xml";
         boolean doExport = false;
         boolean doImport = false;
+        boolean doReplication = false;
         List<String> entities = new ArrayList<String>();
         
         int option;
@@ -95,6 +98,9 @@ public class Main {
                 break;
             case 'i':
                 doImport = true;
+                break;
+            case 'l':
+                doReplication = true;
                 break;
             case 'h':
                 usage();
@@ -161,6 +167,11 @@ public class Main {
             } finally {
                 input.close();
             }
+        } else if (doReplication) {
+            ReplicationConfiguration rConfig = new ReplicationConfiguration();
+            rConfig.setReplicationConfiguration(config);
+            
+            Replicator.run(rConfig);
         } else {
             System.err.println("You must specify whether to export or import.");
             System.exit(1);
@@ -189,7 +200,7 @@ public class Main {
     private static void usage() {
         System.out.println("Usage:");
         
-        System.out.println("data(.sh|.bat) (--export|--import) [<other-options>] [entity-names...]");
+        System.out.println("data(.sh|.bat) (--export|--import|--replicate) [<other-options>] [entity-names...]");
         System.out.println();
         System.out.println("--url : the JDBC URL to the database");
         System.out.println("--username : the database username");

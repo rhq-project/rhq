@@ -19,12 +19,6 @@
 
 package org.rhq.helpers.perftest.support.replication;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.rhq.helpers.perftest.support.config.ExportConfiguration;
 
 /**
@@ -36,8 +30,6 @@ public class ReplicationConfiguration {
 
     private ExportConfiguration replicationConfiguration;
        
-    private NextIdProvider nextIdProvider;
-    
     private ReplicaModifier modifier;
 
     /**
@@ -52,20 +44,6 @@ public class ReplicationConfiguration {
      */
     public void setReplicationConfiguration(ExportConfiguration replicationConfiguration) {
         this.replicationConfiguration = replicationConfiguration;
-    }
-
-    /**
-     * @return the nextIdProvider
-     */
-    public NextIdProvider getNextIdProvider() {
-        return nextIdProvider;
-    }
-
-    /**
-     * @param nextIdProvider the nextIdProvider to set
-     */
-    public void setNextIdProvider(NextIdProvider nextIdProvider) {
-        this.nextIdProvider = nextIdProvider;
     }
 
     /**

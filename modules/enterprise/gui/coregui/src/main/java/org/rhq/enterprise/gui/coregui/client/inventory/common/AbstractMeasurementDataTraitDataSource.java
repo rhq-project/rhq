@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -78,7 +80,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
             .common_title_value());
         fields.add(valueField);
 
-        DataSourceIntegerField timestampField = new DataSourceIntegerField(
+        DataSourceDateTimeField timestampField = new DataSourceDateTimeField(
             MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, MSG.dataSource_traits_field_lastChanged());
         fields.add(timestampField);
 
@@ -147,7 +149,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
         record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
         record.setAttribute("id", from.getSchedule().getDefinition().getId()); // used for detail view
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, from.getTimestamp());
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, new Date(from.getTimestamp()));
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition()
             .getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());

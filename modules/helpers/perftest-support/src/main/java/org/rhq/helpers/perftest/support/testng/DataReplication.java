@@ -37,7 +37,7 @@ public @interface DataReplication {
     /**
      * Where does the {@link #url()} point to. 
      */
-    DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;
+    FileStorage storage() default FileStorage.CLASSLOADER;
     
     /**
      * How many replicas should be prepared and how they should be distributed

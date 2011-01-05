@@ -51,9 +51,9 @@ public @interface DatabaseState {
     String dbVersion();
 
     /**
-     * Where is the export file accessible from (defaults to {@link DatabaseStateStorage#CLASSLOADER}).
+     * Where is the export file accessible from (defaults to {@link FileStorage#CLASSLOADER}).
      */
-    DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;
+    FileStorage storage() default FileStorage.CLASSLOADER;
 
     /**
      * The format of the export file (defaults to zipped xml).

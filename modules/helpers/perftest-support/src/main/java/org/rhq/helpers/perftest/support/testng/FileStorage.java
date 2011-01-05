@@ -20,18 +20,19 @@
 package org.rhq.helpers.perftest.support.testng;
 
 /**
- * Specifies where is the database state export file locatable from.
+ * Specifies where a file is locatable from.
  * 
  * @author Lukas Krejci
  */
-public enum DatabaseStateStorage {
+public enum FileStorage {
+    
     /**
-     * The export file is to be found in the file system.
+     * The file is to be found in the file system.
      */
     FILESYSTEM,
 
     /**
-     * The export file is to be found in the classloader resources.
+     * The file is to be found in the classloader resources.
      */
     CLASSLOADER
 }

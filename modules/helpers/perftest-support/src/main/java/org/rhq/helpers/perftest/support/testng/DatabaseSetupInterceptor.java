@@ -302,7 +302,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         return annotation;
     }
 
-    private static InputStreamProvider getInputStreamProvider(final String url, DatabaseStateStorage storage,
+    private static InputStreamProvider getInputStreamProvider(final String url, FileStorage storage,
         final IInvokedMethod method) throws FileNotFoundException {
         switch (storage) {
         case CLASSLOADER:

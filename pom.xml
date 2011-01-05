@@ -1123,10 +1123,10 @@
       </profile>
 
       <profile>
-          <id>brew</id>
+          <id>brew-generate-build-number</id>
           <activation>
               <property>
-                  <name>rhq.build.number</name>
+                  <name>brew</name>
               </property>
           </activation>
           <build>

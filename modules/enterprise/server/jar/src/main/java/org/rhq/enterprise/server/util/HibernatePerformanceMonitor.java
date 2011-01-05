@@ -50,8 +50,12 @@ public class HibernatePerformanceMonitor {
         return singleton;
     }
 
+    public static boolean isLoggingEnabled() {
+        return log.isDebugEnabled();
+    }
+
     public void zeroStats() {
-        if (log.isDebugEnabled()) {
+        if (isLoggingEnabled()) {
             EntityManager entityManager = LookupUtil.getEntityManager();
             MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
             Statistics stats = PersistenceUtility.getStatisticsService(entityManager, platformMBeanServer);
@@ -60,7 +64,7 @@ public class HibernatePerformanceMonitor {
     }
 
     public long start() {
-        if (log.isDebugEnabled()) {
+        if (isLoggingEnabled()) {
             EntityManager entityManager = LookupUtil.getEntityManager();
             HibernateStatisticsStopWatch watch = new HibernateStatisticsStopWatch(entityManager);
             long id = idGenerator.incrementAndGet();
@@ -72,7 +76,7 @@ public class HibernatePerformanceMonitor {
     }
 
     public void stop(long id, String logPrefix) {
-        if (log.isDebugEnabled()) {
+        if (isLoggingEnabled()) {
             HibernateStatisticsStopWatch watch = watches.remove(id);
             if (watch == null) {
                 return; // could happen if debugging was turned on and the start() call was already skipped

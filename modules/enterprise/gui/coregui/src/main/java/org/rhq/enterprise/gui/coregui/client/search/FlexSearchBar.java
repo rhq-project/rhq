@@ -275,6 +275,7 @@ public class FlexSearchBar extends AbstractSearchBar {
                 @Override
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(new Message("Removed saved search successfully", Severity.Info));
+                    currentSearchId = 0;
                 }
             });
 

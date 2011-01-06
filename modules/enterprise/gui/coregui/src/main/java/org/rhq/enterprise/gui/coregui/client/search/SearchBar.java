@@ -302,6 +302,7 @@ public class SearchBar extends AbstractSearchBar {
 
         if (name.equals("")) {
             GWTServiceLookup.getSearchService().deleteSavedSearch(currentSearchId, blackHoleCallback);
+            currentSearchId = 0;
             starImage.setUrl(STAR_OFF_URL);
         } else {
             // NOTE: currently do not support updated a saved search pattern

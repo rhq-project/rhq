@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
+        <groupId>org.rhq</groupId>
+        <version>4.0.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>alert-cli</artifactId>
+    <version>4.0.0-SNAPSHOT</version>
+    <name>RHQ Enterprise Server CLI Script Alert Plugin</name>
+    <description>An alert sender able to execute an arbitrary CLI script as a response to an alert</description>
+  
+	<scm>
+	    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-cli/</connection>
+	    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-cli/</developerConnection>
+	</scm>
+	
+	<properties>
+	    <scm.module.path>modules/enterprise/server/plugins/alert-cli/</scm.module.path>
+	</properties>
+  
+</project>

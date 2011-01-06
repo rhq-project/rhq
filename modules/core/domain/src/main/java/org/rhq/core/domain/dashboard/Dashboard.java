@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -85,7 +86,7 @@ public class Dashboard implements Serializable {
     private Subject owner;
 
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
-    @Cascade({ org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
+    @Cascade( { org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
         org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     private Set<DashboardPortlet> portlets = new HashSet<DashboardPortlet>();
 
@@ -173,9 +174,51 @@ public class Dashboard implements Serializable {
     }
 
     public boolean removePortlet(DashboardPortlet storedPortlet) {
-        return portlets.remove(storedPortlet);
+        if (!portlets.contains(storedPortlet)) {
+            return false;
+        }
+
+        // lower the index by 1 for  portlets in the same column, below the one being removed
+        int col = storedPortlet.getColumn();
+        int index = storedPortlet.getIndex();
+
+        portlets.remove(storedPortlet);
+
+        for (Iterator<DashboardPortlet> i = portlets.iterator(); i.hasNext();) {
+            DashboardPortlet next = i.next();
+            if (col == next.getColumn() && index < next.getIndex()) {
+                next.setIndex(next.getIndex() - 1);
+            }
+        }
+
+        return true;
     }
 
+    /** 
+     * This can be used to safely add a portlet without knowing the current portlet positioning on the
+     * Dashboard. It adds the portlet to the bottom of the first column.
+     * 
+     * @param storedPortlet
+     */
+    public void addPortlet(DashboardPortlet storedPortlet) {
+        int highIndex = -1;
+        Iterator<DashboardPortlet> i = portlets.iterator();
+        while (i.hasNext()) {
+            DashboardPortlet portlet = i.next();
+            if (0 == portlet.getColumn() && highIndex < portlet.getIndex()) {
+                highIndex = portlet.getIndex();
+            }
+        }
+
+        addPortlet(storedPortlet, 0, ++highIndex);
+    }
+
+    /**
+     * Call this only if you are sure the column and index are valid, not already used and not leaving gaps.
+     * @param storedPortlet
+     * @param column
+     * @param index
+     */
     public void addPortlet(DashboardPortlet storedPortlet, int column, int index) {
         storedPortlet.setColumn(column);
         storedPortlet.setIndex(index);

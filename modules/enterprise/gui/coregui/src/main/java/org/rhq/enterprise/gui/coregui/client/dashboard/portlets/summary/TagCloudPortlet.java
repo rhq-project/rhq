@@ -50,8 +50,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.common_title_the() + " <b>" + MSG.common_title_tag_cloud() + "</b> "
-            + MSG.view_portlet_tagCloud_help());
+        return new HTMLFlow(MSG.view_portlet_help_tagCloud());
     }
 
     public static final class Factory implements PortletViewFactory {

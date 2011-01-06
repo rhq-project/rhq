@@ -105,7 +105,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_favoriteResources_msg());
+        return new HTMLFlow(MSG.view_portlet_help_favoriteResources());
     }
 
     public static final class Factory implements PortletViewFactory {

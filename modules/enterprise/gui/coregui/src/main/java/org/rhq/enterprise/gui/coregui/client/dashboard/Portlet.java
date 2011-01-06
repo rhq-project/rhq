@@ -19,9 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
 
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 
 /**
@@ -32,9 +30,4 @@ public interface Portlet {
     void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet);
 
     Canvas getHelpCanvas();
-
-//    ConfigurationDefinition getConfigurationDefinition();
-
-
-
 }

@@ -61,17 +61,17 @@ public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePort
         if (url != null) {
             setContentsURL(url);
         } else {
-            setContents("<i>" + MSG.view_portlet_mashup_unconfigured());
+            setContents("<br/><i>" + MSG.view_portlet_configure_needed() + "</i>");
         }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_mashup_help());
+        return new HTMLFlow(MSG.view_portlet_help_mashup());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_mashup_config_title(), MSG
-            .view_portlet_mashup_config_title_desc());
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
+            MSG.view_portlet_configure_definitionDesc());
 
         definition.put(new PropertyDefinitionSimple("address", MSG.common_title_web_address(), true,
             PropertySimpleType.STRING));

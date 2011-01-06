@@ -110,10 +110,8 @@ public class SmallGraphView extends LocatableVLayout {
         this.resourceId = resourceId;
         this.definition = def;
         this.data = data;
-        //        setHeight(250);
         setHeight100();
         setWidth100();
-        //        setPadding(10);
     }
 
     public String getName() {
@@ -141,9 +139,18 @@ public class SmallGraphView extends LocatableVLayout {
     @Override
     protected void onDraw() {
         super.onDraw();
-
         removeMembers(getMembers());
+        renderGraph();
+    }
 
+    @Override
+    public void parentResized() {
+        super.parentResized();
+        removeMembers(getMembers());
+        renderGraph();
+    }
+
+    protected void renderGraph() {
         if (this.definition == null) {
 
             ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -193,23 +200,8 @@ public class SmallGraphView extends LocatableVLayout {
         } else {
 
             drawGraph();
+
         }
-    }
-
-    @Override
-    protected void onDetach() {
-        super.onDetach(); // TODO: Implement this method.
-    }
-
-    @Override
-    protected void onUnload() {
-        super.onUnload(); // TODO: Implement this method.
-    }
-
-    @Override
-    public void parentResized() {
-        super.parentResized();
-        onDraw();
     }
 
     private void drawGraph() {

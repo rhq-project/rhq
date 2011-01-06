@@ -28,7 +28,7 @@ import java.util.List;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -143,15 +143,11 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        // TODO: Implement this method.
+        // No Configuration for this portlet
     }
 
     public Canvas getHelpCanvas() {
-        return null; // TODO: Implement this method.
-    }
-
-    public DynamicForm getCustomSettingsForm() {
-        return null; // TODO: Implement this method.
+        return new HTMLFlow(MSG.view_portlet_help_inventorySummary());
     }
 
     /** Custom refresh operation as we are not directly extending Table
@@ -172,7 +168,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
         private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            // return GWT.create(InventorySummaryView.class);
+            // reuse the same portlet, it's not configurable
             if (reference == null) {
                 reference = new InventorySummaryPortlet(locatorId);
             }

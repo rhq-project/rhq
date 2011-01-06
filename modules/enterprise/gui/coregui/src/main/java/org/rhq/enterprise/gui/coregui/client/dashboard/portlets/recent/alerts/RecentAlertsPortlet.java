@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -111,6 +112,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
         setShowFilterForm(false); //disable filter form for portlet
+
+        setOverflow(Overflow.VISIBLE);
     }
 
     @Override
@@ -258,7 +261,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_recentAlerts_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
     }
 
     public DynamicForm getCustomSettingsForm() {

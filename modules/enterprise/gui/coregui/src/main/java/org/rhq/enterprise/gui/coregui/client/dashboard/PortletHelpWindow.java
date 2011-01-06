@@ -82,7 +82,7 @@ public class PortletHelpWindow extends Window {
         if (c != null) {
             layout.addMember(c);
         } else {
-            layout.addMember(new Label(MSG.view_portlet_generic_help()));
+            layout.addMember(new Label(MSG.view_portlet_help_none()));
         }
 
         addItem(layout);

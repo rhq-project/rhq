@@ -104,6 +104,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         this.storedPortlet = storedPortlet;
+
         if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX) != null) {
             //retrieve and translate to int
             String retrieved = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX).getStringValue();
@@ -132,7 +133,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_recentlyAdded_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_recentlyAdded());
     }
 
     public DynamicForm getCustomSettingsForm() {
@@ -141,7 +142,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         //-------------combobox for number of recently added resources to display on the dashboard
         final SelectItem maximumRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_MAX);
         maximumRecentlyAddedComboBox.setTitle(MSG.common_title_show());
-        maximumRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.view_portlet_recentlyAdded_approved_platforms()
+        maximumRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.view_portlet_recentlyAdded_setting_addedPlatforms()
             + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumRecentlyAddedComboBox.setType("selection");
@@ -203,6 +204,10 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(RECENTLY_ADDED_SHOW_HRS, form.getValue(RECENTLY_ADDED_SHOW_HRS)));
                 }
+
+                configure(null, storedPortlet);
+
+                redraw();
             }
         });
 

@@ -203,7 +203,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_platform_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_platformSummary());
     }
 
     public DynamicForm getCustomSettingsForm() {

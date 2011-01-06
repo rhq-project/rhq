@@ -193,7 +193,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_operations_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_operations());
     }
 
     /** Constructs the dynamic form instance using 1 column and multiple row layouts.
@@ -360,6 +360,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
                         new PropertySimple(OPERATIONS_RANGE_SCHEDULED_ENABLED, form
                             .getValue(OPERATIONS_RANGE_SCHEDULED_ENABLED)));
                 }
+
+                redraw();
             }
         });
 
@@ -392,8 +394,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_operations_config_title(),
-            MSG.view_portlet_operations_config_title_desc());
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
+            MSG.view_portlet_configure_definitionDesc());
 
         definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_COMPLETED, MSG
             .view_portlet_operations_config_completed_maximum(), true, PropertySimpleType.STRING));

@@ -56,17 +56,17 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
         if (contents != null) {
             setContents(contents);
         } else {
-            setContents("<i>" + MSG.view_portlet_message_unconfigured());
+            setContents("<br/><i>" + MSG.view_portlet_configure_needed() + "</i>");
         }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_message_help());
+        return new HTMLFlow(MSG.view_portlet_help_message());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_message_config_title(), MSG
-            .view_portlet_message_config_title_desc());
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
+            MSG.view_portlet_configure_definitionDesc());
 
         definition.put(new PropertyDefinitionSimple("message", MSG.view_portlet_message_title(), true,
             PropertySimpleType.LONG_STRING));

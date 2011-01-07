@@ -125,6 +125,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
 
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterLastComputeTimeMax(fiveMinutesAgo);
+        criteria.addFilterGlobal(false); // don't support CRUD global yet, don't bother recalculating these
 
         List<SavedSearch> results = savedSearchManager.findSavedSearchesByCriteria(overlord, criteria);
         if (LOG.isTraceEnabled()) {

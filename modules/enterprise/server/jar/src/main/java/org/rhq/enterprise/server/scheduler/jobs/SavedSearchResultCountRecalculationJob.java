@@ -111,6 +111,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
         if (next.getResultCount() == null || calculatedSize != next.getResultCount()) {
             LOG.trace("Updated " + next + ", new result count is [" + calculatedSize + "]");
             next.setResultCount(calculatedSize);
+            next.setLastComputeTime(System.currentTimeMillis());
             savedSearchManager.updateSavedSearch(overlord, next);
             return true;
         }

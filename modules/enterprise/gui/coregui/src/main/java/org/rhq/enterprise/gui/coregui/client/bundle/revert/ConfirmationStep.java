@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -58,9 +59,13 @@ public class ConfirmationStep extends AbstractWizardStep {
         return MSG.view_bundle_revertWizard_confirmStep_name();
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (layout == null) {
-            layout = new LocatableVLayout("BundleRevertConfirmation");
+            if (parent != null) {
+                layout = new LocatableVLayout(parent.extendLocatorId("BundleRevertConfirmation"));
+            } else {
+                layout = new LocatableVLayout("BundleRevertConfirmation");
+            }
             layout.setMembersMargin(10);
 
             BundleDeploymentCriteria c = new BundleDeploymentCriteria();

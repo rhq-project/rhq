@@ -22,6 +22,7 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Greg Hinkle
@@ -30,7 +31,7 @@ public interface WizardStep {
 
     Messages MSG = CoreGUI.getMessages();
 
-    Canvas getCanvas();
+    Canvas getCanvas(Locatable parent);
 
     boolean nextPage();
 

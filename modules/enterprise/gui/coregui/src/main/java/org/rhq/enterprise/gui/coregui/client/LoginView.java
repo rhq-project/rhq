@@ -113,7 +113,7 @@ public class LoginView extends LocatableCanvas {
             loginShowing = true;
             UserSessionManager.logout();
 
-            form = new LocatableDynamicForm("LoginView");
+            form = new LocatableDynamicForm(extendLocatorId("LoginView"));
             form.setMargin(25);
             form.setAutoFocus(true);
             form.setShowErrorText(true);

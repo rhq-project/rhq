@@ -20,9 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+
 public abstract class AbstractWizardStep implements WizardStep {
 
-    abstract public Canvas getCanvas();
+    abstract public Canvas getCanvas(Locatable parent);
 
     abstract public String getName();
 

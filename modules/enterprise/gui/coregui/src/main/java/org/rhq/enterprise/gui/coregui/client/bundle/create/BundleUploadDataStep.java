@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class BundleUploadDataStep extends AbstractWizardStep {
@@ -55,8 +56,14 @@ public class BundleUploadDataStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas() {
-        final VLayout mainLayout = new LocatableVLayout("BundleCreateUploadData");
+    public Canvas getCanvas(Locatable parent) {
+        final LocatableVLayout mainLayout;
+        if (parent != null) {
+            mainLayout = new LocatableVLayout(parent.extendLocatorId("BundleCreateUploadData"));
+        } else {
+            mainLayout = new LocatableVLayout("BundleCreateUploadData");
+        }
+
         mainLayout.setMargin(Integer.valueOf(20));
         mainLayout.setWidth100();
         mainLayout.setHeight(10);

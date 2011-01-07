@@ -39,6 +39,7 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -74,10 +75,14 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
         this.templates = templates;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (form == null) {
 
-            form = new LocatableDynamicForm("ResFactInfo");
+            if (parent != null) {
+                form = new LocatableDynamicForm(parent.extendLocatorId("ResFactInfo"));
+            } else {
+                form = new LocatableDynamicForm("ResFactInfo");
+            }
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
 

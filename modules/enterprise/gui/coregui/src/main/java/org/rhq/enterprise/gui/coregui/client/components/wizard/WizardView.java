@@ -246,8 +246,7 @@ public class WizardView extends LocatableVLayout {
         if (currentCanvas != null) {
             contentLayout.removeMember(currentCanvas);
         }
-        //        currentCanvas = wizardSteps.get(currentStep).getCanvas();
-        currentCanvas = wizardSteps.get(currentStep).getCanvas();
+        currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
         createdCanvases.add(currentCanvas);
 
         contentLayout.addMember(currentCanvas);

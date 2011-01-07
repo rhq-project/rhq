@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class BundleUploadDistroFileStep extends AbstractWizardStep {
@@ -68,7 +69,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (mainCanvasForm == null) {
             LinkedHashMap<String, DynamicForm> radioItems = new LinkedHashMap<String, DynamicForm>();
             radioItems.put(URL_OPTION, createUrlForm());

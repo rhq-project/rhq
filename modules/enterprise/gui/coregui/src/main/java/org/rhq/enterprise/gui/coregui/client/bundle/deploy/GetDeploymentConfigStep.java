@@ -27,6 +27,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 public class GetDeploymentConfigStep extends AbstractWizardStep {
 
@@ -41,7 +42,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_getConfigStep();
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (null == editor) {
             ConfigurationDefinition configDef = wizard.getBundleVersion().getConfigurationDefinition();
 

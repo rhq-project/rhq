@@ -46,9 +46,9 @@ public interface SearchGWTService extends RemoteService {
      */
     int createSavedSearch(SavedSearch savedSearch) throws RuntimeException;
 
-    void updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException;
+    boolean updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException;
 
-    void updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException;
+    boolean updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException;
 
     void deleteSavedSearch(int savedSearchId) throws RuntimeException;
 

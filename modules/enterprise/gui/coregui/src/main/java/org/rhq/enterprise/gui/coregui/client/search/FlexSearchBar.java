@@ -255,7 +255,7 @@ public class FlexSearchBar extends AbstractSearchBar {
         savedSearchesGrid.setSavedSearchSelectionHandler(handler);
     }
 
-    private void turnNameFieldIntoLabel() {
+    private void turnNameFieldIntoLabel(boolean nameJustUpdated) {
         String name = patternNameField.getText();
 
         if (name.equalsIgnoreCase(DEFAULT_PATTERN_NAME)) {
@@ -285,7 +285,7 @@ public class FlexSearchBar extends AbstractSearchBar {
             if (currentSearchId == 0) {
                 String pattern = autoCompletePatternField.getText();
                 createSavedSearch(name, pattern);
-            } else {
+            } else if (nameJustUpdated) {
                 updateSavedSearchName(currentSearchId, name);
             }
             patternNameLabel.setText(elipse(name));
@@ -326,10 +326,12 @@ public class FlexSearchBar extends AbstractSearchBar {
     }
 
     private void updateSavedSearchName(final int savedSearchId, final String newName) {
-        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, new AsyncCallback<Void>() {
+        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, new AsyncCallback<Boolean>() {
             @Override
-            public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(new Message("Saved search successfully renamed", Severity.Info));
+            public void onSuccess(Boolean hadUpdates) {
+                if (hadUpdates) {
+                    CoreGUI.getMessageCenter().notify(new Message("Saved search successfully renamed", Severity.Info));
+                }
             }
 
             @Override
@@ -377,7 +379,7 @@ public class FlexSearchBar extends AbstractSearchBar {
         public void onKeyPress(KeyPressEvent event) {
             if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                 Log.debug("key press pattern name field");
-                turnNameFieldIntoLabel();
+                turnNameFieldIntoLabel(true);
             }
         }
 
@@ -389,7 +391,7 @@ public class FlexSearchBar extends AbstractSearchBar {
 
         public void onBlur(BlurEvent event) {
             lastNameFieldBlurTime = System.currentTimeMillis();
-            turnNameFieldIntoLabel();
+            turnNameFieldIntoLabel(true);
         }
     }
 
@@ -555,7 +557,7 @@ public class FlexSearchBar extends AbstractSearchBar {
         autoCompletePatternField.setValue(savedSearch.getPattern(), true);
         patternNameField.setValue(savedSearch.getName(), true);
         Log.debug("search results change: [" + savedSearch.getName() + "," + savedSearch.getPattern() + "]");
-        turnNameFieldIntoLabel();
+        turnNameFieldIntoLabel(false);
         savedSearchesPanel.hide();
     }
 

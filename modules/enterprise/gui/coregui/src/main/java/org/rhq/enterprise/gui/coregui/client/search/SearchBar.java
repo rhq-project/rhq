@@ -348,7 +348,16 @@ public class SearchBar extends AbstractSearchBar {
     }
 
     private void updateSavedSearchName(final int savedSearchId, final String newName) {
-        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, blackHoleCallback);
+        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, new AsyncCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean hadUpdates) {
+                // no message bar to send update message to if hadUpdates
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+            }
+        });
     }
 
     /*

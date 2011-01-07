@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client;
+package org.rhq.bindings.output;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -37,6 +36,9 @@ import java.util.Set;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
+import org.rhq.bindings.util.LazyLoadScenario;
+import org.rhq.bindings.util.ShortOutput;
+import org.rhq.bindings.util.SummaryFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -44,8 +46,6 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.client.utility.LazyLoadScenario;
-import org.rhq.enterprise.client.utility.ShortOutput;
 
 /**
  * @author Greg Hinkle

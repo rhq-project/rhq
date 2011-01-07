@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,29 +16,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client.utility;
+
+package org.rhq.bindings.engine;
+
+import java.util.List;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 /**
- * Set by reflective access utilities like the tabular writer to avoid
- * remote calls behind proxy methods.
+ * 
  *
- * @author Greg Hinkle
+ * @author Lukas Krejci
  */
-public class LazyLoadScenario {
+public class JsEngineInitializer implements ScriptEngineInitializer {
 
-    private static ThreadLocal<Boolean> shouldLoad = new ThreadLocal<Boolean>() {
-
-        protected Boolean initialValue() {
-            return true;
-        }
-    };
-
-    public static boolean isShouldLoad() {
-        return shouldLoad.get();
+    public String getEngineName() {
+        return "JavaScript";
     }
-
-    public static void setShouldLoad(boolean shouldLoad) {
-        LazyLoadScenario.shouldLoad.set(shouldLoad);
+    
+    public ScriptEngine instantiate(List<String> packages) throws ScriptException {
+        ScriptEngineManager sem = new ScriptEngineManager();
+        ScriptEngine eng = sem.getEngineByName(getEngineName());
+        
+        for(String pkg : packages) {
+            eng.eval("importPackage(" + pkg + ")");
+        }
+        
+        return eng;
     }
 
 }

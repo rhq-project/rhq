@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import org.testng.annotations.Test;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.client.TabularWriter;
 import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
@@ -24,6 +23,7 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
+import org.rhq.bindings.output.TabularWriter;
 import org.rhq.core.domain.auth.Subject;
 
 import javax.script.ScriptEngine;

@@ -32,8 +32,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.bindings.output.TabularWriter;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.TabularWriter;
 import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.utility.ReflectionUtility;
 

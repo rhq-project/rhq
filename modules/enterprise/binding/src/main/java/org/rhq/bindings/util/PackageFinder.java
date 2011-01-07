@@ -16,12 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -32,29 +33,39 @@ import java.net.URL;
 
 /**
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
 public class PackageFinder {
 
+    private List<File> jarLocations;
 
+    public PackageFinder(List<File> jarLocations) {
+        this.jarLocations = new ArrayList<File>(jarLocations);
+    }
 
-    public List<String> findPackages(String packageRoot) {
+    public List<String> findPackages(String packageRoot) throws IOException {
         ArrayList<String> found = new ArrayList<String>();
 
-        String cwd = System.getProperty("user.dir");
-        File libDir = new File(cwd, "lib");
-        File[] jars;
+//TODO this is where the original package finder used to look for the jars.
+//update the code somewhere in the CLI client to supply this dir to this
+//new style impl.
+//        String cwd = System.getProperty("user.dir");
+//        File libDir = new File(cwd, "lib");
+        
+        
+        List<File> jars = new ArrayList<File>();
 
-        if (libDir.exists()) {
-            jars = libDir.listFiles(new FileFilter() {
-                public boolean accept(File pathname) {
-                    return pathname.isFile() && pathname.getName().endsWith(".jar");
-                }
-            });
-        }
-        else {
-            jars = loadJARsFromClassPath(packageRoot);
+        for (File loc : jarLocations) {
+            if (loc.exists()) {
+                jars.addAll(Arrays.asList(loc.listFiles(new FileFilter() {
+                    public boolean accept(File pathname) {
+                        return pathname.isFile() && pathname.getName().endsWith(".jar");
+                    }
+                })));
+            }
         }
 
+        jars.addAll(loadJARsFromClassPath(packageRoot));
 
         for (File jar : jars) {
             findPackages(packageRoot, found, jar);
@@ -63,28 +74,21 @@ public class PackageFinder {
         return found;
     }
 
-    private File[] loadJARsFromClassPath(String pkgRoot) {
-        try {
-            List<File> jarFiles = new ArrayList<File>();
-            String pkgPath = pkgRoot.replaceAll("\\.", "/");
-            Enumeration<URL> resources = getClass().getClassLoader().getResources(pkgPath);
-            URL resource = null;
+    private List<File> loadJARsFromClassPath(String pkgRoot) throws IOException {
+        List<File> jarFiles = new ArrayList<File>();
+        String pkgPath = pkgRoot.replaceAll("\\.", "/");
+        Enumeration<URL> resources = getClass().getClassLoader().getResources(pkgPath);
+        URL resource = null;
 
-            while (resources.hasMoreElements()) {
-                resource = resources.nextElement();
-                if (resource.toString().startsWith("jar:file")) {
-                    String jarFilePath = getJARFilePath(resource);
-                    jarFiles.add(new File(jarFilePath));
-                }
+        while (resources.hasMoreElements()) {
+            resource = resources.nextElement();
+            if (resource.toString().startsWith("jar:file")) {
+                String jarFilePath = getJARFilePath(resource);
+                jarFiles.add(new File(jarFilePath));
             }
-
-            return jarFiles.toArray(new File[] {});
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            return new File[] {};
         }
 
+        return jarFiles;
     }
 
     private String getJARFilePath(URL resource) {
@@ -95,7 +99,7 @@ public class PackageFinder {
         return string.substring(0, endIndex);
     }
 
-    private void findPackages(String packageRoot, List<String> list, File jar) {
+    private void findPackages(String packageRoot, List<String> list, File jar) throws IOException {
 
         Set<String> paths = new HashSet<String>();
         JarFile jf = null;
@@ -115,26 +119,14 @@ public class PackageFinder {
                 }
             }
             list.addAll(paths);
-
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         } finally {
             try {
                 if (jf != null) {
                     jf.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                
             }
         }
     }
-
-
-
-
-
-    public static void main(String[] args) {
-        new PackageFinder().findPackages("org.rhq.core.domain");
-    }
-
 }

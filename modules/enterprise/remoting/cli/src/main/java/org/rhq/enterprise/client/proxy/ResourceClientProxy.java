@@ -31,6 +31,8 @@ import java.io.IOException;
 
 import javassist.util.proxy.MethodHandler;
 
+import org.rhq.bindings.util.LazyLoadScenario;
+import org.rhq.bindings.util.ShortOutput;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -59,8 +61,6 @@ import org.rhq.core.domain.util.Summary;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.utility.LazyLoadScenario;
-import org.rhq.enterprise.client.utility.ShortOutput;
 import org.rhq.enterprise.client.utility.ConfigurationClassBuilder;
 import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;

@@ -26,6 +26,8 @@ package org.rhq.enterprise.client;
 import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
+
+import org.rhq.bindings.util.SummaryFilter;
 import org.rhq.core.domain.util.Summary;
 
 import javax.persistence.Entity;

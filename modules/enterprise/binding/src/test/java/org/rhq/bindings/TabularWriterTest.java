@@ -21,27 +21,28 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client;
+package org.rhq.bindings;
 
-import static org.testng.Assert.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.shared.ResourceBuilder;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
+import org.apache.commons.lang.StringUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.apache.commons.lang.StringUtils;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.OneToMany;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
-import java.util.ArrayList;
+import org.rhq.bindings.output.TabularWriter;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.shared.ResourceBuilder;
 
-import static org.rhq.core.domain.measurement.AvailabilityType.*;
+import static org.testng.Assert.*;
 
 public class TabularWriterTest {
 
@@ -234,7 +235,7 @@ public class TabularWriterTest {
             .withUuid("12345")
             .withVersion("1.0")
             .inInventory()
-            .withCurrentAvailability(UP)
+            .withCurrentAvailability(AvailabilityType.UP)
             .build();
     }
 

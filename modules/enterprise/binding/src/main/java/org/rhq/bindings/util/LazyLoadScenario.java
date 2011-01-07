@@ -16,12 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
 /**
+ * Set by reflective access utilities like the tabular writer to avoid
+ * remote calls behind proxy methods.
+ *
  * @author Greg Hinkle
  */
-public interface ShortOutput {
+public class LazyLoadScenario {
 
-    String getShortOutput();
+    private static ThreadLocal<Boolean> shouldLoad = new ThreadLocal<Boolean>() {
+
+        protected Boolean initialValue() {
+            return true;
+        }
+    };
+
+    public static boolean isShouldLoad() {
+        return shouldLoad.get();
+    }
+
+    public static void setShouldLoad(boolean shouldLoad) {
+        LazyLoadScenario.shouldLoad.set(shouldLoad);
+    }
+
 }

@@ -20,12 +20,14 @@ package org.rhq.enterprise.client.commands;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.bindings.export.Exporter;
+import org.rhq.bindings.output.TabularWriter;
+import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.Controller;
-import org.rhq.enterprise.client.export.Exporter;
 import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.client.TabularWriter;
 import org.rhq.enterprise.client.proxy.ResourceClientFactory;
 import org.rhq.enterprise.client.proxy.ConfigurationEditor;
 import org.rhq.enterprise.client.script.CLIScriptException;
@@ -34,7 +36,6 @@ import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.ScriptArg;
 import org.rhq.enterprise.client.script.ScriptCmdLine;
-import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ScriptAssert;
 import org.rhq.enterprise.client.utility.ScriptUtil;
 

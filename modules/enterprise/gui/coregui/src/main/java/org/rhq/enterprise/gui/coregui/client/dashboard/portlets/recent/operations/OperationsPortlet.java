@@ -201,7 +201,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     public DynamicForm getCustomSettingsForm() {
 
         //root dynamic form instance
-        final LocatableDynamicForm form = new LocatableDynamicForm("custom-settings");
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
 
         //vertical layout
         VStack column = new VStack();

@@ -78,7 +78,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
             }
 
             public void onSuccess(InventorySummary summary) {
-                form = new LocatableDynamicForm("Portlet_Inventory_Summary");
+                form = new LocatableDynamicForm(extendLocatorId("Portlet_Inventory_Summary"));
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
                 //                HeaderItem headerItem = new HeaderItem("header");

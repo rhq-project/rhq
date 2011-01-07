@@ -276,7 +276,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         VLayout column = new VLayout();
 
         //label
-        LocatableLabel alertRangeLabel = new LocatableLabel("DynamicForm_Label_Alert_Range", "<b>"
+        LocatableLabel alertRangeLabel = new LocatableLabel(extendLocatorId("DynamicForm_Label_Alert_Range"), "<b>"
             + MSG.common_title_alert_range() + "</b>");
 
         //horizontal layout

@@ -23,7 +23,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
@@ -39,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class GroupCreateStep extends AbstractWizardStep {
 
-    private DynamicForm form;
+    private LocatableDynamicForm form;
 
     public Canvas getCanvas() {
 

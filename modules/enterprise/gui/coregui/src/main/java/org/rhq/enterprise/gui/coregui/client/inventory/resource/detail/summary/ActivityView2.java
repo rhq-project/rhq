@@ -18,14 +18,21 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -36,6 +43,9 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
@@ -83,6 +93,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     private String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
     private String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
     private String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
+
+    private Timer sparklineReloader = null;
 
     private ResourceComposite resourceComposite;
 
@@ -185,7 +197,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         getRecentEventUpdates();
         getRecentOobs();
         getRecentPkgHistory();
-        //        getRecentMetrics();
+        getRecentMetrics();
     }
 
     @Override
@@ -201,6 +213,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     public void refresh() {
         //        int resourceId = this.resourceComposite.getResource().getId();
         //        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceId);
+        //        Log.debug("$$$$$$$$$$$$$ ActivityView2.refresh()");
         loadData();
         markForRedraw();
     }
@@ -634,138 +647,138 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         //            });
     }
 
-    //    private void getRecentMetrics() {
-    //        LocatableVLayout column = new LocatableVLayout(recentAlertsContent.extendLocatorId("Content"));
-    //        column.setHeight(10);
-    //
-    //        for (int i = 0; i < 1; i++) {
-    //            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId("ContentForm"));
-    //            row.setNumCols(3);
-    //            row.setBorder("1px dashed green");
-    //            HTMLFlow graph = new HTMLFlow();
-    //            //            graph.setContents("<span class='inlinebar'>1,3,4,8,50,5</span>");
-    //            graph.setContents("<span class='dynamicsparkline'>1,3,4,8,50,5</span>");
-    //            //            graph.setContentsType(ContentsType.FRAGMENT);
-    //            graph.setContentsType(ContentsType.PAGE);
-    //            graph.setBorder("1px dashed black");
-    //            //            graph.setSize("40", "40");
-    //            CanvasItem ci2 = new CanvasItem();
-    //            ci2.setCanvas(graph);
-    //            CanvasItem ci = new CanvasItem();
-    //            ci.setShowTitle(false);
-    //            //            ci.setDefaultValue("<span class='inlinesparkline'>1,3,4,8,50,5</span>");
-    //            ci.setDefaultValue("1,3,4,8,50,5");
-    //            ci.setValue("1,3,4,8,50,5");
-    //            String currentClass = ci.getAttribute("class");
-    //            Log.debug("+++++++++++:Current class for new canvas:" + currentClass);
-    //            ci.setAttribute("class", " dynamicsparkline");
-    //            currentClass = ci.getAttribute("class");
-    //            Log.debug("+++++++++++:Updated class for new canvas:" + currentClass);
-    //            //            ci.getAttribute(attribute);
-    //            //            RichTextItem rti = new RichTextItem();
-    //            BlurbItem rti = new BlurbItem();
-    //            //            rti.setContentsType(ContentsType.PAGE);
-    //            //            rti.setV
-    //            //            rti.setValue("<div class=\"inlinesparkline\">1,3,4,8,50,5</div>");
-    //            rti.setValue("<div id=\"dynamic1\" class=\"dynamicsparkline\">1,3,4,8,50,5</div>");
-    //            Log.debug("@@@@@@@@@@@@@@@@@@@ Blurb-class-attr:" + rti.getAttribute("class"));
-    //            //div id='dynamic1' class='dynamicsparkline'
-    //            Element newDiv = DOM.createDiv();
-    //            Log.debug("+++++++++++:" + newDiv);
-    //            newDiv.setClassName("dynamicsparkline");
-    //            newDiv.setId("dynamic1");
-    //            Log.debug("+++++++++++:" + newDiv + ":inH:" + newDiv.getInnerHTML());
-    //            Log.debug("+++++++ TO STR:" + DOM.toString(newDiv));
-    //            Log.debug("+++++++++++:ParentComponent id:" + recentMeasurementsContent.getID());
-    //            Log.debug("+++++++++++:ParentComponent id:" + recentMeasurementsContent.getLocatorId());
-    //            //            Element located = DOM.getElementById(recentMeasurementsContent.getLocatorId());
-    //            Element located = DOM.getElementById(this.getLocatorId());
-    //            Log.debug("+++++++++++ Parent Node Located:" + located);
-    //            if (located != null) {
-    //                DOM.appendChild(located, newDiv);
-    //            }
-    //
-    //            int[] data = { 1, 3, 4, 8, 50, 5 };
-    //            loadSparkLine(data);
-    //            //            display = loadSparkLine(data);
-    //            //            String loaded = loadSparkLine(data);
-    //            //            Log.debug("+++++++++++:loaded:" + loaded);
-    //            Log.debug("+++++++++++:Completed:" + newDiv.getInnerHTML());
-    //            //            Log.debug("+++++++++++:JSObject:" + display);
-    //            //            Log.debug("+++++++++++:JSObject-class:" + display.getClass());
-    //            Element body = DOM.createElement("body");
-    //            Element locatedBody = DOM.getChild(body, 0);
-    //            Log.debug("+++++++++++:DOM:" + locatedBody);
-    //            //            HTMLPane content = new HTMLPane(display);
-    //            //            rti = new BlurbItem(display);
-    //            //            rti.setDefaultValue("<span class='inlinebar'>1,3,4,8,50,5</span>");
-    //            //            ci.getCanvas().addChild(graph);
-    //            StaticTextItem link = new StaticTextItem();
-    //            link.setValue("(Insert NAME)");
-    //            link.setShowTitle(false);
-    //            StaticTextItem value = new StaticTextItem();
-    //            value.setShowTitle(false);
-    //            value.setValue("142.3");
-    //            //            row.setItems(graph,link,value);
-    //            //            row.setItems(ci, link, value);
-    //            //            row.setItems(rti, link, value);
-    //            row.setItems(ci, rti, link, value, ci2);
-    //
-    //            column.addMember(row);
-    //        }
-    //
-    //        for (Canvas child : recentMeasurementsContent.getChildren()) {
-    //            child.destroy();
-    //        }
-    //        recentMeasurementsContent.setContents("");
-    //        recentMeasurementsContent.addChild(column);
-    //        column.markForRedraw();
-    //        recentMeasurementsContent.markForRedraw();
-    //        int[] data = { 1, 3, 4, 8, 50, 5 };
-    //        loadSparkLine(data);
-    //        column.markForRedraw();
-    //        recentMeasurementsContent.markForRedraw();
-    //    }
-    //
-    //    //    private JavaScriptObject display;
-    //
-    //    /*
-    //     */
-    //    //    public static native void loadSparkLine(int[] data)
-    //    //    public static native JavaScriptObject loadSparkLine(int[] data)
-    //    //    public static native String loadSparkLine(int[] data)
-    //    public static native void loadSparkLine(int[] data)
-    //    /*-{
-    //        //alert(JSON.stringify($wnd.jQuery('.dynamicsparkline').sparkline(data)));
-    //        //alert(JSON.stringify($wnd.jQuery('.dynamicsparkline').sparkline(data)));
-    //    //        var index = 0;
-    //        //$wnd.jQuery('.dynamicsparkline').sparkline(data);
-    //        //return $wnd.jQuery('.dynamicsparkline').sparkline(data);
-    //        //$doc.write('<div id="spark1" class="dynamicsparkline"></div>');
-    //        //$wnd.jQuery('.dynamicsparkline').sparkline(data);
-    //        //var x=document.getElementById("spark1");
-    //        //return "X:";
-    //        //return x.innerHTML;
-    //
-    //        var x=$doc.getElementById("spark1");
-    //    //        alert("SPARK1-LOC:"+x);
-    //    //        alert("SPARK1-LOC-CL:"+x.className);
-    //        //alert("SPARK1-LOC-html:"+x.innerHTML);
-    //    //        alert("JQ obj:"+$wnd.jQuery('.dynamicsparkline'));
-    //    //        alert("JQ obj-JSON-Str:"+JSON.stringify($wnd.jQuery('.dynamicsparkline')));
-    //        $wnd.jQuery('.dynamicsparkline').sparkline();
-    //        $wnd.jQuery('#dynamic1').sparkline([1,2,3,4,5,4,3,2,1]);
-    //
-    //    //        alert("JQ obj-SP:"+$wnd.jQuery('.dynamicsparkline').sparkline());
-    //        //alert("JQ obj-SP-2:"+$wnd.jQuery('.dynamicsparkline').sparkline(data));
-    //         var x=$doc.getElementById("spark1");
-    //    //         alert("SPARK1-LOC-html:"+x.innerHTML);
-    //        //$wnd.jQuery('.dynamicsparkline').sparkline(data);
-    //        //alert();
-    //    //        alert('Window Name:'+$wnd.name);
-    //        //$doc.write('<div id="spark1" class="dynamicsparkline"></div>');
-    //        //var x=$doc.getElementById("spark1");
-    //        //alert("SPARK:"+x);
-    //        //alert(x.innerHTML);
-    //    }-*/;
+    private void getRecentMetrics() {
+        final LocatableVLayout column = new LocatableVLayout(recentMeasurementsContent.extendLocatorId("Content"));
+        column.setHeight(10);
+        final int resourceId = this.resourceComposite.getResource().getId();
+        Set<MeasurementDefinition> definitions = this.resourceComposite.getResource().getResourceType()
+            .getMetricDefinitions();
+
+        final HashMap<String, MeasurementDefinition> map = new HashMap<String, MeasurementDefinition>();
+        for (MeasurementDefinition md : definitions) {
+            map.put(md.getDisplayName(), md);
+        }
+        int[] definitionArrayIds = new int[definitions.size()];
+        final String[] displayOrder = new String[definitions.size()];
+        map.keySet().toArray(displayOrder);
+        Arrays.sort(displayOrder);
+        int l = 0;
+        for (String definitionToDisplay : displayOrder) {
+            definitionArrayIds[l++] = map.get(definitionToDisplay).getId();
+        }
+        GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitionArrayIds,
+            System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
+            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving metrics charting data for resource [" + resourceId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
+                    for (int h = 0; h < displayOrder.length; h++) {
+                        MeasurementDefinition md = map.get(displayOrder[h]);
+                        List<MeasurementDataNumericHighLowComposite> data = results.get(h);
+                        //locate last and minimum values.
+                        double lastValue = 0;
+                        double minValue = Double.MAX_VALUE;
+                        for (MeasurementDataNumericHighLowComposite d : data) {
+                            if ((d.getValue() + "").indexOf("NaN") == -1) {
+                                if (d.getValue() < minValue) {
+                                    minValue = d.getValue();
+                                }
+                            }
+                        }
+
+                        //collapse the data into comma delimited list
+                        String commaDelimitedList = "";
+
+                        for (MeasurementDataNumericHighLowComposite d : data) {
+                            if ((d.getValue() + "").indexOf("NaN") == -1) {
+                                commaDelimitedList += (d.getValue() - minValue) + ",";
+                                lastValue = d.getValue();
+                                if (d.getValue() < minValue) {
+                                    minValue = d.getValue();
+                                }
+                            }
+                        }
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
+                        row.setNumCols(3);
+                        //                        row.setWidth(300);
+                        HTMLFlow graph = new HTMLFlow();
+                        //move all sparkline data up to the minimum value
+                        String contents = "<span id='sparkline_" + 1 + "' class='dynamicsparkline' width='0'>"
+                            + commaDelimitedList + "</span>";
+                        graph.setContents(contents);
+                        graph.setContentsType(ContentsType.PAGE);
+                        graph.setScrollbarSize(0);
+                        CanvasItem ci2 = new CanvasItem();
+                        ci2.setShowTitle(false);
+                        ci2.setHeight(16);
+                        ci2.setWidth(60);
+                        ci2.setCanvas(graph);
+
+                        //Link/title element
+                        LinkItem link = new LinkItem();
+                        link.setLinkTitle(md.getDisplayName());
+                        link.setTitle(md.getName());
+                        link.setTarget("_self");
+                        link.setShowTitle(false);
+                        //Value
+                        StaticTextItem value = new StaticTextItem();
+                        String convertedValue = lastValue + " " + md.getUnits();
+                        long KBYTES = 1024;
+                        long MBYTES = KBYTES * KBYTES;
+                        long GBYTES = MBYTES * KBYTES;
+                        NumberFormat fmt = NumberFormat.getDecimalFormat();
+                        fmt = NumberFormat.getFormat("###.####");
+                        if (md.getUnits() == MeasurementUnits.BYTES) {
+                            if ((lastValue / GBYTES) > 1) {
+                                convertedValue = fmt.format(lastValue / GBYTES) + "GB";
+                            } else if ((lastValue / MBYTES) > 1) {
+                                convertedValue = fmt.format(lastValue / MBYTES) + "MB";
+                            } else {
+                                convertedValue = fmt.format(lastValue / KBYTES) + "KB";
+                            }
+                        } else {
+                            convertedValue = fmt.format(lastValue / 100) + md.getUnits();
+                        }
+                        value.setDefaultValue(convertedValue);
+                        value.setShowTitle(false);
+                        value.setShowPickerIcon(false);
+                        value.setWrap(false);
+
+                        row.setItems(ci2, link, value);
+                        if (commaDelimitedList.trim().length() > 100) {
+                            column.addMember(row);
+                        }
+                    }
+                    //call out to 3rd party javascript lib
+                    graphSparkLines();
+                }
+            });
+
+        for (Canvas child : recentMeasurementsContent.getChildren()) {
+            child.destroy();
+        }
+        recentMeasurementsContent.setContents("");
+        recentMeasurementsContent.addChild(column);
+        //        graphSparkLines();
+        recentMeasurementsContent.markForRedraw();
+        if (sparklineReloader == null) {
+            sparklineReloader = new Timer() {
+                public void run() {
+                    refresh();
+                }
+            };
+            sparklineReloader.schedule(750);
+        }
+    }
+
+    public static native void graphSparkLines()
+    /*-{
+     //find all elements where attribute class contains 'dynamicsparkline' and graph their contents
+     $wnd.jQuery('.dynamicsparkline').sparkline();
+    }-*/;
 }

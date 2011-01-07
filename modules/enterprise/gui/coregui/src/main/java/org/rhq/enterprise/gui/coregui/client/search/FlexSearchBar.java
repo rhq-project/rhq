@@ -532,6 +532,7 @@ public class FlexSearchBar extends AbstractSearchBar {
         criteria.addFilterSubjectId(subject.getId());
         criteria.addFilterId(savedSearchId); // null OK
         criteria.addFilterName(savedSearchName); // null OK
+        criteria.setStrict(true);
 
         GWTServiceLookup.getSearchService().findSavedSearchesByCriteria(criteria,
             new AsyncCallback<List<SavedSearch>>() {

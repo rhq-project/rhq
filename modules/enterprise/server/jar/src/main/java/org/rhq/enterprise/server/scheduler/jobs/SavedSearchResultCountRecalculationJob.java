@@ -105,7 +105,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
         }
         if (updated > 0) {
             // only print non-zero stats
-            LOG.info("Statistics: updated " + updated + " in " + totalMillis + " ms (" + errors + " errors)");
+            LOG.debug("Statistics: updated " + updated + " in " + totalMillis + " ms (" + errors + " errors)");
         }
     }
 

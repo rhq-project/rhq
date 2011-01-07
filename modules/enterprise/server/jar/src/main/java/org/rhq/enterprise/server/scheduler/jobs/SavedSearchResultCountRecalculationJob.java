@@ -30,8 +30,6 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.criteria.Criteria.Restriction;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.PageList;
@@ -68,18 +66,16 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
             }
             try {
 
+                PageList<?> results = null;
+
                 if (next.getSearchSubsystem() == SearchSubsystem.RESOURCE) {
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.setRestriction(Restriction.COUNT_ONLY);
                     criteria.setSearchExpression(next.getPattern());
 
                     totalMillis -= System.currentTimeMillis();
-                    PageList<Resource> results = resourceManager.findResourcesByCriteria(overlord, criteria);
+                    results = resourceManager.findResourcesByCriteria(overlord, criteria);
                     totalMillis += System.currentTimeMillis();
-
-                    if (processResults(next, results)) {
-                        updated++;
-                    }
 
                 } else if (next.getSearchSubsystem() == SearchSubsystem.GROUP) {
                     ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -87,13 +83,12 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
                     criteria.setSearchExpression(next.getPattern());
 
                     totalMillis -= System.currentTimeMillis();
-                    PageList<ResourceGroup> results = resourceGroupManager.findResourceGroupsByCriteria(overlord,
-                        criteria);
+                    results = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
                     totalMillis += System.currentTimeMillis();
+                }
 
-                    if (processResults(next, results)) {
-                        updated++;
-                    }
+                if (results != null && processResults(next, results.getTotalSize())) {
+                    updated++;
                 }
             } catch (Throwable t) {
                 // TODO: mark this saved search as "broken" so that future computation is suppressed for it
@@ -109,12 +104,13 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
         }
     }
 
-    private boolean processResults(SavedSearch next, PageList<?> results) {
+    private boolean processResults(SavedSearch next, long calculatedSize) {
         // TODO: should recent count be computed at the time of update/save for this saved search?
         //       it would obviate the need for null checking here as well as in the UI for conditional 
         //        display of the result count
-        if (next.getResultCount() == null || results.getTotalSize() != next.getResultCount()) {
-            next.setResultCount((long) results.getTotalSize());
+        if (next.getResultCount() == null || calculatedSize != next.getResultCount()) {
+            LOG.trace("Updated " + next + ", new result count is [" + calculatedSize + "]");
+            next.setResultCount(calculatedSize);
             savedSearchManager.updateSavedSearch(overlord, next);
             return true;
         }

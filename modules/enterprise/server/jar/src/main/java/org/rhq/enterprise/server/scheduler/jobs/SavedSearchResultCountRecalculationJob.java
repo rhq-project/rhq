@@ -105,17 +105,19 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
     }
 
     private boolean processResults(SavedSearch next, long calculatedSize) {
-        // TODO: should recent count be computed at the time of update/save for this saved search?
-        //       it would obviate the need for null checking here as well as in the UI for conditional 
-        //        display of the result count
+        boolean countChanged = false;
+
         if (next.getResultCount() == null || calculatedSize != next.getResultCount()) {
             LOG.trace("Updated " + next + ", new result count is [" + calculatedSize + "]");
             next.setResultCount(calculatedSize);
-            next.setLastComputeTime(System.currentTimeMillis());
-            savedSearchManager.updateSavedSearch(overlord, next);
-            return true;
+            countChanged = true;
         }
-        return false;
+
+        // always set lastComputeTime so we don't check this until the recomputation time period elapses
+        next.setLastComputeTime(System.currentTimeMillis());
+        savedSearchManager.updateSavedSearch(overlord, next);
+
+        return countChanged;
     }
 
     private List<SavedSearch> getSavedSearchesNeedingRecomputation() {
@@ -125,6 +127,11 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
         criteria.addFilterLastComputeTimeMax(fiveMinutesAgo);
 
         List<SavedSearch> results = savedSearchManager.findSavedSearchesByCriteria(overlord, criteria);
+        if (LOG.isTraceEnabled()) {
+            for (SavedSearch nextSavedSearch : results) {
+                LOG.trace(nextSavedSearch + " needs recomputation");
+            }
+        }
         return results;
     }
 }

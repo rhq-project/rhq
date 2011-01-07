@@ -57,50 +57,55 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     //ui attributes/properties/indentifiers
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
+
     private String unlimited = MSG.common_label_unlimited();
     private String defaultValue = unlimited;
-    //portlet settings and datasource elements
-    private DashboardPortlet storedPortlet;
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     private AutodiscoveryQueueDataSource dataSource;
     private Timer defaultReloader;
 
     public AutodiscoveryPortlet(String locatorId) {
         super(locatorId, true);
-    }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
         //initialize the datasource to include Portlet instance
         this.dataSource = new AutodiscoveryQueueDataSource(getTreeGrid());
         if (getTreeGrid() != null) {
             getTreeGrid().setDataSource(getDataSource());
         }
-        if ((storedPortlet != null) && (storedPortlet.getConfiguration() != null)) {
-            //loads/retrieves initial portlet settings for datasource
-            String retrieved = null;
-            //if settings already exist for this portlet
-            if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
-                //retrieve and translate to int
-                retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
-            } else {//create setting
-                storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
-                retrieved = defaultValue;
-            }
-
-            if (retrieved.equals(unlimited)) {
-                getDataSource().setMaximumPlatformsToDisplay(-1);
-            } else {
-                getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
-            }
-        }
     }
 
-    /** Implements configure action.  Stores reference to the initiating DashboardPortlet.
+    /** Implements configure action.  Stores reference to encompassing window.
     */
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
+        // loads/retrieves initial portlet settings for datasource
+        String retrieved = null;
+
+        //if settings already exist for this portlet
+        if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
+            //retrieve and translate to int
+            retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
+        } else {//create setting
+            storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
+            retrieved = defaultValue;
+        }
+
+        if (retrieved.equals(unlimited)) {
+            getDataSource().setMaximumPlatformsToDisplay(-1);
+        } else {
+            getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
+        }
     }
 
     public Canvas getHelpCanvas() {
@@ -112,6 +117,8 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     public DynamicForm getCustomSettingsForm() {
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Settings"));
         form.setLayoutAlign(VerticalAlignment.CENTER);
+
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         //horizontal display component
         LocatableHLayout row = new LocatableHLayout(extendLocatorId("auto-discovery.configuration"));
@@ -161,14 +168,14 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             //specify submit action.
             public void onSubmitValues(SubmitValuesEvent event) {
+
                 if (form.getValue(AUTODISCOVERY_PLATFORM_MAX) != null) {
                     //persist this value to configuration
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, form.getValue(AUTODISCOVERY_PLATFORM_MAX)));
-                    //save to datasource
-                    String value = form.getValue(AUTODISCOVERY_PLATFORM_MAX) + "";
-                    int maximumPlatformsToDisplay = value.equals(unlimited) ? -1 : Integer.parseInt(value);
-                    getDataSource().setMaximumPlatformsToDisplay(maximumPlatformsToDisplay);
+
+                    configure(portletWindow, storedPortlet);
+
                     markForRedraw();
                 }
             }
@@ -179,13 +186,10 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private static Portlet reference = null;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new AutodiscoveryPortlet(locatorId);
-            }
-            return reference;
+
+            return new AutodiscoveryPortlet(locatorId);
         }
     }
 

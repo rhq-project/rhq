@@ -78,7 +78,7 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(MessagePortlet.class);
+
             return new MessagePortlet(locatorId);
         }
     }

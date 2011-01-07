@@ -83,7 +83,7 @@ public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePort
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(MashupPortlet.class);
+
             return new MashupPortlet(locatorId);
         }
     }

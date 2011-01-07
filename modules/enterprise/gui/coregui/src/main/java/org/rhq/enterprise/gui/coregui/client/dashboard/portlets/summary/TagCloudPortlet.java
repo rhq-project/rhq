@@ -46,7 +46,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        // TODO: Implement this method.
+        // This portlet has no configuration settings
     }
 
     public Canvas getHelpCanvas() {
@@ -57,6 +57,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
+
             return new TagCloudPortlet(locatorId);
         }
     }

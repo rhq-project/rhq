@@ -27,7 +27,22 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
  */
 public interface Portlet {
 
+    /**
+     * Called to initially configure the portlet and may be subsequently called to update an
+     * existing portlet's configuration.  A portlet's window will not change so it can be safely persisted
+     * by the portlet impl.  But the storedPortlet is provided as a convenience and should not be
+     * persisted. Outside of this call a portlet impl should retrieve the storedPortlet from the portletWindow,
+     * if needed.    
+     *  
+     * @param portletWindow
+     * @param storedPortlet
+     */
     void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet);
 
+    /**
+     * A canvas displaying help text for the portlet. 
+     * 
+     * @return
+     */
     Canvas getHelpCanvas();
 }

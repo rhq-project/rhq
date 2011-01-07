@@ -199,7 +199,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        // TODO: Implement this method.
+        // This portlet has no configuration settings
     }
 
     public Canvas getHelpCanvas() {
@@ -344,6 +344,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
+
             return new PlatformSummaryPortlet(locatorId);
         }
     }

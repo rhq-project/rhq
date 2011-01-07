@@ -60,7 +60,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -76,7 +75,7 @@ public class DashboardView extends LocatableVLayout {
     DynamicForm editForm;
     IMenuButton addPortlet;
 
-    Set<PortletWindow> portlets = new HashSet<PortletWindow>();
+    Set<PortletWindow> portletWindows = new HashSet<PortletWindow>();
     private static String STOP = MSG.view_dashboards_portlets_refresh_none();
     private static String REFRESH1 = MSG.view_dashboards_portlets_refresh_one_min();
     private static String REFRESH5 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(5));
@@ -131,7 +130,7 @@ public class DashboardView extends LocatableVLayout {
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
-        loadPortlets();
+        loadPortletWindows();
 
         addMember(editForm);
         addMember(portalLayout);
@@ -188,9 +187,8 @@ public class DashboardView extends LocatableVLayout {
                 int numColumns = columns.length;
                 if (numColumns > 0) {
                     PortalColumn lastColumn = (PortalColumn) columns[numColumns - 1];
-                    for (Canvas portlet : lastColumn.getMembers()) {
-                        boolean removed = storedDashboard
-                            .removePortlet(((PortletWindow) portlet).getDashboardPortlet());
+                    for (PortletWindow portletWindow : (PortletWindow[]) lastColumn.getMembers()) {
+                        storedDashboard.removePortlet(portletWindow.getStoredPortlet());
                     }
                     portalLayout.removeMember(lastColumn);
                     numColItem.setValue(numColumns - 1);
@@ -317,21 +315,21 @@ public class DashboardView extends LocatableVLayout {
         return editForm;
     }
 
-    private void loadPortlets() {
+    private void loadPortletWindows() {
 
         int col = 0;
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
 
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
-                final PortletWindow portlet = new PortletWindow(extendLocatorId(storedPortlet.getPortletKey()), this,
-                    storedPortlet);
-                portlets.add(portlet);
-                portlet.setTitle(storedPortlet.getName());
+                final PortletWindow portletWindow = new PortletWindow(extendLocatorId(storedPortlet.getPortletKey()),
+                    this, storedPortlet);
+                portletWindows.add(portletWindow);
+                portletWindow.setTitle(storedPortlet.getName());
 
-                portlet.setHeight(storedPortlet.getHeight());
-                portlet.setVisible(true);
+                portletWindow.setHeight(storedPortlet.getHeight());
+                portletWindow.setVisible(true);
 
-                portalLayout.addPortlet(portlet, col);
+                portalLayout.addPortletWindow(portletWindow, col);
             }
 
             col++;
@@ -341,14 +339,14 @@ public class DashboardView extends LocatableVLayout {
     private void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
 
-        final PortletWindow newPortlet = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
-        newPortlet.setTitle(portletName);
-        newPortlet.setHeight(350);
-        newPortlet.setVisible(false);
+        final PortletWindow newPortletWindow = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
+        newPortletWindow.setTitle(portletName);
+        newPortletWindow.setHeight(350);
+        newPortletWindow.setVisible(false);
 
-        portlets.add(newPortlet);
+        portletWindows.add(newPortletWindow);
 
-        int columnIndex = portalLayout.addPortlet(newPortlet);
+        int columnIndex = portalLayout.addPortletWindow(newPortletWindow);
         PortalColumn column = portalLayout.getPortalColumn(columnIndex);
 
         storedDashboard.addPortlet(storedPortlet, columnIndex, column.getMembers().length - 1);
@@ -369,13 +367,13 @@ public class DashboardView extends LocatableVLayout {
         outline.draw();
         outline.bringToFront();
 
-        outline.animateRect(newPortlet.getPageLeft(), newPortlet.getPageTop(), newPortlet.getVisibleWidth(), newPortlet
-            .getViewportHeight(), new AnimationCallback() {
+        outline.animateRect(newPortletWindow.getPageLeft(), newPortletWindow.getPageTop(), newPortletWindow
+            .getVisibleWidth(), newPortletWindow.getViewportHeight(), new AnimationCallback() {
             public void execute(boolean earlyFinish) {
                 // callback at end of animation - destroy placeholder and outline; show the new portlet
                 placeHolder.destroy();
                 outline.destroy();
-                newPortlet.show();
+                newPortletWindow.show();
             }
         }, 750);
         save();
@@ -425,20 +423,13 @@ public class DashboardView extends LocatableVLayout {
                     portletMap.put(key, PortletFactory.getRegisteredPortletFactory(key));
                 }
             }
-            for (PortletWindow portletWindow : portlets) {
+            for (PortletWindow portletWindow : portletWindows) {
                 for (DashboardPortlet portlet : result.getPortlets()) {
-                    if (equalsDashboardPortlet(portletWindow.getDashboardPortlet(), portlet)) {
-                        portletWindow.setDashboardPortlet(portlet);
+                    if (equalsDashboardPortlet(portletWindow.getStoredPortlet(), portlet)) {
+                        portletWindow.setStoredPortlet(portlet);
 
                         //restarting portlet auto-refresh with newest settings
-                        PortletViewFactory viewFactory = portletMap.get(portlet.getPortletKey());
-
-                        // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
-                        // tests as a change in the number of default portlets, or a change in test order could make a test
-                        // non-repeatable. But, at the moment we lack the infrastructure to generate a unique, predictable id.
-                        Portlet view = viewFactory.getInstance(SeleniumUtility.getSafeId(portlet.getPortletKey() + "-"
-                            + Integer.toString(portlet.getId())));
-
+                        Portlet view = portletWindow.getView();
                         if (view instanceof AutoRefreshPortlet) {
                             ((AutoRefreshPortlet) view).startRefreshCycle();
                         }

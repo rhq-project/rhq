@@ -49,8 +49,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_graph();
 
+    // set on initial configuration, the window for this portlet view. 
     private PortletWindow portletWindow;
-    private DashboardPortlet storedPortlet;
 
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
@@ -62,8 +62,15 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.portletWindow = portletWindow;
-        this.storedPortlet = storedPortlet;
+
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             setResourceId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
             setDefinitionId(storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
@@ -76,6 +83,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
     @Override
     protected void onDraw() {
+        DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             super.onDraw();
         } else {
@@ -103,6 +112,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
                 return criteria;
             }
         };
+
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         metric.setWidth(300);
         metric.setValueField("id");
@@ -150,6 +161,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
         super.redraw();
 
         removeMembers(getMembers());
+
+        DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             renderGraph();
         } else {
@@ -162,7 +175,6 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
         public final Portlet getInstance(String locatorId) {
 
-            // always return a new instance of portlets with configuration
             return new GraphPortlet(locatorId);
         }
     }

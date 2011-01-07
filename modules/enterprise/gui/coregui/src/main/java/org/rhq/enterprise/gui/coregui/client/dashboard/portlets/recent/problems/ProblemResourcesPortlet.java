@@ -68,7 +68,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     //keys for smart gwt elements. should be unique
     public static final String PROBLEM_RESOURCE_SHOW_HRS = "max-problems-query-span";
     public static final String PROBLEM_RESOURCE_SHOW_MAX = "max-problems-shown";
-    private DashboardPortlet storedPortlet;
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     //reference to datasource
     private ProblemResourcesDataSource dataSource;
 
@@ -121,7 +124,14 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
-        this.storedPortlet = storedPortlet;
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         int configuredValue = -1;
 
         //determine configuration value for ProblemResourceShowMax
@@ -169,6 +179,8 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
 
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+
         //-------------combobox for number of resource to display on the dashboard
         final SelectItem maximumProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_MAX);
         maximumProblemResourcesComboBox.setTitle(MSG.common_title_display());
@@ -184,14 +196,14 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //default selected value to 'unlimited'(live lists) and check both combobox settings here.
         String selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, defaultValue));
-            }
+
+        //if property exists retrieve it
+        if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX) != null) {
+            selectedValue = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX).getStringValue();
+        } else {//insert default value
+            storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, defaultValue));
         }
+
         //prepopulate the combobox with the previously stored selection
         maximumProblemResourcesComboBox.setDefaultValue(selectedValue);
 
@@ -227,6 +239,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+
                 if (form.getValue(PROBLEM_RESOURCE_SHOW_MAX) != null) {
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, form.getValue(PROBLEM_RESOURCE_SHOW_MAX)));
@@ -236,7 +249,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, form.getValue(PROBLEM_RESOURCE_SHOW_HRS)));
                 }
 
-                configure(null, storedPortlet);
+                configure(portletWindow, storedPortlet);
 
                 refresh();
             }
@@ -247,13 +260,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new ProblemResourcesPortlet(locatorId);
-            }
-            return reference;
+
+            return new ProblemResourcesPortlet(locatorId);
         }
     }
 

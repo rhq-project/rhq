@@ -69,15 +69,20 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     public static final String OPERATIONS_RANGE_SCHEDULED_ENABLED = "operations-scheduled-enabled";
     public static final String OPERATIONS_RANGE_COMPLETED = "operations-range-completed";
     public static final String OPERATIONS_RANGE_SCHEDULED = "operations-range-scheduled";
-    private static String recentOperations = MSG.common_title_recent_operations();
-    private static String scheduledOperations = MSG.common_title_scheduled_operations();
     public static String RANGE_DISABLED_MESSAGE = MSG.view_portlet_operations_disabled();
     //TODO: change this to use the Smart GWT default value.
     public static String RANGE_DISABLED_MESSAGE_DEFAULT = MSG.common_msg_noItemsToShow();
+
+    private static String recentOperations = MSG.common_title_recent_operations();
+    private static String scheduledOperations = MSG.common_title_scheduled_operations();
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     //ListGrids for operations
     private LocatableListGrid recentOperationsGrid = null;
     private LocatableListGrid scheduledOperationsGrid = null;
-    private DashboardPortlet storedPortlet = null;
+
     private RecentOperationsDataSource dataSourceCompleted;
     private ScheduledOperationsDataSource dataSourceScheduled;
     public static String unlimited = MSG.common_label_unlimited();
@@ -143,7 +148,15 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         //Operation range property - retrieve existing value
         PropertySimple property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_COMPLETED);
         if ((property != null) && (property.getStringValue() != null)) {
@@ -202,6 +215,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         //root dynamic form instance
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
+
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         //vertical layout
         VStack column = new VStack();
@@ -361,6 +376,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
                             .getValue(OPERATIONS_RANGE_SCHEDULED_ENABLED)));
                 }
 
+                configure(portletWindow, storedPortlet);
+
                 redraw();
             }
         });
@@ -370,13 +387,10 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new OperationsPortlet(locatorId);
-            }
-            return reference;
+
+            return new OperationsPortlet(locatorId);
         }
     }
 

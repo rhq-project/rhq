@@ -93,9 +93,13 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     public static final String ALERT_LABEL_RESOURCE_INVENTORY = MSG.common_title_resource_inventory();
     public static final int ALERT_RESOURCE_SELECTION_WIDTH = 800;
     public static final String ID = "id";
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     //shared private UI elements
     private AlertResourceSelectorRegion resourceSelector;
-    private DashboardPortlet storedPortlet = null;
+
     private AlertPortletDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
@@ -124,7 +128,15 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         //Operation range property - retrieve existing value
         PropertySimple property = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE);
         if ((property != null) && (property.getStringValue() != null)) {
@@ -265,12 +277,13 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     }
 
     public DynamicForm getCustomSettingsForm() {
-
         //root dynamic form instance
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
         form.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
         form.setHeight(400);
         form.setMargin(5);
+
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         //vertical container
         VLayout column = new VLayout();
@@ -506,7 +519,10 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
                     storedPortlet.getConfiguration().put(new PropertyList(ALERT_RANGE_RESOURCE_IDS, list));
                     getDataSource().setAlertFilterResourceId(resourceSelector.getCurrentlyAssignedIds());
                 }
-                refresh();//reload form with new data selections
+
+                configure(portletWindow, storedPortlet);
+
+                refresh();//reload form with new data selections                
                 markForRedraw();
             }
         });
@@ -521,9 +537,9 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
      * @param portlet Container for configuration changes
      * @param properties Variable list of keys used to verify or populate properties.
      */
-    private void parseFormAndPopulateConfiguration(final DynamicForm form, DashboardPortlet portlet,
+    private void parseFormAndPopulateConfiguration(final DynamicForm form, DashboardPortlet storedPortlet,
         String... properties) {
-        if ((form != null) && (portlet != null)) {
+        if ((form != null) && (storedPortlet != null)) {
             for (String property : properties) {
                 if (form.getValue(property) != null) {//if new value supplied
                     storedPortlet.getConfiguration().put(new PropertySimple(property, form.getValue(property)));
@@ -538,13 +554,10 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new RecentAlertsPortlet(locatorId);
-            }
-            return reference;
+
+            return new RecentAlertsPortlet(locatorId);
         }
     }
 

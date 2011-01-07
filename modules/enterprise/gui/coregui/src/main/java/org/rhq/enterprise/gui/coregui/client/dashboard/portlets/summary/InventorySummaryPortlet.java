@@ -165,14 +165,9 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            // reuse the same portlet, it's not configurable
-            if (reference == null) {
-                reference = new InventorySummaryPortlet(locatorId);
-            }
-            return reference;
+            return new InventorySummaryPortlet(locatorId);
         }
     }
 

@@ -252,7 +252,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/fedorahosted/cobbler/cobbler4j/0.1/cobbler4j-0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.0.4/gwt-user-2.0.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.0.4/gwt-dev-2.0.4.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/2.2.RHQ2/smartgwt-2.2.RHQ2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/2.4/smartgwt-2.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/gwt-log/gwt-log/3.0.4/gwt-log-3.0.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/ca/nanometrics/gflot/1.0.0/gflot-1.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>

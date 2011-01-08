@@ -43,6 +43,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -95,6 +96,15 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     private String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
 
     private Timer sparklineReloader = null;
+    private long KBYTES = 1024;
+    private long MBYTES = KBYTES * KBYTES;
+    private long GBYTES = MBYTES * KBYTES;
+    private long TBYTES = GBYTES * KBYTES;
+    private long PBYTES = TBYTES * KBYTES;
+    private long[] byteCount = { PBYTES, TBYTES, GBYTES, MBYTES, KBYTES };
+    private String[] byteDesc = { "PB", "TB", "GB", "MB", "KB" };
+    private NumberFormat decimalThreeAndOne = NumberFormat.getFormat("###.#");
+    private NumberFormat decimalThreeAndTwo = NumberFormat.getFormat("###.##");
 
     private ResourceComposite resourceComposite;
 
@@ -214,7 +224,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         //        int resourceId = this.resourceComposite.getResource().getId();
         //        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceId);
         //        Log.debug("$$$$$$$$$$$$$ ActivityView2.refresh()");
-        loadData();
         markForRedraw();
     }
 
@@ -648,108 +657,112 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     }
 
     private void getRecentMetrics() {
+        //display container
         final LocatableVLayout column = new LocatableVLayout(recentMeasurementsContent.extendLocatorId("Content"));
-        column.setHeight(10);
         final int resourceId = this.resourceComposite.getResource().getId();
+
+        //retrieve all relevant measurement definition ids.
         Set<MeasurementDefinition> definitions = this.resourceComposite.getResource().getResourceType()
             .getMetricDefinitions();
 
-        final HashMap<String, MeasurementDefinition> map = new HashMap<String, MeasurementDefinition>();
-        for (MeasurementDefinition md : definitions) {
-            map.put(md.getDisplayName(), md);
+        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
+        for (MeasurementDefinition definition : definitions) {
+            measurementDefMap.put(definition.getDisplayName(), definition);
         }
+
+        //bundle definition ids for asynch call.
         int[] definitionArrayIds = new int[definitions.size()];
         final String[] displayOrder = new String[definitions.size()];
-        map.keySet().toArray(displayOrder);
+        measurementDefMap.keySet().toArray(displayOrder);
+        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
         Arrays.sort(displayOrder);
-        int l = 0;
+
+        //organize definitionArrayIds for ordered request on server.
+        int index = 0;
         for (String definitionToDisplay : displayOrder) {
-            definitionArrayIds[l++] = map.get(definitionToDisplay).getId();
+            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
         }
+
+        //make the asynchronous call for all the measurement data
         GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitionArrayIds,
             System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving metrics charting data for resource [" + resourceId + "]:"
+                    Log.debug("Error retrieving recent metrics charting data for resource [" + resourceId + "]:"
                         + caught.getMessage());
                 }
 
                 @Override
                 public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
-                    for (int h = 0; h < displayOrder.length; h++) {
-                        MeasurementDefinition md = map.get(displayOrder[h]);
-                        List<MeasurementDataNumericHighLowComposite> data = results.get(h);
+                    //iterate over the retrieved charting data
+                    for (int index = 0; index < displayOrder.length; index++) {
+
+                        //retrieve the correct measurement definition
+                        MeasurementDefinition md = measurementDefMap.get(displayOrder[index]);
+
+                        //load the data results for the given metric definition
+                        List<MeasurementDataNumericHighLowComposite> data = results.get(index);
+
                         //locate last and minimum values.
-                        double lastValue = 0;
-                        double minValue = Double.MAX_VALUE;
+                        double lastValue = -1;
+                        double minValue = Double.MAX_VALUE;//
                         for (MeasurementDataNumericHighLowComposite d : data) {
-                            if ((d.getValue() + "").indexOf("NaN") == -1) {
+                            if (!Double.isNaN(d.getValue())) {
                                 if (d.getValue() < minValue) {
                                     minValue = d.getValue();
                                 }
+                                lastValue = d.getValue();
                             }
                         }
 
-                        //collapse the data into comma delimited list
+                        //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
                         String commaDelimitedList = "";
 
                         for (MeasurementDataNumericHighLowComposite d : data) {
-                            if ((d.getValue() + "").indexOf("NaN") == -1) {
-                                commaDelimitedList += (d.getValue() - minValue) + ",";
-                                lastValue = d.getValue();
-                                if (d.getValue() < minValue) {
-                                    minValue = d.getValue();
-                                }
+                            if (!Double.isNaN(d.getValue())) {
+                                commaDelimitedList += d.getValue() + ",";
                             }
                         }
                         LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
-                        //                        row.setWidth(300);
                         HTMLFlow graph = new HTMLFlow();
-                        //move all sparkline data up to the minimum value
-                        String contents = "<span id='sparkline_" + 1 + "' class='dynamicsparkline' width='0'>"
-                            + commaDelimitedList + "</span>";
+                        //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
+                        //                            + commaDelimitedList + "</span>";
+                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' "
+                            + "values='" + commaDelimitedList + "'>...</span>";
                         graph.setContents(contents);
                         graph.setContentsType(ContentsType.PAGE);
+                        //diable scrollbars on span
                         graph.setScrollbarSize(0);
-                        CanvasItem ci2 = new CanvasItem();
-                        ci2.setShowTitle(false);
-                        ci2.setHeight(16);
-                        ci2.setWidth(60);
-                        ci2.setCanvas(graph);
+
+                        CanvasItem graphContainer = new CanvasItem();
+                        graphContainer.setShowTitle(false);
+                        graphContainer.setHeight(16);
+                        graphContainer.setWidth(60);
+                        graphContainer.setCanvas(graph);
 
                         //Link/title element
                         LinkItem link = new LinkItem();
-                        link.setLinkTitle(md.getDisplayName());
-                        link.setTitle(md.getName());
+                        link.setLinkTitle(md.getDisplayName() + ":");
+                        //TODO: spinder, change link whenever portal.war/graphing is removed.
+                        link.setValue("/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
+                            + resourceId + "&m=" + md.getId());
                         link.setTarget("_self");
                         link.setShowTitle(false);
+
                         //Value
                         StaticTextItem value = new StaticTextItem();
                         String convertedValue = lastValue + " " + md.getUnits();
-                        long KBYTES = 1024;
-                        long MBYTES = KBYTES * KBYTES;
-                        long GBYTES = MBYTES * KBYTES;
-                        NumberFormat fmt = NumberFormat.getDecimalFormat();
-                        fmt = NumberFormat.getFormat("###.####");
-                        if (md.getUnits() == MeasurementUnits.BYTES) {
-                            if ((lastValue / GBYTES) > 1) {
-                                convertedValue = fmt.format(lastValue / GBYTES) + "GB";
-                            } else if ((lastValue / MBYTES) > 1) {
-                                convertedValue = fmt.format(lastValue / MBYTES) + "MB";
-                            } else {
-                                convertedValue = fmt.format(lastValue / KBYTES) + "KB";
-                            }
-                        } else {
-                            convertedValue = fmt.format(lastValue / 100) + md.getUnits();
-                        }
+                        convertedValue = convertLastValueForDisplay(lastValue, md);
+
                         value.setDefaultValue(convertedValue);
                         value.setShowTitle(false);
                         value.setShowPickerIcon(false);
                         value.setWrap(false);
-
-                        row.setItems(ci2, link, value);
+                        row.setItems(graphContainer, link, value);
+                        //if graph content returned
                         if (commaDelimitedList.trim().length() > 100) {
                             column.addMember(row);
                         }
@@ -759,6 +772,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                 }
             });
 
+        //cleanup
         for (Canvas child : recentMeasurementsContent.getChildren()) {
             child.destroy();
         }
@@ -776,6 +790,47 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         }
     }
 
+    /** Takes last double value returned and the relevant MeasurementDefinition and formats
+     *  the results for display in the UI.  'Formatting' refers to relevant rounding,
+     *  number format for significant digits depending upon the measurement definition
+     *  details.
+     *
+     * @param lastValue
+     * @param md MeasurementDefinition
+     * @return formatted String representation of the last value retrieved.
+     */
+    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
+
+        String convertedValue = "";
+        if (md.getUnits() == MeasurementUnits.BYTES) {
+            double value;
+            boolean converted = false;
+            for (int i = 0; (!converted && (i < byteCount.length)); i++) {
+                //detect first byte translation  1 > N  < 1000
+                value = lastValue / byteCount[i];
+                if (value > 1) {
+                    converted = true;
+                    convertedValue = md.getDisplayType() == DisplayType.SUMMARY ? (decimalThreeAndOne.format(value) + byteDesc[i])
+                        : (decimalThreeAndTwo.format(value)) + byteDesc[i];
+                }
+            }
+        } else if (md.getUnits() == MeasurementUnits.PERCENTAGE) {
+            double value = lastValue * 100;
+            convertedValue = (md.getDisplayType() == DisplayType.SUMMARY ? (decimalThreeAndOne.format(value))
+                : (decimalThreeAndTwo.format(value)))
+                + "%";
+        } else if (md.getUnits() == MeasurementUnits.NONE) {
+            double value = lastValue;
+            convertedValue = md.getDisplayType() == DisplayType.SUMMARY ? (decimalThreeAndOne.format(value))
+                : (decimalThreeAndTwo.format(value));
+        } else {
+            convertedValue = decimalThreeAndTwo.format(lastValue / 100) + md.getUnits();
+        }
+
+        return convertedValue;
+    }
+
+    //This is a JSNI call out to the third party javascript lib to execute on the data inserted into the DOM.
     public static native void graphSparkLines()
     /*-{
      //find all elements where attribute class contains 'dynamicsparkline' and graph their contents

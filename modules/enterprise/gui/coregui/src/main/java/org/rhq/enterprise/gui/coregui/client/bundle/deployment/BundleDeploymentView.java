@@ -325,6 +325,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setValueIconWidth(11);
+        status.setShowValueIconOnly(true);
         status.setWidth("*");
 
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();

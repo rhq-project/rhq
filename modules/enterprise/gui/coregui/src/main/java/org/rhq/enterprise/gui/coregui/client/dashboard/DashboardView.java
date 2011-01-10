@@ -187,8 +187,8 @@ public class DashboardView extends LocatableVLayout {
                 int numColumns = columns.length;
                 if (numColumns > 0) {
                     PortalColumn lastColumn = (PortalColumn) columns[numColumns - 1];
-                    for (PortletWindow portletWindow : (PortletWindow[]) lastColumn.getMembers()) {
-                        storedDashboard.removePortlet(portletWindow.getStoredPortlet());
+                    for (Canvas portletWindow : lastColumn.getMembers()) {
+                        storedDashboard.removePortlet(((PortletWindow) portletWindow).getStoredPortlet());
                     }
                     portalLayout.removeMember(lastColumn);
                     numColItem.setValue(numColumns - 1);
@@ -317,9 +317,7 @@ public class DashboardView extends LocatableVLayout {
 
     private void loadPortletWindows() {
 
-        int col = 0;
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
-
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 final PortletWindow portletWindow = new PortletWindow(portalLayout
                     .extendLocatorId(getPortletLocatorId(storedPortlet)), this, storedPortlet);
@@ -329,10 +327,8 @@ public class DashboardView extends LocatableVLayout {
                 portletWindow.setHeight(storedPortlet.getHeight());
                 portletWindow.setVisible(true);
 
-                portalLayout.addPortletWindow(portletWindow, col);
+                portalLayout.addPortletWindow(portletWindow, i);
             }
-
-            col++;
         }
     }
 

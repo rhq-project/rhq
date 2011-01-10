@@ -71,7 +71,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class DashboardsView extends LocatableVLayout implements BookmarkableView, InitializableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Dashboard", MSG.view_dashboards_title());
+    public static final ViewName VIEW_ID = new ViewName("Dashboards", MSG.view_dashboards_title());
+
+    // for repeatable locators we need to use repeatable naming for localizable tab names
+    private static final ViewName NAME_CUSTOM_DASH = new ViewName("CustomDashboard", MSG.common_title_custom());
+    private static final ViewName NAME_DEFAULT_DASH = new ViewName("DefaultDashboard", MSG.common_title_default());
 
     // Each NamedTab is a Dashboard, name=Dashboard.id, title=Dashboard.name
     private NamedTabSet tabSet;
@@ -197,9 +201,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         });
 
         for (Dashboard dashboard : dashboards) {
-            DashboardView dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard);
-            String tabName = String.valueOf(dashboard.getId());
-            Tab tab = new NamedTab(this.extendLocatorId(tabName), new ViewName(tabName, dashboard.getName()), null);
+            String dashboardName = dashboard.getName();
+            String dashboardLocatorId = getDashboardLocatorId(dashboardName);
+            String locatorId = extendLocatorId(dashboardLocatorId);
+            DashboardView dashboardView = new DashboardView(locatorId, this, dashboard);
+            Tab tab = new NamedTab(locatorId, new ViewName(dashboardName, dashboardName), null);
             tab.setPane(dashboardView);
             tab.setCanClose(true);
 
@@ -207,7 +213,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             if (dashboard.getName().equals(selectedTabName)) {
                 tabSet.selectTab(tab);
             }
-
         }
 
         tabSet.addCloseClickHandler(new CloseClickHandler() {
@@ -233,6 +238,30 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         });
 
         addMember(tabSet);
+    }
+
+    /**
+     * The stored name for a dashboard is initally set to a generated, localizable name. It can later be edited
+     * by the user. Automation tests must be valid independent of localization so we must use repeatable locators.
+     * This method checks for generated dash names and returns a repeatable locator for them.
+     * 
+     * @return a repeatable locatorId for a generated dash name, otherwise just return the passed in name. 
+     */
+    private String getDashboardLocatorId(String dashboardName) {
+        if (null == dashboardName) {
+            return dashboardName;
+        }
+
+        if (dashboardName.equals(NAME_DEFAULT_DASH.getTitle())) {
+            return NAME_DEFAULT_DASH.getName();
+        }
+
+        if (dashboardName.startsWith(NAME_CUSTOM_DASH.getTitle())) {
+            return NAME_CUSTOM_DASH.getName() + dashboardName.substring(NAME_CUSTOM_DASH.getTitle().length());
+
+        }
+
+        return dashboardName;
     }
 
     protected Dashboard getDefaultDashboard() {
@@ -313,11 +342,13 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(Dashboard result) {
-                dashboardsByName.put(result.getName(), result); // update map so name can not be reused
-                DashboardView dashboardView = new DashboardView(extendLocatorId(result.getName()), DashboardsView.this,
-                    result);
-                String tabName = String.valueOf(result.getId());
-                NamedTab tab = new NamedTab(extendLocatorId(tabName), new ViewName(tabName, result.getName()), null);
+                String dashboardName = result.getName();
+                dashboardsByName.put(dashboardName, result); // update map so name can not be reused
+                String dashboardLocatorId = getDashboardLocatorId(dashboardName);
+                DashboardView dashboardView = new DashboardView(extendLocatorId(dashboardLocatorId),
+                    DashboardsView.this, result);
+                NamedTab tab = new NamedTab(extendLocatorId(dashboardLocatorId), new ViewName(dashboardName,
+                    dashboardName), null);
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 

@@ -108,7 +108,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setCellHeight(50);
             //wrap to display disambiguation
             listGrid.setWrapCells(true);
-            addExtraWidget(new TimeRange(this.getLocatorId(), this));
+            addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this));
         }
 
     }
@@ -177,7 +177,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
      */
     public DynamicForm getCustomSettingsForm() {
 
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("customSettings"));
 
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 

@@ -72,7 +72,7 @@ public class DashboardView extends LocatableVLayout {
     boolean editMode = false;
 
     PortalLayout portalLayout;
-    DynamicForm editForm;
+    LocatableDynamicForm editForm;
     IMenuButton addPortlet;
 
     Set<PortletWindow> portletWindows = new HashSet<PortletWindow>();
@@ -198,7 +198,7 @@ public class DashboardView extends LocatableVLayout {
             }
         });
 
-        Menu addPortletMenu = new Menu();
+        Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));
         HashMap<String, String> keyNameMap = PortletFactory.getRegisteredPortletNameMap();
         // the assumption here is that the portlet names are unique. we want a sorted menu here, so create a
         // sorted map from portlet name to portlet key and use that to generate the menu. It would be nice if you
@@ -213,7 +213,7 @@ public class DashboardView extends LocatableVLayout {
             menuItem.setAttribute("portletKey", nameKeyMap.get(portletName));
             addPortletMenu.addItem(menuItem);
         }
-        addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
+        addPortlet = new LocatableIMenuButton(editForm.extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
             addPortletMenu);
 
         addPortlet.setIcon("[skin]/images/actions/add.png");
@@ -247,7 +247,7 @@ public class DashboardView extends LocatableVLayout {
         picker.setValue(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
         //refresh interval
-        LocatableMenu refreshMenu = new LocatableMenu(extendLocatorId("AutoRefreshMenu"));
+        LocatableMenu refreshMenu = new LocatableMenu(editForm.extendLocatorId("AutoRefreshMenu"));
         refreshMenu.setShowShadow(true);
         refreshMenu.setShadowDepth(10);
         refreshMenu.setAutoWidth();
@@ -291,7 +291,7 @@ public class DashboardView extends LocatableVLayout {
         }
 
         refreshMenu.setItems(refreshMenuItems);
-        refreshMenuButton = new LocatableIMenuButton(extendLocatorId("AutoRefreshButton"), MSG
+        refreshMenuButton = new LocatableIMenuButton(editForm.extendLocatorId("AutoRefreshButton"), MSG
             .common_title_change_refresh_time(), refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.getMenu().setItems(refreshMenuItems);
@@ -321,8 +321,8 @@ public class DashboardView extends LocatableVLayout {
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
 
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
-                final PortletWindow portletWindow = new PortletWindow(extendLocatorId(storedPortlet.getPortletKey()),
-                    this, storedPortlet);
+                final PortletWindow portletWindow = new PortletWindow(portalLayout
+                    .extendLocatorId(getPortletLocatorId(storedPortlet)), this, storedPortlet);
                 portletWindows.add(portletWindow);
                 portletWindow.setTitle(storedPortlet.getName());
 
@@ -336,26 +336,51 @@ public class DashboardView extends LocatableVLayout {
         }
     }
 
+    /**
+     * LocatorIds need to be repeatable and non-duplicated.  The natural key for a portlet is the Id but the Id
+     * is not a good locatorId as it may change (it's a sequence generated id) on subsequent test runs.  A portlet has
+     * an internal identifier (portletKey) and a name, but the key-name tuple is not guaranteed to be unique as
+     * multiple instances of the same portlet type may be present on the same, or across multiple dashboards. There
+     * is one tuple that is guaranteed unique and useful for a repeatable locator Id: DashBoard-Position.  This
+     * means that the on a single dashboard each portlet has a unique column-columnIndex pair.  Although portlets
+     * can move, and the positions can change at runtime, it's still valid for a locatorId because it is
+     * unique and repeatable fpr test purposes. We also add the portletKey for an easier visual cue. 
+     * 
+     * @param dashboardPortlet
+     * @return The locatorId for the portlet. Form PortleyKey_DashboardId_Column_ColumnIndex
+     */
+    private String getPortletLocatorId(DashboardPortlet dashboardPortlet) {
+        StringBuilder locatorId = new StringBuilder(dashboardPortlet.getPortletKey());
+        locatorId.append("_");
+        locatorId.append(dashboardPortlet.getDashboard().getId());
+        locatorId.append("_");
+        locatorId.append(dashboardPortlet.getColumn());
+        locatorId.append("_");
+        locatorId.append(dashboardPortlet.getIndex());
+
+        return locatorId.toString();
+    }
+
     private void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
+        storedDashboard.addPortlet(storedPortlet);
 
-        final PortletWindow newPortletWindow = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
+        String locatorId = getPortletLocatorId(storedPortlet);
+        final PortletWindow newPortletWindow = new PortletWindow(portalLayout.extendLocatorId(locatorId), this,
+            storedPortlet);
         newPortletWindow.setTitle(portletName);
         newPortletWindow.setHeight(350);
         newPortletWindow.setVisible(false);
 
         portletWindows.add(newPortletWindow);
-
-        int columnIndex = portalLayout.addPortletWindow(newPortletWindow);
-        PortalColumn column = portalLayout.getPortalColumn(columnIndex);
-
-        storedDashboard.addPortlet(storedPortlet, columnIndex, column.getMembers().length - 1);
+        portalLayout.addPortletWindow(newPortletWindow, storedPortlet.getColumn());
+        PortalColumn portalColumn = portalLayout.getPortalColumn(storedPortlet.getColumn());
 
         // also insert a blank spacer element, which will trigger the built-in
         //  animateMembers layout animation
         final LayoutSpacer placeHolder = new LayoutSpacer();
         //        placeHolder.setRect(newPortlet.getRect());
-        column.addMember(placeHolder); // add to top
+        portalColumn.addMember(placeHolder); // add to top
 
         // create an outline around the clicked button
         final Canvas outline = new Canvas();
@@ -440,7 +465,7 @@ public class DashboardView extends LocatableVLayout {
     }
 
     /**
-     * This an enhanced equals for portlets that allows equality for unpersisted portlets. At times (like addPortlet)
+     * This is an enhanced equals for portlets that allows equality for unpersisted portlets. At times (like addPortlet)
      * a portlet may have been associated with its window prior to being persisted. In this case we can consider
      * it equal if it is associated with the same dashboard and has the same positioning. Note that key-name pairing
      * can not be used for equality as a dashboard is allowed to have the same portlet multiple times, with a default

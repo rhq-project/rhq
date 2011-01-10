@@ -91,23 +91,6 @@ public class PortalLayout extends LocatableHLayout {
         return ((PortalColumn) getMember(column));
     }
 
-    public int addPortletWindow(PortletWindow portletWindow) {
-        int fewestPortletsColumn = -1;
-        int fewestPortletsColumnCount = Integer.MAX_VALUE;
-        for (int i = 0, numColumns = getMembers().length; (i < numColumns); ++i) {
-            PortalColumn portletColumn = (PortalColumn) getMember(i);
-            int memberCount = portletColumn.getMembers().length;
-            if (fewestPortletsColumnCount > memberCount) {
-                fewestPortletsColumn = i;
-                fewestPortletsColumnCount = memberCount;
-            }
-        }
-
-        addPortletWindow(portletWindow, fewestPortletsColumn);
-
-        return fewestPortletsColumn;
-    }
-
     public PortalColumn addPortletWindow(PortletWindow portletWindow, int column) {
 
         PortalColumn portalColumn = (PortalColumn) getMember(column);

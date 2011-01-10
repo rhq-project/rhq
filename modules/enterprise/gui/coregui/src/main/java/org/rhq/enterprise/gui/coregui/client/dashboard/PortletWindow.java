@@ -168,7 +168,8 @@ public class PortletWindow extends LocatableWindow {
     protected void onInit() {
         super.onInit();
 
-        view = PortletFactory.buildPortlet(this, storedPortlet);
+        // each portletWindow wraps a single portlet view, so just extend the window's locatorId with a static id
+        view = PortletFactory.buildPortlet(extendLocatorId("View"), this, storedPortlet);
 
         Canvas canvas = (Canvas) view;
         addItem(canvas);

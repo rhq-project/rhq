@@ -24,6 +24,7 @@ package org.rhq.core.domain.dashboard;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -196,26 +197,34 @@ public class Dashboard implements Serializable {
 
     /** 
      * This can be used to safely add a portlet without knowing the current portlet positioning on the
-     * Dashboard. It adds the portlet to the bottom of the first column.
+     * Dashboard. It adds the portlet to the bottom of column with the least portlets.
      * 
-     * @param storedPortlet
+     * @param storedPortlet, MODIFIED with assigned column, index
      */
     public void addPortlet(DashboardPortlet storedPortlet) {
-        int highIndex = -1;
-        Iterator<DashboardPortlet> i = portlets.iterator();
-        while (i.hasNext()) {
-            DashboardPortlet portlet = i.next();
-            if (0 == portlet.getColumn() && highIndex < portlet.getIndex()) {
-                highIndex = portlet.getIndex();
+        int[] columnCounts = new int[getColumns()];
+        Arrays.fill(columnCounts, 0);
+        // set column counts
+        for (DashboardPortlet dashboardPortlet : portlets) {
+            ++(columnCounts[dashboardPortlet.getColumn()]);
+        }
+        // get best column
+        int bestColumn = -1;
+        int minPortlets = Integer.MAX_VALUE;
+        for (int column = 0; (column < columnCounts.length); ++column) {
+            if (columnCounts[column] < minPortlets) {
+                bestColumn = column;
+                minPortlets = columnCounts[column];
             }
         }
-
-        addPortlet(storedPortlet, 0, ++highIndex);
+        // addPortlet to best Column
+        addPortlet(storedPortlet, bestColumn, minPortlets);
     }
 
     /**
      * Call this only if you are sure the column and index are valid, not already used and not leaving gaps.
-     * @param storedPortlet
+     * 
+     * @param storedPortlet, MODIFIED with assigned column, index
      * @param column
      * @param index
      */

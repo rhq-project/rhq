@@ -47,6 +47,7 @@ import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
 import org.rhq.core.pc.operation.OperationManager;
@@ -463,10 +464,15 @@ public class StandaloneContainer {
      */
     private void children(String[] tokens) {
         int id = Integer.valueOf(tokens[1]);
-        Resource r = inventoryManager.getResourceContainer(id).getResource();
-        Set<Resource> resources = r.getChildResources();
-        for (Resource res : resources) {
-            System.out.println(res);
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
+        if (resourceContainer != null) {
+            Resource r = resourceContainer.getResource();
+            Set<Resource> resources = r.getChildResources();
+            for (Resource res : resources) {
+                System.out.println(res);
+            }
+        } else {
+            System.err.println("There is no resource with id " + id);
         }
     }
 

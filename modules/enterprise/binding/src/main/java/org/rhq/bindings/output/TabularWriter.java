@@ -446,7 +446,7 @@ public class TabularWriter {
 
     public void print(PropertyList p, int depth) {
         out.println(indent(depth) + p.getName() + " [" + p.getList().size() + "] {");
-        if (p.getList().get(0) instanceof PropertyMap) {
+        if (p.getList().size() > 0 && p.getList().get(0) instanceof PropertyMap) {
             consistentMaps(p.getList());
 
         } else {

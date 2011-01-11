@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
 import java.util.LinkedHashMap;
 
@@ -54,7 +54,7 @@ public class ConfigurationClassBuilder {
     }
 
     private static CtClass getSimpleTypeClass(PropertyDefinitionSimple simple) throws NotFoundException {
-        Class paramType = null;
+        Class<?> paramType = null;
         switch (simple.getType()) {
         case STRING:
         case LONG_STRING:

@@ -1,59 +1,192 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <artifactId>rhq-enterprise-parent</artifactId>
-    <groupId>org.rhq</groupId>
-    <version>4.0.0-SNAPSHOT</version>
-  </parent>
-  <groupId>org.rhq</groupId>
-  <artifactId>rhq-script-bindings</artifactId>
-  <version>4.0.0-SNAPSHOT</version>
-  <name>RHQ Script Bindings</name>
-  <description>Abstraction of different facilities and default configurations for script bindings</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>rhq-enterprise-parent</artifactId>
+		<groupId>org.rhq</groupId>
+		<version>4.0.0-SNAPSHOT</version>
+	</parent>
+	<groupId>org.rhq</groupId>
+	<artifactId>rhq-script-bindings</artifactId>
+	<version>4.0.0-SNAPSHOT</version>
+	<name>RHQ Script Bindings</name>
+	<description>Abstraction of different facilities and default configurations for script bindings</description>
 
-    <properties>
-      <persistence-api.version>1.0</persistence-api.version>
-      <opencsv.version>1.8</opencsv.version>
-    </properties>
-    
-    <dependencies>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <exclusions>
-            <exclusion>
-              <groupId>hibernate</groupId>
-              <artifactId>hibernate3</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>      
-      
-      <dependency>
-         <groupId>commons-lang</groupId>
-         <artifactId>commons-lang</artifactId> 
-         <version>2.4</version>
-         <scope>test</scope>        
-      </dependency>      
+	<properties>
+		<persistence-api.version>1.0</persistence-api.version>
+		<opencsv.version>1.8</opencsv.version>
+	</properties>
 
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>${persistence-api.version}</version>
-         <scope>test</scope>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
-         <version>${testng.version}</version>          
-         <scope>test</scope>
-      </dependency> 
-      
-      <dependency>
-         <groupId>net.sf.opencsv</groupId>
-         <artifactId>opencsv</artifactId>
-         <version>${opencsv.version}</version>
-      </dependency>           
-    </dependencies>
+	<dependencies>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>rhq-core-domain</artifactId>
+			<version>${project.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>hibernate</groupId>
+					<artifactId>hibernate3</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-enterprise-server</artifactId>
+            <version>${project.version}</version>
+            <type>ejb-client</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>ant</groupId>
+                    <artifactId>ant</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-httpclient</groupId>
+                    <artifactId>commons-httpclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-lang</groupId>
+                    <artifactId>commons-lang</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-validator</groupId>
+                    <artifactId>commons-validator</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>gnu-getopt</groupId>
+                    <artifactId>getopt</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jboss</groupId>
+                    <artifactId>jboss-cache</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jboss</groupId>
+                    <artifactId>jbpm</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-core-client-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-core-dbutils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>safe-invoker</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>test-utils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.snmp4j</groupId>
+                    <artifactId>snmp4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>oswego-concurrent</groupId>
+                    <artifactId>concurrent</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>rss4j</groupId>
+                    <artifactId>rss4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jboss</groupId>
+                    <artifactId>jboss-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jboss</groupId>
+                    <artifactId>jboss-jmx</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jboss</groupId>
+                    <artifactId>jboss-remoting</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>jboss</groupId>
+                    <artifactId>jboss-serialization</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.jcraft</groupId>
+                    <artifactId>jsch</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-enterprise-comm</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.4</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.persistence</groupId>
+			<artifactId>persistence-api</artifactId>
+			<version>${persistence-api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>hibernate-annotations</groupId>
+			<artifactId>hibernate-annotations</artifactId>
+			<!-- NOTE: The version is defined in the root POM's dependencyManagement 
+				section. -->
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>${testng.version}</version>
+			<scope>compile</scope> <!-- yes, this is meant to be in compile, because we're providing assertions 
+				to the scripts -->
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>${opencsv.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>jboss</groupId>
+			<artifactId>javassist</artifactId>
+		</dependency>
+	</dependencies>
 </project>

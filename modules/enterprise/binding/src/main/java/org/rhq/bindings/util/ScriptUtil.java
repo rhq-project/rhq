@@ -20,45 +20,59 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
-
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+
+import org.rhq.bindings.StandardBindings;
+import org.rhq.bindings.client.RhqFacade;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+
+/**
+ * Instance of this class is injected into the script engine scope.
+ *
+ * @author Lukas Krejci
+ */
 public class ScriptUtil {
 
-    private ClientMain client;
-
-
-    public ScriptUtil(ClientMain client) {
-        this.client = client;
+    private RhqFacade remoteClient;
+    private ScriptEngine scriptEngine;
+    
+    public ScriptUtil(RhqFacade remoteClient) {
+        this.remoteClient = remoteClient;
     }
 
-
-
+    /**
+     * This method is called before the instance is inserted into the script engine scope.
+     * 
+     * @param scriptEngine the script engine this instance is to be injected in
+     */
+    public void init(ScriptEngine scriptEngine) {
+        this.scriptEngine = scriptEngine;
+    }
+    
     public PageList<Resource> findResources(String string) {
-        ResourceManagerRemote resourceManager = client.getRemoteClient().getResourceManagerRemote();
+        ResourceManagerRemote resourceManager = remoteClient.getResourceManager();
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName(string);
-        return resourceManager.findResourcesByCriteria(client.getSubject(), criteria);
+        return resourceManager.findResourcesByCriteria(getSubjectFromEngine(), criteria);
     }
 
 
@@ -100,10 +114,6 @@ public class ScriptUtil {
         return bytes;
     }
 
-    public String getFileString(String fileName) {
-        return new String(getFileBytes(fileName));
-    }
-
     public void sleep(long millis) {
         try {
             Thread.sleep(millis);
@@ -136,8 +146,8 @@ public class ScriptUtil {
 
         while(history == null && i < maxIntervals) {
             Thread.sleep(intervalDuration);
-            PageList<ResourceOperationHistory> histories = client.getRemoteClient().getOperationManagerRemote()
-                    .findResourceOperationHistoriesByCriteria(client.getRemoteClient().getSubject(), criteria);
+            PageList<ResourceOperationHistory> histories = remoteClient.getOperationManager()
+                    .findResourceOperationHistoriesByCriteria(remoteClient.getSubject(), criteria);
             if (histories.size() > 0 && histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
                 history = histories.get(0);
             }
@@ -148,12 +158,24 @@ public class ScriptUtil {
     }
 
     public boolean isDefined(String identifier) {
-        ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
-
         Bindings engineBindings = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
         Bindings globalBindings = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE);
 
         return engineBindings.containsKey(identifier) || globalBindings.containsKey(identifier);
+    }
+    
+    private Subject getSubjectFromEngine() {
+        return (Subject) findBinding(StandardBindings.SUBJECT);
+    }
+    
+    private Object findBinding(String identifier) {
+        Bindings engineBindings = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
+        Bindings globalBindings = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE);
+
+        if (engineBindings.containsKey(identifier)) {
+            return engineBindings.get(identifier);
+        } else {
+            return globalBindings.get(identifier);
+        }
     }
 }

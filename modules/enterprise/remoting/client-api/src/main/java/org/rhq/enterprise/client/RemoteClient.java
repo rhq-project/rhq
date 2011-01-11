@@ -22,11 +22,16 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.remoting.Client;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
+import org.rhq.bindings.client.RhqFacade;
+import org.rhq.bindings.client.RhqManagers;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
@@ -66,60 +71,10 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class RemoteClient {
+public class RemoteClient implements RhqFacade {
 
-    public enum Manager {
-        AlertManager(AlertManagerRemote.class), //
-        AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
-        AvailabilityManager(AvailabilityManagerRemote.class), //
-        BundleManager(BundleManagerRemote.class), //
-        CallTimeDataManager(CallTimeDataManagerRemote.class), //
-        RepoManager(RepoManagerRemote.class), //
-        ConfigurationManager(ConfigurationManagerRemote.class), //
-        ContentManager(ContentManagerRemote.class), //
-        DataAccessManager(DataAccessManagerRemote.class), //
-        DiscoveryBoss(DiscoveryBossRemote.class), //
-        EventManager(EventManagerRemote.class), //
-        MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
-        MeasurementDataManager(MeasurementDataManagerRemote.class), //
-        MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), //
-        MeasurementScheduleManager(MeasurementScheduleManagerRemote.class), //
-        OperationManager(OperationManagerRemote.class), //
-        ResourceManager(ResourceManagerRemote.class), //
-        ResourceFactoryManager(ResourceFactoryManagerRemote.class), //
-        ResourceGroupManager(ResourceGroupManagerRemote.class), //
-        ResourceTypeManager(ResourceTypeManagerRemote.class), //
-        RoleManager(RoleManagerRemote.class), //
-        SavedSearchManager(SavedSearchManagerRemote.class), //
-        SubjectManager(SubjectManagerRemote.class), //
-        SupportManager(SupportManagerRemote.class), //
-        SystemManager(SystemManagerRemote.class), //
-        RemoteInstallManager(RemoteInstallManagerRemote.class), //
-        TagManager(TagManagerRemote.class);
-
-        private Class<?> remote;
-        private String remoteName;
-        private String beanName;
-
-        private Manager(Class<?> remote) {
-            this.remote = remote;
-            this.beanName = this.name() + "Bean";
-            this.remoteName = this.name() + "Remote";
-        }
-
-        Class<?> remote() {
-            return this.remote;
-        }
-
-        public String beanName() {
-            return this.beanName;
-        }
-
-        public String remoteName() {
-            return this.remoteName;
-        }
-    };
-
+    private static final Log LOG = LogFactory.getLog(RemoteClient.class);
+    
     public static final String NONSECURE_TRANSPORT = "servlet";
     public static final String SECURE_TRANSPORT = "sslservlet";
 
@@ -184,12 +139,10 @@ public class RemoteClient {
         logout();
         doConnect();
 
-        this.subject = getSubjectManagerRemote().login(user, password);
+        this.subject = getSubjectManager().login(user, password);
         this.loggedIn = true;
 
-        ServerVersion version = getSystemManagerRemote().getServerVersion(this.subject);
-        // TODO: what to do with this?
-        System.out.println("Remote server version is: " + version);
+        ServerVersion version = getSystemManager().getServerVersion(this.subject);
 
         return this.subject;
     }
@@ -200,7 +153,7 @@ public class RemoteClient {
     public void logout() {
         try {
             if (this.loggedIn && this.subject != null) {
-                getSubjectManagerRemote().logout(this.subject);
+                getSubjectManager().logout(this.subject);
             }
         } catch (Exception e) {
             // just keep going so we can disconnect this client
@@ -304,112 +257,112 @@ public class RemoteClient {
         this.transport = transport;
     }
 
-    public AlertManagerRemote getAlertManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.AlertManager);
+    public AlertManagerRemote getAlertManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.AlertManager);
     }
 
-    public AlertDefinitionManagerRemote getAlertDefinitionManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.AlertDefinitionManager);
+    public AlertDefinitionManagerRemote getAlertDefinitionManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.AlertDefinitionManager);
     }
 
-    public AvailabilityManagerRemote getAvailabilityManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.AvailabilityManager);
+    public AvailabilityManagerRemote getAvailabilityManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.AvailabilityManager);
     }
 
-    public BundleManagerRemote getBundleManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.BundleManager);
+    public BundleManagerRemote getBundleManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.BundleManager);
     }
 
-    public CallTimeDataManagerRemote getCallTimeDataManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.CallTimeDataManager);
+    public CallTimeDataManagerRemote getCallTimeDataManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.CallTimeDataManager);
     }
 
-    public RepoManagerRemote getRepoManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.RepoManager);
+    public RepoManagerRemote getRepoManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.RepoManager);
     }
 
-    public ConfigurationManagerRemote getConfigurationManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ConfigurationManager);
+    public ConfigurationManagerRemote getConfigurationManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.ConfigurationManager);
     }
 
-    public ContentManagerRemote getContentManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ContentManager);
+    public ContentManagerRemote getContentManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.ContentManager);
     }
 
-    public DataAccessManagerRemote getDataAccessManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.DataAccessManager);
+    public DataAccessManagerRemote getDataAccessManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.DataAccessManager);
     }
 
-    public DiscoveryBossRemote getDiscoveryBossRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.DiscoveryBoss);
+    public DiscoveryBossRemote getDiscoveryBoss() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.DiscoveryBoss);
     }
 
-    public EventManagerRemote getEventManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.EventManager);
+    public EventManagerRemote getEventManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.EventManager);
     }
 
-    public MeasurementBaselineManagerRemote getMeasurementBaselineManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.MeasurementBaselineManager);
+    public MeasurementBaselineManagerRemote getMeasurementBaselineManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.MeasurementBaselineManager);
     }
 
-    public MeasurementDataManagerRemote getMeasurementDataManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.MeasurementDataManager);
+    public MeasurementDataManagerRemote getMeasurementDataManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.MeasurementDataManager);
     }
 
-    public MeasurementDefinitionManagerRemote getMeasurementDefinitionManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.MeasurementDefinitionManager);
+    public MeasurementDefinitionManagerRemote getMeasurementDefinitionManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.MeasurementDefinitionManager);
     }
 
-    public MeasurementScheduleManagerRemote getMeasurementScheduleManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.MeasurementScheduleManager);
+    public MeasurementScheduleManagerRemote getMeasurementScheduleManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.MeasurementScheduleManager);
     }
 
-    public OperationManagerRemote getOperationManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.OperationManager);
+    public OperationManagerRemote getOperationManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.OperationManager);
     }
 
-    public ResourceManagerRemote getResourceManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ResourceManager);
+    public ResourceManagerRemote getResourceManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.ResourceManager);
     }
 
-    public ResourceFactoryManagerRemote getResourceFactoryManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ResourceFactoryManager);
+    public ResourceFactoryManagerRemote getResourceFactoryManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.ResourceFactoryManager);
     }
 
-    public ResourceGroupManagerRemote getResourceGroupManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ResourceGroupManager);
+    public ResourceGroupManagerRemote getResourceGroupManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.ResourceGroupManager);
     }
 
-    public ResourceTypeManagerRemote getResourceTypeManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ResourceTypeManager);
+    public ResourceTypeManagerRemote getResourceTypeManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.ResourceTypeManager);
     }
 
-    public RoleManagerRemote getRoleManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.RoleManager);
+    public RoleManagerRemote getRoleManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.RoleManager);
     }
 
-    public SavedSearchManagerRemote getSavedSearchManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.SavedSearchManager);
+    public SavedSearchManagerRemote getSavedSearchManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.SavedSearchManager);
     }
 
-    public SubjectManagerRemote getSubjectManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.SubjectManager);
+    public SubjectManagerRemote getSubjectManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.SubjectManager);
     }
 
-    public SupportManagerRemote getSupportManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.SupportManager);
+    public SupportManagerRemote getSupportManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.SupportManager);
     }
 
-    public SystemManagerRemote getSystemManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.SystemManager);
+    public SystemManagerRemote getSystemManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.SystemManager);
     }
 
-    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.RemoteInstallManager);
+    public RemoteInstallManagerRemote getRemoteInstallManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.RemoteInstallManager);
     }
 
-    public TagManagerRemote getTagManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.TagManager);
+    public TagManagerRemote getTagManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.TagManager);
     }
 
     /**
@@ -423,12 +376,12 @@ public class RemoteClient {
 
             this.managers = new HashMap<String, Object>();
 
-            for (Manager manager : Manager.values()) {
+            for (RhqManagers manager : RhqManagers.values()) {
                 try {
-                    Method m = this.getClass().getMethod("get" + manager.remoteName());
+                    Method m = this.getClass().getMethod("get" + manager.name());
                     this.managers.put(manager.name(), m.invoke(this));
                 } catch (Throwable e) {
-                    System.out.println("Failed to load manager " + manager + " due to missing class: " + e);
+                    LOG.error("Failed to load manager " + manager + " due to missing class.", e);
                 }
             }
         }
@@ -461,7 +414,7 @@ public class RemoteClient {
                 this.remotingClient.disconnect();
             }
         } catch (Exception e) {
-            e.printStackTrace(); // TODO what to do here?
+            LOG.warn(e); // TODO what to do here?
         } finally {
             this.remotingClient = null;
         }

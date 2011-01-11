@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
 import javax.script.ScriptException;
 

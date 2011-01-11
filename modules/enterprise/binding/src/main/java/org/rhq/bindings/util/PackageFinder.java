@@ -44,14 +44,7 @@ public class PackageFinder {
     }
 
     public List<String> findPackages(String packageRoot) throws IOException {
-        ArrayList<String> found = new ArrayList<String>();
-
-//TODO this is where the original package finder used to look for the jars.
-//update the code somewhere in the CLI client to supply this dir to this
-//new style impl.
-//        String cwd = System.getProperty("user.dir");
-//        File libDir = new File(cwd, "lib");
-        
+        ArrayList<String> found = new ArrayList<String>();        
         
         List<File> jars = new ArrayList<File>();
 

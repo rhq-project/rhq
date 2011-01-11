@@ -28,6 +28,8 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
+import org.rhq.bindings.util.ScriptAssert;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 

@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Greg Hinkle
@@ -103,6 +104,8 @@ public class LoginCommand implements ClientCommand {
         client.setPass(password);
 
         Subject subject = remoteClient.login(username, password);
+        ServerVersion version = remoteClient.getSystemManager().getServerVersion(subject);
+        client.getPrintWriter().println("Remote server version is: " + version);
 
         client.setRemoteClient(remoteClient);
         client.setSubject(subject);

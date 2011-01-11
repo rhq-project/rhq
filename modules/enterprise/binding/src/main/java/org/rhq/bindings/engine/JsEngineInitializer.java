@@ -19,6 +19,7 @@
 
 package org.rhq.bindings.engine;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import javax.script.ScriptEngine;
@@ -32,13 +33,13 @@ import javax.script.ScriptException;
  */
 public class JsEngineInitializer implements ScriptEngineInitializer {
 
-    public String getEngineName() {
-        return "JavaScript";
+    public boolean implementsLanguage(String language) {
+        return language != null && ("JavaScript".equals(language) || "ECMAScript".equals(language));
     }
     
     public ScriptEngine instantiate(List<String> packages) throws ScriptException {
         ScriptEngineManager sem = new ScriptEngineManager();
-        ScriptEngine eng = sem.getEngineByName(getEngineName());
+        ScriptEngine eng = sem.getEngineByName("JavaScript");
         
         for(String pkg : packages) {
             eng.eval("importPackage(" + pkg + ")");
@@ -47,4 +48,25 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
         return eng;
     }
 
+    public String generateIndirectionMethod(String boundObjectName, Method method) {
+        String methodName = method.getName();
+        int argCount = method.getParameterTypes().length;
+
+        StringBuilder functionBuilder = new StringBuilder();
+        functionBuilder.append(methodName).append("(");
+        for (int i = 0; i < argCount; ++i) {
+            if (i != 0) {
+                functionBuilder.append(", ");
+            }
+            functionBuilder.append("arg_" + i);
+        }
+        functionBuilder.append(")");
+        String functionFragment = functionBuilder.toString();
+        boolean returnsVoid = method.getReturnType().equals(Void.TYPE);
+
+        String functionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : "return ")
+            + boundObjectName + "." + functionFragment + "; }";
+        
+        return functionDefinition;
+    }
 }

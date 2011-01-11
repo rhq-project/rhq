@@ -21,22 +21,30 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
-import org.testng.Assert;
+import java.util.Collection;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.util.Collection;
+
+import org.testng.Assert;
 
 public class ScriptAssert {
 
     private ScriptEngine scriptEngine;
 
+    public ScriptAssert() {
+        
+    }
+    
     public ScriptAssert(ScriptEngine scriptEngine) {
         this.scriptEngine = scriptEngine;
     }
 
+    public void init(ScriptEngine engine) {
+        this.scriptEngine = engine;
+    }
+    
     public void assertTrue(boolean condition, String msg) {
         try {
             Assert.assertTrue(condition, msg);

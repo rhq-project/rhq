@@ -16,8 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client.proxy;
+package org.rhq.bindings.client;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,17 +28,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 import javassist.util.proxy.MethodHandler;
 
+import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
+import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.bindings.util.ShortOutput;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
@@ -53,18 +55,14 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
 import org.rhq.core.server.MeasurementConverter;
-import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.utility.ConfigurationClassBuilder;
-import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
@@ -72,11 +70,12 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  * if it were local.
  *
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
 public class ResourceClientProxy {
 
-    private ClientMain client;
-    private RemoteClient remoteClient;
+    private ResourceClientFactory proxyFactory;
+    private RhqFacade remoteClient;
     private int resourceId;
     private Resource resource;
 
@@ -99,7 +98,7 @@ public class ResourceClientProxy {
     }
 
     public ResourceClientProxy(ResourceClientProxy parentProxy) {
-        this.client = parentProxy.client;
+        this.proxyFactory = parentProxy.proxyFactory;
         this.remoteClient = parentProxy.remoteClient;
         this.resourceId = parentProxy.resourceId;
         this.resource = parentProxy.resource;
@@ -110,9 +109,9 @@ public class ResourceClientProxy {
 
     }
 
-    public ResourceClientProxy(ClientMain clientMain, int resourceId) {
-        this.client = clientMain;
-        this.remoteClient = client.getRemoteClient();
+    public ResourceClientProxy(ResourceClientFactory factory, int resourceId) {
+        this.proxyFactory = factory;
+        this.remoteClient = factory.getRemoteClient();
         this.resourceId = resourceId;
 
         init();
@@ -191,7 +190,7 @@ public class ResourceClientProxy {
 
     public void init() {
 
-        this.resource = remoteClient.getResourceManagerRemote().getResource(remoteClient.getSubject(), resourceId);
+        this.resource = remoteClient.getResourceManager().getResource(remoteClient.getSubject(), resourceId);
 
         // Lazy init children, not here
         initMeasurements();
@@ -201,10 +200,10 @@ public class ResourceClientProxy {
     }
 
     private void initConfigDefs() {
-        this.resourceConfigurationDefinition = remoteClient.getConfigurationManagerRemote()
+        this.resourceConfigurationDefinition = remoteClient.getConfigurationManager()
             .getResourceConfigurationDefinitionWithTemplatesForResourceType(remoteClient.getSubject(),
                 resource.getResourceType().getId());
-        this.pluginConfigurationDefinition = remoteClient.getConfigurationManagerRemote()
+        this.pluginConfigurationDefinition = remoteClient.getConfigurationManager()
             .getPluginConfigurationDefinitionForResourceType(remoteClient.getSubject(),
                 resource.getResourceType().getId());
     }
@@ -212,11 +211,11 @@ public class ResourceClientProxy {
     private void initChildren() {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterParentResourceId(resourceId);
-        PageList<Resource> childResources = remoteClient.getResourceManagerRemote().findResourcesByCriteria(
+        PageList<Resource> childResources = remoteClient.getResourceManager().findResourcesByCriteria(
             remoteClient.getSubject(), criteria);
 
         for (Resource child : childResources) {
-            this.children.add(new ResourceClientFactory(client).getResource(child.getId()));
+            this.children.add(proxyFactory.getResource(child.getId()));
         }
     }
 
@@ -226,7 +225,7 @@ public class ResourceClientProxy {
 //        criteria.addFilterResourceTypeName(resource.getResourceType().getName());
 //        criteria.setStrict(true);
 
-        this.measurementDefinitions = remoteClient.getMeasurementDefinitionManagerRemote()
+        this.measurementDefinitions = remoteClient.getMeasurementDefinitionManager()
             .findMeasurementDefinitionsByCriteria(remoteClient.getSubject(), criteria);
 
         this.measurementMap = new HashMap<String, Measurement>();
@@ -247,7 +246,7 @@ public class ResourceClientProxy {
         criteria.fetchParametersConfigurationDefinition(true);
         criteria.fetchResultsConfigurationDefinition(true);
 
-        this.operationDefinitions = remoteClient.getOperationManagerRemote().findOperationDefinitionsByCriteria(
+        this.operationDefinitions = remoteClient.getOperationManager().findOperationDefinitionsByCriteria(
             remoteClient.getSubject(), criteria);
 
         for (OperationDefinition def : operationDefinitions) {
@@ -258,7 +257,7 @@ public class ResourceClientProxy {
     }
 
     private void initContent() {
-        ContentManagerRemote contentManager = remoteClient.getContentManagerRemote();
+        ContentManagerRemote contentManager = remoteClient.getContentManager();
         List<PackageType> types = null;
         try {
             types = contentManager.findPackageTypes(remoteClient.getSubject(), resource.getResourceType().getName(),
@@ -286,7 +285,7 @@ public class ResourceClientProxy {
         }
 
         public List<PackageVersion> getInstalledPackages() {
-            ContentManagerRemote contentManager = remoteClient.getContentManagerRemote();
+            ContentManagerRemote contentManager = remoteClient.getContentManager();
 
             PackageVersionCriteria criteria = new PackageVersionCriteria();
             criteria.addFilterResourceId(resourceId);
@@ -343,7 +342,7 @@ public class ResourceClientProxy {
 
         public Object getValue() {
             try {
-                Set<MeasurementData> d = remoteClient.getMeasurementDataManagerRemote().findLiveData(
+                Set<MeasurementData> d = remoteClient.getMeasurementDataManager().findLiveData(
                     remoteClient.getSubject(), resourceId, new int[] { definition.getId() });
                 MeasurementData data = d.iterator().next();
                 return data.getValue();
@@ -388,7 +387,7 @@ public class ResourceClientProxy {
             Configuration parameters = ConfigurationClassBuilder.translateParametersToConfig(definition
                 .getParametersConfigurationDefinition(), args);
 
-            ResourceOperationSchedule schedule = remoteClient.getOperationManagerRemote().scheduleResourceOperation(
+            ResourceOperationSchedule schedule = remoteClient.getOperationManager().scheduleResourceOperation(
                 remoteClient.getSubject(), resourceId, definition.getName(), 0, 0, 0, 30000, parameters,
                 "Executed from commandline");
 
@@ -405,7 +404,7 @@ public class ResourceClientProxy {
             ResourceOperationHistory history = null;
             while (history == null && retries-- > 0) {
                 Thread.sleep(1000);
-                PageList<ResourceOperationHistory> histories = remoteClient.getOperationManagerRemote()
+                PageList<ResourceOperationHistory> histories = remoteClient.getOperationManager()
                     .findResourceOperationHistoriesByCriteria(remoteClient.getSubject(), criteria);
                 if (histories.size() > 0 && histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
                     history = histories.get(0);
@@ -419,15 +418,20 @@ public class ResourceClientProxy {
 
             return returnResults;
         }
+        
+        @Override
+        public String toString() {
+            return getName();
+        }
     }
 
     public static class ClientProxyMethodHandler implements MethodHandler, ContentBackedResource, PluginConfigurable,
         ResourceConfigurable {
 
         ResourceClientProxy resourceClientProxy;
-        RemoteClient remoteClient;
+        RhqFacade remoteClient;
 
-        public ClientProxyMethodHandler(ResourceClientProxy resourceClientProxy, RemoteClient remoteClient) {
+        public ClientProxyMethodHandler(ResourceClientProxy resourceClientProxy, RhqFacade remoteClient) {
             this.resourceClientProxy = resourceClientProxy;
             this.remoteClient = remoteClient;
         }
@@ -438,7 +442,7 @@ public class ResourceClientProxy {
         public Configuration getPluginConfiguration() {
             if (!LazyLoadScenario.isShouldLoad())
                 return null;
-            return remoteClient.getConfigurationManagerRemote().getPluginConfiguration(remoteClient.getSubject(),
+            return remoteClient.getConfigurationManager().getPluginConfiguration(remoteClient.getSubject(),
                 resourceClientProxy.resourceId);
         }
 
@@ -448,7 +452,7 @@ public class ResourceClientProxy {
 
         public PluginConfigurationUpdate updatePluginConfiguration(Configuration configuration) {
             PluginConfigurationUpdate update =
-                remoteClient.getConfigurationManagerRemote().updatePluginConfiguration(
+                remoteClient.getConfigurationManager().updatePluginConfiguration(
                     remoteClient.getSubject(),
                     resourceClientProxy.getId(),
                     configuration);
@@ -456,27 +460,11 @@ public class ResourceClientProxy {
             return update;
         }
 
-        public void editPluginConfiguration() {
-            ConfigurationEditor editor = new ConfigurationEditor(resourceClientProxy.client);
-            Configuration config = editor.editConfiguration(getPluginConfigurationDefinition(), getPluginConfiguration());
-            if (config != null) {
-                updatePluginConfiguration(config);
-            }
-        }
-
-        public void editResourceConfiguration() {
-            ConfigurationEditor editor = new ConfigurationEditor(resourceClientProxy.client);
-            Configuration config = editor.editConfiguration(getResourceConfigurationDefinition(), getResourceConfiguration());
-            if (config != null) {
-                updateResourceConfiguration(config);
-            }
-        }
-
         public Configuration getResourceConfiguration() {
             if (!LazyLoadScenario.isShouldLoad())
                 return null;
 
-            return remoteClient.getConfigurationManagerRemote().getResourceConfiguration(remoteClient.getSubject(),
+            return remoteClient.getConfigurationManager().getResourceConfiguration(remoteClient.getSubject(),
                 resourceClientProxy.resourceId);
         }
 
@@ -486,7 +474,7 @@ public class ResourceClientProxy {
 
         public ResourceConfigurationUpdate updateResourceConfiguration(Configuration configuration) {
             ResourceConfigurationUpdate update =
-                remoteClient.getConfigurationManagerRemote().updateResourceConfiguration(
+                remoteClient.getConfigurationManager().updateResourceConfiguration(
                     remoteClient.getSubject(),
                     resourceClientProxy.getId(),
                     configuration);
@@ -497,7 +485,7 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent() {
 
-            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
+            return remoteClient.getContentManager().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
         }
 
         public void updateBackingContent(String filename) {
@@ -526,11 +514,11 @@ public class ResourceClientProxy {
                 }
             }
 
-            byte[] fileContents = new ScriptUtil(null).getFileBytes(filename);
+            byte[] fileContents = new ScriptUtil(remoteClient).getFileBytes(filename);
 
 
             PackageVersion pv =
-                    remoteClient.getContentManagerRemote().createPackageVersion(
+                    remoteClient.getContentManager().createPackageVersion(
                         remoteClient.getSubject(),
                         oldPackage.getPackageVersion().getGeneralPackage().getName(),
                         oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
@@ -538,7 +526,7 @@ public class ResourceClientProxy {
                         oldPackage.getPackageVersion().getArchitecture().getId(),
                         fileContents);
 
-            remoteClient.getContentManagerRemote().deployPackages(
+            remoteClient.getContentManager().deployPackages(
                     remoteClient.getSubject(),
                     new int[] { resourceClientProxy.getId()},
                     new int[] {pv.getId()});
@@ -556,7 +544,7 @@ public class ResourceClientProxy {
             File file = new File(fileName);
 
             byte[] data =
-                    remoteClient.getContentManagerRemote().getPackageBytes(
+                    remoteClient.getContentManager().getPackageBytes(
                             remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
 
             FileOutputStream fos = new FileOutputStream(file);
@@ -593,7 +581,7 @@ public class ResourceClientProxy {
                         if (key instanceof Measurement) {
                             return key;
                         } else if (key instanceof Operation) {
-                            System.out.println("Invoking operation " + ((Operation) key).getName());
+                            resourceClientProxy.proxyFactory.getOutputWriter().println("Invoking operation " + ((Operation) key).getName());
 
                             return ((Operation) key).invoke(args);
 
@@ -625,8 +613,6 @@ public class ResourceClientProxy {
         public ConfigurationDefinition getPluginConfigurationDefinition();
 
         public PluginConfigurationUpdate updatePluginConfiguration(Configuration configuration);
-
-        public void editPluginConfiguration();
     }
 
     public static interface ResourceConfigurable {
@@ -635,8 +621,6 @@ public class ResourceClientProxy {
         public ConfigurationDefinition getResourceConfigurationDefinition();
 
         public ResourceConfigurationUpdate updateResourceConfiguration(Configuration configuration);
-
-        public void editResourceConfiguration();
     }
 
     public static interface ContentBackedResource {
@@ -649,21 +633,5 @@ public class ResourceClientProxy {
 
         public void retrieveBackingContent(String fileName) throws IOException;
 
-    }
-
-    public static void main(String[] args) throws Exception {
-        RemoteClient rc = new RemoteClient("localhost", 7080);
-
-        rc.login("rhqadmin", "rhqadmin");
-        ClientMain cm = new ClientMain();
-        cm.setRemoteClient(rc);
-
-        ResourceClientFactory factory = new ResourceClientFactory(cm);
-
-        ResourceClientProxy resource = factory.getResource(10571);
-
-        for (Measurement m : resource.getMeasurements()) {
-            System.out.println(m.toString());
-        }
     }
 }

@@ -9,6 +9,8 @@ import javax.script.ScriptEngineManager;
 
 import org.testng.annotations.Test;
 
+import org.rhq.bindings.util.ScriptUtil;
+
 public class ScriptUtilTest {
 
     @Test

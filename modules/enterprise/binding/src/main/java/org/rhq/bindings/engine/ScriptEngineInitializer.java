@@ -19,20 +19,41 @@
 
 package org.rhq.bindings.engine;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 /**
- * Is able to instatiate a script engine and import packages into the context
+ * Is able to instantiate a script engine and import packages into the context
  * of the engine. 
  *
  * @author Lukas Krejci
  */
 public interface ScriptEngineInitializer {
 
-    String getEngineName();
+    boolean implementsLanguage(String language);
     
     ScriptEngine instantiate(List<String> packages) throws ScriptException;
+    
+    /**
+     * This function returns a definition string in the script engine's language
+     * that provides an indirection to calling the method on the bound object.
+     * 
+     * for example for parameters:
+     * <ul>
+     * <li> <code>boundObjectName = foo</code>
+     * <li> <code> method = &lt;int bar(int)&gt;</code>
+     * </ul>
+     * The method would generate this javascript:<br/>
+     * <code>
+     * function bar(arg) { return foo.bar(arg); }
+     * </code>
+     * 
+     * @param boundObjectName
+     * @param method
+     * @return a string with method definition in the scripting language
+     */
+    String generateIndirectionMethod(String boundObjectName, Method method);
 }

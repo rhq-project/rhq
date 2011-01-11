@@ -1,1190 +1,1222 @@
 <?xml version="1.0"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.rhq</groupId>
-  <artifactId>rhq-parent</artifactId>
-  <version>3.0.1-SNAPSHOT</version>
-  <packaging>pom</packaging>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>3.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-  <name>RHQ</name>
-  <description>parent POM for all RHQ modules</description>
-  <url>http://rhq-project.org/</url>
-  <inceptionYear>2008</inceptionYear>
+    <name>RHQ</name>
+    <description>parent POM for all RHQ modules</description>
+    <url>http://rhq-project.org/</url>
+    <inceptionYear>2008</inceptionYear>
 
-  <organization>
-    <name>Red Hat, Inc.</name>
-    <url>http://redhat.com/</url>
-  </organization>
+    <organization>
+        <name>Red Hat, Inc.</name>
+        <url>http://redhat.com/</url>
+    </organization>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
-    <url>http://git.fedorahosted.org/git/?p=rhq/rhq.git</url>
-  </scm>
+    <scm>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+        <url>http://git.fedorahosted.org/git/?p=rhq/rhq.git</url>
+    </scm>
 
-  <issueManagement>
-    <system>bugzilla</system>
-    <url>https://bugzilla.redhat.com/</url>
-  </issueManagement>
-
-
-  <properties>
-    <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
-    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding> 
-
-    <rhq.groupId>org.rhq</rhq.groupId>
-    <rhq.product.name>RHQ</rhq.product.name>
-    <rhq.earName>rhq.ear</rhq.earName>
-    <!-- the below path is relative to {rhq-trunk} -->
-    <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
-    <!-- set the below prop to true to enable misc extra build output -->
-    <rhq.debug>false</rhq.debug>
-
-    <!-- product info -->
-    <product.shortName>RHQ</product.shortName>
-    <product.name>RHQ</product.name>
-    <product.fullName>RHQ</product.fullName>
-    <product.url>http://rhq-project.org/</product.url>
-    <product.urlDomain>rhq-project.org</product.urlDomain>
-    <product.salesEmail>sales@rhq-project.org</product.salesEmail>
-    <product.supportEmail>info@rhq-project.org</product.supportEmail>
-    <product.version>${project.version}</product.version>
-    <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>    
-
-    <doUpdate>false</doUpdate>
-
-    <!-- dependency versions -->
-
-    <!-- Start: JBoss AS Dependency Versions
-         The dependency versions below are declared together as the versions of each are dependent on the
-         overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
-         version is changed the versions of each of these should be validated and updated as needed. -->
-    <jboss.version>4.2.3.GA</jboss.version>
-    <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
-    <jboss-common.version>1.2.1.GA</jboss-common.version>
-    <jboss-jta.version>4.2.3.SP7</jboss-jta.version>
-    <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
-    <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
-    <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
-    <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
-    <!-- End: JBoss AS Dependency Versions -->
-
-    <commons-logging.version>1.1.0.jboss</commons-logging.version>
-    <concurrent.version>1.3.4-jboss-update1</concurrent.version> <!-- oswego-concurrent compatible with 4.2.3.GA -->
-    <findbugs.version>2.3</findbugs.version>
-    <getopt.version>1.0.13</getopt.version>
-    <hibernate3.version>3.2.r14201-2</hibernate3.version>
-    <hibernate-annotations.version>3.2.1.GA</hibernate-annotations.version>
-    <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
-    <i18nlog.version>1.0.10</i18nlog.version>
-    <jaxb-api.version>2.1</jaxb-api.version>
-    <jaxb-impl.version>2.1.6</jaxb-impl.version>
-    <jsf-api.version>1.2_14</jsf-api.version>
-    <jsf-impl.version>1.2_14</jsf-impl.version>
-    <seam.version>2.2.1.CR2</seam.version>
-    <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
-    <ems.version>1.2.15.1</ems.version>
-    <postgresql.version>8.4-701.jdbc3</postgresql.version>
-    <h2.version>1.1.117</h2.version>
-    <jtds.version>1.2.2</jtds.version>
-    <richfaces.version>3.3.3.CR1</richfaces.version>
-    <jline.version>0.9.94</jline.version>
-    <sigar.version>1.6.5.132</sigar.version>
-    <quartz.version>1.6.5</quartz.version>
-    <jna.version>3.2.2</jna.version>
-
-    <!--
-       defaults for datasource used by integration tests -
-       these may be overridden in ~/.m2/settings.xml 
-    -->
-    <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
-    <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.test.ds.db-name}</rhq.test.ds.connection-url>
-    <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
-    <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
-    <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
-    <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
-    <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
-    <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
-    <rhq.test.ds.port>5432</rhq.test.ds.port>
-    <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
-    <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
-    <rhq.test.quartz.selectWithLockSQL>
-       SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE
-    </rhq.test.quartz.selectWithLockSQL>
-    <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
-
-    <!--
-       defaults for datasource used by the dev container build (see dev docs on the 'dev' profile) -
-       these may be overridden in ~/.m2/settings.xml 
-    -->
-    <rhq.dev.ds.db-name>rhqdev</rhq.dev.ds.db-name>
-    <rhq.dev.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.dev.ds.db-name}</rhq.dev.ds.connection-url>
-    <rhq.dev.ds.driver-class>org.postgresql.Driver</rhq.dev.ds.driver-class>
-    <rhq.dev.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.dev.ds.xa-datasource-class>
-    <rhq.dev.ds.user-name>rhqadmin</rhq.dev.ds.user-name>
-    <rhq.dev.ds.password>rhqadmin</rhq.dev.ds.password>
-    <rhq.dev.ds.password.encrypted>1eeb2f255e832171df8592078de921bc</rhq.dev.ds.password.encrypted>
-    <rhq.dev.ds.type-mapping>PostgreSQL</rhq.dev.ds.type-mapping>
-    <rhq.dev.ds.server-name>127.0.0.1</rhq.dev.ds.server-name>
-    <rhq.dev.ds.port>5432</rhq.dev.ds.port>
-    <rhq.dev.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.dev.ds.hibernate-dialect>
-    <rhq.dev.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.dev.quartz.driverDelegateClass>
-    <rhq.dev.quartz.selectWithLockSQL>
-       SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE
-    </rhq.dev.quartz.selectWithLockSQL>
-    <rhq.dev.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.dev.quartz.lockHandlerClass>
-
-     <!-- default port numbers for RHQ server -->
-    <rhq.server.http.port>7080</rhq.server.http.port>
-    <rhq.server.https.port>7443</rhq.server.https.port>
-
-    <rhq.server.enable.ws>false</rhq.server.enable.ws>
-
-    <!--
-      When this property is set to true will compare its endpoint address
-      that is stored in the database against the actual host name/IP address
-      returned by the host system. If they differ, the address stored in the
-      datbase will be updated to the value found on the host machine. While
-      host name changes are/should be uncommon in a typical deployment, they
-      are more common in a cloud deployment such as EC2. And in a cloud
-      deployment like EC2, we want to turn this behavior on to ensure that
-      the server endpoint accurately reflects the current machine address. 
-    -->
-    <rhq.sync.endpoint-address>false</rhq.sync.endpoint-address>
-
-    <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
-               used in the distributionManagement section of the POM. -->
-    <localRepository>${user.home}/.m2/repository</localRepository>
-  </properties>
+    <issueManagement>
+        <system>bugzilla</system>
+        <url>https://bugzilla.redhat.com/</url>
+    </issueManagement>
 
 
-  <dependencyManagement>
+    <properties>
+        <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
+        <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+
+        <rhq.groupId>org.rhq</rhq.groupId>
+        <rhq.product.name>RHQ</rhq.product.name>
+        <rhq.earName>rhq.ear</rhq.earName>
+        <!-- the below path is relative to {rhq-trunk} -->
+        <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
+        <!-- set the below prop to true to enable misc extra build output -->
+        <rhq.debug>false</rhq.debug>
+
+        <!-- product info -->
+        <product.shortName>RHQ</product.shortName>
+        <product.name>RHQ</product.name>
+        <product.fullName>RHQ</product.fullName>
+        <product.url>http://rhq-project.org/</product.url>
+        <product.urlDomain>rhq-project.org</product.urlDomain>
+        <product.salesEmail>sales@rhq-project.org</product.salesEmail>
+        <product.supportEmail>info@rhq-project.org</product.supportEmail>
+        <product.version>${project.version}</product.version>
+        <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>
+
+        <doUpdate>false</doUpdate>
+
+        <!-- dependency versions -->
+
+        <!-- Start: JBoss AS Dependency Versions
+The dependency versions below are declared together as the versions of each are dependent on the
+overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
+version is changed the versions of each of these should be validated and updated as needed. -->
+        <jboss.version>4.2.3.GA</jboss.version>
+        <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
+        <jboss-common.version>1.2.1.GA</jboss-common.version>
+        <jboss-jta.version>4.2.3.SP7</jboss-jta.version>
+        <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
+        <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
+        <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
+        <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
+        <!-- End: JBoss AS Dependency Versions -->
+
+        <commons-logging.version>1.1.0.jboss</commons-logging.version>
+        <concurrent.version>1.3.4-jboss-update1</concurrent.version>
+        <!-- oswego-concurrent compatible with 4.2.3.GA -->
+        <findbugs.version>2.3</findbugs.version>
+        <getopt.version>1.0.13</getopt.version>
+        <hibernate3.version>3.2.r14201-2</hibernate3.version>
+        <hibernate-annotations.version>3.2.1.GA</hibernate-annotations.version>
+        <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
+        <i18nlog.version>1.0.10</i18nlog.version>
+        <jaxb-api.version>2.1</jaxb-api.version>
+        <jaxb-impl.version>2.1.6</jaxb-impl.version>
+        <jsf-api.version>1.2_14</jsf-api.version>
+        <jsf-impl.version>1.2_14</jsf-impl.version>
+        <seam.version>2.2.1.CR2</seam.version>
+        <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
+        <ems.version>1.2.15.1</ems.version>
+        <postgresql.version>8.4-701.jdbc3</postgresql.version>
+        <h2.version>1.1.117</h2.version>
+        <jtds.version>1.2.2</jtds.version>
+        <richfaces.version>3.3.3.CR1</richfaces.version>
+        <jline.version>0.9.94</jline.version>
+        <sigar.version>1.6.5.132</sigar.version>
+        <quartz.version>1.6.5</quartz.version>
+        <jna.version>3.2.2</jna.version>
+
+        <!--
+           defaults for datasource used by integration tests -
+           these may be overridden in ~/.m2/settings.xml
+        -->
+        <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
+        <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.test.ds.db-name}</rhq.test.ds.connection-url>
+        <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
+        <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
+        <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+        <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+        <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
+        <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
+        <rhq.test.ds.port>5432</rhq.test.ds.port>
+        <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
+        <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+        </rhq.test.quartz.driverDelegateClass>
+        <rhq.test.quartz.selectWithLockSQL>
+            SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE
+        </rhq.test.quartz.selectWithLockSQL>
+        <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore
+        </rhq.test.quartz.lockHandlerClass>
+
+        <!--
+           defaults for datasource used by the dev container build (see dev docs on the 'dev' profile) -
+           these may be overridden in ~/.m2/settings.xml
+        -->
+        <rhq.dev.ds.db-name>rhqdev</rhq.dev.ds.db-name>
+        <rhq.dev.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.dev.ds.db-name}</rhq.dev.ds.connection-url>
+        <rhq.dev.ds.driver-class>org.postgresql.Driver</rhq.dev.ds.driver-class>
+        <rhq.dev.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.dev.ds.xa-datasource-class>
+        <rhq.dev.ds.user-name>rhqadmin</rhq.dev.ds.user-name>
+        <rhq.dev.ds.password>rhqadmin</rhq.dev.ds.password>
+        <rhq.dev.ds.password.encrypted>1eeb2f255e832171df8592078de921bc</rhq.dev.ds.password.encrypted>
+        <rhq.dev.ds.type-mapping>PostgreSQL</rhq.dev.ds.type-mapping>
+        <rhq.dev.ds.server-name>127.0.0.1</rhq.dev.ds.server-name>
+        <rhq.dev.ds.port>5432</rhq.dev.ds.port>
+        <rhq.dev.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.dev.ds.hibernate-dialect>
+        <rhq.dev.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+        </rhq.dev.quartz.driverDelegateClass>
+        <rhq.dev.quartz.selectWithLockSQL>
+            SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE
+        </rhq.dev.quartz.selectWithLockSQL>
+        <rhq.dev.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore
+        </rhq.dev.quartz.lockHandlerClass>
+
+        <!-- default port numbers for RHQ server -->
+        <rhq.server.http.port>7080</rhq.server.http.port>
+        <rhq.server.https.port>7443</rhq.server.https.port>
+
+        <rhq.server.enable.ws>false</rhq.server.enable.ws>
+
+        <!--
+          When this property is set to true will compare its endpoint address
+          that is stored in the database against the actual host name/IP address
+          returned by the host system. If they differ, the address stored in the
+          datbase will be updated to the value found on the host machine. While
+          host name changes are/should be uncommon in a typical deployment, they
+          are more common in a cloud deployment such as EC2. And in a cloud
+          deployment like EC2, we want to turn this behavior on to ensure that
+          the server endpoint accurately reflects the current machine address.
+        -->
+        <rhq.sync.endpoint-address>false</rhq.sync.endpoint-address>
+
+        <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
+used in the distributionManagement section of the POM. -->
+        <localRepository>${user.home}/.m2/repository</localRepository>
+    </properties>
+
+
+    <dependencyManagement>
+
+        <dependencies>
+
+            <!-- Start: JBoss AS Dependencies
+The dependencies below are declared together as the versions of each are dependent on the
+overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
+version is changed the versions of each of these should be validated and updated as needed. -->
+            <dependency>
+                <groupId>org.jboss.jbossas</groupId>
+                <artifactId>jboss-as-dist</artifactId>
+                <version>${jboss.version}</version>
+                <type>zip</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.jbossws</groupId>
+                <artifactId>jbossws-native-dist</artifactId>
+                <version>${jbossws-native-dist.version}</version>
+                <type>zip</type>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-all-client</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-annotations-ejb3</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-cache</artifactId>
+                <version>${jboss-cache.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-common</artifactId>
+                <version>${jboss-common.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-ejb3x</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-ejb3-client</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-j2ee</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${jboss-javassist.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-jmx</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-remoting</artifactId>
+                <version>${jboss-remoting.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-serialization</artifactId>
+                <version>${jboss-serialization.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jbosssx</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jboss</groupId>
+                <artifactId>jboss-system</artifactId>
+                <version>${jboss.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.jbossws</groupId>
+                <artifactId>jbossws-native-dist</artifactId>
+                <version>${jbossws-native-dist.version}</version>
+                <type>zip</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.transaction</groupId>
+                <artifactId>jboss-jta</artifactId>
+                <version>${jboss-jta.version}</version>
+            </dependency>
+
+            <!-- End: JBoss AS Dependencies -->
+
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
+            </dependency>
+
+            <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
+            <dependency>
+                <groupId>gnu-getopt</groupId>
+                <artifactId>getopt</artifactId>
+                <version>${getopt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${jaxb-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.faces</groupId>
+                <artifactId>jsf-api</artifactId>
+                <version>${jsf-api.version}</version>
+                <scope>provided</scope>
+                <!-- by JBossAS -->
+            </dependency>
+
+            <dependency>
+                <groupId>javax.faces</groupId>
+                <artifactId>jsf-impl</artifactId>
+                <version>${jsf-impl.version}</version>
+                <scope>provided</scope>
+                <!-- by JBossAS -->
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>${jaxb-impl.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>mc4j</groupId>
+                <artifactId>org-mc4j-ems</artifactId>
+                <version>${ems.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>hibernate</groupId>
+                <artifactId>hibernate3</artifactId>
+                <version>${hibernate3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>hibernate-annotations</groupId>
+                <artifactId>hibernate-annotations</artifactId>
+                <version>${hibernate-annotations.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>hibernate-entitymanager</groupId>
+                <artifactId>hibernate-entitymanager</artifactId>
+                <version>${hibernate-entitymanager.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hyperic</groupId>
+                <artifactId>sigar</artifactId>
+                <version>${sigar.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hyperic</groupId>
+                <artifactId>sigar-dist</artifactId>
+                <version>${sigar.version}</version>
+                <type>zip</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.richfaces.framework</groupId>
+                <artifactId>richfaces-api</artifactId>
+                <version>${richfaces.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.richfaces.framework</groupId>
+                <artifactId>richfaces-impl</artifactId>
+                <version>${richfaces.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.richfaces.ui</groupId>
+                <artifactId>richfaces-ui</artifactId>
+                <version>${richfaces.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>oswego-concurrent</groupId>
+                <artifactId>concurrent</artifactId>
+                <version>${concurrent.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.opensymphony.quartz</groupId>
+                <artifactId>quartz</artifactId>
+                <version>${quartz.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.opensymphony.quartz</groupId>
+                <artifactId>quartz-oracle</artifactId>
+                <version>${quartz.version}</version>
+            </dependency>
+
+            <!-- Postgres JDBC driver -->
+            <dependency>
+                <groupId>postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sourceforge.jtds</groupId>
+                <artifactId>jtds</artifactId>
+                <version>${jtds.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>1.6.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>${jna.version}</version>
+            </dependency>
+        </dependencies>
+
+    </dependencyManagement>
+
 
     <dependencies>
 
-      <!-- Start: JBoss AS Dependencies
-           The dependencies below are declared together as the versions of each are dependent on the
-           overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
-           version is changed the versions of each of these should be validated and updated as needed. -->
-      <dependency>
-        <groupId>org.jboss.jbossas</groupId>
-        <artifactId>jboss-as-dist</artifactId>
-        <version>${jboss.version}</version>
-        <type>zip</type>
-      </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-     <dependency>
-         <groupId>org.jboss.jbossws</groupId>
-         <artifactId>jbossws-native-dist</artifactId>
-         <version>${jbossws-native-dist.version}</version>
-         <type>zip</type>
-     </dependency>
+        <dependency>
+            <groupId>i18nlog</groupId>
+            <artifactId>i18nlog</artifactId>
+            <version>${i18nlog.version}</version>
+        </dependency>
 
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-all-client</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
+        <!-- for the JAXB annotations -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-annotations-ejb3</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.14</version>
+            <scope>provided</scope>
+        </dependency>
 
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-cache</artifactId>
-        <version>${jboss-cache.version}</version>
-      </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.9</version>
+            <scope>test</scope>
+            <classifier>jdk15</classifier>
+        </dependency>
 
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-common</artifactId>
-        <version>${jboss-common.version}</version>
-      </dependency>
+        <!-- for the Nullable/NotNull annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>7.0.2</version>
+            <scope>provided</scope>
+        </dependency>
 
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-ejb3x</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-ejb3-client</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-j2ee</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>javassist</artifactId>
-        <version>${jboss-javassist.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-jmx</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-remoting</artifactId>
-        <version>${jboss-remoting.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-serialization</artifactId>
-        <version>${jboss-serialization.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jbosssx</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-system</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.jbossws</groupId>
-         <artifactId>jbossws-native-dist</artifactId>
-         <version>${jbossws-native-dist.version}</version>
-         <type>zip</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.jboss.transaction</groupId>
-        <artifactId>jboss-jta</artifactId>
-        <version>${jboss-jta.version}</version>
-      </dependency>
-
-      <!-- End: JBoss AS Dependencies -->
-
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <version>${commons-logging.version}</version>
-      </dependency>
-
-      <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
-      <dependency>
-        <groupId>gnu-getopt</groupId>
-        <artifactId>getopt</artifactId>
-        <version>${getopt.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <version>${jaxb-api.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>javax.faces</groupId>
-         <artifactId>jsf-api</artifactId>
-         <version>${jsf-api.version}</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>javax.faces</groupId>
-         <artifactId>jsf-impl</artifactId>
-         <version>${jsf-impl.version}</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>com.sun.xml.bind</groupId>
-         <artifactId>jaxb-impl</artifactId>
-         <version>${jaxb-impl.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>mc4j</groupId>
-        <artifactId>org-mc4j-ems</artifactId>
-        <version>${ems.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>hibernate</groupId>
-        <artifactId>hibernate3</artifactId>
-        <version>${hibernate3.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <version>${hibernate-annotations.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
-         <artifactId>hibernate-entitymanager</artifactId>
-         <version>${hibernate-entitymanager.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar</artifactId>
-        <version>${sigar.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar-dist</artifactId>
-        <version>${sigar.version}</version>
-        <type>zip</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.richfaces.framework</groupId>
-        <artifactId>richfaces-api</artifactId>
-        <version>${richfaces.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.richfaces.framework</groupId>
-        <artifactId>richfaces-impl</artifactId>
-        <version>${richfaces.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.richfaces.ui</groupId>
-        <artifactId>richfaces-ui</artifactId>
-        <version>${richfaces.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>oswego-concurrent</groupId>
-        <artifactId>concurrent</artifactId>
-        <version>${concurrent.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.opensymphony.quartz</groupId>
-        <artifactId>quartz</artifactId>
-        <version>${quartz.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.opensymphony.quartz</groupId>
-        <artifactId>quartz-oracle</artifactId>
-        <version>${quartz.version}</version>
-      </dependency>
-
-      <!-- Postgres JDBC driver -->
-      <dependency>
-        <groupId>postgresql</groupId>
-        <artifactId>postgresql</artifactId>
-        <version>${postgresql.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>${h2.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>net.sourceforge.jtds</groupId>
-        <artifactId>jtds</artifactId>
-        <version>${jtds.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.codehaus.groovy</groupId>
-        <artifactId>groovy-all</artifactId>
-        <version>1.6.0</version>
-      </dependency>
-
-      <dependency>
-         <groupId>net.java.dev.jna</groupId>
-         <artifactId>jna</artifactId>
-         <version>${jna.version}</version>
-      </dependency>
     </dependencies>
 
-  </dependencyManagement>
 
+    <build>
 
-  <dependencies>
+        <defaultGoal>install</defaultGoal>
 
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>i18nlog</groupId>
-      <artifactId>i18nlog</artifactId>
-      <version>${i18nlog.version}</version>
-    </dependency>
-
-    <!-- for the JAXB annotations -->
-    <dependency>
-       <groupId>javax.xml.bind</groupId>
-       <artifactId>jaxb-api</artifactId>
-       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.14</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-      <version>5.9</version>
-      <scope>test</scope>
-      <classifier>jdk15</classifier>
-    </dependency>
-
-    <!-- for the Nullable/NotNull annotations -->
-    <dependency>
-      <groupId>org.jetbrains</groupId>
-      <artifactId>annotations</artifactId>
-      <version>7.0.2</version>
-      <scope>provided</scope>
-    </dependency>
-
-  </dependencies>
-
-
-  <build>
-
-    <defaultGoal>install</defaultGoal>
-
-     <pluginManagement>
-       <plugins>
-         <plugin>
-           <artifactId>maven-antrun-plugin</artifactId>
-           <version>1.3</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-assembly-plugin</artifactId>
-           <version>2.2-beta-5</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-clean-plugin</artifactId>
-           <version>2.4.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.3.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-dependency-plugin</artifactId>
-           <version>2.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-deploy-plugin</artifactId>
-           <version>2.5</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-ear-plugin</artifactId>
-           <version>2.4</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-enforcer-plugin</artifactId>
-           <version>1.0-beta-1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-ejb-plugin</artifactId>
-           <version>2.2</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-idea-plugin</artifactId>
-           <version>2.2</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-install-plugin</artifactId>
-           <version>2.3</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-jar-plugin</artifactId>
-           <version>2.3</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-javadoc-plugin</artifactId>
-           <version>2.6.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-plugin-plugin</artifactId>
-           <version>2.5.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-rar-plugin</artifactId>
-           <version>2.2</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-release-plugin</artifactId>
-           <version>2.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-resources-plugin</artifactId>
-           <version>2.4.2</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-scm-plugin</artifactId>
-           <version>1.3</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-site-plugin</artifactId>
-           <version>2.0.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-source-plugin</artifactId>
-           <version>2.1.1</version>
-         </plugin>
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.5</version>
-            <configuration>
-               <argLine>-Xms16m -Xmx256m</argLine>
-            </configuration>
-         </plugin>
-         <plugin>
-           <artifactId>maven-war-plugin</artifactId>
-           <version>2.1-beta-1</version>
-         </plugin>
-         <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>build-helper-maven-plugin</artifactId>
-           <version>1.4</version>
-         </plugin>
-         <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>buildnumber-maven-plugin</artifactId>
-           <version>1.0-beta-4</version>
-         </plugin>
-         <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>exec-maven-plugin</artifactId>
-           <version>1.1</version>
-         </plugin>
-         <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>properties-maven-plugin</artifactId>
-           <version>1.0-alpha-2</version>
-         </plugin>
-         <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>findbugs-maven-plugin</artifactId>
-           <version>${findbugs.version}</version>
-         </plugin>
-         <plugin>
-           <groupId>org.codehaus.groovy.maven</groupId>
-           <artifactId>gmaven-plugin</artifactId>
-           <version>1.0</version>
-         </plugin>
-       </plugins>
-     </pluginManagement>
-
-
-    <plugins>
-
-      <!-- Set the 'maven.version' property to the version of Maven being used,
-           so we can include the Maven version in the MANIFEST.MF files of all
-           build artifacts. -->
-      <plugin>
-         <groupId>org.codehaus.mojo</groupId>
-         <artifactId>build-helper-maven-plugin</artifactId>
-         <executions>
-           <execution>
-             <phase>initialize</phase>
-             <goals>
-               <goal>maven-version</goal>
-             </goals>
-           </execution>
-         </executions>
-      </plugin>
-
-
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <configuration>
-            <!-- As of v2.4 of this plugin, the default delimiters are @*@ - 
-                 we want the old default of ${*} instead. -->
-            <useDefaultDelimiters>false</useDefaultDelimiters>
-            <delimiters>
-                <delimiter>${*}</delimiter>
-            </delimiters>
-        </configuration>
-      </plugin>
-
-      <!-- Ensure all code compiles and runs on Java 5 or later. -->
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <!-- invocation options -->
-          <fork>true</fork>
-          <meminitial>128M</meminitial>
-          <maxmem>512M</maxmem>
-
-          <!-- compiler options -->
-          <source>1.5</source>
-          <target>1.5</target>
-          <optimize>false</optimize>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-            <manifestEntries>
-               <Maven-Version>${maven.version}</Maven-Version>
-               <Java-Version>${java.version}</Java-Version>
-               <Java-Vendor>${java.vendor}</Java-Vendor>
-               <Os-Name>${os.name}</Os-Name>
-               <Os-Arch>${os.arch}</Os-Arch>
-               <Os-Version>${os.version}</Os-Version>
-               <Build-Number>${buildNumber}</Build-Number>
-               <Build-Time>${buildTime}</Build-Time>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-ejb-plugin</artifactId>
-        <configuration>
-          <ejbVersion>3.0</ejbVersion>
-          <archive>
-            <manifest>
-               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-               <addClasspath>true</addClasspath>
-               <classpathPrefix>lib/</classpathPrefix>
-            </manifest>
-            <manifestEntries>
-               <Maven-Version>${maven.version}</Maven-Version>
-               <Java-Version>${java.version}</Java-Version>
-               <Java-Vendor>${java.vendor}</Java-Vendor>
-               <Os-Name>${os.name}</Os-Name>
-               <Os-Arch>${os.arch}</Os-Arch>
-               <Os-Version>${os.version}</Os-Version>
-               <Build-Number>${buildNumber}</Build-Number>
-               <Build-Time>${buildTime}</Build-Time>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-war-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-            <manifestEntries>
-               <Maven-Version>${maven.version}</Maven-Version>
-               <Java-Version>${java.version}</Java-Version>
-               <Java-Vendor>${java.vendor}</Java-Vendor>
-               <Os-Name>${os.name}</Os-Name>
-               <Os-Arch>${os.arch}</Os-Arch>
-               <Os-Version>${os.version}</Os-Version>
-               <Build-Number>${buildNumber}</Build-Number>
-               <Build-Time>${buildTime}</Build-Time>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-ear-plugin</artifactId>
-        <configuration>
-          <version>1.4</version>  <!-- JEE version -->
-          <archive>
-            <manifest>
-               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-            <manifestEntries>
-               <Maven-Version>${maven.version}</Maven-Version>
-               <Java-Version>${java.version}</Java-Version>
-               <Java-Vendor>${java.vendor}</Java-Vendor>
-               <Os-Name>${os.name}</Os-Name>
-               <Os-Arch>${os.arch}</Os-Arch>
-               <Os-Version>${os.version}</Os-Version>
-               <Build-Number>${buildNumber}</Build-Number>
-               <Build-Time>${buildTime}</Build-Time>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce-versions</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireMavenVersion>
-                  <version>2.0.10</version>
-                </requireMavenVersion>
-                <requireJavaVersion>
-                  <version>[1.5,1.8)</version> <!-- 1.5.x, 1.6.x, 1.7.x -->
-                </requireJavaVersion>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.scm</groupId>
-            <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.3</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-          <updateDependencies>false</updateDependencies>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-scm-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.scm</groupId>
-            <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.3</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <trimStackTrace>false</trimStackTrace>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-idea-plugin</artifactId>
-        <configuration>
-          <ideaVersion>6.x</ideaVersion>
-          <downloadJavadocs>true</downloadJavadocs>
-          <downloadSources>true</downloadSources>
-        </configuration>
-      </plugin>
-
-    </plugins>
-
-  </build>
-
-
-  <repositories>
-
-    <repository>
-       <id>jboss-deprecated-repository</id>
-       <name>JBoss Deprecated</name>
-       <url>https://repository.jboss.org/maven2/</url>
-       <releases>
-         <enabled>true</enabled>
-         <updatePolicy>never</updatePolicy>
-       </releases>
-       <!-- Explicitly disable snapshots, so Maven won't try to
-            check for updates for snapshot internal (rhq-*) deps. -->
-       <snapshots>
-         <enabled>false</enabled>
-       </snapshots>
-    </repository>
-
-    <repository>
-       <id>jboss-repository</id>
-       <name>JBoss</name>
-       <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
-       <!-- Explicitly disable snapshots, so Maven won't try to
-            check for updates for snapshot internal (rhq-*) deps. -->
-       <snapshots>
-         <enabled>false</enabled>
-       </snapshots>
-    </repository>
-
-    <repository>
-       <id>jboss-thirdparty-uploads</id>
-       <name>JBoss Third-Party Uploads</name>
-       <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
-       <!-- Explicitly disable snapshots, so Maven won't try to
-            check for updates for snapshot internal (rhq-*) deps. -->
-       <snapshots>
-         <enabled>false</enabled>
-       </snapshots>
-    </repository>
-
-  </repositories>
-
-
-  <distributionManagement>
-
-    <snapshotRepository>
-      <id>jboss-snapshots-repository</id>
-      <name>JBoss Snapshots Repository</name>
-      <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
-    </snapshotRepository>
-
-    <repository>
-      <id>jboss-releases-repository</id>
-      <name>JBoss Releases Repository</name>
-      <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
-    </repository>
-
-  </distributionManagement>
-
-
-  <modules>
-    <module>modules</module>
-  </modules>
-
-
-  <profiles>
-    <profile>
-        <id>ojdbc-driver</id>
-         <activation>
-            <property>
-               <name>rhq.m2.repo.url.oracle</name>
-            </property>
-         </activation>
-
-        <dependencies>
-            <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
-                 Add a top level dependency if this profile is active to allow for db-required tests in any module.
-                 The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
-                 this profile should not be active by default. -->
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc5</artifactId>
-                <version>${ojdbc5.version}</version>
-                <scope>provided</scope>
-            </dependency>
-        </dependencies>
-    </profile>
-
-    <profile>
-     <id>dev</id>
-
-     <properties>
-        <!-- The below prop can be used by antrun scripts to check if the dev profile is enabled. -->
-        <dev.profile.active>true</dev.profile.active>
-        <!-- This tells dbsetup (in the dbutils module) to use the dev DB conn props
-             (rhq.dev.ds.*), rather than the test DB conn props (rhq.test.ds.*). -->
-        <db>dev</db>
-     </properties>
-
-     <build>
-      <plugins>
-
-       <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>validate</phase>
-            <inherited>false</inherited>
-            <configuration>
-              <tasks>
-                <echo>.                            !!!!!!! dev profile is active !!!!!!!</echo>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-       </plugin>
-
-       <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <useFile>false</useFile>
-        </configuration>
-       </plugin>
-
-      </plugins>
-     </build>
-
-    </profile>
-
-      <profile>
-         <id>test.debug</id>
-         <activation>
-            <property>
-               <name>test.debug</name>
-            </property>
-         </activation>
-
-         <properties>
-            <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
-            <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
-         </properties>
-      </profile>
-
-      <!-- Set the java5.home prop to a Java5 JRE dir to enforce that only Java5 APIs are used. -->
-      <profile>
-         <id>check-java-api</id>
-
-         <activation>
-            <property>
-               <name>java5.home</name>
-            </property>
-         </activation>
-
-         <build>
-           <plugins>
-               <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                  <execution>
-                    <phase>validate</phase>
-                    <inherited>false</inherited>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.3</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.2-beta-5</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>2.4.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.3.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.5</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-ear-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.0-beta-1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-ejb-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-idea-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.3</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.6.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>2.5.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-rar-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>2.4.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-scm-plugin</artifactId>
+                    <version>1.3</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>2.0.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.1.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.5</version>
                     <configuration>
-                      <tasks>
-                        <echo>java5.home=${java5.home}</echo>
-                      </tasks>
+                        <argLine>-Xms16m -Xmx256m</argLine>
                     </configuration>
-                    <goals>
-                      <goal>run</goal>
-                    </goals>
-                  </execution>
-                </executions>
-               </plugin>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.1-beta-1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>1.0-beta-4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <version>1.0-alpha-2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <version>${findbugs.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.groovy.maven</groupId>
+                    <artifactId>gmaven-plugin</artifactId>
+                    <version>1.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
 
-              <plugin>
+
+        <plugins>
+
+            <!-- Set the 'maven.version' property to the version of Maven being used,
+          so we can include the Maven version in the MANIFEST.MF files of all
+          build artifacts. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>maven-version</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <!-- As of v2.4 of this plugin, the default delimiters are @*@ -
+            we want the old default of ${*} instead. -->
+                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                    <delimiters>
+                        <delimiter>${*}</delimiter>
+                    </delimiters>
+                </configuration>
+            </plugin>
+
+            <!-- Ensure all code compiles and runs on Java 5 or later. -->
+            <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                  <compilerArguments>
-                    <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
-                  </compilerArguments>
+                    <!-- invocation options -->
+                    <fork>true</fork>
+                    <meminitial>128M</meminitial>
+                    <maxmem>512M</maxmem>
+
+                    <!-- compiler options -->
+                    <source>1.5</source>
+                    <target>1.5</target>
+                    <optimize>false</optimize>
                 </configuration>
-              </plugin>
-            </plugins>
-          </build>
-      </profile>
+            </plugin>
 
-      <!-- Use buildnumber plugin only if SVN metadata is present. -->
-      <profile>
-         <id>build-number-generation</id>
-         <activation>
-            <file>
-               <exists>.svn</exists>
-            </file>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>buildnumber-maven-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <phase>validate</phase>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Maven-Version>${maven.version}</Maven-Version>
+                            <Java-Version>${java.version}</Java-Version>
+                            <Java-Vendor>${java.vendor}</Java-Vendor>
+                            <Os-Name>${os.name}</Os-Name>
+                            <Os-Arch>${os.arch}</Os-Arch>
+                            <Os-Version>${os.version}</Os-Version>
+                            <Build-Number>${buildNumber}</Build-Number>
+                            <Build-Time>${buildTime}</Build-Time>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-ejb-plugin</artifactId>
+                <configuration>
+                    <ejbVersion>3.0</ejbVersion>
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Maven-Version>${maven.version}</Maven-Version>
+                            <Java-Version>${java.version}</Java-Version>
+                            <Java-Vendor>${java.vendor}</Java-Vendor>
+                            <Os-Name>${os.name}</Os-Name>
+                            <Os-Arch>${os.arch}</Os-Arch>
+                            <Os-Version>${os.version}</Os-Version>
+                            <Build-Number>${buildNumber}</Build-Number>
+                            <Build-Time>${buildTime}</Build-Time>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Maven-Version>${maven.version}</Maven-Version>
+                            <Java-Version>${java.version}</Java-Version>
+                            <Java-Vendor>${java.vendor}</Java-Vendor>
+                            <Os-Name>${os.name}</Os-Name>
+                            <Os-Arch>${os.arch}</Os-Arch>
+                            <Os-Version>${os.version}</Os-Version>
+                            <Build-Number>${buildNumber}</Build-Number>
+                            <Build-Time>${buildTime}</Build-Time>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-ear-plugin</artifactId>
+                <configuration>
+                    <version>1.4</version>
+                    <!-- JEE version -->
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Maven-Version>${maven.version}</Maven-Version>
+                            <Java-Version>${java.version}</Java-Version>
+                            <Java-Vendor>${java.vendor}</Java-Vendor>
+                            <Os-Name>${os.name}</Os-Name>
+                            <Os-Arch>${os.arch}</Os-Arch>
+                            <Os-Version>${os.version}</Os-Version>
+                            <Build-Number>${buildNumber}</Build-Number>
+                            <Build-Time>${buildTime}</Build-Time>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-versions</id>
                         <goals>
-                           <goal>create</goal>
+                            <goal>enforce</goal>
                         </goals>
-                     </execution>
-                     </executions>
-                     <configuration>
-                     <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-                     <revisionOnScmFailure>0</revisionOnScmFailure>
-                     <doCheck>false</doCheck>
-                     <doUpdate>false</doUpdate>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>2.0.10</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[1.5,1.8)</version>
+                                    <!-- 1.5.x, 1.6.x, 1.7.x -->
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-      <profile>
-          <id>build-properties</id>
-          <activation>
-              <file>
-                  <exists>.git</exists>
-              </file>
-          </activation>
-          <build>
-              <plugins>
-              <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>write-build-time-properties-file</id>
-                          <goals>
-                              <goal>run</goal>
-                          </goals>
-                          <phase>generate-sources</phase>
-                          <configuration>
-                              <tasks>
-                                  <tstamp>
-                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
-                                              timezone="GMT"/>
-                                  </tstamp>
-                                  <mkdir dir="target"/>
-                                  <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}
-                                  </echo>
-                              </tasks>
-                          </configuration>
-                      </execution>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.scm</groupId>
+                        <artifactId>maven-scm-provider-gitexe</artifactId>
+                        <version>1.3</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <updateDependencies>false</updateDependencies>
+                </configuration>
+            </plugin>
 
-                      <execution>
-                          <id>echo-build-properties</id>
-                          <phase>compile</phase>
-                          <inherited>false</inherited>
-                          <goals>
-                              <goal>run</goal>
-                          </goals>
-                          <configuration>
-                              <tasks>
-                                  <echo level="debug">buildTime = ${buildTime}</echo>
-                                  <echo level="debug">buildNumber = ${buildNumber}</echo>
-                              </tasks>
-                          </configuration>
-                      </execution>
-                  </executions>
-              </plugin>
+            <plugin>
+                <artifactId>maven-scm-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.scm</groupId>
+                        <artifactId>maven-scm-provider-gitexe</artifactId>
+                        <version>1.3</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
 
-              <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>exec-maven-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>generate-build-number-properties</id>
-                          <phase>generate-sources</phase>
-                          <goals>
-                              <goal>exec</goal>
-                          </goals>
-                          <configuration>
-                              <executable>git</executable>
-                              <arguments>
-                                  <argument>log</argument>
-                                  <argument>--pretty=format:buildNumber = %h</argument>
-                                  <argument>-n1</argument>
-                              </arguments>
-                              <outputFile>${project.build.directory}/build-number.properties</outputFile>
-                          </configuration>
-                      </execution>
-                  </executions>
-              </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                </configuration>
+            </plugin>
 
-              <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>read-build-properties</id>
-                          <phase>process-sources</phase>
-                          <goals>
-                              <goal>read-project-properties</goal>
-                          </goals>
-                          <configuration>
-                              <files>
-                                  <file>${project.build.directory}/build-time.properties</file>
-                                  <file>${project.build.directory}/build-number.properties</file>
-                              </files>
-                          </configuration>
-                      </execution>
-                  </executions>
-              </plugin>
-              </plugins>
-          </build>
-      </profile>
+            <plugin>
+                <artifactId>maven-idea-plugin</artifactId>
+                <configuration>
+                    <ideaVersion>6.x</ideaVersion>
+                    <downloadJavadocs>true</downloadJavadocs>
+                    <downloadSources>true</downloadSources>
+                </configuration>
+            </plugin>
 
-      <profile>
-          <id>brew-generate-build-number</id>
-          <activation>
-              <property>
-                  <name>brew</name>
-              </property>
-          </activation>
-          <build>
-              <plugins>
-              <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>write-build-properties-file</id>
-                          <goals>
-                              <goal>run</goal>
-                          </goals>
-                          <phase>generate-sources</phase>
-                          <configuration>
-                              <tasks>
-                                  <tstamp>
-                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
-                                              timezone="GMT"/>
-                                  </tstamp>
-                                  <mkdir dir="target"/>
-                                  <echo file="target/build-time.properties" level="error">buildTime = ${maven.build.timestamp}</echo>
-                                  <echo file="target/build-number.properties" level="error">buildNumber = ${rhq.build.number}</echo>
-                              </tasks>
-                          </configuration>
-                      </execution>
+        </plugins>
 
-                      <execution>
-                          <id>echo-build-properties</id>
-                          <phase>compile</phase>
-                          <inherited>false</inherited>
-                          <goals>
-                              <goal>run</goal>
-                          </goals>
-                          <configuration>
-                              <tasks>
-                                  <echo level="debug">buildTime = ${maven.build.timestamp}</echo>
-                                  <echo level="debug">buildNumber = ${rhq.build.number}</echo>
-                              </tasks>
-                          </configuration>
-                      </execution>
-                  </executions>
-                </plugin>
-              </plugins>
-          </build>
-      </profile>
-
-  </profiles>
+    </build>
 
 
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>2.3.1</version>
-      </plugin>
-    </plugins>
-  </reporting>
+    <repositories>
+
+        <repository>
+            <id>jboss-deprecated-repository</id>
+            <name>JBoss Deprecated</name>
+            <url>https://repository.jboss.org/maven2/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <!-- Explicitly disable snapshots, so Maven won't try to
+    check for updates for snapshot internal (rhq-*) deps. -->
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>jboss-repository</id>
+            <name>JBoss</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
+            <!-- Explicitly disable snapshots, so Maven won't try to
+    check for updates for snapshot internal (rhq-*) deps. -->
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>jboss-thirdparty-uploads</id>
+            <name>JBoss Third-Party Uploads</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
+            <!-- Explicitly disable snapshots, so Maven won't try to
+    check for updates for snapshot internal (rhq-*) deps. -->
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+    </repositories>
+
+
+    <distributionManagement>
+
+        <snapshotRepository>
+            <id>jboss-snapshots-repository</id>
+            <name>JBoss Snapshots Repository</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+
+        <repository>
+            <id>jboss-releases-repository</id>
+            <name>JBoss Releases Repository</name>
+            <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+        </repository>
+
+    </distributionManagement>
+
+
+    <modules>
+        <module>modules</module>
+    </modules>
+
+
+    <profiles>
+        <profile>
+            <id>ojdbc-driver</id>
+            <activation>
+                <property>
+                    <name>rhq.m2.repo.url.oracle</name>
+                </property>
+            </activation>
+
+            <dependencies>
+                <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
+        Add a top level dependency if this profile is active to allow for db-required tests in any module.
+        The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
+        this profile should not be active by default. -->
+                <dependency>
+                    <groupId>com.oracle</groupId>
+                    <artifactId>ojdbc5</artifactId>
+                    <version>${ojdbc5.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <!-- The below prop can be used by antrun scripts to check if the dev profile is enabled. -->
+                <dev.profile.active>true</dev.profile.active>
+                <!-- This tells dbsetup (in the dbutils module) to use the dev DB conn props
+       (rhq.dev.ds.*), rather than the test DB conn props (rhq.test.ds.*). -->
+                <db>dev</db>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <inherited>false</inherited>
+                                <configuration>
+                                    <tasks>
+                                        <echo>. !!!!!!! dev profile is active !!!!!!!</echo>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <useFile>false</useFile>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+
+        </profile>
+
+        <profile>
+            <id>test.debug</id>
+            <activation>
+                <property>
+                    <name>test.debug</name>
+                </property>
+            </activation>
+
+            <properties>
+                <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
+                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE
+                    -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y
+                </maven.surefire.debug>
+            </properties>
+        </profile>
+
+        <!-- Set the java5.home prop to a Java5 JRE dir to enforce that only Java5 APIs are used. -->
+        <profile>
+            <id>check-java-api</id>
+
+            <activation>
+                <property>
+                    <name>java5.home</name>
+                </property>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <inherited>false</inherited>
+                                <configuration>
+                                    <tasks>
+                                        <echo>java5.home=${java5.home}</echo>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <compilerArguments>
+                                <bootclasspath>
+                                    ${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar
+                                </bootclasspath>
+                            </compilerArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Use buildnumber plugin only if SVN metadata is present. -->
+        <profile>
+            <id>build-number-generation</id>
+            <activation>
+                <file>
+                    <exists>.svn</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>buildnumber-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>create</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                            <revisionOnScmFailure>0</revisionOnScmFailure>
+                            <doCheck>false</doCheck>
+                            <doUpdate>false</doUpdate>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>build-properties</id>
+            <activation>
+                <file>
+                    <exists>.git</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>write-build-time-properties-file</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <tasks>
+                                        <tstamp>
+                                            <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
+                                                    timezone="GMT"/>
+                                        </tstamp>
+                                        <mkdir dir="target"/>
+                                        <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}
+                                        </echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>echo-build-properties</id>
+                                <phase>compile</phase>
+                                <inherited>false</inherited>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo level="debug">buildTime = ${buildTime}</echo>
+                                        <echo level="debug">buildNumber = ${buildNumber}</echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>generate-build-number-properties</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>git</executable>
+                                    <arguments>
+                                        <argument>log</argument>
+                                        <argument>--pretty=format:buildNumber = %h</argument>
+                                        <argument>-n1</argument>
+                                    </arguments>
+                                    <outputFile>${project.build.directory}/build-number.properties</outputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-build-properties</id>
+                                <phase>process-sources</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${project.build.directory}/build-time.properties</file>
+                                        <file>${project.build.directory}/build-number.properties</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>brew-generate-build-number</id>
+            <activation>
+                <property>
+                    <name>brew</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>write-build-properties-file</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <tasks>
+                                        <tstamp>
+                                            <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
+                                                    timezone="GMT"/>
+                                        </tstamp>
+                                        <mkdir dir="target"/>
+                                        <echo file="target/build-time.properties" level="error">buildTime = ${maven.build.timestamp}</echo>
+                                        <echo file="target/build-number.properties" level="error">buildNumber = ${rhq.build.number}</echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>echo-build-properties</id>
+                                <phase>compile</phase>
+                                <inherited>false</inherited>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo level="debug">buildTime = ${maven.build.timestamp}</echo>
+                                        <echo level="debug">buildNumber = ${rhq.build.number}</echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-build-properties</id>
+                                <phase>process-sources</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${project.build.directory}/build-time.properties</file>
+                                        <file>${project.build.directory}/build-number.properties</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.3.1</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
 </project>
 

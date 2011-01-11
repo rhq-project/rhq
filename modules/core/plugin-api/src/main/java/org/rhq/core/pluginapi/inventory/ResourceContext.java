@@ -88,8 +88,8 @@ public class ResourceContext<T extends ResourceComponent> {
      *                                   type as this resource (may be <code>null</code>)
      * @param systemInfo                 information about the system on which the plugin and its plugin container are
      *                                   running
-     * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at agent shutdown
-     * @param dataDirectory              a directory where plugins can store persisted data that survives agent restarts
+     * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at plugin container shutdown
+     * @param dataDirectory              a directory where plugins can store persisted data that survives plugin container restarts
      * @param pluginContainerName        the name of the plugin container in which the discovery component is running.
      *                                   Components can be assured this name is unique across <b>all</b> plugin
      *                                   containers/agents running in the RHQ environment.
@@ -265,8 +265,8 @@ public class ResourceContext<T extends ResourceComponent> {
     }
 
     /**
-     * A temporary directory for plugin use that is destroyed at agent shutdown. Plugins should use this if they need to
-     * write temporary files that they do not expect to remain after the agent is restarted. This directory is shared
+     * A temporary directory for plugin use that is destroyed at plugin container shutdown. Plugins should use this if they need to
+     * write temporary files that they do not expect to remain after the plugin container is restarted. This directory is shared
      * among all plugins - plugins must ensure they write unique files here, as other plugins may be using this same
      * directory. Typically, plugins will use the {@link File#createTempFile(String, String, File)} API when writing to
      * this directory.
@@ -278,7 +278,7 @@ public class ResourceContext<T extends ResourceComponent> {
     }
 
     /**
-     * Directory where plugins can store persisted data that survives agent restarts. Each plugin will have their own
+     * Directory where plugins can store persisted data that survives plugin container restarts. Each plugin will have their own
      * data directory. The returned directory may not yet exist - it is up to each individual plugin to manage this
      * directory as they see fit (this includes performing the initial creation when the directory is first needed).
      *

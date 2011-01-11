@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class GetDeploymentOptionsStep extends AbstractWizardStep {
@@ -46,9 +47,13 @@ public class GetDeploymentOptionsStep extends AbstractWizardStep {
         return "Deploy Options";
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (form == null) {
-            form = new LocatableDynamicForm("BundleDeployGetDepOptions");
+            if (parent != null) {
+                form = new LocatableDynamicForm(parent.extendLocatorId("BundleDeployGetDepOptions"));
+            } else {
+                form = new LocatableDynamicForm("BundleDeployGetDepOptions");
+            }
             form.setWidth100();
             form.setNumCols(2);
             form.setColWidths("50%", "*");

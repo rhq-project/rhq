@@ -52,7 +52,7 @@ import org.rhq.core.util.updater.DeployDifferences;
 public class BundleAntProject extends Project {
     // these statuses should match those of see BundleResourceDeploymentHistory.Status
     public enum AuditStatus {
-        SUCCESS, FAILURE, WARN
+        SUCCESS, FAILURE, WARN, INFO
     };
 
     // Bundle-level attributes
@@ -180,7 +180,7 @@ public class BundleAntProject extends Project {
      * When running in the agent, this audit log will be sent to the server.
      * It is always logged at part of the normal Ant logger mechanism.
      * 
-     * @param status SUCCESS, FAILURE or WARN
+     * @param status SUCCESS, FAILURE, WARN, INFO
      * @param action audit action, a short summary easily displayed (e.g "File Download")
      * @param info information about the action target, easily displayed (e.g. "myfile.zip")
      * @param message Optional, brief (one or two lines) information message

@@ -24,6 +24,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Jay Shaughnessy
@@ -38,13 +39,17 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (editor == null) {
 
             ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
             Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
 
-            editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
+            if (parent != null) {
+                editor = new ConfigurationEditor(parent.extendLocatorId("ResourceFactoryConfig"), def, startingConfig);
+            } else {
+                editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
+            }
         }
         return editor;
     }

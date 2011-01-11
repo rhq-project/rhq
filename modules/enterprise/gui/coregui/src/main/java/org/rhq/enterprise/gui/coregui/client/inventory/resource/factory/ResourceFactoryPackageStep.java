@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFil
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Jay Shaughnessy
@@ -44,12 +45,18 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (null == form) {
 
-            form = new PackageVersionFileUploadForm("ResFactPackageStep", wizard.getNewResourcePackageType().getId(),
-                wizard.getChildType().getName(), wizard.getNewResourceVersion(), wizard.getNewResourceArchitectureId(),
-                true, null);
+            if (parent != null) {
+                form = new PackageVersionFileUploadForm(parent.extendLocatorId("ResFactPackageStep"), wizard
+                    .getNewResourcePackageType().getId(), wizard.getChildType().getName(), wizard
+                    .getNewResourceVersion(), wizard.getNewResourceArchitectureId(), true, null);
+            } else {
+                form = new PackageVersionFileUploadForm("ResFactPackageStep", wizard.getNewResourcePackageType()
+                    .getId(), wizard.getChildType().getName(), wizard.getNewResourceVersion(), wizard
+                    .getNewResourceArchitectureId(), true, null);
+            }
             form.setPadding(20);
             form.addFormHandler(new DynamicFormHandler() {
                 public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {

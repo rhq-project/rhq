@@ -45,10 +45,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class PortletWindow extends LocatableWindow {
 
-    private DashboardView dashboardView;
-    private DashboardPortlet dashboardPortlet;
-    private static String RSS = "Rss";
+    private static final String RSS = "Rss";
 
+    // The dashboard in which this window is diplayed
+    private DashboardView dashboardView;
+
+    // A reference to the stored/persisted DashboardPortlet, so changes made to this will
+    // get persisted when the dashboard is persisted.
+    private DashboardPortlet storedPortlet;
+
+    // The actual portlet content view
     private Portlet view;
 
     private static final ClickHandler NO_OP_HANDLER = new ClickHandler() {
@@ -94,7 +100,7 @@ public class PortletWindow extends LocatableWindow {
         super(locatorId);
 
         this.dashboardView = dashboardView;
-        this.dashboardPortlet = dashboardPortlet;
+        this.storedPortlet = dashboardPortlet;
         setEdgeSize(2);
 
         //        if (!showFrame) {
@@ -138,7 +144,7 @@ public class PortletWindow extends LocatableWindow {
         addDragResizeStopHandler(new DragResizeStopHandler() {
             public void onDragResizeStop(DragResizeStopEvent dragResizeStopEvent) {
 
-                PortletWindow.this.dashboardPortlet.setHeight(((Canvas) dragResizeStopEvent.getSource()).getHeight());
+                PortletWindow.this.storedPortlet.setHeight(((Canvas) dragResizeStopEvent.getSource()).getHeight());
 
                 PortletWindow.this.dashboardView.resize();
                 save();
@@ -148,7 +154,7 @@ public class PortletWindow extends LocatableWindow {
 
         addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClientEvent closeClientEvent) {
-                PortletWindow.this.dashboardView.removePortlet(PortletWindow.this.dashboardPortlet);
+                PortletWindow.this.dashboardView.removePortlet(PortletWindow.this.storedPortlet);
                 destroy();
             }
         });
@@ -162,21 +168,21 @@ public class PortletWindow extends LocatableWindow {
     protected void onInit() {
         super.onInit();
 
-        view = PortletFactory.buildPortlet(this, dashboardPortlet);
+        // each portletWindow wraps a single portlet view, so just extend the window's locatorId with a static id
+        view = PortletFactory.buildPortlet(extendLocatorId("View"), this, storedPortlet);
 
         Canvas canvas = (Canvas) view;
         addItem(canvas);
 
         settingsHandlerDelegate = new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new PortletSettingsWindow(extendLocatorId("Settings"), PortletWindow.this, dashboardPortlet, view)
-                    .show();
+                new PortletSettingsWindow(extendLocatorId("Settings"), PortletWindow.this, storedPortlet, view).show();
             }
         };
 
         helpHandlerDelegate = new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new PortletHelpWindow(dashboardPortlet, view).show();
+                new PortletHelpWindow(storedPortlet, view).show();
             }
         };
     }
@@ -189,12 +195,16 @@ public class PortletWindow extends LocatableWindow {
         helpHandlerDelegate = handler;
     }
 
-    public DashboardPortlet getDashboardPortlet() {
-        return dashboardPortlet;
+    public Portlet getView() {
+        return view;
     }
 
-    public void setDashboardPortlet(DashboardPortlet dashboardPortlet) {
-        this.dashboardPortlet = dashboardPortlet;
+    public DashboardPortlet getStoredPortlet() {
+        return storedPortlet;
+    }
+
+    public void setStoredPortlet(DashboardPortlet storedPortlet) {
+        this.storedPortlet = storedPortlet;
     }
 
     public void save() {

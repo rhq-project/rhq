@@ -35,7 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.Inventor
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -76,15 +75,11 @@ public class PortletFactory {
         registeredPortletNameMap.put(OperationsPortlet.KEY, OperationsPortlet.NAME);
     }
 
-    public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+    public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
         PortletViewFactory viewFactory = registeredPortletFactoryMap.get(storedPortlet.getPortletKey());
 
-        // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
-        // tests as a change in the number of default portlets, or a change in test order could make a test
-        // non-repeatable. But, at the moment we lack the infrastructure to generate a unique, predictable id. 
-        Portlet view = viewFactory.getInstance(SeleniumUtility.getSafeId(storedPortlet.getPortletKey()) + "-"
-            + Integer.toString(storedPortlet.getId()));
+        Portlet view = viewFactory.getInstance(locatorId);
         view.configure(portletWindow, storedPortlet);
 
         //add code to initiate refresh cycle for portlets

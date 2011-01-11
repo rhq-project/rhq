@@ -68,7 +68,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     //keys for smart gwt elements. should be unique
     public static final String PROBLEM_RESOURCE_SHOW_HRS = "max-problems-query-span";
     public static final String PROBLEM_RESOURCE_SHOW_MAX = "max-problems-shown";
-    private DashboardPortlet storedPortlet;
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     //reference to datasource
     private ProblemResourcesDataSource dataSource;
 
@@ -77,6 +80,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     public static final String defaultValue = unlimited;
     private Timer defaultReloader;
 
+    @SuppressWarnings("unchecked")
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId, NAME, true);
 
@@ -85,7 +89,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
         //disable footer refresh
         setShowFooterRefresh(false);
 
-        setOverflow(Overflow.HIDDEN);
+        setOverflow(Overflow.VISIBLE);
 
         //insert the datasource
         this.dataSource = new ProblemResourcesDataSource(this);
@@ -104,7 +108,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setCellHeight(50);
             //wrap to display disambiguation
             listGrid.setWrapCells(true);
-            addExtraWidget(new TimeRange(this.getLocatorId(), this));
+            addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this));
         }
 
     }
@@ -120,7 +124,14 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
-        this.storedPortlet = storedPortlet;
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         int configuredValue = -1;
 
         //determine configuration value for ProblemResourceShowMax
@@ -158,7 +169,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_problem_resources_help());
+        return new HTMLFlow(MSG.view_portlet_help_problemResources());
     }
 
     /** Build custom for to dispaly the Portlet Configuration settings.
@@ -166,13 +177,15 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
      */
     public DynamicForm getCustomSettingsForm() {
 
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("customSettings"));
+
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         //-------------combobox for number of resource to display on the dashboard
         final SelectItem maximumProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_MAX);
         maximumProblemResourcesComboBox.setTitle(MSG.common_title_display());
-        maximumProblemResourcesComboBox.setHint("<nobr><b> "
-            + MSG.view_portlet_problem_resources_config_problem_label() + "</b></nobr>");
+        maximumProblemResourcesComboBox.setHint("<nobr><b> " + MSG.view_portlet_problemResources_maxDisplaySetting()
+            + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
@@ -183,14 +196,14 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //default selected value to 'unlimited'(live lists) and check both combobox settings here.
         String selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, defaultValue));
-            }
+
+        //if property exists retrieve it
+        if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX) != null) {
+            selectedValue = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX).getStringValue();
+        } else {//insert default value
+            storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, defaultValue));
         }
+
         //prepopulate the combobox with the previously stored selection
         maximumProblemResourcesComboBox.setDefaultValue(selectedValue);
 
@@ -223,8 +236,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //submit handler
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
+
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+
                 if (form.getValue(PROBLEM_RESOURCE_SHOW_MAX) != null) {
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, form.getValue(PROBLEM_RESOURCE_SHOW_MAX)));
@@ -233,6 +248,9 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, form.getValue(PROBLEM_RESOURCE_SHOW_HRS)));
                 }
+
+                configure(portletWindow, storedPortlet);
+
                 refresh();
             }
         });
@@ -242,24 +260,21 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new ProblemResourcesPortlet(locatorId);
-            }
-            return reference;
+
+            return new ProblemResourcesPortlet(locatorId);
         }
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition(MSG
-            .view_portlet_problem_resources_config_title(), MSG.view_portlet_problem_resources_config_title_desc());
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
+            MSG.view_portlet_configure_definitionDesc());
 
         definition.put(new PropertyDefinitionSimple(PROBLEM_RESOURCE_SHOW_MAX, MSG
-            .view_portlet_problem_resources_config_display_maximum(), true, PropertySimpleType.INTEGER));
+            .view_portlet_problemResources_config_display_maximum(), true, PropertySimpleType.INTEGER));
         definition.put(new PropertyDefinitionSimple(PROBLEM_RESOURCE_SHOW_HRS, MSG
-            .view_portlet_problem_resources_config_display_range(), true, PropertySimpleType.INTEGER));
+            .view_portlet_problemResources_config_display_range(), true, PropertySimpleType.INTEGER));
 
         return definition;
     }
@@ -316,6 +331,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             defaultReloader.schedule(retrievedRefreshInterval);
         }
     }
+
 }
 
 /**Construct table widget Label to display timerange settings used with latest datasource query.
@@ -323,7 +339,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
  * @author spinder
  */
 class TimeRange extends LocatableHLayout implements TableWidget {
-    private LocatableLabel label = new LocatableLabel(extendLocatorId("time-range-label"));
+    private LocatableLabel label = new LocatableLabel(extendLocatorId("timeRange"));
     private ProblemResourcesPortlet portlet = null;
 
     public TimeRange(String locatorId, ProblemResourcesPortlet problemResourcesPortlet) {
@@ -334,8 +350,7 @@ class TimeRange extends LocatableHLayout implements TableWidget {
     @Override
     public void refresh(ListGrid listGrid) {
         this.label.setWidth(400);
-        //        this.label.setContents("From " + portlet.getTimeRange()[0] + " to " + portlet.getTimeRange()[1]);
-        this.label.setContents(MSG.view_portlet_problem_resources_config_display_range2(portlet.getTimeRange()[0],
+        this.label.setContents(MSG.view_portlet_problemResources_config_display_range2(portlet.getTimeRange()[0],
             portlet.getTimeRange()[1]));
     }
 
@@ -344,4 +359,5 @@ class TimeRange extends LocatableHLayout implements TableWidget {
         super.onDraw();
         addMember(this.label);
     }
+
 }

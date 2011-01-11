@@ -244,6 +244,10 @@ public class SavedSearch implements Serializable {
             return false;
         }
 
+        if (lastComputeTime != other.lastComputeTime) {
+            return false;
+        }
+
         return true;
     }
 

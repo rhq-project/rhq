@@ -108,6 +108,7 @@ public class BundleDeploymentListView extends Table<RPCDataSource<BundleDeployme
         statusField.setValueIcons(statusIcons);
         statusField.setValueIconWidth(11);
         statusField.setValueIconHeight(11);
+        statusField.setShowValueIconOnly(true);
         statusField.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {

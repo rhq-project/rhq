@@ -30,9 +30,6 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.lookup.ResourceLookupComboBoxItem;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -52,8 +49,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_graph();
 
+    // set on initial configuration, the window for this portlet view. 
     private PortletWindow portletWindow;
-    private DashboardPortlet storedPortlet;
 
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
@@ -65,8 +62,15 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.portletWindow = portletWindow;
-        this.storedPortlet = storedPortlet;
+
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             setResourceId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
             setDefinitionId(storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
@@ -74,27 +78,18 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("<h3>" + MSG.view_portlet_graph_help_title() + "</h3>" + MSG.view_portlet_graph_help_msg());
-    }
-
-    public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition def = new ConfigurationDefinition(MSG.view_portlet_graph_configure_title(), MSG
-            .view_portlet_graph_configure_title_desc());
-        def.put(new PropertyDefinitionSimple(CFG_RESOURCE_ID, MSG.view_portlet_graph_configure_resource_graph(), true,
-            PropertySimpleType.INTEGER));
-        def.put(new PropertyDefinitionSimple(CFG_DEFINITION_ID, MSG
-            .view_portlet_graph_configure_metricDefinition_graph(), true, PropertySimpleType.INTEGER));
-
-        return def;
+        return new HTMLFlow(MSG.view_portlet_help_graph());
     }
 
     @Override
     protected void onDraw() {
-        removeMembers(getMembers());
+        DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             super.onDraw();
         } else {
-            addMember(new Label(MSG.view_portlet_graph_help_unconfigured()));
+            removeMembers(getMembers());
+            addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         }
     }
 
@@ -117,6 +112,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
                 return criteria;
             }
         };
+
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         metric.setWidth(300);
         metric.setValueField("id");
@@ -150,17 +147,34 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
                 storedPortlet.getConfiguration().put(
                     new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
 
+                configure(portletWindow, storedPortlet);
+
+                redraw();
             }
         });
 
         return form;
     }
 
+    @Override
+    public void redraw() {
+        super.redraw();
+
+        removeMembers(getMembers());
+
+        DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
+            renderGraph();
+        } else {
+            addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
+        }
+    }
+
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(GraphPortlet.class);
+
             return new GraphPortlet(locatorId);
         }
     }

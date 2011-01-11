@@ -25,7 +25,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.BlurbItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
@@ -58,54 +57,59 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     //ui attributes/properties/indentifiers
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
+
     private String unlimited = MSG.common_label_unlimited();
     private String defaultValue = unlimited;
-    //portlet settings and datasource elements
-    private DashboardPortlet storedPortlet;
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     private AutodiscoveryQueueDataSource dataSource;
     private Timer defaultReloader;
 
     public AutodiscoveryPortlet(String locatorId) {
         super(locatorId, true);
-    }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
         //initialize the datasource to include Portlet instance
         this.dataSource = new AutodiscoveryQueueDataSource(getTreeGrid());
         if (getTreeGrid() != null) {
             getTreeGrid().setDataSource(getDataSource());
         }
-        if ((storedPortlet != null) && (storedPortlet.getConfiguration() != null)) {
-            //loads/retrieves initial portlet settings for datasource
-            String retrieved = null;
-            //if settings already exist for this portlet
-            if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
-                //retrieve and translate to int
-                retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
-            } else {//create setting
-                storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
-                retrieved = defaultValue;
-            }
-
-            if (retrieved.equals(unlimited)) {
-                getDataSource().setMaximumPlatformsToDisplay(-1);
-            } else {
-                getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
-            }
-        }
     }
 
-    /** Implements configure action.  Stores reference to the initiating DashboardPortlet.
+    /** Implements configure action.  Stores reference to encompassing window.
     */
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
+        // loads/retrieves initial portlet settings for datasource
+        String retrieved = null;
+
+        //if settings already exist for this portlet
+        if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
+            //retrieve and translate to int
+            retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
+        } else {//create setting
+            storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
+            retrieved = defaultValue;
+        }
+
+        if (retrieved.equals(unlimited)) {
+            getDataSource().setMaximumPlatformsToDisplay(-1);
+        } else {
+            getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
+        }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_autodiscovery_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_autodiscovery());
     }
 
     /** Build custom settings form.
@@ -114,14 +118,16 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Settings"));
         form.setLayoutAlign(VerticalAlignment.CENTER);
 
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+
         //horizontal display component
         LocatableHLayout row = new LocatableHLayout(extendLocatorId("auto-discovery.configuration"));
-        BlurbItem label = new BlurbItem(form.extendLocatorId("discovery-platform-count-label"));
-        label.setValue(MSG.view_portlet_autodiscovery_config_platform_selection());
-        label.setWrap(false);
 
         //-------------combobox for number of platforms to display on the dashboard
-        final SelectItem maximumPlatformsComboBox = new SelectItem(form.extendLocatorId(AUTODISCOVERY_PLATFORM_MAX), "");
+        final SelectItem maximumPlatformsComboBox = new SelectItem(AUTODISCOVERY_PLATFORM_MAX);
+        maximumPlatformsComboBox.setTitle(MSG.common_title_show());
+        maximumPlatformsComboBox.setHint("<nobr><b> " + MSG.view_portlet_autodiscovery_setting_platforms()
+            + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumPlatformsComboBox.setType("selection");
         //define acceptable values for display amount
@@ -137,14 +143,9 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
             }
         });
 
-        //wrap field item in dynamicform for addition as a field item
         DynamicForm item = new DynamicForm();
-        item.setFields(label);
-
+        item.setFields(maximumPlatformsComboBox);
         row.addMember(item);
-        DynamicForm item2 = new DynamicForm();
-        item2.setFields(maximumPlatformsComboBox);
-        row.addMember(item2);
 
         //default selected value to 'unlimited'(live lists) and check both combobox settings here.
         String selectedValue = defaultValue;
@@ -167,14 +168,14 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             //specify submit action.
             public void onSubmitValues(SubmitValuesEvent event) {
+
                 if (form.getValue(AUTODISCOVERY_PLATFORM_MAX) != null) {
                     //persist this value to configuration
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, form.getValue(AUTODISCOVERY_PLATFORM_MAX)));
-                    //save to datasource
-                    String value = form.getValue(AUTODISCOVERY_PLATFORM_MAX) + "";
-                    int maximumPlatformsToDisplay = value.equals(unlimited) ? -1 : Integer.parseInt(value);
-                    getDataSource().setMaximumPlatformsToDisplay(maximumPlatformsToDisplay);
+
+                    configure(portletWindow, storedPortlet);
+
                     markForRedraw();
                 }
             }
@@ -185,13 +186,10 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private static Portlet reference = null;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new AutodiscoveryPortlet(locatorId);
-            }
-            return reference;
+
+            return new AutodiscoveryPortlet(locatorId);
         }
     }
 

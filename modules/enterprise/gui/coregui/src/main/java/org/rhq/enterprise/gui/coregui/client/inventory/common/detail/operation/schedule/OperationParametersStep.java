@@ -26,6 +26,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Greg Hinkle
@@ -41,15 +42,20 @@ public class OperationParametersStep extends AbstractWizardStep {
         this.definition = operationDefinition;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (definition.getParametersConfigurationDefinition() != null) {
             if (configurationEditor == null) {
                 ConfigurationDefinition configurationDefinition = definition.getParametersConfigurationDefinition();
                 Configuration defaultConfiguration = configurationDefinition.getDefaultTemplate() != null ? configurationDefinition
                     .getDefaultTemplate().createConfiguration()
                     : new Configuration();
-                configurationEditor = new ConfigurationEditor("OperationParams", configurationDefinition,
-                    defaultConfiguration);
+                if (parent != null) {
+                    configurationEditor = new ConfigurationEditor(parent.extendLocatorId("OperationParams"),
+                        configurationDefinition, defaultConfiguration);
+                } else {
+                    configurationEditor = new ConfigurationEditor("OperationParams", configurationDefinition,
+                        defaultConfiguration);
+                }
             }
             return configurationEditor;
         } else {
@@ -68,5 +74,5 @@ public class OperationParametersStep extends AbstractWizardStep {
     public Configuration getParameterConfiguration() {
         return configurationEditor != null ? configurationEditor.getConfiguration() : null;
     }
-    
+
 }

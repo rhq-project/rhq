@@ -54,13 +54,14 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 
-    private DashboardPortlet storedPortlet;
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
+
     private Timer defaultReloader;
 
     public FavoriteResourcesPortlet(String locatorId) {
         super(locatorId);
-        setOverflow(Overflow.HIDDEN);
+        setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
         setShowFooter(false);
@@ -85,7 +86,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
             public void onFieldStateChanged(FieldStateChangedEvent fieldStateChangedEvent) {
                 String state = getListGrid().getViewState();
 
-                storedPortlet.getConfiguration().put(new PropertySimple(CFG_TABLE_PREFS, state));
+                portletWindow.getStoredPortlet().getConfiguration().put(new PropertySimple(CFG_TABLE_PREFS, state));
                 portletWindow.save();
             }
         });
@@ -94,8 +95,13 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.portletWindow = portletWindow;
-        this.storedPortlet = storedPortlet;
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS) != null) {
             String state = storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS).getStringValue();
@@ -105,19 +111,15 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_favoriteResources_msg());
+        return new HTMLFlow(MSG.view_portlet_help_favoriteResources());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(FavoriteResourcesPortlet.class);
-            if (reference == null) {
-                reference = new FavoriteResourcesPortlet(locatorId);
-            }
-            return reference;
+
+            return new FavoriteResourcesPortlet(locatorId);
         }
     }
 

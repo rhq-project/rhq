@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class GetDestinationStep extends AbstractWizardStep {
@@ -58,9 +59,13 @@ public class GetDestinationStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_getDestStep();
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (this.form == null) {
-            this.form = new LocatableVLayout("BundleDeployGetDest");
+            if (parent != null) {
+                this.form = new LocatableVLayout(parent.extendLocatorId("BundleDeployGetDest"));
+            } else {
+                this.form = new LocatableVLayout("BundleDeployGetDest");
+            }
 
             this.valForm.setWidth100();
             this.valForm.setNumCols(2);

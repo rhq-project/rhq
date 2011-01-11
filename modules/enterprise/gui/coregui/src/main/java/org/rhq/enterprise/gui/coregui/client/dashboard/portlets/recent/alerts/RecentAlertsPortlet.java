@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -92,9 +93,13 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     public static final String ALERT_LABEL_RESOURCE_INVENTORY = MSG.common_title_resource_inventory();
     public static final int ALERT_RESOURCE_SELECTION_WIDTH = 800;
     public static final String ID = "id";
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
     //shared private UI elements
     private AlertResourceSelectorRegion resourceSelector;
-    private DashboardPortlet storedPortlet = null;
+
     private AlertPortletDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
@@ -111,6 +116,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
         setShowFilterForm(false); //disable filter form for portlet
+
+        setOverflow(Overflow.VISIBLE);
     }
 
     @Override
@@ -121,7 +128,15 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         //Operation range property - retrieve existing value
         PropertySimple property = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE);
         if ((property != null) && (property.getStringValue() != null)) {
@@ -258,22 +273,23 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_recentAlerts_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
     }
 
     public DynamicForm getCustomSettingsForm() {
-
         //root dynamic form instance
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
         form.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
         form.setHeight(400);
         form.setMargin(5);
 
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+
         //vertical container
         VLayout column = new VLayout();
 
         //label
-        LocatableLabel alertRangeLabel = new LocatableLabel("DynamicForm_Label_Alert_Range", "<b>"
+        LocatableLabel alertRangeLabel = new LocatableLabel(extendLocatorId("DynamicForm_Label_Alert_Range"), "<b>"
             + MSG.common_title_alert_range() + "</b>");
 
         //horizontal layout
@@ -503,7 +519,10 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
                     storedPortlet.getConfiguration().put(new PropertyList(ALERT_RANGE_RESOURCE_IDS, list));
                     getDataSource().setAlertFilterResourceId(resourceSelector.getCurrentlyAssignedIds());
                 }
-                refresh();//reload form with new data selections
+
+                configure(portletWindow, storedPortlet);
+
+                refresh();//reload form with new data selections                
                 markForRedraw();
             }
         });
@@ -518,9 +537,9 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
      * @param portlet Container for configuration changes
      * @param properties Variable list of keys used to verify or populate properties.
      */
-    private void parseFormAndPopulateConfiguration(final DynamicForm form, DashboardPortlet portlet,
+    private void parseFormAndPopulateConfiguration(final DynamicForm form, DashboardPortlet storedPortlet,
         String... properties) {
-        if ((form != null) && (portlet != null)) {
+        if ((form != null) && (storedPortlet != null)) {
             for (String property : properties) {
                 if (form.getValue(property) != null) {//if new value supplied
                     storedPortlet.getConfiguration().put(new PropertySimple(property, form.getValue(property)));
@@ -535,13 +554,10 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private static Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new RecentAlertsPortlet(locatorId);
-            }
-            return reference;
+
+            return new RecentAlertsPortlet(locatorId);
         }
     }
 

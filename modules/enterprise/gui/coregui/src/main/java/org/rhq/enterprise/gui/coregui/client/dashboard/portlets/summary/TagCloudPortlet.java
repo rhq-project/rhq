@@ -46,18 +46,18 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        // TODO: Implement this method.
+        // This portlet has no configuration settings
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.common_title_the() + " <b>" + MSG.common_title_tag_cloud() + "</b> "
-            + MSG.view_portlet_tagCloud_help());
+        return new HTMLFlow(MSG.view_portlet_help_tagCloud());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
+
             return new TagCloudPortlet(locatorId);
         }
     }

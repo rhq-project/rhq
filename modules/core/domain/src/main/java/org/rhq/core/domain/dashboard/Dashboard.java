@@ -24,9 +24,11 @@ package org.rhq.core.domain.dashboard;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -85,7 +87,7 @@ public class Dashboard implements Serializable {
     private Subject owner;
 
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
-    @Cascade({ org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
+    @Cascade( { org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
         org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     private Set<DashboardPortlet> portlets = new HashSet<DashboardPortlet>();
 
@@ -173,9 +175,59 @@ public class Dashboard implements Serializable {
     }
 
     public boolean removePortlet(DashboardPortlet storedPortlet) {
-        return portlets.remove(storedPortlet);
+        if (!portlets.contains(storedPortlet)) {
+            return false;
+        }
+
+        // lower the index by 1 for  portlets in the same column, below the one being removed
+        int col = storedPortlet.getColumn();
+        int index = storedPortlet.getIndex();
+
+        portlets.remove(storedPortlet);
+
+        for (Iterator<DashboardPortlet> i = portlets.iterator(); i.hasNext();) {
+            DashboardPortlet next = i.next();
+            if (col == next.getColumn() && index < next.getIndex()) {
+                next.setIndex(next.getIndex() - 1);
+            }
+        }
+
+        return true;
     }
 
+    /** 
+     * This can be used to safely add a portlet without knowing the current portlet positioning on the
+     * Dashboard. It adds the portlet to the bottom of column with the least portlets.
+     * 
+     * @param storedPortlet, MODIFIED with assigned column, index
+     */
+    public void addPortlet(DashboardPortlet storedPortlet) {
+        int[] columnCounts = new int[getColumns()];
+        Arrays.fill(columnCounts, 0);
+        // set column counts
+        for (DashboardPortlet dashboardPortlet : portlets) {
+            ++(columnCounts[dashboardPortlet.getColumn()]);
+        }
+        // get best column
+        int bestColumn = -1;
+        int minPortlets = Integer.MAX_VALUE;
+        for (int column = 0; (column < columnCounts.length); ++column) {
+            if (columnCounts[column] < minPortlets) {
+                bestColumn = column;
+                minPortlets = columnCounts[column];
+            }
+        }
+        // addPortlet to best Column
+        addPortlet(storedPortlet, bestColumn, minPortlets);
+    }
+
+    /**
+     * Call this only if you are sure the column and index are valid, not already used and not leaving gaps.
+     * 
+     * @param storedPortlet, MODIFIED with assigned column, index
+     * @param column
+     * @param index
+     */
     public void addPortlet(DashboardPortlet storedPortlet, int column, int index) {
         storedPortlet.setColumn(column);
         storedPortlet.setIndex(index);

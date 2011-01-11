@@ -87,7 +87,7 @@ public class ImageManager {
      * {@link #IMAGES_DIR images directory}. If you need a full path to the image, including
      * this top images directory name (for example, if you need to populate an explicit HTML
      * img tag's src attribute) pass in an image path to this {@link #getFullImagePath(String)}
-     * method to obtain the full path.  The caller can optionall prepend {@link #IMAGES_DIR}
+     * method to obtain the full path.  The caller can optionally prepend {@link #IMAGES_DIR}
      * to any path returned by ImageManager, which is all this method really does.
      * 
      * @param image a relative image path

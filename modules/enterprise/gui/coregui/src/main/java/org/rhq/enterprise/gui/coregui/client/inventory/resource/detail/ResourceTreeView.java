@@ -431,7 +431,7 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(operations);
 
         // Metric graph addition menu
-        resourceContextMenu.addItem(buildMetricsMenu(resourceType));
+        resourceContextMenu.addItem(buildMetricsMenu(resourceType, resource));
 
         // Create Child Menu
         MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
@@ -518,7 +518,7 @@ public class ResourceTreeView extends LocatableVLayout {
         });
     }
 
-    private MenuItem buildMetricsMenu(final ResourceType type) {
+    private MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
 
@@ -543,16 +543,14 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         addToDBItem.addClickHandler(new ClickHandler() {
                             public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId))
-                                    .getResource().getId();
-
                                 DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
                                     GraphPortlet.KEY, 250);
-                                p.getConfiguration().put(new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resourceId));
+                                p.getConfiguration().put(
+                                    new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
                                 p.getConfiguration().put(
                                     new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
-                                d.addPortlet(p, 0, 0);
+                                d.addPortlet(p);
 
                                 GWTServiceLookup.getDashboardService().storeDashboard(d,
                                     new AsyncCallback<Dashboard>() {
@@ -580,17 +578,6 @@ public class ResourceTreeView extends LocatableVLayout {
         });
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
-    }
-
-    Resource getResource(int resourceId) {
-        if (this.treeGrid != null && this.treeGrid.getTree() != null) {
-            ResourceTreeNode treeNode = (ResourceTreeNode) this.treeGrid.getTree().findById(
-                ResourceTreeNode.idOf(resourceId));
-            if (treeNode != null) {
-                return treeNode.getResource();
-            }
-        }
-        return null;
     }
 
     private void setRootResource(Resource rootResource) {

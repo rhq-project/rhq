@@ -27,6 +27,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleSelector;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 public class SelectBundleStep extends AbstractWizardStep {
 
@@ -42,8 +43,12 @@ public class SelectBundleStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_selectBundleStep();
     }
 
-    public Canvas getCanvas() {
-        this.selector = new BundleSelector("BundleDeploySelectBundle");
+    public Canvas getCanvas(Locatable parent) {
+        if (parent != null) {
+            this.selector = new BundleSelector(parent.extendLocatorId("BundleDeploySelectBundle"));
+        } else {
+            this.selector = new BundleSelector("BundleDeploySelectBundle");
+        }
         return this.selector;
     }
 

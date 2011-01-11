@@ -33,17 +33,17 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class WizardView extends VLayout {
+public class WizardView extends LocatableVLayout {
     static private final Messages MSG = CoreGUI.getMessages();
 
     static private final String CANCEL = MSG.common_button_cancel();
@@ -76,7 +76,8 @@ public class WizardView extends VLayout {
     HashSet<Canvas> createdCanvases = new HashSet<Canvas>();
 
     public WizardView(Wizard wizard) {
-        super(10);
+        super("WizardView", 10);
+
         this.wizard = wizard;
     }
 
@@ -161,7 +162,7 @@ public class WizardView extends VLayout {
     }
 
     private void setupButtons() {
-        cancelButton = new LocatableIButton("Cancel", CANCEL);
+        cancelButton = new LocatableIButton(extendLocatorId("Cancel"), CANCEL);
         cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -169,7 +170,7 @@ public class WizardView extends VLayout {
                 closeDialog();
             }
         });
-        previousButton = new LocatableIButton("Previous", PREVIOUS);
+        previousButton = new LocatableIButton(extendLocatorId("Previous"), PREVIOUS);
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -180,7 +181,7 @@ public class WizardView extends VLayout {
                 }
             }
         });
-        nextButton = new LocatableIButton("Next", NEXT);
+        nextButton = new LocatableIButton(extendLocatorId("Next"), NEXT);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -245,7 +246,7 @@ public class WizardView extends VLayout {
         if (currentCanvas != null) {
             contentLayout.removeMember(currentCanvas);
         }
-        currentCanvas = wizardSteps.get(currentStep).getCanvas();
+        currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
         createdCanvases.add(currentCanvas);
 
         contentLayout.addMember(currentCanvas);

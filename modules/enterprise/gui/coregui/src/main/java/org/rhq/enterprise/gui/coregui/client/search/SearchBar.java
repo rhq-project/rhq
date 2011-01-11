@@ -302,6 +302,7 @@ public class SearchBar extends AbstractSearchBar {
 
         if (name.equals("")) {
             GWTServiceLookup.getSearchService().deleteSavedSearch(currentSearchId, blackHoleCallback);
+            currentSearchId = 0;
             starImage.setUrl(STAR_OFF_URL);
         } else {
             // NOTE: currently do not support updated a saved search pattern
@@ -347,7 +348,16 @@ public class SearchBar extends AbstractSearchBar {
     }
 
     private void updateSavedSearchName(final int savedSearchId, final String newName) {
-        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, blackHoleCallback);
+        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, new AsyncCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean hadUpdates) {
+                // no message bar to send update message to if hadUpdates
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+            }
+        });
     }
 
     /*

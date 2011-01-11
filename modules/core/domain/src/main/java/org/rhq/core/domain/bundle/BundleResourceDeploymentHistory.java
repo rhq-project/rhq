@@ -209,7 +209,8 @@ public class BundleResourceDeploymentHistory implements Serializable {
     public enum Status {
         SUCCESS("Success"), //
         FAILURE("Failure"), //
-        WARN("Warning");
+        WARN("Warning"), //
+        INFO("Information"); // used mainly for informational audit messages
 
         private String displayName;
 

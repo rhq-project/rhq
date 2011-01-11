@@ -85,7 +85,7 @@ public class DeploymentUnitType extends AbstractBundleType {
     public void install(boolean revert, boolean clean) throws BuildException {
         if (clean) {
             getProject().auditLog(
-                AuditStatus.WARN,
+                AuditStatus.INFO,
                 "Clean Requested",
                 "A clean deployment has been requested. Files will be deleted!",
                 "A clean deployment has been requested. Files will be deleted"
@@ -93,7 +93,7 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
         if (revert) {
             getProject().auditLog(
-                AuditStatus.WARN,
+                AuditStatus.INFO,
                 "Revert Requested",
                 "The previous deployment will be reverted!",
                 "The previous deployment will be reverted. An attempt to restore"
@@ -162,7 +162,7 @@ public class DeploymentUnitType extends AbstractBundleType {
                 if (!dryRun) {
                     getProject()
                         .auditLog(
-                            AuditStatus.WARN,
+                            AuditStatus.INFO,
                             "Managing Top Level Deployment Directory",
                             "The top level deployment directory will be managed - files found there will be backed up and removed!",
                             "The bundle recipe has requested that the top level deployment directory be fully managed by RHQ."

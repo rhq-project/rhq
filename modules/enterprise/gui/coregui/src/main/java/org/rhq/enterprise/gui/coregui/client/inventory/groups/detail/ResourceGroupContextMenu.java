@@ -295,7 +295,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                     p.getConfiguration().put(
                                         new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
-                                    d.addPortlet(p, 0, 0);
+                                    d.addPortlet(p);
 
                                     GWTServiceLookup.getDashboardService().storeDashboard(d,
                                         new AsyncCallback<Dashboard>() {

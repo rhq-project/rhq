@@ -70,21 +70,21 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
         }
     }
 
-    public void updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException {
+    public boolean updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException {
         try {
             SavedSearch savedSearch = getSubjectSavedSearch(savedSearchId);
             savedSearch.setName(newName);
-            savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+            return savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
-    public void updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException {
+    public boolean updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException {
         try {
             SavedSearch savedSearch = getSubjectSavedSearch(savedSearchId);
             savedSearch.setPattern(newPattern);
-            savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+            return savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

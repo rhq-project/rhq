@@ -376,10 +376,17 @@ public class AgentPluginScanner {
                         cachedPluginOnFilesystem.setVersion(version);
                         cachedPluginOnFilesystem.setMd5(md5);
                     } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("It appears the agent plugin [" + dbPlugin
-                                + "] in the database may be obsolete. If so, it will be updated soon.");
-                        }
+                        String message = "It appears the agent plugin [" + dbPlugin
+                        + "] in the database may be obsolete. If so, it will be updated soon by the version on the filesystem [" + currentFile + "].";
+                        if (currentFile.getAbsolutePath().equals(expectedFile.getAbsolutePath())) {
+                            if (log.isDebugEnabled()) {
+                                log.debug(message);
+                            }
+                        } else {
+                            //inform on the info level so that it's clear from the logs that the new file 
+                            //is going to be used.
+                            log.info(message);
+                        }                
                     }
                 } else {
                     log.info("Found agent plugin in the DB that we do not yet have: " + name);

@@ -159,6 +159,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         File pluginTmpDir = resourceContainer.getResourceContext().getTemporaryDirectory();
                         File bundleFilesDir = new File(pluginTmpDir, "bundle-versions/"
                             + bundleDeployment.getBundleVersion().getId());
+                        bundleFilesDir.mkdirs();
                         Map<PackageVersion, File> downloadedFiles = downloadBundleFiles(resourceDeployment,
                             bundleFilesDir);
 

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.types.VisibilityMode;
@@ -34,9 +35,12 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -55,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  */
 public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayout implements BookmarkableView,
     InitializableView {
-    
+
     private String viewId;
     private boolean initialized;
     private ViewId currentSectionViewId;
@@ -67,6 +71,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     private Canvas currentContent;
     private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
     private Map<String, NavigationSection> sectionsByName;
+
+    // Capture the user's global permissions for use by any dashboard or portlet that may need it for rendering.
+    private Set<Permission> globalPermissions;
 
     public AbstractSectionedLeftNavigationView(String viewId) {
         super(viewId);
@@ -90,19 +97,26 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        List<NavigationSection> sections = getNavigationSections();
-        this.sectionsByName = new HashMap<String, NavigationSection>(sections.size());
-        for (NavigationSection section : sections) {
-            TreeGrid treeGrid = buildTreeGridForSection(section);
-            addSection(treeGrid);
-            treeGrid.getTree().openAll();
-            this.sectionsByName.put(section.getName(), section);
-        }
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
-        addMember(sectionStack);
-        addMember(contentCanvas);
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                globalPermissions = permissions;
 
-        this.initialized = true;
+                List<NavigationSection> sections = getNavigationSections();
+                sectionsByName = new HashMap<String, NavigationSection>(sections.size());
+                for (NavigationSection section : sections) {
+                    TreeGrid treeGrid = buildTreeGridForSection(section);
+                    addSection(treeGrid);
+                    treeGrid.getTree().openAll();
+                    sectionsByName.put(section.getName(), section);
+                }
+
+                addMember(sectionStack);
+                addMember(contentCanvas);
+
+                initialized = true;
+            }
+        });
     }
 
     @Override
@@ -247,6 +261,10 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
                 }
             }
         }
+    }
+
+    public Set<Permission> getGlobalPermissions() {
+        return globalPermissions;
     }
 
 }

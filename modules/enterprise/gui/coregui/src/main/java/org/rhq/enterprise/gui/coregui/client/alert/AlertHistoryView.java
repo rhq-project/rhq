@@ -108,10 +108,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-        setupTableInteractions();
+        setupTableInteractions(this.hasWriteAccess);
     }
 
-    private void setupTableInteractions() {
+    protected void setupTableInteractions(final boolean hasWriteAccess) {
         TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 

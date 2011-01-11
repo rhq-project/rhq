@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.Set;
+
 import com.smartgwt.client.types.DragAppearance;
 import com.smartgwt.client.types.HeaderControls;
 import com.smartgwt.client.types.Overflow;
@@ -35,6 +37,7 @@ import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
@@ -210,4 +213,9 @@ public class PortletWindow extends LocatableWindow {
     public void save() {
         this.dashboardView.save();
     }
+
+    public Set<Permission> getGlobalPermissions() {
+        return dashboardView.getGlobalPermissions();
+    }
+
 }

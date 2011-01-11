@@ -115,13 +115,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         ListGrid grid = getListGrid();
         ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
         if (field != null) {
-            field.setCellFormatter(new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int i, int i1) {
-                    Integer recordId = getId(record);
-                    String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                    return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
-                }
-            });
+            field.setCellFormatter(getDetailsLinkColumnCellFormatter());
         }
 
         // Make double-clicking the row an alternate means to go to the details view.
@@ -133,6 +127,24 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         });
     }
 
+    /**
+     * Override if you don't want the detailsLinkColumn to have the default link wrapper.
+     * @return the desired CellFormatter. 
+     */
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                Integer recordId = getId(record);
+                String detailsUrl = "#" + getBasePath() + "/" + recordId;
+                return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+            }
+        };
+    }
+
+    /**
+     * Override if you don't want FIELD_NAME to be wrapped ina link.
+     * @return the name of the field to be wrapped, or null if no field should be wrapped. 
+     */
     protected String getDetailsLinkColumnName() {
         return FIELD_NAME;
     }

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -42,12 +43,15 @@ import com.smartgwt.client.widgets.tab.events.TabCloseClickEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
@@ -94,6 +98,9 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
+    // Capture the user's global permissions for use by any dashboard or portlet that may need it for rendering.
+    private Set<Permission> globalPermissions;
+
     private boolean initialized = false;
 
     public DashboardsView(String locatorId) {
@@ -114,16 +121,25 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(final List<Dashboard> result) {
-                initialized = true;
+                // now, a second async call to load global perms
+                new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
-                if (result.isEmpty()) {
-                    // if the user has no dashboards persist a default dashboard for him to work with. In
-                    // this way we're always working with a persisted dashboard and real entities.
-                    addDefaultDashboard();
+                    public void onPermissionsLoaded(Set<Permission> permissions) {
+                        globalPermissions = permissions;
 
-                } else {
-                    updateDashboards(result);
-                }
+                        if (result.isEmpty()) {
+                            // if the user has no dashboards persist a default dashboard for him to work with. In
+                            // this way we're always working with a persisted dashboard and real entities.
+                            addDefaultDashboard();
+
+                        } else {
+                            updateDashboards(result);
+
+                        }
+
+                        initialized = true;
+                    }
+                });
             }
         });
     }
@@ -402,4 +418,9 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     public boolean isInitialized() {
         return initialized;
     }
+
+    public Set<Permission> getGlobalPermissions() {
+        return globalPermissions;
+    }
+
 }

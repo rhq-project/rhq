@@ -131,8 +131,15 @@ public class LinkManager {
         return link;
     }
 
-    public static String getSubsystemAlertHistoryLink() {
-        return "/rhq/subsystem/alertHistory.xhtml";
+    public static String getSubsystemAlertHistoryLink(int resourceId, int alertHistoryId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Alerts/History/" + alertHistoryId;
+        } else {
+            link = "/rhq/subsystem/alertHistory.xhtml";
+        }
+
+        return link;
     }
 
     public static String getSubsystemAlertDefsLink() {

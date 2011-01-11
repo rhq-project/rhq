@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
+import java.util.Set;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -29,14 +31,18 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
@@ -51,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Simeon Pinder
@@ -579,6 +586,32 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
             };
             defaultReloader.schedule(retrievedRefreshInterval);
         }
+    }
+
+    @Override
+    protected void setupTableInteractions(boolean hasWriteAccess) {
+        // The portlet is a "subsystem" view. Meaning the alerts displayed can be from any accessible group for
+        // the user.  This means the user can have varying permissions on the underlying groups and/or resources,
+        // which makes button enablement tricky. So, for the portlet don't even show the buttons unless the user
+        // is inventory manager.  Other users will just have to navigate to the alert in question in order to
+        // manipulate it.
+
+        //determine if the user is inventory manager and if so render the buttons
+        Set<Permission> permissions = this.portletWindow.getGlobalPermissions();
+        if ((null != permissions) && permissions.contains(Permission.MANAGE_INVENTORY)) {
+            super.setupTableInteractions(true);
+        }
+    }
+
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                Integer recordId = getId(record);
+                Integer resourceId = record.getAttributeAsInt("resourceId");
+                String detailsUrl = LinkManager.getSubsystemAlertHistoryLink(resourceId, recordId);
+                return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+            }
+        };
     }
 }
 

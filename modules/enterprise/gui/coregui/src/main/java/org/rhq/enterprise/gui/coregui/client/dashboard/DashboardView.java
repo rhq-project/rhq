@@ -47,6 +47,7 @@ import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -521,6 +522,10 @@ public class DashboardView extends LocatableVLayout {
 
     public Dashboard getDashboard() {
         return storedDashboard;
+    }
+
+    public Set<Permission> getGlobalPermissions() {
+        return dashboardsView.getGlobalPermissions();
     }
 
     public void setEditMode(boolean editMode) {

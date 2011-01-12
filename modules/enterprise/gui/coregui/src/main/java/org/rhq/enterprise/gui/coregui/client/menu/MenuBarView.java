@@ -130,8 +130,8 @@ public class MenuBarView extends LocatableVLayout {
         for (ViewName section : SECTIONS) {
 
             String styleClass = "TopSectionLink";
-            if (section.equals(currentlySelectedSection)) {
-                styleClass += "Selected";
+            if (section.getName().equals(currentlySelectedSection)) {
+                styleClass = "TopSectionLinkSelected";
             }
 
             // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.

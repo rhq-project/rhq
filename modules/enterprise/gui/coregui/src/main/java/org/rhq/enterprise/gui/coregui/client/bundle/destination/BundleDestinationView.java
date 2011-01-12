@@ -213,7 +213,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                                         new Message(MSG.view_bundle_dest_deleteSuccessful(destination.getName()),
                                             Message.Severity.Info));
                                     // Bundle destination is deleted, go back to main bundle view
-                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0));
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0), true);
                                 }
                             });
                         }

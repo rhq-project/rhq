@@ -247,7 +247,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                                             Message.Severity.Info));
                                     // Bundle deployment is deleted, go back to main bundle destinations view
                                     CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), deployment
-                                        .getDestination().getId()));
+                                        .getDestination().getId()), true);
                                 }
                             });
                         }

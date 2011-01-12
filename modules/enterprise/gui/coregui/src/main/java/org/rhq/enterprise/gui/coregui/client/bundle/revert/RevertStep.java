@@ -86,6 +86,7 @@ public class RevertStep extends AbstractWizardStep {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_bundle_revertWizard_revertStep_scheduledDetails(result.getName(),
                                 result.getDestination().getGroup().getName()), Severity.Info));
+                        CoreGUI.refresh();
                         wizard.setDeployment(result);
                     }
 

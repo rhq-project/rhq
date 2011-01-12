@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -245,7 +244,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_bundle_list_deleteSuccessful(bundle.getName()),
                                             Message.Severity.Info));
-                                    History.newItem("Bundles"); // Bundle is deleted, go back to all bundles view
+                                    CoreGUI.goToView("Bundles", true); // Bundle is deleted, go back to all bundles view
                                 }
                             });
                         }

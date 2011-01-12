@@ -98,7 +98,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static CoreGUI coreGUI;
 
+    // store a message to be posted in the message center during the next renderView processing.
     private static Message pendingMessage;
+
+    // store the fact that we want the ViewPath for the next renderView to have refresh on. This allows us to
+    // ask for a refresh even when changing viewPaths, which can be useful when we want to say, refresh a LHS tree
+    // while also changing the main content. Typically we refresh only when the path is not changed.
+    private static boolean pendingRefresh = false;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -263,11 +269,20 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
-        goToView(viewPath, null);
+        goToView(viewPath, null, false);
     }
 
     public static void goToView(String viewPath, Message message) {
+        goToView(viewPath, message, false);
+    }
+
+    public static void goToView(String viewPath, boolean refresh) {
+        goToView(viewPath, null, refresh);
+    }
+
+    public static void goToView(String viewPath, Message message, boolean refresh) {
         pendingMessage = message;
+        pendingRefresh = refresh;
 
         // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
         if (viewPath.charAt(0) == '#') {
@@ -341,6 +356,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 if (pendingMessage != null) {
                     getMessageCenter().notify(pendingMessage);
                     pendingMessage = null;
+                }
+
+                if (pendingRefresh) {
+                    viewPath.setRefresh(true);
+                    pendingRefresh = false;
                 }
 
                 ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration

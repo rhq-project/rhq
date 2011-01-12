@@ -19,6 +19,7 @@
 package org.rhq.core.domain.operation.bean;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -39,6 +40,7 @@ import org.rhq.core.domain.operation.JobId;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class OperationSchedule implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private int id;
@@ -50,6 +52,7 @@ public abstract class OperationSchedule implements Serializable {
     private Subject subject;
     private String description;
     private JobTrigger jobTrigger;
+    private Date nextFireTime;
 
     public OperationSchedule() {
     }
@@ -141,6 +144,14 @@ public abstract class OperationSchedule implements Serializable {
 
     public void setJobTrigger(JobTrigger jobTrigger) {
         this.jobTrigger = jobTrigger;
+    }
+
+    public Date getNextFireTime() {
+        return nextFireTime;
+    }
+
+    public void setNextFireTime(Date nextFireTime) {
+        this.nextFireTime = nextFireTime;
     }
 
     /**

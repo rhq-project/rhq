@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.trigger;
 
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,6 +47,8 @@ import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.common.JobTrigger;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -775,12 +778,42 @@ public class JobTriggerEditor extends LocatableVLayout {
     }
 
     public boolean validate() {
+        // TODO (ips, 01/12/11): Use custom validators to do the startTime / endTime validation instead of the code
+        //                       below; that way field-specific validation errors will be used, rather than messages in
+        //                       the message bar.
         boolean isValid = true;
+        Date currentTime = new Date();
+        Date startTime = getStartTime();
+        Date endTime = getEndTime();
         if (this.isStartLater) {
             isValid = isValid && this.laterForm.validate();
+            if (startTime != null) {
+                if (startTime.before(currentTime)) {
+                    Message message = new Message("Start time must be in the future.", Message.Severity.Error,
+                            EnumSet.of(Message.Option.Transient));
+                    CoreGUI.getMessageCenter().notify(message);
+                    isValid = false;
+                }
+                if (this.isRecurring && endTime != null) {
+                    if (endTime.before(startTime)) {
+                        Message message = new Message("End time must be after start time.", Message.Severity.Error,
+                                EnumSet.of(Message.Option.Transient));
+                        CoreGUI.getMessageCenter().notify(message);
+                        isValid = false;
+                    }
+                }
+            }
         }
         if (this.isRecurring) {
             isValid = isValid && this.repeatForm.validate();
+            if (endTime != null) {
+                if (endTime.before(currentTime)) {
+                    Message message = new Message("End time must be in the future.", Message.Severity.Error,
+                            EnumSet.of(Message.Option.Transient));
+                    CoreGUI.getMessageCenter().notify(message);
+                    isValid = false;
+                }
+            }
         }
         return isValid;
     }

@@ -26,12 +26,12 @@ import java.util.Set;
 
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.apache.tools.ant.types.selectors.TypeSelector;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
@@ -56,6 +56,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         public static final String PARAMETERS = "parameters";
         public static final String SUBJECT = "subject";
         public static final String DESCRIPTION = "description";
+        public static final String NEXT_FIRE_TIME = "nextFireTime";
 
         // job trigger fields
         public static final String START_TIME = "startTime";
@@ -86,10 +87,12 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         idField.setCanEdit(false);
         fields.add(idField);               
 
-        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation Name", null, 100, true);
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation Name", null, 100,
+                true);
         fields.add(operationNameField);
 
-        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null, 100, true);
+        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null,
+                100, true);
         fields.add(operationDisplayNameField);
 
         Set<OperationDefinition> operationDefinitions = this.resourceType.getOperationDefinitions();
@@ -105,6 +108,10 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
 
         DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, "Notes", null, 100, false);
         fields.add(descriptionField);
+
+        DataSourceDateTimeField nextFireTimeField = new DataSourceDateTimeField(Field.NEXT_FIRE_TIME,
+                "Next Scheduled Execution");
+        nextFireTimeField.setCanEdit(false);
 
         return fields;
     }
@@ -124,6 +131,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setOperationName(from.getAttribute(Field.OPERATION_NAME));
         to.setOperationDisplayName(from.getAttribute(Field.OPERATION_DISPLAY_NAME));
         to.setDescription(from.getAttribute(Field.DESCRIPTION));
+        to.setNextFireTime(from.getAttributeAsDate(Field.NEXT_FIRE_TIME));
 
         to.setJobTrigger(createJobTrigger(from.getAttributeAsRecord("jobTrigger")));
 
@@ -143,6 +151,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
         to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());        
         to.setAttribute(Field.DESCRIPTION, from.getDescription());
+        to.setAttribute(Field.NEXT_FIRE_TIME, from.getNextFireTime());
 
         JobTrigger jobTrigger = from.getJobTrigger();
         Record jobTriggerRecord = new ListGridRecord();
@@ -206,11 +215,11 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         return jobTrigger;
     }
 
-    public class SubjectRecord extends ListGridRecord {
+    public static class SubjectRecord extends ListGridRecord {
         static final String FIELD_ID = "id";
         static final String FIELD_NAME = "name";
 
-        SubjectRecord(Subject subject) {
+        public SubjectRecord(Subject subject) {
             setAttribute(FIELD_ID, subject.getId());
             setAttribute(FIELD_NAME, subject.getName());
         }

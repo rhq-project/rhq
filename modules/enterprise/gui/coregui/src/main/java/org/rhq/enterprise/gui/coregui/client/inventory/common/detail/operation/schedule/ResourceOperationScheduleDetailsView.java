@@ -138,10 +138,22 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
         this.notesForm.setWidth100();
+
+        List<FormItem> notesFields = new ArrayList<FormItem>();
+
+        if (!isNewRecord()) {
+            StaticTextItem nextFireTimeItem = new StaticTextItem(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
+                    "Next Scheduled Execution");
+            notesFields.add(nextFireTimeItem);
+        }
+
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
         notesItem.setWidth(450);
         notesItem.setHeight(150);
-        this.notesForm.setFields(notesItem);
+        notesFields.add(notesItem);
+
+        this.notesForm.setFields(notesFields.toArray(new FormItem[notesFields.size()]));
+
         contentPane.addMember(this.notesForm);
 
         return contentPane;
@@ -163,7 +175,9 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     protected Record createNewRecord() {
         Record record = super.createNewRecord();
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, sessionSubject);
+        OperationScheduleDataSource.SubjectRecord subjectRecord =
+                new OperationScheduleDataSource.SubjectRecord(sessionSubject);
+        record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, subjectRecord);
         return record;
     }
 
@@ -171,6 +185,11 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     protected void editRecord(Record record) {
         refreshOperationDescriptionItem();
         refreshOperationParametersItem();
+
+        if (!isNewRecord()) {
+            FormItem nextFireTimeItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
+            nextFireTimeItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
+        }
 
         FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
         notesItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION));

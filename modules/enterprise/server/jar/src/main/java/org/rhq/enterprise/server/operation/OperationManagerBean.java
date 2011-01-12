@@ -485,6 +485,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Trigger trigger = getTriggerOfJob(jobDetail);
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
+        sched.setNextFireTime(trigger.getNextFireTime());
 
         return sched;
     }

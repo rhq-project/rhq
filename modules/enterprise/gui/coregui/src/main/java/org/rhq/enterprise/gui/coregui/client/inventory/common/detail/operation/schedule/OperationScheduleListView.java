@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.enterprise.gui.coregui.client.components.table.SubjectRecordCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
@@ -44,13 +45,14 @@ public abstract class OperationScheduleListView extends TableSection<OperationSc
 
         ListGridField operationField = new ListGridField(OperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 150);
 
-        //ListGridField subjectField = new ListGridField(OperationScheduleDataSource.Field.SUBJECT, 150);
+        ListGridField subjectField = new ListGridField(OperationScheduleDataSource.Field.SUBJECT, 150);
+        subjectField.setCellFormatter(new SubjectRecordCellFormatter());
 
         //ListGridField jobTriggerField = new ListGridField(OperationScheduleDataSource.Field.JOB_TRIGGER, 300);
 
         ListGridField descriptionField = new ListGridField(OperationScheduleDataSource.Field.DESCRIPTION);
 
-        setListGridFields(operationField, descriptionField);
+        setListGridFields(operationField, subjectField, descriptionField);
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -70,9 +72,14 @@ public abstract class OperationScheduleListView extends TableSection<OperationSc
                 }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    // TODO: unschedule the selected schedule items
+                    deleteSelectedRecords();
                 }
             });        
+    }
+
+    @Override
+    protected String getDetailsLinkColumnName() {
+        return OperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
     }
 
 }

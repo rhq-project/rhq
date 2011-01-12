@@ -249,7 +249,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         this.form.resetValues();
     }
 
-    protected void save() {
+    protected void save(DSRequest requestProperties) {
         if (!this.form.validate()) {
             Message message = new Message(MSG.widget_recordEditor_warn_validation(this.dataTypeName),
                 Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
@@ -308,7 +308,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                     CoreGUI.getMessageCenter().notify(message);
                 }
             }
-        });
+        }, requestProperties);
     }
 
     protected void editNewRecord() {
@@ -451,7 +451,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             saveButton.setDisabled(true);
             saveButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    save();
+                    save(new DSRequest());
                 }
             });
             hLayout.addMember(saveButton);

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -25,21 +25,28 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.smartgwt.client.types.Visibility;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
-import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
-import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 
+import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.common.JobTrigger;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -50,11 +57,17 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class JobTriggerEditor extends LocatableVLayout {
 
+    // Field Names
     private static final String FIELD_REPEAT_INTERVAL = "repeatInterval";
     private static final String FIELD_REPEAT_DURATION = "repeatDuration";
     private static final String FIELD_END_TIME = "endTime";
+    private static final String FIELD_START_TYPE = "startType";
+    private static final String FIELD_START_TIME = "startTime";
+    private static final String FIELD_START_DELAY = "startDelay";
+    private static final String FIELD_RECURRENCE_TYPE = "recurrenceType";
+    private static final String FIELD_CRON_EXPRESSION = "cronExpression";
 
-    private static final Map<String, Long> UNITS_TO_MILLIS_MULTIPLIER_MAP = new HashMap();
+    private static final Map<String, Long> UNITS_TO_MILLIS_MULTIPLIER_MAP = new HashMap<String, Long>();
     static {
         UNITS_TO_MILLIS_MULTIPLIER_MAP.put("seconds", 1000L);
         UNITS_TO_MILLIS_MULTIPLIER_MAP.put("s", 1000L);
@@ -78,6 +91,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
     private DynamicForm laterForm;
     private DynamicForm repeatForm;
+    private LocatableDynamicForm cronForm;
 
     // These flags allow us to determine the trigger type.
     private boolean isCronMode;
@@ -87,10 +101,6 @@ public class JobTriggerEditor extends LocatableVLayout {
     private boolean isEndTime;
     private boolean isStartDelay;
     private boolean isStartTime;
-    private static final String FIELD_START_TYPE = "startType";
-    private static final String FIELD_START_TIME = "startTime";
-    private static final String FIELD_START_DELAY = "startDelay";
-    private static final String FIELD_RECURRENCE_TYPE = "recurrenceType";
 
     /**
      * Create a new job trigger.
@@ -131,6 +141,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         modeForm.setFields(modeItem);
         addMember(modeForm);
 
+        final LocatableVLayout calendarModeLayout = new LocatableVLayout(extendLocatorId("CalendarModeLayout"));
+        calendarModeLayout.setVisible(false);
 
         final DynamicForm calendarTypeForm = new DynamicForm();
 
@@ -146,24 +158,349 @@ public class JobTriggerEditor extends LocatableVLayout {
         calendarTypeItem.setVertical(false);
 
         calendarTypeForm.setFields(calendarTypeItem);
-        calendarTypeForm.setVisible(false);
         
-        addMember(calendarTypeForm);
+        calendarModeLayout.addMember(calendarTypeForm);
+        addMember(calendarModeLayout);
+
+        final LocatableVLayout cronModeLayout = new LocatableVLayout(extendLocatorId("CronModeLayout"));
+        cronModeLayout.setVisible(false);
+
+        this.cronForm = new LocatableDynamicForm(cronModeLayout.extendLocatorId("Form"));
+
+        TextItem cronExpressionItem = new TextItem(FIELD_CRON_EXPRESSION, "Cron Expression");
+        cronExpressionItem.setRequired(true);
+        cronExpressionItem.setWidth(340);
+
+        this.cronForm.setFields(cronExpressionItem);
+
+        cronModeLayout.addMember(this.cronForm);
+
+        final TabSet cronHelpTabSet = new TabSet();
+        cronHelpTabSet.setWidth100();
+        cronHelpTabSet.setHeight(200);
+        Img closeIcon = new Img("[SKIN]/headerIcons/close.png", 16, 16);
+        closeIcon.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                cronHelpTabSet.hide();
+            }
+        });
+        cronHelpTabSet.setTabBarControls(closeIcon);
+
+        Tab formatTab = new Tab("Format");
+        HTMLFlow formatPane = new HTMLFlow();
+        formatPane.setWidth100();
+        formatPane.setContents("<p>A cron expression is a string comprised of 6 or 7 fields separated by white space. Fields can contain any of the\n" +
+                "allowed values, along with various combinations of the allowed special characters for that field. The fields are as\n" +
+                "follows:</p>\n" +
+                "<table cellpadding=\"3\" cellspacing=\"1\">\n" +
+                "    <tbody>\n" +
+                "\n" +
+                "        <tr>\n" +
+                "            <th>Field Name</th>\n" +
+                "            <th>Mandatory</th>\n" +
+                "            <th>Allowed Values</th>\n" +
+                "            <th>Allowed Special Characters</th>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Seconds</td>\n" +
+                "            <td>YES</td>\n" +
+                "\n" +
+                "            <td>0-59</td>\n" +
+                "            <td>, - * /</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Minutes</td>\n" +
+                "            <td>YES</td>\n" +
+                "            <td>0-59</td>\n" +
+                "\n" +
+                "            <td>, - * /</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Hours</td>\n" +
+                "            <td>YES</td>\n" +
+                "            <td>0-23</td>\n" +
+                "            <td>, - * /</td>\n" +
+                "\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Day of month</td>\n" +
+                "            <td>YES</td>\n" +
+                "            <td>1-31</td>\n" +
+                "            <td>, - * ? / L W<br clear=\"all\" />\n" +
+                "            </td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Month</td>\n" +
+                "            <td>YES</td>\n" +
+                "            <td>1-12 or JAN-DEC</td>\n" +
+                "            <td>, - * /</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Day of week</td>\n" +
+                "\n" +
+                "            <td>YES</td>\n" +
+                "            <td>1-7 or SUN-SAT</td>\n" +
+                "            <td>, - * ? / L #</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td>Year</td>\n" +
+                "            <td>NO</td>\n" +
+                "\n" +
+                "            <td>empty, 1970-2099</td>\n" +
+                "            <td>, - * /</td>\n" +
+                "        </tr>\n" +
+                "    </tbody>\n" +
+                "\n" +
+                "</table>\n" +
+                "<p>So cron expressions can be as simple as this: <tt>&#42; * * * ? *</tt><br />\n" +
+                "or more complex, like this: <tt>0/5 14,18,3-39,52 * ? JAN,MAR,SEP MON-FRI 2002-2010</tt></p>\n" +
+                "\n" +
+                "<h2><a name=\"CronTriggersTutorial-Specialcharacters\"></a>Special Characters</h2>\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li><tt><b>&#42;</b></tt> (<em>\"all values\"</em>) - used to select all values within a field. For example, \"*\"\n" +
+                "    in the minute field means <em>\"every minute\"</em>.</li>\n" +
+                "\n" +
+                "</ul>\n" +
+                "\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li><tt><b>?</b></tt> (<em>\"no specific value\"</em>) - useful when you need to specify something in one of the\n" +
+                "    two fields in which the character is allowed, but not the other. For example, if I want my trigger to fire on a\n" +
+                "    particular day of the month (say, the 10th), but don't care what day of the week that happens to be, I would put\n" +
+                "    \"10\" in the day-of-month field, and \"?\" in the day-of-week field. See the examples below for clarification.</li>\n" +
+                "\n" +
+                "</ul>\n" +
+                "\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li><tt><b>&#45;</b></tt> &#45; used to specify ranges. For example, \"10-12\" in the hour field means <em>\"the\n" +
+                "    hours 10, 11 and 12\"</em>.</li>\n" +
+                "\n" +
+                "</ul>\n" +
+                "\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li><tt><b>,</b></tt> &#45; used to specify additional values. For example, \"MON,WED,FRI\" in the day-of-week\n" +
+                "    field means <em>\"the days Monday, Wednesday, and Friday\"</em>.</li>\n" +
+                "\n" +
+                "</ul>\n" +
+                "\n" +
+                "\n" +
+                "<ul>\n" +
+                "\n" +
+                "    <li><tt><b>/</b></tt> &#45; used to specify increments. For example, \"0/15\" in the seconds field means <em>\"the\n" +
+                "    seconds 0, 15, 30, and 45\"</em>. And \"5/15\" in the seconds field means <em>\"the seconds 5, 20, 35, and 50\"</em>. You can\n" +
+                "    also specify '/' after the '<b>' character - in this case '</b>' is equivalent to having '0' before the '/'. '1/3'\n" +
+                "    in the day-of-month field means <em>\"fire every 3 days starting on the first day of the month\"</em>.</li>\n" +
+                "\n" +
+                "</ul>\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li><tt><b>L</b></tt> (<em>\"last\"</em>) - has different meaning in each of the two fields in which it is\n" +
+                "    allowed. For example, the value \"L\" in the day-of-month field means <em>\"the last day of the month\"</em> &#45; day\n" +
+                "    31 for January, day 28 for February on non-leap years. If used in the day-of-week field by itself, it simply means\n" +
+                "    \"7\" or \"SAT\". But if used in the day-of-week field after another value, it means <em>\"the last xxx day of the\n" +
+                "    month\"</em> &#45; for example \"6L\" means <em>\"the last friday of the month\"</em>. When using the 'L' option, it is\n" +
+                "    important not to specify lists, or ranges of values, as you'll get confusing results.</li>\n" +
+                "\n" +
+                "</ul>\n" +
+                "\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li><tt><b>W</b></tt> (<em>\"weekday\"</em>) - used to specify the weekday (Monday-Friday) nearest the given day.\n" +
+                "    As an example, if you were to specify \"15W\" as the value for the day-of-month field, the meaning is: <em>\"the\n" +
+                "    nearest weekday to the 15th of the month\"</em>. So if the 15th is a Saturday, the trigger will fire on Friday the 14th.\n" +
+                "    If the 15th is a Sunday, the trigger will fire on Monday the 16th. If the 15th is a Tuesday, then it will fire on\n" +
+                "    Tuesday the 15th. However if you specify \"1W\" as the value for day-of-month, and the 1st is a Saturday, the trigger\n" +
+                "    will fire on Monday the 3rd, as it will not 'jump' over the boundary of a month's days. The 'W' character can only\n" +
+                "    be specified when the day-of-month is a single day, not a range or list of days.\n" +
+                "        <div class=\"tip\">\n" +
+                "            The 'L' and 'W' characters can also be combined in the day-of-month field to yield 'LW', which\n" +
+                "            translates to <em>\"last weekday of the month\"</em>.\n" +
+                "        </div>\n" +
+                "\n" +
+                "    </li>\n" +
+                "\n" +
+                "    <li><tt><b>&#35;</b></tt> &#45; used to specify \"the nth\" XXX day of the month. For example, the value of \"6#3\"\n" +
+                "    in the day-of-week field means <em>\"the third Friday of the month\"</em> (day 6 = Friday and \"#3\" = the 3rd one in\n" +
+                "    the month). Other examples: \"2#1\" = the first Monday of the month and \"4#5\" = the fifth Wednesday of the month. Note\n" +
+                "    that if you specify \"#5\" and there is not 5 of the given day-of-week in the month, then no firing will occur that\n" +
+                "    month.\n" +
+                "        <div class=\"tip\">\n" +
+                "            The legal characters and the names of months and days of the week are not case sensitive. <tt>MON</tt>\n" +
+                "            is the same as <tt>mon</tt>.\n" +
+                "        </div>\n" +
+                "\n" +
+                "    </li>\n" +
+                "</ul>" +
+                "<h2><a name=\"CronTriggersTutorial-Notes\"></a>Notes</h2>\n" +
+                "\n" +
+                "<ul>\n" +
+                "    <li>Support for specifying both a day-of-week and a day-of-month value is not complete (you must currently use\n" +
+                "    the '?' character in one of these fields).</li>\n" +
+                "    <li>Be careful when setting fire times between mid-night and 1:00 AM - \"daylight savings\" can cause a skip or a\n" +
+                "    repeat depending on whether the time moves back or jumps forward.</li>\n" +
+                "\n" +
+                "</ul>");
+        formatTab.setPane(formatPane);
+
+        Tab examplesTab = new Tab("Examples");
+        HTMLFlow examplesPane = new HTMLFlow();
+        examplesPane.setWidth100();
+        examplesPane.setContents("<table cellpadding=\"3\" cellspacing=\"1\">\n" +
+                "    <tbody>\n" +
+                "        <tr>\n" +
+                "            <th>Expression</th>\n" +
+                "\n" +
+                "            <th>Meaning</th>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 0 12 * * ?</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 12pm (noon) every day</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td><tt>0 15 10 ? * *</tt></td>\n" +
+                "            <td>Fire at 10:15am every day</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 * * ?</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 10:15am every day</td>\n" +
+                "\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 * * ? *</tt></td>\n" +
+                "            <td>Fire at 10:15am every day</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 * * ? 2005</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 10:15am every day during the year 2005</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 * 14 * * ?</tt></td>\n" +
+                "            <td>Fire every minute starting at 2pm and ending at 2:59pm, every day</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td><tt>0 0/5 14 * * ?</tt></td>\n" +
+                "\n" +
+                "            <td>Fire every 5 minutes starting at 2pm and ending at 2:55pm, every day</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 0/5 14,18 * * ?</tt></td>\n" +
+                "            <td>Fire every 5 minutes starting at 2pm and ending at 2:55pm, AND fire every 5\n" +
+                "            minutes starting at 6pm and ending at 6:55pm, every day</td>\n" +
+                "\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 0-5 14 * * ?</tt></td>\n" +
+                "\n" +
+                "            <td>Fire every minute starting at 2pm and ending at 2:05pm, every day</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 10,44 14 ? 3 WED</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 2:10pm and at 2:44pm every Wednesday in the month of March.</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 ? * MON-FRI</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 10:15am every Monday, Tuesday, Wednesday, Thursday and Friday</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td><tt>0 15 10 15 * ?</tt></td>\n" +
+                "            <td>Fire at 10:15am on the 15th day of every month</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 L * ?</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 10:15am on the last day of every month</td>\n" +
+                "\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 ? * 6L</tt></td>\n" +
+                "            <td>Fire at 10:15am on the last Friday of every month</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 ? * 6L</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 10:15am on the last Friday of every month</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 15 10 ? * 6L 2002-2005</tt></td>\n" +
+                "            <td>Fire at 10:15am on every last friday of every month during the years 2002,\n" +
+                "            2003, 2004 and 2005</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "\n" +
+                "            <td><tt>0 15 10 ? * 6#3</tt></td>\n" +
+                "\n" +
+                "            <td>Fire at 10:15am on the third Friday of every month</td>\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 0 12 1/5 * ?</tt></td>\n" +
+                "            <td>Fire at 12pm (noon) every 5 days every month, starting on the first day of the\n" +
+                "            month.</td>\n" +
+                "\n" +
+                "        </tr>\n" +
+                "        <tr>\n" +
+                "            <td><tt>0 11 11 11 11 ?</tt></td>\n" +
+                "\n" +
+                "            <td>Fire every November 11th at 11:11am.</td>\n" +
+                "        </tr>\n" +
+                "    </tbody>\n" +
+                "</table>");
+        examplesTab.setPane(examplesPane);
+
+        cronHelpTabSet.addTab(formatTab);
+        cronHelpTabSet.addTab(examplesTab);
+
+        cronHelpTabSet.setVisible(false);
+
+        FormItemIcon helpIcon = new FormItemIcon();
+        helpIcon.setSrc("[SKIN]/actions/help.png");
+        cronExpressionItem.setIcons(helpIcon);
+        cronExpressionItem.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                cronHelpTabSet.show();
+            }
+        });
+
+        cronModeLayout.addMember(cronHelpTabSet);
+        addMember(cronModeLayout);
 
         modeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 if (event.getValue().equals("calendar")) {
                     JobTriggerEditor.this.isCronMode = false;
-                    calendarTypeForm.show();
+                    calendarModeLayout.show();
+                    cronModeLayout.hide();
+                } else {
+                    // cron mode
+                    JobTriggerEditor.this.isCronMode = true;
+                    calendarModeLayout.hide();
+                    cronModeLayout.show();
                 }
             }
         });
 
         this.laterForm = createLaterForm();
-        addMember(this.laterForm);
+        calendarModeLayout.addMember(this.laterForm);
 
         this.repeatForm = createRepeatForm();
-        addMember(this.repeatForm);
+        calendarModeLayout.addMember(this.repeatForm);
 
         calendarTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
@@ -204,21 +541,13 @@ public class JobTriggerEditor extends LocatableVLayout {
         TextItem repeatIntervalItem = new TextItem(FIELD_REPEAT_INTERVAL, "Run now and every");
         repeatIntervalItem.setRequired(true);
 
-        // Configure hint.
-        repeatIntervalItem.setHint("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-        repeatIntervalItem.setShowHint(false);
-        repeatIntervalItem.addFocusHandler(new FocusHandler() {
-            public void onFocus(FocusEvent event) {
-                repeatForm.setColWidths(130, 400, 130, 130, 130);
-                event.getItem().setShowHint(true);
-                repeatForm.markForRedraw();
-            }
-        });
-        repeatIntervalItem.addBlurHandler(new BlurHandler() {
-            public void onBlur(BlurEvent event) {
-                repeatForm.setColWidths(130, 130, 130, 130, 130);
-                event.getItem().setShowHint(false);                
-                repeatForm.markForRedraw();
+        // Configure context-sensitive help.
+        FormItemIcon helpIcon = new FormItemIcon();
+        helpIcon.setSrc("[SKIN]/actions/help.png");
+        repeatIntervalItem.setIcons(helpIcon);
+        repeatIntervalItem.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                SC.say("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
             }
         });
 
@@ -228,6 +557,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         repeatIntervalItem.setValidateOnExit(true);
 
         RadioGroupItem recurrenceTypeItem = new RadioGroupItem(FIELD_RECURRENCE_TYPE);
+        recurrenceTypeItem.setRequired(true);
         recurrenceTypeItem.setShowTitle(false);
         LinkedHashMap<String, String> recurrenceTypeValueMap = new LinkedHashMap<String, String>();
         recurrenceTypeValueMap.put("for", "For");
@@ -239,21 +569,13 @@ public class JobTriggerEditor extends LocatableVLayout {
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
 
-        // Configure hint.
-        repeatDurationItem.setHint("N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
-        repeatDurationItem.setShowHint(false);
-        repeatDurationItem.addFocusHandler(new FocusHandler() {
-            public void onFocus(FocusEvent event) {
-                repeatForm.setColWidths(130, 130, 400, 130, 130);
-                event.getItem().setShowHint(true);
-                repeatForm.markForRedraw();
-            }
-        });
-        repeatDurationItem.addBlurHandler(new BlurHandler() {
-            public void onBlur(BlurEvent event) {
-                repeatForm.setColWidths(130, 130, 130, 130, 130);
-                event.getItem().setShowHint(false);
-                repeatForm.markForRedraw();
+        // Configure context-sensitive help.
+        helpIcon = new FormItemIcon();
+        helpIcon.setSrc("[SKIN]/actions/help.png");
+        repeatDurationItem.setIcons(helpIcon);
+        repeatDurationItem.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                SC.say("N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
             }
         });
 
@@ -321,21 +643,13 @@ public class JobTriggerEditor extends LocatableVLayout {
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
 
-        // Configure hint.
-        startDelayItem.setHint("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-        startDelayItem.setShowHint(false);
-        startDelayItem.addFocusHandler(new FocusHandler() {
-            public void onFocus(FocusEvent event) {
-                laterForm.setColWidths(130, 130, 400);
-                event.getItem().setShowHint(true);
-                laterForm.markForRedraw();
-            }
-        });
-        startDelayItem.addBlurHandler(new BlurHandler() {
-            public void onBlur(BlurEvent event) {
-                laterForm.setColWidths(130, 130, 130);
-                event.getItem().setShowHint(false);
-                laterForm.markForRedraw();
+        // Configure context-sensitive help.
+        FormItemIcon icon = new FormItemIcon();
+        icon.setSrc("[SKIN]/actions/help.png");
+        startDelayItem.setIcons(icon);
+        startDelayItem.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                SC.say("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
             }
         });
 
@@ -378,108 +692,97 @@ public class JobTriggerEditor extends LocatableVLayout {
         return laterForm;
     }
 
-    public JobTrigger getJobTrigger() throws Exception {
-        JobTrigger jobTrigger = null;
-
-        if (this.isCronMode) {
-            // TODO
+    public Date getStartTime() {
+        Date startTime;
+        if (this.isStartDelay) {
+            // start delay - computer start time
+            String startDelay = this.laterForm.getValueAsString(FIELD_START_DELAY);
+            Duration startDelayDuration = parseDurationString(startDelay);
+            long delay = startDelayDuration.count * startDelayDuration.multiplier;
+            long startTimestamp = System.currentTimeMillis() + delay;
+            startTime = new Date(startTimestamp);
         } else {
-            // calendar mode
+            // start time
+            DateTimeItem startTimeItem = (DateTimeItem)this.laterForm.getField(FIELD_START_TIME);
+            startTime = startTimeItem.getValueAsDate();
+        }
+        return startTime;
+    }
 
-            // Validate first.
-            boolean isValid = true;
-            if (this.isStartLater) {
-                isValid = isValid && this.laterForm.validate();
-            }
-            if (this.isRecurring) {
-                isValid = isValid && this.repeatForm.validate();
-            }
-            if (!isValid) {
-                throw new Exception("The specified schedule is not valid.");
-            }
+    public Long getRepeatInterval() {
+        Long intervalMillis;
+        if (this.isRecurring) {
+            String repeatInterval = this.repeatForm.getValueAsString(FIELD_REPEAT_INTERVAL);
+            Duration intervalDuration = parseDurationString(repeatInterval);
+            intervalMillis = intervalDuration.count * intervalDuration.multiplier;
+        } else {
+            intervalMillis = null;
+        }
+        return intervalMillis;
+    }
 
-            if (this.isStartLater) {
-                Date startDate;
-                if (this.isStartDelay) {
-                    // start delay - computer start time
-                    String startDelay = this.laterForm.getValueAsString(FIELD_START_DELAY);
-                    Duration startDelayDuration = parseDurationString(startDelay);
-                    long delay = startDelayDuration.count * startDelayDuration.multiplier;
-                    long startTime = System.currentTimeMillis() + delay;
-                    startDate = new Date(startTime);
+    public Integer getRepeatCount() {
+        Integer repetitions;
+        if (this.isRecurring) {
+            if (this.isRepeatDuration) {
+                String repeatDurationString = this.repeatForm.getValueAsString(FIELD_REPEAT_DURATION);
+                Duration repeatDuration = parseDurationString(repeatDurationString);
+                if (repeatDuration.multiplier == null) {
+                    // n repetitions
+                    repetitions = repeatDuration.count;
                 } else {
-                    // start time
-                    DateTimeItem startTimeItem = (DateTimeItem)this.laterForm.getField(FIELD_START_TIME);
-                    startDate = startTimeItem.getValueAsDate();
-                }
-
-                if (this.isRecurring) {
-                    // LATER AND REPEAT
-
-                    String repeatInterval = this.repeatForm.getValueAsString(FIELD_REPEAT_INTERVAL);
-                    Duration intervalDuration = parseDurationString(repeatInterval);
-                    long intervalMillis = intervalDuration.count * intervalDuration.multiplier;
-
-                    if (this.isRepeatDuration) {
-                        String repeatDurationString = this.repeatForm.getValueAsString(FIELD_REPEAT_DURATION);
-                        Duration repeatDuration = parseDurationString(repeatDurationString);
-                        if (repeatDuration.multiplier == null) {
-                            // n repetitions
-                            int repetitions = repeatDuration.count;
-                            jobTrigger = JobTrigger.createLaterAndRepeatTrigger(startDate, intervalMillis, repetitions);
-                        } else {
-                            // n units of time - compute end time
-                            long delay = repeatDuration.count * repeatDuration.multiplier;
-                            long endTime = System.currentTimeMillis() + delay;
-                            Date endDate = new Date(endTime);
-                            jobTrigger = JobTrigger.createLaterAndRepeatTrigger(startDate, intervalMillis, endDate);
-                        }
-                    } else if (this.isEndTime) {
-                        DateTimeItem endTimeItem = (DateTimeItem)this.repeatForm.getField(FIELD_END_TIME);
-                        Date endDate = endTimeItem.getValueAsDate();
-                        jobTrigger = JobTrigger.createLaterAndRepeatTrigger(startDate, intervalMillis, endDate);
-                    }
-                } else {
-                    // LATER
-
-                    jobTrigger = JobTrigger.createLaterTrigger(startDate);
+                    // n units of time - compute end time
+                    repetitions = null;
                 }
             } else {
-                if (this.isRecurring) {
-                    // NOW AND REPEAT
-
-                    String repeatInterval = this.repeatForm.getValueAsString(FIELD_REPEAT_INTERVAL);
-                    Duration intervalDuration = parseDurationString(repeatInterval);
-                    long intervalMillis = intervalDuration.count * intervalDuration.multiplier;
-
-                    if (this.isRepeatDuration) {
-                        String repeatDurationString = this.repeatForm.getValueAsString(FIELD_REPEAT_DURATION);
-                        Duration repeatDuration = parseDurationString(repeatDurationString);
-                        if (repeatDuration.multiplier == null) {
-                            // n repetitions
-                            int repetitions = repeatDuration.count;
-                            jobTrigger = JobTrigger.createNowAndRepeatTrigger(intervalMillis, repetitions);
-                        } else {
-                            // n units of time - compute end time
-                            long delay = repeatDuration.count * repeatDuration.multiplier;
-                            long endTime = System.currentTimeMillis() + delay;
-                            Date endDate = new Date(endTime);
-                            jobTrigger = JobTrigger.createNowAndRepeatTrigger(intervalMillis, endDate);
-                        }
-                    } else if (this.isEndTime) {
-                        DateTimeItem endTimeItem = (DateTimeItem)this.repeatForm.getField(FIELD_END_TIME);
-                        Date endDate = endTimeItem.getValueAsDate();
-                        jobTrigger = JobTrigger.createNowAndRepeatTrigger(intervalMillis, endDate);
-                    }
-                } else {
-                    // NOW
-
-                    jobTrigger = JobTrigger.createNowTrigger();
-                }
+                repetitions = null;
             }
+        } else {
+            repetitions = null;
         }
+        return repetitions;
+    }
 
-        return jobTrigger;
+    public Date getEndTime() {
+        Date endTime;
+        if (this.isRecurring) {
+            if (this.isRepeatDuration) {
+                String repeatDurationString = this.repeatForm.getValueAsString(FIELD_REPEAT_DURATION);
+                Duration repeatDuration = parseDurationString(repeatDurationString);
+                if (repeatDuration.multiplier == null) {
+                    // n repetitions
+                    endTime = null;
+                } else {
+                    // n units of time - compute end time
+                    long delay = repeatDuration.count * repeatDuration.multiplier;
+                    long endTimestamp = System.currentTimeMillis() + delay;
+                    endTime = new Date(endTimestamp);
+                }
+            } else if (this.isEndTime) {
+                DateTimeItem endTimeItem = (DateTimeItem)this.repeatForm.getField(FIELD_END_TIME);
+                endTime = endTimeItem.getValueAsDate();
+            } else {
+                endTime = null;
+            }
+        } else {
+            endTime = null;
+        }
+        return endTime;
+    }
+
+    public String getCronExpression() {
+        return this.cronForm.getValueAsString(FIELD_CRON_EXPRESSION);
+    }
+
+    public boolean validate() {
+        boolean isValid = true;
+        if (this.isStartLater) {
+            isValid = isValid && this.laterForm.validate();
+        }
+        if (this.isRecurring) {
+            isValid = isValid && this.repeatForm.validate();
+        }
+        return isValid;
     }
 
     private static Duration parseDurationString(String durationString) {

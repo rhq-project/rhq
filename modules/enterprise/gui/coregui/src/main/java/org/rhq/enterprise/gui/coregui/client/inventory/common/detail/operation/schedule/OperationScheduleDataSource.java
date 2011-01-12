@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
 
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -27,8 +28,10 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.apache.tools.ant.types.selectors.TypeSelector;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
@@ -53,7 +56,13 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         public static final String PARAMETERS = "parameters";
         public static final String SUBJECT = "subject";
         public static final String DESCRIPTION = "description";
-        public static final String JOB_TRIGGER = "jobTrigger";
+
+        // job trigger fields
+        public static final String START_TIME = "startTime";
+        public static final String REPEAT_INTERVAL = "repeatInterval";
+        public static final String REPEAT_COUNT = "repeatCount";
+        public static final String END_TIME = "endTime";
+        public static final String CRON_EXPRESSION = "cronExpression";
     }
 
     protected OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
@@ -90,15 +99,12 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         }
         operationNameField.setValueMap(valueMap);        
 
-        DataSourceTextField subjectField = createTextField(Field.SUBJECT, "Owner", null, 100, true);
+        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY, "Owner");
         subjectField.setCanEdit(false);
         fields.add(subjectField);
 
         DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, "Notes", null, 100, false);
         fields.add(descriptionField);
-
-        DataSourceTextField jobTriggerField = createTextField(Field.JOB_TRIGGER, "Schedule", null, 100, true);
-        fields.add(jobTriggerField);
 
         return fields;
     }
@@ -112,12 +118,14 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setId(from.getAttributeAsInt(Field.ID));
         to.setJobName(from.getAttribute(Field.JOB_NAME));        
         to.setJobGroup(from.getAttribute(Field.JOB_GROUP));
-        to.setJobTrigger((JobTrigger)from.getAttributeAsObject(Field.JOB_TRIGGER));
-        to.setSubject((Subject)from.getAttributeAsObject(Field.SUBJECT));
+        SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
+        to.setSubject(subjectRecord.toSubject());
         to.setParameters((Configuration)from.getAttributeAsObject(Field.PARAMETERS));
         to.setOperationName(from.getAttribute(Field.OPERATION_NAME));
         to.setOperationDisplayName(from.getAttribute(Field.OPERATION_DISPLAY_NAME));
         to.setDescription(from.getAttribute(Field.DESCRIPTION));
+
+        to.setJobTrigger(createJobTrigger(from.getAttributeAsRecord("jobTrigger")));
 
         return to;
     }
@@ -129,14 +137,98 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setAttribute(Field.ID, from.getId());
         to.setAttribute(Field.JOB_NAME, from.getJobName());
         to.setAttribute(Field.JOB_GROUP, from.getJobGroup());
-        to.setAttribute(Field.JOB_TRIGGER, from.getJobTrigger());
-        to.setAttribute(Field.SUBJECT, from.getSubject());
+        SubjectRecord subjectRecord = new SubjectRecord(from.getSubject());
+        to.setAttribute(Field.SUBJECT, subjectRecord);
         to.setAttribute(Field.PARAMETERS, from.getParameters());
         to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
         to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());        
         to.setAttribute(Field.DESCRIPTION, from.getDescription());
 
+        JobTrigger jobTrigger = from.getJobTrigger();
+        Record jobTriggerRecord = new ListGridRecord();
+        jobTriggerRecord.setAttribute(Field.START_TIME, jobTrigger.getStartDate());
+        jobTriggerRecord.setAttribute(Field.REPEAT_INTERVAL, jobTrigger.getRepeatInterval());
+        jobTriggerRecord.setAttribute(Field.REPEAT_COUNT, jobTrigger.getRepeatCount());
+        jobTriggerRecord.setAttribute(Field.END_TIME, jobTrigger.getEndDate());
+        jobTriggerRecord.setAttribute(Field.CRON_EXPRESSION, jobTrigger.getCronExpression());
+        to.setAttribute("jobTrigger", jobTriggerRecord);
+
         return to;
+    }
+
+    public JobTrigger createJobTrigger(Record jobTriggerRecord) {
+        JobTrigger jobTrigger;
+
+        String cronExpression = jobTriggerRecord.getAttribute(Field.CRON_EXPRESSION);
+        if (cronExpression != null) {
+            jobTrigger = JobTrigger.createCronTrigger(cronExpression);
+        } else {
+            // calendar mode
+            Date startTime = jobTriggerRecord.getAttributeAsDate(Field.START_TIME);
+            Long repeatInterval = (Long)jobTriggerRecord.getAttributeAsObject(Field.REPEAT_INTERVAL);
+            Integer repeatCount = jobTriggerRecord.getAttributeAsInt(Field.REPEAT_COUNT);
+            Date endTime = jobTriggerRecord.getAttributeAsDate(Field.END_TIME);
+
+            if (startTime != null) {
+                // LATER
+
+                if (repeatInterval != null) {
+                    // LATER AND REPEAT
+
+                    if (repeatCount != null) {
+                        jobTrigger = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval, repeatCount);
+                    } else {
+                        jobTrigger = JobTrigger.createLaterAndRepeatTrigger(startTime, repeatInterval, endTime);
+                    }
+                } else {
+                    // LATER ONCE
+
+                    jobTrigger = JobTrigger.createLaterTrigger(startTime);
+                }
+            } else {
+                // NOW
+                if (repeatInterval != null) {
+                    // NOW AND REPEAT
+
+                    if (repeatCount != null) {
+                        jobTrigger = JobTrigger.createNowAndRepeatTrigger(repeatInterval, repeatCount);
+                    } else {
+                        jobTrigger = JobTrigger.createNowAndRepeatTrigger(repeatInterval, endTime);
+                    }
+                } else {
+                    // NOW ONCE
+
+                    jobTrigger = JobTrigger.createNowTrigger();
+                }
+            }
+        }
+
+        return jobTrigger;
+    }
+
+    public class SubjectRecord extends ListGridRecord {
+        static final String FIELD_ID = "id";
+        static final String FIELD_NAME = "name";
+
+        SubjectRecord(Subject subject) {
+            setAttribute(FIELD_ID, subject.getId());
+            setAttribute(FIELD_NAME, subject.getName());
+        }
+
+        public int getId() {
+            return getAttributeAsInt(FIELD_ID);
+        }
+
+        public String getName() {
+            return getAttribute(FIELD_NAME);
+        }
+
+        public Subject toSubject() {
+            Subject subject = new Subject();
+            subject.setId(getId());
+            subject.setName(getName());
+            return subject;
+        }
     }
 
 }

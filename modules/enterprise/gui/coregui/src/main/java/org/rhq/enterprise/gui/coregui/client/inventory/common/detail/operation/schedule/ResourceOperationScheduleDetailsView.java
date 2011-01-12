@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -20,12 +20,16 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -33,20 +37,20 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import org.rhq.core.domain.common.JobTrigger;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -62,11 +66,12 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     private Map<String, String> operationNameToDescriptionMap = new HashMap<String, String>();
     private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap =
         new HashMap<String, ConfigurationDefinition>();
-    private SelectItem operationNameItem;
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
     private LocatableHLayout operationParametersConfigurationHolder;
     private JobTriggerEditor triggerEditor;
+    private Configuration parameters;
+    private EnhancedDynamicForm notesForm;
 
     public ResourceOperationScheduleDetailsView(String locatorId, ResourceComposite resourceComposite, int scheduleId) {
         super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite), scheduleId, "Scheduled Operation", null);
@@ -94,9 +99,9 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
 
-        this.operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
-        items.add(this.operationNameItem);
-        this.operationNameItem.addChangedHandler(new ChangedHandler() {
+        SelectItem operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
+        items.add(operationNameItem);
+        operationNameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
                 refreshOperationDescriptionItem();
                 refreshOperationParametersItem();
@@ -120,18 +125,24 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
         this.operationParametersConfigurationHolder.setVisible(false);
         contentPane.addMember(this.operationParametersConfigurationHolder);
 
+        HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
+        contentPane.addMember(hr);
+
         if (isNewRecord()) {
             this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
             contentPane.addMember(this.triggerEditor);
+            hr = new HTMLFlow("<p/><hr/><p/>");
+            contentPane.addMember(hr);
         }
-        
-        EnhancedDynamicForm notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
+
+        this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
+        this.notesForm.setWidth100();
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
-        notesItem.setStartRow(true);
-        notesItem.setColSpan(4);
-        notesForm.setFields(notesItem);
-        contentPane.addMember(notesForm);
+        notesItem.setWidth(450);
+        notesItem.setHeight(150);
+        this.notesForm.setFields(notesItem);
+        contentPane.addMember(this.notesForm);
 
         return contentPane;
     }
@@ -149,22 +160,61 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     }
 
     @Override
-    protected void save() {
-        try {
-            JobTrigger trigger = this.triggerEditor.getJobTrigger();
-            System.out.println(trigger);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            CoreGUI.getMessageCenter().notify(new Message(e.getMessage(), Message.Severity.Warning));
+    protected Record createNewRecord() {
+        Record record = super.createNewRecord();
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, sessionSubject);
+        return record;
+    }
+
+    @Override
+    protected void editRecord(Record record) {
+        refreshOperationDescriptionItem();
+        refreshOperationParametersItem();
+
+        FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
+        notesItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION));
+
+        super.editRecord(record);
+    }
+
+    @Override
+    protected void save(DSRequest requestProperties) {
+        requestProperties.setAttribute("parameters", this.parameters);
+
+        if (!this.triggerEditor.validate()) {
+            // TODO: print error Message
             return;
         }
+        EnhancedDynamicForm form = getForm();
 
-        super.save();
+        Record jobTriggerRecord = new ListGridRecord();
+
+        Date startTime = this.triggerEditor.getStartTime();
+        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.START_TIME, startTime);
+
+        Date endTime = this.triggerEditor.getEndTime();
+        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.END_TIME, endTime);
+
+        Integer repeatCount = this.triggerEditor.getRepeatCount();
+        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.REPEAT_COUNT, repeatCount);
+
+        Long repeatInterval = this.triggerEditor.getRepeatInterval();
+        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.REPEAT_INTERVAL, repeatInterval);
+
+        String cronExpression = this.triggerEditor.getCronExpression();
+        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.CRON_EXPRESSION, cronExpression);
+
+        form.setValue("jobTrigger", jobTriggerRecord);
+
+        FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
+        form.setValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
+
+        super.save(requestProperties);
     }
 
     private void refreshOperationDescriptionItem() {
-        String operationName = this.operationNameItem.getValueAsString();
+        String operationName = getSelectedOperationName();
         String value;
         if (operationName == null) {
             value = "<i>Select an operation.</i>";
@@ -175,7 +225,7 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     }
 
     private void refreshOperationParametersItem() {
-        String operationName = this.operationNameItem.getValueAsString();
+        String operationName = getSelectedOperationName();
         String value;
         if (operationName == null) {
             value = "<i>Select an operation.</i>";
@@ -189,7 +239,7 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
                 }
                 this.operationParametersConfigurationHolder.hide();
             } else {
-                value = "<i>Enter parameters below...</i>";
+                value = isNewRecord() ? "<i>Enter parameters below...</i>" : "";
 
                 for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
                     child.destroy();
@@ -199,11 +249,17 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
                 ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor", parametersDefinition,
                     defaultConfiguration);
                 configurationEditor.setReadOnly(isReadOnly());
+                this.parameters = configurationEditor.getConfiguration();
                 this.operationParametersConfigurationHolder.addMember(configurationEditor);
                 this.operationParametersConfigurationHolder.show();
             }
         }
         this.operationParametersItem.setValue(value);
+    }
+
+    private String getSelectedOperationName() {
+        FormItem operationNameItem = getForm().getField(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
+        return (String)operationNameItem.getValue();
     }
 
 }

@@ -26,6 +26,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -47,7 +48,9 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
 
     @Override
     protected ResourceOperationSchedule createOperationSchedule() {
-        return new ResourceOperationSchedule();
+        ResourceOperationSchedule resourceOperationSchedule = new ResourceOperationSchedule();
+        resourceOperationSchedule.setResource(this.resourceComposite.getResource());
+        return resourceOperationSchedule;
     }
 
     @Override
@@ -68,7 +71,34 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
     }
 
     @Override
-    protected void executeAdd(Record recordToAdd, DSRequest request, DSResponse response) {
-        //operationService.scheduleResourceOperation();
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        Configuration parameters = (Configuration) request.getAttributeAsObject("parameters");
+        recordToAdd.setAttribute(Field.PARAMETERS, parameters);
+        final ResourceOperationSchedule scheduleToAdd = copyValues(recordToAdd);
+        operationService.scheduleResourceOperation(scheduleToAdd, new AsyncCallback<Integer>() {
+            public void onSuccess(Integer scheduleId) {
+                scheduleToAdd.setId(scheduleId);
+                sendSuccessResponse(request, response, scheduleToAdd);
+            }
+
+            public void onFailure(Throwable caught) {
+                throw new RuntimeException("Failed to add " + scheduleToAdd, caught);
+            }
+        });
+    }
+
+    @Override
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final ResourceOperationSchedule scheduleToRemove = copyValues(recordToRemove);
+
+        operationService.unscheduleResourceOperation(scheduleToRemove, new AsyncCallback<Void>() {
+            public void onSuccess(Void result) {
+                sendSuccessResponse(request, response, scheduleToRemove);
+            }
+
+            public void onFailure(Throwable caught) {
+                throw new RuntimeException(caught);
+            }
+        });
     }
 }

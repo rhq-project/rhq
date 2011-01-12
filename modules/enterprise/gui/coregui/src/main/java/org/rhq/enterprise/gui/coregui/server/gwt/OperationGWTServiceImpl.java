@@ -38,6 +38,7 @@ import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
@@ -89,6 +90,25 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
                 resourceId, operationName, parameters, ct, description);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException {
+        try {
+            return operationManager.scheduleResourceOperation(getSessionSubject(), resourceOperationSchedule);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException {
+        try {
+            operationManager.unscheduleResourceOperation(getSessionSubject(), resourceOperationSchedule.getJobId().toString(),
+                    resourceOperationSchedule.getResource().getId());
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 

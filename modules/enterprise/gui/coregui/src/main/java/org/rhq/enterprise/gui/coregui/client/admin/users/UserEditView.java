@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
@@ -193,7 +194,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     }
 
     @Override
-    protected void save() {
+    protected void save(DSRequest requestProperties) {
         // Grab the currently assigned roles from the selector and stick them into the corresponding canvas
         // item on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
         // to the datasource's add or update methods.
@@ -203,7 +204,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         }
 
         // Submit the form values to the datasource.
-        super.save();
+        super.save(requestProperties);
     }
 
     @Override

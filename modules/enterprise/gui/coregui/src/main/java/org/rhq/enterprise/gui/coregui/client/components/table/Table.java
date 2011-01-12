@@ -686,20 +686,27 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     protected void deleteSelectedRecords() {
-        getListGrid().removeSelectedData(new DSCallback() {
+        ListGrid listGrid = getListGrid();
+        final int selectedRecordCount = listGrid.getSelection().length;
+        final List<String> deletedRecordNames = new ArrayList<String>(selectedRecordCount);
+        listGrid.removeSelectedData(new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
-                Record[] deletedRecords = response.getData();
-                List<String> recordNames = new ArrayList<String>(deletedRecords.length);
-                for (Record deletedRecord : deletedRecords) {
-                    String name = deletedRecord.getAttribute(getTitleFieldName());
-                    recordNames.add(name);
+                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                    Record[] deletedRecords = response.getData();
+                    for (Record deletedRecord : deletedRecords) {
+                        String name = deletedRecord.getAttribute(getTitleFieldName());
+                        deletedRecordNames.add(name);
+                    }
+                    if (deletedRecordNames.size() == selectedRecordCount) {
+                        // all selected schedules were successfully deleted.
+                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
+                        .valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
+                        .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
+                                getDataTypeNamePlural(), deletedRecordNames.toString()));
+                        CoreGUI.getMessageCenter().notify(message);
+                    }
                 }
-
-                Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
-                    .valueOf(deletedRecords.length), getDataTypeNamePlural()), MSG
-                    .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
-                        getDataTypeNamePlural(), recordNames.toString()));
-                CoreGUI.getMessageCenter().notify(message);
+                // TODO: Print error messages for failures or partial failures.
             }
         }, null);
     }

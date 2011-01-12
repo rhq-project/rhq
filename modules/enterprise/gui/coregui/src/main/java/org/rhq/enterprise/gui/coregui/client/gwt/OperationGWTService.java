@@ -54,6 +54,10 @@ public interface OperationGWTService extends RemoteService {
     void invokeResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout) throws RuntimeException;
 
+    int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
+    void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
     void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout, String cronString) throws RuntimeException;
 

@@ -385,7 +385,7 @@ public class StandaloneContainer {
             System.err.println("Operation timed out ");
         } else {
             Configuration result = res.getComplexResults();
-            if (res == null)
+            if (result == null)
                 System.out.println("Operation did not return a result");
             else
                 System.out.println(result.getProperties());

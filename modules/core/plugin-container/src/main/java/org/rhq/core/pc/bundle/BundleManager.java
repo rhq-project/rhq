@@ -37,6 +37,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
+import org.rhq.core.clientapi.agent.bundle.BundlePurgeResponse;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
@@ -46,6 +48,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -62,6 +65,7 @@ import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
+import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 
@@ -80,6 +84,9 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private final String AUDIT_DEPLOYMENT_SCHEDULED = "Deployment Scheduled";
     private final String AUDIT_FILE_DOWNLOAD_ENDED = "File Download Started";
     private final String AUDIT_FILE_DOWNLOAD_STARTED = "File Download Started";
+
+    private final String AUDIT_PURGE_STARTED = "Purge Started";
+    private final String AUDIT_PURGE_ENDED = "Purge Ended";
 
     private PluginContainerConfiguration configuration;
     private ExecutorService deployerThreadPool;
@@ -126,6 +133,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         return size;
     }
 
+    @Override
     public BundleScheduleResponse schedule(final BundleScheduleRequest request) {
         final BundleScheduleResponse response = new BundleScheduleResponse();
 
@@ -201,6 +209,58 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             this.deployerThreadPool.execute(deployerRunnable);
         } catch (Throwable t) {
             log.error("Failed to schedule bundle request: " + request, t);
+            response.setErrorMessage(t);
+        }
+
+        return response;
+    }
+
+    @Override
+    public BundlePurgeResponse purge(BundlePurgeRequest request) {
+        final BundlePurgeResponse response = new BundlePurgeResponse();
+
+        try {
+            final BundleResourceDeployment resourceDeployment = request.getLiveBundleResourceDeployment();
+            final BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
+
+            // find the resource that will purge the bundle
+            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
+            ResourceType resourceType = bundleType.getResourceType();
+            Set<Resource> resources = im.getResourcesWithType(resourceType);
+            if (resources.isEmpty()) {
+                throw new Exception("No bundle plugin supports bundle type [" + bundleType + "]");
+            }
+            final int bundleHandlerResourceId = resources.iterator().next().getId();
+            final ResourceContainer resourceContainer = im.getResourceContainer(bundleHandlerResourceId);
+            if (null == resourceContainer.getResourceContext()) {
+                throw new Exception("No bundle plugin resource available to handle purge for bundle type ["
+                    + bundleType
+                    + "]. Ensure the bundle plugin is deployed and its resource is imported into inventory.");
+            }
+
+            // purge the bundle utilizing the bundle facet object
+            String deploymentMessage = "Deployment [" + bundleDeployment + "] to be purged via ["
+                + resourceDeployment.getResource() + "]";
+            auditDeployment(resourceDeployment, AUDIT_PURGE_STARTED, bundleDeployment.getName(), deploymentMessage);
+
+            org.rhq.core.pluginapi.bundle.BundlePurgeRequest purgeRequest = new org.rhq.core.pluginapi.bundle.BundlePurgeRequest();
+            purgeRequest.setBundleManagerProvider(this);
+            purgeRequest.setLiveResourceDeployment(resourceDeployment);
+
+            // get the bundle facet object that will process the bundle and call it to start the purge
+            int facetMethodTimeout = 30 * 60 * 1000; // 30 minutes should be enough time for the bundle plugin to purge everything
+            BundleFacet bundlePluginComponent = getBundleFacet(bundleHandlerResourceId, facetMethodTimeout);
+            BundlePurgeResult result = bundlePluginComponent.purgeBundle(purgeRequest);
+            if (result.isSuccess()) {
+                auditDeployment(resourceDeployment, AUDIT_PURGE_ENDED, bundleDeployment.getName(), deploymentMessage);
+            } else {
+                response.setErrorMessage(result.getErrorMessage());
+                auditDeployment(resourceDeployment, AUDIT_PURGE_ENDED, bundleDeployment.getName(), null,
+                    Status.FAILURE, "Failed: " + deploymentMessage, result.getErrorMessage());
+            }
+        } catch (Throwable t) {
+            log.error("Failed to purge bundle: " + request, t);
             response.setErrorMessage(t);
         }
 

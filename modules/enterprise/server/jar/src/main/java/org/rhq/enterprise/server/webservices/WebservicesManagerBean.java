@@ -374,6 +374,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
             isCleanDeployment);
     }
 
+    public void purgeBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
+        bundleManager.purgeBundleDestination(subject, bundleDestinationId);
+    }
+
     //BUNDLEMANAGER: END ----------------------------------  
 
     //CALLTIMEDATAMANAGER: BEGIN ----------------------------------

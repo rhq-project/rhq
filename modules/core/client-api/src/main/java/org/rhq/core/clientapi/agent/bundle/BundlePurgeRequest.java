@@ -20,27 +20,38 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.core.clientapi.agent.bundle;
 
+import java.io.Serializable;
+
+import org.rhq.core.domain.bundle.BundleResourceDeployment;
+
 /**
- * The interface to agent's bundle subsystem which allows the server to request
- * the agent to perform tasks on a bundle (which is essentially a bundle of content
- * that needs to be installed).
+ * The request that the server sends down to the agent to purge the live bundle deployment.
  * 
  * @author John Mazzitelli
  */
-public interface BundleAgentService {
-    /**
-     * Schedules the deployment of a bundle to occur immediately.
-     * @param request
-     * @return the results of the immediate scheduling
-     */
-    BundleScheduleResponse schedule(BundleScheduleRequest request);
+public class BundlePurgeRequest implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private BundleResourceDeployment resourceDeployment;
+
+    public BundlePurgeRequest(BundleResourceDeployment resourceDeployment) {
+        this.resourceDeployment = resourceDeployment;
+    }
 
     /**
-     * Purges the live deployment off the local filesystem.
-     * @param request
-     * @return the results of the purge
+     * @return the live resource deployment that is to be purged
      */
-    BundlePurgeResponse purge(BundlePurgeRequest request);
+    public BundleResourceDeployment getLiveBundleResourceDeployment() {
+        return resourceDeployment;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder(this.getClass() + ": ");
+        str.append("live-deployment=[").append(resourceDeployment.toString()).append("]");
+        return str.toString();
+    }
 }

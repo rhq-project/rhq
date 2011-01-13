@@ -43,6 +43,8 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -51,9 +53,12 @@ import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
+import org.rhq.core.pluginapi.bundle.BundlePurgeRequest;
+import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.DeploymentsMetadata;
@@ -155,6 +160,38 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);
+            result.setErrorMessage(t);
+        }
+        return result;
+    }
+
+    // TODO: this is copied from FileTemplate bundle plugin - I think we want to be more smart here since
+    // we have more metadata about the live deployment to be purged in our .rhqdeployments (specifically about
+    // the external raw files that we should delete)
+    public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
+        BundlePurgeResult result = new BundlePurgeResult();
+        try {
+            BundleResourceDeployment deploymentToPurge = request.getLiveResourceDeployment();
+            BundleDeployment bundleDeployment = deploymentToPurge.getBundleDeployment();
+            File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+            String deployDirAbsolutePath = deployDir.getAbsolutePath();
+            BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+
+            // completely purge the deployment directory.
+            // TODO: if the receipe copied a file outside of the deployment directory, it will still exist. How do we remove those?
+            FileUtil.purge(deployDir, true);
+
+            if (!deployDir.exists()) {
+                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                    "The destination directory has been purged", Category.AUDIT_MESSAGE, Status.SUCCESS,
+                    "Directory purged: " + deployDirAbsolutePath, null);
+            } else {
+                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                    "The destination directory failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE,
+                    "The directory that failed to be purged: " + deployDirAbsolutePath, null);
+            }
+        } catch (Throwable t) {
+            log.error("Failed to purge bundle [" + request + "]", t);
             result.setErrorMessage(t);
         }
         return result;

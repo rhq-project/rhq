@@ -330,6 +330,17 @@ public interface BundleManagerRemote {
      */
 
     /**
+     * Purges the destination's live deployment content from the remote platforms.
+     *
+     * @param subject user that must have proper permissions
+     * @param bundleDestinationId the ID of the destination that is to be purged of bundle content
+     */
+    @WebMethod
+    void purgeBundleDestination( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleDestinationId") int bundleDestinationId) throws Exception;
+
+    /**
      * Deploy the bundle to the destination, as described in the provided deployment.
      * Deployment is asynchronous so return of this method does not indicate individual resource deployments are
      * complete. The returned BundleDeployment can be used to track the history of the individual deployments.

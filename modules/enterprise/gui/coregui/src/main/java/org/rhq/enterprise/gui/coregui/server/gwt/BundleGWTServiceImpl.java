@@ -266,4 +266,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
+
+    public void purgeBundleDestination(int bundleDestinationId) throws RuntimeException {
+        try {
+            bundleManager.purgeBundleDestination(getSessionSubject(), bundleDestinationId);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
 }

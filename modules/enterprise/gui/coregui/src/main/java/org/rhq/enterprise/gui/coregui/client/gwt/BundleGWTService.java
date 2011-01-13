@@ -96,4 +96,5 @@ public interface BundleGWTService extends RemoteService {
     BundleDeployment scheduleRevertBundleDeployment(int bundleDestinationId, String deploymentDescription,
         boolean isCleanDeployment) throws RuntimeException;
 
+    void purgeBundleDestination(int bundleDestinationId) throws RuntimeException;
 }

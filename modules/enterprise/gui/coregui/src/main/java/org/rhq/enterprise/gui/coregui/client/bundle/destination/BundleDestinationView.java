@@ -189,10 +189,46 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new BundleRevertWizard(destination).startWizard();
+                SC.ask(MSG.view_bundle_dest_revertConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            new BundleRevertWizard(destination).startWizard();
+                        }
+                    }
+                });
             }
         });
         actionLayout.addMember(revertButton);
+
+        IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+        purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+        purgeButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            bundleService.purgeBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_dest_purgeFailure(destination.getName()), caught);
+                                }
+
+                                @Override
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_dest_purgeSuccessful(destination.getName()),
+                                            Message.Severity.Info));
+                                    // Bundle destination is purged, go back to bundle destinations root view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0));
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(purgeButton);
 
         IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
         deleteButton.setIcon("subsystems/bundle/BundleDestinationAction_Delete_16.png");
@@ -212,7 +248,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_bundle_dest_deleteSuccessful(destination.getName()),
                                             Message.Severity.Info));
-                                    // Bundle destination is deleted, go back to main bundle view
+                                    // Bundle destination is deleted, go back to bundle destinations root view
                                     CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0), true);
                                 }
                             });
@@ -226,6 +262,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         if (!canManageBundles) {
             deployButton.setDisabled(true);
             revertButton.setDisabled(true);
+            purgeButton.setDisabled(true);
             deleteButton.setDisabled(true);
         }
 

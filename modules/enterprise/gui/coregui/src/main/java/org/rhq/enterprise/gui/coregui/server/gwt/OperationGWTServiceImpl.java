@@ -116,10 +116,10 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
      * 
      */
     public List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
-        PageControl pageControl) throws RuntimeException {
+        int resourceId, PageControl pageControl) throws RuntimeException {
         try {
             PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = operationManager
-                .findRecentlyCompletedResourceOperations(getSessionSubject(), null, pageControl);
+                .findRecentlyCompletedResourceOperations(getSessionSubject(), resourceId, pageControl);
 
             //translate the returned problem resources to disambiguated links
             List<DisambiguationReport<ResourceOperationLastCompletedComposite>> disambiguatedLastCompletedResourceOps = resourceManager

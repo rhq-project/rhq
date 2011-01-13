@@ -146,7 +146,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         leftPane.addMember(recentOobsTitle);
         leftPane.addMember(recentOobContent);
         recentOobContent.setHeight(20);
-        recentOobContent.setContents(RECENT_OOB_NONE);
 
         //rightPane
         rightPane = new LocatableVLayout(extendLocatorId("Right"));
@@ -160,7 +159,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         rightPane.addMember(recentConfigUpdatesTitle);
         rightPane.addMember(recentConfigurationContent);
         recentConfigurationContent.setHeight(20);
-        //        recentConfigurationContent.setContents(RECENT_CONFIGURATIONS_NONE);
         rightPane.addMember(divider3);
         //recentOperations.xhtml
         LocatableHLayout recentOperationsTitle = new TitleWithIcon(leftPane, "RecentOperations",
@@ -168,7 +166,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         rightPane.addMember(recentOperationsTitle);
         rightPane.addMember(recentOperationsContent);
         recentOperationsContent.setHeight(20);
-        //        recentOperationsContent.setContents(RECENT_OPERATIONS_NONE);
         rightPane.addMember(divider4);
         //recentEventCounts.xhtml
         LocatableHLayout recentEventsTitle = new TitleWithIcon(leftPane, "RecentEvent",
@@ -305,7 +302,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         //fetches five most recent operations.
         PageControl pageControl = new PageControl(0, 5);
         pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-        GWTServiceLookup.getOperationService().findRecentCompletedOperations(pageControl,
+        GWTServiceLookup.getOperationService().findRecentCompletedOperations(resourceId, pageControl,
             new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
 
                 @Override
@@ -352,7 +349,15 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                     } else {
-                        column.setContents(RECENT_OPERATIONS_NONE);
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                            .extendLocatorId("ContentForm"));
+                        row.setNumCols(3);
+                        StaticTextItem none = new StaticTextItem();
+                        none.setShowTitle(false);
+                        none.setDefaultValue(RECENT_OPERATIONS_NONE);
+                        none.setWrap(false);
+                        row.setItems(none);
+                        column.addMember(row);
                     }
                     for (Canvas child : recentOperationsContent.getChildren()) {
                         child.destroy();
@@ -558,7 +563,15 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             //                            column.addMember(row);
                         }
                     } else {
-                        column.setContents(RECENT_OOB_NONE);
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent
+                            .extendLocatorId("ContentForm"));
+                        row.setNumCols(3);
+                        StaticTextItem none = new StaticTextItem();
+                        none.setShowTitle(false);
+                        none.setDefaultValue(RECENT_OOB_NONE);
+                        none.setWrap(false);
+                        row.setItems(none);
+                        column.addMember(row);
                     }
                     recentOobContent.setContents("");
                     for (Canvas child : recentOobContent.getChildren()) {
@@ -566,7 +579,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                     }
                     recentOobContent.addChild(column);
                     recentOobContent.markForRedraw();
-
                 }
             });
     }

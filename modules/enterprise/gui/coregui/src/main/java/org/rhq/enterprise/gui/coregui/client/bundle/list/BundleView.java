@@ -231,7 +231,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.ask(MSG.view_bundle_list_deleteConfirm(), new BooleanCallback() {
+                SC.ask(MSG.view_bundle_deleteConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
                             bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {

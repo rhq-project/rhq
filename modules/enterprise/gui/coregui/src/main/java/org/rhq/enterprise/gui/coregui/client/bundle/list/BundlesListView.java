@@ -139,7 +139,7 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
                 }
             });
 
-            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(),
                 new AbstractTableAction((hasAuth) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selections, Object actionValue) {
                         if (selections == null || selections.length == 0) {

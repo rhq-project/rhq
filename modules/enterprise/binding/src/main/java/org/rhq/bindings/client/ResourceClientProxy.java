@@ -560,12 +560,12 @@ public class ResourceClientProxy {
         public Object invoke(Object proxy, Method method, Method proceedMethod, Object[] args) throws Throwable {
 
             if (proceedMethod != null) {
-                Method realMethod = ResourceClientProxy.class.getMethod(method.getName(), method.getParameterTypes());
+                Method realMethod = getResourceClientProxyClass().getMethod(method.getName(), method.getParameterTypes());
                 return realMethod.invoke(resourceClientProxy, args);
             } else {
 
                 try {
-                    Method localMethod = ClientProxyMethodHandler.class.getDeclaredMethod(method.getName(), method
+                    Method localMethod = getClass().getDeclaredMethod(method.getName(), method
                         .getParameterTypes());
                     return localMethod.invoke(this, args);
                 } catch (NoSuchMethodException nsme) {
@@ -591,6 +591,10 @@ public class ResourceClientProxy {
 
                 throw new RuntimeException("Can't find custom method: " + method);
             }
+        }
+        
+        protected Class<? extends ResourceClientProxy> getResourceClientProxyClass() {
+            return ResourceClientProxy.class;
         }
     }
 

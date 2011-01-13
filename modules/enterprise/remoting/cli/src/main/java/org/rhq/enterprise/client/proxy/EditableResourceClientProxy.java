@@ -23,7 +23,6 @@ import org.rhq.bindings.client.ResourceClientProxy;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RemoteClient;
 
 /**
  * Extends the {@link ResourceClientProxy} and provides the interactive configuration editing features.
@@ -62,6 +61,11 @@ public class EditableResourceClientProxy extends ResourceClientProxy {
             if (config != null) {
                 updateResourceConfiguration(config);
             }
+        }
+        
+        @Override
+        protected Class<? extends ResourceClientProxy> getResourceClientProxyClass() {
+            return EditableResourceClientProxy.class;
         }
     }
 }

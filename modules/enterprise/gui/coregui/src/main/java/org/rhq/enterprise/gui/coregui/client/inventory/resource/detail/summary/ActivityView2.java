@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ContentsType;
@@ -39,12 +38,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
@@ -96,16 +95,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     private String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
 
     private Timer sparklineReloader = null;
-    private long KBYTES = 1024;
-    private long MBYTES = KBYTES * KBYTES;
-    private long GBYTES = MBYTES * KBYTES;
-    private long TBYTES = GBYTES * KBYTES;
-    private long PBYTES = TBYTES * KBYTES;
-    private long[] byteCount = { PBYTES, TBYTES, GBYTES, MBYTES, KBYTES };
-    private String[] byteDesc = { "PB", "TB", "GB", "MB", "KB" };
-    private NumberFormat decimalThreeAndOne = NumberFormat.getFormat("###.#");
-    private NumberFormat decimalThreeAndTwo = NumberFormat.getFormat("###.##");
-
     private ResourceComposite resourceComposite;
 
     public ActivityView2(String locatorId, ResourceComposite resourceComposite) {
@@ -150,7 +139,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         leftPane.addMember(recentAlertsTitle);
         leftPane.addMember(recentAlertsContent);
         recentAlertsContent.setHeight(20);
-        //        recentAlertsContent.setContents(RECENT_ALERTS_NONE);
         leftPane.addMember(divider2);
         //recentOOBs.xhtml
         LocatableHLayout recentOobsTitle = new TitleWithIcon(leftPane, "RecentOobs",
@@ -196,7 +184,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         rightPane.addMember(recentPkgHistoryTitle);
         rightPane.addMember(recentPkgHistoryContent);
         recentPkgHistoryContent.setHeight(20);
-        recentPkgHistoryContent.setContents(RECENT_PKG_HISTORY_NONE);
         loadData();
     }
 
@@ -223,7 +210,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     public void refresh() {
         //        int resourceId = this.resourceComposite.getResource().getId();
         //        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceId);
-        //        Log.debug("$$$$$$$$$$$$$ ActivityView2.refresh()");
         markForRedraw();
     }
 
@@ -585,79 +571,79 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
             });
     }
 
+    /** Fetches recent package history information and updates the DynamicForm instance with details.
+     */
     private void getRecentPkgHistory() {
         final int resourceId = this.resourceComposite.getResource().getId();
         InstalledPackageCriteria criteria = new InstalledPackageCriteria();
         criteria.addFilterResourceId(resourceId);
-        //        criteria.
         PageControl pageControl = new PageControl(0, 5);
         criteria.setPageControl(pageControl);
 
-        //        GWTServiceLookup.getContentService().getInstalledPackageHistoryForResource(resourceId, 5,
-        //            new AsyncCallback<PageList<InstalledPackageHistory>>() {
-        //                @Override
-        //                public void onFailure(Throwable caught) {
-        //                    Log.debug("Error retrieving installed package history for resource [" + resourceId + "]:"
-        //                        + caught.getMessage());
-        //                }
-        //
-        //                @Override
-        //                public void onSuccess(PageList<InstalledPackageHistory> result) {
-        //                    LocatableVLayout column = new LocatableVLayout(recentPkgHistoryContent.extendLocatorId("Content"));
-        //                    column.setHeight(10);
-        //                    if (!result.isEmpty()) {
-        //                        for (InstalledPackageHistory history : result) {
-        //                            LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-        //                                .extendLocatorId("ContentForm"));
-        //                            row.setNumCols(3);
-        //
-        //                            StaticTextItem iconItem = new StaticTextItem();
-        //                            FormItemIcon img = new FormItemIcon();
-        //                            img.setSrc("subsystems/content/Content_16.png");
-        //                            img.setWidth(16);
-        //                            img.setHeight(16);
-        //                            iconItem.setIcons(img);
-        //                            iconItem.setShowTitle(false);
-        //
-        //                            LinkItem link = new LinkItem();
-        //                            link.setLinkTitle(history.getPackageVersion().getDisplayName());
-        //                            link.setTitle(history.getPackageVersion().getDisplayName());
-        //                            //                        link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Configuration/History/"
-        //                            //                            + update.getId());
-        //                            //link.setValue(rhq/resource/content/audit-trail-item.xhtml?id=10005&selectedHistoryId=10002
-        //                            link.setValue("rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
-        //                                + "&selectedHistoryId=" + history.getId());
-        //                            link.setTarget("_self");
-        //                            link.setShowTitle(false);
-        //
-        //                            StaticTextItem time = new StaticTextItem();
-        //                            time.setDefaultValue(new Date(history.getTimestamp()).toString());
-        //                            time.setShowTitle(false);
-        //                            time.setShowPickerIcon(false);
-        //                            time.setWrap(false);
-        //                            row.setItems(iconItem, link, time);
-        //
-        //                            column.addMember(row);
-        //                        }
-        //                    } else {
-        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-        //                            .extendLocatorId("ContentForm"));
-        //                        row.setNumCols(3);
-        //                        StaticTextItem none = new StaticTextItem();
-        //                        none.setShowTitle(false);
-        //                        none.setDefaultValue(RECENT_PKG_HISTORY_NONE);
-        //                        none.setWrap(false);
-        //                        row.setItems(none);
-        //                        column.addMember(row);
-        //                    }
-        //                    //cleanup
-        //                    for (Canvas child : recentPkgHistoryContent.getChildren()) {
-        //                        child.destroy();
-        //                    }
-        //                    recentPkgHistoryContent.addChild(column);
-        //                    recentPkgHistoryContent.markForRedraw();
-        //                }
-        //            });
+        GWTServiceLookup.getContentService().getInstalledPackageHistoryForResource(resourceId, 5,
+            new AsyncCallback<PageList<InstalledPackageHistory>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving installed package history for resource [" + resourceId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<InstalledPackageHistory> result) {
+                    LocatableVLayout column = new LocatableVLayout(recentPkgHistoryContent.extendLocatorId("Content"));
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (InstalledPackageHistory history : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                                .extendLocatorId("ContentForm"));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = new StaticTextItem();
+                            FormItemIcon img = new FormItemIcon();
+                            img.setSrc("subsystems/content/Content_16.png");
+                            img.setWidth(16);
+                            img.setHeight(16);
+                            iconItem.setIcons(img);
+                            iconItem.setShowTitle(false);
+
+                            LinkItem link = new LinkItem();
+                            link.setLinkTitle(history.getPackageVersion().getFileName() + ":");
+                            link.setTitle(history.getPackageVersion().getFileName() + ":");
+
+                            //TODO: spinder. Upgrade link when content available in coreGui. Not yet iframed correctly.
+                            link.setValue("/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
+                                + "&selectedHistoryId=" + history.getId());
+                            link.setTarget("_self");
+                            link.setShowTitle(false);
+
+                            StaticTextItem time = new StaticTextItem();
+                            time.setDefaultValue(GwtRelativeDurationConverter.format(history.getTimestamp()));
+                            time.setShowTitle(false);
+                            time.setShowPickerIcon(false);
+                            time.setWrap(false);
+                            row.setItems(iconItem, link, time);
+
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                            .extendLocatorId("ContentForm"));
+                        row.setNumCols(3);
+                        StaticTextItem none = new StaticTextItem();
+                        none.setShowTitle(false);
+                        none.setDefaultValue(RECENT_PKG_HISTORY_NONE);
+                        none.setWrap(false);
+                        row.setItems(none);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentPkgHistoryContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentPkgHistoryContent.addChild(column);
+                    recentPkgHistoryContent.markForRedraw();
+                }
+            });
     }
 
     /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
@@ -815,7 +801,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
      * @return formatted String representation of the last value retrieved.
      */
     protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
-        MeasurementUnits mu = md.getUnits();
         String convertedValue = "";
         String[] convertedValues = GwtMonitorUtils.formatSimpleMetrics(new double[] { lastValue }, md);
         convertedValue = convertedValues[0];

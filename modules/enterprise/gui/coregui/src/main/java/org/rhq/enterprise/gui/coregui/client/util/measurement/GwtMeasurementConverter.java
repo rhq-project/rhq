@@ -25,7 +25,7 @@ public class GwtMeasurementConverter {
     private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";
 
     private static NumberFormat getDefaultNumberFormat() {
-        NumberFormat nf = NumberFormat.getFormat("##0.##");
+        NumberFormat nf = NumberFormat.getFormat("##,##0.##");
         return nf;
     }
 
@@ -138,7 +138,7 @@ public class GwtMeasurementConverter {
             for (int i = 0; i < precisionDigits; i++) {
                 formatPattern += "#";
             }
-            nf = NumberFormat.getFormat("#####." + formatPattern);
+            nf = NumberFormat.getFormat("#,###." + formatPattern);
 
             Double[] scaledValues = new Double[values.length];
 
@@ -223,7 +223,7 @@ public class GwtMeasurementConverter {
             }
         }
         if ((null != minimumFractionDigits) || (null != maximumFractionDigits)) {
-            numberFormat = NumberFormat.getFormat("#####." + pattern);
+            numberFormat = NumberFormat.getFormat("#,###." + pattern);
         }
 
         String formatted = numberFormat.format(value);

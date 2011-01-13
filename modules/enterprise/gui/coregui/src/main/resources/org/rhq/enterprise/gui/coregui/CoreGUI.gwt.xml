@@ -63,6 +63,9 @@
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
     
+    <!-- External javascript libraries -->
+    <script src="/coregui/js/jquery-1.4.4.js"/>
+    <script src="/coregui/js/jquery.sparkline-1.6.js"/>
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.

@@ -66,8 +66,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class BundleDestinationView extends LocatableVLayout implements BookmarkableView {
-    private BundleGWTServiceAsync bundleService;
-
     private BundleDestination destination;
     private Bundle bundle;
 
@@ -207,6 +205,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
                             bundleService.purgeBundleDestination(destination.getId(), new AsyncCallback<Void>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
@@ -238,6 +237,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 SC.ask(MSG.view_bundle_dest_deleteConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
                             bundleService.deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
@@ -288,7 +288,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         criteria.fetchDeployments(true);
         criteria.fetchTags(true);
 
-        bundleService = GWTServiceLookup.getBundleService();
+        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDestinationsByCriteria(criteria, new AsyncCallback<PageList<BundleDestination>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);

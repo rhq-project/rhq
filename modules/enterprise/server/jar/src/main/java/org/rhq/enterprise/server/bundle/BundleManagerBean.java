@@ -45,6 +45,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
+import org.rhq.core.clientapi.agent.bundle.BundlePurgeResponse;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
@@ -80,9 +82,11 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.NumberUtil;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -778,23 +782,112 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void purgeBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
-        BundleDeploymentCriteria c = new BundleDeploymentCriteria();
-        c.addFilterDestinationId(bundleDestinationId);
-        c.addFilterIsLive(true);
-        c.fetchBundleVersion(true);
-        c.fetchResourceDeployments(true);
-        c.fetchDestination(true);
-        List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, c);
+        // find the live bundle deployment for this destination, and get all the resource deployments for that live deployment
+        BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
+        bdc.addFilterDestinationId(bundleDestinationId);
+        bdc.addFilterIsLive(true);
+        bdc.fetchBundleVersion(true);
+        bdc.fetchResourceDeployments(true);
+        bdc.fetchDestination(true);
+        List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, bdc);
         if (1 != liveDeployments.size()) {
             throw new IllegalArgumentException("No live deployment to purge is found for destinationId ["
                 + bundleDestinationId + "]");
         }
         BundleDeployment liveDeployment = liveDeployments.get(0);
-        BundleDestination destination = liveDeployment.getDestination();
         List<BundleResourceDeployment> resourceDeploys = liveDeployment.getResourceDeployments();
+        if (resourceDeploys == null || resourceDeploys.isEmpty()) {
+            return; // nothing to do
+        }
 
-        // TODO loop through each deployment and purge it on agent
+        // we need to obtain the bundle type (the remote plugin container needs it). our first criteria can't fetch this deep, we have to do another query.
+        BundleVersionCriteria bvc = new BundleVersionCriteria();
+        bvc.addFilterId(liveDeployment.getBundleVersion().getId());
+        bvc.fetchBundle(true); // will eagerly fetch the bundle type
+        PageList<BundleVersion> bvs = bundleManager.findBundleVersionsByCriteria(subject, bvc);
+        liveDeployment.setBundleVersion(bvs.get(0)); // wire up the full bundle version back into the live deployment
+
+        // we need to obtain the resources for all resource deployments - our first criteria can't fetch this deep, we have to do another query.
+        List<Integer> resourceDeployIds = new ArrayList<Integer>();
+        for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
+            resourceDeployIds.add(resourceDeploy.getId());
+        }
+        BundleResourceDeploymentCriteria brdc = new BundleResourceDeploymentCriteria();
+        brdc.addFilterIds(resourceDeployIds.toArray(new Integer[resourceDeployIds.size()]));
+        brdc.fetchResource(true);
+        brdc.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<BundleResourceDeployment> brdResults = bundleManager.findBundleResourceDeploymentsByCriteria(subject,
+            brdc);
+        resourceDeploys.clear();
+        resourceDeploys.addAll(brdResults);
+        // need to wire the live bundle deployment back in - no need for another query or fetch it above because we have it already
+        for (BundleResourceDeployment brd : brdResults) {
+            brd.setBundleDeployment(liveDeployment);
+        }
+
+        // loop through each deployment and purge it on agent
+        Map<BundleResourceDeployment, String> failedToPurge = new HashMap<BundleResourceDeployment, String>();
+        for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
+            try {
+                Subject overlord = subjectManager.getOverlord();
+                AgentClient agentClient = agentManager.getAgentClient(overlord, resourceDeploy.getResource().getId());
+                BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
+                BundlePurgeRequest request = new BundlePurgeRequest(resourceDeploy);
+                BundlePurgeResponse results = bundleAgentService.purge(request);
+                if (!results.isSuccess()) {
+                    String errorMessage = results.getErrorMessage();
+                    failedToPurge.put(resourceDeploy, errorMessage);
+                }
+            } catch (Exception e) {
+                String errorMessage = ThrowableUtil.getStackAsString(e);
+                failedToPurge.put(resourceDeploy, errorMessage);
+            }
+        }
+
+        // marks the live deployment "no longer live"
+        bundleManager._finalizePurge(subject, liveDeployment, failedToPurge);
+
+        // throw an exception if we failed to purge one or more resource deployments.
+        // since we are not in a tx context, we lose nothing. All DB updates have already been committed by now
+        // which is what we want. All this does is inform the caller something went wrong.
+        if (!failedToPurge.isEmpty()) {
+            int totalDeployments = liveDeployment.getResourceDeployments().size();
+            int failedPurges = failedToPurge.size();
+            throw new Exception("Failed to purge [" + failedPurges + "] of [" + totalDeployments
+                + "] remote resource deployments");
+        }
+        return;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    // no one should be calling us except overlord
+    public void _finalizePurge(Subject subject, BundleDeployment bundleDeployment,
+        Map<BundleResourceDeployment, String> failedToPurge) throws Exception {
+
+        bundleDeployment = entityManager.find(BundleDeployment.class, bundleDeployment.getId());
+        if (failedToPurge.isEmpty()) {
+            bundleDeployment.setLive(false); // all deployments are purged, no where is this live anymore
+            bundleDeployment.setErrorMessage(null);
+            bundleDeployment.setStatus(BundleDeploymentStatus.SUCCESS);
+        } else {
+            int totalDeployments = bundleDeployment.getResourceDeployments().size();
+            int failedPurges = failedToPurge.size();
+            bundleDeployment.setLive(true); // not all deployments are purged - error indicates it is still live somewhere
+            if (failedPurges < totalDeployments) {
+                bundleDeployment.setStatus(BundleDeploymentStatus.MIXED); // some deployments were purged, so show MIXED status
+                bundleDeployment.setErrorMessage("Failed to purge [" + failedPurges + "] of [" + totalDeployments
+                    + "] remote resource deployments");
+            } else {
+                bundleDeployment.setStatus(BundleDeploymentStatus.FAILURE); // all deployments failed to be purged
+                bundleDeployment.setErrorMessage("Failed to purge all [" + failedPurges
+                    + "] remote resource deployments");
+            }
+        }
+
+        return;
     }
 
     @Override
@@ -1178,10 +1271,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
-
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
         return queryRunner.execute();
@@ -1191,8 +1281,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
         BundleDestinationCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
         return queryRunner.execute();
@@ -1226,8 +1314,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleVersion> queryRunner = new CriteriaQueryRunner<BundleVersion>(criteria, generator,
             entityManager);
         return queryRunner.execute();
@@ -1236,8 +1322,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleFile> queryRunner = new CriteriaQueryRunner<BundleFile>(criteria, generator,
             entityManager);
         return queryRunner.execute();
@@ -1246,8 +1330,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
     }

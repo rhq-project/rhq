@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-cli"
+        displayName="Alert:CLI"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertCli"
+        description="Alert sender plugin that can execute a CLI script."
+        >
+
+    <serverplugin:help>
+        Used to execute a CLI script.
+    </serverplugin:help>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>CLI Script</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>CliSender</plugin-class>
+
+    <alert-configuration>
+        <c:simple-property name="packageId" type="integer" required="true" description="The id of the package containing the script to execute."/>
+    </alert-configuration>
+</alert-plugin>

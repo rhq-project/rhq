@@ -873,18 +873,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             bundleDeployment.setErrorMessage(null);
             bundleDeployment.setStatus(BundleDeploymentStatus.SUCCESS);
         } else {
+            bundleDeployment.setLive(true); // not all deployments are purged - error indicates it is still live somewhere
+
+            StringBuilder errorStr = new StringBuilder();
             int totalDeployments = bundleDeployment.getResourceDeployments().size();
             int failedPurges = failedToPurge.size();
-            bundleDeployment.setLive(true); // not all deployments are purged - error indicates it is still live somewhere
             if (failedPurges < totalDeployments) {
                 bundleDeployment.setStatus(BundleDeploymentStatus.MIXED); // some deployments were purged, so show MIXED status
-                bundleDeployment.setErrorMessage("Failed to purge [" + failedPurges + "] of [" + totalDeployments
+                errorStr.append("Failed to purge [" + failedPurges + "] of [" + totalDeployments
                     + "] remote resource deployments");
             } else {
                 bundleDeployment.setStatus(BundleDeploymentStatus.FAILURE); // all deployments failed to be purged
-                bundleDeployment.setErrorMessage("Failed to purge all [" + failedPurges
-                    + "] remote resource deployments");
+                errorStr.append("Failed to purge all [" + failedPurges + "] remote resource deployments");
             }
+
+            // key is the resource deployment that failed to be purged; value is the error message
+            for (Map.Entry<BundleResourceDeployment, String> entry : failedToPurge.entrySet()) {
+                errorStr.append("\n\n");
+                errorStr.append(entry.getKey().getResource().getName()).append(": ").append(entry.getValue());
+            }
+
+            bundleDeployment.setErrorMessage(errorStr.toString());
         }
 
         return;

@@ -140,9 +140,13 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
-                // TODO: put the diffs in the "attachment" area and make it more formatted/legible
+
+                String msg = new StringBuilder("Added files=").append(diffs.getAddedFiles().size()).append(
+                    "; Deleted files=").append(diffs.getDeletedFiles().size()).append(
+                    " (see attached details for more information)").toString();
+                String fullDetails = formatDiff(diffs);
                 bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", project.getName(),
-                    BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, diffs.toString(), null);
+                    BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, msg, fullDetails);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -245,5 +249,56 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             }
         }
         return antProps;
+    }
+
+    private String formatDiff(DeployDifferences diffs) {
+        String indent = "    ";
+        String nl = "\n";
+        StringBuilder str = new StringBuilder("DEPLOYMENT DETAILS:");
+        str.append(nl);
+
+        str.append("Added Files: ").append(diffs.getAddedFiles().size()).append(nl);
+        for (String f : diffs.getAddedFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Deleted Files: ").append(diffs.getDeletedFiles().size()).append(nl);
+        for (String f : diffs.getDeletedFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Changed Files: ").append(diffs.getChangedFiles().size()).append(nl);
+        for (String f : diffs.getChangedFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Backed Up Files: ").append(diffs.getBackedUpFiles().size()).append(nl);
+        for (Map.Entry<String, String> entry : diffs.getBackedUpFiles().entrySet()) {
+            str.append(indent).append(entry.getKey()).append(" -> ").append(entry.getValue()).append(nl);
+        }
+
+        str.append("Restored Files: ").append(diffs.getRestoredFiles().size()).append(nl);
+        for (Map.Entry<String, String> entry : diffs.getRestoredFiles().entrySet()) {
+            str.append(indent).append(entry.getKey()).append(" <- ").append(entry.getValue()).append(nl);
+        }
+
+        str.append("Ignored Files: ").append(diffs.getIgnoredFiles().size()).append(nl);
+        for (String f : diffs.getIgnoredFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Realized Files: ").append(diffs.getRealizedFiles().size()).append(nl);
+        for (String f : diffs.getRealizedFiles().keySet()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Was Cleaned?: ").append(diffs.wasCleaned()).append(nl);
+
+        str.append("Errors: ").append(diffs.getErrors().size()).append(nl);
+        for (Map.Entry<String, String> entry : diffs.getErrors().entrySet()) {
+            str.append(indent).append(entry.getKey()).append(" : ").append(entry.getValue()).append(nl);
+        }
+
+        return str.toString();
     }
 }

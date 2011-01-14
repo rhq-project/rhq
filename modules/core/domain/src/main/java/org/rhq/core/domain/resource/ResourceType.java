@@ -96,8 +96,6 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
         "WHERE rt.deleted = false and pa IN (:resourceType)"),
-    // template count composites need the parent types fetched; however, because of a quirk in hibernate,
-    // we can't use the template component constructor in the select, we'll build the composites in our code
     @NamedQuery(name = ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite" //
         + "(" //

@@ -80,7 +80,7 @@ public class ResourceTreeModelUIBean {
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree root resource");
         log.debug("Found root resource in " + (end - start));
 
-        Agent agent = agentManager.getAgentByResourceId(EnterpriseFacesContextUtility.getSubject(), rootResource
+        Agent agent = agentManager.getAgentByResourceId(LookupUtil.getSubjectManager().getOverlord(), rootResource
             .getId());
 
         start = System.currentTimeMillis();

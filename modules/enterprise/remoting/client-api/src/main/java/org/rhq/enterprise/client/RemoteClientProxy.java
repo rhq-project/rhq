@@ -18,18 +18,14 @@
  */
 package org.rhq.enterprise.client;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
+import org.rhq.bindings.client.AbstractRhqFacadeProxy;
 import org.rhq.bindings.client.RhqManagers;
 import org.rhq.bindings.util.InterfaceSimplifier;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.server.ExternalizableStrategy;
 
 /**
@@ -37,19 +33,16 @@ import org.rhq.core.server.ExternalizableStrategy;
  * to SLSB Remotes over a remoting invoker.
  *
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
-public class RemoteClientProxy implements InvocationHandler {
-    private RemoteClient client;
-    private RhqManagers manager;
+public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
 
-    //    public RHQRemoteClientProxy(RHQRemoteClient client, Class targetClass) {
     public RemoteClientProxy(RemoteClient client, RhqManagers manager) {
-        this.client = client;
-        this.manager = manager;
+        super(client, manager);
     }
 
     public Class<?> getRemoteInterface() {
-        return this.manager.remote();
+        return this.getManager().remote();
     }
 
     @SuppressWarnings("unchecked")
@@ -57,7 +50,7 @@ public class RemoteClientProxy implements InvocationHandler {
         try {
             RemoteClientProxy gpc = new RemoteClientProxy(remoteClient, manager);
 
-            Class<?> intf = InterfaceSimplifier.simplify(gpc.manager.remote());
+            Class<?> intf = InterfaceSimplifier.simplify(manager.remote());
 
             return (T) Proxy
                 .newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class<?>[] { intf }, gpc);
@@ -67,62 +60,32 @@ public class RemoteClientProxy implements InvocationHandler {
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
         try {
-            // make sure we're serializing in Remote Client mode for rich serialization
-            ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
-
-            String methodName = manager.beanName() + ":" + method.getName();
-
-            Class<?>[] params = method.getParameterTypes();
-
-            try {
-                Class<?>[] interfaces = method.getDeclaringClass().getInterfaces();
-
-                Class<?> originalClass;
-                if (interfaces != null && interfaces.length > 0) {
-                    originalClass = interfaces[0];
-                } else {
-                    originalClass = method.getDeclaringClass();
-                }
-
-                // See if this method really exists or if its a simplified set of parameters
-                originalClass.getMethod(method.getName(), method.getParameterTypes());
-
-            } catch (Exception e) {
-                // If this was not in the original interface it must've been added in the Simplifier... add back the subject argument
-                int numArgs = (null == args) ? 0 : args.length;
-                Object[] newArgs = new Object[numArgs + 1];
-                if (numArgs > 0) {
-                    System.arraycopy(args, 0, newArgs, 1, numArgs);
-                }
-                newArgs[0] = client.getSubject();
-                args = newArgs;
-
-                int numParams = (null == params) ? 0 : params.length;
-                Class<?>[] newParams = new Class[numParams + 1];
-                if (numParams > 0) {
-                    System.arraycopy(params, 0, newParams, 1, numParams);
-                }
-                newParams[0] = Subject.class;
-                params = newParams;
-            }
-
-            String[] paramSig = createParamSignature(params);
-            NameBasedInvocation request = new NameBasedInvocation(methodName, args, paramSig);
-
-            Object response = client.getRemotingClient().invoke(request);
-
-            if (response instanceof Throwable) {
-                throw (Throwable) response;
-            }
-            return response;
+            return super.invoke(proxy, method, args);
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         }
     }
 
+    protected Object doInvoke(Object proxy, Method originalMethod, java.lang.Class<?>[] argTypes, Object[] args) throws Throwable  {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        String methodName = getManager().beanName() + ":" + originalMethod.getName();
+
+        String[] paramSig = createParamSignature(argTypes);
+        
+        NameBasedInvocation request = new NameBasedInvocation(methodName, args, paramSig);
+
+        Object response = getRhqFacade().getRemotingClient().invoke(request);
+
+        if (response instanceof Throwable) {
+            throw (Throwable) response;
+        }
+        
+        return response;
+    }
+    
     private String[] createParamSignature(Class<?>[] types) {
         String[] paramSig = new String[types.length];
         for (int x = 0; x < types.length; x++) {

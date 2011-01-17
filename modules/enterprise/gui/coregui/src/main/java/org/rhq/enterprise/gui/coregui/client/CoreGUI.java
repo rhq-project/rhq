@@ -151,7 +151,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void buildCoreUI() {
-        // If the core gui is already built (eg. from previous login, just refire event)
+        // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
             MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
@@ -176,12 +176,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
 
         if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
-            // request a redraw of the MenuBarItem to ensure the correct sessio info is displayed 
-            rootCanvas.getMember(0).markForRedraw();
+
+            // init the rootCanvas to ensure a clean slate for a new user
+            rootCanvas.initCanvas();
 
             // go to default view if user doesn't specify a history token
             History.newItem(getDefaultView());
         } else {
+
             // otherwise just fire an event for the bookmarked URL they are returning to
             History.fireCurrentHistoryState();
         }
@@ -344,6 +346,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 path.append("Core Application");
             }
             return "RHQ: " + path.toString();
+        }
+
+        public void initCanvas() {
+            // request a redraw of the MenuBarItem to ensure the correct session info is displayed 
+            getMember(0).markForRedraw();
+
+            // remove any current viewId so the next requested path generates new content
+            this.currentViewId = null;
         }
 
         public void renderView(final ViewPath viewPath) {

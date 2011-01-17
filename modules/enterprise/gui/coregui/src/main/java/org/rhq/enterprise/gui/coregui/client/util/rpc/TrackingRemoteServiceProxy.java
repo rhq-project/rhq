@@ -49,9 +49,11 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
  */
 public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
 
+    /** Don't block methods used during the login or logout process. Declare the exceptions here. */
     private static final Set<String> bypassMethods = new HashSet<String>();
     static {
         bypassMethods.add("SubjectGWTService_Proxy.findSubjectsByCriteria");
+        bypassMethods.add("SubjectGWTService_Proxy.logout");
     }
 
     public TrackingRemoteServiceProxy(String moduleBaseURL, String remoteServiceRelativePath,
@@ -74,7 +76,9 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
 
         String sessionId = UserSessionManager.getSessionId();
         if (sessionId != null) {
-            Log.debug("SessionRpcRequestBuilder is adding sessionId to request for (" + methodName + ")");
+            if (Log.isDebugEnabled()) {
+                Log.debug("SessionRpcRequestBuilder is adding sessionId to request for (" + methodName + ")");
+            }
             rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
         } else {
             Log.error("SessionRpcRequestBuilder missing sessionId for request (" + methodName + ")");
@@ -100,7 +104,9 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
     protected <T> Request doInvoke(ResponseReader responseReader, String methodName, int invocationCount,
         String requestData, AsyncCallback<T> callback) {
 
-        Log.debug("RPC method invocation: " + methodName);
+        if (Log.isDebugEnabled()) {
+            Log.debug("RPC method invocation: " + methodName);
+        }
         if (bypassMethods.contains(methodName) || !UserSessionManager.isLoggedOut()) {
             return super.doInvoke(responseReader, methodName, invocationCount, requestData, callback);
         }

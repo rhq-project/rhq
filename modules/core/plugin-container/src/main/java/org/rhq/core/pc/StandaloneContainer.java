@@ -38,12 +38,15 @@ import java.util.Stack;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -368,6 +371,29 @@ public class StandaloneContainer {
     private void invokeOps(String[] tokens) throws Exception {
         if (resourceId == 0)
             return;
+
+        String operation = tokens[1];
+        if (operation.equals("-list")) {
+            ResourceContainer rc = inventoryManager.getResourceContainer(resourceId);
+            Resource res = rc.getResource();
+            ResourceType rt = res.getResourceType();
+            Set<OperationDefinition> opDefs = rt.getOperationDefinitions();
+            for (OperationDefinition def :opDefs) {
+                System.out.println(def.getName() + " : " + def.getDescription());
+                ConfigurationDefinition params = def.getParametersConfigurationDefinition();
+                if (params!=null && params.getPropertyDefinitions()!=null && !params.getPropertyDefinitions().isEmpty()) {
+                    System.out.println("  Parameters:");
+                    for (Map.Entry<String,PropertyDefinition> param : params.getPropertyDefinitions().entrySet()) {
+                        System.out.println("    " + param.getKey()); // TODO add more info
+                    }
+                }
+            }
+            if (opDefs.isEmpty()) {
+                System.out.println("Resource has no operations");
+            }
+            return;
+        }
+
 
         OperationManager opMan = pc.getOperationManager();
         OperationServices operationServices = new OperationServicesAdapter(opMan);
@@ -716,7 +742,7 @@ public class StandaloneContainer {
         FIND("find", "r | t  | rt <name>", 2,
             "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
                 + " Will set $r for the last resource shown."), HELP("h", "", 0, "Shows this help"), //
-        INVOKE("i", "operation [params]", 1, "Triggers running an operation"), //
+        INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations"), //
         MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //
         NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
         QUIT("quit", "", 0, "Terminates the application"), //

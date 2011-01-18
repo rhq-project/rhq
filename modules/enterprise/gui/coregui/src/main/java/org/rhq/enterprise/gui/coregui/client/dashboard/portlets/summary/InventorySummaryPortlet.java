@@ -59,26 +59,30 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
-    private Timer defaultReloader;
-    private Timer reloader;
+    private Timer refreshTimer;
 
     public InventorySummaryPortlet(String locatorId) {
         super(locatorId);
 
-        loadInventoryViewDiata();
+        loadInventoryViewData();
     }
 
-    private void loadInventoryViewDiata() {
+    private void loadInventoryViewData() {
         for (Canvas child : getChildren()) {
             child.destroy();
         }
+        //destroy form
+        if (form != null) {
+            form.destroy();
+        }
+
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_portlet_inventory_error1(), throwable);
             }
 
             public void onSuccess(InventorySummary summary) {
-                form = new LocatableDynamicForm(extendLocatorId("Portlet_Inventory_Summary"));
+                form = new LocatableDynamicForm(extendLocatorId("Form"));
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
                 //                HeaderItem headerItem = new HeaderItem("header");
@@ -155,12 +159,9 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     @Override
     public void redraw() {
         super.redraw();
-        if (form != null) {
-            //destroy form
-            form.destroy();
-        }
+
         //now reload the data
-        loadInventoryViewDiata();
+        loadInventoryViewData();
     }
 
     public static final class Factory implements PortletViewFactory {
@@ -174,20 +175,34 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     @Override
     public void startRefreshCycle() {
         //current setting
-        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-        //cancel previous operation
-        if (defaultReloader != null) {
-            defaultReloader.cancel();
+        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+
+        //cancel any existing timer
+        if (refreshTimer != null) {
+            refreshTimer.cancel();
         }
-        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
-            defaultReloader = new Timer() {
+
+        if (refreshInterval >= MeasurementUtility.MINUTES) {
+
+            refreshTimer = new Timer() {
                 public void run() {
+
                     redraw();
-                    //launch again until portlet reference and child references GC.
-                    defaultReloader.schedule(retrievedRefreshInterval);
                 }
             };
-            defaultReloader.schedule(retrievedRefreshInterval);
+
+            refreshTimer.scheduleRepeating(refreshInterval);
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        if (refreshTimer != null) {
+
+            refreshTimer.cancel();
+        }
+
+        super.onDestroy();
+    }
+
 }

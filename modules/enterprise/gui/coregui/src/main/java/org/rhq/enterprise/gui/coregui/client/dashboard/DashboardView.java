@@ -92,6 +92,10 @@ public class DashboardView extends LocatableVLayout {
     private LocatableIMenuButton refreshMenuButton;
     private HashMap<String, PortletViewFactory> portletMap = null;
 
+    // this is used to prevent an odd smartgwt problem where onInit() can get called multiple times if
+    // the view is set to a Tab's pane.
+    private boolean isInitialized = false;
+
     public DashboardView(String locatorId, DashboardsView dashboardsView, Dashboard storedDashboard) {
         super(locatorId);
 
@@ -104,12 +108,17 @@ public class DashboardView extends LocatableVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-        buildEditForm();
+
+        if (!isInitialized) {
+            addMember(buildEditForm());
+            isInitialized = true;
+        }
     }
 
     public void redraw() {
         for (Canvas c : getChildren()) {
             c.removeFromParent();
+            c.destroy();
         }
 
         buildPortlets();
@@ -133,7 +142,6 @@ public class DashboardView extends LocatableVLayout {
 
         loadPortletWindows();
 
-        addMember(editForm);
         addMember(portalLayout);
     }
 

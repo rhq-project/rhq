@@ -52,4 +52,14 @@ public class NamedTabSet extends LocatableTabSet {
         return null;
     }
 
+    @Override
+    protected void onDestroy() {
+
+        for (NamedTab tab : getTabs()) {
+            tab.destroy();
+        }
+
+        super.onDestroy();
+    }
+
 }

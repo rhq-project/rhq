@@ -110,7 +110,8 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     private AlertPortletDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
-    private Timer defaultReloader;
+
+    private Timer refreshTimer;
 
     public RecentAlertsPortlet(String locatorId) {
         super(locatorId);
@@ -571,21 +572,34 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     @Override
     public void startRefreshCycle() {
         //current setting
-        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-        //cancel previous operation
-        if (defaultReloader != null) {
-            defaultReloader.cancel();
+        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+
+        //cancel any existing timer
+        if (refreshTimer != null) {
+            refreshTimer.cancel();
         }
-        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
-            defaultReloader = new Timer() {
+
+        if (refreshInterval >= MeasurementUtility.MINUTES) {
+
+            refreshTimer = new Timer() {
                 public void run() {
-                    refresh();
-                    //launch again until portlet reference and child references GC.
-                    defaultReloader.schedule(retrievedRefreshInterval);
+
+                    redraw();
                 }
             };
-            defaultReloader.schedule(retrievedRefreshInterval);
+
+            refreshTimer.scheduleRepeating(refreshInterval);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (refreshTimer != null) {
+
+            refreshTimer.cancel();
+        }
+
+        super.onDestroy();
     }
 
     @Override

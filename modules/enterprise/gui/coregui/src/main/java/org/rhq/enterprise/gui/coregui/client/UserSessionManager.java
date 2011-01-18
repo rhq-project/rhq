@@ -458,6 +458,13 @@ public class UserSessionManager {
         }
 
         try {
+            // The logout() method should be called against the dying session. This makes sense and
+            // also protects against the fact that sessionSubject may be null at the time of this call.
+            // The sessionSubject is used to build the server request, so it must be valid. 
+            Subject tempSubject = sessionSubject;
+            sessionSubject = new Subject();
+            sessionSubject.setSessionId(doomedSessionId);
+
             GWTServiceLookup.getSubjectService().logout(doomedSessionId, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.util_userSession_logoutFail(), caught);
@@ -469,6 +476,9 @@ public class UserSessionManager {
                     }
                 }
             });
+
+            // return sessionSubject to its actual value
+            sessionSubject = tempSubject;
         } catch (Throwable caught) {
             CoreGUI.getErrorHandler().handleError(MSG.util_userSession_logoutFail(), caught);
         }

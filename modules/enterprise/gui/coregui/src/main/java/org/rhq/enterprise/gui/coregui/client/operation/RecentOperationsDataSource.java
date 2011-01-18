@@ -131,7 +131,7 @@ public class RecentOperationsDataSource extends
             }
         }
 
-        int resourceId = getFilter(request, "id", Integer.class);
+        int resourceId = -1;
 
         GWTServiceLookup.getOperationService().findRecentCompletedOperations(resourceId, pageControl,
             new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {

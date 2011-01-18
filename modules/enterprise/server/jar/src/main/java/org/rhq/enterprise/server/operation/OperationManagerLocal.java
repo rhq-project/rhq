@@ -52,7 +52,26 @@ import org.rhq.enterprise.server.exception.UnscheduleException;
 
 @Local
 public interface OperationManagerLocal {
+
+    /**
+     * TODO
+     *
+     * @param groupId
+     *
+     * @return
+     */
     public List<IntegerOptionItem> getResourceNameOptionItems(int groupId);
+
+    /**
+     * Schedules a Resource operation for execution.
+     *
+     * @param subject the user who is asking to schedule the job
+     * @param schedule the information describing the operation to be scheduled along with the schedule to be used
+     *
+     * @return the id of the {@link org.rhq.core.domain.operation.ResourceOperationScheduleEntity} created to track the
+     *         scheduled operation
+     */
+    int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule);
 
     /**
      * Schedules an operation for execution on the given resource.
@@ -610,4 +629,5 @@ public interface OperationManagerLocal {
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria);
+
 }

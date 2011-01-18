@@ -87,8 +87,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class BundleDeploymentView extends LocatableVLayout implements BookmarkableView {
-    private BundleGWTServiceAsync bundleService;
-
     private BundleDeployment deployment;
     private BundleVersion version;
     private Bundle bundle;
@@ -211,7 +209,11 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     private Canvas getActionLayout(String locatorId) {
         LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
 
-        // we can only revert the live deployments, only show revert button when appropriate 
+        // we can only revert the live deployments, only show revert button when appropriate
+        // in addition, we provide a purge button if you are viewing the live deployment, so
+        // they can be shown an option to purge the platform content (since only the "live"
+        // deployment represents content on the remote machines, showing purge only for live
+        // deployments makes sense).
         if (deployment.isLive()) {
             IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG
                 .view_bundle_revert());
@@ -222,8 +224,44 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                 }
             });
             actionLayout.addMember(revertButton);
+
+            IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+            purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+            purgeButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                    SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                        public void execute(Boolean aBoolean) {
+                            if (aBoolean) {
+                                final int destinationId = deployment.getDestination().getId();
+                                final String destinationName = deployment.getDestination().getName();
+                                BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
+                                bundleService.purgeBundleDestination(destinationId, new AsyncCallback<Void>() {
+                                    @Override
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_bundle_dest_purgeFailure(destinationName), caught);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
+                                                Message.Severity.Info));
+                                        // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
+                                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(bundle.getId(), deployment
+                                            .getId()), true);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+            actionLayout.addMember(purgeButton);
+
             if (!canManageBundles) {
                 revertButton.setDisabled(true);
+                purgeButton.setDisabled(true);
             }
         }
 
@@ -235,6 +273,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                 SC.ask(MSG.view_bundle_deploy_deleteConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
                             bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
@@ -247,7 +286,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                                             Message.Severity.Info));
                                     // Bundle deployment is deleted, go back to main bundle destinations view
                                     CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), deployment
-                                        .getDestination().getId()));
+                                        .getDestination().getId()), true);
                                 }
                             });
                         }
@@ -385,7 +424,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         criteria.fetchDestination(true);
         criteria.fetchTags(true);
 
-        bundleService = GWTServiceLookup.getBundleService();
+        final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);

@@ -98,7 +98,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static CoreGUI coreGUI;
 
+    // store a message to be posted in the message center during the next renderView processing.
     private static Message pendingMessage;
+
+    // store the fact that we want the ViewPath for the next renderView to have refresh on. This allows us to
+    // ask for a refresh even when changing viewPaths, which can be useful when we want to say, refresh a LHS tree
+    // while also changing the main content. Typically we refresh only when the path is not changed.
+    private static boolean pendingRefresh = false;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -145,7 +151,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void buildCoreUI() {
-        // If the core gui is already built (eg. from previous login, just refire event)
+        // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
             MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
@@ -170,12 +176,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
 
         if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
-            // request a redraw of the MenuBarItem to ensure the correct sessio info is displayed 
-            rootCanvas.getMember(0).markForRedraw();
+
+            // init the rootCanvas to ensure a clean slate for a new user
+            rootCanvas.initCanvas();
 
             // go to default view if user doesn't specify a history token
             History.newItem(getDefaultView());
         } else {
+
             // otherwise just fire an event for the bookmarked URL they are returning to
             History.fireCurrentHistoryState();
         }
@@ -263,11 +271,20 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
-        goToView(viewPath, null);
+        goToView(viewPath, null, false);
     }
 
     public static void goToView(String viewPath, Message message) {
+        goToView(viewPath, message, false);
+    }
+
+    public static void goToView(String viewPath, boolean refresh) {
+        goToView(viewPath, null, refresh);
+    }
+
+    public static void goToView(String viewPath, Message message, boolean refresh) {
         pendingMessage = message;
+        pendingRefresh = refresh;
 
         // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
         if (viewPath.charAt(0) == '#') {
@@ -331,6 +348,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             return "RHQ: " + path.toString();
         }
 
+        public void initCanvas() {
+            // request a redraw of the MenuBarItem to ensure the correct session info is displayed 
+            getMember(0).markForRedraw();
+
+            // remove any current viewId so the next requested path generates new content
+            this.currentViewId = null;
+        }
+
         public void renderView(final ViewPath viewPath) {
             Window.setTitle(getViewPathTitle(viewPath));
 
@@ -341,6 +366,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 if (pendingMessage != null) {
                     getMessageCenter().notify(pendingMessage);
                     pendingMessage = null;
+                }
+
+                if (pendingRefresh) {
+                    viewPath.setRefresh(true);
+                    pendingRefresh = false;
                 }
 
                 ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration

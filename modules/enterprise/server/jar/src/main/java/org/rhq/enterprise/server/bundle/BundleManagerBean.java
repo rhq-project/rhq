@@ -45,6 +45,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
+import org.rhq.core.clientapi.agent.bundle.BundlePurgeResponse;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleRequest;
 import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
@@ -80,9 +82,11 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.NumberUtil;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -142,6 +146,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeploymentHistory addBundleResourceDeploymentHistory(Subject subject, int bundleDeploymentId,
@@ -159,6 +164,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return history;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -201,6 +207,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundle;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
@@ -218,6 +225,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return createBundleDeploymentImpl(subject, bundleVersion, bundleDestination, name, description, configuration);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
         String description, Configuration configuration) throws Exception {
@@ -262,6 +270,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return deployment;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
         String deployDir, Integer groupId) throws Exception {
@@ -289,6 +298,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return dest;
     }
 
+    @Override
     public String getBundleDeploymentName(Subject subject, int bundleDestinationId, int bundleVersionId,
         int prevDeploymentId) {
         BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
@@ -367,6 +377,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return deploymentName;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleType createBundleType(Subject subject, String name, int resourceTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -383,6 +394,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleType;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
         int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
@@ -406,6 +418,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bv;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
@@ -476,6 +489,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
 
@@ -486,6 +500,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
@@ -497,6 +512,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleVersion;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
@@ -659,6 +675,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return newVersion;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {
@@ -716,6 +733,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, byte[] fileBytes) throws Exception {
@@ -723,6 +741,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return addBundleFile(subject, bundleVersionId, name, version, architecture, new ByteArrayInputStream(fileBytes));
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, String bundleFileUrl) throws Exception {
@@ -733,6 +752,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return addBundleFile(subject, bundleVersionId, name, version, architecture, url.openStream());
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
         int packageVersionId) throws Exception {
@@ -760,12 +780,133 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return bundleFile;
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void purgeBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
+        // find the live bundle deployment for this destination, and get all the resource deployments for that live deployment
+        BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
+        bdc.addFilterDestinationId(bundleDestinationId);
+        bdc.addFilterIsLive(true);
+        bdc.fetchBundleVersion(true);
+        bdc.fetchResourceDeployments(true);
+        bdc.fetchDestination(true);
+        List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, bdc);
+        if (1 != liveDeployments.size()) {
+            throw new IllegalArgumentException("No live deployment to purge is found for destinationId ["
+                + bundleDestinationId + "]");
+        }
+        BundleDeployment liveDeployment = liveDeployments.get(0);
+        List<BundleResourceDeployment> resourceDeploys = liveDeployment.getResourceDeployments();
+        if (resourceDeploys == null || resourceDeploys.isEmpty()) {
+            return; // nothing to do
+        }
+
+        // we need to obtain the bundle type (the remote plugin container needs it). our first criteria can't fetch this deep, we have to do another query.
+        BundleVersionCriteria bvc = new BundleVersionCriteria();
+        bvc.addFilterId(liveDeployment.getBundleVersion().getId());
+        bvc.fetchBundle(true); // will eagerly fetch the bundle type
+        PageList<BundleVersion> bvs = bundleManager.findBundleVersionsByCriteria(subject, bvc);
+        liveDeployment.setBundleVersion(bvs.get(0)); // wire up the full bundle version back into the live deployment
+
+        // we need to obtain the resources for all resource deployments - our first criteria can't fetch this deep, we have to do another query.
+        List<Integer> resourceDeployIds = new ArrayList<Integer>();
+        for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
+            resourceDeployIds.add(resourceDeploy.getId());
+        }
+        BundleResourceDeploymentCriteria brdc = new BundleResourceDeploymentCriteria();
+        brdc.addFilterIds(resourceDeployIds.toArray(new Integer[resourceDeployIds.size()]));
+        brdc.fetchResource(true);
+        brdc.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<BundleResourceDeployment> brdResults = bundleManager.findBundleResourceDeploymentsByCriteria(subject,
+            brdc);
+        resourceDeploys.clear();
+        resourceDeploys.addAll(brdResults);
+        // need to wire the live bundle deployment back in - no need for another query or fetch it above because we have it already
+        for (BundleResourceDeployment brd : brdResults) {
+            brd.setBundleDeployment(liveDeployment);
+        }
+
+        // loop through each deployment and purge it on agent
+        Map<BundleResourceDeployment, String> failedToPurge = new HashMap<BundleResourceDeployment, String>();
+        for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
+            try {
+                Subject overlord = subjectManager.getOverlord();
+                AgentClient agentClient = agentManager.getAgentClient(overlord, resourceDeploy.getResource().getId());
+                BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
+                BundlePurgeRequest request = new BundlePurgeRequest(resourceDeploy);
+                BundlePurgeResponse results = bundleAgentService.purge(request);
+                if (!results.isSuccess()) {
+                    String errorMessage = results.getErrorMessage();
+                    failedToPurge.put(resourceDeploy, errorMessage);
+                }
+            } catch (Exception e) {
+                String errorMessage = ThrowableUtil.getStackAsString(e);
+                failedToPurge.put(resourceDeploy, errorMessage);
+            }
+        }
+
+        // marks the live deployment "no longer live"
+        bundleManager._finalizePurge(subject, liveDeployment, failedToPurge);
+
+        // throw an exception if we failed to purge one or more resource deployments.
+        // since we are not in a tx context, we lose nothing. All DB updates have already been committed by now
+        // which is what we want. All this does is inform the caller something went wrong.
+        if (!failedToPurge.isEmpty()) {
+            int totalDeployments = liveDeployment.getResourceDeployments().size();
+            int failedPurges = failedToPurge.size();
+            throw new Exception("Failed to purge [" + failedPurges + "] of [" + totalDeployments
+                + "] remote resource deployments");
+        }
+        return;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    // no one should be calling us except overlord
+    public void _finalizePurge(Subject subject, BundleDeployment bundleDeployment,
+        Map<BundleResourceDeployment, String> failedToPurge) throws Exception {
+
+        bundleDeployment = entityManager.find(BundleDeployment.class, bundleDeployment.getId());
+        if (failedToPurge.isEmpty()) {
+            bundleDeployment.setLive(false); // all deployments are purged, no where is this live anymore
+            bundleDeployment.setErrorMessage(null);
+            bundleDeployment.setStatus(BundleDeploymentStatus.SUCCESS);
+        } else {
+            bundleDeployment.setLive(true); // not all deployments are purged - error indicates it is still live somewhere
+
+            StringBuilder errorStr = new StringBuilder();
+            int totalDeployments = bundleDeployment.getResourceDeployments().size();
+            int failedPurges = failedToPurge.size();
+            if (failedPurges < totalDeployments) {
+                bundleDeployment.setStatus(BundleDeploymentStatus.MIXED); // some deployments were purged, so show MIXED status
+                errorStr.append("Failed to purge [" + failedPurges + "] of [" + totalDeployments
+                    + "] remote resource deployments");
+            } else {
+                bundleDeployment.setStatus(BundleDeploymentStatus.FAILURE); // all deployments failed to be purged
+                errorStr.append("Failed to purge all [" + failedPurges + "] remote resource deployments");
+            }
+
+            // key is the resource deployment that failed to be purged; value is the error message
+            for (Map.Entry<BundleResourceDeployment, String> entry : failedToPurge.entrySet()) {
+                errorStr.append("\n\n");
+                errorStr.append(entry.getKey().getResource().getName()).append(": ").append(entry.getValue());
+            }
+
+            bundleDeployment.setErrorMessage(errorStr.toString());
+        }
+
+        return;
+    }
+
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
         throws Exception {
         return scheduleBundleDeploymentImpl(subject, bundleDeploymentId, isCleanDeployment, false);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
         String deploymentDescription, boolean isCleanDeployment) throws Exception {
@@ -920,6 +1061,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return resourceDeployment;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleScheduleRequest getScheduleRequest(Subject subject, int resourceDeploymentId,
@@ -971,6 +1113,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return request;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
@@ -991,6 +1134,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return resourceDeployment;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
         BundleDeploymentStatus status) throws Exception {
@@ -1042,6 +1186,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     //  return groupDeployment;
     //}
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception {
@@ -1081,6 +1226,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
 
@@ -1114,6 +1260,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<BundleType> getAllBundleTypes(Subject subject) {
         // the list of types will be small, no need to support paging
@@ -1122,6 +1269,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return types;
     }
 
+    @Override
     public BundleType getBundleType(Subject subject, String bundleTypeName) {
         // the list of types will be small, no need to support paging
         Query q = entityManager.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
@@ -1130,26 +1278,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return type;
     }
 
+    @Override
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
-
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
         BundleDestinationCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
         BundleResourceDeploymentCriteria criteria) {
 
@@ -1174,32 +1320,30 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleVersion> queryRunner = new CriteriaQueryRunner<BundleVersion>(criteria, generator,
             entityManager);
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<BundleFile> queryRunner = new CriteriaQueryRunner<BundleFile>(criteria, generator,
             entityManager);
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(Subject subject,
         BundleCriteria criteria) {
 
@@ -1222,6 +1366,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     // to avoid deadlocks, you cannot delete multiple bundles concurrently (see BZ 606530)
     // instead, this simple method just loops over the given array and deletes them serially
     // note they all get deleted in their own transaction; this method is never in a tx itself
+    @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void deleteBundles(Subject subject, int[] bundleIds) throws Exception {
         if (bundleIds != null) {
@@ -1231,6 +1376,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
@@ -1257,6 +1403,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         repoManager.deleteRepo(subjectManager.getOverlord(), bundleRepo.getId());
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
         BundleDeployment doomed = this.entityManager.find(BundleDeployment.class, bundleDeploymentId);
@@ -1273,6 +1420,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleDestination(Subject subject, int destinationId) throws Exception {
         BundleDestination doomed = this.entityManager.find(BundleDestination.class, destinationId);
@@ -1292,6 +1440,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.remove(doomed);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);

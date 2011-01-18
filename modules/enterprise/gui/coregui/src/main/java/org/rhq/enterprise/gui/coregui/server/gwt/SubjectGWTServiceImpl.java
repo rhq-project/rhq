@@ -79,9 +79,9 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
-    public void logout(Subject subject) throws RuntimeException {
+    public void logout(int sessionId) throws RuntimeException {
         try {
-            subjectManager.logout(subject.getSessionId());
+            subjectManager.logout(sessionId);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

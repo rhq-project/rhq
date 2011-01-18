@@ -102,6 +102,10 @@ public class GWTServiceLookup {
         return secure(BundleGWTServiceAsync.Util.getInstance());
     }
 
+    public static BundleGWTServiceAsync getBundleService(int timeout) {
+        return secure(BundleGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
     public static ResourceBossGWTServiceAsync getResourceBossService() {
         return secure(ResourceBossGWTServiceAsync.Util.getInstance());
     }
@@ -198,8 +202,10 @@ public class GWTServiceLookup {
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
-                Log.debug("SessionRpcRequestBuilder is adding sessionId(" + sessionId + ") to request("
-                    + serviceEntryPoint + ")");
+                if (Log.isDebugEnabled()) {
+                    Log.debug("SessionRpcRequestBuilder is adding sessionId(" + sessionId + ") to request("
+                        + serviceEntryPoint + ")");
+                }
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
                 Log.error("SessionRpcRequestBuilder missing sessionId for request(" + serviceEntryPoint + ") ");

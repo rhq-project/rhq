@@ -18,12 +18,15 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.util.CriteriaUtils;
 
 /**
  * @author Jay Shaughnessy
@@ -35,6 +38,7 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private List<Integer> filterIds; // needs overrides
     private Integer filterBundleDeploymentId; // requires override   
     private String filterBundleDeploymentName; // requires override    
     private Integer filterResourceId; // requires override
@@ -46,6 +50,7 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     private boolean fetchHistories;
 
     public BundleResourceDeploymentCriteria() {
+        filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("bundleDeploymentId", "bundleDeployment.id = ?");
         filterOverrides.put("bundleDeploymentName", "bundleDeployment.name like ?");
         filterOverrides.put("resourceId", "resource.id = ?");
@@ -59,6 +64,10 @@ public class BundleResourceDeploymentCriteria extends Criteria {
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     public void addFilterBundleDeploymentId(Integer filterBundleDeploymentId) {

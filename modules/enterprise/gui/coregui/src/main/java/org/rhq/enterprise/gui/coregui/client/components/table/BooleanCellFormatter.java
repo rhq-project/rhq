@@ -21,7 +21,7 @@ public class BooleanCellFormatter implements CellFormatter {
         if (value == null) {
             imageUrl = ICON_URL_NULL;
         } else if (value instanceof Boolean) {
-            imageUrl = ((Boolean) value) ? ICON_URL_FALSE : ICON_URL_TRUE;
+            imageUrl = ((Boolean) value) ? ICON_URL_TRUE : ICON_URL_FALSE;
         } else {
             throw new IllegalArgumentException("value parameter is not a Boolean.");
         }

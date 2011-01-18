@@ -43,6 +43,8 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -51,9 +53,12 @@ import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
+import org.rhq.core.pluginapi.bundle.BundlePurgeRequest;
+import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.DeploymentsMetadata;
@@ -135,8 +140,13 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
+
+                String msg = new StringBuilder("Added files=").append(diffs.getAddedFiles().size()).append(
+                    "; Deleted files=").append(diffs.getDeletedFiles().size()).append(
+                    " (see attached details for more information)").toString();
+                String fullDetails = formatDiff(diffs);
                 bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", project.getName(),
-                    BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, diffs.toString(), null);
+                    BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, msg, fullDetails);
             } catch (Throwable t) {
                 if (log.isDebugEnabled()) {
                     try {
@@ -155,6 +165,38 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
         } catch (Throwable t) {
             log.error("Failed to deploy bundle [" + request + "]", t);
+            result.setErrorMessage(t);
+        }
+        return result;
+    }
+
+    // TODO: this is copied from FileTemplate bundle plugin - I think we want to be more smart here since
+    // we have more metadata about the live deployment to be purged in our .rhqdeployments (specifically about
+    // the external raw files that we should delete)
+    public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
+        BundlePurgeResult result = new BundlePurgeResult();
+        try {
+            BundleResourceDeployment deploymentToPurge = request.getLiveResourceDeployment();
+            BundleDeployment bundleDeployment = deploymentToPurge.getBundleDeployment();
+            File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+            String deployDirAbsolutePath = deployDir.getAbsolutePath();
+            BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+
+            // completely purge the deployment directory.
+            // TODO: if the receipe copied a file outside of the deployment directory, it will still exist. How do we remove those?
+            FileUtil.purge(deployDir, true);
+
+            if (!deployDir.exists()) {
+                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                    "The destination directory has been purged", Category.AUDIT_MESSAGE, Status.SUCCESS,
+                    "Directory purged: " + deployDirAbsolutePath, null);
+            } else {
+                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                    "The destination directory failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE,
+                    "The directory that failed to be purged: " + deployDirAbsolutePath, null);
+            }
+        } catch (Throwable t) {
+            log.error("Failed to purge bundle [" + request + "]", t);
             result.setErrorMessage(t);
         }
         return result;
@@ -207,5 +249,56 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             }
         }
         return antProps;
+    }
+
+    private String formatDiff(DeployDifferences diffs) {
+        String indent = "    ";
+        String nl = "\n";
+        StringBuilder str = new StringBuilder("DEPLOYMENT DETAILS:");
+        str.append(nl);
+
+        str.append("Added Files: ").append(diffs.getAddedFiles().size()).append(nl);
+        for (String f : diffs.getAddedFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Deleted Files: ").append(diffs.getDeletedFiles().size()).append(nl);
+        for (String f : diffs.getDeletedFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Changed Files: ").append(diffs.getChangedFiles().size()).append(nl);
+        for (String f : diffs.getChangedFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Backed Up Files: ").append(diffs.getBackedUpFiles().size()).append(nl);
+        for (Map.Entry<String, String> entry : diffs.getBackedUpFiles().entrySet()) {
+            str.append(indent).append(entry.getKey()).append(" -> ").append(entry.getValue()).append(nl);
+        }
+
+        str.append("Restored Files: ").append(diffs.getRestoredFiles().size()).append(nl);
+        for (Map.Entry<String, String> entry : diffs.getRestoredFiles().entrySet()) {
+            str.append(indent).append(entry.getKey()).append(" <- ").append(entry.getValue()).append(nl);
+        }
+
+        str.append("Ignored Files: ").append(diffs.getIgnoredFiles().size()).append(nl);
+        for (String f : diffs.getIgnoredFiles()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Realized Files: ").append(diffs.getRealizedFiles().size()).append(nl);
+        for (String f : diffs.getRealizedFiles().keySet()) {
+            str.append(indent).append(f).append(nl);
+        }
+
+        str.append("Was Cleaned?: ").append(diffs.wasCleaned()).append(nl);
+
+        str.append("Errors: ").append(diffs.getErrors().size()).append(nl);
+        for (Map.Entry<String, String> entry : diffs.getErrors().entrySet()) {
+            str.append(indent).append(entry.getKey()).append(" : ").append(entry.getValue()).append(nl);
+        }
+
+        return str.toString();
     }
 }

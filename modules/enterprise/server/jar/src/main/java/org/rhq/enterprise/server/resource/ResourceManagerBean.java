@@ -269,7 +269,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (resource.getParentResource() == null) {
             try {
                 // note, this needs to be done before the marking because the agent reference is going to be set to null
-                doomedAgent = agentManager.getAgentByResourceId(user, resourceId);
+                doomedAgent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
             } catch (Exception e) {
                 doomedAgent = null;
                 log.warn("This warning should occur in TEST code only! " + e);
@@ -403,7 +403,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         // one more thing, delete any autogroup backing groups
-        if (attachedResource!=null) {
+        if (attachedResource != null) {
             List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
             if (null != backingGroups && !backingGroups.isEmpty()) {
                 int size = backingGroups.size();
@@ -417,8 +417,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     if (log.isDebugEnabled()) {
                         log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
                     } else {
-                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds + ": "
-                            + t.getMessage());
+                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds
+                            + ": " + t.getMessage());
                     }
                 }
             }
@@ -2332,15 +2332,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds) {
-        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
-            .setParameter("resourceTypeIds", resourceTypeIds)
-            .getResultList();
+        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS).setParameter("resourceTypeIds",
+            resourceTypeIds).getResultList();
     }
 
     @Override
     public Integer getResourceCount(List<Integer> resourceTypeIds) {
-        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES)
-            .setParameter("resourceTypeIds", resourceTypeIds)
-            .getSingleResult();
+        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES).setParameter(
+            "resourceTypeIds", resourceTypeIds).getSingleResult();
     }
 }

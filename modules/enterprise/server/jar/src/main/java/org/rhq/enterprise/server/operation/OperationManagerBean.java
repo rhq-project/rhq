@@ -166,12 +166,15 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    public ResourceOperationSchedule scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule)
+    public int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule)
         throws ScheduleException {
         JobTrigger jobTrigger = schedule.getJobTrigger();
         Trigger trigger = convertToTrigger(jobTrigger);
         try {
-            return scheduleResourceOperation(subject, schedule.getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+            ResourceOperationSchedule resourceOperationSchedule = scheduleResourceOperation(subject,
+                    schedule.getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger,
+                    schedule.getDescription());
+            return resourceOperationSchedule.getId();
         }
         catch (SchedulerException e) {
             throw new ScheduleException(e);
@@ -200,6 +203,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
         jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID, resource.getId());
+        jobDataMap.put("description", notes);
 
         JobDetail jobDetail = new JobDetail();
         jobDetail.setName(uniqueJobId);
@@ -445,7 +449,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         String jobName = jobDetail.getName();
         String jobGroup = jobDetail.getGroup();
-        String description = jobDetail.getDescription();
+        String description = jobDataMap.getString("description");
         String operationName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME);
         String displayName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
         int subjectId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID);
@@ -481,6 +485,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Trigger trigger = getTriggerOfJob(jobDetail);
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
+        sched.setNextFireTime(trigger.getNextFireTime());
 
         return sched;
     }

@@ -38,12 +38,16 @@ import java.util.Stack;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -366,8 +370,31 @@ public class StandaloneContainer {
      * @throws Exception if anything goes wrong
      */
     private void invokeOps(String[] tokens) throws Exception {
-        if (resourceId == 0)
+        if (resourceId == 0) {
+            System.err.println("No resource selected");
             return;
+        }
+
+        String operation = tokens[1];
+        if (operation.equals("-list")) {
+            ResourceType rt = getTypeForResourceId();
+            Set<OperationDefinition> opDefs = rt.getOperationDefinitions();
+            for (OperationDefinition def :opDefs) {
+                System.out.println(def.getName() + " : " + def.getDescription());
+                ConfigurationDefinition params = def.getParametersConfigurationDefinition();
+                if (params!=null && params.getPropertyDefinitions()!=null && !params.getPropertyDefinitions().isEmpty()) {
+                    System.out.println("  Parameters:");
+                    for (Map.Entry<String,PropertyDefinition> param : params.getPropertyDefinitions().entrySet()) {
+                        System.out.println("    " + param.getKey()); // TODO add more info
+                    }
+                }
+            }
+            if (opDefs.isEmpty()) {
+                System.out.println("Resource has no operations");
+            }
+            return;
+        }
+
 
         OperationManager opMan = pc.getOperationManager();
         OperationServices operationServices = new OperationServicesAdapter(opMan);
@@ -385,12 +412,18 @@ public class StandaloneContainer {
             System.err.println("Operation timed out ");
         } else {
             Configuration result = res.getComplexResults();
-            if (res == null)
+            if (result == null)
                 System.out.println("Operation did not return a result");
             else
                 System.out.println(result.getProperties());
         }
 
+    }
+
+    private ResourceType getTypeForResourceId() {
+        ResourceContainer rc = inventoryManager.getResourceContainer(resourceId);
+        Resource res = rc.getResource();
+        return res.getResourceType();
     }
 
     /**
@@ -561,6 +594,11 @@ public class StandaloneContainer {
             } catch (NumberFormatException nfe) {
                 System.err.println("Sorry, but [" + arg + "] is no valid number");
             }
+            ResourceContainer rc = inventoryManager.getResourceContainer(resourceId);
+            if (rc==null) {
+                System.err.println("No resource with that id exists");
+                resourceId=0;
+            }
         } else
             System.err.println("Bad command " + tokens[1]);
 
@@ -612,6 +650,26 @@ public class StandaloneContainer {
             return;
         }
 
+        MeasurementManager mm = pc.getMeasurementManager();
+
+        if (tokens[1].equals("-list")) {
+            ResourceType rt = getTypeForResourceId();
+            Set<MeasurementDefinition> defs = rt.getMetricDefinitions();
+            if (defs==null || defs.isEmpty()) {
+                System.out.println("Resource has no metrics");
+                return;
+            }
+            for (MeasurementDefinition def : defs) {
+                System.out.println(def.getName() + " : " + def.getDataType() + ", " + def.getDescription());
+            }
+            return;
+        }
+
+        if (tokens.length<3) {
+            System.err.println("measure needs at least two parameters");
+            return;
+        }
+
         DataType dataType = getDataType(tokens[1]);
         if (dataType == null) {
             System.err.println("Unknown DataType " + tokens[1]);
@@ -626,7 +684,6 @@ public class StandaloneContainer {
             requests.add(new MeasurementDataRequest(metric, dataType));
         }
 
-        MeasurementManager mm = pc.getMeasurementManager();
         Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, requests);
         if (dataset == null) {
             System.err.println("No data returned");
@@ -716,8 +773,8 @@ public class StandaloneContainer {
         FIND("find", "r | t  | rt <name>", 2,
             "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
                 + " Will set $r for the last resource shown."), HELP("h", "", 0, "Shows this help"), //
-        INVOKE("i", "operation [params]", 1, "Triggers running an operation"), //
-        MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //
+        INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations"), //
+        MEASURE("m", "datatype property+", 1, "Triggers getting metric values. All need to be of the same data type. If datatype is '-list' it shows the defined metrics"), //
         NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
         QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovered resources"), //

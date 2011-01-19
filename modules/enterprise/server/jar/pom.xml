@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
@@ -410,18 +410,11 @@
       </dependency>
 
        <dependency>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>test-utils</artifactId>
-          <version>${project.version}</version>
-          <scope>test</scope>
-       </dependency>
-
-       <dependency>
            <groupId>net.sf.opencsv</groupId>
            <artifactId>opencsv</artifactId>
            <version>1.8</version>
            <scope>test</scope>
-       </dependency>       
+       </dependency>
 
        <dependency>
        	<groupId>org.rhq.helpers</groupId>
@@ -753,12 +746,12 @@ Build-OS-Version=${os.version}
         <build>
          <plugins>
            <plugin>
-              <artifactId>maven-antrun-plugin</artifactId>          
+              <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>                 
+                 <version>1.9.4.1</version>
                </dependency>
              </dependencies>
              <executions>

@@ -43,6 +43,8 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
         log.debug("Updating bundle type and package types for " + existingType);
 
+        existingType = entityMgr.find(ResourceType.class, existingType.getId());
+
         // set the bundle type if one is defined
         BundleType newBundleType = newType.getBundleType();
         if (newBundleType != null) {
@@ -56,6 +58,10 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
                 log.debug("Updating bundle type to " + newBundleType);
             }
             existingType.setBundleType(newBundleType);
+
+            // If bundleType is not null then this in a bundle plugin and we do not need to do any further
+            // processing because a bundle plugin cannot define any other content.
+            return;
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Removing bundle type");

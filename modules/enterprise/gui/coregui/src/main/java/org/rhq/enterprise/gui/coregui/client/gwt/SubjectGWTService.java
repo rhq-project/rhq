@@ -84,9 +84,9 @@ public interface SubjectGWTService extends RemoteService {
     /**
      * Logs out a user.
      *
-     * @param subject The username for the current user
+     * @param sessionId The sessionId for the subject
      */
-    void logout(Subject subject) throws RuntimeException;
+    void logout(int sessionId) throws RuntimeException;
 
     /**
      * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles, but it will save

@@ -25,14 +25,17 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.List;
 
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ContentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -44,7 +47,8 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
-    //private ContentUIManagerLocal contentUiManager = LookupUtil.getContentUIManager();
+    //TODO: spinder. should the become it's own GWTService?
+    private ContentUIManagerLocal contentUiManager = LookupUtil.getContentUIManager();
 
     public void deletePackageVersion(int packageVersionId) throws RuntimeException {
         try {
@@ -64,15 +68,16 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         }
     }
 
-    //    public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count) throws RuntimeException {
-    //        try {
-    //            PageControl pc = new PageControl(0, count);
-    //            return SerialUtility.prepare(contentUiManager.getInstalledPackageHistoryForResource(resourceId, pc),
-    //                "ContentService.getInstalledPackageHistoryForResource");
-    //        } catch (Throwable t) {
-    //            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
-    //        }
-    //    }
+    public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
+        throws RuntimeException {
+        try {
+            PageControl pc = new PageControl(0, count);
+            return SerialUtility.prepare(contentUiManager.getInstalledPackageHistoryForResource(resourceId, pc),
+                "ContentService.getInstalledPackageHistoryForResource");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
 
     public List<Architecture> getArchitectures() throws RuntimeException {
         try {

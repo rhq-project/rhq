@@ -33,6 +33,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -159,7 +160,9 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     private void updateDashboards(List<Dashboard> dashboards) {
-        removeMembers(getMembers());
+        Canvas[] members = getMembers();
+        removeMembers(members);
+
         this.dashboardsByName = new HashMap<String, Dashboard>(dashboards.size());
         for (Dashboard dashboard : dashboards) {
             this.dashboardsByName.put(dashboard.getName(), dashboard);

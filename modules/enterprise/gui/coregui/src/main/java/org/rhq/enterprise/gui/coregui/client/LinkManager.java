@@ -156,7 +156,7 @@ public class LinkManager {
 
     public static String getDashboardLink() {
         if (GWT) {
-            return "#Dashboard";
+            return "#Dashboards";
         } else {
             return "/Dashboard.do";
         }

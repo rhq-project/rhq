@@ -27,6 +27,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -40,6 +41,8 @@ public interface ContentGWTService extends RemoteService {
     void deletePackageVersion(int packageVersionId) throws RuntimeException;
 
     PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) throws RuntimeException;
+
+    PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count);
 
     List<Architecture> getArchitectures() throws RuntimeException;
 

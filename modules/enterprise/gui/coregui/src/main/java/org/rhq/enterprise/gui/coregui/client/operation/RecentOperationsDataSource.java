@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -107,18 +108,18 @@ public class RecentOperationsDataSource extends
      * @param response outgoing response
      */
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        int pageSize = -1;
+        PageControl pageControl = new PageControl();
         //retrieve current portlet display settings
         if ((this.portlet != null) && (this.portlet instanceof OperationsPortlet)) {
             OperationsPortlet operationsPortlet = (OperationsPortlet) this.portlet;
             //populate criteria with portlet preferences defined.
             if (operationsPortlet != null) {
                 if (isOperationsRangeCompletedEnabled()) {
-                    pageSize = getOperationsRangeCompleted();
+                    pageControl.setPageSize(getOperationsRangeCompleted());
                     operationsPortlet.getCompletedOperationsGrid().setEmptyMessage(
                         OperationsPortlet.RANGE_DISABLED_MESSAGE_DEFAULT);
                 } else {//show the component, return no results and indicate that you've disabled this display
-                    pageSize = 0;
+                    pageControl.setPageSize(0);
                     operationsPortlet.getCompletedOperationsGrid().setEmptyMessage(
                         OperationsPortlet.RANGE_DISABLED_MESSAGE);
                     response.setData(null);
@@ -130,7 +131,9 @@ public class RecentOperationsDataSource extends
             }
         }
 
-        GWTServiceLookup.getOperationService().findRecentCompletedOperations(pageSize,
+        int resourceId = -1;
+
+        GWTServiceLookup.getOperationService().findRecentCompletedOperations(resourceId, pageControl,
             new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
 
                 public void onFailure(Throwable throwable) {

@@ -1,5 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 
@@ -28,6 +30,13 @@ public class NamedTab extends LocatableTab {
 
     public String getTitle() {
         return viewName.getTitle();
+    }
+
+    protected void destroy() {
+        Canvas pane = getPane();
+        if (null != pane) {
+            pane.destroy();
+        }
     }
 
 }

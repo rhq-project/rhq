@@ -29,6 +29,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 
@@ -69,6 +70,8 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     @Override
     protected void configureTable() {
+        super.configureTable();
+
         Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
@@ -91,23 +94,22 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
             }
         });
 
-        super.configureTable();
+        DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+        if ((null != storedPortlet && null != storedPortlet.getConfiguration())) {
+
+            PropertySimple tablePrefs = storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS);
+            ListGrid listGrid = getListGrid();
+            if (null != tablePrefs && null != listGrid) {
+                String state = tablePrefs.getStringValue();
+                listGrid.setViewState(state);
+            }
+        }
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
         }
-
-        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
-            return;
-        }
-
-        if (storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS) != null) {
-            String state = storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS).getStringValue();
-            getListGrid().setViewState(state);
-        }
-
     }
 
     public Canvas getHelpCanvas() {

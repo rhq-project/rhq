@@ -23,6 +23,7 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,6 +47,7 @@ import org.hibernate.annotations.NamedQuery;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProductVersion;
+import org.rhq.core.util.OSGiVersionComparator;
 
 /**
  * Represents a specific version of a {@link Package}. This does <i>not</i> represent an installed package found
@@ -275,6 +277,51 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
     public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
+    
+    /**
+     * This is a default {@link Comparator} implementation for package versions.
+     * If the package versions being compared both have non-null {@link PackageVersion#getVersion() versions}
+     * an {@link OSGiVersionComparator} is used to compare them. If it fails or if one of the versions
+     * is null the package versions are compared by {@link PackageVersion#getFileCreatedDate() file created date}.
+     * If the creation date is not specified for one of the package versions, they proclaimed equal.
+     * <p>
+     * Note that this comparator is *INCONSISTENT* with <code>equals()</code> and therefore care should be taken
+     * when using it with sets and maps (read this {@link Comparator documentation}).
+     *
+     * @author Lukas Krejci
+     */
+    public static class DefaultPackageVersionComparator implements Comparator<PackageVersion>, Serializable {
+        private static final long serialVersionUID = 1L;
+
+        public int compare(PackageVersion p1, PackageVersion p2) {
+            String v1 = p1.getVersion();
+            String v2 = p2.getVersion();
+            
+            OSGiVersionComparator c = new OSGiVersionComparator();
+            
+            if (v1 != null && v2 != null) {
+                try {
+                    return c.compare(v1, v2);
+                } catch (IllegalArgumentException e) {
+                    //well, this can happen.. not all packages have OSGi type versions.
+                }
+            }
+                       
+            if (p1.getFileCreatedDate() != null && p2.getFileCreatedDate() != null) {
+                return p1.getFileCreatedDate().compareTo(p2.getFileCreatedDate());
+            }
+            
+            //hmm... there's actually nothing we can sort these two by..
+            //pronounce them equal
+            return 0;
+        }
+    };
+    
+    /**
+     * @see DefaultPackageVersionComparator
+     */
+    public static final DefaultPackageVersionComparator DEFAULT_COMPARATOR = new DefaultPackageVersionComparator();
+    
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)

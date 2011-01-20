@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.content;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -633,4 +634,19 @@ public interface ContentSourceManagerLocal {
      *                                the given object are not valid
      */
     ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
+    
+    /**
+     * Returns the latest package version of the supplied package as deemed by the supplied comparator.
+     * The supplied comparator is taken as an override to the default one to use.
+     * The default comparator is determined using the following algorithm:
+     * <ol>
+     * <li>Find the first content provider defining the package that defines a non-null comparator and return that
+     * <li>If no content provider provides explicit comparator, use {@link PackageVersion#DEFAULT_COMPARATOR}
+     * </ol>
+     * 
+     * @param packageId the id of the package to find the latest version for.
+     * @param versionComparator if left null, the comparator to use is determined by the rules above
+     * @return
+     */
+    PackageVersion getLatestPackageVersion(int packageId, Comparator<PackageVersion> versionComparator);    
 } 

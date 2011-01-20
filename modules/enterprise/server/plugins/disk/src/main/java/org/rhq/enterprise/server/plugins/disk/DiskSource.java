@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.ContentFileInfoFactory;
@@ -164,6 +166,20 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         return new FileInputStream(new File(getRootDirectory(), location));
     }
 
+    /**
+     * The disk source doesn't have a meaningful version strings, so this
+     * implementation compares strictly by {@link PackageVersion#getFileCreatedDate() file creation date}.
+     * 
+     * @return a comparator comparing two package versions coming from DiskSource by their file-created-date.
+     */
+    public Comparator<PackageVersion> getPackageVersionComparator() {
+        return new Comparator<PackageVersion>() {
+            public int compare(PackageVersion o1, PackageVersion o2) {
+                return o1.getFileCreatedDate().compareTo(o2.getFileCreatedDate());
+            }
+        };
+    }
+    
     protected File getRootDirectory() {
         return this.rootDirectory;
     }

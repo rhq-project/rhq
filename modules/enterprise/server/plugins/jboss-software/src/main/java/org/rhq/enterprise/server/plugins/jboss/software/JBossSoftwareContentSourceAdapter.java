@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Comparator;
 
 import churchillobjects.rss4j.RssDocument;
 import churchillobjects.rss4j.parser.RssParser;
@@ -38,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
@@ -163,6 +165,13 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         return stream;
     }
 
+    /**
+     * @return null so that the {@link PackageVersion#DEFAULT_COMPARATOR} is used because it is well suited for the CSP packages.
+     */
+    public Comparator<PackageVersion> getPackageVersionComparator() {
+        return null;
+    }
+    
     public RepoImportReport importRepos() throws Exception {
         RepoDetails repo = new RepoDetails("JBoss Patches");
 

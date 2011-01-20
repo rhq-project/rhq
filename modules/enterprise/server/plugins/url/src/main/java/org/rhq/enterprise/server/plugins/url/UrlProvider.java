@@ -25,6 +25,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
@@ -209,6 +211,14 @@ public class UrlProvider implements ContentProvider, PackageSource {
         return;
     }
 
+    /**
+     * This uses the default comparator.
+     * @return null so that the {@link PackageVersion#DEFAULT_COMPARATOR} is used.
+     */
+    public Comparator<PackageVersion> getPackageVersionComparator() {
+        return null;
+    }
+    
     public void testConnection() throws Exception {
         // to test, just make sure we can read the index file;
         // errors will caused exceptions to be thrown.

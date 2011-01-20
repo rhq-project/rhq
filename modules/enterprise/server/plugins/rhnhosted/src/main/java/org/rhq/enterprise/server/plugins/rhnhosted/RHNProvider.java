@@ -28,6 +28,7 @@ import java.net.URL;
 import java.security.KeyException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -36,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySource;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
@@ -224,6 +226,13 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         }
     }
 
+    /**
+     * @return null so that the {@link PackageVersion#DEFAULT_COMPARATOR} is used because it is well suited for the RHN packages.
+     */
+    public Comparator<PackageVersion> getPackageVersionComparator() {
+        return null;
+    }
+    
     /**
      * @inheritDoc
      */

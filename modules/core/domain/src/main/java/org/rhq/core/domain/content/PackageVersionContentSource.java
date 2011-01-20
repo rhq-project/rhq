@@ -43,6 +43,8 @@ import javax.persistence.Table;
 @NamedQueries( {
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_NO_FETCH, query = "SELECT pvcs "
         + "  FROM PackageVersionContentSource pvcs " + " WHERE pvcs.contentSource.id = :id "),
+    @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_PACKAGE_VERSION_ID_NO_FETCH, query = "SELECT pvcs "
+        + "  FROM PackageVersionContentSource pvcs WHERE pvcs.packageVersion.id = :id"),
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT pvcs "
         + "  FROM PackageVersionContentSource pvcs " //
         + "       LEFT JOIN FETCH pvcs.packageVersion pv " //
@@ -113,7 +115,8 @@ public class PackageVersionContentSource implements Serializable {
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_NOT_LOADED_COUNT = "PackageVersionContentSource.findByCSIdAndNotLoadedCount";
     public static final String QUERY_FIND_BY_PKG_VER_ID_AND_RES_ID = "PackageVersionContentSource.findByPkgVerIdAndResId";
     public static final String DELETE_BY_CONTENT_SOURCE_ID = "PackageVersionContentSource.deleteByContentSourceId";
-
+    public static final String QUERY_FIND_BY_PACKAGE_VERSION_ID_NO_FETCH = "PackageVersionContentSource.findByPackageVersionIdNoFetch";
+    
     private static final long serialVersionUID = 1L;
 
     /*

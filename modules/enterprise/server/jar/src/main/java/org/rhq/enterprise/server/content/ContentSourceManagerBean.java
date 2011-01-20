@@ -33,6 +33,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +119,7 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -947,6 +950,51 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return packageBits;
     }
 
+    public PackageVersion getLatestPackageVersion(int packageId, Comparator<PackageVersion> versionComparator) {
+        if (versionComparator == null) {
+            Query pvcsQ = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_PACKAGE_VERSION_ID_NO_FETCH);
+            
+            @SuppressWarnings("unchecked")
+            List<PackageVersionContentSource> pvcss = (List<PackageVersionContentSource>) pvcsQ.getResultList();
+            
+            try {
+                ContentProviderManager manager = ContentManagerHelper.getPluginContainer().getAdapterManager();
+                for(PackageVersionContentSource pvcs : pvcss) {
+                    ContentProvider provider = manager.getIsolatedContentProvider(pvcs.getPackageVersionContentSourcePK().getContentSource().getId());
+                    
+                    if (provider instanceof PackageSource) {
+                        versionComparator = ((PackageSource)provider).getPackageVersionComparator();
+                        
+                        if (versionComparator != null) {
+                            //ok, we found one non-default, let's go with that.
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Searching package sources for a version comparator failed. Will use the default comparator.", e);
+            }
+            
+            if (versionComparator == null) {
+                versionComparator = PackageVersion.DEFAULT_COMPARATOR;
+            }
+        }
+        
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_ID);
+        
+        @SuppressWarnings("unchecked")
+        List<PackageVersion> results = (List<PackageVersion>) q.getResultList();
+        
+        if (results.size() > 0) {
+            Comparator<PackageVersion> descending = Collections.reverseOrder(versionComparator);
+            Collections.sort(results, descending);
+        
+            return results.get(0);
+        }
+        
+        return null;
+    }
+    
     /**
      * This creates a new PackageBits entity initialized to EMPTY_BLOB for the associated PackageBitsBlob.
      * Note that PackageBits and PackageBitsBlob are two entities that *share* the same db row.  This is

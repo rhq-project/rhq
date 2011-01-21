@@ -513,12 +513,11 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         //            });
     }
 
+    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
+     *  oob change details.
+     */
     private void getRecentOobs() {
         final int resourceId = this.resourceComposite.getResource().getId();
-        AlertCriteria criteria = new AlertCriteria();
-        criteria.addFilterResourceIds(resourceId);
-        PageControl pageControl = new PageControl(0, 5);
-        criteria.setPageControl(pageControl);
         GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId, 5,
             new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                 @Override
@@ -535,32 +534,25 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                         for (MeasurementOOBComposite oob : result) {
                             LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent
                                 .extendLocatorId("ContentForm"));
-                            row.setNumCols(3);
+                            row.setNumCols(2);
 
-                            //                            StaticTextItem iconItem = new StaticTextItem();
-                            //                            FormItemIcon img = new FormItemIcon();
-                            //                            img.setSrc(ImageManager.getAlertIcon(alert.getAlertDefinition().getPriority()));
-                            //                            img.setWidth(16);
-                            //                            img.setHeight(16);
-                            //                            iconItem.setIcons(img);
-                            //                            iconItem.setShowTitle(false);
-                            //
-                            //                            LinkItem link = new LinkItem();
-                            //                            link.setLinkTitle(alert.getAlertDefinition().getName());
-                            //                            link.setTitle(alert.getAlertDefinition().getName());
-                            //                            link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/Definitions/"
-                            //                                + alert.getAlertDefinition().getId());
-                            //                            link.setTarget("_self");
-                            //                            link.setShowTitle(false);
-                            //
-                            //                            StaticTextItem time = new StaticTextItem();
-                            //                            time.setDefaultValue(new Date(alert.getAlertDefinition().getCtime()).toString());
-                            //                            time.setShowTitle(false);
-                            //                            time.setShowPickerIcon(false);
-                            //                            time.setWrap(false);
-                            //                            row.setItems(iconItem, link, time);
-                            //
-                            //                            column.addMember(row);
+                            LinkItem link = new LinkItem();
+                            link.setLinkTitle(oob.getScheduleName() + ":");
+                            link.setTitle(oob.getScheduleName() + ":");
+                            //TODO: change link after charting updated for gwt.
+                            link.setValue("/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId() + "&id="
+                                + resourceId + "&mode=chartSingleMetricSingleResource");
+                            link.setTarget("_self");
+                            link.setShowTitle(false);
+
+                            StaticTextItem time = new StaticTextItem();
+                            time.setDefaultValue(GwtRelativeDurationConverter.format(oob.getTimestamp()));
+                            time.setShowTitle(false);
+                            time.setShowPickerIcon(false);
+                            time.setWrap(false);
+                            row.setItems(link, time);
+
+                            column.addMember(row);
                         }
                     } else {
                         LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent

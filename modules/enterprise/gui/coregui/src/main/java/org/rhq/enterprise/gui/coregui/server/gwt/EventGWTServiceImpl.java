@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
@@ -77,14 +78,14 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
         }
     }
 
-    //    public Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate) {
-    //        try {
-    //            return SerialUtility.prepare(eventManager.getEventCountsBySeverity(getSessionSubject(), resourceId,
-    //                startDate, endDate), "EventService.getEventCountsBySeverity");
-    //        } catch (Exception e) {
-    //            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-    //        }
-    //    }
+    public Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate) {
+        try {
+            return SerialUtility.prepare(eventManager.getEventCountsBySeverity(getSessionSubject(), resourceId,
+                startDate, endDate), "EventService.getEventCountsBySeverity");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
 
     public PageList<Event> findEventsByCriteria(EventCriteria criteria) throws RuntimeException {
         try {

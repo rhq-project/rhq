@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -40,9 +42,9 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -57,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
@@ -173,7 +176,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         rightPane.addMember(recentEventsTitle);
         rightPane.addMember(recentEventsContent);
         recentEventsContent.setHeight(20);
-        recentEventsContent.setContents(RECENT_EVENTS_NONE);
+        //        recentEventsContent.setContents(RECENT_EVENTS_NONE);
         rightPane.addMember(divider5);
         //recentPackageHistory.xhtml
         LocatableHLayout recentPkgHistoryTitle = new TitleWithIcon(leftPane, "RecentPkgHistory",
@@ -444,73 +447,85 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
             });
     }
 
+    /** Fetches recent events and updates the DynamicForm instance with the latest
+     *  event information over last 24hrs.
+     */
     private void getRecentEventUpdates() {
+
         final int resourceId = this.resourceComposite.getResource().getId();
-        EventCriteria criteria = new EventCriteria();
-        //        criteria.addFilterResourceIds(resourceId);
         long now = System.currentTimeMillis();
         long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
 
-        criteria.addFilterResourceId(resourceId);
-        PageControl pageControl = PageControl.getUnlimitedInstance();
-        criteria.setPageControl(pageControl);
-        //Error retrieving recent event counts for resource [" + resourceId + "]:"
-        //        GWTServiceLookup.getEventService().getEventCountsBySeverity(resourceId, nowMinus24Hours, now,
-        //            new AsyncCallback<Map<EventSeverity, Integer>>() {
-        //                @Override
-        //                public void onFailure(Throwable caught) {
-        //                    Log.debug("Error retrieving recent event counts for resource [" + resourceId + "]:"
-        //                        + caught.getMessage());
-        //                }
-        //
-        //                @Override
-        //                public void onSuccess(Map<EventSeverity, Integer> result) {
-        //                    LocatableVLayout column = new LocatableVLayout(recentOperationsContent.extendLocatorId("Content"));
-        //                    column.setHeight(10);
-        //                    if (!result.isEmpty()) {
-        //                        for (Entry<EventSeverity, Integer> entry : result.entrySet()) {
-        //                            EventSeverity severity = entry.getKey();
-        //                            LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-        //                                .extendLocatorId("ContentForm"));
-        //                            row.setNumCols(2);
-        //
-        //                            StaticTextItem iconItem = new StaticTextItem();
-        //                            FormItemIcon img = new FormItemIcon();
-        //                            img.setSrc(ImageManager.getEventSeverityIcon(severity));
-        //                            //                        img.set
-        //                            img.setWidth(16);
-        //                            img.setHeight(16);
-        //                            iconItem.setIcons(img);
-        //                            iconItem.setShowTitle(false);
-        //
-        //                            StaticTextItem time = new StaticTextItem();
-        //                            time.setDefaultValue(entry.getValue());
-        //                            time.setShowTitle(false);
-        //                            time.setShowPickerIcon(false);
-        //                            time.setWrap(false);
-        //                            row.setItems(iconItem, time);
-        //
-        //                            column.addMember(row);
-        //                        }
-        //                    } else {
-        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-        //                            .extendLocatorId("ContentForm"));
-        //                        row.setNumCols(3);
-        //                        StaticTextItem none = new StaticTextItem();
-        //                        none.setShowTitle(false);
-        //                        none.setDefaultValue(RECENT_EVENTS_NONE);
-        //                        none.setWrap(false);
-        //                        row.setItems(none);
-        //                        column.addMember(row);
-        //                    }
-        //                    //cleanup
-        //                    for (Canvas child : recentEventsContent.getChildren()) {
-        //                        child.destroy();
-        //                    }
-        //                    recentEventsContent.addChild(column);
-        //                    recentEventsContent.markForRedraw();
-        //                }
-        //            });
+        GWTServiceLookup.getEventService().getEventCountsBySeverity(resourceId, nowMinus24Hours, now,
+            new AsyncCallback<Map<EventSeverity, Integer>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent event counts for resource [" + resourceId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(Map<EventSeverity, Integer> eventCounts) {
+                    //Now populated Tuples
+                    List<GwtTuple<EventSeverity, Integer>> results = new ArrayList<GwtTuple<EventSeverity, Integer>>();
+                    for (EventSeverity severity : eventCounts.keySet()) {
+                        int count = eventCounts.get(severity);
+                        if (count > 0) {
+                            results.add(new GwtTuple<EventSeverity, Integer>(severity, count));
+                        }
+                    }
+                    //build display
+                    LocatableVLayout column = new LocatableVLayout(recentEventsContent.extendLocatorId("Content"));
+                    column.setHeight(10);
+
+                    if (!results.isEmpty()) {
+                        for (GwtTuple<EventSeverity, Integer> tuple : results) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
+                                .extendLocatorId("ContentForm"));
+                            row.setNumCols(2);
+                            row.setWidth(10);//pack.
+
+                            //icon
+                            StaticTextItem iconItem = new StaticTextItem();
+                            FormItemIcon img = new FormItemIcon();
+                            img.setSrc(ImageManager.getEventSeverityIcon(tuple.getLefty()));
+                            img.setWidth(16);
+                            img.setHeight(16);
+                            img.setPrompt(tuple.getLefty().name());
+                            iconItem.setIcons(img);
+                            iconItem.setShowTitle(false);
+
+                            //count
+                            StaticTextItem count = new StaticTextItem();
+                            count.setDefaultValue(tuple.righty);
+                            count.setShowTitle(false);
+                            count.setShowPickerIcon(false);
+                            count.setWrap(false);
+                            row.setItems(iconItem, count);
+
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
+                            .extendLocatorId("ContentForm"));
+                        row.setNumCols(3);
+                        StaticTextItem none = new StaticTextItem();
+                        none.setShowTitle(false);
+                        none.setDefaultValue(RECENT_EVENTS_NONE);
+                        none.setWrap(false);
+                        row.setItems(none);
+                        column.addMember(row);
+                    }
+                    recentEventsContent.setContents("");
+                    //cleanup
+                    for (Canvas child : recentEventsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentEventsContent.addChild(column);
+                    recentEventsContent.markForRedraw();
+                }
+            });
     }
 
     /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5

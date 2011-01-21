@@ -113,6 +113,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         initializeUi();
     }
 
+    /**Defines layout for the Activity page.
+     */
     private void initializeUi() {
         setPadding(5);
         setMembersMargin(5);
@@ -190,6 +192,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         loadData();
     }
 
+    /**Initiates data request.
+     */
     private void loadData() {
         getRecentAlerts();
         getRecentOperations();

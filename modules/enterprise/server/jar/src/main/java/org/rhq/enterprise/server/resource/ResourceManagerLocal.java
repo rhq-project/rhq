@@ -218,7 +218,15 @@ public interface ResourceManagerLocal {
         String pluginName, Resource parentResource, String searchString, boolean attachParentResource,
         PageControl pageControl);
 
-    // TODO GH: This would be more useful if it used a groupby to return a map of categories to their size
+    /**
+     * Get a summary of counts, by category, of the user's viewable resources having the provided inventory status.  
+     * 
+     * @param user
+     * @param status
+     * @return A 3 element int array with counts for platform, service, service as a[0], a[1], a[2], respectively.
+     */
+    int[] getResourceCountSummary(Subject user, InventoryStatus status);
+
     int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status);
 
     int getResourceCountByTypeAndIds(Subject user, ResourceType type, int[] resourceIds);

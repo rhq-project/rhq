@@ -307,6 +307,17 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.resourceType.category = :category " //
         + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS, query = "" //
+        + "SELECT res.resourceType.category, count(*) " //
+        + "     FROM Resource res " //
+        + "    WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "      AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) " //
+        + " GROUP BY res.resourceType.category "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS_ADMIN, query = "" //
+        + "SELECT res.resourceType.category, count(*) " //
+        + "     FROM Resource res " //
+        + "    WHERE (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) " //
+        + " GROUP BY res.resourceType.category "),
 
     // Returns all platforms that is either of a given inventory status itself or
     // one of its top level servers have one of the inventory statuses (for auto-discovery queue).
@@ -347,12 +358,9 @@ import org.rhq.core.domain.util.Summary;
         + " WHERE res.resourceType = :type " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "   AND res.id IN ( :ids ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_IDS_BY_TYPE_IDS, query =
-          "SELECT r.id "
-        + "FROM Resource r "
+    @NamedQuery(name = Resource.QUERY_FIND_IDS_BY_TYPE_IDS, query = "SELECT r.id " + "FROM Resource r "
         + "WHERE r.resourceType.id IN (:resourceTypeIds)"),
-    @NamedQuery(name = Resource.QUERY_FIND_COUNT_BY_TYPES, query =
-          "SELECT COUNT(r) FROM Resource r WHERE r.resourceType.id IN (:resourceTypeIds)"),
+    @NamedQuery(name = Resource.QUERY_FIND_COUNT_BY_TYPES, query = "SELECT COUNT(r) FROM Resource r WHERE r.resourceType.id IN (:resourceTypeIds)"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
@@ -787,6 +795,9 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public static final String QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS = "Resource.findByCategoryAndInventoryStatus";
     public static final String QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN = "Resource.findByCategoryAndInventoryStatus_admin";
+
+    public static final String QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS = "Resource.findResourceSummaryByInventoryStatus";
+    public static final String QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS_ADMIN = "Resource.findResourceSummaryByInventoryStatus_admin";
 
     public static final String QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS = "Resource.findQueuedPlatformsByInventoryStatus";
 

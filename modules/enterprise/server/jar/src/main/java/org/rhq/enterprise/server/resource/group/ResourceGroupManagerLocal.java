@@ -67,7 +67,13 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;
 
-    int getResourceGroupCountByCategory(Subject subject, GroupCategory category);
+    /**
+     * Get a summary of counts, by category, of the user's assigned, visible groups.  
+     * 
+     * @param user
+     * @return A 2 element int array with counts for mixed, compatible as a[0], a[1] respectively.
+     */
+    int[] getResourceGroupCountSummary(Subject user);
 
     void enableRecursivityForGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupUpdateException;

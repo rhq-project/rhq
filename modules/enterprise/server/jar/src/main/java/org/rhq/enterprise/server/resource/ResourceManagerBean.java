@@ -1091,6 +1091,38 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @SuppressWarnings("unchecked")
+    public int[] getResourceCountSummary(Subject user, InventoryStatus status) {
+        Query query;
+        if (authorizationManager.isInventoryManager(user)) {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS_ADMIN);
+        } else {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS);
+            query.setParameter("subject", user);
+        }
+
+        query.setParameter("inventoryStatus", status);
+
+        int[] counts = new int[3];
+        List<Object[]> resultList = query.getResultList();
+
+        for (Object[] row : resultList) {
+            switch ((ResourceCategory) row[0]) {
+            case PLATFORM:
+                counts[0] = ((Long) row[1]).intValue();
+                break;
+            case SERVER:
+                counts[1] = ((Long) row[1]).intValue();
+                break;
+            case SERVICE:
+                counts[2] = ((Long) row[1]).intValue();
+                break;
+            }
+        }
+
+        return counts;
+    }
+
     public int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status) {
         Query queryCount;
         if (authorizationManager.isInventoryManager(user)) {
@@ -1211,6 +1243,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public List<AutoGroupComposite> findResourcesAutoGroups(Subject subject, int[] resourceIds) {
         List<AutoGroupComposite> results = new ArrayList<AutoGroupComposite>();
         List<Integer> ids = ArrayUtils.wrapInList(resourceIds);
@@ -2009,6 +2042,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             String resourceKey = (String) prefetched[i++];
 
             Integer parentId = (Integer) prefetched[i++];
+            @SuppressWarnings("unused")
             String parentName = (String) prefetched[i++];
 
             AvailabilityType availType = (AvailabilityType) prefetched[i++];

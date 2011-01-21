@@ -380,7 +380,7 @@ public class ImageManager {
                 icon = "_warning";
                 break;
             case ERROR:
-                icon = "_info";
+                icon = "_error";
                 break;
             case FATAL:
                 icon = "_fatal";

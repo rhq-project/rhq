@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -249,8 +248,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                 column.setHeight(10);
                 if (!result.isEmpty()) {
                     for (Alert alert : result) {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent
-                            .extendLocatorId("ContentForm"));
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
 
                         StaticTextItem iconItem = new StaticTextItem();
@@ -320,8 +318,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (DisambiguationReport<ResourceOperationLastCompletedComposite> report : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-                                .extendLocatorId("ContentForm"));
+                            LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = new StaticTextItem();
@@ -352,8 +349,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-                            .extendLocatorId("ContentForm"));
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
                         StaticTextItem none = new StaticTextItem();
                         none.setShowTitle(false);
@@ -376,10 +372,14 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
      */
     private void getRecentConfigurationUpdates() {
         final int resourceId = this.resourceComposite.getResource().getId();
+
+        //construct criteria( last five config updates for resourceId sorted by cTime)
         ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
         criteria.addFilterResourceIds(resourceId);
         PageControl pageControl = new PageControl(0, 5);
+        criteria.addSortCtime(PageOrdering.DESC);
         criteria.setPageControl(pageControl);
+
         GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
 
@@ -391,12 +391,12 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                 @Override
                 public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-                    LocatableVLayout column = new LocatableVLayout(recentOperationsContent.extendLocatorId("Content"));
+                    LocatableVLayout column = new LocatableVLayout(recentConfigurationContent
+                        .extendLocatorId("Content"));
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (ResourceConfigurationUpdate update : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
-                                .extendLocatorId("ContentForm"));
+                            LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = new StaticTextItem();
@@ -409,16 +409,16 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                             LinkItem link = new LinkItem();
                             link.setLinkTitle(MSG.view_resource_inventory_activity_changed_by() + " "
-                                + update.getSubjectName());
+                                + update.getSubjectName() + ":");
                             link.setTitle(MSG.view_resource_inventory_activity_changed_by() + " "
-                                + update.getSubjectName());
+                                + update.getSubjectName() + ":");
                             link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Configuration/History/"
                                 + update.getId());
                             link.setTarget("_self");
                             link.setShowTitle(false);
 
                             StaticTextItem time = new StaticTextItem();
-                            time.setDefaultValue(new Date(update.getCreatedTime()).toString());
+                            time.setDefaultValue(GwtRelativeDurationConverter.format(update.getCreatedTime()));
                             time.setShowTitle(false);
                             time.setShowPickerIcon(false);
                             time.setWrap(false);
@@ -427,8 +427,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
-                            .extendLocatorId("ContentForm"));
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
                         StaticTextItem none = new StaticTextItem();
                         none.setShowTitle(false);
@@ -481,8 +480,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                     if (!results.isEmpty()) {
                         for (GwtTuple<EventSeverity, Integer> tuple : results) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-                                .extendLocatorId("ContentForm"));
+                            LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                             row.setNumCols(2);
                             row.setWidth(10);//pack.
 
@@ -507,8 +505,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-                            .extendLocatorId("ContentForm"));
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
                         StaticTextItem none = new StaticTextItem();
                         none.setShowTitle(false);
@@ -547,8 +544,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (MeasurementOOBComposite oob : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent
-                                .extendLocatorId("ContentForm"));
+                            LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                             row.setNumCols(2);
 
                             LinkItem link = new LinkItem();
@@ -570,8 +566,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent
-                            .extendLocatorId("ContentForm"));
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
                         StaticTextItem none = new StaticTextItem();
                         none.setShowTitle(false);
@@ -613,8 +608,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (InstalledPackageHistory history : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-                                .extendLocatorId("ContentForm"));
+                            LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = new StaticTextItem();
@@ -645,8 +639,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-                            .extendLocatorId("ContentForm"));
+                        LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
                         row.setNumCols(3);
                         StaticTextItem none = new StaticTextItem();
                         none.setShowTitle(false);

@@ -408,10 +408,14 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             iconItem.setShowTitle(false);
 
                             LinkItem link = new LinkItem();
-                            link.setLinkTitle(MSG.view_resource_inventory_activity_changed_by() + " "
-                                + update.getSubjectName() + ":");
-                            link.setTitle(MSG.view_resource_inventory_activity_changed_by() + " "
-                                + update.getSubjectName() + ":");
+                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
+                                + update.getSubjectName() + ":";
+                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
+                                linkTitle = MSG.common_msg_changeAutoDetected();
+                                ;
+                            }
+                            link.setLinkTitle(linkTitle);
+                            link.setTitle(linkTitle);
                             link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Configuration/History/"
                                 + update.getId());
                             link.setTarget("_self");

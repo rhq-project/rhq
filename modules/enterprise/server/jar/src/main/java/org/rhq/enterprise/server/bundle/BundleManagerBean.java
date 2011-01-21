@@ -847,7 +847,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         // marks the live deployment "no longer live"
-        bundleManager._finalizePurge(subject, liveDeployment, failedToPurge);
+        bundleManager._finalizePurge(subjectManager.getOverlord(), liveDeployment, failedToPurge);
 
         // throw an exception if we failed to purge one or more resource deployments.
         // since we are not in a tx context, we lose nothing. All DB updates have already been committed by now

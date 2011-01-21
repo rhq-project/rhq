@@ -62,6 +62,7 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.DeploymentsMetadata;
+import org.rhq.core.util.updater.FileHashcodeMap;
 
 /**
  * @author John Mazzitelli
@@ -170,9 +171,6 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         return result;
     }
 
-    // TODO: this is copied from FileTemplate bundle plugin - I think we want to be more smart here since
-    // we have more metadata about the live deployment to be purged in our .rhqdeployments (specifically about
-    // the external raw files that we should delete)
     public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
         BundlePurgeResult result = new BundlePurgeResult();
         try {
@@ -182,8 +180,56 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             String deployDirAbsolutePath = deployDir.getAbsolutePath();
             BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
 
+            // If the receipe copied file(s) outside of the deployment directory (external, raw files), they will still exist.
+            // Let's get the metadata information that tells us if such files exist, and if so, remove them.
+            DeploymentsMetadata metadata = new DeploymentsMetadata(deployDir);
+            if (metadata.isManaged()) {
+                int totalExternalFiles = 0;
+                ArrayList<String> deleteSuccesses = new ArrayList<String>(0);
+                ArrayList<String> deleteFailures = new ArrayList<String>(0);
+                FileHashcodeMap fileHashcodes = metadata.getCurrentDeploymentFileHashcodes();
+                for (String filePath : fileHashcodes.keySet()) {
+                    File file = new File(filePath);
+                    if (file.isAbsolute()) {
+                        totalExternalFiles++;
+                        if (file.exists()) {
+                            if (file.delete()) {
+                                deleteSuccesses.add(filePath);
+                            } else {
+                                deleteFailures.add(filePath);
+                            }
+                        } else {
+                            deleteSuccesses.add(filePath); // someone already deleted it, consider it removed successfully
+                        }
+                    }
+                }
+                if (totalExternalFiles > 0) {
+                    if (!deleteSuccesses.isEmpty()) {
+                        StringBuilder deleteSuccessesDetails = new StringBuilder();
+                        for (String path : deleteSuccesses) {
+                            deleteSuccessesDetails.append(path).append("\n");
+                        }
+                        bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge", "External files were purged",
+                            Category.AUDIT_MESSAGE, Status.SUCCESS, "[" + deleteSuccesses.size() + "] of ["
+                                + totalExternalFiles
+                                + "] external files were purged. See attached details for the list",
+                            deleteSuccessesDetails.toString());
+                    }
+                    if (!deleteFailures.isEmpty()) {
+                        StringBuilder deleteFailuresDetails = new StringBuilder();
+                        for (String path : deleteFailures) {
+                            deleteFailuresDetails.append(path).append("\n");
+                        }
+                        bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                            "External files failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE, "["
+                                + deleteFailures.size() + "] of [" + totalExternalFiles
+                                + "] external files failed to be purged. See attached details for the list",
+                            deleteFailuresDetails.toString());
+                    }
+                }
+            }
+
             // completely purge the deployment directory.
-            // TODO: if the receipe copied a file outside of the deployment directory, it will still exist. How do we remove those?
             FileUtil.purge(deployDir, true);
 
             if (!deployDir.exists()) {

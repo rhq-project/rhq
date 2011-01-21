@@ -216,7 +216,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
                 // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
                 subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
                 if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subtabName));
+                    // due to our attempt to perform sticky tabbing we may request an invalid subtab when
+                    // switching resources. Just silently go to the default tab/subtab.
                     subtab = tab.getLayout().getDefaultSubTab();
                 }
                 tab.getLayout().selectSubTab(subtab);

@@ -603,6 +603,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                 @Override
                 public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
                     if (!results.isEmpty()) {
+                        boolean someChartedData = false;
                         //iterate over the retrieved charting data
                         for (int index = 0; index < displayOrder.length; index++) {
 
@@ -668,7 +669,12 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             //if graph content returned
                             if ((md.getName().trim().indexOf("Trait.") == -1) && (lastValue != -1)) {
                                 column.addMember(row);
+                                someChartedData = true;
                             }
+                        }
+                        if (!someChartedData) {// when there are results but no chartable entries.
+                            LocatableDynamicForm row = createEmptyDisplayRow(column, RECENT_MEASUREMENTS_NONE);
+                            column.addMember(row);
                         }
                         //call out to 3rd party javascript lib
                         graphSparkLines();

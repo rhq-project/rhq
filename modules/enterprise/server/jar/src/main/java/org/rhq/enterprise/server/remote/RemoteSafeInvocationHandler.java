@@ -37,7 +37,7 @@ import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.core.server.ExternalizableStrategy;
 import org.rhq.core.util.exception.WrappedRemotingException;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 
 /**
  * Handle remote invocations.  Note that we perform only invocations defined in the remote interfaces.

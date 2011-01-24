@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.util;
 
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

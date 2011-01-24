@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.util;
+package org.rhq.enterprise.server.safeinvoker;
 
 import java.util.Iterator;
 
@@ -25,6 +25,7 @@ import org.jboss.ws.core.server.ServiceEndpointInvokerEJB21;
 import org.jboss.wsf.spi.deployment.Deployment;
 import org.jboss.wsf.spi.deployment.DeploymentAspect;
 import org.jboss.wsf.spi.deployment.Endpoint;
+
 
 /**
  * This class installs the EJB3SafeEndpointInvoker into the deployment aspect for the endpoint.

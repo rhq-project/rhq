@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.util;
+package org.rhq.enterprise.server.safeinvoker;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

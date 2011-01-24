@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.util;
+package org.rhq.enterprise.server.safeinvoker;
 
 import java.lang.reflect.Method;
 
@@ -26,6 +26,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.ws.core.EndpointInvocation;
 import org.jboss.ws.core.server.ServiceEndpointInvoker;
 import org.jboss.wsf.spi.invocation.InvocationContext;
+
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 
 /**
  * This invoker will take an uninitialized relationships or references from EJB3 pojo's and null them out so that we can

@@ -35,7 +35,7 @@ import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
 import org.rhq.enterprise.communications.command.client.SendCallback;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 
 /**
  * Provides the mechanism by which you obtain remote interface proxies to a particular agent. Using those remote

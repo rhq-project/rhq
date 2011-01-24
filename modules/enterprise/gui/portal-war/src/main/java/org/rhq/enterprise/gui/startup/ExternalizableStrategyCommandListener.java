@@ -23,7 +23,7 @@ import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
 import org.rhq.enterprise.communications.command.server.CommandListener;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 
 /**
  * This is a listener for commands coming into the {@link ServiceContainer}'s {@link CommandPreprocessor} and will

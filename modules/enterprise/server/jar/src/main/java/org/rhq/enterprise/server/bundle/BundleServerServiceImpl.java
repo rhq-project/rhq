@@ -36,9 +36,9 @@ import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 
 /**
  * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards

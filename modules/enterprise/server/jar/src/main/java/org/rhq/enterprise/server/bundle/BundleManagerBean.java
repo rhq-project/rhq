@@ -808,6 +808,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         bvc.fetchBundle(true); // will eagerly fetch the bundle type
         PageList<BundleVersion> bvs = bundleManager.findBundleVersionsByCriteria(subject, bvc);
         liveDeployment.setBundleVersion(bvs.get(0)); // wire up the full bundle version back into the live deployment
+        // the bundle type doesn't eagerly load the resource type - the remote plugin container needs that too
+        ResourceTypeCriteria rtc = new ResourceTypeCriteria();
+        rtc.addFilterBundleTypeId(liveDeployment.getBundleVersion().getBundle().getBundleType().getId());
+        PageList<ResourceType> rts = resourceTypeManager.findResourceTypesByCriteria(subject, rtc);
+        liveDeployment.getBundleVersion().getBundle().getBundleType().setResourceType(rts.get(0));
 
         // we need to obtain the resources for all resource deployments - our first criteria can't fetch this deep, we have to do another query.
         List<Integer> resourceDeployIds = new ArrayList<Integer>();
@@ -831,6 +836,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Map<BundleResourceDeployment, String> failedToPurge = new HashMap<BundleResourceDeployment, String>();
         for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
             try {
+                // first put the user name that requested the purge in the audit trail
+                BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
+                    "Purge Requested", "User [" + subject.getName() + "] requested to purge this deployment", null,
+                    BundleResourceDeploymentHistory.Status.SUCCESS, null, null);
+                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeploy.getId(), history);
+
+                // get a connection to the agent and tell it to purge the bundle from the file system
                 Subject overlord = subjectManager.getOverlord();
                 AgentClient agentClient = agentManager.getAgentClient(overlord, resourceDeploy.getResource().getId());
                 BundleAgentService bundleAgentService = agentClient.getBundleAgentService();

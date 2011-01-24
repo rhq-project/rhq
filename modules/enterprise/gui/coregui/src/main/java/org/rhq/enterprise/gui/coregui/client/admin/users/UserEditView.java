@@ -146,11 +146,10 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             items.add(nameItem);
         }
 
-        RadioGroupItem isLdapItem = new RadioGroupItem(UsersDataSource.Field.LDAP);
-        isLdapItem.setVertical(false);
+        StaticTextItem isLdapItem = new StaticTextItem(UsersDataSource.Field.LDAP);
         items.add(isLdapItem);
 
-        boolean isLdap = Boolean.valueOf(isLdapItem.getValueAsString());
+        boolean isLdap = Boolean.valueOf(form.getValueAsString(UsersDataSource.Field.LDAP));
 
         // Only display the password fields for non-LDAP users (i.e. users that have an associated RHQ Principal).
         if (!isLdap) {

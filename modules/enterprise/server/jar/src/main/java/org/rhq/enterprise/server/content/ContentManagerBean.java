@@ -1301,7 +1301,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("packageTypeName", pv.getGeneralPackage().getPackageType().getName());
             q.setParameter("architectureName", pv.getArchitecture().getName());
             q.setParameter("version", pv.getVersion());
-            q.setParameter("resourceTypeId", pv.getGeneralPackage().getPackageType().getResourceType().getId());
+            
+            ResourceType rt = pv.getGeneralPackage().getPackageType().getResourceType();
+            q.setParameter("resourceTypeId", rt != null ? rt.getId() : null);
 
             List<PackageVersion> found = q.getResultList();
             if (error != null && found.size() == 0) {

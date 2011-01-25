@@ -112,7 +112,7 @@
         <column name="IS_CREATION_DATA" type="BOOLEAN" required="true"/>
         <column name="SUPPORTS_ARCHITECTURE" type="BOOLEAN" required="true"/>
 
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
         <column name="DEPLOYMENT_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
         <column name="PACKAGE_EXTRA_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
 

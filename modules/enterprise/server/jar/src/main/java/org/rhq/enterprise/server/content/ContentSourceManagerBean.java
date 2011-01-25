@@ -1616,26 +1616,29 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentProviderPackageDetailsKey key = newDetails.getContentProviderPackageDetailsKey();
 
             // find the new package's associated resource type (should already exist)
-            ResourceType rt = new ResourceType();
-            rt.setName(key.getResourceTypeName());
-            rt.setPlugin(key.getResourceTypePluginName());
+            ResourceType rt = null;
+            if (key.getResourceTypeName() != null && key.getResourceTypePluginName() != null) {
+                rt = new ResourceType();
+                rt.setName(key.getResourceTypeName());
+                rt.setPlugin(key.getResourceTypePluginName());
 
-            if (!knownResourceTypes.containsKey(rt)) {
-                q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
-                q.setParameter("name", rt.getName());
-                q.setParameter("plugin", rt.getPlugin());
+                if (!knownResourceTypes.containsKey(rt)) {
+                    q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
+                    q.setParameter("name", rt.getName());
+                    q.setParameter("plugin", rt.getPlugin());
 
-                try {
-                    rt = (ResourceType) q.getSingleResult();
-                    knownResourceTypes.put(rt, rt); // cache it so we don't have to keep querying the DB
-                    knownProductVersions.put(rt, new HashMap<String, ProductVersion>());
-                } catch (NoResultException nre) {
-                    log.warn("Content source adapter found a package for an unknown resource type ["
-                        + key.getResourceTypeName() + "|" + key.getResourceTypePluginName() + "] Skipping it.");
-                    continue; // skip this one but move on to the next
-                }
-            } else {
-                rt = knownResourceTypes.get(rt);
+                    try {
+                        rt = (ResourceType) q.getSingleResult();
+                        knownResourceTypes.put(rt, rt); // cache it so we don't have to keep querying the DB
+                        knownProductVersions.put(rt, new HashMap<String, ProductVersion>());
+                    } catch (NoResultException nre) {
+                        log.warn("Content source adapter found a package for an unknown resource type ["
+                            + key.getResourceTypeName() + "|" + key.getResourceTypePluginName() + "] Skipping it.");
+                        continue; // skip this one but move on to the next
+                    }
+                } else {
+                    rt = knownResourceTypes.get(rt);
+                }                
             }
 
             // find the new package's type (package types should already exist, agent plugin descriptors define them)
@@ -1643,7 +1646,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             if (!knownPackageTypes.containsKey(pt)) {
                 q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
-                q.setParameter("typeId", rt.getId());
+                q.setParameter("typeId", rt != null ? rt.getId() : null);
                 q.setParameter("name", pt.getName());
 
                 try {
@@ -1664,7 +1667,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE);
             q.setParameter("name", newDetails.getName());
             q.setParameter("packageTypeName", newDetails.getPackageTypeName());
-            q.setParameter("resourceTypeId", rt.getId());
+            q.setParameter("resourceTypeId", rt != null ? rt.getId() : null);
             Package pkg;
             try {
                 pkg = (Package) q.getSingleResult();
@@ -1753,7 +1756,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // For each resource version that is supported, make sure we have an entry for that in product version
             Set<String> resourceVersions = newDetails.getResourceVersions();
-            if (resourceVersions != null) {
+
+            // the check for null resource type shouldn't be necessary here because
+            // the package shouldn't declare any resource versions if it doesn't declare a resource type.
+            // Nevertheless, let's make that check just to prevent disasters caused by "malicious" content
+            // providers.                        
+            if (resourceVersions != null && rt != null) {
                 Map<String, ProductVersion> cachedProductVersions = knownProductVersions.get(rt); // we are guaranteed that this returns non-null
                 for (String version : resourceVersions) {
                     ProductVersion productVersion = cachedProductVersions.get(version);
@@ -1765,6 +1773,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     ProductVersionPackageVersion mapping = new ProductVersionPackageVersion(productVersion, pv);
                     entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
                 }
+            } else if (resourceVersions != null) {
+                log.info("Misbehaving content provider detected. It declares resource versions " + resourceVersions
+                    + " but no resource type in package " + newDetails + ".");
             }
 
             // now create the mapping between the package version and content source

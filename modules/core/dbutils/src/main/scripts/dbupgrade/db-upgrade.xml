@@ -3296,6 +3296,10 @@
                 </schema-directSQL>
             </schemaSpec>
 
+        	<schemaSpec version="2.103">
+        		<!-- package types no longer require to be coupled with a resource type. They can exist on their own. -->
+        		<schema-alterColumn table="RHQ_PACKAGE_TYPE" column="RESOURCE_TYPE_ID" nullable="true"/>        		        	
+        	</schemaSpec>
         </dbupgrade>
     </target>
 </project>

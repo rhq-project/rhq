@@ -129,7 +129,7 @@ public class PackageType implements Serializable {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "packageType", cascade = { CascadeType.REMOVE })
     private Set<Package> packages;
 
-    @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     @XmlTransient
     private ResourceType resourceType;
@@ -289,7 +289,8 @@ public class PackageType implements Serializable {
 
     /**
      * The resource type that defined this package type. Resources of this resource type can have packages of this
-     * package type installed on them.
+     * package type installed on them. This can be null if this package type only exists in support of some serverside-only
+     * functionality.
      */
     public ResourceType getResourceType() {
         return this.resourceType;

@@ -213,6 +213,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new PermissionException("You cannot disable the system user [" + subjectToModify.getName() + "].");
         }
 
+        Subject attachedSubject = getSubjectById(subjectToModify.getId());
+        if (attachedSubject == null) {
+            throw new IllegalArgumentException("No user exists with id [" + subjectToModify.getId() + "].");
+        }
+        if (!attachedSubject.getName().equals(subjectToModify.getName())) {
+            throw new IllegalArgumentException("You cannot change a user's username.");
+        }
+
         Set<Role> newRoles = subjectToModify.getRoles();
         if (newRoles != null) {
             Set<Role> currentRoles = new HashSet<Role>(roleManager.findRolesBySubject(subjectToModify.getId(),

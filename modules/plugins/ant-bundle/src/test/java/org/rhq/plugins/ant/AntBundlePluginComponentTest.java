@@ -199,6 +199,7 @@ public class AntBundlePluginComponentTest {
         assert deploymentProps.getDeploymentId() == deployment.getId();
         assert deploymentProps.getBundleName().equals(bundle.getName());
         assert deploymentProps.getBundleVersion().equals(bundleVersion.getVersion());
+        assert deploymentProps.getManageRootDir() == true;
 
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
@@ -300,6 +301,7 @@ public class AntBundlePluginComponentTest {
         assert deploymentProps.getDeploymentId() == deployment.getId();
         assert deploymentProps.getBundleName().equals(bundle.getName());
         assert deploymentProps.getBundleVersion().equals(bundleVersion.getVersion());
+        assert deploymentProps.getManageRootDir() == true;
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
         DeploymentProperties previousProps = metadata.getPreviousDeploymentProperties(deployment.getId());
@@ -471,6 +473,7 @@ public class AntBundlePluginComponentTest {
         assert deploymentProps.getDeploymentId() == deployment.getId();
         assert deploymentProps.getBundleName().equals(bundle.getName());
         assert deploymentProps.getBundleVersion().equals(bundleVersion.getVersion());
+        assert deploymentProps.getManageRootDir() == true;
 
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
@@ -488,6 +491,7 @@ public class AntBundlePluginComponentTest {
         assert previousProps.getDeploymentId() == 123 : "bad previous deployment metadata"; // testAntBundleInitialInstall used 123
         assert previousProps.getBundleName().equals(deploymentProps.getBundleName());
         assert previousProps.getBundleVersion().equals("2.5"); // testAntBundleInitialInstall deployed version 2.5
+        assert previousProps.getManageRootDir() == true;
     }
 
     private void assertResultsSuccess(BundleDeployResult results) {

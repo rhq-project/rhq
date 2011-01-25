@@ -74,9 +74,7 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
     protected void onDraw() {
         super.onDraw();
 
-        for (Canvas child : getMembers()) {
-            child.destroy();
-        }
+        destroyMembers();
 
         if (this.operationHistory != null) {
             displayDetails(operationHistory);
@@ -139,7 +137,8 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    final Window winModal = new LocatableWindow(ResourceOperationHistoryDetailsView.this.extendLocatorId("errorWin"));
+                    final Window winModal = new LocatableWindow(ResourceOperationHistoryDetailsView.this
+                        .extendLocatorId("errorWin"));
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
                     winModal.setShowMinimizeButton(false);
@@ -260,5 +259,5 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
         }
         return errMsg;
     }
-    
+
 }

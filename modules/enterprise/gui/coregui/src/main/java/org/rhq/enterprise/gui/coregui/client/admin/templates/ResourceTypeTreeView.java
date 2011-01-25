@@ -55,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
@@ -185,30 +186,21 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
      * @param canvasToShow the canvas to show in the parent
      */
     private void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
-        Canvas[] members = getMembers();
-        if (members != null) {
-            for (Canvas c : members) {
-                parentCanvas.removeMember(c);
-            }
-        }
+        SeleniumUtility.destroyMembers(parentCanvas);
+
         parentCanvas.addMember(canvasToShow);
         parentCanvas.markForRedraw();
     }
 
     private void prepareSubCanvas(Layout parentCanvas, Canvas canvasToShow, boolean showBackButton) {
-        Canvas[] members = getMembers();
-        if (members != null) {
-            for (Canvas c : members) {
-                parentCanvas.removeMember(c);
-                c.destroy();
-            }
-        }
+        SeleniumUtility.destroyMembers(parentCanvas);
 
         if (showBackButton) {
             String backLink = LinkManager.getAdminTemplatesLink().substring(1); // strip the #
             BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", backLink);
             parentCanvas.addMember(backButton);
         }
+
         parentCanvas.addMember(canvasToShow);
         parentCanvas.markForRedraw();
     }

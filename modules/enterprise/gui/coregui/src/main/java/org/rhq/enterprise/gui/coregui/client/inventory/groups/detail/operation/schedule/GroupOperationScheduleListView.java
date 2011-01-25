@@ -17,37 +17,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule;
 
 import com.smartgwt.client.widgets.Canvas;
-
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleListView;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 
 /**
  * @author Ian Springer
  */
-public class ResourceOperationScheduleListView extends OperationScheduleListView {
+public class GroupOperationScheduleListView extends OperationScheduleListView {
 
     private static final String TITLE = null;
 
-    private ResourceComposite resourceComposite;
+    private ResourceGroupComposite groupComposite;
 
-    public ResourceOperationScheduleListView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite), TITLE);
-        this.resourceComposite = resourceComposite;
+    public GroupOperationScheduleListView(String locatorId, ResourceGroupComposite groupComposite) {
+        super(locatorId, new GroupOperationScheduleDataSource(groupComposite), TITLE);
+        this.groupComposite = groupComposite;
     }
 
     @Override
     protected boolean hasControlPermission() {
-        return this.resourceComposite.getResourcePermission().isControl();
+        return this.groupComposite.getResourcePermission().isControl();
     }
 
     @Override
     public Canvas getDetailsView(int scheduleId) {
-        return new ResourceOperationScheduleDetailsView(extendLocatorId("DetailsView"),
-            this.resourceComposite, scheduleId);
+        return new GroupOperationScheduleDetailsView(extendLocatorId("DetailsView"),
+            this.groupComposite, scheduleId);
     }
 
 }

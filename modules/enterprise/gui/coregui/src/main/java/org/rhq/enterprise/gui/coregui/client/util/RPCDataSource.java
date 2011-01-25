@@ -36,14 +36,17 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.util.JSOHelper;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.hibernate.validator.RangeValidator;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -550,6 +553,23 @@ public abstract class RPCDataSource<T> extends DataSource {
         valueMap.put(Boolean.TRUE.toString(), MSG.common_val_yes_lower());
         valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());
         textField.setValueMap(valueMap);
+        return textField;
+    }
+
+    protected DataSourceIntegerField createIntegerField(String name, String title, Integer minValue, Integer maxValue,
+        Boolean required) {
+        DataSourceIntegerField textField = new DataSourceIntegerField(name, title);
+        textField.setRequired(required);
+        if (minValue != null || maxValue != null) {
+            IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
+            if (minValue != null) {
+                integerRangeValidator.setMin(minValue);
+            }
+            if (maxValue != null) {
+                integerRangeValidator.setMax(maxValue);
+            }
+            textField.setValidators(integerRangeValidator);
+        }
         return textField;
     }
 

@@ -1016,7 +1016,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Resource platform, boolean isCleanDeployment, boolean isRevert) throws Exception {
 
         int platformId = platform.getId();
-        AgentClient agentClient = agentManager.getAgentClient(subject, platformId);
+        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), platformId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
         // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try        

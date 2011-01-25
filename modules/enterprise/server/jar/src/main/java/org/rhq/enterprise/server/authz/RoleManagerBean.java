@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -155,13 +156,22 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         // Now we must merge subjects and resource groups, since those fields in Role do not have persist cascade
         // enabled.
+        int[] subjectIds = new int[newRole.getSubjects().size()];
+        int i = 0;
         for (Subject subject : newRole.getSubjects()) {
-            entityManager.merge(subject);
+            subjectIds[i++] = subject.getId();
         }
+        addSubjectsToRole(whoami, newRole.getId(), subjectIds);
 
         for (ResourceGroup resourceGroup : newRole.getResourceGroups()) {
             entityManager.merge(resourceGroup);
         }
+        int[] resourceGroupIds = new int[newRole.getResourceGroups().size()];
+        i = 0;
+        for (ResourceGroup resourceGroup : newRole.getResourceGroups()) {
+            resourceGroupIds[i++] = resourceGroup.getId();
+        }
+        addResourceGroupsToRole(whoami, newRole.getId(), resourceGroupIds);
 
         return newRole;
     }

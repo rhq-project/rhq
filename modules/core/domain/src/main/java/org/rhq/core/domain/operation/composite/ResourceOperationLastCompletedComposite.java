@@ -35,8 +35,8 @@ public class ResourceOperationLastCompletedComposite extends OperationLastComple
     //no args constructor. Not to be used. java bean/serialization requirement
     private ResourceOperationLastCompletedComposite() {
         super();
-        this.resourceTypeName = "(unitialized type)";
-        this.resourceName = "(unitialized)";
+        this.resourceTypeName = "(uninitialized type)";
+        this.resourceName = "(uninitialized)";
         this.resourceId = 0;
     }
 

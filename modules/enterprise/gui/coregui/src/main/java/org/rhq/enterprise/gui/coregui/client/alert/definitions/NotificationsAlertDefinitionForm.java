@@ -258,8 +258,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                     ListGrid listGrid = (ListGrid) event.getSource();
                     ListGridRecord[] selectedRows = listGrid.getSelection();
                     if (selectedRows != null && selectedRows.length == 1) {
-                        AlertNotification notif = (getDataSource())
-                            .copyValues(selectedRows[0]);
+                        AlertNotification notif = (getDataSource()).copyValues(selectedRows[0]);
                         popupNotificationEditor(notif);
                     }
                 }
@@ -306,7 +305,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             winModal.addCloseClickHandler(new CloseClickHandler() {
                 @Override
                 public void onCloseClick(CloseClientEvent event) {
-                    winModal.markForDestroy();
+                    winModal.destroy();
                 }
             });
 
@@ -314,7 +313,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 alertDefinition, notifications, notifToEdit, new Runnable() {
                     @Override
                     public void run() {
-                        winModal.markForDestroy();
+                        winModal.destroy();
                         table.refresh();
                     }
                 });

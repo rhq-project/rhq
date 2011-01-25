@@ -180,67 +180,118 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             String deployDirAbsolutePath = deployDir.getAbsolutePath();
             BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
 
+            boolean manageAllDeployDir = true;
+            boolean errorPurgingDeployDirContent = false;
+            File metadataDirectoryToPurge = null;
+
             // If the receipe copied file(s) outside of the deployment directory (external, raw files), they will still exist.
             // Let's get the metadata information that tells us if such files exist, and if so, remove them.
+            // Since we are iterating over the manage files anyway, let's also remove the files/subdirs under the deploy directory too.
             DeploymentsMetadata metadata = new DeploymentsMetadata(deployDir);
             if (metadata.isManaged()) {
+                metadataDirectoryToPurge = metadata.getMetadataDirectory();
+                manageAllDeployDir = metadata.getCurrentDeploymentProperties().getManageRootDir();
                 int totalExternalFiles = 0;
-                ArrayList<String> deleteSuccesses = new ArrayList<String>(0);
-                ArrayList<String> deleteFailures = new ArrayList<String>(0);
-                FileHashcodeMap fileHashcodes = metadata.getCurrentDeploymentFileHashcodes();
-                for (String filePath : fileHashcodes.keySet()) {
+                ArrayList<String> externalDeleteSuccesses = new ArrayList<String>(0);
+                ArrayList<String> externalDeleteFailures = new ArrayList<String>(0);
+                FileHashcodeMap deployDirFileHashcodes = metadata.getCurrentDeploymentFileHashcodes();
+                for (String filePath : deployDirFileHashcodes.keySet()) {
                     File file = new File(filePath);
                     if (file.isAbsolute()) {
                         totalExternalFiles++;
                         if (file.exists()) {
                             if (file.delete()) {
-                                deleteSuccesses.add(filePath);
+                                externalDeleteSuccesses.add(filePath);
                             } else {
-                                deleteFailures.add(filePath);
+                                externalDeleteFailures.add(filePath);
                             }
                         } else {
-                            deleteSuccesses.add(filePath); // someone already deleted it, consider it removed successfully
+                            externalDeleteSuccesses.add(filePath); // someone already deleted it, consider it removed successfully
+                        }
+                    } else {
+                        // a relative path means it is inside the deploy dir (i.e. its relative to deployDir).
+                        // note that we only remove child directories and files that are direct children of the deploy dir itself;
+                        // we do not purge the deploy dir itself, in case we are not managing the full deploy dir. 
+                        String parentDir = file.getParent();
+                        if (parentDir == null) {
+                            // this file is directly in the deploy dir
+                            file = new File(deployDir, filePath);
+                            file.delete();
+                        } else {
+                            // this file is under some subdirectory under the deploy dir - purge the subdirectory completely
+                            file = new File(deployDir, parentDir);
+                            FileUtil.purge(file, true);
+                        }
+                        if (file.exists()) {
+                            errorPurgingDeployDirContent = true;
                         }
                     }
                 }
                 if (totalExternalFiles > 0) {
-                    if (!deleteSuccesses.isEmpty()) {
+                    if (!externalDeleteSuccesses.isEmpty()) {
                         StringBuilder deleteSuccessesDetails = new StringBuilder();
-                        for (String path : deleteSuccesses) {
+                        for (String path : externalDeleteSuccesses) {
                             deleteSuccessesDetails.append(path).append("\n");
                         }
                         bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge", "External files were purged",
-                            Category.AUDIT_MESSAGE, Status.SUCCESS, "[" + deleteSuccesses.size() + "] of ["
+                            Category.AUDIT_MESSAGE, Status.SUCCESS, "[" + externalDeleteSuccesses.size() + "] of ["
                                 + totalExternalFiles
                                 + "] external files were purged. See attached details for the list",
                             deleteSuccessesDetails.toString());
                     }
-                    if (!deleteFailures.isEmpty()) {
+                    if (!externalDeleteFailures.isEmpty()) {
                         StringBuilder deleteFailuresDetails = new StringBuilder();
-                        for (String path : deleteFailures) {
+                        for (String path : externalDeleteFailures) {
                             deleteFailuresDetails.append(path).append("\n");
                         }
                         bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
                             "External files failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE, "["
-                                + deleteFailures.size() + "] of [" + totalExternalFiles
+                                + externalDeleteFailures.size() + "] of [" + totalExternalFiles
                                 + "] external files failed to be purged. See attached details for the list",
                             deleteFailuresDetails.toString());
                     }
                 }
             }
 
-            // completely purge the deployment directory.
-            FileUtil.purge(deployDir, true);
-
-            if (!deployDir.exists()) {
-                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
-                    "The destination directory has been purged", Category.AUDIT_MESSAGE, Status.SUCCESS,
-                    "Directory purged: " + deployDirAbsolutePath, null);
+            // if we are managing the full deploy dir, completely purge the deployment directory.
+            // otherwise, just report that we deleted what we were responsible for.
+            if (manageAllDeployDir) {
+                FileUtil.purge(deployDir, true);
+                if (!deployDir.exists()) {
+                    bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                        "The destination directory has been purged", Category.AUDIT_MESSAGE, Status.SUCCESS,
+                        "Directory purged: " + deployDirAbsolutePath, null);
+                } else {
+                    bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                        "The destination directory failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE,
+                        "The directory that failed to be purged: " + deployDirAbsolutePath, null);
+                }
             } else {
-                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
-                    "The destination directory failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE,
-                    "The directory that failed to be purged: " + deployDirAbsolutePath, null);
+                if (!errorPurgingDeployDirContent) {
+                    bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                        "The managed bundle content was removed from the destination directory; "
+                            + "other unmanaged content may still remain", Category.AUDIT_MESSAGE, Status.SUCCESS,
+                        "Deploy Directory: " + deployDirAbsolutePath, null);
+                } else {
+                    bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                        "Not all managed bundle content was able to be removed from the destination directory. "
+                            + "That managed content along with other unmanaged content still remain",
+                        Category.AUDIT_MESSAGE, Status.FAILURE, "Deploy Directory: " + deployDirAbsolutePath, null);
+                }
+
+                // make sure we remove the metadata directory, too - since it may still have sensitive files that were backed up
+                if (metadataDirectoryToPurge != null) {
+                    FileUtil.purge(metadataDirectoryToPurge, true);
+                    if (metadataDirectoryToPurge.exists()) {
+                        bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                            "Failed to purge the metadata directory from the destination directory. "
+                                + "It may still contain backed up files from previous bundle deployments.",
+                            Category.AUDIT_MESSAGE, Status.FAILURE, "Metadata Directory: "
+                                + metadataDirectoryToPurge.getAbsolutePath(), null);
+                    }
+                }
             }
+
         } catch (Throwable t) {
             log.error("Failed to purge bundle [" + request + "]", t);
             result.setErrorMessage(t);

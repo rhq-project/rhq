@@ -707,7 +707,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return queryRunner.execute();
     }
 
-    @Override
     public String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications) {
         if (notifications == null || notifications.length == 0) {
             return new String[0];

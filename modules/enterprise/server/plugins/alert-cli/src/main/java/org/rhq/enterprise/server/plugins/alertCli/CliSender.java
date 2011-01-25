@@ -20,12 +20,17 @@
 package org.rhq.enterprise.server.plugins.alertCli;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.PrintWriter;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Collections;
 
 import javax.script.ScriptEngine;
@@ -42,6 +47,7 @@ import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.client.LocalClient;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -54,15 +60,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Lukas Krejci
  */
 public class CliSender extends AlertSender<ServerPluginComponent> {
+
+    public static final String PROP_PACKAGE_ID = "packageId";
+    public static final String PROP_USER_ID = "userId";
+
     private static final Log LOG = LogFactory.getLog(CliSender.class);
 
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
         try {
-            ScriptEngine engine = getScriptEngine(alert);
+            ByteArrayOutputStream scriptOutputStream = new ByteArrayOutputStream();
+            
+            ScriptEngine engine = getScriptEngine(alert, scriptOutputStream);
 
-            PropertySimple packageIdProp = alertParameters.getSimple("packageId");
+            PropertySimple packageIdProp = alertParameters.getSimple(PROP_PACKAGE_ID);
 
             if (packageIdProp == null) {
                 return SenderResult
@@ -79,14 +91,19 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
 
-            Object ret = engine.eval(reader);
+            engine.eval(reader);
 
-            //TODO what to do with the return value, if any
-
+            String scriptOutput = scriptOutputStream.toString(Charset.defaultCharset().name());
+            
+            result.setSummary(scriptOutput);
+            
+            result.addSuccessMessage("The script executed successfully. Its output is stored in the summary.");
+            
             return result;
-        } catch (Exception e) {
-            //TODO I don't like this
+        } catch (IllegalArgumentException e) {
             return SenderResult.getSimpleFailure(e.getMessage());
+        } catch (Exception e) {
+            return SenderResult.getSimpleFailure(ThrowableUtil.getAllMessages(e));
         } finally {
             if (reader != null) {
                 try {
@@ -98,13 +115,19 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
         }
     }
 
-    private ScriptEngine getScriptEngine(Alert alert) throws ScriptException, IOException {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+    private ScriptEngine getScriptEngine(Alert alert, OutputStream scriptOutput) throws ScriptException, IOException, IllegalArgumentException {
+        int userId = alertParameters.getSimple(PROP_USER_ID).getIntegerValue();
+        
+        Subject user = LookupUtil.getSubjectManager().getSubjectById(userId);
+        
+        if (user == null) {
+            throw new IllegalArgumentException("The script cannot run because the user (id " + userId + ") configured to run it doesn't exist anymore.");
+        }
+        
+        LocalClient client = new LocalClient(user);
 
-        LocalClient client = new LocalClient(overlord);
-
-        //TODO define some meaningful printwriter
-        StandardBindings bindings = new StandardBindings(null, client);
+        PrintWriter output = new PrintWriter(scriptOutput);
+        StandardBindings bindings = new StandardBindings(output, client);
         bindings.put("alert", alert);
 
         return ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Collections.<File> emptyList()),

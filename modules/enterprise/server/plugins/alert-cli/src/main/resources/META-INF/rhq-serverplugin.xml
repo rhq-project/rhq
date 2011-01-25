@@ -22,5 +22,6 @@
 
     <alert-configuration>
         <c:simple-property name="packageId" type="integer" required="true" description="The id of the package containing the script to execute."/>
+        <c:simple-property name="userId" type="integer" required="true" description="The user the script will be run as."/>
     </alert-configuration>
 </alert-plugin>

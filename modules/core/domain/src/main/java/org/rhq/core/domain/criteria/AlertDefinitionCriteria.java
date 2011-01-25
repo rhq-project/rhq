@@ -53,7 +53,8 @@ public class AlertDefinitionCriteria extends Criteria {
     private List<Integer> filterResourceGroupIds; // requires overrides
     private Boolean filterEnabled;
     private Boolean filterDeleted = false; // find enabled definitions by default
-
+    private List<String> filterNotificationSenderNames;
+    
     private boolean fetchAlerts;
     private boolean fetchGroupAlertDefinition;
     private boolean fetchConditions;
@@ -62,12 +63,13 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortName;
     private PageOrdering sortPriority;
 
-    public AlertDefinitionCriteria() {
+    public AlertDefinitionCriteria() {        
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
         filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
+        filterOverrides.put("notificationSenderNames", "alertNotifications.senderName IN ( ? )");
     }
 
     @Override
@@ -119,6 +121,11 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterDeleted = filterDeleted;
     }
 
+    public void addFilterNotificationNames(String... notificationNames) {
+        fetchAlertNotifications(true);
+        this.filterNotificationSenderNames = Arrays.asList(notificationNames);
+    }
+    
     public void fetchAlerts(boolean fetchAlerts) {
         this.fetchAlerts = fetchAlerts;
     }

@@ -23,7 +23,8 @@ public class TimestampCellFormatter implements CellFormatter {
      * even if the caller doesn't have data from a cell or list grid. This can keep date formatting
      * consistent across the app, whether the data is in a cell or not.
      * 
-     * @param date the date to format as a Date, Long, Integer or a String
+     * @param value the date to format as a Date, Long, Integer or a String
+     *
      * @return the formatted date string
      */
     public static String format(Object value) {

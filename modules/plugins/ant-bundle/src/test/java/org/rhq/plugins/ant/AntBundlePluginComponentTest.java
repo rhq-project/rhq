@@ -55,6 +55,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
+import org.rhq.core.pluginapi.bundle.BundlePurgeRequest;
+import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
@@ -165,7 +167,7 @@ public class AntBundlePluginComponentTest {
 
         // test that the prop was replaced in raw file test.properties
         Properties realizedProps = new Properties();
-        realizedProps.load(new FileInputStream(new File(this.destDir, "config/test.properties")));
+        loadProperties(realizedProps, new FileInputStream(new File(this.destDir, "config/test.properties")));
         assert customPropValue.equals(realizedProps.getProperty(customPropName)) : "didn't replace prop";
 
         // test that the archive was extracted properly. These are the files in the archive:
@@ -279,7 +281,7 @@ public class AntBundlePluginComponentTest {
 
         // test that the prop was replaced in raw file test.properties
         Properties realizedProps = new Properties();
-        realizedProps.load(new FileInputStream(new File(this.destDir, "config/test.properties")));
+        loadProperties(realizedProps, new FileInputStream(new File(this.destDir, "config/test.properties")));
         assert customPropValue.equals(realizedProps.getProperty(customPropName)) : "didn't replace prop";
 
         // test that the archive was extracted properly. These are the files in the archive:
@@ -364,13 +366,132 @@ public class AntBundlePluginComponentTest {
 
         // test that the prop was replaced in test.properties
         Properties realizedProps = new Properties();
-        realizedProps.load(new FileInputStream(new File(this.destDir, "config/test.properties")));
+        loadProperties(realizedProps, new FileInputStream(new File(this.destDir, "config/test.properties")));
         assert realPropValue.equals(realizedProps.getProperty("custom.prop1")) : "didn't replace prop";
 
         // test that the prop was not replaced in noreplace.properties
         Properties notrealizedProps = new Properties();
-        notrealizedProps.load(new FileInputStream(new File(this.destDir, "config/noreplace.properties")));
+        loadProperties(notrealizedProps, new FileInputStream(new File(this.destDir, "config/noreplace.properties")));
         assert "@@custom.prop1@@".equals(notrealizedProps.getProperty("custom.prop1")) : "replaced prop when it shouldn't";
+    }
+
+    /**
+     * Test deployment of an RHQ bundle recipe where the deploy directory is not to be fully managed.
+     */
+    @Test(enabled = true)
+    public void testAntBundleNoManageRootDir() throws Exception {
+        ResourceType resourceType = new ResourceType("testNoManageRootDirBundle", "plugin", ResourceCategory.SERVER,
+            null);
+        BundleType bundleType = new BundleType("testNoManageRootDirBundle", resourceType);
+        Repo repo = new Repo("testNoManageRootDirBundle");
+        PackageType packageType = new PackageType("testNoManageRootDirBundle", resourceType);
+        Bundle bundle = new Bundle("testNoManageRootDirBundle", bundleType, repo, packageType);
+        BundleVersion bundleVersion = new BundleVersion("testNoManageRootDirBundle", "1.0", bundle,
+            getRecipeFromFile("test-bundle-no-manage-root-dir.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testNoManageRootDirBundle", new ResourceGroup(
+            "testNoManageRootDirBundle"), this.destDir.getAbsolutePath());
+        Configuration config = new Configuration();
+
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
+        deployment.setDestination(destination);
+
+        // create bundle test files
+        File file0 = new File(this.bundleFilesDir, "zero.properties");
+        Properties props = new Properties();
+        props.setProperty("zero", "0");
+        FileOutputStream outputStream = new FileOutputStream(file0);
+        props.store(outputStream, "zero file");
+        outputStream.close();
+
+        File file1 = new File(this.bundleFilesDir, "one.properties");
+        props.clear();
+        props.setProperty("one", "1");
+        outputStream = new FileOutputStream(file1);
+        props.store(outputStream, "one file");
+        outputStream.close();
+
+        File file2 = new File(this.bundleFilesDir, "two.properties");
+        props.clear();
+        props.setProperty("two", "2");
+        outputStream = new FileOutputStream(file2);
+        props.store(outputStream, "two file");
+        outputStream.close();
+
+        // create some external test files that don't belong to the bundle but are in the dest dir (which is not fully managed by the bundle)
+        this.destDir.mkdirs();
+        File external1 = new File(this.destDir, "external1.properties");
+        props.clear();
+        props.setProperty("external1", "1");
+        outputStream = new FileOutputStream(external1);
+        props.store(outputStream, "external1 file");
+        outputStream.close();
+
+        File external2 = new File(this.destDir, "extdir/external2.properties");
+        external2.getParentFile().mkdirs();
+        props.clear();
+        props.setProperty("external2", "2");
+        outputStream = new FileOutputStream(external2);
+        props.store(outputStream, "external2 file");
+        outputStream.close();
+
+        // deploy the bundle
+        BundleDeployRequest request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+
+        BundleDeployResult results = plugin.deployBundle(request);
+
+        assertResultsSuccess(results);
+
+        // test that files were deployed in the proper place
+        props.clear();
+        loadProperties(props, new FileInputStream(new File(this.destDir, "zero.properties")));
+        assert "0".equals(props.getProperty("zero")) : "did not deploy bundle correctly 0";
+        loadProperties(props, new FileInputStream(new File(this.destDir, "subdir1/one.properties")));
+        assert "1".equals(props.getProperty("one")) : "did not deploy bundle correctly 1";
+        loadProperties(props, new FileInputStream(new File(this.destDir, "subdir2/two.properties")));
+        assert "2".equals(props.getProperty("two")) : "did not deploy bundle correctly 2";
+
+        DeploymentsMetadata metadata = new DeploymentsMetadata(this.destDir);
+        assert metadata.isManaged() == true : "missing metadata directory";
+        assert metadata.getCurrentDeploymentProperties().getManageRootDir() == false : "should not be managing root dir";
+
+        // make sure our unmanaged files/directories weren't removed
+        props.clear();
+        loadProperties(props, new FileInputStream(new File(this.destDir, "external1.properties")));
+        assert "1".equals(props.getProperty("external1")) : "bundle deployment removed our unmanaged file 1";
+        loadProperties(props, new FileInputStream(new File(this.destDir, "extdir/external2.properties")));
+        assert "2".equals(props.getProperty("external2")) : "bundle deployment removed our unmanaged file 2";
+
+        // now purge the bundle - this should only purge those files that were laid down by the bundle plus the metadata directory
+        BundlePurgeRequest purgeRequest = new BundlePurgeRequest();
+        purgeRequest.setLiveResourceDeployment(new BundleResourceDeployment(deployment, null));
+        purgeRequest.setBundleManagerProvider(new MockBundleManagerProvider());
+
+        BundlePurgeResult purgeResults = plugin.purgeBundle(purgeRequest);
+        assertResultsSuccess(purgeResults);
+
+        // make sure our bundle files have been completely purged; the metadata directory should have been purged too
+        assert new File(this.destDir, "zero.properties").exists() == false;
+        assert new File(this.destDir, "subdir1/one.properties").exists() == false;
+        assert new File(this.destDir, "subdir2/two.properties").exists() == false;
+        assert new File(this.destDir, "subdir1").exists() == false;
+        assert new File(this.destDir, "subdir2").exists() == false;
+        assert this.destDir.exists() == true : "deploy dir should still exist, we were told not to fully manage it";
+
+        metadata = new DeploymentsMetadata(this.destDir);
+        assert metadata.getMetadataDirectory().exists() == false : "metadata directory should not exist";
+
+        // make sure our external, unmanaged files still exist - the purge should not have deleted these
+        props.clear();
+        loadProperties(props, new FileInputStream(new File(this.destDir, "external1.properties")));
+        assert "1".equals(props.getProperty("external1")) : "bundle purge removed our unmanaged file 1";
+        loadProperties(props, new FileInputStream(new File(this.destDir, "extdir/external2.properties")));
+        assert "2".equals(props.getProperty("external2")) : "bundle purge removed our unmanaged file 2";
     }
 
     private void upgrade(boolean clean) throws Exception {
@@ -441,7 +562,7 @@ public class AntBundlePluginComponentTest {
 
         // test that the prop was replaced in raw file test.properties
         Properties realizedProps = new Properties();
-        realizedProps.load(new FileInputStream(new File(this.destDir, "config/test.properties")));
+        loadProperties(realizedProps, new FileInputStream(new File(this.destDir, "config/test.properties")));
         assert customPropValue.equals(realizedProps.getProperty(customPropName)) : "didn't replace prop";
 
         // test that the archive was extracted properly. These are the files in the archive or removed from original:
@@ -499,6 +620,11 @@ public class AntBundlePluginComponentTest {
         assert results.isSuccess() : "Failed to process bundle!: [" + results.getErrorMessage() + "]";
     }
 
+    private void assertResultsSuccess(BundlePurgeResult results) {
+        assert (results.getErrorMessage() == null) : "Failed to purge bundle: [" + results.getErrorMessage() + "]";
+        assert results.isSuccess() : "Failed to purge bundle!: [" + results.getErrorMessage() + "]";
+    }
+
     private String getRecipeFromFile(String filename) {
         InputStream stream = getClass().getClassLoader().getResourceAsStream(filename);
 
@@ -508,6 +634,14 @@ public class AntBundlePluginComponentTest {
 
     private String readFile(File file) throws Exception {
         return new String(StreamUtil.slurp(new FileInputStream(file)));
+    }
+
+    private void loadProperties(Properties realizedProps, FileInputStream fileInputStream) throws Exception {
+        try {
+            realizedProps.load(fileInputStream);
+        } finally {
+            fileInputStream.close();
+        }
     }
 
     private class MockBundleManagerProvider implements BundleManagerProvider {

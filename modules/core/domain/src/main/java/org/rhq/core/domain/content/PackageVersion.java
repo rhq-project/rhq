@@ -47,7 +47,7 @@ import org.hibernate.annotations.NamedQuery;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProductVersion;
-import org.rhq.core.util.OSGiVersionComparator;
+import org.rhq.core.domain.util.OSGiVersionComparator;
 
 /**
  * Represents a specific version of a {@link Package}. This does <i>not</i> represent an installed package found

@@ -20,7 +20,9 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.util;
+package org.rhq.core.domain.util;
+
+import org.rhq.core.domain.util.OSGiVersionComparator;
 
 import junit.framework.TestCase;
 

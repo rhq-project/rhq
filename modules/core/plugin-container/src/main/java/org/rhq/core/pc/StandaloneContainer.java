@@ -542,7 +542,7 @@ public class StandaloneContainer {
             Set<Resource> resources = getResources();
             for (Resource res : resources) {
                 if (res.getName().matches(pattern)) {
-                    System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
+                    System.out.println(res.getId() + ": " + res.getName() + " (parent= " + res.getParentResource() + " )");
                     dollarR = res.getId();
                 }
             }

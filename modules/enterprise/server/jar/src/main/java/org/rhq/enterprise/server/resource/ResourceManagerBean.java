@@ -279,7 +279,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         AgentClient agentClient = null;
         try {
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
-            agentClient = agentManager.getAgentClient(user, resourceId);
+            agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
         } catch (Throwable t) {
             log.warn("No AgentClient found for resource [" + resource
                 + "]. Unable to inform agent of inventory removal (this may be ok): " + t);

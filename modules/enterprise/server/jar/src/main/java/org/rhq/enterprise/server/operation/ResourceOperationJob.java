@@ -177,7 +177,7 @@ public class ResourceOperationJob extends OperationJob {
             }
 
             AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-            AgentClient agentClient = agentManager.getAgentClient(schedule.getSubject(), resource.getId());
+            AgentClient agentClient = agentManager.getAgentClient(getOverlord(), resource.getId());
 
             agentClient.getOperationAgentService().invokeOperation(resourceHistory.getJobId().toString(),
                 resource.getId(), schedule.getOperationName(), schedule.getParameters());

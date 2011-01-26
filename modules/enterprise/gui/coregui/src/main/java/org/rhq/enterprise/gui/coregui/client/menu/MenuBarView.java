@@ -52,6 +52,7 @@ public class MenuBarView extends LocatableVLayout {
 
     public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
         BundleTopView.VIEW_ID, AdministrationView.VIEW_ID, HelpView.VIEW_ID };
+    public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
 
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
     private LocatableLabel userLabel;
@@ -160,7 +161,8 @@ public class MenuBarView extends LocatableVLayout {
         lineLabel.setWidth("10px");
         lineLabel.setAlign(Alignment.CENTER);
 
-        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_logout(), "LogOut"));
+        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(LOGOUT_VIEW_ID.getTitle(), LOGOUT_VIEW_ID
+            .getName()), LOGOUT_VIEW_ID.getName());
         logoutLink.setWidth("50px");
 
         layout.addMember(userLabel);

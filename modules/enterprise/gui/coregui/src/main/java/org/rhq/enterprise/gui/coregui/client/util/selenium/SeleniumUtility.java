@@ -1,6 +1,5 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.UIObject;
 import com.smartgwt.client.widgets.BaseWidget;
 import com.smartgwt.client.widgets.Canvas;
@@ -96,20 +95,6 @@ public class SeleniumUtility {
         uiObject.getElement().setAttribute("id", id);
 
         return uiObject;
-    }
-
-    /**
-     * A utility for assigning an ID to a gwt Hyperlink.  For a smartgwt widget
-     * use {@link setId(BaseWidget)}. Any current ID will be overwritten.  The algorithm is:
-     * <pre>
-     * Equivalent to setHtmlId(hyperlink, hyperlink.getText());
-     * </pre>
-     * 
-     * @param hyperlink
-     * @return the updated hyperlink 
-     */
-    static public <T extends Hyperlink> T setHtmlId(final T hyperlink) {
-        return setHtmlId(hyperlink, hyperlink.getText());
     }
 
     /**

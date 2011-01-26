@@ -14,6 +14,43 @@
         Used to execute a CLI script.
     </serverplugin:help>
 
+    <serverplugin:plugin-component class="CliComponent">
+        <serverplugin:control name="checkAlertsValidity">
+            <serverplugin:results>
+                <c:list-property name="misconfiguredAlertDefs" displayName="Misconfigured Alert Definitions">
+                    <c:description>
+                        Alert scripts run authenticated as a user specified in their definitions. If a user is deleted, 
+                        the alert definition will contain invalid reference to that user and needs to be update manually. 
+                        This operation returns a list of such misconfigured alert definitions.
+                    </c:description>
+                    <c:map-property name="alertDefinition">
+                        <c:simple-property name="resourceId" />
+                        <c:simple-property name="resourcePath" />
+                        <c:simple-property name="alertDefinitionName" />
+                    </c:map-property>
+                </c:list-property>
+            </serverplugin:results>
+        </serverplugin:control>
+        
+        <!--  TODO define the args and results of this operation -->
+        <serverplugin:control name="reassignAlerts" description="Re-assign alerts to run as different users" />
+    </serverplugin:plugin-component>
+
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="uploadRepoName" displayName="Repo to manually upload scripts to" required="true" default="Uploaded Scripts">
+            <c:description>
+                When manually uploading a script while defining an alert notification, the script will be stored in this repo.
+            </c:description>
+        </c:simple-property>
+        <c:list-property name="packageTypes" displayName="Package Types" required="true">
+            <c:description>
+                The list of package types that will be considered scripts. Any package of those types in any repo will be 
+                considered a script and will be available for choosing as an alert script.
+            </c:description> 
+            <c:simple-property name="packageType" displayName="Package Type" type="string" required="true"/>
+        </c:list-property>
+    </serverplugin:plugin-configuration>
+    
     <!-- How does this sender show up in drop downs etc -->
     <short-name>CLI Script</short-name>
 

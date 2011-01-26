@@ -1139,6 +1139,7 @@ version is changed the versions of each of these should be validated and updated
             <activation>
                 <property>
                     <name>brew</name>
+                    <value>true</value>
                 </property>
             </activation>
             <build>

@@ -26,7 +26,7 @@ import com.smartgwt.client.data.Record;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 
 import java.util.List;
 
@@ -36,7 +36,7 @@ import java.util.List;
  *
  * @author Ian Springer
  */
-public class GroupOperationScheduleDataSource extends OperationScheduleDataSource<GroupOperationSchedule> {
+public class GroupOperationScheduleDataSource extends AbstractOperationScheduleDataSource<GroupOperationSchedule> {
 
     private ResourceGroupComposite groupComposite;
 
@@ -74,8 +74,8 @@ public class GroupOperationScheduleDataSource extends OperationScheduleDataSourc
         Configuration parameters = (Configuration) request.getAttributeAsObject("parameters");
         recordToAdd.setAttribute(Field.PARAMETERS, parameters);
         final GroupOperationSchedule scheduleToAdd = copyValues(recordToAdd);
-        // TODO
-        /*operationService.scheduleResourceOperation(scheduleToAdd, new AsyncCallback<Integer>() {
+
+        operationService.scheduleGroupOperation(scheduleToAdd, new AsyncCallback<Integer>() {
             public void onSuccess(Integer scheduleId) {
                 scheduleToAdd.setId(scheduleId);
                 sendSuccessResponse(request, response, scheduleToAdd);
@@ -84,22 +84,22 @@ public class GroupOperationScheduleDataSource extends OperationScheduleDataSourc
             public void onFailure(Throwable caught) {
                 throw new RuntimeException("Failed to add " + scheduleToAdd, caught);
             }
-        });*/
+        });
     }
 
     @Override
     protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
         final GroupOperationSchedule scheduleToRemove = copyValues(recordToRemove);
-        // TODO
-        /*operationService.unscheduleResourceOperation(scheduleToRemove, new AsyncCallback<Void>() {
+
+        operationService.unscheduleGroupOperation(scheduleToRemove, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
                 sendSuccessResponse(request, response, scheduleToRemove);
             }
 
             public void onFailure(Throwable caught) {
-                throw new RuntimeException(caught);
+                throw new RuntimeException("Failed to remove " + scheduleToRemove, caught);
             }
-        });*/
+        });
     }
 
 }

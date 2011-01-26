@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Ian Springer
  */
-public abstract class OperationScheduleDataSource<T extends OperationSchedule> extends RPCDataSource<T> {    
+public abstract class AbstractOperationScheduleDataSource<T extends OperationSchedule> extends RPCDataSource<T> {
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -72,7 +72,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
 
     private ResourceType resourceType;
 
-    public OperationScheduleDataSource(ResourceType resourceType) {
+    public AbstractOperationScheduleDataSource(ResourceType resourceType) {
         super();
         this.resourceType = resourceType;
         List<DataSourceField> fields = addDataSourceFields();
@@ -157,12 +157,14 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setAttribute(Field.JOB_GROUP, from.getJobGroup());
         SubjectRecord subjectRecord = new SubjectRecord(from.getSubject());
         to.setAttribute(Field.SUBJECT, subjectRecord);
-        to.setAttribute(Field.PARAMETERS, from.getParameters());
+        Configuration parameters = from.getParameters();
+        to.setAttribute(Field.PARAMETERS, parameters);
         to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
         to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());        
         to.setAttribute(Field.DESCRIPTION, from.getDescription());
         to.setAttribute(Field.NEXT_FIRE_TIME, from.getNextFireTime());
-        to.setAttribute(Field.TIMEOUT, from.getParameters().getSimpleValue(OperationDefinition.TIMEOUT_PARAM_NAME, null));
+        to.setAttribute(Field.TIMEOUT, (parameters != null) ?
+                parameters.getSimpleValue(OperationDefinition.TIMEOUT_PARAM_NAME, null) : null);
 
         JobTrigger jobTrigger = from.getJobTrigger();
         Record jobTriggerRecord = new ListGridRecord();

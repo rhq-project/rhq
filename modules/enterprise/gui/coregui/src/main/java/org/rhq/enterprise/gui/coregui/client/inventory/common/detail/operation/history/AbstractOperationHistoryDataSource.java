@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -32,8 +35,11 @@ import java.util.List;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
-public abstract class OperationHistoryDataSource<T extends OperationHistory> extends RPCDataSource<T> {
+public abstract class AbstractOperationHistoryDataSource<T extends OperationHistory> extends RPCDataSource<T> {
+
+    private T currentOperationHistory;
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -51,9 +57,25 @@ public abstract class OperationHistoryDataSource<T extends OperationHistory> ext
 
     protected OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
-    public OperationHistoryDataSource() {
+    public AbstractOperationHistoryDataSource() {
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
+    }
+
+    @Override
+    protected void executeRemove(Record recordToRemove, DSRequest request, DSResponse response) {
+        final OperationHistory operationHistoryToRemove = copyValues(recordToRemove);
+        Boolean forceValue = request.getAttributeAsBoolean("force");
+        boolean force = ((forceValue != null) && forceValue);
+        operationService.deleteOperationHistory(operationHistoryToRemove.getId(), force, new AsyncCallback<Void>() {
+            public void onSuccess(Void result) {
+                return;
+            }
+
+            public void onFailure(Throwable caught) {
+                throw new RuntimeException("Failed to delete " + operationHistoryToRemove + ".", caught);
+            }
+        });
     }
 
     @Override
@@ -86,12 +108,15 @@ public abstract class OperationHistoryDataSource<T extends OperationHistory> ext
 
     @Override
     public T copyValues(Record from) {
-        throw new UnsupportedOperationException("OperationHistory is read only.");
+        return this.currentOperationHistory;
     }
 
     @Override
     public ListGridRecord copyValues(T from) {
+        this.currentOperationHistory = from;
+
         ListGridRecord record = new ListGridRecord();
+
         record.setAttribute(Field.ID, from.getId());
         record.setAttribute(Field.CREATED_TIME, from.getCreatedTime());
         record.setAttribute(Field.STARTED_TIME, new Date(from.getStartedTime()));

@@ -29,9 +29,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 /**
  * @author Ian Springer
  */
-public abstract class OperationScheduleListView extends TableSection<OperationScheduleDataSource> {    
+public abstract class AbstractOperationScheduleListView extends TableSection<AbstractOperationScheduleDataSource> {
 
-    public OperationScheduleListView(String locatorId, OperationScheduleDataSource dataSource, String title) {
+    public AbstractOperationScheduleListView(String locatorId, AbstractOperationScheduleDataSource dataSource, String title) {
         super(locatorId, title);
 
         setDataSource(dataSource);
@@ -43,17 +43,17 @@ public abstract class OperationScheduleListView extends TableSection<OperationSc
     protected void configureTable() {
         super.configureTable();
 
-        ListGridField operationField = new ListGridField(OperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 180);
+        ListGridField operationField = new ListGridField(AbstractOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 180);
 
-        ListGridField subjectField = new ListGridField(OperationScheduleDataSource.Field.SUBJECT, 110);
+        ListGridField subjectField = new ListGridField(AbstractOperationScheduleDataSource.Field.SUBJECT, 110);
         subjectField.setCellFormatter(new SubjectRecordCellFormatter());
 
         //ListGridField jobTriggerField = new ListGridField(OperationScheduleDataSource.Field.JOB_TRIGGER, 300);
 
-        ListGridField nextFireTimeField = new ListGridField(OperationScheduleDataSource.Field.NEXT_FIRE_TIME,
+        ListGridField nextFireTimeField = new ListGridField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
                 "Next Scheduled Execution", 190);
 
-        ListGridField descriptionField = new ListGridField(OperationScheduleDataSource.Field.DESCRIPTION);
+        ListGridField descriptionField = new ListGridField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
 
         setListGridFields(operationField, subjectField, nextFireTimeField, descriptionField);
 
@@ -82,7 +82,7 @@ public abstract class OperationScheduleListView extends TableSection<OperationSc
 
     @Override
     protected String getDetailsLinkColumnName() {
-        return OperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
+        return AbstractOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
     }
 
 }

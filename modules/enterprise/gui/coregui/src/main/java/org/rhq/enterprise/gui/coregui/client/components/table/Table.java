@@ -686,6 +686,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     protected void deleteSelectedRecords() {
+        deleteSelectedRecords(null);
+    }
+
+    protected void deleteSelectedRecords(DSRequest requestProperties) {
         ListGrid listGrid = getListGrid();
         final int selectedRecordCount = listGrid.getSelection().length;
         final List<String> deletedRecordNames = new ArrayList<String>(selectedRecordCount);
@@ -704,11 +708,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                         .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
                                 getDataTypeNamePlural(), deletedRecordNames.toString()));
                         CoreGUI.getMessageCenter().notify(message);
+                        refresh();
                     }
                 }
                 // TODO: Print error messages for failures or partial failures.
             }
-        }, null);
+        }, requestProperties);
     }
 
     protected String getDataTypeName() {

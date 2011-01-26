@@ -72,7 +72,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     private Configuration parameters;
     private EnhancedDynamicForm notesForm;
 
-    public AbstractOperationScheduleDetailsView(String locatorId, OperationScheduleDataSource dataSource,
+    public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
                                                 ResourceType resourceType, int scheduleId) {
         super(locatorId, dataSource, scheduleId, "Scheduled Operation", null);
 
@@ -140,11 +140,11 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
         if (!isNewRecord()) {
-            StaticTextItem nextFireTimeItem = new StaticTextItem(OperationScheduleDataSource.Field.NEXT_FIRE_TIME);
+            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
             notesFields.add(nextFireTimeItem);
         }
 
-        TextItem timeoutItem = new TextItem(OperationScheduleDataSource.Field.TIMEOUT, "Timeout (in seconds)");
+        TextItem timeoutItem = new TextItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout (in seconds)");
         notesFields.add(timeoutItem);
 
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
@@ -175,8 +175,8 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     protected Record createNewRecord() {
         Record record = super.createNewRecord();
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        OperationScheduleDataSource.SubjectRecord subjectRecord =
-                new OperationScheduleDataSource.SubjectRecord(sessionSubject);
+        AbstractOperationScheduleDataSource.SubjectRecord subjectRecord =
+                new AbstractOperationScheduleDataSource.SubjectRecord(sessionSubject);
         record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, subjectRecord);
         return record;
     }

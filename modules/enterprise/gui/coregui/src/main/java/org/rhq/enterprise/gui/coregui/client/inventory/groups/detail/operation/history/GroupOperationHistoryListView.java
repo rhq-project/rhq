@@ -23,7 +23,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 
 /**
  * @author Ian Springer
@@ -33,17 +32,15 @@ public class GroupOperationHistoryListView extends AbstractOperationHistoryListV
     private ResourceGroupComposite groupComposite;
 
     public GroupOperationHistoryListView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, new ResourceOperationHistoryDataSource(), null,
+        super(locatorId, new GroupOperationHistoryDataSource(), null,
             new Criteria(GroupOperationHistoryDataSource.CriteriaField.GROUP_ID,
             String.valueOf(groupComposite.getResourceGroup().getId())));
         this.groupComposite = groupComposite;
     }
 
     @Override
-    protected void configureTable() {
-        super.configureTable();
-
-        // TODO: Add Delete button.
+    protected boolean hasControlPermission() {
+        return this.groupComposite.getResourcePermission().isControl();
     }
 
     @Override

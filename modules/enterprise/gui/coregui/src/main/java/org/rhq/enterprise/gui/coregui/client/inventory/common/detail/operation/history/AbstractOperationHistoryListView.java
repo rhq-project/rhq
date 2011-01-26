@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DateDisplayFormat;
@@ -40,6 +41,7 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -48,21 +50,23 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractOperationHistoryListView extends TableSection<OperationHistoryDataSource> {
+public abstract class AbstractOperationHistoryListView extends TableSection<AbstractOperationHistoryDataSource> {
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
 
-    public AbstractOperationHistoryListView(String locatorId, OperationHistoryDataSource dataSource, String title) {
+    public AbstractOperationHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource, String title) {
         super(locatorId, title);
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
     }
 
-    public AbstractOperationHistoryListView(String locatorId, OperationHistoryDataSource dataSource, String title,
+    public AbstractOperationHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource, String title,
                                     Criteria criteria) {
         super(locatorId, title, criteria);
         setDataSource(dataSource);
     }
+
+    protected abstract boolean hasControlPermission();
 
     @Override
     protected void configureTable() {
@@ -70,26 +74,53 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Oper
 
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
+
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteSelectedRecords();
+                }
+            });
+
+        // TODO: i18n
+        addTableAction(extendLocatorId("ForceDelete"), "Force Delete", getDeleteConfirmMessage(),
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    return (count >= 1 && hasControlPermission());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    DSRequest requestProperties = new DSRequest();
+                    requestProperties.setAttribute("force", true);
+                    deleteSelectedRecords(requestProperties);
+                }
+            });
     }
 
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField idField = new ListGridField(OperationHistoryDataSource.Field.ID, MSG.common_title_id());
+        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID, MSG.common_title_id());
         idField.setWidth(38);
         fields.add(idField);
 
-        ListGridField opNameField = new ListGridField(OperationHistoryDataSource.Field.OPERATION_NAME,
+        ListGridField opNameField = new ListGridField(AbstractOperationHistoryDataSource.Field.OPERATION_NAME,
             MSG.dataSource_operationHistory_operationName());
         opNameField.setWidth("34%");
         fields.add(opNameField);
 
-        ListGridField subjectField = new ListGridField(OperationHistoryDataSource.Field.SUBJECT,
+        ListGridField subjectField = new ListGridField(AbstractOperationHistoryDataSource.Field.SUBJECT,
             MSG.common_title_user());
         subjectField.setWidth("33%");
         fields.add(subjectField);
 
-        ListGridField statusField = new ListGridField(OperationHistoryDataSource.Field.STATUS,
+        ListGridField statusField = new ListGridField(AbstractOperationHistoryDataSource.Field.STATUS,
             MSG.common_title_status());
         statusField.setAlign(Alignment.CENTER);
         statusField.setCellAlign(Alignment.CENTER);
@@ -97,7 +128,7 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Oper
         statusField.setHoverCustomizer(new HoverCustomizer() {
             @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String statusStr = record.getAttribute(OperationHistoryDataSource.Field.STATUS);
+                String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
                 case SUCCESS: {
@@ -127,7 +158,7 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Oper
             @Override
             public void onRecordClick(RecordClickEvent event) {
                 Record record = event.getRecord();
-                String statusStr = record.getAttribute(OperationHistoryDataSource.Field.STATUS);
+                String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 if (status == OperationRequestStatus.FAILURE) {
                     final Window winModal = new LocatableWindow(AbstractOperationHistoryListView.this
@@ -155,7 +186,7 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Oper
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
                     htmlPane.setDefaultHeight(400);
-                    String errorMsg = record.getAttribute(OperationHistoryDataSource.Field.ERROR_MESSAGE);
+                    String errorMsg = record.getAttribute(AbstractOperationHistoryDataSource.Field.ERROR_MESSAGE);
                     if (errorMsg == null) {
                         errorMsg = MSG.common_status_failed();
                     }
@@ -168,7 +199,7 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Oper
         statusField.setWidth(44);
         fields.add(statusField);
 
-        ListGridField startedTimeField = new ListGridField(OperationHistoryDataSource.Field.STARTED_TIME,
+        ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
             MSG.dataSource_operationHistory_startedTime());
         startedTimeField.setType(ListGridFieldType.DATE);
         startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
@@ -182,7 +213,7 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Oper
 
     @Override
     protected String getDetailsLinkColumnName() {
-        return OperationHistoryDataSource.Field.OPERATION_NAME;
+        return AbstractOperationHistoryDataSource.Field.OPERATION_NAME;
     }
 
 }

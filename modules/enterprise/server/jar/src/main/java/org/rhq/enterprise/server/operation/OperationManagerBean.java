@@ -66,6 +66,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.operation.ScheduleJobId;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
@@ -174,6 +175,30 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 .getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule
                 .getDescription());
             return resourceOperationSchedule.getId();
+        } catch (SchedulerException e) {
+            throw new ScheduleException(e);
+        }
+    }
+
+    public int scheduleGroupOperation(Subject subject, GroupOperationSchedule schedule) throws ScheduleException {
+        JobTrigger jobTrigger = schedule.getJobTrigger();
+        Trigger trigger = convertToTrigger(jobTrigger);
+        try {
+            List<Resource> executionOrderResources = schedule.getExecutionOrder();
+            int[] executionOrderResourceIds;
+            if (executionOrderResources == null) {
+                executionOrderResourceIds = null;
+            } else {
+                executionOrderResourceIds = new int[executionOrderResources.size()];
+                for (int i = 0, executionOrderResourcesSize = executionOrderResources.size(); i < executionOrderResourcesSize; i++) {
+                    Resource executionOrderResource = executionOrderResources.get(i);
+                    executionOrderResourceIds[i] = executionOrderResource.getId();
+                }
+            }
+            GroupOperationSchedule groupOperationSchedule = scheduleGroupOperation(subject, schedule
+                .getGroup().getId(), executionOrderResourceIds, schedule.getHaltOnFailure(),
+                    schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+            return groupOperationSchedule.getId();
         } catch (SchedulerException e) {
             throw new ScheduleException(e);
         }
@@ -557,7 +582,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             }
         }
 
+        Integer entityId = getOperationScheduleEntityId(jobDetail);
+
         GroupOperationSchedule sched = new GroupOperationSchedule();
+        sched.setId(entityId);
         sched.setJobName(jobDetail.getName());
         sched.setJobGroup(jobDetail.getGroup());
         sched.setGroup(group);

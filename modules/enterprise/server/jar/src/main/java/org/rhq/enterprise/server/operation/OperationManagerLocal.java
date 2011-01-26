@@ -74,6 +74,17 @@ public interface OperationManagerLocal {
     int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule);
 
     /**
+     * Schedules a Resource group operation for execution.
+     *
+     * @param subject the user who is asking to schedule the job
+     * @param schedule the information describing the operation to be scheduled along with the schedule to be used
+     *
+     * @return the id of the {@link org.rhq.core.domain.operation.GroupOperationScheduleEntity} created to track the
+     *         scheduled operation
+     */
+    int scheduleGroupOperation(Subject subject, GroupOperationSchedule schedule) throws ScheduleException;
+
+    /**
      * Schedules an operation for execution on the given resource.
      *
      * @param  subject       the user who is asking to schedule the job

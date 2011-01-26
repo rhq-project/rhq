@@ -26,7 +26,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.measurement.DataType;
@@ -62,9 +61,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     protected void onDraw() {
         super.onDraw();
 
-        for (Canvas c : getMembers()) {
-            c.destroy();
-        }
+        destroyMembers();
 
         addMember(new AvailabilityBarView(resource));
 

@@ -397,7 +397,16 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         @SuppressWarnings("unchecked")
         List<ResourceTypeTemplateCountComposite> results = (List<ResourceTypeTemplateCountComposite>) templateCountQuery.getResultList();
 
-        // we don't need to send all the data in resource types over the wire, so we'll be scrubbing the types
+        for (ResourceTypeTemplateCountComposite result : results) {
+            ResourceType type = result.getType();
+
+            // TODO (ips, 01/24/11): I tried to fetch the parents via the
+            //                       ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES named query,
+            //                       but was unable to get it working. This will suffice for the time being.
+            type.getParentResourceTypes().size();
+        }
+
+        // we don't need to send all the data in resource types over the wire, so we'll be scrubbing the types;
         // to avoid the scrubbed types getting persisted back to the db, let's clear the persistence context
         entityManager.clear();
 
@@ -405,28 +414,32 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         for (ResourceTypeTemplateCountComposite result : results) {
             ResourceType type = result.getType();
 
-            // scrub it to avoid sending data over the wire we don't need
+            // scrub it to avoid sending data over the wire we don't need;
             // some of these are eagerly loaded, but my paranoia says assume everything is eagerly loaded to purge it all
-            type.setBundleType(null);
-            type.setChildResourceTypes(null);
-            type.setChildSubCategories(null);
-            type.setClassLoaderType(null);
-            type.setEventDefinitions(null);
-            type.setMetricDefinitions(null);
-            type.setOperationDefinitions(null);
-            type.setPackageTypes(null);
-            type.setPluginConfigurationDefinition(null);
-            type.setProcessScans(null);
-            type.setProductVersions(null);
-            type.setResourceConfigurationDefinition(null);
-            type.setResourceGroups(null);
-            type.setResources(null);
-            type.setSubCategory(null);
+            scrubType(type);
 
             compositeMap.put(type.getId(), result);
         }
 
         return compositeMap;
+    }
+
+    private void scrubType(ResourceType type) {
+        type.setBundleType(null);
+        type.setChildResourceTypes(null);
+        type.setChildSubCategories(null);
+        type.setClassLoaderType(null);
+        type.setEventDefinitions(null);
+        type.setMetricDefinitions(null);
+        type.setOperationDefinitions(null);
+        type.setPackageTypes(null);
+        type.setPluginConfigurationDefinition(null);
+        type.setProcessScans(null);
+        type.setProductVersions(null);
+        type.setResourceConfigurationDefinition(null);
+        type.setResourceGroups(null);
+        type.setResources(null);
+        type.setSubCategory(null);
     }
 
     @SuppressWarnings("unchecked")

@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.ResourceType;
@@ -57,6 +58,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         public static final String SUBJECT = "subject";
         public static final String DESCRIPTION = "description";
         public static final String NEXT_FIRE_TIME = "nextFireTime";
+        public static final String TIMEOUT = "timeout";
 
         // job trigger fields
         public static final String START_TIME = "startTime";
@@ -112,6 +114,10 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         DataSourceDateTimeField nextFireTimeField = new DataSourceDateTimeField(Field.NEXT_FIRE_TIME,
                 "Next Scheduled Execution");
         nextFireTimeField.setCanEdit(false);
+        fields.add(nextFireTimeField);
+
+        DataSourceIntegerField timeoutField = createIntegerField(Field.TIMEOUT, "Timeout (in seconds)", 30, null, false);
+        fields.add(timeoutField);
 
         return fields;
     }
@@ -127,11 +133,15 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setJobGroup(from.getAttribute(Field.JOB_GROUP));
         SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
         to.setSubject(subjectRecord.toSubject());
-        to.setParameters((Configuration)from.getAttributeAsObject(Field.PARAMETERS));
+        Configuration parameters = (Configuration) from.getAttributeAsObject(Field.PARAMETERS);
+        to.setParameters(parameters);
         to.setOperationName(from.getAttribute(Field.OPERATION_NAME));
         to.setOperationDisplayName(from.getAttribute(Field.OPERATION_DISPLAY_NAME));
         to.setDescription(from.getAttribute(Field.DESCRIPTION));
         to.setNextFireTime(from.getAttributeAsDate(Field.NEXT_FIRE_TIME));
+        if (parameters != null) {
+            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, from.getAttributeAsInt(Field.TIMEOUT)));
+        }
 
         to.setJobTrigger(createJobTrigger(from.getAttributeAsRecord("jobTrigger")));
 
@@ -152,6 +162,7 @@ public abstract class OperationScheduleDataSource<T extends OperationSchedule> e
         to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());        
         to.setAttribute(Field.DESCRIPTION, from.getDescription());
         to.setAttribute(Field.NEXT_FIRE_TIME, from.getNextFireTime());
+        to.setAttribute(Field.TIMEOUT, from.getParameters().getSimpleValue(OperationDefinition.TIMEOUT_PARAM_NAME, null));
 
         JobTrigger jobTrigger = from.getJobTrigger();
         Record jobTriggerRecord = new ListGridRecord();

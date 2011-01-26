@@ -18,29 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
-import java.util.Date;
-import java.util.List;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * @author Greg Hinkle
  */
-public abstract class OperationHistoryDataSource extends RPCDataSource<ResourceOperationHistory> {
+public abstract class OperationHistoryDataSource<T extends OperationHistory> extends RPCDataSource<T> {
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -92,18 +85,17 @@ public abstract class OperationHistoryDataSource extends RPCDataSource<ResourceO
     }
 
     @Override
-    public ResourceOperationHistory copyValues(Record from) {
-        throw new UnsupportedOperationException("ResourceOperationHistory is read only.");
+    public T copyValues(Record from) {
+        throw new UnsupportedOperationException("OperationHistory is read only.");
     }
 
     @Override
-    public ListGridRecord copyValues(ResourceOperationHistory from) {
+    public ListGridRecord copyValues(T from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(Field.ID, from.getId());
         record.setAttribute(Field.CREATED_TIME, from.getCreatedTime());
         record.setAttribute(Field.STARTED_TIME, new Date(from.getStartedTime()));
         record.setAttribute(Field.DURATION, from.getDuration());
-        record.setAttribute(Field.RESOURCE, from.getResource());
         record.setAttribute(Field.SUBJECT, from.getSubjectName());
         record.setAttribute(Field.OPERATION_DEFINITION, from.getOperationDefinition());
         record.setAttribute(Field.OPERATION_NAME, from.getOperationDefinition().getDisplayName());

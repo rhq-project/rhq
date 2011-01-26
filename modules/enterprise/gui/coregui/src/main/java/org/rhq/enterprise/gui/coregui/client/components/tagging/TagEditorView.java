@@ -30,7 +30,6 @@ import java.util.Set;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TextMatchStyle;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -110,9 +109,7 @@ public class TagEditorView extends LocatableLayout {
     }
 
     private void setup() {
-        for (Canvas child : getMembers()) {
-            child.destroy();
-        }
+        destroyMembers();
 
         Layout layout = vertical ? new LocatableVLayout(getLocatorId()) : new LocatableHLayout(getLocatorId());
         if (!vertical)

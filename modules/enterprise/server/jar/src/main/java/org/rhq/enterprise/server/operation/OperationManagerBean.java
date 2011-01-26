@@ -166,17 +166,15 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    public int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule)
-        throws ScheduleException {
+    public int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule) throws ScheduleException {
         JobTrigger jobTrigger = schedule.getJobTrigger();
         Trigger trigger = convertToTrigger(jobTrigger);
         try {
-            ResourceOperationSchedule resourceOperationSchedule = scheduleResourceOperation(subject,
-                    schedule.getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger,
-                    schedule.getDescription());
+            ResourceOperationSchedule resourceOperationSchedule = scheduleResourceOperation(subject, schedule
+                .getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule
+                .getDescription());
             return resourceOperationSchedule.getId();
-        }
-        catch (SchedulerException e) {
+        } catch (SchedulerException e) {
             throw new ScheduleException(e);
         }
     }
@@ -496,7 +494,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         int entityId;
         if (entityIdObj != null) {
             // for jobs created using RHQ 4.0 or later, the map will contain an entityId entry
-            entityId = Integer.valueOf((String)entityIdObj);
+            entityId = Integer.valueOf((String) entityIdObj);
         } else {
             // for jobs created prior to upgrading to RHQ 4.0, the map will not contain an entityId entry,
             // so we'll need to lookup the entity id from the DB.
@@ -915,7 +913,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         boolean canceled = false;
 
         try {
-            agent = agentManager.getAgentClient(subject, resourceId);
+            agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
 
             // since this method is usually called by the UI, we want to quickly determine if we can even talk to the agent
             if (agent.ping(5000L)) {
@@ -1477,8 +1475,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (ResourceOperationScheduleComposite composite : results) {
             try {
-                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId()
-                    .toString());
+                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId().toString());
                 OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
                     .getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
@@ -1531,8 +1528,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (GroupOperationScheduleComposite composite : results) {
             try {
-                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId()
-                    .toString());
+                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId().toString());
                 OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
                     .getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
@@ -1816,7 +1812,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         query.setParameter("jobName", jobName);
         String jobGroup = jobId.getJobGroup();
         query.setParameter("jobGroup", jobGroup);
-        OperationScheduleEntity operationScheduleEntity = (OperationScheduleEntity)query.getSingleResult();
+        OperationScheduleEntity operationScheduleEntity = (OperationScheduleEntity) query.getSingleResult();
         return operationScheduleEntity;
     }
 
@@ -1892,8 +1888,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Trigger[] triggers;
         try {
             triggers = scheduler.getTriggersOfJob(jobDetail.getName(), jobDetail.getGroup());
-        }
-        catch (SchedulerException e) {
+        } catch (SchedulerException e) {
             throw new RuntimeException("Failed to lookup trigger for job [" + jobDetail.getFullName() + "].", e);
         }
         if (triggers.length == 0) {
@@ -1909,7 +1904,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     private static JobTrigger convertToJobTrigger(Trigger trigger) {
         JobTrigger schedule;
         if (trigger instanceof SimpleTrigger) {
-            SimpleTrigger simpleTrigger = (SimpleTrigger)trigger;
+            SimpleTrigger simpleTrigger = (SimpleTrigger) trigger;
             Date startTime = simpleTrigger.getStartTime();
             if (startTime != null) {
                 // later
@@ -1953,7 +1948,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 }
             }
         } else if (trigger instanceof CronTrigger) {
-            CronTrigger cronTrigger = (CronTrigger)trigger;
+            CronTrigger cronTrigger = (CronTrigger) trigger;
             schedule = JobTrigger.createCronTrigger(cronTrigger.getCronExpression());
         } else {
             throw new IllegalStateException("Unsupported Quartz trigger type: " + trigger.getClass().getName());
@@ -1967,8 +1962,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             CronTrigger cronTrigger = new CronTrigger();
             try {
                 cronTrigger.setCronExpression(jobTrigger.getCronExpression());
-            }
-            catch (ParseException e) {
+            } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
             trigger = cronTrigger;
@@ -1976,18 +1970,18 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             SimpleTrigger simpleTrigger = new SimpleTrigger();
             Date startTime = null;
             switch (jobTrigger.getStartType()) {
-                case NOW:
-                    startTime = new Date();
-                    break;
-                case DATETIME:
-                    startTime = jobTrigger.getStartDate();
-                    break;
+            case NOW:
+                startTime = new Date();
+                break;
+            case DATETIME:
+                startTime = jobTrigger.getStartDate();
+                break;
             }
             simpleTrigger.setStartTime(startTime);
 
             // TODO (ips): Finish implementing this.
 
-            trigger= simpleTrigger;
+            trigger = simpleTrigger;
         }
 
         return trigger;

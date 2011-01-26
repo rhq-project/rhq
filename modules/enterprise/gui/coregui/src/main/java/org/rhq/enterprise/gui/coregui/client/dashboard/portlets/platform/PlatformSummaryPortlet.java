@@ -138,7 +138,13 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         measurementService.findLiveData(resource.getId(), pmd.getDefinitionIds(),
             new AsyncCallback<Set<MeasurementData>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_portlet_platform_type_error_1(), caught);
+                    // this can happen if the agent is down, don't crash out of the entire portlet
+                    record.setAttribute("cpu", MSG.common_val_na());
+                    record.setAttribute("memory", MSG.common_val_na());
+
+                    setSortField(1);
+                    refreshFields();
+                    markForRedraw();
                 }
 
                 public void onSuccess(Set<MeasurementData> result) {

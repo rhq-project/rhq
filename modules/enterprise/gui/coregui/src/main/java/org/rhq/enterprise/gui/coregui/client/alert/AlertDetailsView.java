@@ -29,7 +29,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -87,9 +86,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private void show(Alert alert) {
-        for (Canvas child : getMembers()) {
-            removeChild(child);
-        }
+        destroyMembers();
 
         Log.info("AlertDetailsView-Alert: " + alert);
         ListGridRecord record = AlertDataSource.convert(alert);

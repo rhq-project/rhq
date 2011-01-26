@@ -156,7 +156,16 @@ public class SeleniumUtility {
      * @param layout
      */
     static public <T extends Layout> void destroyMembers(T layout) {
-        for (Canvas currentMember : layout.getMembers()) {
+        if (null == layout) {
+            return;
+        }
+
+        Canvas[] members = layout.getMembers();
+        if (null == members) {
+            return;
+        }
+
+        for (Canvas currentMember : members) {
             layout.removeMember(currentMember);
             currentMember.destroy();
         }

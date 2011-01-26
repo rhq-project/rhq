@@ -17,26 +17,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 
 /**
  * @author Ian Springer
  */
-public class ResourceOperationHistoryListView extends AbstractOperationHistoryListView {
+public class GroupOperationHistoryListView extends AbstractOperationHistoryListView {
 
-    private ResourceComposite resourceComposite;
+    private ResourceGroupComposite groupComposite;
 
-    public ResourceOperationHistoryListView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, new ResourceOperationHistoryDataSource(), null, 
-            new Criteria(ResourceOperationHistoryDataSource.CriteriaField.RESOURCE_ID,
-            String.valueOf(resourceComposite.getResource().getId())));
-        this.resourceComposite = resourceComposite;
+    public GroupOperationHistoryListView(String locatorId, ResourceGroupComposite groupComposite) {
+        super(locatorId, new ResourceOperationHistoryDataSource(), null,
+            new Criteria(GroupOperationHistoryDataSource.CriteriaField.GROUP_ID,
+            String.valueOf(groupComposite.getResourceGroup().getId())));
+        this.groupComposite = groupComposite;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class ResourceOperationHistoryListView extends AbstractOperationHistoryLi
 
     @Override
     public Canvas getDetailsView(int id) {
-        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("Details"));
+        return new Canvas();
     }
 
 }

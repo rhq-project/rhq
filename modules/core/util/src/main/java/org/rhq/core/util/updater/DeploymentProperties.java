@@ -34,10 +34,14 @@ import java.util.Properties;
 public class DeploymentProperties extends Properties {
     private static final long serialVersionUID = 1L;
 
+    // required properties that must always exist
     private static final String DEPLOYMENT_ID = "deployment.id";
     private static final String BUNDLE_NAME = "bundle.name";
     private static final String BUNDLE_VERSION = "bundle.version";
     private static final String BUNDLE_DESCRIPTION = "bundle.description";
+
+    // optional properties
+    private static final String MANAGE_ROOT_DIR = "manage.root.dir";
 
     public static DeploymentProperties loadFromFile(File file) throws Exception {
         DeploymentProperties props = new DeploymentProperties();
@@ -189,5 +193,21 @@ public class DeploymentProperties extends Properties {
         } else {
             setProperty(BUNDLE_DESCRIPTION, description);
         }
+    }
+
+    /**
+     * @return the flag to indicate if the entire root directory content is to be managed.
+     *         If there is no property, this method returns a default of <code>true</code>
+     */
+    public boolean getManageRootDir() {
+        String str = getProperty(MANAGE_ROOT_DIR);
+        if (str == null) {
+            return true;
+        }
+        return Boolean.parseBoolean(str);
+    }
+
+    public void setManageRootDir(boolean willManageRootDir) {
+        setProperty(MANAGE_ROOT_DIR, Boolean.toString(willManageRootDir));
     }
 }

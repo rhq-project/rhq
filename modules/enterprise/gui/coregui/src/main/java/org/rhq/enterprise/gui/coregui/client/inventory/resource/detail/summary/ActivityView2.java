@@ -18,10 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -35,14 +36,15 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -57,12 +59,11 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The content pane of the Resource Summary>Activity tab.
@@ -70,15 +71,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Simeon Pinder
  */
 public class ActivityView2 extends LocatableHLayout implements RefreshableView {
-    private LocatableVLayout leftPane;
-    private LocatableVLayout rightPane;
-    private LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetricsContent"));
-    private LocatableCanvas recentAlertsContent = new LocatableCanvas(extendLocatorId("RecentAlertsContent"));
-    private LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobsContent"));
-    private LocatableCanvas recentConfigurationContent = new LocatableCanvas(extendLocatorId("RecentConfigContent"));
-    private LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperationsContent"));
-    private LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEventsContent"));
-    private LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistoryContent"));
+
+    //Locatable ui references
+    private VLayout leftPane = new VLayout();;
+    private VLayout rightPane = new VLayout();;
+    private LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
+    private LocatableCanvas recentAlertsContent = new LocatableCanvas(extendLocatorId("RecentAlerts"));
+    private LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
+    private LocatableCanvas recentConfigurationContent = new LocatableCanvas(extendLocatorId("RecentConfig"));
+    private LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
+    private LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
+    private LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
+
+    //retrieve localized text
     private String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
     private String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
     private String RECENT_ALERTS = MSG.common_title_recent_alerts();
@@ -104,6 +109,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         initializeUi();
     }
 
+    /**Defines layout for the Activity page.
+     */
     private void initializeUi() {
         setPadding(5);
         setMembersMargin(5);
@@ -120,70 +127,63 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         divider5.setWidth("50%");
 
         //leftPane
-        leftPane = new LocatableVLayout(extendLocatorId("Left"));
         leftPane.setWidth("50%");
         leftPane.setPadding(5);
         leftPane.setMembersMargin(5);
         leftPane.setAutoHeight();
+
         //recentMetrics.xhtml
-        LocatableHLayout recentMetricsTitle = new TitleWithIcon(leftPane, "RecentMetrics",
-            "subsystems/monitor/Monitor_24.png", RECENT_MEASUREMENTS);
+        HLayout recentMetricsTitle = new TitleWithIcon("subsystems/monitor/Monitor_24.png", RECENT_MEASUREMENTS);
         leftPane.addMember(recentMetricsTitle);
         leftPane.addMember(recentMeasurementsContent);
         recentMeasurementsContent.setHeight(20);
-        recentMeasurementsContent.setContents(RECENT_MEASUREMENTS_NONE);
         leftPane.addMember(divider1);
         //recentAlerts.xhtml
-        LocatableHLayout recentAlertsTitle = new TitleWithIcon(leftPane, "RecentAlerts",
-            "subsystems/alert/Flag_blue_24.png", RECENT_ALERTS);
+        HLayout recentAlertsTitle = new TitleWithIcon("subsystems/alert/Flag_blue_24.png", RECENT_ALERTS);
         leftPane.addMember(recentAlertsTitle);
         leftPane.addMember(recentAlertsContent);
         recentAlertsContent.setHeight(20);
         leftPane.addMember(divider2);
         //recentOOBs.xhtml
-        LocatableHLayout recentOobsTitle = new TitleWithIcon(leftPane, "RecentOobs",
-            "subsystems/monitor/Monitor_failed_24.png", RECENT_OOB);
+        HLayout recentOobsTitle = new TitleWithIcon("subsystems/monitor/Monitor_failed_24.png", RECENT_OOB);
         leftPane.addMember(recentOobsTitle);
         leftPane.addMember(recentOobContent);
         recentOobContent.setHeight(20);
 
         //rightPane
-        rightPane = new LocatableVLayout(extendLocatorId("Right"));
         rightPane.setWidth("50%");
         rightPane.setPadding(5);
         rightPane.setMembersMargin(5);
         rightPane.setAutoHeight();
         //recentConfigUpdates.xhtml
-        LocatableHLayout recentConfigUpdatesTitle = new TitleWithIcon(leftPane, "RecentConfigUpdates",
-            "subsystems/configure/Configure_24.png", RECENT_CONFIGURATIONS);
+        HLayout recentConfigUpdatesTitle = new TitleWithIcon("subsystems/configure/Configure_24.png",
+            RECENT_CONFIGURATIONS);
         rightPane.addMember(recentConfigUpdatesTitle);
         rightPane.addMember(recentConfigurationContent);
         recentConfigurationContent.setHeight(20);
         rightPane.addMember(divider3);
         //recentOperations.xhtml
-        LocatableHLayout recentOperationsTitle = new TitleWithIcon(leftPane, "RecentOperations",
-            "subsystems/control/Operation_24.png", RECENT_OPERATIONS);
+        HLayout recentOperationsTitle = new TitleWithIcon("subsystems/control/Operation_24.png", RECENT_OPERATIONS);
         rightPane.addMember(recentOperationsTitle);
         rightPane.addMember(recentOperationsContent);
         recentOperationsContent.setHeight(20);
         rightPane.addMember(divider4);
         //recentEventCounts.xhtml
-        LocatableHLayout recentEventsTitle = new TitleWithIcon(leftPane, "RecentEvent",
-            "subsystems/event/Events_24.png", RECENT_EVENTS);
+        HLayout recentEventsTitle = new TitleWithIcon("subsystems/event/Events_24.png", RECENT_EVENTS);
         rightPane.addMember(recentEventsTitle);
         rightPane.addMember(recentEventsContent);
         recentEventsContent.setHeight(20);
-        recentEventsContent.setContents(RECENT_EVENTS_NONE);
         rightPane.addMember(divider5);
         //recentPackageHistory.xhtml
-        LocatableHLayout recentPkgHistoryTitle = new TitleWithIcon(leftPane, "RecentPkgHistory",
-            "subsystems/content/Content_24.png", RECENT_PKG_HISTORY);
+        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_PKG_HISTORY);
         rightPane.addMember(recentPkgHistoryTitle);
         rightPane.addMember(recentPkgHistoryContent);
         recentPkgHistoryContent.setHeight(20);
         loadData();
     }
 
+    /**Initiates data request.
+     */
     private void loadData() {
         getRecentAlerts();
         getRecentOperations();
@@ -198,6 +198,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
     protected void onDraw() {
         super.onDraw();
 
+        //TODO:spinder cleanup members before on draw?
         addMember(leftPane);
         addMember(rightPane);
         refresh();
@@ -208,15 +209,16 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         //        int resourceId = this.resourceComposite.getResource().getId();
         //        this.iFrame.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceId);
         markForRedraw();
+        //call out to 3rd party javascript lib
+        graphSparkLines();
     }
 
-    class TitleWithIcon extends LocatableHLayout {
-        public TitleWithIcon(String locatorId) {
-            super(locatorId);
-        }
+    /**Creates the section top titles with icon for regions of Activity page.
+     */
+    class TitleWithIcon extends HLayout {
 
-        public TitleWithIcon(Locatable parentContainer, String locatorIdentifier, String imageUrl, String title) {
-            super(parentContainer.extendLocatorId(locatorIdentifier));
+        public TitleWithIcon(String imageUrl, String title) {
+            super();
             Img titleImage = new Img(imageUrl, 24, 24);
             HTMLFlow titleElement = new HTMLFlow();
             titleElement.setWidth("*");
@@ -242,44 +244,31 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         GWTServiceLookup.getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             @Override
             public void onSuccess(PageList<Alert> result) {
-                LocatableVLayout column = new LocatableVLayout(recentAlertsContent.extendLocatorId("Content"));
+                VLayout column = new VLayout();
                 column.setHeight(10);
                 if (!result.isEmpty()) {
+                    int rowNum = 0;
                     for (Alert alert : result) {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent
-                            .extendLocatorId("ContentForm"));
+                        // alert history records do not have a usable locatorId, we'll use rownum, which is unique and
+                        // may be repeatable.
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                            .valueOf(rowNum++)));
                         row.setNumCols(3);
 
-                        StaticTextItem iconItem = new StaticTextItem();
-                        FormItemIcon img = new FormItemIcon();
-                        img.setSrc(ImageManager.getAlertIcon(alert.getAlertDefinition().getPriority()));
-                        img.setWidth(16);
-                        img.setHeight(16);
-                        img.setPrompt(alert.getAlertDefinition().getPriority().getDisplayName());
-                        iconItem.setIcons(img);
-                        iconItem.setShowTitle(false);
-
-                        LinkItem link = new LinkItem();
-                        link.setLinkTitle(alert.getAlertDefinition().getName() + ": ");
-                        link.setTitle(alert.getAlertDefinition().getName());
-                        link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/History/"
-                            + alert.getId());
-                        link.setTarget("_self");
-                        link.setShowTitle(false);
-
-                        StaticTextItem time = new StaticTextItem();
-                        time.setDefaultValue(GwtRelativeDurationConverter.format(alert.getCtime()));
-                        time.setShowTitle(false);
-                        time.setShowPickerIcon(false);
-                        time.setWrap(false);
+                        StaticTextItem iconItem = newTextItemIcon(ImageManager.getAlertIcon(alert.getAlertDefinition()
+                            .getPriority()), alert.getAlertDefinition().getPriority().getDisplayName());
+                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ",
+                            ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/History/" + alert.getId());
+                        StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(alert.getCtime()));
                         row.setItems(iconItem, link, time);
 
                         column.addMember(row);
                     }
                 } else {
-                    column.setContents(RECENT_ALERTS_NONE);
+                    LocatableDynamicForm row = createEmptyDisplayRow(recentAlertsContent.extendLocatorId("None"),
+                        RECENT_ALERTS_NONE);
+                    column.addMember(row);
                 }
-                recentAlertsContent.setContents("");
                 for (Canvas child : recentAlertsContent.getChildren()) {
                     child.destroy();
                 }
@@ -313,50 +302,32 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                 @Override
                 public void onSuccess(List<DisambiguationReport<ResourceOperationLastCompletedComposite>> result) {
-                    LocatableVLayout column = new LocatableVLayout(recentOperationsContent.extendLocatorId("Content"));
+                    VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
+                        int rowNum = 0;
                         for (DisambiguationReport<ResourceOperationLastCompletedComposite> report : result) {
+                            // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
                             LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-                                .extendLocatorId("ContentForm"));
+                                .extendLocatorId(String.valueOf(rowNum)));
                             row.setNumCols(3);
 
-                            StaticTextItem iconItem = new StaticTextItem();
-                            FormItemIcon img = new FormItemIcon();
-                            img.setSrc(ImageManager.getOperationResultsIcon(report.getOriginal().getOperationStatus()));
-                            img.setWidth(16);
-                            img.setHeight(16);
-                            img.setPrompt(report.getOriginal().getOperationStatus().getDisplayName());
-                            iconItem.setIcons(img);
-                            iconItem.setShowTitle(false);
-
-                            LinkItem link = new LinkItem();
-                            link.setLinkTitle(report.getOriginal().getOperationName() + ": ");
-                            link.setTitle(report.getOriginal().getOperationName());
-                            link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Operations/History/"
-                                + report.getOriginal().getOperationHistoryId());
-                            link.setTarget("_self");
-                            link.setShowTitle(false);
-
-                            StaticTextItem time = new StaticTextItem();
-                            time.setDefaultValue(GwtRelativeDurationConverter.format(report.getOriginal()
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
+                                .getOriginal().getOperationStatus()), report.getOriginal().getOperationStatus()
+                                .getDisplayName());
+                            LinkItem link = newLinkItem(report.getOriginal().getOperationName() + ": ",
+                                ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Operations/History/"
+                                    + report.getOriginal().getOperationHistoryId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
                                 .getOperationStartTime()));
-                            time.setShowTitle(false);
-                            time.setShowPickerIcon(false);
-                            time.setWrap(false);
                             row.setItems(iconItem, link, time);
 
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-                            .extendLocatorId("ContentForm"));
-                        row.setNumCols(3);
-                        StaticTextItem none = new StaticTextItem();
-                        none.setShowTitle(false);
-                        none.setDefaultValue(RECENT_OPERATIONS_NONE);
-                        none.setWrap(false);
-                        row.setItems(none);
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
+                            .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
                         column.addMember(row);
                     }
                     for (Canvas child : recentOperationsContent.getChildren()) {
@@ -373,12 +344,12 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
      */
     private void getRecentConfigurationUpdates() {
         final int resourceId = this.resourceComposite.getResource().getId();
-        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-        criteria.addFilterResourceIds(resourceId);
-        PageControl pageControl = new PageControl(0, 5);
-        criteria.setPageControl(pageControl);
-        GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+
+        PageControl lastFive = new PageControl(0, 5);
+        lastFive.initDefaultOrderingField("cu.createdTime", PageOrdering.DESC);
+
+        GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdates(resourceId, null, null, true,
+            lastFive, new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
 
                 @Override
                 public void onFailure(Throwable caught) {
@@ -388,50 +359,35 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                 @Override
                 public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-                    LocatableVLayout column = new LocatableVLayout(recentOperationsContent.extendLocatorId("Content"));
+                    VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
+                        int rowNum = 0;
                         for (ResourceConfigurationUpdate update : result) {
+                            // config update history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.                            
                             LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
-                                .extendLocatorId("ContentForm"));
+                                .extendLocatorId(String.valueOf(rowNum)));
                             row.setNumCols(3);
 
-                            StaticTextItem iconItem = new StaticTextItem();
-                            FormItemIcon img = new FormItemIcon();
-                            img.setSrc(ImageManager.getResourceConfigurationIcon(update.getStatus()));
-                            img.setWidth(16);
-                            img.setHeight(16);
-                            iconItem.setIcons(img);
-                            iconItem.setShowTitle(false);
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getResourceConfigurationIcon(update
+                                .getStatus()), null);
+                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
+                                + update.getSubjectName() + ":";
+                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
+                                linkTitle = MSG.common_msg_changeAutoDetected();
+                            }
+                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_RESOURCE_URL + resourceId
+                                + "/Configuration/History/" + update.getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
+                                .getCreatedTime()));
 
-                            LinkItem link = new LinkItem();
-                            link.setLinkTitle(MSG.view_resource_inventory_activity_changed_by() + " "
-                                + update.getSubjectName());
-                            link.setTitle(MSG.view_resource_inventory_activity_changed_by() + " "
-                                + update.getSubjectName());
-                            link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Configuration/History/"
-                                + update.getId());
-                            link.setTarget("_self");
-                            link.setShowTitle(false);
-
-                            StaticTextItem time = new StaticTextItem();
-                            time.setDefaultValue(new Date(update.getCreatedTime()).toString());
-                            time.setShowTitle(false);
-                            time.setShowPickerIcon(false);
-                            time.setWrap(false);
                             row.setItems(iconItem, link, time);
-
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
-                            .extendLocatorId("ContentForm"));
-                        row.setNumCols(3);
-                        StaticTextItem none = new StaticTextItem();
-                        none.setShowTitle(false);
-                        none.setDefaultValue(RECENT_CONFIGURATIONS_NONE);
-                        none.setWrap(false);
-                        row.setItems(none);
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
+                            .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
                         column.addMember(row);
                     }
                     //cleanup
@@ -444,81 +400,77 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
             });
     }
 
+    /** Fetches recent events and updates the DynamicForm instance with the latest
+     *  event information over last 24hrs.
+     */
     private void getRecentEventUpdates() {
+
         final int resourceId = this.resourceComposite.getResource().getId();
-        EventCriteria criteria = new EventCriteria();
-        //        criteria.addFilterResourceIds(resourceId);
         long now = System.currentTimeMillis();
         long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
 
-        criteria.addFilterResourceId(resourceId);
-        PageControl pageControl = PageControl.getUnlimitedInstance();
-        criteria.setPageControl(pageControl);
-        //Error retrieving recent event counts for resource [" + resourceId + "]:"
-        //        GWTServiceLookup.getEventService().getEventCountsBySeverity(resourceId, nowMinus24Hours, now,
-        //            new AsyncCallback<Map<EventSeverity, Integer>>() {
-        //                @Override
-        //                public void onFailure(Throwable caught) {
-        //                    Log.debug("Error retrieving recent event counts for resource [" + resourceId + "]:"
-        //                        + caught.getMessage());
-        //                }
-        //
-        //                @Override
-        //                public void onSuccess(Map<EventSeverity, Integer> result) {
-        //                    LocatableVLayout column = new LocatableVLayout(recentOperationsContent.extendLocatorId("Content"));
-        //                    column.setHeight(10);
-        //                    if (!result.isEmpty()) {
-        //                        for (Entry<EventSeverity, Integer> entry : result.entrySet()) {
-        //                            EventSeverity severity = entry.getKey();
-        //                            LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-        //                                .extendLocatorId("ContentForm"));
-        //                            row.setNumCols(2);
-        //
-        //                            StaticTextItem iconItem = new StaticTextItem();
-        //                            FormItemIcon img = new FormItemIcon();
-        //                            img.setSrc(ImageManager.getEventSeverityIcon(severity));
-        //                            //                        img.set
-        //                            img.setWidth(16);
-        //                            img.setHeight(16);
-        //                            iconItem.setIcons(img);
-        //                            iconItem.setShowTitle(false);
-        //
-        //                            StaticTextItem time = new StaticTextItem();
-        //                            time.setDefaultValue(entry.getValue());
-        //                            time.setShowTitle(false);
-        //                            time.setShowPickerIcon(false);
-        //                            time.setWrap(false);
-        //                            row.setItems(iconItem, time);
-        //
-        //                            column.addMember(row);
-        //                        }
-        //                    } else {
-        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-        //                            .extendLocatorId("ContentForm"));
-        //                        row.setNumCols(3);
-        //                        StaticTextItem none = new StaticTextItem();
-        //                        none.setShowTitle(false);
-        //                        none.setDefaultValue(RECENT_EVENTS_NONE);
-        //                        none.setWrap(false);
-        //                        row.setItems(none);
-        //                        column.addMember(row);
-        //                    }
-        //                    //cleanup
-        //                    for (Canvas child : recentEventsContent.getChildren()) {
-        //                        child.destroy();
-        //                    }
-        //                    recentEventsContent.addChild(column);
-        //                    recentEventsContent.markForRedraw();
-        //                }
-        //            });
+        GWTServiceLookup.getEventService().getEventCountsBySeverity(resourceId, nowMinus24Hours, now,
+            new AsyncCallback<Map<EventSeverity, Integer>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent event counts for resource [" + resourceId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(Map<EventSeverity, Integer> eventCounts) {
+                    //Now populated Tuples
+                    List<GwtTuple<EventSeverity, Integer>> results = new ArrayList<GwtTuple<EventSeverity, Integer>>();
+                    for (EventSeverity severity : eventCounts.keySet()) {
+                        int count = eventCounts.get(severity);
+                        if (count > 0) {
+                            results.add(new GwtTuple<EventSeverity, Integer>(severity, count));
+                        }
+                    }
+                    //build display
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+
+                    if (!results.isEmpty()) {
+                        int rowNum = 0;
+                        for (GwtTuple<EventSeverity, Integer> tuple : results) {
+                            // event history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.                                                        
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(2);
+                            row.setWidth(10);//pack.
+
+                            //icon
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getEventSeverityIcon(tuple
+                                .getLefty()), tuple.getLefty().name());
+                            //count
+                            StaticTextItem count = newTextItem(String.valueOf(tuple.righty));
+                            row.setItems(iconItem, count);
+
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
+                            RECENT_EVENTS_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentEventsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentEventsContent.addChild(column);
+                    recentEventsContent.markForRedraw();
+                }
+            });
     }
 
+    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
+     *  oob change details.
+     */
     private void getRecentOobs() {
         final int resourceId = this.resourceComposite.getResource().getId();
-        AlertCriteria criteria = new AlertCriteria();
-        criteria.addFilterResourceIds(resourceId);
-        PageControl pageControl = new PageControl(0, 5);
-        criteria.setPageControl(pageControl);
         GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId, 5,
             new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                 @Override
@@ -529,48 +481,26 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                 @Override
                 public void onSuccess(PageList<MeasurementOOBComposite> result) {
-                    LocatableVLayout column = new LocatableVLayout(recentAlertsContent.extendLocatorId("Content"));
+                    VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (MeasurementOOBComposite oob : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent
-                                .extendLocatorId("ContentForm"));
-                            row.setNumCols(3);
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
+                                .getScheduleName()));
+                            row.setNumCols(2);
 
-                            //                            StaticTextItem iconItem = new StaticTextItem();
-                            //                            FormItemIcon img = new FormItemIcon();
-                            //                            img.setSrc(ImageManager.getAlertIcon(alert.getAlertDefinition().getPriority()));
-                            //                            img.setWidth(16);
-                            //                            img.setHeight(16);
-                            //                            iconItem.setIcons(img);
-                            //                            iconItem.setShowTitle(false);
-                            //
-                            //                            LinkItem link = new LinkItem();
-                            //                            link.setLinkTitle(alert.getAlertDefinition().getName());
-                            //                            link.setTitle(alert.getAlertDefinition().getName());
-                            //                            link.setValue(ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/Definitions/"
-                            //                                + alert.getAlertDefinition().getId());
-                            //                            link.setTarget("_self");
-                            //                            link.setShowTitle(false);
-                            //
-                            //                            StaticTextItem time = new StaticTextItem();
-                            //                            time.setDefaultValue(new Date(alert.getAlertDefinition().getCtime()).toString());
-                            //                            time.setShowTitle(false);
-                            //                            time.setShowPickerIcon(false);
-                            //                            time.setWrap(false);
-                            //                            row.setItems(iconItem, link, time);
-                            //
-                            //                            column.addMember(row);
+                            String title = oob.getScheduleName() + ":";
+                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
+                                + "&id=" + resourceId + "&mode=chartSingleMetricSingleResource";
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(oob.getTimestamp()));
+
+                            row.setItems(link, time);
+                            column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent
-                            .extendLocatorId("ContentForm"));
-                        row.setNumCols(3);
-                        StaticTextItem none = new StaticTextItem();
-                        none.setShowTitle(false);
-                        none.setDefaultValue(RECENT_OOB_NONE);
-                        none.setWrap(false);
-                        row.setItems(none);
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
+                            RECENT_OOB_NONE);
                         column.addMember(row);
                     }
                     recentOobContent.setContents("");
@@ -602,50 +532,29 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
 
                 @Override
                 public void onSuccess(PageList<InstalledPackageHistory> result) {
-                    LocatableVLayout column = new LocatableVLayout(recentPkgHistoryContent.extendLocatorId("Content"));
+                    VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (InstalledPackageHistory history : result) {
                             LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-                                .extendLocatorId("ContentForm"));
+                                .extendLocatorId(history.getPackageVersion().getFileName()
+                                    + history.getPackageVersion().getVersion()));
                             row.setNumCols(3);
 
-                            StaticTextItem iconItem = new StaticTextItem();
-                            FormItemIcon img = new FormItemIcon();
-                            img.setSrc("subsystems/content/Content_16.png");
-                            img.setWidth(16);
-                            img.setHeight(16);
-                            iconItem.setIcons(img);
-                            iconItem.setShowTitle(false);
+                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                            String title = history.getPackageVersion().getFileName() + ":";
+                            String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
+                                + "&selectedHistoryId=" + history.getId();
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(history
+                                .getTimestamp()));
 
-                            LinkItem link = new LinkItem();
-                            link.setLinkTitle(history.getPackageVersion().getFileName() + ":");
-                            link.setTitle(history.getPackageVersion().getFileName() + ":");
-
-                            //TODO: spinder. Upgrade link when content available in coreGui. Not yet iframed correctly.
-                            link.setValue("/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
-                                + "&selectedHistoryId=" + history.getId());
-                            link.setTarget("_self");
-                            link.setShowTitle(false);
-
-                            StaticTextItem time = new StaticTextItem();
-                            time.setDefaultValue(GwtRelativeDurationConverter.format(history.getTimestamp()));
-                            time.setShowTitle(false);
-                            time.setShowPickerIcon(false);
-                            time.setWrap(false);
                             row.setItems(iconItem, link, time);
-
                             column.addMember(row);
                         }
                     } else {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-                            .extendLocatorId("ContentForm"));
-                        row.setNumCols(3);
-                        StaticTextItem none = new StaticTextItem();
-                        none.setShowTitle(false);
-                        none.setDefaultValue(RECENT_PKG_HISTORY_NONE);
-                        none.setWrap(false);
-                        row.setItems(none);
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent
+                            .extendLocatorId("None"), RECENT_PKG_HISTORY_NONE);
                         column.addMember(row);
                     }
                     //cleanup
@@ -664,7 +573,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
      */
     private void getRecentMetrics() {
         //display container
-        final LocatableVLayout column = new LocatableVLayout(recentMeasurementsContent.extendLocatorId("Content"));
+        final VLayout column = new VLayout();
+        column.setHeight(10);//pack
         final int resourceId = this.resourceComposite.getResource().getId();
 
         //retrieve all relevant measurement definition ids.
@@ -703,6 +613,7 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                 @Override
                 public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
                     if (!results.isEmpty()) {
+                        boolean someChartedData = false;
                         //iterate over the retrieved charting data
                         for (int index = 0; index < displayOrder.length; index++) {
 
@@ -734,7 +645,8 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                                     commaDelimitedList += d.getValue() + ",";
                                 }
                             }
-                            LocatableDynamicForm row = new LocatableDynamicForm(column.extendLocatorId("ContentForm"));
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId(md.getName()));
                             row.setNumCols(3);
                             HTMLFlow graph = new HTMLFlow();
                             //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
@@ -753,34 +665,35 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
                             graphContainer.setCanvas(graph);
 
                             //Link/title element
-                            LinkItem link = new LinkItem();
-                            link.setLinkTitle(md.getDisplayName() + ":");
                             //TODO: spinder, change link whenever portal.war/graphing is removed.
-                            link
-                                .setValue("/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-                                    + resourceId + "&m=" + md.getId());
-                            link.setTarget("_self");
-                            link.setShowTitle(false);
+                            String title = md.getDisplayName() + ":";
+                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
+                                + resourceId + "&m=" + md.getId();
+                            LinkItem link = newLinkItem(title, destination);
 
                             //Value
-                            StaticTextItem value = new StaticTextItem();
                             String convertedValue = lastValue + " " + md.getUnits();
                             convertedValue = convertLastValueForDisplay(lastValue, md);
+                            StaticTextItem value = newTextItem(convertedValue);
 
-                            value.setDefaultValue(convertedValue);
-                            value.setShowTitle(false);
-                            value.setShowPickerIcon(false);
-                            value.setWrap(false);
                             row.setItems(graphContainer, link, value);
                             //if graph content returned
                             if ((md.getName().trim().indexOf("Trait.") == -1) && (lastValue != -1)) {
                                 column.addMember(row);
+                                someChartedData = true;
                             }
+                        }
+                        if (!someChartedData) {// when there are results but no chartable entries.
+                            LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
+                                .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
+                            column.addMember(row);
                         }
                         //call out to 3rd party javascript lib
                         graphSparkLines();
                     } else {
-                        column.setContents(RECENT_MEASUREMENTS_NONE);
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
+                            .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
+                        column.addMember(row);
                     }
                 }
             });
@@ -789,7 +702,6 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         for (Canvas child : recentMeasurementsContent.getChildren()) {
             child.destroy();
         }
-        recentMeasurementsContent.setContents("");
         recentMeasurementsContent.addChild(column);
         //        graphSparkLines();
         recentMeasurementsContent.markForRedraw();
@@ -818,6 +730,58 @@ public class ActivityView2 extends LocatableHLayout implements RefreshableView {
         convertedValue = convertedValues[0];
 
         return convertedValue;
+    }
+
+    /** Create empty display row(LocatableDynamicForm) that is constently defined and displayed.
+     *
+     * @param column Locatable parent colum.
+     * @param emptyMessage Contents of the empty region
+     * @return
+     */
+    private LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
+        LocatableDynamicForm row = null;
+        row = new LocatableDynamicForm(locatorId);
+
+        row.setNumCols(3);
+        StaticTextItem none = new StaticTextItem();
+        none.setShowTitle(false);
+        none.setDefaultValue(emptyMessage);
+        none.setWrap(false);
+        row.setItems(none);
+        return row;
+    }
+
+    private StaticTextItem newTextItemIcon(String imageSrc, String mouseOver) {
+        StaticTextItem iconItem = new StaticTextItem();
+        FormItemIcon img = new FormItemIcon();
+        img.setSrc(imageSrc);
+        img.setWidth(16);
+        img.setHeight(16);
+        if (mouseOver != null) {
+            img.setPrompt(mouseOver);
+        }
+        iconItem.setIcons(img);
+        iconItem.setShowTitle(false);
+        return iconItem;
+    }
+
+    private LinkItem newLinkItem(String title, String destination) {
+        LinkItem link = new LinkItem();
+        link.setLinkTitle(title);
+        link.setTitle(title);
+        link.setValue(destination);
+        link.setTarget("_self");
+        link.setShowTitle(false);
+        return link;
+    }
+
+    private StaticTextItem newTextItem(String contents) {
+        StaticTextItem item = new StaticTextItem();
+        item.setDefaultValue(contents);
+        item.setShowTitle(false);
+        item.setShowPickerIcon(false);
+        item.setWrap(false);
+        return item;
     }
 
     //This is a JSNI call out to the third party javascript lib to execute on the data inserted into the DOM.

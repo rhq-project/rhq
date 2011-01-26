@@ -23,6 +23,8 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -56,11 +58,20 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         setAlign(Alignment.CENTER);
 
         label.setAlign(Alignment.CENTER);
-        label.setWidth("400px");
+        label.setWidth("600px");
         label.setHeight("25px");
 
         setLabelEmpty();
         addMember(label);
+
+        // sometimes its annoying to have the error message hang around for too long
+        // let the user click the message so it goes away on demand
+        addDoubleClickHandler(new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                clearMessage(true);
+            }
+        });
 
         CoreGUI.getMessageCenter().addMessageListener(this);
     }

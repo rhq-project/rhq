@@ -293,9 +293,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
                  */
-                for (Canvas child : detailsHolder.getMembers()) {
-                    child.destroy();
-                }
+                SeleniumUtility.destroyMembers(detailsHolder);
 
                 buildDetailsView();
             }
@@ -335,9 +333,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        for (Canvas child : detailsHolder.getMembers()) {
-                            child.destroy();
-                        }
+                        SeleniumUtility.destroyMembers(detailsHolder);
 
                         contents.animateShow(AnimationEffect.WIPE);
                     }

@@ -65,6 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -202,6 +203,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         addMember(this.hlayout);
     }
 
+    @Override
+    protected void onDestroy() {
+        SeleniumUtility.destroyMembers(hlayout);
+    }
+
     private SectionStack buildAvailableItemsStack() {
         SectionStack availableSectionStack = new SectionStack();
         availableSectionStack.setWidth(300);
@@ -265,7 +271,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
 
         // Add event handlers.
-        
+
         this.availableGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 updateButtonEnablement();
@@ -311,7 +317,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         }
                     } else {
                         availableRecords.addAll(Arrays.asList(allRecords));
-                    }                    
+                    }
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
                 } finally {
                     updateButtonEnablement();
@@ -505,26 +511,6 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected String getAssignedItemsGridTitle() {
         String itemTitle = getItemTitle();
         return MSG.view_selector_assigned(itemTitle);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        assignedGrid.destroy();
-
-        if (!isReadOnly) {
-            if (availableFilterForm != null) {
-                availableFilterForm.destroy();
-            }
-
-            availableGrid.destroy();
-
-            addButton.destroy();
-            removeButton.destroy();
-            addAllButton.destroy();
-            removeAllButton.destroy();
-        }
     }
 
     protected void updateButtonEnablement() {

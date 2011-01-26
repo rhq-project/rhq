@@ -64,6 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Single
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * This notification form will be used for the Resource Operation sender. This form lets
@@ -521,22 +522,12 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     }
 
     private void hideOperationArguments() {
-        Canvas[] canvii = operationArgumentsCanvasItem.getMembers();
-        if (canvii != null) {
-            for (Canvas canvas : canvii) {
-                canvas.destroy();
-            }
-        }
+        SeleniumUtility.destroyMembers(operationArgumentsCanvasItem);
         markForRedraw();
     }
 
     private void showOperationArguments(ConfigurationDefinition def, Configuration config) {
-        Canvas[] canvii = operationArgumentsCanvasItem.getMembers();
-        if (canvii != null) {
-            for (Canvas canvas : canvii) {
-                canvas.destroy();
-            }
-        }
+        SeleniumUtility.destroyMembers(operationArgumentsCanvasItem);
 
         if (def != null) {
             ConfigurationEditor configEditor = new ConfigurationEditor(extendLocatorId("opArgs"), def, config);

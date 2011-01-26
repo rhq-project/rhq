@@ -166,19 +166,19 @@ public class ResourceSearchView extends Table {
             availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
-            .view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            .view_inventory_resources_uninventoryConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 int[] resourceIds = TableUtility.getIds(selection);
                 ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
                 resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(), caught);
                     }
 
                     public void onSuccess(List<Integer> result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
+                            new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
 
                         ResourceSearchView.this.refresh();
                     }

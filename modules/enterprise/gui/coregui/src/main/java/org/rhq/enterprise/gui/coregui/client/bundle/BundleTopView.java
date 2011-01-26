@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * This is the main bundle view with left hand side trees and right hand side list/details view.
@@ -136,9 +137,8 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
     }
 
     private void setContent(Canvas newContent) {
-        for (Canvas c : contentCanvas.getMembers()) {
-            c.destroy();
-        }
+        SeleniumUtility.destroyMembers(contentCanvas);
+
         contentCanvas.addMember(newContent);
         contentCanvas.markForRedraw();
     }

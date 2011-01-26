@@ -138,19 +138,18 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         List<FormItem> items = new ArrayList<FormItem>();
 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
-        if (form.isNewRecord()) {
-            TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
-            items.add(nameItem);
+        FormItem nameItem;
+        if (isNewRecord()) {
+            nameItem = new TextItem(UsersDataSource.Field.NAME);
         } else {
-            StaticTextItem nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
-            items.add(nameItem);
+            nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
         }
+        items.add(nameItem);
 
-        RadioGroupItem isLdapItem = new RadioGroupItem(UsersDataSource.Field.LDAP);
-        isLdapItem.setVertical(false);
+        StaticTextItem isLdapItem = new StaticTextItem(UsersDataSource.Field.LDAP);
         items.add(isLdapItem);
 
-        boolean isLdap = Boolean.valueOf(isLdapItem.getValueAsString());
+        boolean isLdap = Boolean.valueOf(form.getValueAsString(UsersDataSource.Field.LDAP));
 
         // Only display the password fields for non-LDAP users (i.e. users that have an associated RHQ Principal).
         if (!isLdap) {

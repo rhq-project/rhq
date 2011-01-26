@@ -56,12 +56,22 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
     private SubjectSelector selector;
 
+    private boolean isInitialized = false;
+
     public SystemUsersNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
         super(locatorId, notif, sender);
     }
 
     @Override
     protected void onInit() {
+        // for reasons I'm not sure about, perhaps due to the way NewNotificationEditor destroys its own parent
+        // via callback, this onInit may be called a second time, during the destroy() call chain. Prevent
+        // it from re-executing.
+        if (isInitialized) {
+            return;
+        }
+        isInitialized = true;
+
         super.onInit();
 
         String subjectIds = getConfiguration().getSimpleValue(PROPNAME, ""); // we know the subject plugin defines this

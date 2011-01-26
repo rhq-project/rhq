@@ -218,8 +218,9 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_bundle_dest_purgeSuccessful(destination.getName()),
                                             Message.Severity.Info));
-                                    // Bundle destination is purged, go back to bundle destinations root view
-                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0));
+                                    // Bundle destination is purged, go back to bundle destination view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), destination
+                                        .getId()), true);
                                 }
                             });
                         }

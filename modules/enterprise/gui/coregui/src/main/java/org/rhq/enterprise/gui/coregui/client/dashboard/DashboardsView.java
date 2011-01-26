@@ -163,6 +163,10 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         Canvas[] members = getMembers();
         removeMembers(members);
 
+        if (null != tabSet) {
+            tabSet.destroy();
+        }
+
         this.dashboardsByName = new HashMap<String, Dashboard>(dashboards.size());
         for (Dashboard dashboard : dashboards) {
             this.dashboardsByName.put(dashboard.getName(), dashboard);

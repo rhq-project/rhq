@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
@@ -43,7 +44,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -57,12 +57,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Ian Springer
  */
-public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
+public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
 
-    private ResourceComposite resourceComposite;
     private Map<String, String> operationNameToDescriptionMap = new HashMap<String, String>();
     private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap =
         new HashMap<String, ConfigurationDefinition>();
@@ -73,11 +72,10 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
     private Configuration parameters;
     private EnhancedDynamicForm notesForm;
 
-    public ResourceOperationScheduleDetailsView(String locatorId, ResourceComposite resourceComposite, int scheduleId) {
-        super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite), scheduleId, "Scheduled Operation", null);
+    public AbstractOperationScheduleDetailsView(String locatorId, OperationScheduleDataSource dataSource,
+                                                ResourceType resourceType, int scheduleId) {
+        super(locatorId, dataSource, scheduleId, "Scheduled Operation", null);
 
-        this.resourceComposite = resourceComposite;
-        ResourceType resourceType = this.resourceComposite.getResource().getResourceType();
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         for (OperationDefinition operationDefinition : operationDefinitions) {
             this.operationNameToDescriptionMap.put(operationDefinition.getName(), operationDefinition.getDescription());
@@ -142,10 +140,12 @@ public class ResourceOperationScheduleDetailsView extends AbstractRecordEditor {
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
         if (!isNewRecord()) {
-            StaticTextItem nextFireTimeItem = new StaticTextItem(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
-                    "Next Scheduled Execution");
+            StaticTextItem nextFireTimeItem = new StaticTextItem(OperationScheduleDataSource.Field.NEXT_FIRE_TIME);
             notesFields.add(nextFireTimeItem);
         }
+
+        TextItem timeoutItem = new TextItem(OperationScheduleDataSource.Field.TIMEOUT, "Timeout (in seconds)");
+        notesFields.add(timeoutItem);
 
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
         notesItem.setWidth(450);

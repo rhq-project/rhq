@@ -76,7 +76,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
             form.destroy();
         }
 
-        resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
+        resourceBossService.getInventorySummary(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_portlet_inventory_error1(), throwable);
             }

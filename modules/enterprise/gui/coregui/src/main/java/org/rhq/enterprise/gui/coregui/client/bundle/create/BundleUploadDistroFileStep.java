@@ -214,7 +214,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             return;
         }
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
         bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(

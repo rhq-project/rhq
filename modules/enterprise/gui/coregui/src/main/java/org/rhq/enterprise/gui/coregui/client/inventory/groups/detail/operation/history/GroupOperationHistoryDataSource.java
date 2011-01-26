@@ -17,64 +17,62 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationHistory;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.OperationHistoryDataSource;
 
+import java.util.Arrays;
+
 /**
  * @author Ian Springer
  */
-public class ResourceOperationHistoryDataSource extends OperationHistoryDataSource<ResourceOperationHistory> {
+public class GroupOperationHistoryDataSource extends OperationHistoryDataSource<GroupOperationHistory> {
 
     public static abstract class Field extends OperationHistoryDataSource.Field {
-        public static final String RESOURCE = "resource";
+        public static final String GROUP = "group";
     }
 
     public static abstract class CriteriaField {
-        public static final String RESOURCE_ID = "resourceId";
+        public static final String GROUP_ID = "groupId";
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        GroupOperationHistoryCriteria criteria = new GroupOperationHistoryCriteria();
 
-        if (request.getCriteria().getValues().containsKey(CriteriaField.RESOURCE_ID)) {
-            int resourceId = Integer.parseInt((String)request.getCriteria().getValues().get(
-                CriteriaField.RESOURCE_ID));
-            criteria.addFilterResourceIds(resourceId);
+        if (request.getCriteria().getValues().containsKey(CriteriaField.GROUP_ID)) {
+            int groupId = Integer.parseInt((String)request.getCriteria().getValues().get(
+                CriteriaField.GROUP_ID));
+            criteria.addFilterResourceGroupIds(Arrays.asList(groupId));
         }
 
         criteria.setPageControl(getPageControl(request));
 
-        operationService.findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
-                }
+        operationService.findGroupOperationHistoriesByCriteria(criteria,
+                new AsyncCallback<PageList<GroupOperationHistory>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
+                    }
 
-                public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+                    public void onSuccess(PageList<GroupOperationHistory> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
     }
 
     @Override
-    public ListGridRecord copyValues(ResourceOperationHistory from) {
+    public ListGridRecord copyValues(GroupOperationHistory from) {
         ListGridRecord record = super.copyValues(from);
-        record.setAttribute(Field.RESOURCE, from.getResource());
+        record.setAttribute(Field.GROUP, from.getGroup());
         return record;
     }
 

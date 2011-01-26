@@ -57,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.H
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.MembersView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -233,7 +234,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSummaryTab();
         updateMonitoringTab(groupId, groupCategory, facets);
         updateInventoryTab(groupId, facets);
-        updateOperationsTab(groupId, groupCategory, facets);
+        updateOperationsTab(groupCategory, facets);
         updateAlertsTab(groupComposite, groupCategory);
         updateConfigurationTab(groupId, groupCategory, facets);
         updateEventsTab(groupComposite, groupCategory, facets);
@@ -293,14 +294,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
     }
 
-    private void updateOperationsTab(int groupId, GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+    private void updateOperationsTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
             updateSubTab(this.operationsTab, this.operationsSchedule,
                     new GroupOperationScheduleListView(this.operationsSchedule.extendLocatorId("View"),
                             this.groupComposite), true, true);
-            updateSubTab(this.operationsTab, this.operationsHistory, new FullHTMLPane(this.operationsHistory.extendLocatorId("View"),
-                "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.operationsTab, this.operationsHistory, new GroupOperationHistoryListView(
+                    this.operationsHistory.extendLocatorId("View"), this.groupComposite), true, true);
         }
     }
 

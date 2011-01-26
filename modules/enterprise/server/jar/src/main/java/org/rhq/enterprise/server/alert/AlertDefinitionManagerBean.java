@@ -78,6 +78,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
+    
     @EJB
     @IgnoreDependency
     private AlertManagerLocal alertManager;
@@ -85,6 +86,10 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @EJB
     private StatusManagerLocal agentStatusManager;
 
+    @EJB
+    @IgnoreDependency
+    private AlertNotificationManagerLocal alertNotificationManager;
+    
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
         if (alertDefinition.getResourceType() != null) { // an alert template
             return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
@@ -530,6 +535,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
 
         fixRecoveryId(oldAlertDefinition);
+                
         AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 
         if (isResourceLevel
@@ -611,9 +617,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                         + "' is a trending metric, and thus will never have baselines calculated for it.");
                 }
             }
-        }
-
-        return;
+        }    
+        
+        alertNotificationManager.finalizeNotifications(alertDefinition.getAlertNotifications());        
     }
 
     private void notifyAlertConditionCacheManager(Subject subject, String methodName, AlertDefinition alertDefinition,

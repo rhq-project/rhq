@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEdito
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -145,11 +146,13 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         }
 
         TextItem timeoutItem = new TextItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout (in seconds)");
+        FormUtility.addContextualHelp(timeoutItem, "a time duration in seconds; if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was initiated");
         notesFields.add(timeoutItem);
 
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
         notesItem.setWidth(450);
-        notesItem.setHeight(150);
+        notesItem.setHeight(120);
+        FormUtility.addContextualHelp(notesItem, "an optional description of this scheduled operation (e.g. \"nightly maintenance app server restart\")");
         notesFields.add(notesItem);
 
         this.notesForm.setFields(notesFields.toArray(new FormItem[notesFields.size()]));
@@ -236,7 +239,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         String operationName = getSelectedOperationName();
         String value;
         if (operationName == null) {
-            value = "<i>Select an operation.</i>";
+            value = "<i>Select an operation to see its description.</i>";
         } else {
             value = this.operationNameToDescriptionMap.get(operationName);
         }
@@ -247,7 +250,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         String operationName = getSelectedOperationName();
         String value;
         if (operationName == null) {
-            value = "<i>Select an operation.</i>";
+            value = "<i>Select an operation to see its parameters.</i>";
         } else {
             ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap.get(operationName);
             if (parametersDefinition == null || parametersDefinition.getPropertyDefinitions().isEmpty()) {

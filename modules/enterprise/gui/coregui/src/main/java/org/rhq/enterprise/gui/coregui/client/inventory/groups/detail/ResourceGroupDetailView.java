@@ -203,7 +203,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .view_tabs_common_schedule()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        operationsTab.registerSubTabs(this.operationsHistory, this.operationsSchedule);
+        operationsTab.registerSubTabs(this.operationsSchedule, this.operationsHistory);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",

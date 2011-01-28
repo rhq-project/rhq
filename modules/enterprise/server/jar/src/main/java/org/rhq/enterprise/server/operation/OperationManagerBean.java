@@ -582,6 +582,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             }
         }
 
+        boolean haltOnFailure = jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE);
+
         Integer entityId = getOperationScheduleEntityId(jobDetail);
 
         GroupOperationSchedule sched = new GroupOperationSchedule();
@@ -595,10 +597,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setParameters(parameters);
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
-        sched.setHaltOnFailure(jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE));
+        sched.setHaltOnFailure(haltOnFailure);
         Trigger trigger = getTriggerOfJob(jobDetail);
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
+        sched.setNextFireTime(trigger.getNextFireTime());
 
         return sched;
     }

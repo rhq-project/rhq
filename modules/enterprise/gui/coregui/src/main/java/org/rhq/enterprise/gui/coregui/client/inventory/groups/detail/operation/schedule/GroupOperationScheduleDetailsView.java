@@ -29,6 +29,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
 
     private ResourceGroupComposite groupComposite;
     private ListGridRecord[] memberResourceRecords;
+    private DynamicForm executionModeForm;
 
     public GroupOperationScheduleDetailsView(String locatorId, ResourceGroupComposite groupComposite, int scheduleId) {
         super(locatorId, new GroupOperationScheduleDataSource(groupComposite),
@@ -67,7 +68,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        DynamicForm executionModeForm = new DynamicForm();
+        this.executionModeForm = new DynamicForm();
         executionModeForm.setColWidths("250", "*");
 
         RadioGroupItem executionModeItem = new RadioGroupItem("executionMode", "Member Resource Execution Order");
@@ -103,5 +104,13 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         contentPane.addMember(memberExecutionOrderer);
 
         return contentPane;
+    }
+
+    @Override
+    protected void save(DSRequest requestProperties) {
+        Boolean haltOnFailure = (Boolean) this.executionModeForm.getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+        getForm().setValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE, haltOnFailure);
+
+        super.save(requestProperties);
     }
 }

@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -37,6 +38,11 @@ import java.util.List;
  * @author Ian Springer
  */
 public class GroupOperationScheduleDataSource extends AbstractOperationScheduleDataSource<GroupOperationSchedule> {
+
+    public static abstract class Field extends AbstractOperationScheduleDataSource.Field {
+        public static final String HALT_ON_FAILURE = "haltOnFailure";
+        public static final String EXECUTION_ORDER = "executionOrder";
+    }
 
     private ResourceGroupComposite groupComposite;
 
@@ -100,6 +106,26 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
                 throw new RuntimeException("Failed to remove " + scheduleToRemove, caught);
             }
         });
+    }
+
+    @Override
+    public ListGridRecord copyValues(GroupOperationSchedule from) {
+        ListGridRecord record = super.copyValues(from);
+
+        record.setAttribute(Field.HALT_ON_FAILURE, from.getHaltOnFailure());
+        // TODO: set executionOrder field
+
+        return record;
+    }
+
+    @Override
+    public GroupOperationSchedule copyValues(Record from) {
+        GroupOperationSchedule groupOperationSchedule = super.copyValues(from);
+
+        groupOperationSchedule.setHaltOnFailure(from.getAttributeAsBoolean(Field.HALT_ON_FAILURE));
+        // TODO: set executionOrder field
+
+        return groupOperationSchedule;
     }
 
 }

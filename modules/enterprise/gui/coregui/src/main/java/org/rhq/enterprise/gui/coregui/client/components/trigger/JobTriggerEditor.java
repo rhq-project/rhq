@@ -48,6 +48,7 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -544,15 +545,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         TextItem repeatIntervalItem = new TextItem(FIELD_REPEAT_INTERVAL, "Run now and every");
         repeatIntervalItem.setRequired(true);
 
-        // Configure context-sensitive help.
-        FormItemIcon helpIcon = new FormItemIcon();
-        helpIcon.setSrc("[SKIN]/actions/help.png");
-        repeatIntervalItem.setIcons(helpIcon);
-        repeatIntervalItem.addIconClickHandler(new IconClickHandler() {
-            public void onIconClick(IconClickEvent event) {
-                SC.say("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-            }
-        });
+        FormUtility.addContextualHelp(repeatIntervalItem,
+                "N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
 
         // Configure validation.
         RegExpValidator repeatIntervalValidator = new RegExpValidator("[1-9][0-9]*[ ]*(seconds|s|minutes|m|hours|h|days|d|weeks|w|months|M|quarters|q|years|y)");
@@ -572,15 +566,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
 
-        // Configure context-sensitive help.
-        helpIcon = new FormItemIcon();
-        helpIcon.setSrc("[SKIN]/actions/help.png");
-        repeatDurationItem.setIcons(helpIcon);
-        repeatDurationItem.addIconClickHandler(new IconClickHandler() {
-            public void onIconClick(IconClickEvent event) {
-                SC.say("N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
-            }
-        });
+        FormUtility.addContextualHelp(repeatDurationItem,
+            "N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
 
         // Configure validation.
         RegExpValidator repeatDurationValidator = new RegExpValidator("[1-9][0-9]*[ ]*(times|repetitions|seconds|s|minutes|m|hours|h|days|d|weeks|w|months|M|quarters|q|years|y)");
@@ -646,15 +633,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
 
-        // Configure context-sensitive help.
-        FormItemIcon icon = new FormItemIcon();
-        icon.setSrc("[SKIN]/actions/help.png");
-        startDelayItem.setIcons(icon);
-        startDelayItem.addIconClickHandler(new IconClickHandler() {
-            public void onIconClick(IconClickEvent event) {
-                SC.say("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-            }
-        });
+        FormUtility.addContextualHelp(startDelayItem,
+            "N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
 
         // Configure validation.
         RegExpValidator startDelayValidator = new RegExpValidator("[1-9][0-9]*([ ]+(seconds|minutes|hours|days|weeks|months|quarters|years)|(s|m|h|d|w|M|q|y))");

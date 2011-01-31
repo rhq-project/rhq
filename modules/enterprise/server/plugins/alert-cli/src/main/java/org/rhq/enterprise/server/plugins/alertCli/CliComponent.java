@@ -164,7 +164,7 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
                         return map.getSimple(PROP_RESOURCE_ID).getIntegerValue();
                     };
                 }, 
-                DefaultDisambiguationUpdateStrategies.getDefault());
+                DefaultDisambiguationUpdateStrategies.KEEP_ALL_PARENTS);
             
             DisambiguationReportRenderer renderer = new DisambiguationReportRenderer();
             

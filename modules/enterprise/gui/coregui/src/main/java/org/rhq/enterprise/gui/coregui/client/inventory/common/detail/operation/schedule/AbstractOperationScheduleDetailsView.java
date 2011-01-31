@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -95,8 +96,23 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     }
 
     @Override
+    protected EnhancedDynamicForm buildForm() {
+        EnhancedDynamicForm form = super.buildForm();
+
+        form.setNumCols(2);
+        form.setColWidths("165", "*");
+
+        return form;
+    }
+
+    @Override
     protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
+
+        if (!isNewRecord()) {
+            StaticTextItem idItem = new StaticTextItem(ResourceOperationScheduleDataSource.Field.ID);
+            items.add(idItem);
+        }
 
         SelectItem operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
         items.add(operationNameItem);
@@ -141,7 +157,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
         if (!isNewRecord()) {
-            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
+            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME, "Next Fire Time");
             notesFields.add(nextFireTimeItem);
         }
 
@@ -151,7 +167,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
         notesItem.setWidth(450);
-        notesItem.setHeight(120);
+        notesItem.setHeight(60);
         FormUtility.addContextualHelp(notesItem, "an optional description of this scheduled operation (e.g. \"nightly maintenance app server restart\")");
         notesFields.add(notesItem);
 
@@ -266,6 +282,12 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
                 for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
                     child.destroy();
                 }
+
+                // Add spacer so params are indented.
+                VLayout horizontalSpacer = new VLayout();
+                horizontalSpacer.setWidth(165);
+                this.operationParametersConfigurationHolder.addMember(horizontalSpacer);
+
                 Configuration defaultConfiguration = (parametersDefinition.getDefaultTemplate() != null) ?
                     parametersDefinition.getDefaultTemplate().createConfiguration() : new Configuration();
                 ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor", parametersDefinition,

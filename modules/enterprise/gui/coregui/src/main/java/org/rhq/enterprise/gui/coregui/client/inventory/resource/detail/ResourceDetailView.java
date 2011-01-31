@@ -106,7 +106,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryGroups;
     private SubTab inventoryAgent;
     private SubTab operationsHistory;
-    private SubTab operationsSchedule;
+    private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
     private SubTab configCurrent;
@@ -188,11 +188,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.operationsSchedule = new SubTab(operationsTab.extendLocatorId("Schedule"), new ViewName("Schedule", MSG
-            .view_tabs_common_schedule()), null);
+        this.operationsSchedules = new SubTab(operationsTab.extendLocatorId("Schedules"), new ViewName("Schedules", MSG
+            .view_tabs_common_schedules()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        operationsTab.registerSubTabs(this.operationsHistory, this.operationsSchedule);
+        operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
@@ -344,11 +344,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
 
+            updateSubTab(this.operationsTab, this.operationsSchedules, new ResourceOperationScheduleListView(
+                operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), true, true);
+
             updateSubTab(this.operationsTab, this.operationsHistory, new ResourceOperationHistoryListView(operationsTab
                 .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
-
-            updateSubTab(this.operationsTab, this.operationsSchedule, new ResourceOperationScheduleListView(
-                operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), true, true);
         }
     }
 

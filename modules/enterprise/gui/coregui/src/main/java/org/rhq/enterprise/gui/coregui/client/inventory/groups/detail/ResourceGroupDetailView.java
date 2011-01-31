@@ -96,7 +96,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab inventoryConn;
     private SubTab inventoryConnHistory;
     private SubTab operationsHistory;
-    private SubTab operationsSchedule;
+    private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
     private SubTab configCurrent;
@@ -199,11 +199,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.operationsSchedule = new SubTab(operationsTab.extendLocatorId("Schedule"), new ViewName("Schedule", MSG
-            .view_tabs_common_schedule()), null);
+        this.operationsSchedules = new SubTab(operationsTab.extendLocatorId("Schedules"), new ViewName("Schedules", MSG
+            .view_tabs_common_schedules()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        operationsTab.registerSubTabs(this.operationsSchedule, this.operationsHistory);
+        operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
@@ -297,8 +297,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private void updateOperationsTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
-            updateSubTab(this.operationsTab, this.operationsSchedule,
-                    new GroupOperationScheduleListView(this.operationsSchedule.extendLocatorId("View"),
+            updateSubTab(this.operationsTab, this.operationsSchedules,
+                    new GroupOperationScheduleListView(this.operationsSchedules.extendLocatorId("View"),
                             this.groupComposite), true, true);
             updateSubTab(this.operationsTab, this.operationsHistory, new GroupOperationHistoryListView(
                     this.operationsHistory.extendLocatorId("View"), this.groupComposite), true, true);

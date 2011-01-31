@@ -93,9 +93,9 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout, String cronString) throws RuntimeException {
         try {
-            CronTrigger ct = new CronTrigger("resource " + resourceId + "_" + operationName, "group", cronString);
+            CronTrigger cronTrigger = new CronTrigger("resource " + resourceId + "_" + operationName, "group", cronString);
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
-                resourceId, operationName, parameters, ct, description);
+                resourceId, operationName, parameters, cronTrigger, description);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

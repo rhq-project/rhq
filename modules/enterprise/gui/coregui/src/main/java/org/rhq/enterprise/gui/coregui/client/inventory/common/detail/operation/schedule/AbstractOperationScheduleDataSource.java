@@ -84,7 +84,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, "ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, "Schedule ID");
         idField.setPrimaryKey(true);
         idField.setCanEdit(false);
         fields.add(idField);               
@@ -134,15 +134,18 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
         to.setSubject(subjectRecord.toSubject());
         Configuration parameters = (Configuration) from.getAttributeAsObject(Field.PARAMETERS);
+        Integer timeout = from.getAttributeAsInt(Field.TIMEOUT);
+        if (timeout != null) {
+            if (parameters == null) {
+                parameters = new Configuration();
+            }
+            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
+        }
         to.setParameters(parameters);
         to.setOperationName(from.getAttribute(Field.OPERATION_NAME));
         to.setOperationDisplayName(from.getAttribute(Field.OPERATION_DISPLAY_NAME));
         to.setDescription(from.getAttribute(Field.DESCRIPTION));
         to.setNextFireTime(from.getAttributeAsDate(Field.NEXT_FIRE_TIME));
-        if (parameters != null) {
-            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, from.getAttributeAsInt(Field.TIMEOUT)));
-        }
-
         to.setJobTrigger(createJobTrigger(from.getAttributeAsRecord("jobTrigger")));
 
         return to;

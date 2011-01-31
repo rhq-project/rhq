@@ -39,9 +39,12 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
     protected abstract boolean hasControlPermission();
 
+
     @Override
     protected void configureTable() {
         super.configureTable();
+
+        ListGridField idField = new ListGridField(AbstractOperationScheduleDataSource.Field.ID, 70);
 
         ListGridField operationField = new ListGridField(AbstractOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 180);
 
@@ -55,7 +58,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
         ListGridField descriptionField = new ListGridField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
 
-        setListGridFields(operationField, subjectField, nextFireTimeField, descriptionField);
+        setListGridFields(true, idField, operationField, subjectField, nextFireTimeField, descriptionField);
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {

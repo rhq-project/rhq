@@ -2001,16 +2001,22 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             SimpleTrigger simpleTrigger = new SimpleTrigger();
             Date startTime = null;
             switch (jobTrigger.getStartType()) {
-            case NOW:
-                startTime = new Date();
-                break;
-            case DATETIME:
-                startTime = jobTrigger.getStartDate();
-                break;
+                case NOW:
+                    startTime = new Date();
+                    break;
+                case DATETIME:
+                    startTime = jobTrigger.getStartDate();
+                    break;
             }
             simpleTrigger.setStartTime(startTime);
-
-            // TODO (ips): Finish implementing this.
+            if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.REPEAT_INTERVAL) {
+                simpleTrigger.setRepeatInterval(jobTrigger.getRepeatInterval());
+                if (jobTrigger.getEndType() == JobTrigger.EndType.DATETIME) {
+                    simpleTrigger.setEndTime(jobTrigger.getEndDate());
+                } else if (jobTrigger.getEndType() == JobTrigger.EndType.REPEAT_COUNT) {
+                    simpleTrigger.setRepeatCount(jobTrigger.getRepeatCount());
+                }
+            }
 
             trigger = simpleTrigger;
         }

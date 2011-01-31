@@ -326,14 +326,27 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     }
     
     public int cleanseAlertNotificationBySubject(int subjectId) {
-        return cleanseParmaeterValueForAlertSender("System Users", "subjectId", String.valueOf(subjectId));
+        return cleanseParameterValueForAlertSender("System Users", "subjectId", String.valueOf(subjectId));
     }
 
     public int cleanseAlertNotificationByRole(int roleId) {
-        return cleanseParmaeterValueForAlertSender("System Roles", "roleId", String.valueOf(roleId));
+        return cleanseParameterValueForAlertSender("System Roles", "roleId", String.valueOf(roleId));
     }
 
-    private int cleanseParmaeterValueForAlertSender(String senderName, String propertyName, String valueToCleanse) {
+    public void massReconfigure(List<Integer> alertNotificationIds, Map<String, String> newConfigurationValues) {
+        Query query = entityManager.createNamedQuery(AlertNotification.QUERY_UPDATE_PARAMETER_FOR_NOTIFICATIONS);
+        
+        query.setParameter("alertNotificationIds", alertNotificationIds);
+        
+        for(Map.Entry<String, String> entry : newConfigurationValues.entrySet()) {
+            query.setParameter("propertyName", entry.getKey());
+            query.setParameter("propertyValue", entry.getValue());
+            
+            query.executeUpdate();
+        }
+    }
+    
+    private int cleanseParameterValueForAlertSender(String senderName, String propertyName, String valueToCleanse) {
         Query query = entityManager.createNamedQuery(AlertNotification.QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER);
         query.setParameter("senderName", senderName);
         query.setParameter("propertyName", propertyName);

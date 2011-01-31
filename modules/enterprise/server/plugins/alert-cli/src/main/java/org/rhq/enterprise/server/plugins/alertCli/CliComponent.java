@@ -19,8 +19,12 @@
 
 package org.rhq.enterprise.server.plugins.alertCli;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -37,6 +41,7 @@ import org.rhq.core.domain.util.DisambiguationReportRenderer;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
@@ -62,6 +67,9 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private static final String PROP_RESOURCE_ID = "resourceId";
     private static final String PROP_MISCONFIGURED_ALERT_DEFS = "misconfiguredAlertDefs";
     private static final String PROP_ALERT_DEFINITION = "alertDefinition";
+    private static final String PROP_ALERT_DEFINITION_ID = "alertDefinitionId";
+    private static final String PROP_USER_NAME = "userName";
+    private static final String PROP_ALERT_DEF_IDS = "alertDefIds";
     
     private Set<String> scriptPackageTypes;
     private String pluginName;
@@ -103,52 +111,26 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     }
     
     private void checkAlertsValidity(ControlResults results, Configuration parameters) {
-        AlertDefinitionManagerLocal manager = LookupUtil.getAlertDefinitionManager();
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        List<AlertNotification> invalidNotifs = getAllCliNotificationsWithInvalidUser();
         
-        Subject overlord = subjectManager.getOverlord();
-        
-        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.addFilterNotificationNames(pluginName);
-        criteria.setPageControl(PageControl.getUnlimitedInstance());
-        
-        List<AlertDefinition> defs = manager.findAlertDefinitionsByCriteria(overlord, criteria);
-        
-        for(AlertDefinition def : defs) {
-            List<AlertNotification> notifications = def.getAlertNotifications();
+        for(AlertNotification cliNotification : invalidNotifs) {
+            AlertDefinition def = cliNotification.getAlertDefinition();
             
-            AlertNotification cliNotification = getCliNotification(notifications);
+            Configuration resConfig = results.getComplexResults();
             
-            if (cliNotification == null) {
-                //we alway should find this but a little bit of paranoia never hurt anyone
-                continue;
+            PropertyList misconfigured = resConfig.getList(PROP_MISCONFIGURED_ALERT_DEFS);
+            if (misconfigured == null) {
+                misconfigured = new PropertyList(PROP_MISCONFIGURED_ALERT_DEFS);
+                resConfig.put(misconfigured);
             }
             
-            Subject checkSubject = null;
+            PropertyMap alertDefinitionMap = new PropertyMap(PROP_ALERT_DEFINITION);
             
-            PropertySimple subjectIdProperty = cliNotification.getConfiguration().getSimple(CliSender.PROP_USER_ID);
-            if (subjectIdProperty != null) {                
-                int subjectId = subjectIdProperty.getIntegerValue();
-                
-                checkSubject = subjectManager.getSubjectById(subjectId);
-            }
+            alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_ID, def.getId()));
+            alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_NAME, def.getName()));
+            alertDefinitionMap.put(new PropertySimple(PROP_RESOURCE_ID, def.getResource().getId()));
             
-            if (checkSubject == null) {
-                Configuration resConfig = results.getComplexResults();
-                
-                PropertyList misconfigured = resConfig.getList(PROP_MISCONFIGURED_ALERT_DEFS);
-                if (misconfigured == null) {
-                    misconfigured = new PropertyList(PROP_MISCONFIGURED_ALERT_DEFS);
-                    resConfig.put(misconfigured);
-                }
-                
-                PropertyMap alertDefinitionMap = new PropertyMap(PROP_ALERT_DEFINITION);
-                
-                alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_NAME, def.getName()));
-                alertDefinitionMap.put(new PropertySimple(PROP_RESOURCE_ID, def.getResource().getId()));
-                
-                misconfigured.add(alertDefinitionMap);
-            }
+            misconfigured.add(alertDefinitionMap);
         }
         
         //ok, now we have to obtain the resource paths. doing it out of the above loop reduces the number
@@ -179,10 +161,46 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     }
     
     private void reassignAlerts(ControlResults results, Configuration parameters) {
-        //TODO implement
+        PropertySimple userNameProp = parameters.getSimple(PROP_USER_NAME);
+        PropertySimple alertDefIdsProp = parameters.getSimple(PROP_ALERT_DEF_IDS);
+        
+        if (userNameProp == null) {
+            throw new IllegalArgumentException("User name not specified.");
+        }
+        
+        String userName = userNameProp.getStringValue();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject subject = subjectManager.getSubjectByName(userName);
+        
+        if (subject == null) {
+            throw new IllegalArgumentException("User '" + userName + "' doesn't exist.");
+        }
+        
+        //now get the list of the alert notifications to update
+        List<AlertNotification> notifsToReAssign = null;
+        if (alertDefIdsProp == null || alertDefIdsProp.getStringValue().trim().length() == 0) {
+            notifsToReAssign = getAllCliNotificationsWithInvalidUser();
+        } else {
+            List<Integer> alertDefIds = asIdList(alertDefIdsProp.getStringValue().split("\\s*,\\s*"));
+            List<AlertDefinition> defs = getAlertDefinitionsWithCliNotifications(alertDefIds);
+            
+            notifsToReAssign = new ArrayList<AlertNotification>();
+            for(AlertDefinition def : defs) {
+                AlertNotification cliNotif = getCliNotification(def.getAlertNotifications());
+                if (cliNotif != null) {
+                    notifsToReAssign.add(cliNotif);
+                }
+            }
+        }
+        
+        AlertNotificationManagerLocal notificationManager = LookupUtil.getAlertNotificationManager();
+
+        List<Integer> notifIds = asIdList(notifsToReAssign);
+        Map<String, String> updates = Collections.singletonMap(CliSender.PROP_USER_ID, Integer.toString(subject.getId()));
+        notificationManager.massReconfigure(notifIds, updates);
     }
     
-    AlertNotification getCliNotification(List<AlertNotification> notifications) {
+    private AlertNotification getCliNotification(List<AlertNotification> notifications) {
         for(AlertNotification n : notifications) {
             if (pluginName.equals(n.getSenderName())) {
                 return n;
@@ -190,5 +208,75 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
         }
         
         return null;
+    }
+    
+    private List<AlertDefinition> getAlertDefinitionsWithCliNotifications(Collection<Integer> ids) {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        AlertDefinitionManagerLocal manager = LookupUtil.getAlertDefinitionManager();
+
+        Subject overlord = subjectManager.getOverlord();
+
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterNotificationNames(pluginName);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        criteria.fetchAlertNotifications(true);
+        if (ids != null) {
+            criteria.addFilterIds(ids.toArray(new Integer[ids.size()]));
+        }
+        
+        return manager.findAlertDefinitionsByCriteria(overlord, criteria);
+    }
+    
+    private List<AlertNotification> getAllCliNotificationsWithInvalidUser() {
+        List<AlertNotification> ret = new ArrayList<AlertNotification>();
+        
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        
+        List<AlertDefinition> defs = getAlertDefinitionsWithCliNotifications(null);
+        
+        for(AlertDefinition def : defs) {
+            List<AlertNotification> notifications = def.getAlertNotifications();
+            
+            AlertNotification cliNotification = getCliNotification(notifications);
+            
+            if (cliNotification == null) {
+                //we always should find this but a little bit of paranoia never hurt anyone
+                continue;
+            }
+            
+            Subject checkSubject = null;
+            
+            PropertySimple subjectIdProperty = cliNotification.getConfiguration().getSimple(CliSender.PROP_USER_ID);
+            if (subjectIdProperty != null) {                
+                int subjectId = subjectIdProperty.getIntegerValue();
+                
+                checkSubject = subjectManager.getSubjectById(subjectId);
+            }
+            
+            if (checkSubject == null) {
+                ret.add(cliNotification);
+            }
+        }
+        
+        return ret;
+    }
+    
+    private List<Integer> asIdList(String... ids) {
+        List<Integer> ret = new ArrayList<Integer>();
+        for(String id : ids) {
+            ret.add(Integer.parseInt(id));
+        }
+        
+        return ret;
+    }
+    
+    private List<Integer> asIdList(Collection<AlertNotification> notifs) {
+        ArrayList<Integer> ret = new ArrayList<Integer>();
+        
+        for(AlertNotification n : notifs) {
+            ret.add(n.getId());
+        }
+        
+        return ret;
     }
 }

@@ -43,6 +43,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private List<Integer> filterIds;
     private String filterName;
     private String filterDescription;
     private AlertPriority filterPriority;
@@ -70,6 +71,7 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
         filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
         filterOverrides.put("notificationSenderNames", "alertNotifications.senderName IN ( ? )");
+        filterOverrides.put("filterIds", "id IN ( ? )");
     }
 
     @Override
@@ -81,6 +83,10 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterId = filterId;
     }
 
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = Arrays.asList(filterIds);
+    }
+    
     public void addFilterName(String filterName) {
         this.filterName = filterName;
     }

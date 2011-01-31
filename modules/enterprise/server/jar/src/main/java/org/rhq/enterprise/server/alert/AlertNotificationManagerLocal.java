@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.alert;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -118,4 +119,12 @@ public interface AlertNotificationManagerLocal {
     int cleanseAlertNotificationBySubject(int subjectId);
 
     int cleanseAlertNotificationByRole(int roleId);
+    
+    /**
+     * This method can be used to reconfigure a number of notifications en-masse.
+     * 
+     * @param alertNotificationIds the alert notifications to update
+     * @param newConfigurationValues a map where keys are the property names and values are the new property values
+     */
+    void massReconfigure(List<Integer> alertNotificationIds, Map<String, String> newConfigurationValues);
 }

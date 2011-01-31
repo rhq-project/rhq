@@ -24,16 +24,28 @@
                         This operation returns a list of such misconfigured alert definitions.
                     </c:description>
                     <c:map-property name="alertDefinition">
+                        <c:simple-property name="alertDefinitionId" />
+                        <c:simple-property name="alertDefinitionName" />
                         <c:simple-property name="resourceId" />
                         <c:simple-property name="resourcePath" />
-                        <c:simple-property name="alertDefinitionName" />
                     </c:map-property>
                 </c:list-property>
             </serverplugin:results>
         </serverplugin:control>
         
-        <!--  TODO define the args and results of this operation -->
-        <serverplugin:control name="reassignAlerts" description="Re-assign alerts to run as different users" />
+        <serverplugin:control name="reassignAlerts" description="Re-assign alerts to run as different users">
+            <serverplugin:parameters>
+                <c:simple-property name="userName" displayName="User Name" description="The name of the user to re-assign the alerts to." />
+                <c:simple-property name="alertDefIds" displayName="Alert Definition IDs" required="false">
+                    <c:description>
+                        The comma-separated list of the alert definition ids to re-assign.
+                        If left empty, all the alert definitions with the CLI notifications that have
+                        an invalid user assigned, will be re-assigned to the provided user.
+                    </c:description>
+                    <c:constraint><c:regex-constraint expression="(\d+(\s*,\s*\d+)*)?"/></c:constraint>
+                </c:simple-property>
+            </serverplugin:parameters>
+        </serverplugin:control>
     </serverplugin:plugin-component>
 
     <serverplugin:plugin-configuration>

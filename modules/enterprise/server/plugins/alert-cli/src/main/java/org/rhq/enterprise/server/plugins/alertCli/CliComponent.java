@@ -124,17 +124,16 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
                 continue;
             }
             
+            Subject checkSubject = null;
+            
             PropertySimple subjectIdProperty = cliNotification.getConfiguration().getSimple(CliSender.PROP_USER_ID);
-            if (subjectIdProperty == null) {
-                continue;
+            if (subjectIdProperty != null) {                
+                int subjectId = subjectIdProperty.getIntegerValue();
+                
+                checkSubject = subjectManager.getSubjectById(subjectId);
             }
             
-            int subjectId = subjectIdProperty.getIntegerValue();
-            
-            Subject checkSubject = subjectManager.getSubjectById(subjectId);
-            
             if (checkSubject == null) {
-                //TODO this is the invalid user we're after.. let's store the info about the alert 
                 Configuration resConfig = results.getComplexResults();
                 
                 PropertyList misconfigured = resConfig.getList(PROP_MISCONFIGURED_ALERT_DEFS);

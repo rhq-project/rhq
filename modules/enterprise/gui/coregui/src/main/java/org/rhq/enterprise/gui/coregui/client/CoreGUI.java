@@ -391,7 +391,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                                     ((BookmarkableView) currentCanvas).renderView(viewPath.next());
                                 } else {
                                     long elapsedMillis = System.currentTimeMillis() - startTime;
-                                    if (elapsedMillis < 5000) {
+                                    if (elapsedMillis < 10000) {
                                         schedule(100); // Reschedule the timer.
                                     }
                                 }

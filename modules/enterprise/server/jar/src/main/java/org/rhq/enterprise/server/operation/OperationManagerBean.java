@@ -2011,10 +2011,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             simpleTrigger.setStartTime(startTime);
             if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.REPEAT_INTERVAL) {
                 simpleTrigger.setRepeatInterval(jobTrigger.getRepeatInterval());
-                if (jobTrigger.getEndType() == JobTrigger.EndType.DATETIME) {
-                    simpleTrigger.setEndTime(jobTrigger.getEndDate());
-                } else if (jobTrigger.getEndType() == JobTrigger.EndType.REPEAT_COUNT) {
+                if (jobTrigger.getEndType() == JobTrigger.EndType.REPEAT_COUNT) {
                     simpleTrigger.setRepeatCount(jobTrigger.getRepeatCount());
+                } else {
+                    simpleTrigger.setRepeatCount(SimpleTrigger.REPEAT_INDEFINITELY);
+                    if (jobTrigger.getEndType() == JobTrigger.EndType.DATETIME) {
+                        simpleTrigger.setEndTime(jobTrigger.getEndDate());
+                    }
                 }
             }
 

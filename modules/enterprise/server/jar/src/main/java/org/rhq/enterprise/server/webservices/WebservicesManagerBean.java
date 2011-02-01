@@ -25,6 +25,7 @@ package org.rhq.enterprise.server.webservices;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -779,6 +780,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId,
+        Comparator<PackageVersion> versionComparator) {
+        return repoManager.getLatestPackageVersion(subject, packageId, repoId, versionComparator);
+    }
+    
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
         return repoManager.findSubscribedResources(subject, repoId, pc);
     }

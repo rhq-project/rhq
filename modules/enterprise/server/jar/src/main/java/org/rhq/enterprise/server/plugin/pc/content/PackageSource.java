@@ -34,6 +34,7 @@ import org.rhq.core.domain.content.PackageVersion;
  * passed into the plugin through {@link ContentProvider#initialize(org.rhq.core.domain.configuration.Configuration)}
  *
  * @author Jason Dobies
+ * @author Lukas Krejci
  */
 public interface PackageSource {
 

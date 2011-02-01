@@ -70,9 +70,11 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private static final String PROP_ALERT_DEFINITION_ID = "alertDefinitionId";
     private static final String PROP_USER_NAME = "userName";
     private static final String PROP_ALERT_DEF_IDS = "alertDefIds";
+    private static final String PROP_REPO_NAME = "repoName";
     
     private Set<String> scriptPackageTypes;
     private String pluginName;
+    private String repoName;
     
     public void initialize(ServerPluginContext context) throws Exception {
         scriptPackageTypes = new HashSet<String>();
@@ -83,8 +85,18 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
             
             scriptPackageTypes.add(value.getStringValue());
         }
+        
+        repoName = context.getPluginConfiguration().getSimpleValue(PROP_REPO_NAME, null);
     }
 
+    public Set<String> getScriptPackageTypes() {
+        return scriptPackageTypes;
+    }
+    
+    public String getRepoName() {
+        return repoName;
+    }
+    
     public void start() {
     }
 

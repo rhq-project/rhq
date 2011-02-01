@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.util.Comparator;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -108,6 +109,11 @@ public interface RepoManagerLocal {
      */
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
+    /**
+     * @see RepoManagerRemote#getLatestPackageVersion(Subject, int, int, Comparator) 
+     */
+    PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId, Comparator<PackageVersion> versionComparator);
+    
     /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
      *

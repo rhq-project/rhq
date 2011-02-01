@@ -240,8 +240,12 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGE_BY_FILENAME, query = "SELECT p FROM Package p "
         + "WHERE p.id IN (SELECT pv.generalPackage.id FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME, query = "SELECT pv FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)")
-
+    @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME, query = "SELECT pv FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_AND_REPO_ID, query = "SELECT pv"
+        + " FROM PackageVersion pv"
+        + " JOIN pv.repoPackageVersions rpv"
+        + " WHERE pv.generalPackage.id = :packageId"
+        + "     AND rpv.repo.id = :repoId")
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
@@ -260,6 +264,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_REPO_ID = "PackageVersion.findByRepoId";
     public static final String QUERY_FIND_BY_REPO_ID_FILTERED = "PackageVersion.findByRepoIdFiltered";
     public static final String QUERY_FIND_BY_PACKAGE_ID = "PackageVersion.findByPackageId";
+    public static final String QUERY_FIND_BY_PACKAGE_AND_REPO_ID = "PackageVersion.findByPackageAndRepoId";
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE = "PackageVersion.findByRepoIdWithPackage";
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByRepoIdWithPackageFiltered";
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";

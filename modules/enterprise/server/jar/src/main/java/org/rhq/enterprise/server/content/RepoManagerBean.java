@@ -20,7 +20,10 @@ package org.rhq.enterprise.server.content;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -74,8 +77,10 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
@@ -319,6 +324,71 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return new PageList<PackageVersion>(results, (int) count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId, Comparator<PackageVersion> versionComparator) {
+        if (versionComparator == null) {
+            Query pvcsQ = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_PACKAGE_AND_REPO_ID_NO_FETCH);
+            pvcsQ.setParameter("package_id", packageId);
+            pvcsQ.setParameter("repo_id", repoId);
+            
+            @SuppressWarnings("unchecked")
+            List<PackageVersionContentSource> pvcss = (List<PackageVersionContentSource>) pvcsQ.getResultList();
+            
+            try {
+                ContentProviderManager manager = ContentManagerHelper.getPluginContainer().getAdapterManager();
+                for(PackageVersionContentSource pvcs : pvcss) {
+                    ContentProvider provider = manager.getIsolatedContentProvider(pvcs.getPackageVersionContentSourcePK().getContentSource().getId());
+                    
+                    if (provider instanceof PackageSource) {
+                        versionComparator = ((PackageSource)provider).getPackageVersionComparator();
+                        
+                        if (versionComparator != null) {
+                            //ok, we found one non-default, let's go with that.
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Searching package sources for a version comparator failed. Will use the default comparator.", e);
+            }
+            
+            if (versionComparator == null) {
+                versionComparator = PackageVersion.DEFAULT_COMPARATOR;
+            }
+            
+            //even though we can obtain the package versions from the pvcss elements, we can't
+            //use just these, because these are not all the package versions there might be present
+            //in the repo for this package. Some package versions can have no content source.
+            //therefore we need to query the database again in the code below to obtain the full
+            //list of package versions.
+        }
+        
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_AND_REPO_ID);
+        q.setParameter("packageId", packageId);
+        q.setParameter("repoId", repoId);
+        
+        @SuppressWarnings("unchecked")
+        List<PackageVersion> results = (List<PackageVersion>) q.getResultList();
+        
+        if (results.size() == 0) {
+            return null;
+        } else if (results.size() == 1) {
+            return results.get(0);
+        }
+        
+        PackageVersion latest = results.get(0);
+        Iterator<PackageVersion> it = results.iterator();
+        it.next(); //skip the first element, we don't have to compare it with itself
+        while(it.hasNext()) {
+            PackageVersion current = it.next();
+            if (versionComparator.compare(latest, current) < 0) {
+                latest = current;
+            }
+        }
+        
+        return latest;                    
+    }
+    
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
         validateFields(repo);

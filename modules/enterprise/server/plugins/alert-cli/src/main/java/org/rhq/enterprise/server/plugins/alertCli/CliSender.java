@@ -29,9 +29,9 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.List;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -47,9 +47,12 @@ import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.client.LocalClient;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -62,48 +65,54 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class CliSender extends AlertSender<ServerPluginComponent> {
 
     public static final String PROP_PACKAGE_ID = "packageId";
+    public static final String PROP_REPO_ID = "repoId";
     public static final String PROP_USER_ID = "userId";
 
     private static final Log LOG = LogFactory.getLog(CliSender.class);
 
+    private static final String SUMMARY_TEMPLATE = "Ran script $packageName in version $packageVersion from repo $repoName as user $userName.";
+    private static final String PREVIEW_TEMPLATE = "Run script $packageName from repo $repoName as user $userName.";
+
+    /**
+     * Simple strongly typed representation of the alert configuration
+     */
+    private static class Config {
+        Subject subject;
+        int packageId;
+        int repoId;
+    }
+    
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
         try {
+            Config config = getConfig();
+            result.setSummary(createSummary(config, SUMMARY_TEMPLATE));
+
             ByteArrayOutputStream scriptOutputStream = new ByteArrayOutputStream();
-            
-            ScriptEngine engine = getScriptEngine(alert, scriptOutputStream);
 
-            PropertySimple packageIdProp = alertParameters.getSimple(PROP_PACKAGE_ID);
+            ScriptEngine engine = getScriptEngine(alert, scriptOutputStream, config);
 
-            if (packageIdProp == null) {
-                return SenderResult
-                    .getSimpleFailure("The configuration doesn't contain the mandatory 'packageId' property. This should not happen.");
-            }
-
-            Integer packageId = packageIdProp.getIntegerValue();
-
-            if (packageId == null) {
-                return SenderResult.getSimpleFailure("No script defined.");
-            }
-
-            InputStream packageBits = getPackageBits(packageId);
+            InputStream packageBits = getPackageBits(config.packageId, config.repoId);
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
 
             engine.eval(reader);
 
             String scriptOutput = scriptOutputStream.toString(Charset.defaultCharset().name());
+
+            if (scriptOutput.length() == 0) {
+                scriptOutput = "Script generated no output.";
+            }
             
-            result.setSummary(scriptOutput);
-            
-            result.addSuccessMessage("The script executed successfully. Its output is stored in the summary.");
-            
+            result.addSuccessMessage(scriptOutput);
+
             return result;
         } catch (IllegalArgumentException e) {
             return SenderResult.getSimpleFailure(e.getMessage());
         } catch (Exception e) {
-            return SenderResult.getSimpleFailure(ThrowableUtil.getAllMessages(e));
+            result.addFailureMessage(ThrowableUtil.getAllMessages(e));
+            return result;
         } finally {
             if (reader != null) {
                 try {
@@ -115,15 +124,21 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
         }
     }
 
-    private ScriptEngine getScriptEngine(Alert alert, OutputStream scriptOutput) throws ScriptException, IOException, IllegalArgumentException {
-        int userId = alertParameters.getSimple(PROP_USER_ID).getIntegerValue();
-        
-        Subject user = LookupUtil.getSubjectManager().getSubjectById(userId);
-        
-        if (user == null) {
-            throw new IllegalArgumentException("The script cannot run because the user (id " + userId + ") configured to run it doesn't exist anymore.");
+    @Override
+    public String previewConfiguration() {
+        try {
+            Config c = getConfig();
+            return createSummary(c, PREVIEW_TEMPLATE);
+        } catch (Exception e) {
+            LOG.warn("Failed to get the configuration preview.", e);
+            return "Failed to get configuration preview: " + e.getMessage();
         }
-        
+    }
+
+    private static ScriptEngine getScriptEngine(Alert alert, OutputStream scriptOutput, Config config) throws ScriptException,
+        IOException {
+        Subject user = config.subject;
+
         LocalClient client = new LocalClient(user);
 
         PrintWriter output = new PrintWriter(scriptOutput);
@@ -134,9 +149,10 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
             bindings);
     }
 
-    private InputStream getPackageBits(int packageId) throws IOException {
+    private static InputStream getPackageBits(int packageId, int repoId) throws IOException {
         final ContentSourceManagerLocal csm = LookupUtil.getContentSourceManager();
-        final PackageVersion versionToUse = csm.getLatestPackageVersion(packageId, null);
+        RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
+        final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(), packageId, repoId, null);
 
         PipedInputStream ret = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(ret);
@@ -166,5 +182,89 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
         reader.start();
 
         return ret;
+    }
+
+    /**
+     * Possible replacements are:
+     * <ul>
+     * <li><code>$userName</code>
+     * <li><code>$packageName</code>
+     * <li><code>$packageVersion</code>
+     * <li><code>$repoName</code>
+     * </ul>
+     * @param config
+     * @param template
+     * @return
+     */
+    private static String createSummary(Config config, String template) {
+        try {
+            String ret = template;
+
+            ret = ret.replace("$userName", config.subject.getName());
+
+            //now get the package and repo info
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
+            PackageVersion versionToUse = rm.getLatestPackageVersion(overlord, config.packageId, config.repoId, null);
+
+            ret = ret.replace("$packageName", versionToUse.getDisplayName());
+            ret = ret.replace("$pacakgeVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
+                : versionToUse.getDisplayVersion());
+
+            RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
+            RepoCriteria criteria = new RepoCriteria();
+            criteria.addFilterId(config.repoId);
+            
+            List<Repo> repos = rm.findReposByCriteria(overlord, criteria);
+            
+            String repoName;
+            
+            if (repos.size() > 0) {
+                repoName = repos.get(0).getName();
+            } else {
+                repoName = "unknown repo with id " + config.repoId;
+            }
+            
+            ret = ret.replace("$repoName", repoName);
+            
+            return ret;
+        } catch (Exception e) {
+            LOG.info("Failed to create alert sender summary.", e);
+            return "Failed to create summary: " + e.getMessage();
+        }
+    }
+
+    private Config getConfig() throws IllegalArgumentException {
+        Config ret = new Config();
+
+        int subjectId = getIntFromConfiguration(PROP_USER_ID, "User id not specified.", "Failed to read subject id property: ");
+        int packageId = getIntFromConfiguration(PROP_PACKAGE_ID, "Package id of the script not specified.", "Failed to read the package id property: ");
+        int repoId = getIntFromConfiguration(PROP_REPO_ID, "Repo to download the script package from not specified.", "Failed to read the repo id property: ");
+        
+        Subject subject = LookupUtil.getSubjectManager().getSubjectById(subjectId);
+
+        if (subject == null) {
+            throw new IllegalArgumentException("User with id " + subjectId + " doesn't exist anymore.");
+        }
+
+        ret.subject = subject;
+        ret.packageId = packageId;
+        ret.repoId = repoId;
+        
+        return ret;
+    }
+    
+    private int getIntFromConfiguration(String propName, String errorMessage, String convertErrorMessage) throws IllegalArgumentException {
+        PropertySimple prop = alertParameters.getSimple(propName);
+        
+        if (prop == null) {
+            throw new IllegalArgumentException(errorMessage);                       
+        }
+        
+        try {
+            return prop.getIntegerValue();
+        } catch (Exception e) {
+            throw new IllegalArgumentException(convertErrorMessage + e.getMessage(), e);
+        }
     }
 }

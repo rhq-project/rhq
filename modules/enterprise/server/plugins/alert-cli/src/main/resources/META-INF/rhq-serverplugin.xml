@@ -58,6 +58,11 @@
             <c:description>
                 The list of package types that will be considered scripts. Any package of those types in any repo will be 
                 considered a script and will be available for choosing as an alert script.
+                The package type can be one of those defined by different agent plugins and can be applicable
+                to some resource type (i.e. you might use such package type to "stream" the packages down to resources 
+                on different agents using the content subsystem) but it doesn't have to. 
+                
+                A good choice is something like 'seversideCLIScript'.
             </c:description> 
             <c:simple-property name="packageType" displayName="Package Type" type="string" required="true"/>
         </c:list-property>
@@ -71,6 +76,7 @@
 
     <alert-configuration>
         <c:simple-property name="packageId" type="integer" required="true" description="The id of the package containing the script to execute."/>
+        <c:simple-property name="repoId" type="integer" required="true" description="The id of the repo to download the package from."/>
         <c:simple-property name="userId" type="integer" required="true" description="The user the script will be run as."/>
     </alert-configuration>
 </alert-plugin>

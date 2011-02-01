@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
@@ -48,7 +49,7 @@ public class BundleSelector extends AbstractSelector<Bundle> {
     }
 
     protected DynamicForm getAvailableFilterForm() {
-        DynamicForm availableFilterForm = new DynamicForm();
+        DynamicForm availableFilterForm = new LocatableDynamicForm(extendLocatorId("availableForm"));
         availableFilterForm.setNumCols(4);
         final TextItem search = new TextItem("search", MSG.common_title_search());
 

@@ -15,6 +15,11 @@ public class NamedTab extends LocatableTab {
 
     private ViewName viewName;
 
+    public NamedTab(String locatorId, ViewName viewName) {
+        super(locatorId, viewName.getTitle());
+        this.viewName = viewName;
+    }
+
     public NamedTab(String locatorId, ViewName viewName, String icon) {
         super(locatorId, viewName.getTitle(), icon);
         this.viewName = viewName;

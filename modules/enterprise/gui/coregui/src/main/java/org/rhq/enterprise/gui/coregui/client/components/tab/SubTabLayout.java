@@ -90,7 +90,7 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     /**
-     * Make subTab visible.
+     * Make subTab visible. 
      * 
      * @param subTab not null
      */
@@ -105,17 +105,12 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     /**
-     * Make subTab not visible.
+     * Make subTab not visible. Keeps any associated Canvas.
      * 
      * @param subTab not null
      */
     public void hideSubTab(SubTab subTab) {
-        Button button = subTab.getButton();
-        if (null != button) {
-            buttonBar.removeMember(button);
-            button.destroy();
-            subTab.setButton(null);
-        }
+        subTab.destroyButton();
     }
 
     public boolean isSubTabVisible(SubTab subTab) {
@@ -292,12 +287,9 @@ public class SubTabLayout extends LocatableVLayout {
     /**
      * Destroy all the currently held views so that they can be replaced with new versions
      */
-    public void destroyViews() {
+    void destroyViews() {
         for (SubTab subTab : subTabs.values()) {
-            if (subTab.getCanvas() != null) {
-                subTab.getCanvas().destroy();
-                subTab.setCanvas(null);
-            }
+            subTab.destroyCanvas();
         }
     }
 

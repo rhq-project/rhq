@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.sorter;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -29,13 +34,9 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
+
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Ian Springer
@@ -59,7 +60,8 @@ public class ReorderableList extends LocatableVLayout {
         this(locatorId, false, records, itemTitle, itemIcon);
     }
 
-    public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle, String itemIcon) {
+    public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle,
+        String itemIcon) {
         super(locatorId);
 
         this.isReadOnly = isReadOnly;
@@ -178,13 +180,6 @@ public class ReorderableList extends LocatableVLayout {
 
     protected String getItemIcon() {
         return itemIcon;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        this.listGrid.destroy();
     }
 
 }

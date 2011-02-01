@@ -63,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The content pane of the Resource Summary>Activity tab.
@@ -72,8 +73,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 public class ActivityView extends LocatableHLayout implements RefreshableView {
 
     //Locatable ui references
-    private VLayout leftPane = new VLayout();;
-    private VLayout rightPane = new VLayout();;
+    private VLayout leftPane = new VLayout();
+    private VLayout rightPane = new VLayout();
     private LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
     private LocatableCanvas recentAlertsContent = new LocatableCanvas(extendLocatorId("RecentAlerts"));
     private LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
@@ -103,7 +104,6 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
     public ActivityView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
         this.resourceComposite = resourceComposite;
-        setID(locatorId);
         initializeUi();
     }
 
@@ -177,6 +177,10 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
         rightPane.addMember(recentPkgHistoryTitle);
         rightPane.addMember(recentPkgHistoryContent);
         recentPkgHistoryContent.setHeight(20);
+
+        addMember(leftPane);
+        addMember(rightPane);
+
         loadData();
     }
 
@@ -195,8 +199,16 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
     @Override
     protected void onDraw() {
         super.onDraw();
-        addMember(leftPane);
-        addMember(rightPane);
+        refresh();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // destroy members of non-locatable layouts
+        SeleniumUtility.destroyMembers(leftPane);
+        SeleniumUtility.destroyMembers(rightPane);
     }
 
     @Override
@@ -220,6 +232,13 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
             addMember(titleImage);
             addMember(titleElement);
             setMembersMargin(10);
+        }
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+
+            SeleniumUtility.destroyMembers(this);
         }
     }
 

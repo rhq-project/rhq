@@ -25,7 +25,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -224,9 +223,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         int groupId = group.getId();
         getTitleBar().setGroup(groupComposite);
 
-        for (Tab top : this.getTabSet().getTabs()) {
-            ((TwoLevelTab) top).getLayout().destroyViews();
-        }
+        // wipe the canvas views for the current set of subtabs.
+        this.getTabSet().destroyViews();
 
         GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
         Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
@@ -297,11 +295,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private void updateOperationsTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
-            updateSubTab(this.operationsTab, this.operationsSchedules,
-                    new GroupOperationScheduleListView(this.operationsSchedules.extendLocatorId("View"),
-                            this.groupComposite), true, true);
+            updateSubTab(this.operationsTab, this.operationsSchedules, new GroupOperationScheduleListView(
+                this.operationsSchedules.extendLocatorId("View"), this.groupComposite), true, true);
             updateSubTab(this.operationsTab, this.operationsHistory, new GroupOperationHistoryListView(
-                    this.operationsHistory.extendLocatorId("View"), this.groupComposite), true, true);
+                this.operationsHistory.extendLocatorId("View"), this.groupComposite), true, true);
         }
     }
 

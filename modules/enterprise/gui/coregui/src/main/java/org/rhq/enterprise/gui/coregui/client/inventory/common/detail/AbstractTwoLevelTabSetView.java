@@ -105,27 +105,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     protected boolean updateTab(TwoLevelTab tab, boolean visible, boolean enabled) {
-        TwoLevelTab attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
         if (visible) {
-            if (attachedTab == null) {
-                getTabSet().addTab(tab);
-                attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
-            }
-            getTabSet().setTabEnabled(attachedTab, enabled);
+            getTabSet().setTabHidden(tab, false);
+            getTabSet().setTabEnabled(tab, enabled);
         } else {
-            if (attachedTab != null) {
-                // NOTE: If the currently selected tab is going away then switch to the default
-                // prior to the removeTab call.
-                if (attachedTab.equals(getTabSet().getSelectedTab())) {
-                    selectDefaultTabAndSubTab();
-                }
-                // NOTE: We need to remove the tab, because SmartGWT tabset doesn't support hiding tabs.
-                Canvas contentPane = attachedTab.getPane();
-                getTabSet().updateTab(attachedTab, null);
-                getTabSet().removeTab(attachedTab);
-                // Reset the pane on the tab, since the call to updateTab() above nulled it out.
-                attachedTab.setPane(contentPane);
-            }
+            getTabSet().setTabHidden(tab, true);
         }
 
         return (visible && enabled);
@@ -278,6 +262,12 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     public String getBaseViewPath() {
         return baseViewPath;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        tabSet.destroy();
     }
 
 }

@@ -380,6 +380,7 @@ public class SmallGraphView extends LocatableVLayout {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         hoverLabel.destroy();
     }
 }

@@ -31,4 +31,15 @@ public class LocatableToolStrip extends ToolStrip implements Locatable {
         return this.locatorId + "_" + extension;
     }
 
+    public void destroyMembers() {
+        SeleniumUtility.destroyMembers(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        destroyMembers();
+    }
+
 }

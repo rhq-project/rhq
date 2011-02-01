@@ -37,7 +37,7 @@ public class NamedTab extends LocatableTab {
         return viewName.getTitle();
     }
 
-    protected void destroy() {
+    public void destroy() {
         Canvas pane = getPane();
         if (null != pane) {
             pane.destroy();

@@ -25,7 +25,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -232,9 +231,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         Resource resource = this.resourceComposite.getResource();
         getTitleBar().setResource(this.resourceComposite);
 
-        for (Tab top : this.getTabSet().getTabs()) {
-            ((TwoLevelTab) top).getLayout().destroyViews();
-        }
+        // wipe the canvas views for the current set of subtabs.
+        this.getTabSet().destroyViews();
 
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();

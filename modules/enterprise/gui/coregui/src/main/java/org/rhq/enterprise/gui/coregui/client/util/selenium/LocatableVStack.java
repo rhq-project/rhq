@@ -51,4 +51,11 @@ public class LocatableVStack extends VStack implements Locatable {
         SeleniumUtility.destroyMembers(this);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        destroyMembers();
+    }
+
 }

@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Reports top-level view.
@@ -82,7 +83,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected VLayout defaultView() {
-        VLayout vLayout = new VLayout();
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
         // TODO: Admin icon.

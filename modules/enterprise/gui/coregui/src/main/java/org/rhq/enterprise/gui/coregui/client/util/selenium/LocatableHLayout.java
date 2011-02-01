@@ -53,9 +53,8 @@ public class LocatableHLayout extends HLayout implements Locatable {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         destroyMembers();
+        super.onDestroy();
     }
 
 }

@@ -53,9 +53,8 @@ public class LocatableVStack extends VStack implements Locatable {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         destroyMembers();
+        super.onDestroy();
     }
 
 }

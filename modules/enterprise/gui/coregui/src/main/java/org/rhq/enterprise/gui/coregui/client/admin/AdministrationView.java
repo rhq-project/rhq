@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Administration top-level view.
@@ -90,7 +91,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     protected VLayout defaultView() {
-        VLayout vLayout = new VLayout();
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
         // TODO: Admin icon.

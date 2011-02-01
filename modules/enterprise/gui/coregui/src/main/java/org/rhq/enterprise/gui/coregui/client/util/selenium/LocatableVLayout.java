@@ -53,9 +53,8 @@ public class LocatableVLayout extends VLayout implements Locatable {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         destroyMembers();
+        super.onDestroy();
     }
 
 }

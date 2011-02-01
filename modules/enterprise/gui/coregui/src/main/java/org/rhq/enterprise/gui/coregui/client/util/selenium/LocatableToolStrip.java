@@ -35,11 +35,14 @@ public class LocatableToolStrip extends ToolStrip implements Locatable {
         SeleniumUtility.destroyMembers(this);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        destroyMembers();
-    }
+    // It was my understanding that Layouts needed explicit removal of members but it seems
+    // that ToolStrip may treat its members differently.  The logic below actually caused issues because
+    // the member was being destroyed automatically.
+    //
+    //@Override
+    //protected void onDestroy() {
+    //    destroyMembers();
+    //    super.onDestroy();
+    //}
 
 }

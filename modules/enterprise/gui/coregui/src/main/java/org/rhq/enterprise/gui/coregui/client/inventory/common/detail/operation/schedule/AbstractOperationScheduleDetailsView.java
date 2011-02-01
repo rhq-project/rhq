@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,14 +31,16 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Subject;
@@ -73,6 +76,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     private JobTriggerEditor triggerEditor;
     private Configuration parameters;
     private EnhancedDynamicForm notesForm;
+    private EnhancedDynamicForm timeoutForm;
 
     public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
                                                 ResourceType resourceType, int scheduleId) {
@@ -99,8 +103,8 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     protected EnhancedDynamicForm buildForm() {
         EnhancedDynamicForm form = super.buildForm();
 
-        form.setNumCols(2);
-        form.setColWidths("165", "*");
+        form.setNumCols(3);
+        form.setColWidths("140", "140", "*");
 
         return form;
     }
@@ -114,7 +118,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             items.add(idItem);
         }
 
-        SelectItem operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
+        SelectItem operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME, "Name");
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
@@ -123,10 +127,12 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             }
         });
 
-        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION, "Operation Description");
+        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION, "Description");
+        this.operationDescriptionItem.setShowTitle(false);
         items.add(this.operationDescriptionItem);
 
-        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS, "Operation Parameters");
+        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS, "Parameters");
+        this.operationParametersItem.setColSpan(2);
         items.add(this.operationParametersItem);
 
         return items;
@@ -150,9 +156,31 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             contentPane.addMember(hr);
         }
 
+        this.timeoutForm = new EnhancedDynamicForm(extendLocatorId("TimeoutForm"), isReadOnly(), isNewRecord());
+        this.timeoutForm.setNumCols(4);
+        this.timeoutForm.setColWidths("140", "90", "105", "*");
+
+        IntegerItem timeoutItem = new IntegerItem("timeoutValue", "Timeout");
+        IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
+        integerRangeValidator.setMin(1);
+        timeoutItem.setValidators(integerRangeValidator);
+        ComboBoxItem timeoutUnitsItem = new ComboBoxItem("timeoutUnits");
+        timeoutUnitsItem.setShowTitle(false);
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(3);
+        valueMap.put("seconds", "seconds");
+        valueMap.put("minutes", "minutes");
+        valueMap.put("hours", "hours");
+        timeoutUnitsItem.setValueMap(valueMap);
+        timeoutUnitsItem.setDefaultValue("minutes");
+        FormUtility.addContextualHelp(timeoutUnitsItem, "a time duration - if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was initiated");
+        this.timeoutForm.setFields(timeoutItem, timeoutUnitsItem);
+        timeoutItem.setWidth(90);
+        timeoutUnitsItem.setWidth(105);
+        contentPane.addMember(this.timeoutForm);
+
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
-        this.notesForm.setWidth100();
+        this.notesForm.setColWidths("140", "50%", "140", "50%");
 
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
@@ -160,10 +188,6 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME, "Next Fire Time");
             notesFields.add(nextFireTimeItem);
         }
-
-        TextItem timeoutItem = new TextItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout (in seconds)");
-        FormUtility.addContextualHelp(timeoutItem, "a time duration in seconds; if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was initiated");
-        notesFields.add(timeoutItem);
 
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
         notesItem.setWidth(450);

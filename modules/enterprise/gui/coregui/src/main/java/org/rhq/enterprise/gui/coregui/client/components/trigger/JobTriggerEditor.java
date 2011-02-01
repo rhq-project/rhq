@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.smartgwt.client.types.Visibility;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -48,6 +47,7 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -132,13 +132,14 @@ public class JobTriggerEditor extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        DynamicForm modeForm = new DynamicForm();
+        EnhancedDynamicForm modeForm = new EnhancedDynamicForm(extendLocatorId("ModeForm"));
+        modeForm.setNumCols(3);
+        modeForm.setColWidths("140", "220", "*");
 
         RadioGroupItem modeItem = new RadioGroupItem("mode", "Schedule using");
-        modeItem.setWidth(220);
         LinkedHashMap<String, String> modeValueMap = new LinkedHashMap<String, String>();
         modeValueMap.put("calendar", "Calendar");
-        modeValueMap.put("cron", "Cron Mode");
+        modeValueMap.put("cron", "Cron Expression");
         modeItem.setValueMap(modeValueMap);
         modeItem.setVertical(false);
 
@@ -540,7 +541,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     private DynamicForm createRepeatForm() {
         final DynamicForm repeatForm = new DynamicForm();
         repeatForm.setNumCols(6);
-        repeatForm.setColWidths(130, 130, 130, 130, 130);
+        repeatForm.setColWidths(140, 130, 130, 130, 130);
 
         TextItem repeatIntervalItem = new TextItem(FIELD_REPEAT_INTERVAL, "Run now and every");
         repeatIntervalItem.setRequired(true);
@@ -619,7 +620,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     private DynamicForm createLaterForm() {
         final DynamicForm laterForm = new DynamicForm();
         laterForm.setNumCols(4);
-        laterForm.setColWidths(130, 130, 130);
+        laterForm.setColWidths(140, 130, 130);
 
         RadioGroupItem startTypeItem = new RadioGroupItem(FIELD_START_TYPE, "Run");
         LinkedHashMap<String, String> startTypeValueMap = new LinkedHashMap<String, String>();

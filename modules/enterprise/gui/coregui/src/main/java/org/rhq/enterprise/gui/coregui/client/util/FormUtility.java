@@ -49,12 +49,14 @@ public class FormUtility {
     }
 
     public static void addContextualHelp(FormItem item, final String helpText) {
-        FormItemIcon helpIcon = new FormItemIcon();
+        final FormItemIcon helpIcon = new FormItemIcon();
         helpIcon.setSrc("[SKIN]/actions/help.png");
         item.setIcons(helpIcon);
         item.addIconClickHandler(new IconClickHandler() {
             public void onIconClick(IconClickEvent event) {
-                SC.say(helpText);
+                if (event.getIcon().equals(helpIcon)) {
+                    SC.say(helpText);
+                }
             }
         });
     }

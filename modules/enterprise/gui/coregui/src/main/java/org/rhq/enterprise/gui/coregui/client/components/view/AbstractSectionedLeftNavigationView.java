@@ -232,6 +232,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             if (viewPath.isEnd()) {
                 // Display default view
                 setContent(defaultView());
+                initSectionPageTreeGrids();
             } else {
                 renderContentView(viewPath);
             }
@@ -243,6 +244,15 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
                 Log.debug("Refreshing data for [" + this.currentContent.getClass().getName() + "]...");
                 ((RefreshableView) this.currentContent).refresh();
             }
+        }
+    }
+
+    private void initSectionPageTreeGrids() {
+        for (String name : treeGrids.keySet()) {
+            TreeGrid treeGrid = treeGrids.get(name);
+            treeGrid.deselectAllRecords();
+            this.currentSectionViewId = null;
+            this.currentPageViewId = null;
         }
     }
 

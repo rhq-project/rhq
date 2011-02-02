@@ -44,9 +44,13 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
+import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -95,15 +99,18 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private TabSet getDetailsTabSet(Record record) {
-        TabSet tabset = new TabSet();
+        TabSet tabset = new NamedTabSet(extendLocatorId("detailsTabSet"));
 
-        Tab generalTab = new Tab(MSG.view_alert_common_tab_general());
+        Tab generalTab = new NamedTab(extendLocatorId("general"), new ViewName("general", MSG
+            .view_alert_common_tab_general()));
         generalTab.setPane(getDetailsTableForAlert(record));
 
-        Tab conditionsTab = new Tab(MSG.view_alert_common_tab_conditions());
+        Tab conditionsTab = new NamedTab(extendLocatorId("conditions"), new ViewName("conditions", MSG
+            .view_alert_common_tab_conditions()));
         conditionsTab.setPane(getConditionsForAlert(record));
 
-        Tab notificationsTab = new Tab(MSG.view_alert_common_tab_notifications());
+        Tab notificationsTab = new NamedTab(extendLocatorId("notifications"), new ViewName("notifications", MSG
+            .view_alert_common_tab_notifications()));
         notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);
@@ -114,7 +121,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private DynamicForm getDetailsTableForAlert(Record record) {
-        DynamicForm form = new DynamicForm();
+        DynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
         form.setNumCols(4);
         form.setHeight("15%");
         form.setWrapItemTitles(false);

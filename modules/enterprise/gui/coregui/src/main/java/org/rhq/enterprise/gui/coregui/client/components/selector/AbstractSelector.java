@@ -65,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -201,11 +200,6 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         updateButtonEnablement();
 
         addMember(this.hlayout);
-    }
-
-    @Override
-    protected void onDestroy() {
-        SeleniumUtility.destroyMembers(hlayout);
     }
 
     private SectionStack buildAvailableItemsStack() {

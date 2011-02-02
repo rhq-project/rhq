@@ -107,19 +107,19 @@ public class DashboardView extends LocatableVLayout {
 
     @Override
     protected void onInit() {
-        super.onInit();
 
         if (!isInitialized) {
+            super.onInit();
             addMember(buildEditForm());
             isInitialized = true;
         }
     }
 
     public void redraw() {
-        for (Canvas c : getChildren()) {
-            c.removeFromParent();
-            c.destroy();
-        }
+        // destroy all of the portlets and recreate from scratch
+        portalLayout.removeFromParent();
+        portalLayout.destroy();
+        portalLayout = null;
 
         buildPortlets();
     }
@@ -328,8 +328,8 @@ public class DashboardView extends LocatableVLayout {
 
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
-                final PortletWindow portletWindow = new PortletWindow(portalLayout
-                    .extendLocatorId(getPortletLocatorId(storedPortlet)), this, storedPortlet);
+                String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
+                final PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet);
                 portletWindows.add(portletWindow);
                 portletWindow.setTitle(storedPortlet.getName());
 
@@ -349,30 +349,30 @@ public class DashboardView extends LocatableVLayout {
      * is one tuple that is guaranteed unique and useful for a repeatable locator Id: DashBoard-Position.  This
      * means that the on a single dashboard each portlet has a unique column-columnIndex pair.  Although portlets
      * can move, and the positions can change at runtime, it's still valid for a locatorId because it is
-     * unique and repeatable fpr test purposes. We also add the portletKey for an easier visual cue. 
+     * unique and repeatable for test purposes. We also add the portletKey for an easier visual cue.
+     * The portalLayout's locatorId already incorporates the dashboardName, so we need only extend it with the
+     * positioning information. 
      * 
+     * @param portalLayout
      * @param dashboardPortlet
      * @return The locatorId for the portlet. Form PortleyKey_DashboardId_Column_ColumnIndex
      */
-    private String getPortletLocatorId(DashboardPortlet dashboardPortlet) {
+    private String getPortletLocatorId(PortalLayout portalLayout, DashboardPortlet dashboardPortlet) {
         StringBuilder locatorId = new StringBuilder(dashboardPortlet.getPortletKey());
-        locatorId.append("_");
-        locatorId.append(dashboardPortlet.getDashboard().getId());
         locatorId.append("_");
         locatorId.append(dashboardPortlet.getColumn());
         locatorId.append("_");
         locatorId.append(dashboardPortlet.getIndex());
 
-        return locatorId.toString();
+        return portalLayout.extendLocatorId(locatorId.toString());
     }
 
     private void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
         storedDashboard.addPortlet(storedPortlet);
 
-        String locatorId = getPortletLocatorId(storedPortlet);
-        final PortletWindow newPortletWindow = new PortletWindow(portalLayout.extendLocatorId(locatorId), this,
-            storedPortlet);
+        String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
+        final PortletWindow newPortletWindow = new PortletWindow(locatorId, this, storedPortlet);
         newPortletWindow.setTitle(portletName);
         newPortletWindow.setHeight(350);
         newPortletWindow.setVisible(false);
@@ -422,6 +422,10 @@ public class DashboardView extends LocatableVLayout {
     }
 
     public void save() {
+        save((AsyncCallback<Dashboard>) null);
+    }
+
+    public void save(final AsyncCallback<Dashboard> callback) {
         // since we reset storedDashboard after the async update completes, block modification of the dashboard
         // during that interval.
         DashboardView.this.disable();
@@ -430,6 +434,10 @@ public class DashboardView extends LocatableVLayout {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardManager_error(), caught);
                 DashboardView.this.enable();
+
+                if (null != callback) {
+                    callback.onFailure(caught);
+                }
             }
 
             public void onSuccess(Dashboard result) {
@@ -440,6 +448,11 @@ public class DashboardView extends LocatableVLayout {
                 // up to date portlets.
                 updatePortletWindows(result);
                 storedDashboard = result;
+
+                if (null != callback) {
+                    callback.onSuccess(result);
+                }
+
                 DashboardView.this.enable();
             }
         });

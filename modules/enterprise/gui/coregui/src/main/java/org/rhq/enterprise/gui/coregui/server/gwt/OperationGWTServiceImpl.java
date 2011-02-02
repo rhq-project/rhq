@@ -45,6 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements OperationGWTService {
 
@@ -71,6 +72,14 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
+    public void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) {
+        try {
+            operationManager.deleteOperationHistory(getSessionSubject(), operationHistoryId, deleteEvenIfInProgress);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void invokeResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout) throws RuntimeException {
         try {
@@ -84,9 +93,9 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout, String cronString) throws RuntimeException {
         try {
-            CronTrigger ct = new CronTrigger("resource " + resourceId + "_" + operationName, "group", cronString);
+            CronTrigger cronTrigger = new CronTrigger("resource " + resourceId + "_" + operationName, "group", cronString);
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
-                resourceId, operationName, parameters, ct, description);
+                resourceId, operationName, parameters, cronTrigger, description);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -101,11 +110,31 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
+    public int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException {
+        try {
+            return operationManager.scheduleGroupOperation(getSessionSubject(), groupOperationSchedule);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule)
         throws RuntimeException {
         try {
             operationManager.unscheduleResourceOperation(getSessionSubject(), resourceOperationSchedule.getJobId()
                 .toString(), resourceOperationSchedule.getResource().getId());
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void unscheduleGroupOperation(GroupOperationSchedule groupOperationSchedule)
+        throws RuntimeException {
+        try {
+            operationManager.unscheduleGroupOperation(getSessionSubject(), groupOperationSchedule.getJobId()
+                    .toString(), groupOperationSchedule.getGroup().getId());
         } catch (RuntimeException e) {
             e.printStackTrace();
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));

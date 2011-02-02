@@ -12,6 +12,8 @@ import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -29,6 +31,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
 
     private ResourceGroupComposite groupComposite;
     private ListGridRecord[] memberResourceRecords;
+    private DynamicForm executionModeForm;
 
     public GroupOperationScheduleDetailsView(String locatorId, ResourceGroupComposite groupComposite, int scheduleId) {
         super(locatorId, new GroupOperationScheduleDataSource(groupComposite),
@@ -67,13 +70,14 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        DynamicForm executionModeForm = new DynamicForm();
-        executionModeForm.setColWidths("250", "*");
+        this.executionModeForm = new DynamicForm();
+        this.executionModeForm.setNumCols(2);
+        this.executionModeForm.setColWidths("140", "*");
 
-        RadioGroupItem executionModeItem = new RadioGroupItem("executionMode", "Member Resource Execution Order");
+        RadioGroupItem executionModeItem = new RadioGroupItem("executionMode", "Execute");
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
-        valueMap.put("parallel", "Execute in parallel");
-        valueMap.put("sequential", "Execute in the order specified below");
+        valueMap.put("parallel", "in parallel");
+        valueMap.put("sequential", "in the order specified below (drag and drop member Resources to change order)");
         executionModeItem.setValueMap(valueMap);
         executionModeItem.setDefaultValue("parallel");
 
@@ -82,26 +86,43 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         haltOnFailureItem.setVisible(false);
         haltOnFailureItem.setLabelAsTitle(true);
 
-        executionModeItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent event) {
-                if (event.getValue().equals("parallel")) {
-                    haltOnFailureItem.hide();
-                } else {
-                    haltOnFailureItem.show();
-                }
-            }
-        });
-
         executionModeForm.setFields(executionModeItem, haltOnFailureItem);
 
         contentPane.addMember(executionModeForm);
 
+        HLayout hLayout = new HLayout();
+        VLayout horizontalSpacer = new VLayout();
+        horizontalSpacer.setWidth(140);
+        hLayout.addMember(horizontalSpacer);
         ResourceCategory resourceCategory = this.groupComposite.getResourceGroup().getResourceType().getCategory();
         String memberIcon = ImageManager.getResourceIcon(resourceCategory);
-        ReorderableList memberExecutionOrderer = new ReorderableList(extendLocatorId("MemberExecutionOrderer"),
-                this.memberResourceRecords, "Member Resources", memberIcon);
-        contentPane.addMember(memberExecutionOrderer);
+        final ReorderableList memberExecutionOrderer = new ReorderableList(extendLocatorId("MemberExecutionOrderer"),
+                this.memberResourceRecords, null, memberIcon);
+        memberExecutionOrderer.setVisible(false);
+        memberExecutionOrderer.setNameFieldTitle("Member Resource");
+        hLayout.addMember(memberExecutionOrderer);
+        contentPane.addMember(hLayout);
+
+        executionModeItem.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                if (event.getValue().equals("parallel")) {
+                    haltOnFailureItem.hide();
+                    memberExecutionOrderer.hide();
+                } else {
+                    haltOnFailureItem.show();
+                    memberExecutionOrderer.show();
+                }
+            }
+        });
 
         return contentPane;
+    }
+
+    @Override
+    protected void save(DSRequest requestProperties) {
+        Boolean haltOnFailure = (Boolean) this.executionModeForm.getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+        getForm().setValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE, haltOnFailure);
+
+        super.save(requestProperties);
     }
 }

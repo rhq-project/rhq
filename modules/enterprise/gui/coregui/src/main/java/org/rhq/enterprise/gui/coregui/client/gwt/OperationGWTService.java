@@ -46,6 +46,8 @@ public interface OperationGWTService extends RemoteService {
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
         throws RuntimeException;
 
+    void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException;
+
     List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int resourceId,
         PageControl pageControl) throws RuntimeException;
 
@@ -57,7 +59,11 @@ public interface OperationGWTService extends RemoteService {
 
     int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
 
+    int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
+
     void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
+    void unscheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
 
     void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout, String cronString) throws RuntimeException;

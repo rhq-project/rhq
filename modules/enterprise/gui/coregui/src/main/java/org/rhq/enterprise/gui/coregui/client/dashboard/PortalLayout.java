@@ -22,13 +22,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.EventHandler;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DropEvent;
 import com.smartgwt.client.widgets.events.DropHandler;
 
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -57,9 +60,9 @@ public class PortalLayout extends LocatableHLayout {
                     int dropPosition = column.getDropPosition();
                     int dropColumn = columnNumber;
 
-                    Canvas target = EventHandler.getDragTarget();
-                    ((PortletWindow) target).getStoredPortlet().setIndex(dropPosition);
-                    ((PortletWindow) target).getStoredPortlet().setColumn(dropColumn);
+                    final PortletWindow target = (PortletWindow) EventHandler.getDragTarget();
+                    target.getStoredPortlet().setIndex(dropPosition);
+                    target.getStoredPortlet().setColumn(dropColumn);
 
                     int colNum = 0;
                     for (Canvas pcc : getMembers()) {
@@ -80,7 +83,31 @@ public class PortalLayout extends LocatableHLayout {
 
                         colNum++;
                     }
-                    save();
+
+                    // drop means the portlet location has changed. The selenium testing locators include positioning
+                    // info. So, in this case we have to take the hit and completely redraw the dash.
+                    AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null
+                        : new AsyncCallback<Dashboard>() {
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                redraw();
+                            }
+
+                            @Override
+                            public void onSuccess(Dashboard result) {
+                                // for some reason the drag drop operation is leaving the target widget (the
+                                // portlet window) in the DOM, detached from its original parent (the PortalLayout),
+                                // and therefore not destroyed in the redraw().  So, kill it off manually to
+                                // avoid ID conflicts if the portlet is again dragged back its original position. 
+                                target.removeFromParent();
+                                target.destroy();
+
+                                redraw();
+                            }
+                        };
+                    save(callback);
+
                     com.allen_sauer.gwt.log.client.Log.info("Rearranged column indexes");
                 }
             });
@@ -99,8 +126,12 @@ public class PortalLayout extends LocatableHLayout {
         return portalColumn;
     }
 
-    public void save() {
-        this.dashboardView.save();
+    public void save(AsyncCallback<Dashboard> callback) {
+        this.dashboardView.save(callback);
+    }
+
+    public void redraw() {
+        this.dashboardView.redraw();
     }
 
     public void resize() {
@@ -117,4 +148,11 @@ public class PortalLayout extends LocatableHLayout {
             }
         }
     }
+
+    //    @Override
+    //    protected void onDestroy() {
+    //        destroyMembers();
+    //        super.onDestroy();
+    //    }
+
 }

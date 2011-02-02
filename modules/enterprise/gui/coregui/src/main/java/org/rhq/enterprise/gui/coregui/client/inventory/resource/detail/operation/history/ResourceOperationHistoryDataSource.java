@@ -23,22 +23,19 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.OperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 
 /**
  * @author Ian Springer
  */
-public class ResourceOperationHistoryDataSource extends OperationHistoryDataSource<ResourceOperationHistory> {
+public class ResourceOperationHistoryDataSource extends AbstractOperationHistoryDataSource<ResourceOperationHistory> {
 
-    public static abstract class Field extends OperationHistoryDataSource.Field {
+    public static abstract class Field extends AbstractOperationHistoryDataSource.Field {
         public static final String RESOURCE = "resource";
     }
 

@@ -35,7 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
- * Provides convienence methods that loads permissions and notifies you via a callback when done.
+ * Provides convenience methods that loads permissions and notifies you via a callback when done.
  * If an error occurs, the error will be logged in the message center.
  * This stores the last error received, in case a caller wants more information on failures.
  * 

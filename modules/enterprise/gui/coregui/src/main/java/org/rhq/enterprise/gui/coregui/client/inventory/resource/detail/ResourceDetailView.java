@@ -25,7 +25,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -63,7 +62,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView2;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -93,7 +91,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private TwoLevelTab contentTab;
 
     private SubTab summaryActivity;
-    private SubTab summaryActivity2;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorTables;
@@ -108,7 +105,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab inventoryGroups;
     private SubTab inventoryAgent;
     private SubTab operationsHistory;
-    private SubTab operationsSchedule;
+    private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
     private SubTab configCurrent;
@@ -131,12 +128,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
         summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity", MSG
             .view_tabs_common_activity()), null);
-        summaryActivity2 = new SubTab(summaryTab.extendLocatorId("Activity2"), new ViewName("Activity2", MSG
-            .view_tabs_common_activity() + 2), null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline", MSG
             .view_tabs_common_timeline()), null);
-        //        summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
-        summaryTab.registerSubTabs(summaryActivity, summaryActivity2, summaryTimeline);
+        summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
@@ -193,11 +187,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.operationsSchedule = new SubTab(operationsTab.extendLocatorId("Schedule"), new ViewName("Schedule", MSG
-            .view_tabs_common_schedule()), null);
+        this.operationsSchedules = new SubTab(operationsTab.extendLocatorId("Schedules"), new ViewName("Schedules", MSG
+            .view_tabs_common_schedules()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        operationsTab.registerSubTabs(this.operationsHistory, this.operationsSchedule);
+        operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
@@ -237,9 +231,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         Resource resource = this.resourceComposite.getResource();
         getTitleBar().setResource(this.resourceComposite);
 
-        for (Tab top : this.getTabSet().getTabs()) {
-            ((TwoLevelTab) top).getLayout().destroyViews();
-        }
+        // wipe the canvas views for the current set of subtabs.
+        this.getTabSet().destroyViews();
 
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
@@ -259,8 +252,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     private void updateSummaryTabContent(Resource resource) {
         updateSubTab(this.summaryTab, this.summaryActivity, new ActivityView(this.summaryActivity
-            .extendLocatorId("View"), this.resourceComposite), true, true);
-        updateSubTab(this.summaryTab, this.summaryActivity2, new ActivityView2(this.summaryActivity2
             .extendLocatorId("View"), this.resourceComposite), true, true);
 
         updateSubTab(this.summaryTab, this.summaryTimeline, new FullHTMLPane(this.summaryTimeline
@@ -351,11 +342,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
 
+            updateSubTab(this.operationsTab, this.operationsSchedules, new ResourceOperationScheduleListView(
+                operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), true, true);
+
             updateSubTab(this.operationsTab, this.operationsHistory, new ResourceOperationHistoryListView(operationsTab
                 .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
-
-            updateSubTab(this.operationsTab, this.operationsSchedule, new ResourceOperationScheduleListView(
-                operationsTab.extendLocatorId("SchedulesView"), this.resourceComposite), true, true);
         }
     }
 

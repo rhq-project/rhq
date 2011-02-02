@@ -40,10 +40,8 @@ public class ResourceOperationHistoryListView extends AbstractOperationHistoryLi
     }
 
     @Override
-    protected void configureTable() {
-        super.configureTable();
-
-        // TODO: Add Delete button.
+    protected boolean hasControlPermission() {
+        return this.resourceComposite.getResourcePermission().isControl();
     }
 
     @Override

@@ -26,7 +26,6 @@ import java.util.Set;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -47,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupD
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Inventory top-level view.
@@ -101,7 +101,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        VLayout vLayout = new VLayout();
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
         // TODO: Admin icon.

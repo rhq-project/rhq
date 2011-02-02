@@ -18,7 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.sorter;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -28,13 +34,9 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
+
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Ian Springer
@@ -48,6 +50,7 @@ public class ReorderableList extends LocatableVLayout {
     private String itemIcon;
     /** the item title (i.e. display name), which should be plural and capitalized, e.g. "Resource Groups", "Roles". */
     private String itemTitle;
+    private String nameFieldTitle = MSG.common_title_name();
 
     private Set<ListOrderChangedHandler> listOrderChangedHandlers = new HashSet<ListOrderChangedHandler>();
 
@@ -57,7 +60,8 @@ public class ReorderableList extends LocatableVLayout {
         this(locatorId, false, records, itemTitle, itemIcon);
     }
 
-    public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle, String itemIcon) {
+    public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle,
+        String itemIcon) {
         super(locatorId);
 
         this.isReadOnly = isReadOnly;
@@ -91,22 +95,10 @@ public class ReorderableList extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        SectionStack itemsStack = buildItemsSectionStack();
-        hlayout.addMember(itemsStack);
-
-        addMember(this.hlayout);
-    }
-
-    private SectionStack buildItemsSectionStack() {
-        SectionStack itemsSectionStack = new SectionStack();
-        itemsSectionStack.setWidth(300);
-        itemsSectionStack.setHeight(250);
-
-        SectionStackSection itemsSection = new SectionStackSection(getItemTitle());
-        itemsSection.setCanCollapse(false);
-        itemsSection.setExpanded(true);
-
+        this.listGrid.setWidth(300);
+        this.listGrid.setHeight(250);
         this.listGrid.setCanReorderRecords(true);
+        // TODO: Change cursor to hand or something like that when user hovers over a record in the grid.
         this.listGrid.setLoadingMessage(MSG.common_msg_loading());
         this.listGrid.setEmptyMessage(MSG.common_msg_noItemsToShow());
         this.listGrid.addRecordDropHandler(new RecordDropHandler() {
@@ -125,11 +117,30 @@ public class ReorderableList extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             fields.add(iconField);
         }
-        ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
+        ListGridField nameField = new ListGridField(getNameField(), this.nameFieldTitle);
         fields.add(nameField);
         this.listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
 
+        if (getItemTitle() != null) {
+            SectionStack itemsStack = buildItemsSectionStack();
+            this.hlayout.addMember(itemsStack);
+        } else {
+            this.hlayout.addMember(this.listGrid);
+        }
+
+        addMember(this.hlayout);
+    }
+
+    private SectionStack buildItemsSectionStack() {
+        SectionStack itemsSectionStack = new SectionStack();
+        itemsSectionStack.setWidth(300);
+        itemsSectionStack.setHeight(250);
+
+        SectionStackSection itemsSection = new SectionStackSection(getItemTitle());
+        itemsSection.setCanCollapse(false);
+        itemsSection.setExpanded(true);
         itemsSection.setItems(this.listGrid);
+
         itemsSectionStack.addSection(itemsSection);
 
         return itemsSectionStack;
@@ -159,19 +170,16 @@ public class ReorderableList extends LocatableVLayout {
         return "name";
     }
 
+    public void setNameFieldTitle(String nameFieldTitle) {
+        this.nameFieldTitle = nameFieldTitle;
+    }
+
     public String getItemTitle() {
         return itemTitle;
     }
 
     protected String getItemIcon() {
         return itemIcon;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        this.listGrid.destroy();
     }
 
 }

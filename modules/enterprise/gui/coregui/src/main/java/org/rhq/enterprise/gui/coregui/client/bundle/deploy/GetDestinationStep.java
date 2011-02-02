@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class GetDestinationStep extends AbstractWizardStep {
@@ -46,7 +47,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private final BundleDeployWizard wizard;
     private VLayout form;
-    DynamicForm valForm = new DynamicForm();
+    DynamicForm valForm = new LocatableDynamicForm("GetDestinationStepValForm");
     private SinglePlatformResourceGroupSelector selector;
     private BundleDestination dest = new BundleDestination();
     private boolean createInProgress = false;

@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.BooleanCallback;
@@ -51,6 +50,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -209,11 +209,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
                 /*
                  * do not record history item if initially loading the DashboardsView.  if the selectedDashboardView is
-                 * null, suppression will prevent redirection from #Dashboard to #Dashboard/<id>, which would require
-                 * the user to hit the back button twice to return to the previous page.
+                 * null, suppression will prevent redirection from #Dashboards to #Dashboards/dashboardId,
+                 * which would require the user to hit the back button twice to return to the previous page.
                  */
                 if (selectedDashboardView != null) {
-                    History.newItem("Dashboard/" + selectedTab.getName(), false);
+                    CoreGUI.goToView(LinkManager.getDashboardLink(Integer.valueOf(selectedTab.getName())));
                 }
 
                 selectedDashboardView = (DashboardView) selectedTab.getPane();
@@ -224,11 +224,12 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         });
 
         for (Dashboard dashboard : dashboards) {
-            String dashboardName = dashboard.getName();
-            String dashboardLocatorId = getDashboardLocatorId(dashboardName);
+            String dashboardName = String.valueOf(dashboard.getId());
+            String dashboardTitle = dashboard.getName();
+            String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
             String locatorId = extendLocatorId(dashboardLocatorId);
             DashboardView dashboardView = new DashboardView(locatorId, this, dashboard);
-            Tab tab = new NamedTab(locatorId, new ViewName(dashboardName, dashboardName), null);
+            Tab tab = new NamedTab(locatorId, new ViewName(dashboardName, dashboardTitle), null);
             tab.setPane(dashboardView);
             tab.setCanClose(true);
 
@@ -365,13 +366,14 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(Dashboard result) {
-                String dashboardName = result.getName();
-                dashboardsByName.put(dashboardName, result); // update map so name can not be reused
-                String dashboardLocatorId = getDashboardLocatorId(dashboardName);
+                String dashboardName = String.valueOf(result.getId());
+                String dashboardTitle = result.getName();
+                dashboardsByName.put(dashboardTitle, result); // update map so name can not be reused
+                String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
                 DashboardView dashboardView = new DashboardView(extendLocatorId(dashboardLocatorId),
                     DashboardsView.this, result);
                 NamedTab tab = new NamedTab(extendLocatorId(dashboardLocatorId), new ViewName(dashboardName,
-                    dashboardName), null);
+                    dashboardTitle), null);
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 

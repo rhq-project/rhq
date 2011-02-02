@@ -98,11 +98,11 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
 
         OperationRequestStatus status = operationHistory.getStatus();
 
-        StaticTextItem operationItem = new StaticTextItem(OperationHistoryDataSource.Field.OPERATION_NAME, MSG
+        StaticTextItem operationItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.OPERATION_NAME, MSG
             .view_operationHistoryDetails_operation());
         operationItem.setValue(definition.getDisplayName());
 
-        StaticTextItem submittedItem = new StaticTextItem(OperationHistoryDataSource.Field.STARTED_TIME, MSG
+        StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME, MSG
             .view_operationHistoryDetails_dateSubmitted());
         submittedItem.setValue(new Date(operationHistory.getStartedTime()));
 
@@ -115,13 +115,13 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
             completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
         }
 
-        StaticTextItem requesterItem = new StaticTextItem(OperationHistoryDataSource.Field.SUBJECT, MSG
+        StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT, MSG
             .view_operationHistoryDetails_requestor());
         requesterItem.setValue(operationHistory.getSubjectName());
 
         LinkItem errorLinkItem = null;
 
-        StaticTextItem statusItem = new StaticTextItem(OperationHistoryDataSource.Field.STATUS, MSG
+        StaticTextItem statusItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STATUS, MSG
             .view_operationHistoryDetails_status());
         String icon = ImageManager.getFullImagePath(ImageManager.getOperationResultsIcon(status));
         statusItem.setValue("<img src='" + icon + "'/>");

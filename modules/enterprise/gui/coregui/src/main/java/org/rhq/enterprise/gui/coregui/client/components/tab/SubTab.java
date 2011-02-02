@@ -26,7 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 
 /**
- * Simple class to provide a SubTab a locatorId.
+ * A Locatable SubTab associating a Button with a Canvas.
  *  
  * @author Jay Shaughnessy
  */
@@ -73,6 +73,27 @@ public class SubTab implements Locatable {
 
     public String getTitle() {
         return viewName.getTitle();
+    }
+
+    public void destroyButton() {
+        if (null != button) {
+            button.removeFromParent();
+            button.destroy();
+            button = null;
+        }
+    }
+
+    public void destroyCanvas() {
+        if (null != canvas) {
+            canvas.removeFromParent();
+            canvas.destroy();
+            canvas = null;
+        }
+    }
+
+    public void destroy() {
+        destroyCanvas();
+        destroyButton();
     }
 
     @Override

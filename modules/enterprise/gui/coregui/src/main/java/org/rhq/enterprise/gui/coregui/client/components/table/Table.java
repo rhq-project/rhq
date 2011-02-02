@@ -574,7 +574,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                listGridIdField = new ListGridField(FIELD_ID, MSG.common_title_id(), 55);
+                String datasourceFieldTitle = this.dataSource.getField(FIELD_ID).getTitle();
+                String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG.common_title_id();
+                listGridIdField = new ListGridField(FIELD_ID, listGridFieldTitle, 55);
                 // Override the DataSource id field metadata for consistent display across all Tables.
                 listGridIdField.setType(ListGridFieldType.INTEGER);
                 listGridIdField.setCanEdit(false);
@@ -686,6 +688,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     protected void deleteSelectedRecords() {
+        deleteSelectedRecords(null);
+    }
+
+    protected void deleteSelectedRecords(DSRequest requestProperties) {
         ListGrid listGrid = getListGrid();
         final int selectedRecordCount = listGrid.getSelection().length;
         final List<String> deletedRecordNames = new ArrayList<String>(selectedRecordCount);
@@ -704,11 +710,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                         .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
                                 getDataTypeNamePlural(), deletedRecordNames.toString()));
                         CoreGUI.getMessageCenter().notify(message);
+                        refresh();
                     }
                 }
                 // TODO: Print error messages for failures or partial failures.
             }
-        }, null);
+        }, requestProperties);
     }
 
     protected String getDataTypeName() {

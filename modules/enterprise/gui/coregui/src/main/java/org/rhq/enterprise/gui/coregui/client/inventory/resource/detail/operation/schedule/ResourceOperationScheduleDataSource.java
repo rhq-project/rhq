@@ -30,14 +30,14 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 
 /**
  * A DataSource for {@link ResourceOperationSchedule}s for a given {@link Resource}.
  *
  * @author Ian Springer
  */
-public class ResourceOperationScheduleDataSource extends OperationScheduleDataSource<ResourceOperationSchedule> {
+public class ResourceOperationScheduleDataSource extends AbstractOperationScheduleDataSource<ResourceOperationSchedule> {
 
     private ResourceComposite resourceComposite;
 

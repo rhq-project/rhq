@@ -21,15 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.
 
 import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
 
 /**
  * @author Ian Springer
  */
-public class GroupOperationScheduleListView extends OperationScheduleListView {
+public class GroupOperationScheduleListView extends AbstractOperationScheduleListView {
 
     private static final String TITLE = null;
 

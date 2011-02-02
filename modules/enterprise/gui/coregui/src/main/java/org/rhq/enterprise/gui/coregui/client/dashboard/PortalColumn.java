@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VStack;
 
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
 /**
  * @author Greg Hinkle
  */
@@ -52,4 +54,12 @@ public class PortalColumn extends VStack {
         placeHolderProperties.setBorder("2px solid #4A5D75");
         setPlaceHolderProperties(placeHolderProperties);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        SeleniumUtility.destroyMembers(this);
+    }
+
 }

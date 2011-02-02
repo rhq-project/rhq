@@ -27,16 +27,16 @@ import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.OperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 
 import java.util.Arrays;
 
 /**
  * @author Ian Springer
  */
-public class GroupOperationHistoryDataSource extends OperationHistoryDataSource<GroupOperationHistory> {
+public class GroupOperationHistoryDataSource extends AbstractOperationHistoryDataSource<GroupOperationHistory> {
 
-    public static abstract class Field extends OperationHistoryDataSource.Field {
+    public static abstract class Field extends AbstractOperationHistoryDataSource.Field {
         public static final String GROUP = "group";
     }
 

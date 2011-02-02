@@ -154,9 +154,17 @@ public class LinkManager {
         }
     }
 
-    public static String getDashboardLink() {
+    public static String getDashboardsLink() {
         if (GWT) {
             return "#Dashboards";
+        } else {
+            return "/Dashboard.do";
+        }
+    }
+
+    public static String getDashboardLink(int dashboardId) {
+        if (GWT) {
+            return "#Dashboards/" + dashboardId;
         } else {
             return "/Dashboard.do";
         }

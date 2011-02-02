@@ -5,11 +5,9 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
 
 /**
- * Formats a {@link org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource.SubjectRecord}
+ * Formats a {@link org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource.SubjectRecord}
  * (the SmartGWT {@link Record} representation of a {@link Subject}).
  * 
  * @author Ian Springer

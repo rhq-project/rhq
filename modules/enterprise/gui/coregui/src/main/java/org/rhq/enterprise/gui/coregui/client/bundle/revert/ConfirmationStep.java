@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -126,7 +127,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         liveHeader.setWidth100();
         layout.addMember(liveHeader);
 
-        DynamicForm liveForm = new DynamicForm();
+        DynamicForm liveForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("liveForm"));
         liveForm.setNumCols(2);
 
         StaticTextItem liveNameItem = new StaticTextItem("liveName", MSG.common_title_name());
@@ -162,7 +163,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         layout.addMember(prevHeader);
 
         if (prev != null) {
-            final DynamicForm prevForm = new DynamicForm();
+            final DynamicForm prevForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("previousForm"));
             prevForm.setNumCols(2);
 
             StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());

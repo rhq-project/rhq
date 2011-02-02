@@ -35,4 +35,10 @@ public class LocatableLayout extends Layout implements Locatable {
         SeleniumUtility.destroyMembers(this);
     }
 
+    @Override
+    protected void onDestroy() {
+        destroyMembers();
+        super.onDestroy();
+    }
+
 }

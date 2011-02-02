@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.smartgwt.client.types.Visibility;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -48,6 +47,8 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -131,13 +132,14 @@ public class JobTriggerEditor extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        DynamicForm modeForm = new DynamicForm();
+        EnhancedDynamicForm modeForm = new EnhancedDynamicForm(extendLocatorId("ModeForm"));
+        modeForm.setNumCols(3);
+        modeForm.setColWidths("140", "220", "*");
 
         RadioGroupItem modeItem = new RadioGroupItem("mode", "Schedule using");
-        modeItem.setWidth(220);
         LinkedHashMap<String, String> modeValueMap = new LinkedHashMap<String, String>();
         modeValueMap.put("calendar", "Calendar");
-        modeValueMap.put("cron", "Cron Mode");
+        modeValueMap.put("cron", "Cron Expression");
         modeItem.setValueMap(modeValueMap);
         modeItem.setVertical(false);
 
@@ -539,20 +541,13 @@ public class JobTriggerEditor extends LocatableVLayout {
     private DynamicForm createRepeatForm() {
         final DynamicForm repeatForm = new DynamicForm();
         repeatForm.setNumCols(6);
-        repeatForm.setColWidths(130, 130, 130, 130, 130);
+        repeatForm.setColWidths(140, 130, 130, 130, 130);
 
         TextItem repeatIntervalItem = new TextItem(FIELD_REPEAT_INTERVAL, "Run now and every");
         repeatIntervalItem.setRequired(true);
 
-        // Configure context-sensitive help.
-        FormItemIcon helpIcon = new FormItemIcon();
-        helpIcon.setSrc("[SKIN]/actions/help.png");
-        repeatIntervalItem.setIcons(helpIcon);
-        repeatIntervalItem.addIconClickHandler(new IconClickHandler() {
-            public void onIconClick(IconClickEvent event) {
-                SC.say("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-            }
-        });
+        FormUtility.addContextualHelp(repeatIntervalItem,
+                "N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
 
         // Configure validation.
         RegExpValidator repeatIntervalValidator = new RegExpValidator("[1-9][0-9]*[ ]*(seconds|s|minutes|m|hours|h|days|d|weeks|w|months|M|quarters|q|years|y)");
@@ -572,15 +567,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
 
-        // Configure context-sensitive help.
-        helpIcon = new FormItemIcon();
-        helpIcon.setSrc("[SKIN]/actions/help.png");
-        repeatDurationItem.setIcons(helpIcon);
-        repeatDurationItem.addIconClickHandler(new IconClickHandler() {
-            public void onIconClick(IconClickEvent event) {
-                SC.say("N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
-            }
-        });
+        FormUtility.addContextualHelp(repeatDurationItem,
+            "N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
 
         // Configure validation.
         RegExpValidator repeatDurationValidator = new RegExpValidator("[1-9][0-9]*[ ]*(times|repetitions|seconds|s|minutes|m|hours|h|days|d|weeks|w|months|M|quarters|q|years|y)");
@@ -632,7 +620,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     private DynamicForm createLaterForm() {
         final DynamicForm laterForm = new DynamicForm();
         laterForm.setNumCols(4);
-        laterForm.setColWidths(130, 130, 130);
+        laterForm.setColWidths(140, 130, 130);
 
         RadioGroupItem startTypeItem = new RadioGroupItem(FIELD_START_TYPE, "Run");
         LinkedHashMap<String, String> startTypeValueMap = new LinkedHashMap<String, String>();
@@ -646,15 +634,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
 
-        // Configure context-sensitive help.
-        FormItemIcon icon = new FormItemIcon();
-        icon.setSrc("[SKIN]/actions/help.png");
-        startDelayItem.setIcons(icon);
-        startDelayItem.addIconClickHandler(new IconClickHandler() {
-            public void onIconClick(IconClickEvent event) {
-                SC.say("N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-            }
-        });
+        FormUtility.addContextualHelp(startDelayItem,
+            "N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
 
         // Configure validation.
         RegExpValidator startDelayValidator = new RegExpValidator("[1-9][0-9]*([ ]+(seconds|minutes|hours|days|weeks|months|quarters|years)|(s|m|h|d|w|M|q|y))");

@@ -18,8 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 
 /**
  * A collection of utility methods for working with SmartGWT {@link DynamicForm}s.
@@ -42,6 +46,19 @@ public class FormUtility {
         } else {
             return item.getValue().toString();
         }
+    }
+
+    public static void addContextualHelp(FormItem item, final String helpText) {
+        final FormItemIcon helpIcon = new FormItemIcon();
+        helpIcon.setSrc("[SKIN]/actions/help.png");
+        item.setIcons(helpIcon);
+        item.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                if (event.getIcon().equals(helpIcon)) {
+                    SC.say(helpText);
+                }
+            }
+        });
     }
 
 }

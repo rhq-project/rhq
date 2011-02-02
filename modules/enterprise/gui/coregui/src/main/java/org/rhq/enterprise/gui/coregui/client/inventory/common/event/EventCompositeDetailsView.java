@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -79,7 +80,7 @@ public class EventCompositeDetailsView extends LocatableVLayout implements Bookm
             removeChild(child);
         }
 
-        DynamicForm form = new DynamicForm();
+        DynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
         form.setWidth100();
         form.setHeight100();
 

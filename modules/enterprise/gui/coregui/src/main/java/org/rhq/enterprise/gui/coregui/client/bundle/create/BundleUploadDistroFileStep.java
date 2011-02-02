@@ -76,7 +76,12 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             radioItems.put(UPLOAD_OPTION, createUploadForm());
             radioItems.put(RECIPE_OPTION, createRecipeForm());
 
-            mainCanvasForm = new DynamicForm();
+            if (parent != null) {
+                mainCanvasForm = new LocatableDynamicForm(parent.extendLocatorId("mainCanvasForm"));
+            } else {
+                mainCanvasForm = new LocatableDynamicForm("mainCanvasForm");
+            }
+
             radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", MSG
                 .view_bundle_createWizard_bundleDistro(), radioItems, mainCanvasForm);
             radioGroup.setShowTitle(false);

@@ -15,6 +15,11 @@ public class NamedTab extends LocatableTab {
 
     private ViewName viewName;
 
+    public NamedTab(String locatorId, ViewName viewName) {
+        super(locatorId, viewName.getTitle());
+        this.viewName = viewName;
+    }
+
     public NamedTab(String locatorId, ViewName viewName, String icon) {
         super(locatorId, viewName.getTitle(), icon);
         this.viewName = viewName;
@@ -32,7 +37,7 @@ public class NamedTab extends LocatableTab {
         return viewName.getTitle();
     }
 
-    protected void destroy() {
+    public void destroy() {
         Canvas pane = getPane();
         if (null != pane) {
             pane.destroy();

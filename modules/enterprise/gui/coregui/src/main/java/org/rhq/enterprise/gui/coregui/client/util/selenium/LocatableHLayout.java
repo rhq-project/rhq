@@ -51,4 +51,10 @@ public class LocatableHLayout extends HLayout implements Locatable {
         SeleniumUtility.destroyMembers(this);
     }
 
+    @Override
+    protected void onDestroy() {
+        destroyMembers();
+        super.onDestroy();
+    }
+
 }

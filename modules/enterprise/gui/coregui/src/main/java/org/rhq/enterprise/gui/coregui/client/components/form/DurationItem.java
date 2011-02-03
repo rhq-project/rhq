@@ -50,14 +50,16 @@ public class DurationItem extends CanvasItem {
     private final DynamicForm form;
     private TimeUnit defaultUnit;
     private String contextualHelp;
-    private boolean iterationsSupported;
+    private boolean supportsIterations;
     private TimeUnit valueUnit;
+    private boolean isReadOnly;
 
-    public DurationItem(String name, String title, Set<TimeUnit> supportedUnits, boolean iterationsSupported,
-                        Locatable parentWidget) {
+    public DurationItem(String name, String title, Set<TimeUnit> supportedUnits, boolean supportsIterations,
+                        boolean isReadOnly, Locatable parentWidget) {
         super(name, title);
 
-        this.iterationsSupported = iterationsSupported;
+        this.supportsIterations = supportsIterations;
+        this.isReadOnly = isReadOnly;
 
         this.form = new EnhancedDynamicForm(parentWidget.extendLocatorId(name), false, false);
         this.form.setNumCols(4);
@@ -83,7 +85,7 @@ public class DurationItem extends CanvasItem {
 
         // TODO: i18n valueMap values
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        if (iterationsSupported) {
+        if (supportsIterations) {
             valueMap.put("times", "times");
         }
         if (supportedUnits != null && !supportedUnits.isEmpty()) {

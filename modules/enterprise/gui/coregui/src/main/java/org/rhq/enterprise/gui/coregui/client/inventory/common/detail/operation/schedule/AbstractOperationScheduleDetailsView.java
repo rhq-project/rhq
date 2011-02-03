@@ -75,7 +75,6 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     private JobTriggerEditor triggerEditor;
     private Configuration parameters;
     private EnhancedDynamicForm notesForm;
-    private EnhancedDynamicForm timeoutForm;
 
     public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
                                                 ResourceType resourceType, int scheduleId) {
@@ -189,7 +188,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
         DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout",
-                supportedUnits, false, this.notesForm);
+                supportedUnits, false, isReadOnly(), this.notesForm);
         notesFields.add(timeoutItem);
 
         if (!isNewRecord()) {

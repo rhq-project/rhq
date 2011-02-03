@@ -288,7 +288,10 @@ public class DashboardView extends LocatableVLayout {
         Integer[] refreshValues = { STOP_VALUE, REFRESH1_VALUE, REFRESH5_VALUE, REFRESH10_VALUE };
         refreshMenuMappings = new HashMap<Integer, String>();
         refreshMenuItems = new MenuItem[refreshIntervals.length];
-        int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        int retrievedRefreshInterval = REFRESH1_VALUE;
+        if (null != UserSessionManager.getUserPreferences()) {
+            retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+        }
         for (int i = 0; i < refreshIntervals.length; i++) {
             MenuItem item = new MenuItem(refreshIntervals[i], "");
             item.addClickHandler(menuClick);
@@ -587,7 +590,10 @@ public class DashboardView extends LocatableVLayout {
 
     public void updateRefreshMenu() {
         if (refreshMenuItems != null) {
-            int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+            int retrievedRefreshInterval = REFRESH1_VALUE;
+            if (null != UserSessionManager.getUserPreferences()) {
+                retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
+            }
             String currentSelection = refreshMenuMappings.get(retrievedRefreshInterval);
             if (currentSelection != null) {//iterate over menu items and update icon details
                 for (int i = 0; i < refreshMenuItems.length; i++) {

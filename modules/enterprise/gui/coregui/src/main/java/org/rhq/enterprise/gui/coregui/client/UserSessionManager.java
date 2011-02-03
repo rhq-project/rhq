@@ -102,7 +102,8 @@ public class UserSessionManager {
 
     public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
         BrowserUtility.forceIe6Hacks();
-
+        //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
+        //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
         final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
@@ -212,7 +213,6 @@ public class UserSessionManager {
                                 new LoginView(LOCATOR_ID).showLoginDialog();
                                 return;
                             }
-
                             // BZ-586435: insert case insensitivity for usernames with ldap auth
                             // locate first matching subject and attach.
                             SubjectCriteria subjectCriteria = new SubjectCriteria();
@@ -242,7 +242,7 @@ public class UserSessionManager {
                                                 sessionId, password, callback);
                                             return;
                                         } else {//launch case sensitive code handling
-                                            Subject locatedSubject = results.get(0);
+                                            final Subject locatedSubject = results.get(0);
                                             Log
                                                 .trace("Checked credentials and determined that ldap case insensitive login '"
                                                     + locatedSubject.getName()
@@ -251,6 +251,7 @@ public class UserSessionManager {
                                                     + "'");
                                             //use the original username to pass session check.
                                             subject.setName(user);
+
                                             GWTServiceLookup.getSubjectService().processSubjectForLdap(subject,
                                                 password, new AsyncCallback<Subject>() {
                                                     public void onFailure(Throwable caught) {
@@ -261,23 +262,22 @@ public class UserSessionManager {
                                                         return;
                                                     }
 
-                                                    public void onSuccess(Subject checked) {
-                                                        Log.trace("Proceeding with registration for ldap user '" + user
-                                                            + "'.");
+                                                    public void onSuccess(final Subject checked) {
+                                                        Log.trace("Proceeding with case sensitive login of ldap user '"
+                                                            + user + "'.");
+
                                                         sessionState = State.IS_LOGGED_IN;
                                                         userPreferences = new UserPreferences(checked);
                                                         refresh();
-
                                                         callback.onSuccess(checked);
                                                         return;
                                                     }
                                                 });//end processSubjectForLdap call
-                                        }
+                                        }//end of case insensitive processing
                                     }
                                 });//end findSubjectsByCriteria
 
                         } else {//else send through regular session check 
-
                             SubjectCriteria criteria = new SubjectCriteria();
                             criteria.fetchConfiguration(true);
                             criteria.addFilterId(subjectId);
@@ -308,12 +308,14 @@ public class UserSessionManager {
                                                     Log.warn("Errors occurred processing subject for LDAP."
                                                         + caught.getMessage());
                                                     //TODO: pass informative message to Login UI.
+                                                    callback.onSuccess(validSessionSubject);
                                                     return;
                                                 }
 
                                                 public void onSuccess(Subject result) {
                                                     Log.trace("Succesfully processed subject '"
                                                         + validSessionSubject.getName() + "' for LDAP.");
+                                                    callback.onSuccess(validSessionSubject);
                                                     return;
                                                 }
                                             });
@@ -321,15 +323,13 @@ public class UserSessionManager {
                                         // reset the session subject to the latest, for wrapping in user preferences
                                         sessionSubject = validSessionSubject;
                                         userPreferences = new UserPreferences(sessionSubject);
+                                        //calling refresh here will set State to IS_LOGGED_IN
                                         refresh();
-                                        sessionState = State.IS_LOGGED_IN;
-                                        callback.onSuccess(validSessionSubject);
-                                        return;
                                     }
                                 });
                         }//end of server side session check;
-                    } else {
 
+                    } else {
                         //invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
                         new LoginView(LOCATOR_ID).showLoginDialog();
@@ -361,9 +361,12 @@ public class UserSessionManager {
     public static void login(String user, String password) {
 
         checkLoginStatus(user, password, new AsyncCallback<Subject>() {
-            public void onSuccess(Subject result) {
+            public void onSuccess(final Subject result) {
                 // will build UI if necessary, then fires history event
                 sessionState = State.IS_LOGGED_IN;
+
+                //update the sessionSubject appropriately
+                sessionSubject = result;
 
                 CoreGUI.get().buildCoreUI();
             }

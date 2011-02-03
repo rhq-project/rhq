@@ -258,6 +258,7 @@ public class LoginView extends LocatableCanvas {
             IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
+
                     //F5 refresh check? If they've reloaded the form for some reason then bail.
                     boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
                         .trim().isEmpty()));
@@ -271,12 +272,17 @@ public class LoginView extends LocatableCanvas {
                     if (inputForm.validate()) {
                         Log.trace("Successfully validated all data for user registration.");
                         //populate form
-                        inputForm.setValue(FIRST, String.valueOf(first.getValue()));
-                        inputForm.setValue(LAST, String.valueOf(last.getValue()));
+                        if (first.getValue() != null)
+                            inputForm.setValue(FIRST, String.valueOf(first.getValue()));
+                        if (last.getValue() != null)
+                            inputForm.setValue(LAST, String.valueOf(last.getValue()));
                         inputForm.setValue(USERNAME, String.valueOf(username.getValue()));
-                        inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
-                        inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
-                        inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
+                        if (email.getValue() != null)
+                            inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
+                        if (phone.getValue() != null)
+                            inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
+                        if (department.getValue() != null)
+                            inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
                         inputForm.setValue(SESSIONID, sessionId);
                         inputForm.setValue(PASSWORD, password);
                         registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);

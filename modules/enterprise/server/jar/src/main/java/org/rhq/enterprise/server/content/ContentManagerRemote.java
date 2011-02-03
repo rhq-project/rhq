@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -160,6 +161,21 @@ public interface ContentManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
+    /**
+     * This method requires InventoryManager permissions if the criteria is set up to fetch the package
+     * versions via {@link PackageCriteria#fetchVersions(boolean)}. There are no privileges required
+     * if only a list of packages without their associated package versions is requested.
+     * <p>
+     * 
+     * @param subject
+     * @param criteria
+     * @return
+     */
+    @WebMethod
+    PageList<Package> findPackagesByCriteria(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "criteria") PackageCriteria criteria);
+    
     /**
      * For a resource that is content-backed (aka package-backed), this call will return InstalledPackage information
      * for the backing content (package).

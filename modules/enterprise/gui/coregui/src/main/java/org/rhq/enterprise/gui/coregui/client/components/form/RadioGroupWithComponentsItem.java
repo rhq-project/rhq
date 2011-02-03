@@ -38,6 +38,8 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
+ * TODO
+ *
  * @author Greg Hinkle
  */
 public class RadioGroupWithComponentsItem extends CanvasItem {

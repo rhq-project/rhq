@@ -42,6 +42,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.RecordUtility;
 
 /**
  * @author Ian Springer
@@ -134,7 +135,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
         to.setSubject(subjectRecord.toSubject());
         Configuration parameters = (Configuration) from.getAttributeAsObject(Field.PARAMETERS);
-        Integer timeout = from.getAttributeAsInt(Field.TIMEOUT);
+        Integer timeout = RecordUtility.getAttributeAsInteger(from, Field.TIMEOUT);
         if (timeout != null) {
             if (parameters == null) {
                 parameters = new Configuration();

@@ -130,6 +130,24 @@ public interface OperationManagerLocal {
         throws SchedulerException;
 
     /**
+     * TODO
+     *
+     * @param whoami
+     * @param scheduleId
+     * @return
+     */
+    ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, int scheduleId);
+
+    /**
+     * TODO
+     *
+     * @param whoami
+     * @param scheduleId
+     * @return
+     */
+    GroupOperationSchedule getGroupOperationSchedule(Subject whoami, int scheduleId);
+
+    /**
      * This will delete an operation schedule entity identified with the given job ID. Note that this does <b>not</b>
      * actually unschedule the job - it merely removed our schedule tracking entity. This schedule tracking entity is
      * really just used to provide some additional querying capabilities since it allows us to link a resource or group

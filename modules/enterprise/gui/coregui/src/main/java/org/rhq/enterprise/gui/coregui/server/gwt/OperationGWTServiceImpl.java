@@ -28,6 +28,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
@@ -117,6 +118,18 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             e.printStackTrace();
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
+    }
+
+    public ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) {
+        ResourceOperationSchedule resourceOperationSchedule =
+                operationManager.getResourceOperationSchedule(getSessionSubject(), scheduleId);
+        return SerialUtility.prepare(resourceOperationSchedule, "getResourceOperationSchedule");
+    }
+
+    public GroupOperationSchedule getGroupOperationSchedule(int scheduleId) {
+        GroupOperationSchedule groupOperationSchedule =
+                operationManager.getGroupOperationSchedule(getSessionSubject(), scheduleId);
+        return SerialUtility.prepare(groupOperationSchedule, "getGroupOperationSchedule");
     }
 
     public void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule)

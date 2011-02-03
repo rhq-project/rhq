@@ -22,7 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,16 +31,13 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Subject;
@@ -52,7 +49,9 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
@@ -156,7 +155,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             contentPane.addMember(hr);
         }
 
-        this.timeoutForm = new EnhancedDynamicForm(extendLocatorId("TimeoutForm"), isReadOnly(), isNewRecord());
+        /*this.timeoutForm = new EnhancedDynamicForm(extendLocatorId("TimeoutForm"), isReadOnly(), isNewRecord());
         this.timeoutForm.setNumCols(4);
         this.timeoutForm.setColWidths("140", "90", "105", "*");
 
@@ -177,6 +176,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         timeoutItem.setWidth(90);
         timeoutUnitsItem.setWidth(105);
         contentPane.addMember(this.timeoutForm);
+        */
 
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
@@ -184,8 +184,17 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
+        Set<TimeUnit> supportedUnits = new HashSet<TimeUnit>(3);
+        supportedUnits.add(TimeUnit.SECONDS);
+        supportedUnits.add(TimeUnit.MINUTES);
+        supportedUnits.add(TimeUnit.HOURS);
+        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout",
+                supportedUnits, false, this.notesForm);
+        notesFields.add(timeoutItem);
+
         if (!isNewRecord()) {
-            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME, "Next Fire Time");
+            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
+                    "Next Fire Time");
             notesFields.add(nextFireTimeItem);
         }
 
@@ -229,15 +238,21 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         refreshOperationDescriptionItem();
         refreshOperationParametersItem();
 
-        if (!isNewRecord()) {
-            FormItem nextFireTimeItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
-            nextFireTimeItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
-        }
+        super.editRecord(record);
+    }
+
+    @Override
+    protected void editExistingRecord(Record record) {
+        FormItem nextFireTimeItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
+        nextFireTimeItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
+
+        FormItem timeoutItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        timeoutItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT));
 
         FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
         notesItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION));
 
-        super.editRecord(record);
+        super.editExistingRecord(record);
     }
 
     @Override
@@ -269,8 +284,11 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         form.setValue("jobTrigger", jobTriggerRecord);
 
-        FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
-        form.setValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
+        DurationItem timeoutItem = (DurationItem)this.notesForm.getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeoutItem.getValueAsInteger());
+
+        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
 
         super.save(requestProperties);
     }

@@ -109,29 +109,6 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         //no permissions check as embedded in the SLSB call.
         try {
             Subject processedSubject = subjectManager.processSubjectForLdap(subjectToModify, password);
-            //if sessionId has changed then need to refresh the WebUser
-            //            if (subjectToModify.getSessionId() != processedSubject.getSessionId()) {
-            //                HttpServletRequest request = requestReference;
-            //                if ((request != null) && (request.getSession() != null)) {
-            //                    HttpSession session = request.getSession();
-            //
-            //                    //                    //move this to the sessionAccessServlet
-            //                    //                    WebUser webUser = new WebUser(processedSubject, false);
-            //                    //                    session.invalidate();
-            //                    //                    session = request.getSession(true);
-            //                    //                    SessionUtils.setWebUser(session, webUser);
-            //                    //                    // look up the user's permissions
-            //                    //                    Set<Permission> all_permissions = LookupUtil.getAuthorizationManager()
-            //                    //                        .getExplicitGlobalPermissions(processedSubject);
-            //                    //
-            //                    //                    Map<String, Boolean> userGlobalPermissionsMap = new HashMap<String, Boolean>();
-            //                    //                    for (Permission permission : all_permissions) {
-            //                    //                        userGlobalPermissionsMap.put(permission.toString(), Boolean.TRUE);
-            //                    //                    }
-            //                    //                    //load all session attributes
-            //                    //                    session.setAttribute(Constants.USER_OPERATIONS_ATTR, userGlobalPermissionsMap);
-            //                }
-            //            }
             return SerialUtility.prepare(processedSubject, "SubjectManager.processSubjectForLdap");
         } catch (LoginException e) {
             throw new RuntimeException("LoginException: " + e.getMessage());

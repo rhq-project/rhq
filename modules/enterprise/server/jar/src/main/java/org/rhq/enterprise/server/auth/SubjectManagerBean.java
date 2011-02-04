@@ -505,24 +505,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             Configuration newUserConfig = new Configuration();
                             subject.setUserConfiguration(newUserConfig);
                         }
-                        //                        //either way need to refresh the WebUser
-                        //                        if ((request != null) && (request.getSession() != null)) {
-                        //                            HttpSession session = request.getSession();
-                        //                            WebUser webUser = new WebUser(subject, false);
-                        //                            session.invalidate();
-                        //                            session = request.getSession(true);
-                        //                            SessionUtils.setWebUser(session, webUser);
-                        //                            // look up the user's permissions
-                        //                            Set<Permission> all_permissions = LookupUtil.getAuthorizationManager()
-                        //                                .getExplicitGlobalPermissions(subject);
-                        //
-                        //                            Map<String, Boolean> userGlobalPermissionsMap = new HashMap<String, Boolean>();
-                        //                            for (Permission permission : all_permissions) {
-                        //                                userGlobalPermissionsMap.put(permission.toString(), Boolean.TRUE);
-                        //                            }
-                        //                            //load all session attributes
-                        //                            session.setAttribute(Constants.USER_OPERATIONS_ATTR, userGlobalPermissionsMap);
-                        //                        }
                     }
 
                     //Subject.id guaranteed to be > 0 then iii)authorization updates for ldap groups necessary

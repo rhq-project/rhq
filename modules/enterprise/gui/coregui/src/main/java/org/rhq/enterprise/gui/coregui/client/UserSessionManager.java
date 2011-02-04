@@ -52,6 +52,20 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  *    Else check server-side logged in state
  *       If logged out on server-side, LoginView will be shown, which sets local loggedIn bit to false.
  * 
+ * Additionally, all login checks go through checkLoginStatus where the following happens
+ *
+ *  1)HTTP Get request sent to portal.war SessionAccessServlet which when logged in:
+ *    yes)logged in returns (Subject.id):(Server side session id):(Last Accessed time)
+ *    no )empty text and Login screen displayed
+ *
+ *  2)If logged in there are two flavors of Subject logins that will occur
+ *    a)Regular RHQ logins and case sensitive LDAP users with established RHQ accounts:         Subject.id > 0
+ *    b)LDAP users i)registering new user ii)Existing but case-insensitive ldap username used : Subject.id == 0
+ *
+ *    Case a) is trivial and well understood. With case b) the credentials are used to retrieve or create RHQ Subject
+ *    instances by terminating previous sessions and creating new ones to be used with all future client
+ *    side UI requests.  In case b) the WebUser is updated appropriately.
+ *
  * @author Joseph Marques
  * @author Jay Shaughnessy
  * @author Simeon Pinder
@@ -237,15 +251,16 @@ public class UserSessionManager {
                                     }
 
                                     //pipe through method to handle case insensitive
-                                    public void onSuccess(PageList<Subject> results) {
-                                        if (results.size() == 0) {//no case insensitive matches found, launch registration
+                                    public void onSuccess(PageList<Subject> subjects) {
+                                        //no case insensitive matches found, launch registration
+                                        if (subjects.size() == 0) {
                                             Log.trace("Proceeding with registration for ldap user '" + user + "'.");
                                             sessionState = State.IS_REGISTERING;
                                             new LoginView(LOCATOR_ID).showRegistrationDialog(subject.getName(),
                                                 sessionId, password, callback);
                                             return;
                                         } else {//launch case sensitive code handling
-                                            final Subject locatedSubject = results.get(0);
+                                            final Subject locatedSubject = subjects.get(0);
                                             Log
                                                 .trace("Checked credentials and determined that ldap case insensitive login '"
                                                     + locatedSubject.getName()
@@ -268,7 +283,6 @@ public class UserSessionManager {
                                                     public void onSuccess(final Subject checked) {
                                                         Log.trace("Proceeding with case sensitive login of ldap user '"
                                                             + user + "'.");
-
                                                         callback.onSuccess(checked);
                                                         return;
                                                     }
@@ -321,11 +335,8 @@ public class UserSessionManager {
                                                 }
                                             });
 
-                                        // reset the session subject to the latest, for wrapping in user preferences
-                                        sessionSubject = validSessionSubject;
-                                        userPreferences = new UserPreferences(sessionSubject);
-                                        //calling refresh here will set State to IS_LOGGED_IN
-                                        refresh();
+                                        //indicate success to 'login' Callback
+                                        callback.onSuccess(validSessionSubject);
                                     }
                                 });
                         }//end of server side session check;
@@ -353,29 +364,29 @@ public class UserSessionManager {
     /** Takes an updated Subject and signals SessionAccessServlet in portal.war to update the associated WebUser
      *  because for this specific authenticated user.  Currently assumes Subject instances returned from SubjectManagerBean.processSubjectForLdap.
      *
-     * @param checked Subject with updated session
+     * @param loggedInSubject Subject with updated session
      */
-    private static void scheduleWebUserUpdate(final Subject checked) {
+    private static void scheduleWebUserUpdate(final Subject loggedInSubject) {
         final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
-        b.setHeader(WEB_USER_UPDATE, String.valueOf(checked.getSessionId()));
+        b.setHeader(WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
                     Log.trace("Successfully submitted request to update server side WebUser for subject '"
-                        + checked.getName() + "'.");
+                        + loggedInSubject.getName() + "'.");
                 }
 
                 @Override
                 public void onError(Request request, Throwable exception) {
                     Log.trace("Failed to submit request to update server side WebUser for subject '"
-                        + checked.getName() + "'."
+                        + loggedInSubject.getName() + "'."
                         + ((exception != null ? exception.getMessage() : " Exception ref null.")));
                 }
             });
             b.send();
         } catch (RequestException e) {
-            Log.trace("Failure submitting update request for WebUser '" + checked.getName() + "'."
+            Log.trace("Failure submitting update request for WebUser '" + loggedInSubject.getName() + "'."
                 + (e != null ? e.getMessage() : "RequestException reference is null."));
         }
     }

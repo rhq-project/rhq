@@ -80,6 +80,7 @@
     -->
     <module>alert-snmp</module>
     <module>alert-subject</module>
+    <module>alert-log4j</module>
     <module>cobbler</module>
     <module>filetemplate-bundle</module>
     <module>ant-bundle</module>

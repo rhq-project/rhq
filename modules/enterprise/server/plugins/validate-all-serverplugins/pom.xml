@@ -52,6 +52,7 @@
                               <pathelement location="../alert-sms/target/alert-sms-${project.version}.jar" />
                               <pathelement location="../alert-snmp/target/alert-snmp-${project.version}.jar" />
                               <pathelement location="../alert-subject/target/alert-subject-${project.version}.jar" />
+                              <pathelement location="../alert-log4j/target/alert-log4j-${project.version}.jar" />
                               <pathelement location="../cobbler/target/cobbler-${project.version}.jar" />
                               <pathelement location="../filetemplate-bundle/target/rhq-serverplugin-filetemplate-bundle-${project.version}.jar" />
                               <pathelement location="../ant-bundle/target/rhq-serverplugin-ant-bundle-${project.version}.jar" />

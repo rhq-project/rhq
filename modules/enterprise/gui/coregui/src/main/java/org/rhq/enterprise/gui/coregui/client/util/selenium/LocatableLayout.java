@@ -36,9 +36,8 @@ public class LocatableLayout extends Layout implements Locatable {
     }
 
     @Override
-    protected void onDestroy() {
+    public void destroy() {
         destroyMembers();
-        super.onDestroy();
+        super.destroy();
     }
-
 }

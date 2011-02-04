@@ -157,7 +157,7 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
     }
 
     @Override
-    protected void onDestroy() {
+    public void destroy() {
         // add the hidden tabs back under the TabSet. This will get them destroyed by smartgwt when the tabset
         // goes away. There is no explicit Tab.destroy().
         for (TwoLevelTab tab : hiddenTabs.values()) {
@@ -166,7 +166,6 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         for (TwoLevelTab tab : getTabs()) {
             tab.getLayout().destroyViews();
         }
-        super.onDestroy();
+        super.destroy();
     }
-
 }

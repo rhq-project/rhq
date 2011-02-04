@@ -311,8 +311,8 @@ public class SmallGraphView extends LocatableVLayout {
 
     @Override
     public void destroy() {
-        super.destroy();
         hoverLabel.destroy();
+        super.destroy();
     }
 
     @Override
@@ -377,10 +377,4 @@ public class SmallGraphView extends LocatableVLayout {
         graphPopup.show();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        hoverLabel.destroy();
-    }
 }

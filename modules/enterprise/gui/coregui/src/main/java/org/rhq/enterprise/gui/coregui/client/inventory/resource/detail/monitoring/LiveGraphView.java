@@ -291,14 +291,13 @@ public class LiveGraphView extends LocatableVLayout {
     }
 
     protected void stop() {
-        dataLoader.cancel();
         hoverLabel.destroy();
+        dataLoader.cancel();
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         stop();
+        super.onDestroy();
     }
 }

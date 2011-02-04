@@ -89,8 +89,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static String currentPath;
 
-    @SuppressWarnings("unused")
-    private static Canvas content;
+    //    @SuppressWarnings("unused")
+    //    private static Canvas content;
 
     private RootCanvas rootCanvas;
 
@@ -259,15 +259,17 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void setContent(Canvas newContent) {
-        if (content != null) {
-            content.removeFromParent();
-            content.destroy();
-            content = null;
+        // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
+        // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
+        // are in the array.
+        Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
+        Canvas[] children;
+        while ((children = contentCanvas.getChildren()).length > 0) {
+            children[0].destroy();
         }
 
-        Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
         if (newContent != null) {
-            content = newContent;
+            //content = newContent;
             contentCanvas.addChild(newContent);
         }
         contentCanvas.markForRedraw();

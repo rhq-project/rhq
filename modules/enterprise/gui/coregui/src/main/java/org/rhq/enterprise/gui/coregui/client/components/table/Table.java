@@ -84,6 +84,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -308,6 +309,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
+    }
+
+    @Override
+    public void destroy() {
+        SeleniumUtility.destroyMembers(contents);
+        super.destroy();
     }
 
     private void drawHeader() {
@@ -575,7 +582,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
                 String datasourceFieldTitle = this.dataSource.getField(FIELD_ID).getTitle();
-                String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG.common_title_id();
+                String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG
+                    .common_title_id();
                 listGridIdField = new ListGridField(FIELD_ID, listGridFieldTitle, 55);
                 // Override the DataSource id field metadata for consistent display across all Tables.
                 listGridIdField.setType(ListGridFieldType.INTEGER);
@@ -706,8 +714,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     if (deletedRecordNames.size() == selectedRecordCount) {
                         // all selected schedules were successfully deleted.
                         Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
-                        .valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
-                        .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
+                            .valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
+                            .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
                                 getDataTypeNamePlural(), deletedRecordNames.toString()));
                         CoreGUI.getMessageCenter().notify(message);
                         refresh();

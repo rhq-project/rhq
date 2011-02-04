@@ -63,8 +63,11 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -202,8 +205,31 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         addMember(this.hlayout);
     }
 
+    @Override
+    public void destroy() {
+        // explicitly destroy non-locatable member layouts
+        SeleniumUtility.destroyMembers(hlayout);
+        super.destroy();
+
+        // For reasons unknown, possibly issues in smartgwt's cleanup of VStack and SectionStack, these
+        // widgets did not always get destroyed (for example, if something was moved to assigned, but nothing
+        // was moved to available - go figure), so destroy them manually when the other cleanup is already done.
+        availableGrid.removeFromParent();
+        availableGrid.destroy();
+        assignedGrid.removeFromParent();
+        assignedGrid.destroy();
+        addButton.removeFromParent();
+        addButton.destroy();
+        addAllButton.removeFromParent();
+        addAllButton.destroy();
+        removeButton.removeFromParent();
+        removeButton.destroy();
+        removeAllButton.removeFromParent();
+        removeAllButton.destroy();
+    }
+
     private SectionStack buildAvailableItemsStack() {
-        SectionStack availableSectionStack = new SectionStack();
+        SectionStack availableSectionStack = new LocatableSectionStack(extendLocatorId("Available"));
         availableSectionStack.setWidth(300);
         availableSectionStack.setHeight(250);
 
@@ -321,7 +347,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     private VStack buildButtonStack() {
-        VStack moveButtonStack = new VStack(6);
+        VStack moveButtonStack = new LocatableVStack(extendLocatorId("MoveButtons"), 6);
         moveButtonStack.setWidth(42);
         moveButtonStack.setHeight(250);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
@@ -365,7 +391,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     private SectionStack buildAssignedItemsStack() {
-        SectionStack assignedSectionStack = new SectionStack();
+        SectionStack assignedSectionStack = new LocatableSectionStack(extendLocatorId("Assigned"));
         assignedSectionStack.setWidth(300);
         assignedSectionStack.setHeight(250);
         assignedSectionStack.setAlign(Alignment.LEFT);

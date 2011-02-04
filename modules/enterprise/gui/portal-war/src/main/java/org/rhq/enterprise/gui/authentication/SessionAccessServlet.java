@@ -63,12 +63,36 @@ public class SessionAccessServlet extends HttpServlet {
         //if a session does not already exist this call will create one
         HttpSession session = request.getSession();
 
+        //check for web user update request from coregui
+        String sessionWebUserUpdate = request.getHeader("rhq_webuser_update");
+
         /* 
          * check if the user object is in the session.  if not, then the user is not validated, the response output
          * will not contain the "<subjectId>:<sessionId>:<lastAccess>", which will forward the user to the login page
          */
         WebUser webUser = SessionUtils.getWebUser(session);
+
         if (webUser != null && webUser.getSubject() != null) {
+
+            //if sessionWebUserUpdate header sent then request for WebUser to be updated
+            if ((sessionWebUserUpdate != null) && (!sessionWebUserUpdate.trim().isEmpty())) {
+                //if webUser.getSubject.getName is same as user with session id passed in
+                try {
+                    //attempt to retrieve Subject for the requested session update
+                    Subject currentSubject = SessionManager.getInstance().getSubject(
+                        Integer.valueOf(sessionWebUserUpdate));
+                    if (currentSubject != null) {//located associated subject
+                        //if userNames match(case insensitive) then update webUser appropriately and re-associate in session
+                        if (webUser.getSubject().getName().equalsIgnoreCase(currentSubject.getName())) {
+                            webUser = new WebUser(currentSubject);
+                            SessionUtils.setWebUser(session, webUser);
+                        }
+                    }
+                } catch (SessionNotFoundException snfe) {
+                } catch (NumberFormatException e) {
+                } catch (SessionTimeoutException e) {
+                }
+            }
 
             // the web user exists, so update our SessionManager's session last-access-time
             Subject subject = webUser.getSubject();

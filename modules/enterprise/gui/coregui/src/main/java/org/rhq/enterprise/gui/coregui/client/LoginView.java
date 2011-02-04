@@ -469,6 +469,7 @@ public class LoginView extends LocatableCanvas {
                         Log.trace("Succesfully registered the new ldap Subject.");
                         window.destroy();
                         loginShowing = false;
+                        //indicate to login callback success
                         callback.onSuccess(checked);
                     }
                 });

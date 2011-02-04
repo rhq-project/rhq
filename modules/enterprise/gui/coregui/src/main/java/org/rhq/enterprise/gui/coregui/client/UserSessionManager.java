@@ -54,6 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * 
  * @author Joseph Marques
  * @author Jay Shaughnessy
+ * @author Simeon Pinder
  */
 public class UserSessionManager {
     private static final Messages MSG = CoreGUI.getMessages();
@@ -66,6 +67,8 @@ public class UserSessionManager {
 
     // The web session scheduled to be logged out on the server side 
     private static final String DOOMED_SESSION_NAME = "RHQ_DoomedSession";
+    // header identifier for triggering updating portal war webUser
+    private static final String WEB_USER_UPDATE = "rhq_webuser_update";
     private static final String LOCATOR_ID = "SessionManagerLogin";
 
     private static Subject sessionSubject;
@@ -266,12 +269,10 @@ public class UserSessionManager {
                                                         Log.trace("Proceeding with case sensitive login of ldap user '"
                                                             + user + "'.");
 
-                                                        sessionState = State.IS_LOGGED_IN;
-                                                        userPreferences = new UserPreferences(checked);
-                                                        refresh();
                                                         callback.onSuccess(checked);
                                                         return;
                                                     }
+
                                                 });//end processSubjectForLdap call
                                         }//end of case insensitive processing
                                     }
@@ -349,6 +350,36 @@ public class UserSessionManager {
         }
     }
 
+    /** Takes an updated Subject and signals SessionAccessServlet in portal.war to update the associated WebUser
+     *  because for this specific authenticated user.  Currently assumes Subject instances returned from SubjectManagerBean.processSubjectForLdap.
+     *
+     * @param checked Subject with updated session
+     */
+    private static void scheduleWebUserUpdate(final Subject checked) {
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
+        b.setHeader(WEB_USER_UPDATE, String.valueOf(checked.getSessionId()));
+        try {
+            b.setCallback(new RequestCallback() {
+                public void onResponseReceived(final Request request, final Response response) {
+                    Log.trace("Successfully submitted request to update server side WebUser for subject '"
+                        + checked.getName() + "'.");
+                }
+
+                @Override
+                public void onError(Request request, Throwable exception) {
+                    Log.trace("Failed to submit request to update server side WebUser for subject '"
+                        + checked.getName() + "'."
+                        + ((exception != null ? exception.getMessage() : " Exception ref null.")));
+                }
+            });
+            b.send();
+        } catch (RequestException e) {
+            Log.trace("Failure submitting update request for WebUser '" + checked.getName() + "'."
+                + (e != null ? e.getMessage() : "RequestException reference is null."));
+        }
+    }
+
     public static void login() {
         login(null, null);
     }
@@ -361,12 +392,30 @@ public class UserSessionManager {
     public static void login(String user, String password) {
 
         checkLoginStatus(user, password, new AsyncCallback<Subject>() {
-            public void onSuccess(final Subject result) {
+            public void onSuccess(final Subject loggedInSubject) {
                 // will build UI if necessary, then fires history event
                 sessionState = State.IS_LOGGED_IN;
 
+                int storedSessionSubjectId = -1;
+                if (sessionSubject != null) {
+                    sessionSubject.getId();
+                }
+
                 //update the sessionSubject appropriately
-                sessionSubject = result;
+                sessionSubject = loggedInSubject;
+                sessionState = State.IS_LOGGED_IN;
+                userPreferences = new UserPreferences(loggedInSubject);
+                refresh();
+
+                //conditionally update session information and server side WebUser when updated.
+                if ((sessionSubject != null) && (loggedInSubject.getId() != storedSessionSubjectId)) {
+                    //update the sessionSubject appropriately
+                    sessionSubject = loggedInSubject;
+                    //update the sessionId
+                    saveSessionId(String.valueOf(loggedInSubject.getSessionId().intValue()));
+                    //Update the portal war WebUser now that we've updated subject+session
+                    scheduleWebUserUpdate(loggedInSubject);
+                }
 
                 CoreGUI.get().buildCoreUI();
             }

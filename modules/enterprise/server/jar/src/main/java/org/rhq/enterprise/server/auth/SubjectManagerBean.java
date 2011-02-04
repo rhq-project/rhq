@@ -168,7 +168,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
         if (authorizationManager.isSystemSuperuser(subjectToModify) && !subjectToModify.getFactive()) {
             throw new PermissionException("You cannot disable system user [" + subjectToModify.getName()
-                    + "] - it must always be active.");
+                + "] - it must always be active.");
         }
 
         // Reset the roles, LDAP roles, and owned groups according to the current settings as this method will not
@@ -501,6 +501,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             // new subject in order to do it with his own credentials
                             logout(subject.getSessionId().intValue());
                             subject = login(subject.getName(), subjectPassword);
+                            //insert empty configuration to start
+                            Configuration newUserConfig = new Configuration();
+                            subject.setUserConfiguration(newUserConfig);
                         }
                         //                        //either way need to refresh the WebUser
                         //                        if ((request != null) && (request.getSession() != null)) {

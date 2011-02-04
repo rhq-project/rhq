@@ -39,7 +39,6 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
     protected abstract boolean hasControlPermission();
 
-
     @Override
     protected void configureTable() {
         super.configureTable();

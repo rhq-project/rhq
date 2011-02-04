@@ -25,20 +25,24 @@ package org.rhq.enterprise.gui.coregui.client.components.form;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
+import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * A form item for entering a time duration - consists of an IntegerItem for entering the amount of time and a
- * ComboBoxItem for entering the time units.
+ * A form item for entering a duration - consists of an IntegerItem for entering the amount of time and a
+ * ComboBoxItem for entering the duration units.
  *
  * @author Ian Springer
  */
@@ -48,116 +52,143 @@ public class DurationItem extends CanvasItem {
     private static final String FIELD_UNITS = "units";
 
     private final DynamicForm form;
-    private TimeUnit defaultUnit;
-    private String contextualHelp;
-    private boolean supportsIterations;
+    private TimeUnit defaultTimeUnit;
+    private Set<UnitType> supportedUnitTypes;
     private TimeUnit valueUnit;
     private boolean isReadOnly;
+    private UnitType unitType;
 
-    public DurationItem(String name, String title, Set<TimeUnit> supportedUnits, boolean supportsIterations,
+    public DurationItem(String name, String title, TreeSet<TimeUnit> supportedUnits, boolean supportsIterations,
                         boolean isReadOnly, Locatable parentWidget) {
         super(name, title);
 
-        this.supportsIterations = supportsIterations;
+        this.supportedUnitTypes = EnumSet.noneOf(UnitType.class);
+        if (supportedUnits != null && !supportedUnits.isEmpty()) {
+            this.supportedUnitTypes.add(UnitType.TIME);
+            this.valueUnit = supportedUnits.iterator().next();
+        }
+        if (supportsIterations) {
+            this.supportedUnitTypes.add(UnitType.ITERATIONS);
+        }
+
         this.isReadOnly = isReadOnly;
 
         this.form = new EnhancedDynamicForm(parentWidget.extendLocatorId(name), false, false);
-        this.form.setNumCols(4);
-        this.form.setColWidths("140", "90", "105", "*");
 
-        final IntegerItem valueItem = new IntegerItem(FIELD_VALUE, title);
-        valueItem.setShowTitle(getShowTitle());
-        valueItem.setValue(getValue());
-        IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
-        integerRangeValidator.setMin(1);
-        valueItem.setValidators(integerRangeValidator);
-        valueItem.setValidateOnChange(getValidateOnChange());
-        valueItem.setValidateOnExit(getValidateOnExit());
+        if (this.isReadOnly) {
+            this.form.setNumCols(2);
+            this.form.setColWidths("140", "160");
 
-        valueItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent event) {
-                updateValue();
-            }
-        });
+            StaticTextItem staticTextItem = new StaticTextItem(FIELD_VALUE, title);
+            staticTextItem.setShowTitle(getShowTitle());
 
-        ComboBoxItem unitsItem = new ComboBoxItem(FIELD_UNITS);
-        unitsItem.setShowTitle(false);
-
-        // TODO: i18n valueMap values
-        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        if (supportsIterations) {
-            valueMap.put("times", "times");
-        }
-        if (supportedUnits != null && !supportedUnits.isEmpty()) {
-            TreeSet<TimeUnit> sortedSupportedUnits = new TreeSet<TimeUnit>(supportedUnits);
-            for (TimeUnit unit : sortedSupportedUnits) {
-                valueMap.put(unit.name().toLowerCase(), unit.name().toLowerCase());
-            }
-            this.valueUnit = sortedSupportedUnits.iterator().next();
-            unitsItem.setValueMap(valueMap);
-        }
-
-        if (this.defaultUnit != null) {
-            unitsItem.setDefaultValue(this.defaultUnit.name().toLowerCase());
+            this.form.setFields(staticTextItem);
         } else {
-            unitsItem.setDefaultToFirstOption(true);
-        }
+            this.form.setNumCols(4);
+            this.form.setColWidths("140", "90", "105", "*");
 
-        if (this.contextualHelp != null) {
-            FormUtility.addContextualHelp(unitsItem, this.contextualHelp);
-        }
+            final IntegerItem valueItem = new IntegerItem(FIELD_VALUE, title);
+            valueItem.setShowTitle(getShowTitle());
+            valueItem.setValue(getValue());
+            IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
+            integerRangeValidator.setMin(1);
+            valueItem.setValidators(integerRangeValidator);
+            valueItem.setValidateOnChange(getValidateOnChange());
+            valueItem.setValidateOnExit(getValidateOnExit());
 
-        unitsItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent event) {
-                updateValue();
+            valueItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updateValue();
+                }
+            });
+
+            ComboBoxItem unitsItem = new ComboBoxItem(FIELD_UNITS);
+            unitsItem.setShowTitle(false);
+
+            // TODO: i18n valueMap values
+            LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+            if (this.supportedUnitTypes.contains(UnitType.ITERATIONS)) {
+                valueMap.put("times", "times");
             }
-        });
+            if (this.supportedUnitTypes.contains(UnitType.TIME)) {
+                for (TimeUnit unit : supportedUnits) {
+                    valueMap.put(unit.name().toLowerCase(), unit.name().toLowerCase());
+                }
+            }
+            unitsItem.setValueMap(valueMap);
 
-        this.form.setFields(valueItem, unitsItem);
-        valueItem.setWidth(90);
-        unitsItem.setWidth(105);
+            if (this.defaultTimeUnit != null) {
+                unitsItem.setDefaultValue(this.defaultTimeUnit.name().toLowerCase());
+            } else {
+                unitsItem.setDefaultToFirstOption(true);
+            }
+
+            unitsItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    updateValue();
+                }
+            });
+
+            this.form.setFields(valueItem, unitsItem);
+            valueItem.setWidth(90);
+            unitsItem.setWidth(105);
+        }
 
         setCanvas(this.form);
     }
 
-    public void setValue(Object value) {
-        Integer intValue;
-        if (value instanceof String) {
-            intValue = Integer.valueOf((String)value);
-        } else if (value instanceof Integer) {
-            intValue = (Integer) value;
-        } else {
-            intValue = null;
+    public void setValue(Integer value, UnitType unitType) {
+        if (!this.supportedUnitTypes.contains(unitType)) {
+            throw new IllegalArgumentException("Unit type [" + unitType + "] is not supported by this DurationItem.");
+        }
+        this.unitType = unitType;
+
+        String unitString = null;
+        switch (unitType) {
+            case TIME:
+                unitString = this.valueUnit.name().toLowerCase();
+                break;
+            case ITERATIONS:
+                unitString = "times";
         }
 
-        if (intValue != null) {
-            this.form.setValue(FIELD_VALUE, intValue);
+        if (this.isReadOnly) {
+            String stringValue;
+            if (value == null) {
+                stringValue = "";
+            } else {
+                stringValue = value + " " + unitString;
+            }
+            this.form.setValue(FIELD_VALUE, stringValue);
         } else {
-            this.form.setValue(FIELD_VALUE, (String)null);
+            if (value != null) {
+                this.form.setValue(FIELD_VALUE, value);
+            } else {
+                this.form.setValue(FIELD_VALUE, (String)null);
+            }
+            this.form.setValue(FIELD_UNITS, unitString);
         }
 
-        super.setValue(value);
+        setValue(value);
     }
 
     private void updateValue() {
-        Integer convertedValue = null;
+        Integer value = calculateValue();
+        setValue(value);
+    }
 
+    private Integer calculateValue() {
         IntegerItem valueItem = (IntegerItem) this.form.getItem(FIELD_VALUE);
         Object value = valueItem.getValue();
-        Integer intValue;
-        if (value instanceof String) {
-            intValue = Integer.valueOf((String)value);
-        } else if (value instanceof Integer) {
-            intValue = (Integer) value;
-        } else {
-            intValue = null;
-        }
-
-        if (intValue != null) {
+        Integer integerValue = TypeConversionUtility.toInteger(value);
+        Integer convertedValue = null;
+        if (integerValue != null) {
             TimeUnit unit = getInputTimeUnit();
             if (unit == null) {
-                convertedValue = intValue;
+                this.unitType = UnitType.ITERATIONS;
+                convertedValue = integerValue;
             } else {
+                this.unitType = UnitType.TIME;
                 if (unit.compareTo(this.valueUnit) < 0) {
                     throw new IllegalStateException("Input unit is less than target unit.");
                 }
@@ -165,148 +196,147 @@ public class DurationItem extends CanvasItem {
                     case MILLISECONDS:
                         switch (this.valueUnit) {
                             case MILLISECONDS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                         }
                         break;
                     case SECONDS:
                         switch (this.valueUnit) {
                             case SECONDS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 1000;
+                                convertedValue = integerValue * 1000;
                                 break;
                         }
                         break;
                     case MINUTES:
                         switch (this.valueUnit) {
                             case MINUTES:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case SECONDS:
-                                convertedValue = intValue * 60;
+                                convertedValue = integerValue * 60;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 60 * 1000;
+                                convertedValue = integerValue * 60 * 1000;
                                 break;
                         }
                         break;
                     case HOURS:
                         switch (this.valueUnit) {
                             case HOURS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case MINUTES:
-                                convertedValue = intValue * 60;
+                                convertedValue = integerValue * 60;
                                 break;
                             case SECONDS:
-                                convertedValue = intValue * 60 * 60;
+                                convertedValue = integerValue * 60 * 60;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 60 * 60 * 1000;
+                                convertedValue = integerValue * 60 * 60 * 1000;
                                 break;
                         }
                         break;
                     case DAYS:
                         switch (this.valueUnit) {
                             case DAYS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case HOURS:
-                                convertedValue = intValue * 24;
+                                convertedValue = integerValue * 24;
                                 break;
                             case MINUTES:
-                                convertedValue = intValue * 24 * 60;
+                                convertedValue = integerValue * 24 * 60;
                                 break;
                             case SECONDS:
-                                convertedValue = intValue * 24 * 60 * 60;
+                                convertedValue = integerValue * 24 * 60 * 60;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 24 * 60 * 60 * 1000;
+                                convertedValue = integerValue * 24 * 60 * 60 * 1000;
                                 break;
                         }
                         break;
                     case WEEKS:
                         switch (this.valueUnit) {
                             case WEEKS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case DAYS:
-                                convertedValue = intValue * 7;
+                                convertedValue = integerValue * 7;
                                 break;
                             case HOURS:
-                                convertedValue = intValue * 7 * 24;
+                                convertedValue = integerValue * 7 * 24;
                                 break;
                             case MINUTES:
-                                convertedValue = intValue * 7 * 24 * 60;
+                                convertedValue = integerValue * 7 * 24 * 60;
                                 break;
                             case SECONDS:
-                                convertedValue = intValue * 7 * 24 * 60 * 60;
+                                convertedValue = integerValue * 7 * 24 * 60 * 60;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 7 * 24 * 60 * 60 * 1000;
+                                convertedValue = integerValue * 7 * 24 * 60 * 60 * 1000;
                                 break;
                         }
                         break;
                     case MONTHS:
                         switch (this.valueUnit) {
                             case MONTHS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case WEEKS:
-                                convertedValue = intValue * 4;
+                                convertedValue = integerValue * 4;
                                 break;
                             case DAYS:
-                                convertedValue = intValue * 30;
+                                convertedValue = integerValue * 30;
                                 break;
                             case HOURS:
-                                convertedValue = intValue * 30 * 24;
+                                convertedValue = integerValue * 30 * 24;
                                 break;
                             case MINUTES:
-                                convertedValue = intValue * 30 * 24 * 60;
+                                convertedValue = integerValue * 30 * 24 * 60;
                                 break;
                             case SECONDS:
-                                convertedValue = intValue * 30 * 24 * 60 * 60;
+                                convertedValue = integerValue * 30 * 24 * 60 * 60;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 30 * 24 * 60 * 60 * 1000;
+                                convertedValue = integerValue * 30 * 24 * 60 * 60 * 1000;
                                 break;
                         }
                         break;
                     case YEARS:
                         switch (this.valueUnit) {
                             case YEARS:
-                                convertedValue = intValue;
+                                convertedValue = integerValue;
                                 break;
                             case MONTHS:
-                                convertedValue = intValue * 12;
+                                convertedValue = integerValue * 12;
                                 break;
                             case WEEKS:
-                                convertedValue = intValue * 52;
+                                convertedValue = integerValue * 52;
                                 break;
                             case DAYS:
-                                convertedValue = intValue * 365;
+                                convertedValue = integerValue * 365;
                                 break;
                             case HOURS:
-                                convertedValue = intValue * 365 * 24;
+                                convertedValue = integerValue * 365 * 24;
                                 break;
                             case MINUTES:
-                                convertedValue = intValue * 365 * 24 * 60;
+                                convertedValue = integerValue * 365 * 24 * 60;
                                 break;
                             case SECONDS:
-                                convertedValue = intValue * 365 * 24 * 60 * 60;
+                                convertedValue = integerValue * 365 * 24 * 60 * 60;
                                 break;
                             case MILLISECONDS:
-                                convertedValue = intValue * 365 * 24 * 60 * 60 * 1000;
+                                convertedValue = integerValue * 365 * 24 * 60 * 60 * 1000;
                                 break;
                         }
                         break;
                 }
             }
         }
-
-        super.setValue(convertedValue);
+        return convertedValue;
     }
 
     private TimeUnit getInputTimeUnit() {
@@ -322,6 +352,10 @@ public class DurationItem extends CanvasItem {
         return unit;
     }
 
+    public UnitType getUnitType() {
+        return unitType;
+    }
+
     public Integer getValueAsInteger() {
         return (Integer) getValue();
     }
@@ -331,20 +365,28 @@ public class DurationItem extends CanvasItem {
         return this.form.validate();
     }
 
-    public void setDefaultUnit(TimeUnit defaultUnit) {
-        this.defaultUnit = defaultUnit;
+    public void setDefaultTimeUnit(TimeUnit defaultTimeUnit) {
+        this.defaultTimeUnit = defaultTimeUnit;
     }
 
     public void setContextualHelp(String contextualHelp) {
-        this.contextualHelp = contextualHelp;
+        if (contextualHelp != null) {
+            FormItem item;
+            if (this.isReadOnly) {
+                item = this.form.getItem(FIELD_VALUE);
+            } else {
+                item = this.form.getItem(FIELD_UNITS);
+            }
+            FormUtility.addContextualHelp(item, contextualHelp);
+        }
     }
 
     /**
-     * Returns the time unit of this item's {@link #getValue() value} - if null, the item's value represents an iteration
-     * count, not a time duration.
+     * If this item's {@link #getValue() value} represents a time duration, returns the value's time unit; otherwise
+     * returns null.
      *
-     * @return the time unit of this item's {@link #getValue() value} - if null, the item's value represents an iteration
-     *         count, not a time duration
+     * @return if this item's {@link #getValue() value} represents a time duration, returns the value's time unit; otherwise
+     *         returns null
      */
     public TimeUnit getValueUnit() {
         return this.valueUnit;

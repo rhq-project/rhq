@@ -22,10 +22,10 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
@@ -52,9 +52,11 @@ import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEdito
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
+import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
+import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -88,12 +90,14 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         }
     }
 
+    protected abstract boolean hasControlPermission();
+
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
         // Existing schedules are not editable. This may change in the future.
-        boolean isReadOnly = (getRecordId() != 0);
+        boolean isReadOnly = (!hasControlPermission() || (getRecordId() != 0));
         init(isReadOnly);
     }
 
@@ -112,11 +116,11 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         List<FormItem> items = new ArrayList<FormItem>();
 
         if (!isNewRecord()) {
-            StaticTextItem idItem = new StaticTextItem(ResourceOperationScheduleDataSource.Field.ID);
+            StaticTextItem idItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.ID);
             items.add(idItem);
         }
 
-        SelectItem operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME, "Name");
+        SelectItem operationNameItem = new SelectItem(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
@@ -154,41 +158,19 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             contentPane.addMember(hr);
         }
 
-        /*this.timeoutForm = new EnhancedDynamicForm(extendLocatorId("TimeoutForm"), isReadOnly(), isNewRecord());
-        this.timeoutForm.setNumCols(4);
-        this.timeoutForm.setColWidths("140", "90", "105", "*");
-
-        IntegerItem timeoutItem = new IntegerItem("timeoutValue", "Timeout");
-        IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
-        integerRangeValidator.setMin(1);
-        timeoutItem.setValidators(integerRangeValidator);
-        ComboBoxItem timeoutUnitsItem = new ComboBoxItem("timeoutUnits");
-        timeoutUnitsItem.setShowTitle(false);
-        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(3);
-        valueMap.put("seconds", "seconds");
-        valueMap.put("minutes", "minutes");
-        valueMap.put("hours", "hours");
-        timeoutUnitsItem.setValueMap(valueMap);
-        timeoutUnitsItem.setDefaultValue("minutes");
-        FormUtility.addContextualHelp(timeoutUnitsItem, "a time duration - if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was initiated");
-        this.timeoutForm.setFields(timeoutItem, timeoutUnitsItem);
-        timeoutItem.setWidth(90);
-        timeoutUnitsItem.setWidth(105);
-        contentPane.addMember(this.timeoutForm);
-        */
-
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
         this.notesForm.setColWidths("140", "50%", "140", "50%");
 
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
-        Set<TimeUnit> supportedUnits = new HashSet<TimeUnit>(3);
+        TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
         supportedUnits.add(TimeUnit.SECONDS);
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
         DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout",
                 supportedUnits, false, isReadOnly(), this.notesForm);
+        timeoutItem.setContextualHelp("a time duration - if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was already initiated");
         notesFields.add(timeoutItem);
 
         if (!isNewRecord()) {
@@ -245,8 +227,10 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         FormItem nextFireTimeItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
         nextFireTimeItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
 
-        FormItem timeoutItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
-        timeoutItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT));
+        DurationItem timeoutItem = (DurationItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        Object value = getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        Integer integerValue = TypeConversionUtility.toInteger(value);
+        timeoutItem.setValue(integerValue, UnitType.TIME);
 
         FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
         notesItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION));

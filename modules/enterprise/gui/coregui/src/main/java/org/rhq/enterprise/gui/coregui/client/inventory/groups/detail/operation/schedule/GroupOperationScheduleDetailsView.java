@@ -40,6 +40,11 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     }
 
     @Override
+    protected boolean hasControlPermission() {
+        return this.groupComposite.getResourcePermission().isControl();
+    }
+
+    @Override
     protected void init(final boolean isReadOnly) {
         if (isNewRecord()) {
             ResourceDatasource resourceDatasource = new ResourceDatasource();

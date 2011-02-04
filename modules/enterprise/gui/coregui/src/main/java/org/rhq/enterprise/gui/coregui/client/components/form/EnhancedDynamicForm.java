@@ -101,7 +101,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 hasIdField = true;
             }
             if (this.isReadOnly) {
-                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem && !(item instanceof DurationItem))) {
+                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem)) {
                     // note: EditableFormItem is a subclass of CanvasItem
                     if (item instanceof EditableFormItem) {
                         ((EditableFormItem) item).setReadOnly(true);
@@ -110,8 +110,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 } else {
                     StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());
                     staticItem.setTooltip(item.getTooltip());
-                    Object value = (item instanceof DurationItem) ? item.toString() : item.getValue();
-                    staticItem.setValue(value);
+                    staticItem.setValue(item.getValue());
                     staticItem.setColSpan(item.getAttribute("colSpan"));
                     // TODO: Any other fields we should copy? icons?
 
@@ -153,4 +152,5 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     public boolean isReadOnly() {
         return isReadOnly;
     }
+
 }

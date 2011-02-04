@@ -90,7 +90,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         idField.setCanEdit(false);
         fields.add(idField);               
 
-        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation Name", null, 100,
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation", null, 100,
                 true);
         fields.add(operationNameField);
 

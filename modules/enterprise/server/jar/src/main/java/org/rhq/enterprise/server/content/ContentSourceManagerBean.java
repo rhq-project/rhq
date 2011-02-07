@@ -161,7 +161,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private RepoManagerLocal repoManager;
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void purgeOrphanedPackageVersions(Subject subject) {
         // get all orphaned package versions that have extra props, we need to delete the configs
         // separately. We do this using em.remove so we can get hibernate to perform the cascading for us.
@@ -217,7 +217,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         log.info("User [" + subject + "] purged [" + count + "] orphaned package versions");
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void deleteContentSource(Subject subject, int contentSourceId) {
         log.debug("User [" + subject + "] is deleting content source [" + contentSourceId + "]");
 
@@ -279,7 +279,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSource> getAllContentSources(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
@@ -294,7 +294,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
@@ -324,7 +324,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return type;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource getContentSource(Subject subject, int contentSourceId) {
         Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG);
         q.setParameter("id", contentSourceId);
@@ -339,7 +339,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return contentSource;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource getContentSourceByNameAndType(Subject subject, String name, String typeName) {
         Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
         q.setParameter("name", name);
@@ -356,7 +356,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
@@ -374,6 +374,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<Repo>(results, (int) count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<Repo> getCandidateRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
@@ -393,7 +394,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSourceSyncResults> getContentSourceSyncResults(Subject subject, int contentSourceId,
         PageControl pc) {
         pc.initDefaultOrderingField("cssr.startTime", PageOrdering.DESC);
@@ -412,7 +413,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<ContentSourceSyncResults>(results, (int) count, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void mergeRepoImportResults(List<RepoDetails> repos) {
 
         Subject overlord = subjectManager.getOverlord();
@@ -440,7 +441,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void deleteContentSourceSyncResults(Subject subject, int[] ids) {
         if (ids != null) {
             for (int id : ids) {
@@ -452,7 +453,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource createContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
 
@@ -485,7 +486,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return contentSource; // now has the ID set
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
         validateContentSource(contentSource);
@@ -494,7 +495,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return contentSource;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource updateContentSource(Subject subject, ContentSource contentSource, boolean syncNow)
         throws ContentSourceException {
 
@@ -579,7 +580,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void synchronizeAndLoadContentSource(Subject subject, int contentSourceId) {
         try {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
@@ -596,7 +597,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<PackageVersionContentSource> getPackageVersionsFromContentSource(Subject subject,
         int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
@@ -612,7 +613,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject,
         int contentSourceId, int repoId) {
 
@@ -626,7 +627,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return results;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public long getPackageVersionCountFromContentSource(Subject subject, int contentSourceId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_COUNT);
@@ -652,7 +653,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     // The methods below probably should not be exposed to remote clients
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject,
         int[] contentSourceIds, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
@@ -677,7 +678,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSourceInRepo(Subject subject,
         int contentSourceId, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
@@ -719,7 +720,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<PackageVersionContentSource>(uniquePVs, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(45 * 60)
     public void downloadDistributionBits(Subject subject, ContentSource contentSource) {
@@ -796,7 +797,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @TransactionTimeout(90 * 60)
     public PackageBits downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) {

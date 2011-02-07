@@ -80,7 +80,9 @@
         <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
         <column name="IS_CANDIDATE" type="BOOLEAN" required="true"/>
         <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
-
+        <column name="OWNER_ID" type="INTEGER" required="false" references="RHQ_SUBJECT" />
+        <column name="IS_PRIVATE" type="BOOLEAN" required="true" />
+        
         <index name="RHQ_REPO_IDX" unique="true">
             <field ref="NAME"/>
         </index>

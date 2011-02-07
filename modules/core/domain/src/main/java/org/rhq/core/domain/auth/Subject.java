@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
@@ -309,6 +310,9 @@ public class Subject implements Serializable {
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
     private List<ResourceGroup> ownedGroups = null;
 
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Set<Repo> ownedRepos;
+    
     @Transient
     private Integer sessionId = null;
 

@@ -173,15 +173,15 @@ public class DurationItem extends CanvasItem {
     }
 
     private void updateValue() {
-        Integer value = calculateValue();
+        Long value = calculateValue();
         setValue(value);
     }
 
-    private Integer calculateValue() {
+    private Long calculateValue() {
         IntegerItem valueItem = (IntegerItem) this.form.getItem(FIELD_VALUE);
         Object value = valueItem.getValue();
-        Integer integerValue = TypeConversionUtility.toInteger(value);
-        Integer convertedValue = null;
+        Long integerValue = TypeConversionUtility.toLong(value);
+        Long convertedValue = null;
         if (integerValue != null) {
             TimeUnit unit = getInputTimeUnit();
             if (unit == null) {
@@ -357,7 +357,11 @@ public class DurationItem extends CanvasItem {
     }
 
     public Integer getValueAsInteger() {
-        return (Integer) getValue();
+        return TypeConversionUtility.toInteger(getValue());
+    }
+
+    public Long getValueAsLong() {
+        return TypeConversionUtility.toLong(getValue());
     }
 
     @Override

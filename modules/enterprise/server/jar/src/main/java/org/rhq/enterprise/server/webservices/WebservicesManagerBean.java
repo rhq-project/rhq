@@ -63,6 +63,7 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
@@ -83,6 +84,7 @@ import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -518,6 +520,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return contentManager.getPackageBytes(subject, resourceId, installedPackageId);
     }
 
+    public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return contentManager.findPackagesByCriteria(subject, criteria); 
+    }
+        
     //CONTENTMANAGER: END ----------------------------------
 
     //    //DATAACCESSMANAGER: BEGIN ----------------------------------
@@ -780,9 +787,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId,
-        Comparator<PackageVersion> versionComparator) {
-        return repoManager.getLatestPackageVersion(subject, packageId, repoId, versionComparator);
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId) {
+        return repoManager.getLatestPackageVersion(subject, packageId, repoId);
     }
     
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {

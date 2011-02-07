@@ -132,27 +132,24 @@ public interface RepoManagerRemote {
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
     /**
-     * Returns the latest package version of the supplied package as deemed by the supplied comparator.
-     * The supplied comparator is taken as an override to the default one to use.
-     * The default comparator is determined using the following algorithm:
+     * Returns the latest package version of the supplied package.
+     * The latest version is determined using a comparator which is found using the following rules:
      * <ol>
      * <li>Find the first content provider defining the package connected to given repo 
-     *     that defines a non-null comparator and return that
+     *     that defines a non-null version comparator
      * <li>If no content provider provides explicit comparator, use {@link PackageVersion#DEFAULT_COMPARATOR}
      * </ol>
      * 
      * @param subject the authenticated user
      * @param packageId the id of the package to find the latest version for.
      * @param repoId the repo where to take the package versions of the package from
-     * @param versionComparator if left null, the comparator to use is determined by the rules above
      * @return
      */
     @WebMethod
     PackageVersion getLatestPackageVersion(
         @WebParam(name = "subject") Subject subject, 
         @WebParam(name = "packageId") int packageId, 
-        @WebParam(name = "repoId") int repoId, 
-        @WebParam(name = "versionComparator") Comparator<PackageVersion> versionComparator);
+        @WebParam(name = "repoId") int repoId);
     
     /**
      * Update an existing {@link Repo} object's basic fields, like name, description, etc. Note that the given <code>

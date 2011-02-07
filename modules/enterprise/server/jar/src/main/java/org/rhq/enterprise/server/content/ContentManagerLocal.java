@@ -42,6 +42,7 @@ import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -344,6 +345,11 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
      */
     PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
+
+    /**
+     * @see ContentManagerRemote#findPackagesByCriteria(Subject, PackageCriteria) 
+     */
+    PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria);
 
     /**
      * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)

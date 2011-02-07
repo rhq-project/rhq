@@ -85,6 +85,7 @@ import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -1490,6 +1491,20 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return queryRunner.execute();
     }
 
+    public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
+        
+        if (criteria.isInventoryManagerRequired() && !authorizationManager.isInventoryManager(subject)) {
+            throw new PermissionException("Subject [" + subject.getName() 
+                + "] is required to have InventoryManager permission for requested query criteria.");
+        }
+        
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        
+        CriteriaQueryRunner<Package> runner = new CriteriaQueryRunner<Package>(criteria, generator, entityManager);
+        
+        return runner.execute();
+    }
+    
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         InstalledPackage result = null;
 

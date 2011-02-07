@@ -26,8 +26,10 @@ import java.util.List;
 
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -68,6 +70,15 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         }
     }
 
+    public PageList<Package> findPackagesByCriteria(PackageCriteria criteria) {
+        try {
+            return SerialUtility.prepare(contentManager.findPackagesByCriteria(getSessionSubject(), criteria),
+                "ContentService.findPackagesByCriteria");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+    
     public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
         throws RuntimeException {
         try {

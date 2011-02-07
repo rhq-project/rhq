@@ -77,4 +77,8 @@ public class PackageCriteria extends Criteria {
         addSortField("name");
         this.sortName = sort;
     }
+    
+    public boolean isInventoryManagerRequired() {
+        return fetchVersions;
+    }
 }

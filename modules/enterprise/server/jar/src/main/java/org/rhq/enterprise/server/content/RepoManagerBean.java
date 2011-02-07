@@ -325,6 +325,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId) {
+        return getLatestPackageVersion(subject, packageId, repoId, null);
+    }
+    
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId, Comparator<PackageVersion> versionComparator) {
         if (versionComparator == null) {
             Query pvcsQ = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_PACKAGE_AND_REPO_ID_NO_FETCH);

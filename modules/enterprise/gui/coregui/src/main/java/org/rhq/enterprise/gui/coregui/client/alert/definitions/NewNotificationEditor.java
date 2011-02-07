@@ -246,6 +246,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 rt = res.getResourceType();
             }
             newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt, res);
+        } else if ("CLI Script".equals(sender)) {
+            newCanvas = new CliNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else {
             // catch all - all other senders are assumed to just have simple configuration definition
             // that can be used by our configuration editor UI component to ask for config values.

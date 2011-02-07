@@ -29,6 +29,7 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
@@ -166,6 +167,7 @@ public interface ContentManagerRemote {
      * versions via {@link PackageCriteria#fetchVersions(boolean)}. There are no privileges required
      * if only a list of packages without their associated package versions is requested.
      * <p>
+     * TODO the privileges need to be worked out for this...
      * 
      * @param subject
      * @param criteria

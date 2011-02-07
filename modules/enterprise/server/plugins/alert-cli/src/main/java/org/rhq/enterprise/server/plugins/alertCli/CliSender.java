@@ -205,13 +205,12 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
             //now get the package and repo info
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
-            PackageVersion versionToUse = rm.getLatestPackageVersion(overlord, config.packageId, config.repoId, null);
+            PackageVersion versionToUse = rm.getLatestPackageVersion(overlord, config.packageId, config.repoId);
 
             ret = ret.replace("$packageName", versionToUse.getDisplayName());
             ret = ret.replace("$pacakgeVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
                 : versionToUse.getDisplayVersion());
 
-            RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
             RepoCriteria criteria = new RepoCriteria();
             criteria.addFilterId(config.repoId);
             

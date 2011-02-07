@@ -9,18 +9,33 @@ public class TypeConversionUtility {
     }
 
     public static Integer toInteger(Object object) {
-        Integer integer;
+        Integer integerValue;
         if (object instanceof String) {
-            integer = Integer.valueOf((String)object);
+            integerValue = Integer.valueOf((String)object);
         } else if (object instanceof Number) {
-            integer = ((Number) object).intValue();
+            integerValue = ((Number) object).intValue();
         } else if (object == null) {
-            integer = null;
+            integerValue = null;
         } else {
             throw new IllegalArgumentException("Failed to convert " + object.getClass().getName() + " [" + object
                     + "] to an Integer.");
         }
-        return integer;
+        return integerValue;
+    }
+
+    public static Long toLong(Object object) {
+        Long longValue;
+        if (object instanceof String) {
+            longValue = Long.valueOf((String)object);
+        } else if (object instanceof Number) {
+            longValue = ((Number) object).longValue();
+        } else if (object == null) {
+            longValue = null;
+        } else {
+            throw new IllegalArgumentException("Failed to convert " + object.getClass().getName() + " [" + object
+                    + "] to a Long.");
+        }
+        return longValue;
     }
 
 }

@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.smartgwt.client.types.Visibility;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -47,7 +48,10 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
+import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -539,20 +543,22 @@ public class JobTriggerEditor extends LocatableVLayout {
     }
 
     private DynamicForm createRepeatForm() {
-        final DynamicForm repeatForm = new DynamicForm();
+        final EnhancedDynamicForm repeatForm = new EnhancedDynamicForm(extendLocatorId("RepeatForm"));
         repeatForm.setNumCols(6);
         repeatForm.setColWidths(140, 130, 130, 130, 130);
 
-        TextItem repeatIntervalItem = new TextItem(FIELD_REPEAT_INTERVAL, "Run now and every");
+        TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
+        supportedUnits.add(TimeUnit.SECONDS);
+        supportedUnits.add(TimeUnit.MINUTES);
+        supportedUnits.add(TimeUnit.HOURS);
+        supportedUnits.add(TimeUnit.DAYS);
+        supportedUnits.add(TimeUnit.WEEKS);
+        supportedUnits.add(TimeUnit.MONTHS);
+        supportedUnits.add(TimeUnit.YEARS);
+        DurationItem repeatIntervalItem = new DurationItem(FIELD_REPEAT_INTERVAL, "Run now and every",
+                supportedUnits, false, isReadOnly(), repeatForm);
         repeatIntervalItem.setRequired(true);
-
-        FormUtility.addContextualHelp(repeatIntervalItem,
-                "N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-
-        // Configure validation.
-        RegExpValidator repeatIntervalValidator = new RegExpValidator("[1-9][0-9]*[ ]*(seconds|s|minutes|m|hours|h|days|d|weeks|w|months|M|quarters|q|years|y)");
-        repeatIntervalItem.setValidators(repeatIntervalValidator);
-        repeatIntervalItem.setValidateOnExit(true);
+        repeatIntervalItem.setContextualHelp("how often the operation should be executed");
 
         RadioGroupItem recurrenceTypeItem = new RadioGroupItem(FIELD_RECURRENCE_TYPE);
         recurrenceTypeItem.setRequired(true);
@@ -563,17 +569,19 @@ public class JobTriggerEditor extends LocatableVLayout {
         recurrenceTypeValueMap.put("indefinitely", "Indefinitely");
         recurrenceTypeItem.setValueMap(recurrenceTypeValueMap);
 
-        final TextItem repeatDurationItem = new TextItem(FIELD_REPEAT_DURATION);
+        supportedUnits = new TreeSet<TimeUnit>();
+        supportedUnits.add(TimeUnit.SECONDS);
+        supportedUnits.add(TimeUnit.MINUTES);
+        supportedUnits.add(TimeUnit.HOURS);
+        supportedUnits.add(TimeUnit.DAYS);
+        supportedUnits.add(TimeUnit.WEEKS);
+        supportedUnits.add(TimeUnit.MONTHS);
+        supportedUnits.add(TimeUnit.YEARS);
+        final DurationItem repeatDurationItem = new DurationItem(FIELD_REPEAT_DURATION, null,
+                supportedUnits, true, isReadOnly(), repeatForm);
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
-
-        FormUtility.addContextualHelp(repeatDurationItem,
-            "N UNITS (where N is a positive integer and UNITS is \"times\", \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"5 repetitions\")");
-
-        // Configure validation.
-        RegExpValidator repeatDurationValidator = new RegExpValidator("[1-9][0-9]*[ ]*(times|repetitions|seconds|s|minutes|m|hours|h|days|d|weeks|w|months|M|quarters|q|years|y)");
-        repeatDurationItem.setValidators(repeatDurationValidator);
-        repeatDurationItem.setValidateOnExit(true);
+        repeatDurationItem.setContextualHelp("keep running this operation this many times or until this amount of time has elapsed");
 
         final DateTimeItem endTimeItem = createDateTimeItem(FIELD_END_TIME);
         endTimeItem.setShowTitle(false);
@@ -618,7 +626,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     }
 
     private DynamicForm createLaterForm() {
-        final DynamicForm laterForm = new DynamicForm();
+        final EnhancedDynamicForm laterForm = new EnhancedDynamicForm(extendLocatorId("LaterForm"));
         laterForm.setNumCols(4);
         laterForm.setColWidths(140, 130, 130);
 
@@ -630,17 +638,19 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         final DateTimeItem startTimeItem = createDateTimeItem(FIELD_START_TIME);
 
-        final TextItem startDelayItem = new TextItem(FIELD_START_DELAY);
+        TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
+        supportedUnits.add(TimeUnit.SECONDS);
+        supportedUnits.add(TimeUnit.MINUTES);
+        supportedUnits.add(TimeUnit.HOURS);
+        supportedUnits.add(TimeUnit.DAYS);
+        supportedUnits.add(TimeUnit.WEEKS);
+        supportedUnits.add(TimeUnit.MONTHS);
+        supportedUnits.add(TimeUnit.YEARS);
+        final DurationItem startDelayItem = new DurationItem(FIELD_START_DELAY, null,
+                supportedUnits, false, isReadOnly(), laterForm);
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
-
-        FormUtility.addContextualHelp(startDelayItem,
-            "N UNITS (where N is a positive integer and UNITS is \"seconds\", \"minutes\", \"hours\", \"days\", \"weeks\", \"months\", \"quarters\", or \"years\", e.g. \"30 seconds\" or \"6 weeks\")");
-
-        // Configure validation.
-        RegExpValidator startDelayValidator = new RegExpValidator("[1-9][0-9]*([ ]+(seconds|minutes|hours|days|weeks|months|quarters|years)|(s|m|h|d|w|M|q|y))");
-        startDelayItem.setValidators(startDelayValidator);
-        startDelayItem.setValidateOnExit(true);
+        startDelayItem.setContextualHelp("start executing the operation after this amount of time has elapsed");
 
         SpacerItem spacerItem = new SpacerItem();
 
@@ -679,10 +689,9 @@ public class JobTriggerEditor extends LocatableVLayout {
     public Date getStartTime() {
         Date startTime;
         if (this.isStartDelay) {
-            // start delay - computer start time
-            String startDelay = this.laterForm.getValueAsString(FIELD_START_DELAY);
-            Duration startDelayDuration = parseDurationString(startDelay);
-            long delay = startDelayDuration.count * startDelayDuration.multiplier;
+            // start delay - compute start time
+            DurationItem startDelayItem = (DurationItem) this.laterForm.getItem(FIELD_START_DELAY);
+            long delay = startDelayItem.getValueAsLong();
             long startTimestamp = System.currentTimeMillis() + delay;
             startTime = new Date(startTimestamp);
         } else {
@@ -696,9 +705,8 @@ public class JobTriggerEditor extends LocatableVLayout {
     public Long getRepeatInterval() {
         Long intervalMillis;
         if (this.isRecurring) {
-            String repeatInterval = this.repeatForm.getValueAsString(FIELD_REPEAT_INTERVAL);
-            Duration intervalDuration = parseDurationString(repeatInterval);
-            intervalMillis = intervalDuration.count * intervalDuration.multiplier;
+            DurationItem repeatInterval = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_INTERVAL);
+            intervalMillis = repeatInterval.getValueAsLong();
         } else {
             intervalMillis = null;
         }
@@ -709,11 +717,10 @@ public class JobTriggerEditor extends LocatableVLayout {
         Integer repetitions;
         if (this.isRecurring) {
             if (this.isRepeatDuration) {
-                String repeatDurationString = this.repeatForm.getValueAsString(FIELD_REPEAT_DURATION);
-                Duration repeatDuration = parseDurationString(repeatDurationString);
-                if (repeatDuration.multiplier == null) {
+                DurationItem repeatDurationItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_DURATION);
+                if (repeatDurationItem.getUnitType() == UnitType.ITERATIONS) {
                     // n repetitions
-                    repetitions = repeatDuration.count;
+                    repetitions = repeatDurationItem.getValueAsInteger();
                 } else {
                     // n units of time - compute end time
                     repetitions = null;
@@ -731,14 +738,13 @@ public class JobTriggerEditor extends LocatableVLayout {
         Date endTime;
         if (this.isRecurring) {
             if (this.isRepeatDuration) {
-                String repeatDurationString = this.repeatForm.getValueAsString(FIELD_REPEAT_DURATION);
-                Duration repeatDuration = parseDurationString(repeatDurationString);
-                if (repeatDuration.multiplier == null) {
+                DurationItem repeatDurationItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_DURATION);
+                if (repeatDurationItem.getUnitType() == UnitType.ITERATIONS) {
                     // n repetitions
                     endTime = null;
                 } else {
                     // n units of time - compute end time
-                    long delay = repeatDuration.count * repeatDuration.multiplier;
+                    long delay = repeatDurationItem.getValueAsLong();
                     long endTimestamp = System.currentTimeMillis() + delay;
                     endTime = new Date(endTimestamp);
                 }
@@ -798,35 +804,6 @@ public class JobTriggerEditor extends LocatableVLayout {
         }
         return isValid;
     }
-
-    private static Duration parseDurationString(String durationString) {
-        String countString = "";
-        int index;
-        for (index = 0; index < durationString.length(); index++) {
-            char c = durationString.charAt(index);
-            if (Character.isDigit(c)) {
-                countString += c;
-            } else {
-                break;
-            }
-        }
-        int count = Integer.valueOf(countString);
-
-        // Skip optional whitespace.
-        while (index < durationString.length()) {
-            char c = durationString.charAt(index);
-            if (c != ' ') {
-                break;
-            }
-            index++;
-        }
-
-        String units = durationString.substring(index);
-        Long multiplier = UNITS_TO_MILLIS_MULTIPLIER_MAP.get(units.toLowerCase());
-
-        return new Duration(count, multiplier);
-    }
-
 
     private static DateTimeItem createDateTimeItem(String name) {
         final DateTimeItem dateTimeItem = new DateTimeItem(name);

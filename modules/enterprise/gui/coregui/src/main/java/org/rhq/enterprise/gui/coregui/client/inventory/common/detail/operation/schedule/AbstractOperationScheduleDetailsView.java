@@ -268,7 +268,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         form.setValue("jobTrigger", jobTriggerRecord);
 
         DurationItem timeoutItem = (DurationItem)this.notesForm.getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
-        form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeoutItem.getValueAsInteger());
+        form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeoutItem.getValueAsLong());
 
         FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
         form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
@@ -327,7 +327,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     }
 
     private String getSelectedOperationName() {
-        FormItem operationNameItem = getForm().getField(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
+        FormItem operationNameItem = getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
         return (String)operationNameItem.getValue();
     }
 

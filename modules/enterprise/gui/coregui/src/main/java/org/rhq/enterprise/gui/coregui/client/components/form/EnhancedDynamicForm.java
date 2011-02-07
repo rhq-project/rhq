@@ -29,6 +29,7 @@ import java.util.List;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.widgets.form.fields.BooleanItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -114,7 +115,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     staticItem.setColSpan(item.getAttribute("colSpan"));
                     // TODO: Any other fields we should copy? icons?
 
-                    if (item instanceof BooleanItem) {
+                    if ((item instanceof BooleanItem) || (item instanceof CheckboxItem)) {
                         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
                         valueMap.put("true", MSG.common_val_yes());
                         valueMap.put("false", MSG.common_val_no());

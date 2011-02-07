@@ -218,31 +218,43 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            Subject new_subject = new Subject();
-            new_subject.setName("role-manager-subject");
-            new_subject.setFsystem(false);
+            Subject newSubject1 = new Subject();
+            newSubject1.setName("role-manager-subject");
+            newSubject1.setFsystem(false);
+
+            Subject newSubject2 = new Subject();
+            newSubject2.setName("secondary-role-manager");
+            newSubject2.setFsystem(false);
 
             Role role = new Role("role-manager-role");
             role.setFsystem(false);
-            role.addSubject(new_subject);
+            role.addSubject(newSubject1);
 
             Subject superuser = subjectManager.getOverlord();
-            subjectManager.createSubject(superuser, new_subject);
-            createSession(new_subject);
+            subjectManager.createSubject(superuser, newSubject1);
+            createSession(newSubject1);
 
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 0 : "Role should not be created or assigned yet";
+            subjectManager.createSubject(superuser, newSubject2);
+            createSession(newSubject2);
+
+            assertEquals("Role should not be created or assigned yet", 0,
+                roleManager.findRolesBySubject(newSubject1.getId(), PageControl.getUnlimitedInstance()).size());
 
             role = roleManager.createRole(superuser, role);
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 0 : "Role should not be assigned yet";
+            assertEquals("Role should be assigned at the time the role is created", 1,
+                    roleManager.findRolesBySubject(newSubject1.getId(), PageControl.getUnlimitedInstance()).size());
 
-            roleManager.addRolesToSubject(superuser, new_subject.getId(), new int[] { role.getId() });
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 1 : "Role should be assigned";
+            roleManager.addRolesToSubject(superuser, newSubject2.getId(), new int[]{role.getId()});
+            assertEquals("Role should be assigned", 1,
+                roleManager.findRolesBySubject(newSubject2.getId(), PageControl.getUnlimitedInstance()).size());
 
-            roleManager.removeRolesFromSubject(superuser, new_subject.getId(), new int[] { role.getId() });
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 0 : "Role should have been unassigned";
+            roleManager.removeRolesFromSubject(superuser, newSubject1.getId(), new int[] { role.getId() });
+            assertEquals("Role should have been unassigned", 0,
+                roleManager.findRolesBySubject(newSubject1.getId(), PageControl.getUnlimitedInstance()).size());
 
             roleManager.deleteRoles(superuser, new int[] { role.getId() });
-            assert !roleManager.findRoles(PageControl.getUnlimitedInstance()).contains(role) : "Role should have been deleted";
+            assertFalse("Roles should have been deleted",
+                roleManager.findRoles(PageControl.getUnlimitedInstance()).contains(role));
         } finally {
             getTransactionManager().rollback();
         }

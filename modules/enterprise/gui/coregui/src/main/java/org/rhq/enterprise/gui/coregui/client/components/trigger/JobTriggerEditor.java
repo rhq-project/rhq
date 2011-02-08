@@ -98,8 +98,10 @@ public class JobTriggerEditor extends LocatableVLayout {
      *
      * @param locatorId
      */
-    public JobTriggerEditor(String locatorId) {
+    public JobTriggerEditor(String locatorId, boolean isReadOnly) {
         super(locatorId);
+
+        this.isReadOnly = isReadOnly;
     }
 
     /**
@@ -117,6 +119,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
     public void setJobTrigger(JobTrigger jobTrigger) {
         this.jobTrigger = jobTrigger;
+        this.isReadOnly = true;
         if (isDrawn()) {
             refresh();
         }
@@ -124,23 +127,24 @@ public class JobTriggerEditor extends LocatableVLayout {
 
     private void refresh() {
         if (this.jobTrigger != null) {
-            RadioGroupItem modeItem = (RadioGroupItem) this.modeForm.getItem(FIELD_MODE);
+            FormItem modeItem = this.modeForm.getItem(FIELD_MODE);
             if (this.jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.CRON_EXPRESSION) {
                 modeItem.setValue("cron");
                 changeMode("cron");
                 this.cronForm.setValue("cronExpression", this.jobTrigger.getCronExpression());
             } else {
                 modeItem.setValue("calendar");
+                this.calendarTypeForm.hide();
                 changeMode("calendar");
 
-                RadioGroupItem startTypeItem = (RadioGroupItem) this.laterForm.getItem(FIELD_START_TYPE);
+                FormItem startTypeItem = this.laterForm.getItem(FIELD_START_TYPE);
                 startTypeItem.setValue("on");
                 DurationItem startDelayItem = (DurationItem) this.laterForm.getItem(FIELD_START_DELAY);
-                DateTimeItem startTimeItem = (DateTimeItem)this.laterForm.getField(FIELD_START_TIME);
+                FormItem startTimeItem = this.laterForm.getField(FIELD_START_TIME);
                 changeStartType("on", startDelayItem, startTimeItem);
                 startTimeItem.setValue(this.jobTrigger.getStartDate());
 
-                RadioGroupItem calendarTypeItem = (RadioGroupItem) this.calendarTypeForm.getField("calendarType");
+                FormItem calendarTypeItem = this.calendarTypeForm.getField("calendarType");
                 if (this.jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.REPEAT_INTERVAL) {
                     calendarTypeItem.setValue("laterAndRepeat");
                     changeCalendarType("laterAndRepeat");
@@ -148,9 +152,9 @@ public class JobTriggerEditor extends LocatableVLayout {
                     DurationItem repeatIntervalItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_INTERVAL);
                     repeatIntervalItem.setValue(this.jobTrigger.getRepeatInterval().intValue(), UnitType.TIME);
 
-                    DateTimeItem endTimeItem = (DateTimeItem)this.repeatForm.getField(FIELD_END_TIME);
+                    FormItem endTimeItem = this.repeatForm.getField(FIELD_END_TIME);
                     DurationItem repeatDurationItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_DURATION);
-                    RadioGroupItem recurrenceTypeItem = (RadioGroupItem) this.repeatForm.getField(FIELD_RECURRENCE_TYPE);
+                    FormItem recurrenceTypeItem = this.repeatForm.getField(FIELD_RECURRENCE_TYPE);
                     if (this.jobTrigger.getRepeatCount() != null) {
                         recurrenceTypeItem.setValue("for");
                         changeRecurrenceType("for", endTimeItem, repeatDurationItem);
@@ -185,6 +189,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         modeValueMap.put("cron", "Cron Expression");
         modeItem.setValueMap(modeValueMap);
         modeItem.setVertical(false);
+        modeItem.setShowTitle(true);
 
         this.modeForm.setFields(modeItem);
         addMember(this.modeForm);
@@ -652,7 +657,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         return repeatForm;
     }
 
-    private void changeRecurrenceType(String recurrenceType, DateTimeItem endTimeItem, DurationItem repeatDurationItem) {
+    private void changeRecurrenceType(String recurrenceType, FormItem endTimeItem, DurationItem repeatDurationItem) {
         if (recurrenceType.equals("for")) {
             this.isEndTime = false;
             this.isRepeatDuration = true;
@@ -689,6 +694,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         startTypeValueMap.put("on", "on");
         startTypeValueMap.put("in", "in");
         startTypeItem.setValueMap(startTypeValueMap);
+        startTypeItem.setShowTitle(true);
 
         final DateTimeItem startTimeItem = createDateTimeItem(FIELD_START_TIME);
 
@@ -721,7 +727,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         return laterForm;
     }
 
-    private void changeStartType(String startType, DurationItem startDelayItem, DateTimeItem startTimeItem) {
+    private void changeStartType(String startType, DurationItem startDelayItem, FormItem startTimeItem) {
         if (startType.equals("on")) {
             this.isStartDelay = false;
             this.isStartTime = true;

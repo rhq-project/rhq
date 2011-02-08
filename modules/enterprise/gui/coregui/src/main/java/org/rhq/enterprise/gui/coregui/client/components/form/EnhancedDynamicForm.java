@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -102,7 +103,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 hasIdField = true;
             }
             if (this.isReadOnly) {
-                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem)) {
+                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem) || (item instanceof SpacerItem)) {
                     // note: EditableFormItem is a subclass of CanvasItem
                     if (item instanceof EditableFormItem) {
                         ((EditableFormItem) item).setReadOnly(true);
@@ -110,6 +111,8 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     itemsList.add(item);
                 } else {
                     StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());
+                    Boolean showTitle = (item.getShowTitle() != null) ? item.getShowTitle() : true;
+                    staticItem.setShowTitle(showTitle);
                     staticItem.setTooltip(item.getTooltip());
                     staticItem.setValue(item.getValue());
                     staticItem.setColSpan(item.getAttribute("colSpan"));

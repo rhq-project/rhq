@@ -123,6 +123,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         }
 
         SelectItem operationNameItem = new SelectItem(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+        operationNameItem.setShowTitle(true);
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
@@ -153,7 +154,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
+        this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"), isReadOnly());
         contentPane.addMember(this.triggerEditor);
         hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);

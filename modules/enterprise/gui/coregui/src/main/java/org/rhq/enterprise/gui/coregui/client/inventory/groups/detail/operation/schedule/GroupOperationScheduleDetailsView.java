@@ -22,7 +22,6 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm
 import org.rhq.enterprise.gui.coregui.client.components.sorter.ReorderableList;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 import java.util.LinkedHashMap;
@@ -95,6 +94,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         haltOnFailureItem.setDefaultValue(false);
         haltOnFailureItem.setVisible(false);
         haltOnFailureItem.setLabelAsTitle(true);
+        haltOnFailureItem.setShowTitle(true);
 
         executionModeForm.setFields(executionModeItem, haltOnFailureItem);
 

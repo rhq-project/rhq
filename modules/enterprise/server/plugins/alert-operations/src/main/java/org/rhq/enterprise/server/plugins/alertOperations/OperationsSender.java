@@ -26,8 +26,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -38,8 +38,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class OperationsSender extends AlertSender {
 
-    private static final String URL_RESOURCE_OPERATION_HISTORY = "/rhq/resource/operation/resourceOperationHistory.xhtml";
-    private static final String URL_RESOURCE_OPERATION_HISTORY_DETAILS = "/rhq/resource/operation/resourceOperationHistoryDetails.xhtml";
+    private static String getResourceOperationHistoryURL(int resourceId) {
+        return "/coregui/CoreGUI.html#Resource/" + resourceId + "/Operations/History";
+    }
 
     @Override
     public SenderResult send(Alert alert) {
@@ -141,8 +142,8 @@ public class OperationsSender extends AlertSender {
         return "Status was " + decorate(status) + ", see operation details "
             + link("here", URL_RESOURCE_OPERATION_HISTORY_DETAILS + "?id=" + resourceId + "&opId=" + history.getId());
             */
-        return "Check the corresponding "
-            + link("operation history", URL_RESOURCE_OPERATION_HISTORY + "?id=" + resourceId) + " for more details.";
+        return "Check the corresponding " + link("operation history", getResourceOperationHistoryURL(resourceId))
+            + " for more details.";
     }
 
     public String decorate(OperationRequestStatus status) {

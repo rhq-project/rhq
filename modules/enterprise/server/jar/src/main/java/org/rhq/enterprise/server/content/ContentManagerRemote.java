@@ -138,6 +138,25 @@ public interface ContentManagerRemote {
         @WebParam(name = "pluginName") String pluginName) throws ResourceTypeNotFoundException;
 
     /**
+     * This re tries to find a package type of given name defined by the resource type
+     * provided. 
+     * <p>
+     * The resource type id can be null, in which case only the serverside defined package types
+     * are searched for.
+     * 
+     * @param subject the authenticated user
+     * @param resourceTypeId the id of the resource type associated with the package type or null  if only server-side package types should be searched for 
+     * @param packageTypeName the name of the package type to find
+     * @return
+     */
+    @WebMethod
+    PackageType findPackageType(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "resourceTypeId") Integer resourceTypeId,
+        @WebParam(name = "packageTypeName") String packageTypeName
+        );
+    
+    /**
      * @param subject
      * @param criteria {@link InstalledPackageCriteria}
      * @return InstalledPackages for the criteria

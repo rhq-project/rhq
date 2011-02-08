@@ -337,6 +337,11 @@ public interface ContentManagerLocal {
         throws ResourceTypeNotFoundException;
 
     /**
+     * @see {@link ContentManagerRemote#findPackageType(Subject, Integer, String)}
+     */
+    PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
+    
+    /**
      * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}
      */
     PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria);
@@ -361,6 +366,20 @@ public interface ContentManagerLocal {
      */
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
 
+    /**
+     * This method is used to persist new package types that are defined on the server-side
+     * by some kind of plugin.
+     * <p>
+     * Server-side package types are used to identify data stored in the content subsystem
+     * which don't have any agent-side counter-part. Such package types are required to have
+     * the {@link PackageType#getResourceType() resource type} set to null.
+     * 
+     * @param packageType the package type to persist
+     * @return the persisted package type
+     * @throws IllegalArgumentException if the supplied package type has non-null resource type
+     */
+    PackageType persistServersidePackageType(PackageType packageType);
+    
     void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams);
 
     void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails);

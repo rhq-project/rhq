@@ -1122,6 +1122,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return result;
     }
 
+    public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
+        Query q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
+        q.setParameter("typeId", resourceTypeId);
+        q.setParameter("name", packageTypeName);
+        
+        @SuppressWarnings("unchecked")
+        List<PackageType> results = (List<PackageType>) q.getResultList();
+        
+        if (results.size() == 0) {
+            return null;
+        } else if (results.size() == 1) {
+            return results.get(0);
+        } else {
+            String message = "2 or more package types with name '" + packageTypeName + "' found on the resource type with id " + resourceTypeId + ". This is a bug in the database.";
+            log.error(message);
+            throw new IllegalStateException(message);
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {
         if (!authorizationManager.isOverlord(subject)) {
@@ -1604,6 +1623,16 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     }
 
+    public PackageType persistServersidePackageType(PackageType packageType) {
+        if (packageType.getResourceType() != null) {
+            throw new IllegalArgumentException("Server-side package types can't be associated with a resource type.");
+        }
+        
+        entityManager.persist(packageType);
+        
+        return packageType;
+    }
+    
     /** Pulls in package bits from the stream. Currently inefficient.
      *
      * @param packageBitStream

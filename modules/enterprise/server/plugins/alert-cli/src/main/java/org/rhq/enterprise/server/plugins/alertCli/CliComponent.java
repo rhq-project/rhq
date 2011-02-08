@@ -22,10 +22,8 @@ package org.rhq.enterprise.server.plugins.alertCli;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -35,6 +33,8 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageCategory;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.DisambiguationReportRenderer;
@@ -43,6 +43,7 @@ import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -58,10 +59,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class CliComponent implements ServerPluginComponent, ControlFacet {
 
+    //TODO the package type definition could be defined somewhere accessible
+    //server-wide if we decide to use it in more places than just this alert sender
+    
+    public static final String PACKAGE_TYPE_NAME = "__SERVER_SIDE_CLI_SCRIPT";
+    public static final String PACKAGE_TYPE_DESCRIPTION = 
+        "A CLI script running on the server-side.";
+    public static final String PACKAGE_TYPE_DISPLAY_NAME = "Server-side CLI Script";
+    
     private static final String CONTROL_CHECK_ALERTS_VALIDITY = "checkAlertsValidity";
     private static final String CONTROL_REASSIGN_ALERTS = "reassignAlerts";
     
-    private static final String PROP_PACKAGE_TYPES = "packageTypes";
     private static final String PROP_ALERT_DEFINITION_NAME = "alertDefinitionName";
     private static final String PROP_RESOURCE_PATH = "resourcePath";
     private static final String PROP_RESOURCE_ID = "resourceId";
@@ -70,31 +78,37 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private static final String PROP_ALERT_DEFINITION_ID = "alertDefinitionId";
     private static final String PROP_USER_NAME = "userName";
     private static final String PROP_ALERT_DEF_IDS = "alertDefIds";
-    private static final String PROP_REPO_NAME = "repoName";
     
-    private Set<String> scriptPackageTypes;
     private String pluginName;
-    private String repoName;
+    private PackageType packageType;
+    
+    private SubjectManagerLocal subjectManager;
     
     public void initialize(ServerPluginContext context) throws Exception {
-        scriptPackageTypes = new HashSet<String>();
         pluginName = context.getPluginEnvironment().getPluginDescriptor().getName();
-        PropertyList packageTypesList = context.getPluginConfiguration().getList(PROP_PACKAGE_TYPES);
-        for(Property p : packageTypesList.getList()) {
-            PropertySimple value = (PropertySimple) p;
-            
-            scriptPackageTypes.add(value.getStringValue());
-        }
         
-        repoName = context.getPluginConfiguration().getSimpleValue(PROP_REPO_NAME, null);
+        subjectManager = LookupUtil.getSubjectManager();
+        ContentManagerLocal cm = LookupUtil.getContentManager();
+        
+        packageType = cm.findPackageType(subjectManager.getOverlord(), null, PACKAGE_TYPE_NAME);
+        
+        if (packageType == null) {
+            packageType = new PackageType(PACKAGE_TYPE_NAME, null);
+            packageType.setCategory(PackageCategory.EXECUTABLE_SCRIPT);
+            packageType.setDescription(PACKAGE_TYPE_DESCRIPTION);
+            packageType.setDisplayName(PACKAGE_TYPE_DISPLAY_NAME);
+            packageType.setSupportsArchitecture(false);
+            packageType.setCreationData(false);
+            packageType.setDeploymentConfigurationDefinition(null);
+            packageType.setDiscoveryInterval(-1);
+            packageType.setPackageExtraPropertiesDefinition(null);
+            
+            packageType = cm.persistServersidePackageType(packageType);
+        }
     }
 
-    public Set<String> getScriptPackageTypes() {
-        return scriptPackageTypes;
-    }
-    
-    public String getRepoName() {
-        return repoName;
+    public PackageType getScriptPackageType() {
+        return packageType;
     }
     
     public void start() {

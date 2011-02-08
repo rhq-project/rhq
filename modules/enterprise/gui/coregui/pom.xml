@@ -277,6 +277,7 @@
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
+                    <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>                    
                     <compileSourcesArtifacts>org.rhq:rhq-core-domain</compileSourcesArtifacts>
                     <style>DETAILED</style>
                 </configuration>

@@ -68,6 +68,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     // This must come first to ensure proper I18N class loading for dev mode
     private static final Messages MSG = GWT.create(Messages.class);
+    private static final MessageConstants MSGCONST = GWT.create(MessageConstants.class);
 
     private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
 
@@ -307,6 +308,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static Messages getMessages() {
         return MSG;
+    }
+
+    public static MessageConstants getMessageConstants() {
+        return MSGCONST;
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {

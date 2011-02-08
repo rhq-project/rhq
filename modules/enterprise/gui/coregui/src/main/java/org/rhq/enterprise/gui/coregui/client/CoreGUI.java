@@ -258,23 +258,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         return DEFAULT_VIEW_PATH;
     }
 
-    public static void setContent(Canvas newContent) {
-        // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
-        // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
-        // are in the array.
-        Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
-        Canvas[] children;
-        while ((children = contentCanvas.getChildren()).length > 0) {
-            children[0].destroy();
-        }
-
-        if (newContent != null) {
-            //content = newContent;
-            contentCanvas.addChild(newContent);
-        }
-        contentCanvas.markForRedraw();
-    }
-
     public static void goToView(String viewPath) {
         goToView(viewPath, null, false);
     }
@@ -380,9 +363,25 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
                 ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
                 if (!topLevelViewId.equals(this.currentViewId)) {
+                    // Destroy the current canvas before creating the new one. This helps prevent locator
+                    // conflicts if the old and new content share (logical) widgets.  A call to destroy (e.g. certain
+                    // IFrames/FullHTMLPane) can actually remove multiple children of the contentCanvas. As such, we
+                    // need to query for the children after each destroy to ensure only valid children are in the array.
+                    Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
+                    Canvas[] children;
+                    while ((children = contentCanvas.getChildren()).length > 0) {
+                        children[0].destroy();
+                    }
+
+                    // Set the new content and redraw
                     this.currentViewId = topLevelViewId;
                     this.currentCanvas = createContent(this.currentViewId.getPath());
-                    setContent(this.currentCanvas);
+
+                    if (null != this.currentCanvas) {
+                        contentCanvas.addChild(this.currentCanvas);
+                    }
+
+                    contentCanvas.markForRedraw();
                 }
 
                 if (this.currentCanvas instanceof BookmarkableView) {

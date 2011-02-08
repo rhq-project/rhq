@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.DrawEvent;
+import com.smartgwt.client.widgets.events.DrawHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
@@ -199,14 +201,14 @@ public class WizardView extends LocatableVLayout {
 
     }
 
-    private void setStep(int stepIndex) {
+    private void setStep(final int stepIndex) {
         if (stepIndex < 0) {
             this.previousButton.setDisabled(true);
             return;
         }
 
         // determine if we are "finished" - that is, going past our last step
-        List<WizardStep> wizardSteps = wizard.getSteps();
+        final List<WizardStep> wizardSteps = wizard.getSteps();
         if (stepIndex >= wizardSteps.size()) {
             closeDialog();
             return;
@@ -222,14 +224,9 @@ public class WizardView extends LocatableVLayout {
 
         stepTitleLabel.setContents(step.getName());
 
-        previousButton.setDisabled(stepIndex == 0);
-
-        boolean last = (stepIndex == (wizardSteps.size() - 1));
-        if (last) {
-            nextButton.setTitle(MSG.common_button_finish());
-        } else {
-            nextButton.setTitle(MSG.common_button_next());
-        }
+        cancelButton.setDisabled(true);
+        previousButton.setDisabled(true);
+        nextButton.setDisabled(true);
 
         for (IButton button : customButtons) {
             buttonBar.removeMember(button);
@@ -238,6 +235,7 @@ public class WizardView extends LocatableVLayout {
         List<IButton> cbs = wizard.getCustomButtons(currentStep);
         if (cbs != null) {
             for (IButton button : cbs) {
+                button.setDisabled(true);
                 buttonBar.addMember(button);
                 customButtons.add(button);
             }
@@ -247,8 +245,33 @@ public class WizardView extends LocatableVLayout {
             contentLayout.removeMember(currentCanvas);
         }
         currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
-        createdCanvases.add(currentCanvas);
 
+        // after the canvas is drawn, enable the wizard buttons (unlikely a user will notice, but useful
+        // for keeping automated testing from advancing too quickly).
+        currentCanvas.addDrawHandler(new DrawHandler() {
+
+            @Override
+            public void onDraw(DrawEvent event) {
+                boolean last = (stepIndex == (wizardSteps.size() - 1));
+                if (last) {
+                    nextButton.setTitle(MSG.common_button_finish());
+                } else {
+                    nextButton.setTitle(MSG.common_button_next());
+                }
+
+                cancelButton.setDisabled(false);
+                previousButton.setDisabled(stepIndex == 0);
+                nextButton.setDisabled(false);
+
+                for (IButton button : customButtons) {
+                    button.setDisabled(false);
+                }
+
+                markForRedraw();
+            }
+        });
+
+        createdCanvases.add(currentCanvas);
         contentLayout.addMember(currentCanvas);
 
         // clean any message from a previous step

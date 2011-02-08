@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -414,7 +415,22 @@ public class DashboardView extends LocatableVLayout {
 
     public void removePortlet(DashboardPortlet portlet) {
         storedDashboard.removePortlet(portlet);
-        save();
+
+        // portlet remove means the portlet locations may have changed. The selenium testing locators include
+        // positioning info. So, in this case we have to take the hit and completely redraw the dash.
+        AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null : new AsyncCallback<Dashboard>() {
+
+            @Override
+            public void onFailure(Throwable caught) {
+                redraw();
+            }
+
+            @Override
+            public void onSuccess(Dashboard result) {
+                redraw();
+            }
+        };
+        save(callback);
     }
 
     public void save(Dashboard dashboard) {

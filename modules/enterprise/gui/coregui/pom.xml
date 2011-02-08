@@ -481,7 +481,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
                        <includes>
-                           <include>org/rhq/enterprise/gui/coregui/client/Messages.java</include>
+                           <include>org/rhq/enterprise/gui/coregui/client/Messages*.java</include>
                        </includes>
                     </configuration>
                   </plugin>

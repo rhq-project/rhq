@@ -21,9 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.components.trigger;
 
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.TreeSet;
 
 import com.smartgwt.client.types.Visibility;
@@ -42,7 +40,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
-import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -52,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
-import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -66,6 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class JobTriggerEditor extends LocatableVLayout {
 
     // Field Names
+    private static final String FIELD_MODE = "mode";
     private static final String FIELD_REPEAT_INTERVAL = "repeatInterval";
     private static final String FIELD_REPEAT_DURATION = "repeatDuration";
     private static final String FIELD_END_TIME = "endTime";
@@ -75,28 +72,14 @@ public class JobTriggerEditor extends LocatableVLayout {
     private static final String FIELD_RECURRENCE_TYPE = "recurrenceType";
     private static final String FIELD_CRON_EXPRESSION = "cronExpression";
 
-    private static final Map<String, Long> UNITS_TO_MILLIS_MULTIPLIER_MAP = new HashMap<String, Long>();
-    static {
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("seconds", 1000L);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("s", 1000L);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("minutes", 1000L * 60);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("m", 1000L * 60);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("hours", 1000L * 60 * 60);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("h", 1000L * 60 * 60);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("days", 1000L * 60 * 60 * 24);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("d", 1000L * 60 * 60 * 24);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("weeks", 1000L * 60 * 60 * 24 * 7);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("w", 1000L * 60 * 60 * 24 * 7);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("months", 1000L * 60 * 60 * 24 * 7 * 30);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("M", 1000L * 60 * 60 * 24 * 7 * 30);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("quarters", 1000L * 60 * 60 * 24 * 7 * 90);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("q", 1000L * 60 * 60 * 24 * 7 * 90);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("years", 1000L * 60 * 60 * 24 * 7 * 30 * 365);
-        UNITS_TO_MILLIS_MULTIPLIER_MAP.put("y", 1000L * 60 * 60 * 24 * 7 * 30 * 365);
-    }
-
+    private JobTrigger jobTrigger;
     private boolean isReadOnly;
 
+    private LocatableVLayout calendarModeLayout;
+    private LocatableVLayout cronModeLayout;
+
+    private EnhancedDynamicForm modeForm;
+    private EnhancedDynamicForm calendarTypeForm;
     private DynamicForm laterForm;
     private DynamicForm repeatForm;
     private LocatableDynamicForm cronForm;
@@ -124,36 +107,92 @@ public class JobTriggerEditor extends LocatableVLayout {
      *
      * @param locatorId
      * @param jobTrigger
-     * @param isReadOnly
      */
-    public JobTriggerEditor(String locatorId, JobTrigger jobTrigger, boolean isReadOnly) {
+    public JobTriggerEditor(String locatorId, JobTrigger jobTrigger) {
         super(locatorId);
 
-        this.isReadOnly = isReadOnly;
+        this.jobTrigger = jobTrigger;
+        this.isReadOnly = true;
+    }
+
+    public void setJobTrigger(JobTrigger jobTrigger) {
+        this.jobTrigger = jobTrigger;
+        if (isDrawn()) {
+            refresh();
+        }
+    }
+
+    private void refresh() {
+        if (this.jobTrigger != null) {
+            RadioGroupItem modeItem = (RadioGroupItem) this.modeForm.getItem(FIELD_MODE);
+            if (this.jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.CRON_EXPRESSION) {
+                modeItem.setValue("cron");
+                changeMode("cron");
+                this.cronForm.setValue("cronExpression", this.jobTrigger.getCronExpression());
+            } else {
+                modeItem.setValue("calendar");
+                changeMode("calendar");
+
+                RadioGroupItem startTypeItem = (RadioGroupItem) this.laterForm.getItem(FIELD_START_TYPE);
+                startTypeItem.setValue("on");
+                DurationItem startDelayItem = (DurationItem) this.laterForm.getItem(FIELD_START_DELAY);
+                DateTimeItem startTimeItem = (DateTimeItem)this.laterForm.getField(FIELD_START_TIME);
+                changeStartType("on", startDelayItem, startTimeItem);
+                startTimeItem.setValue(this.jobTrigger.getStartDate());
+
+                RadioGroupItem calendarTypeItem = (RadioGroupItem) this.calendarTypeForm.getField("calendarType");
+                if (this.jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.REPEAT_INTERVAL) {
+                    calendarTypeItem.setValue("laterAndRepeat");
+                    changeCalendarType("laterAndRepeat");
+
+                    DurationItem repeatIntervalItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_INTERVAL);
+                    repeatIntervalItem.setValue(this.jobTrigger.getRepeatInterval().intValue(), UnitType.TIME);
+
+                    DateTimeItem endTimeItem = (DateTimeItem)this.repeatForm.getField(FIELD_END_TIME);
+                    DurationItem repeatDurationItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_DURATION);
+                    RadioGroupItem recurrenceTypeItem = (RadioGroupItem) this.repeatForm.getField(FIELD_RECURRENCE_TYPE);
+                    if (this.jobTrigger.getRepeatCount() != null) {
+                        recurrenceTypeItem.setValue("for");
+                        changeRecurrenceType("for", endTimeItem, repeatDurationItem);
+                        repeatDurationItem.setValue(this.jobTrigger.getRepeatCount(), UnitType.ITERATIONS);
+                    } else if (this.jobTrigger.getEndDate() != null) {
+                        recurrenceTypeItem.setValue("until");
+                        changeRecurrenceType("until", endTimeItem, repeatDurationItem);
+                        endTimeItem.setValue(this.jobTrigger.getEndDate());
+                    } else {
+                        recurrenceTypeItem.setValue("indefinitely");
+                        changeRecurrenceType("indefinitely", endTimeItem, repeatDurationItem);
+                    }
+                } else {
+                    calendarTypeItem.setValue("later");
+                    changeCalendarType("later");
+                }
+            }
+        }
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        EnhancedDynamicForm modeForm = new EnhancedDynamicForm(extendLocatorId("ModeForm"));
-        modeForm.setNumCols(3);
-        modeForm.setColWidths("140", "220", "*");
+        this.modeForm = new EnhancedDynamicForm(extendLocatorId("ModeForm"), this.isReadOnly);
+        this.modeForm.setNumCols(3);
+        this.modeForm.setColWidths("140", "220", "*");
 
-        RadioGroupItem modeItem = new RadioGroupItem("mode", "Schedule using");
+        RadioGroupItem modeItem = new RadioGroupItem(FIELD_MODE, "Schedule using");
         LinkedHashMap<String, String> modeValueMap = new LinkedHashMap<String, String>();
         modeValueMap.put("calendar", "Calendar");
         modeValueMap.put("cron", "Cron Expression");
         modeItem.setValueMap(modeValueMap);
         modeItem.setVertical(false);
 
-        modeForm.setFields(modeItem);
-        addMember(modeForm);
+        this.modeForm.setFields(modeItem);
+        addMember(this.modeForm);
 
-        final LocatableVLayout calendarModeLayout = new LocatableVLayout(extendLocatorId("CalendarModeLayout"));
-        calendarModeLayout.setVisible(false);
+        this.calendarModeLayout = new LocatableVLayout(extendLocatorId("CalendarModeLayout"));
+        this.calendarModeLayout.setVisible(false);
 
-        final DynamicForm calendarTypeForm = new DynamicForm();
+        this.calendarTypeForm = new EnhancedDynamicForm(extendLocatorId("CalendarTypeForm"), this.isReadOnly);
 
         RadioGroupItem calendarTypeItem = new RadioGroupItem("calendarType");
         calendarTypeItem.setWidth(440);
@@ -166,15 +205,15 @@ public class JobTriggerEditor extends LocatableVLayout {
         calendarTypeItem.setValueMap(calendarTypeValueMap);
         calendarTypeItem.setVertical(false);
 
-        calendarTypeForm.setFields(calendarTypeItem);
+        this.calendarTypeForm.setFields(calendarTypeItem);
         
-        calendarModeLayout.addMember(calendarTypeForm);
-        addMember(calendarModeLayout);
+        this.calendarModeLayout.addMember(this.calendarTypeForm);
+        addMember(this.calendarModeLayout);
 
-        final LocatableVLayout cronModeLayout = new LocatableVLayout(extendLocatorId("CronModeLayout"));
-        cronModeLayout.setVisible(false);
+        this.cronModeLayout = new LocatableVLayout(extendLocatorId("CronModeLayout"));
+        this.cronModeLayout.setVisible(false);
 
-        this.cronForm = new LocatableDynamicForm(cronModeLayout.extendLocatorId("Form"));
+        this.cronForm = new LocatableDynamicForm(this.cronModeLayout.extendLocatorId("Form"));
 
         TextItem cronExpressionItem = new TextItem(FIELD_CRON_EXPRESSION, "Cron Expression");
         cronExpressionItem.setRequired(true);
@@ -182,7 +221,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         this.cronForm.setFields(cronExpressionItem);
 
-        cronModeLayout.addMember(this.cronForm);
+        this.cronModeLayout.addMember(this.cronForm);
 
         final TabSet cronHelpTabSet = new TabSet();
         cronHelpTabSet.setWidth100();
@@ -487,63 +526,74 @@ public class JobTriggerEditor extends LocatableVLayout {
             }
         });
 
-        cronModeLayout.addMember(cronHelpTabSet);
-        addMember(cronModeLayout);
+        this.cronModeLayout.addMember(cronHelpTabSet);
+        addMember(this.cronModeLayout);
 
         modeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                if (event.getValue().equals("calendar")) {
-                    JobTriggerEditor.this.isCronMode = false;
-                    calendarModeLayout.show();
-                    cronModeLayout.hide();
-                } else {
-                    // cron mode
-                    JobTriggerEditor.this.isCronMode = true;
-                    calendarModeLayout.hide();
-                    cronModeLayout.show();
-                }
+                String mode = (String) event.getValue();
+                changeMode(mode);
             }
         });
 
         this.laterForm = createLaterForm();
-        calendarModeLayout.addMember(this.laterForm);
+        this.calendarModeLayout.addMember(this.laterForm);
 
         this.repeatForm = createRepeatForm();
-        calendarModeLayout.addMember(this.repeatForm);
+        this.calendarModeLayout.addMember(this.repeatForm);
 
         calendarTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String value = (String)event.getValue();
-                if (value.equals("now")) {
-                    JobTriggerEditor.this.isStartLater = false;
-                    JobTriggerEditor.this.isRecurring = false;
-                } else if (value.equals("nowAndRepeat")) {
-                    JobTriggerEditor.this.isStartLater = false;
-                    JobTriggerEditor.this.isRecurring = true;
-
-                    FormItem repeatIntervalItem = repeatForm.getItem(FIELD_REPEAT_INTERVAL);
-                    repeatIntervalItem.setTitle("Run now and every");
-                    repeatIntervalItem.redraw();
-                } else if (value.equals("later")) {
-                    JobTriggerEditor.this.isStartLater = true;
-                    JobTriggerEditor.this.isRecurring = false;
-                } else {
-                    // value.equals("laterAndRepeat")
-                    JobTriggerEditor.this.isStartLater = true;
-                    JobTriggerEditor.this.isRecurring = true;
-
-                    FormItem repeatIntervalItem = repeatForm.getItem(FIELD_REPEAT_INTERVAL);
-                    repeatIntervalItem.setTitle("Repeat every");
-                    repeatIntervalItem.redraw();
-                }
-                laterForm.setVisibility(JobTriggerEditor.this.isStartLater ? Visibility.VISIBLE : Visibility.HIDDEN);
-                repeatForm.setVisibility(JobTriggerEditor.this.isRecurring ? Visibility.VISIBLE : Visibility.HIDDEN);
+                String calendarType = (String)event.getValue();
+                changeCalendarType(calendarType);
             }
         });
+
+        refresh();
+    }
+
+    private void changeCalendarType(String calendarType) {
+        if (calendarType.equals("now")) {
+            this.isStartLater = false;
+            this.isRecurring = false;
+        } else if (calendarType.equals("nowAndRepeat")) {
+            this.isStartLater = false;
+            this.isRecurring = true;
+
+            FormItem repeatIntervalItem = repeatForm.getItem(FIELD_REPEAT_INTERVAL);
+            repeatIntervalItem.setTitle("Run now and every");
+            repeatIntervalItem.redraw();
+        } else if (calendarType.equals("later")) {
+            this.isStartLater = true;
+            this.isRecurring = false;
+        } else {
+            // value.equals("laterAndRepeat")
+            this.isStartLater = true;
+            this.isRecurring = true;
+
+            FormItem repeatIntervalItem = repeatForm.getItem(FIELD_REPEAT_INTERVAL);
+            repeatIntervalItem.setTitle("Repeat every");
+            repeatIntervalItem.redraw();
+        }
+        laterForm.setVisibility(this.isStartLater ? Visibility.VISIBLE : Visibility.HIDDEN);
+        repeatForm.setVisibility(this.isRecurring ? Visibility.VISIBLE : Visibility.HIDDEN);
+    }
+
+    private void changeMode(String mode) {
+        if (mode.equals("calendar")) {
+            this.isCronMode = false;
+            calendarModeLayout.show();
+            cronModeLayout.hide();
+        } else {
+            // cron expression mode
+            this.isCronMode = true;
+            calendarModeLayout.hide();
+            cronModeLayout.show();
+        }
     }
 
     private DynamicForm createRepeatForm() {
-        final EnhancedDynamicForm repeatForm = new EnhancedDynamicForm(extendLocatorId("RepeatForm"));
+        final EnhancedDynamicForm repeatForm = new EnhancedDynamicForm(extendLocatorId("RepeatForm"), this.isReadOnly);
         repeatForm.setNumCols(6);
         repeatForm.setColWidths(140, 130, 130, 130, 130);
 
@@ -556,7 +606,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         DurationItem repeatIntervalItem = new DurationItem(FIELD_REPEAT_INTERVAL, "Run now and every",
-                supportedUnits, false, isReadOnly(), repeatForm);
+                supportedUnits, false, this.isReadOnly, repeatForm);
         repeatIntervalItem.setRequired(true);
         repeatIntervalItem.setContextualHelp("how often the operation should be executed");
 
@@ -578,7 +628,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         final DurationItem repeatDurationItem = new DurationItem(FIELD_REPEAT_DURATION, null,
-                supportedUnits, true, isReadOnly(), repeatForm);
+                supportedUnits, true, this.isReadOnly, repeatForm);
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
         repeatDurationItem.setContextualHelp("keep running this operation this many times or until this amount of time has elapsed");
@@ -591,31 +641,8 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         recurrenceTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String value = (String)event.getValue();
-                if (value.equals("for")) {
-                    JobTriggerEditor.this.isEndTime = false;
-                    JobTriggerEditor.this.isRepeatDuration = true;
-                } else if (value.equals("until")) {
-                    JobTriggerEditor.this.isEndTime = true;
-                    JobTriggerEditor.this.isRepeatDuration = false;
-                } else {
-                    // indefinite
-                    JobTriggerEditor.this.isEndTime = false;
-                    JobTriggerEditor.this.isRepeatDuration = false;
-                }
-
-                endTimeItem.setRequired(JobTriggerEditor.this.isEndTime);
-                if (JobTriggerEditor.this.isEndTime) {
-                    endTimeItem.show();
-                } else {
-                    endTimeItem.hide();
-                }
-                repeatDurationItem.setRequired(JobTriggerEditor.this.isRepeatDuration);
-                if (JobTriggerEditor.this.isRepeatDuration) {
-                    repeatDurationItem.show();
-                } else {
-                    repeatDurationItem.hide();
-                }
+                String recurrenceType = (String)event.getValue();
+                changeRecurrenceType(recurrenceType, endTimeItem, repeatDurationItem);
             }
         });
 
@@ -625,8 +652,35 @@ public class JobTriggerEditor extends LocatableVLayout {
         return repeatForm;
     }
 
+    private void changeRecurrenceType(String recurrenceType, DateTimeItem endTimeItem, DurationItem repeatDurationItem) {
+        if (recurrenceType.equals("for")) {
+            this.isEndTime = false;
+            this.isRepeatDuration = true;
+        } else if (recurrenceType.equals("until")) {
+            this.isEndTime = true;
+            this.isRepeatDuration = false;
+        } else {
+            // indefinite
+            this.isEndTime = false;
+            this.isRepeatDuration = false;
+        }
+
+        endTimeItem.setRequired(this.isEndTime);
+        if (this.isEndTime) {
+            endTimeItem.show();
+        } else {
+            endTimeItem.hide();
+        }
+        repeatDurationItem.setRequired(this.isRepeatDuration);
+        if (this.isRepeatDuration) {
+            repeatDurationItem.show();
+        } else {
+            repeatDurationItem.hide();
+        }
+    }
+
     private DynamicForm createLaterForm() {
-        final EnhancedDynamicForm laterForm = new EnhancedDynamicForm(extendLocatorId("LaterForm"));
+        final EnhancedDynamicForm laterForm = new EnhancedDynamicForm(extendLocatorId("LaterForm"), this.isReadOnly);
         laterForm.setNumCols(4);
         laterForm.setColWidths(140, 130, 130);
 
@@ -647,7 +701,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         final DurationItem startDelayItem = new DurationItem(FIELD_START_DELAY, null,
-                supportedUnits, false, isReadOnly(), laterForm);
+                supportedUnits, false, this.isReadOnly, laterForm);
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
         startDelayItem.setContextualHelp("start executing the operation after this amount of time has elapsed");
@@ -656,27 +710,8 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         startTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String value = (String)event.getValue();
-                if (value.equals("on")) {
-                    JobTriggerEditor.this.isStartDelay = false;
-                    JobTriggerEditor.this.isStartTime = true;
-                } else {
-                    // value.equals("in")
-                    JobTriggerEditor.this.isStartDelay = true;
-                    JobTriggerEditor.this.isStartTime = false;
-                }
-                startDelayItem.setRequired(JobTriggerEditor.this.isStartDelay);
-                if (JobTriggerEditor.this.isStartDelay) {
-                    startDelayItem.show();
-                } else {
-                    startDelayItem.hide();
-                }
-                startTimeItem.setRequired(JobTriggerEditor.this.isStartTime);
-                if (JobTriggerEditor.this.isStartTime) {
-                    startTimeItem.show();
-                } else {
-                    startTimeItem.hide();
-                }
+                String startType = (String)event.getValue();
+                changeStartType(startType, startDelayItem, startTimeItem);
             }
         });
 
@@ -686,12 +721,35 @@ public class JobTriggerEditor extends LocatableVLayout {
         return laterForm;
     }
 
+    private void changeStartType(String startType, DurationItem startDelayItem, DateTimeItem startTimeItem) {
+        if (startType.equals("on")) {
+            this.isStartDelay = false;
+            this.isStartTime = true;
+        } else {
+            // value.equals("in")
+            this.isStartDelay = true;
+            this.isStartTime = false;
+        }
+        startDelayItem.setRequired(this.isStartDelay);
+        if (this.isStartDelay) {
+            startDelayItem.show();
+        } else {
+            startDelayItem.hide();
+        }
+        startTimeItem.setRequired(this.isStartTime);
+        if (this.isStartTime) {
+            startTimeItem.show();
+        } else {
+            startTimeItem.hide();
+        }
+    }
+
     public Date getStartTime() {
         Date startTime;
         if (this.isStartDelay) {
             // start delay - compute start time
             DurationItem startDelayItem = (DurationItem) this.laterForm.getItem(FIELD_START_DELAY);
-            long delay = startDelayItem.getValueAsLong();
+            long delay = startDelayItem.getValueAsLong() * 1000;
             long startTimestamp = System.currentTimeMillis() + delay;
             startTime = new Date(startTimestamp);
         } else {
@@ -706,7 +764,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         Long intervalMillis;
         if (this.isRecurring) {
             DurationItem repeatInterval = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_INTERVAL);
-            intervalMillis = repeatInterval.getValueAsLong();
+            intervalMillis = repeatInterval.getValueAsLong() * 1000;
         } else {
             intervalMillis = null;
         }
@@ -744,7 +802,7 @@ public class JobTriggerEditor extends LocatableVLayout {
                     endTime = null;
                 } else {
                     // n units of time - compute end time
-                    long delay = repeatDurationItem.getValueAsLong();
+                    long delay = repeatDurationItem.getValueAsLong() * 1000;
                     long endTimestamp = System.currentTimeMillis() + delay;
                     endTime = new Date(endTimestamp);
                 }
@@ -817,18 +875,4 @@ public class JobTriggerEditor extends LocatableVLayout {
         return dateTimeItem;
     }
 
-    public boolean isReadOnly() {
-        return isReadOnly;
-    }
-
-    private static class Duration {
-        public int count;
-        // a null multiplier means the count refers repetitions, rather than units of time
-        public Long multiplier;
-
-        private Duration(int count, Long multiplier) {
-            this.count = count;
-            this.multiplier = multiplier;
-        }
-    }
 }

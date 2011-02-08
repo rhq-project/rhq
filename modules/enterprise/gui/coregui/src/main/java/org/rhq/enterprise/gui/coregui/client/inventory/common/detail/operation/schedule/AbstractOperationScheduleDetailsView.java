@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
@@ -41,6 +42,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -63,7 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Ian Springer
  */
-public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor {
+public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor<AbstractOperationScheduleDataSource> {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
@@ -151,12 +153,10 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        if (isNewRecord()) {
-            this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
-            contentPane.addMember(this.triggerEditor);
-            hr = new HTMLFlow("<p/><hr/><p/>");
-            contentPane.addMember(hr);
-        }
+        this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
+        contentPane.addMember(this.triggerEditor);
+        hr = new HTMLFlow("<p/><hr/><p/>");
+        contentPane.addMember(hr);
 
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
@@ -224,16 +224,22 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
     @Override
     protected void editExistingRecord(Record record) {
-        FormItem nextFireTimeItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
-        nextFireTimeItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
+        JavaScriptObject jobTriggerJavaScriptObject =
+                (JavaScriptObject) getForm().getValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER);
+        Record jobTriggerRecord =  new ListGridRecord(jobTriggerJavaScriptObject);
+        JobTrigger jobTrigger = getDataSource().createJobTrigger(jobTriggerRecord);
+        this.triggerEditor.setJobTrigger(jobTrigger);
+
+        FormItem nextFireTimeItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
+        nextFireTimeItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
 
         DurationItem timeoutItem = (DurationItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
         Object value = getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT);
         Integer integerValue = TypeConversionUtility.toInteger(value);
         timeoutItem.setValue(integerValue, UnitType.TIME);
 
-        FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
-        notesItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION));
+        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
 
         super.editExistingRecord(record);
     }
@@ -251,21 +257,21 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         Record jobTriggerRecord = new ListGridRecord();
 
         Date startTime = this.triggerEditor.getStartTime();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.START_TIME, startTime);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.START_TIME, startTime);
 
         Date endTime = this.triggerEditor.getEndTime();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.END_TIME, endTime);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.END_TIME, endTime);
 
         Integer repeatCount = this.triggerEditor.getRepeatCount();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.REPEAT_COUNT, repeatCount);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.REPEAT_COUNT, repeatCount);
 
         Long repeatInterval = this.triggerEditor.getRepeatInterval();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.REPEAT_INTERVAL, repeatInterval);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.REPEAT_INTERVAL, repeatInterval);
 
         String cronExpression = this.triggerEditor.getCronExpression();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.CRON_EXPRESSION, cronExpression);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.CRON_EXPRESSION, cronExpression);
 
-        form.setValue("jobTrigger", jobTriggerRecord);
+        form.setValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER, jobTriggerRecord);
 
         DurationItem timeoutItem = (DurationItem)this.notesForm.getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
         form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeoutItem.getValueAsLong());

@@ -60,6 +60,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         public static final String DESCRIPTION = "description";
         public static final String NEXT_FIRE_TIME = "nextFireTime";
         public static final String TIMEOUT = "timeout";
+        public static final String JOB_TRIGGER = "jobTrigger";
 
         // job trigger fields
         public static final String START_TIME = "startTime";

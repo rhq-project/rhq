@@ -26,9 +26,10 @@ public class TypeConversionUtility {
     public static Long toLong(Object object) {
         Long longValue;
         if (object instanceof String) {
-            longValue = Long.valueOf((String)object);
+            longValue = (long)Integer.valueOf((String)object);
         } else if (object instanceof Number) {
-            longValue = ((Number) object).longValue();
+            // Note: Do *not* use Number.longValue() here, since it causes a GWT exception when in non-hosted mode.
+            longValue = (long)((Number) object).intValue();
         } else if (object == null) {
             longValue = null;
         } else {

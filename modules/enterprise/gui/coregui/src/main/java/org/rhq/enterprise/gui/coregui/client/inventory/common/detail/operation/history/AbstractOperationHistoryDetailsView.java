@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
-import java.util.Date;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
@@ -32,42 +29,48 @@ import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import com.smartgwt.client.widgets.layout.VLayout;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
+import java.util.Date;
+
 /**
  * @author Greg Hinkle
  */
-public class ResourceOperationHistoryDetailsView extends LocatableVLayout implements BookmarkableView {
+public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVLayout
+        implements BookmarkableView {
 
     private OperationDefinition definition;
-    private ResourceOperationHistory operationHistory;
+    private T operationHistory;
 
     private DynamicForm form;
 
-    public ResourceOperationHistoryDetailsView(String locatorId) {
-        super(locatorId);
+    public AbstractOperationHistoryDetailsView(String locatorId) {
+        this(locatorId, null, null);
     }
 
-    public ResourceOperationHistoryDetailsView(String locatorId, OperationDefinition definition,
-        ResourceOperationHistory operationHistory) {
+    public AbstractOperationHistoryDetailsView(String locatorId, OperationDefinition definition,
+                                               T operationHistory) {
         super(locatorId);
 
         this.definition = definition;
         this.operationHistory = operationHistory;
+
+        setWidth100();
+        setHeight100();
+        setOverflow(Overflow.AUTO);
+        setLayoutMargin(0);
+        setMembersMargin(16);
     }
 
     @Override
@@ -81,7 +84,7 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
         }
     }
 
-    private void displayDetails(final ResourceOperationHistory operationHistory) {
+    protected void displayDetails(final T operationHistory) {
 
         for (Canvas child : getMembers()) {
             removeChild(child);
@@ -137,7 +140,7 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    final Window winModal = new LocatableWindow(ResourceOperationHistoryDetailsView.this
+                    final Window winModal = new LocatableWindow(AbstractOperationHistoryDetailsView.this
                         .extendLocatorId("errorWin"));
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
@@ -157,7 +160,7 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
                         }
                     });
 
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(ResourceOperationHistoryDetailsView.this
+                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(AbstractOperationHistoryDetailsView.this
                         .extendLocatorId("statusDetailsPane"));
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
@@ -201,48 +204,42 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
         // params/results
 
         if (operationHistory.getParameters() != null) {
-            Label title = new Label(MSG.view_operationHistoryDetails_parameters());
-            addMember(title);
+            LocatableVLayout parametersSection = new LocatableVLayout(extendLocatorId("ParametersSection"));
 
-            ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"), definition
-                .getParametersConfigurationDefinition(), operationHistory.getParameters());
-            editor.setReadOnly(true);
-            addMember(editor);
+            Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_parameters() + "</h4>");
+            title.setHeight(27);
+            parametersSection.addMember(title);
+
+            ConfigurationDefinition parametersConfigurationDefinition = definition
+                    .getParametersConfigurationDefinition();
+            if (parametersConfigurationDefinition != null &&
+                    !parametersConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
+                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"),
+                        parametersConfigurationDefinition, operationHistory.getParameters());
+                editor.setReadOnly(true);
+                parametersSection.addMember(editor);
+            } else {
+                Label noParametersLabel = new Label("This operation does not take any parameters.");
+                noParametersLabel.setHeight(17);
+                parametersSection.addMember(noParametersLabel);
+            }
+
+            addMember(parametersSection);
         }
 
-        if (status == OperationRequestStatus.SUCCESS && operationHistory.getResults() != null) {
-            Label title = new Label(MSG.view_operationHistoryDetails_results());
-            addMember(title);
-
-            ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"), definition
-                .getResultsConfigurationDefinition(), operationHistory.getResults());
-            editor.setReadOnly(true);
-            addMember(editor);
+        Canvas resultsSection = buildResultsSection(operationHistory);
+        if (resultsSection != null) {
+            addMember(resultsSection);
         }
+
+        VLayout verticalSpacer = new VLayout();
+        verticalSpacer.setHeight100();
+        addMember(verticalSpacer);
     }
 
-    private void lookupDetails(int historyId) {
-        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+    protected abstract Canvas buildResultsSection(T operationHistory);
 
-        criteria.addFilterId(historyId);
-
-        criteria.fetchOperationDefinition(true);
-        criteria.fetchParameters(true);
-        criteria.fetchResults(true);
-
-        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler()
-                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
-                }
-
-                public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    ResourceOperationHistory item = result.get(0);
-                    displayDetails(item);
-                }
-            });
-    }
+    protected abstract void lookupDetails(int historyId);
 
     @Override
     public void renderView(ViewPath viewPath) {
@@ -250,7 +247,7 @@ public class ResourceOperationHistoryDetailsView extends LocatableVLayout implem
         lookupDetails(historyId);
     }
 
-    private String getShortErrorMessage(ResourceOperationHistory operationHistory) {
+    private static String getShortErrorMessage(OperationHistory operationHistory) {
         String errMsg = operationHistory.getErrorMessage();
         if (errMsg == null) {
             errMsg = MSG.common_status_failed();

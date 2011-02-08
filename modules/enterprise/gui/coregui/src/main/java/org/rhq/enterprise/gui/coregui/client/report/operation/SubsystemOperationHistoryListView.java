@@ -37,8 +37,8 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.ResourceOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 
 /**
  * @author Ian Springer
@@ -102,7 +102,7 @@ public class SubsystemOperationHistoryListView extends AbstractOperationHistoryL
 
     @Override
     public Canvas getDetailsView(int id) {
-        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("Details"));
+        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("DetailsView"));
     }
 
 }

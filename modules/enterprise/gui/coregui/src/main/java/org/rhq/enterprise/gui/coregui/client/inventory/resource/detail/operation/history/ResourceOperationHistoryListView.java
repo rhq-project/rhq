@@ -23,7 +23,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.ResourceOperationHistoryDetailsView;
 
 /**
  * @author Ian Springer
@@ -46,7 +45,7 @@ public class ResourceOperationHistoryListView extends AbstractOperationHistoryLi
 
     @Override
     public Canvas getDetailsView(int id) {
-        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("Details"));
+        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("DetailsView"));
     }
 
 }

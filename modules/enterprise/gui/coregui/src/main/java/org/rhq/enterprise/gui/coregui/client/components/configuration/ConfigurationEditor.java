@@ -255,7 +255,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: "
+                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retrieved in: "
                                 + (System.currentTimeMillis() - start));
                             configurationDefinition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (configurationDefinition == null) {
@@ -282,7 +282,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            Log.debug("ConfigDef retrieved in: " + (System.currentTimeMillis() - start));
                             configurationDefinition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (configurationDefinition == null) {
                                 showError(MSG.view_configEdit_error_2());

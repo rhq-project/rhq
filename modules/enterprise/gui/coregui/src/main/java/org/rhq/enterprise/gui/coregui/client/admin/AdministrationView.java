@@ -52,6 +52,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_TOPOLOGY_VIEW_ID = new ViewName("Topology", MSG.view_admin_topology());
     public static final ViewName SECTION_CONFIGURATION_VIEW_ID = new ViewName("Configuration", MSG
         .view_admin_configuration());
+    public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
     private static final ViewName PAGE_SERVERS_VIEW_ID = new ViewName("Servers", MSG.view_adminTopology_servers());
@@ -68,6 +69,12 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_DOWNLOADS_VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads());
     private static final ViewName PAGE_LICENSE_VIEW_ID = new ViewName("License", MSG.view_adminConfig_license());
     private static final ViewName PAGE_PLUGINS_VIEW_ID = new ViewName("Plugins", MSG.view_adminConfig_plugins());
+
+    // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
+    private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources", MSG
+        .view_adminContent_contentSources());
+    private static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG
+        .view_adminContent_repositories());
 
     public AdministrationView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -86,6 +93,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
         NavigationSection configurationSection = buildConfigurationSection();
         sections.add(configurationSection);
+
+        NavigationSection contentSection = buildContentSection();
+        sections.add(contentSection);
 
         return sections;
     }
@@ -207,5 +217,25 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, templatesItem, downloadsItem,
             licenseItem, pluginsItem);
+    }
+
+    private NavigationSection buildContentSection() {
+        NavigationItem contentSourcesItem = new NavigationItem(PAGE_CONTENT_SOURCES_VIEW_ID,
+            "subsystems/content/Content_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_CONTENT_SOURCES_VIEW_ID.getName()),
+                        "/rhq/content/listContentProviders.xhtml");
+                }
+            });
+
+        NavigationItem reposItem = new NavigationItem(PAGE_REPOS_VIEW_ID, "subsystems/content/Content_16.png",
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane(extendLocatorId(PAGE_REPOS_VIEW_ID.getName()),
+                        "/rhq/content/listRepos.xhtml");
+                }
+            });
+
+        return new NavigationSection(SECTION_CONTENT_VIEW_ID, contentSourcesItem, reposItem);
     }
 }

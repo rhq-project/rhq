@@ -67,6 +67,7 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = PackageType.QUERY_FIND_ALL, query = "SELECT pt FROM PackageType pt"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType.id = :typeId"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType.id = :typeId AND pt.name = :name"),
+    @NamedQuery(name = PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType = null AND pt.name = :name"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG, query = "SELECT pt FROM PackageType pt "
         + "JOIN pt.resourceType rt "
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
@@ -85,6 +86,7 @@ public class PackageType implements Serializable {
 
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID = "PackageType.findByResourceTypeId";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME = "PackageType.findByResourceTypeIdAndName";
+    public static final String QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE = "PackageType.findByNameAndNullResourceType";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG = "PackageType.findByResourceTypeIdAndCreationFlag";
 
     public static final String QUERY_DYNAMIC_CONFIG_VALUES = "PackageType.dynamicConfigValues";

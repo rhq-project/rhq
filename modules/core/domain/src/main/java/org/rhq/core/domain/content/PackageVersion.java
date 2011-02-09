@@ -69,11 +69,16 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY, query = "SELECT pv FROM PackageVersion AS pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :packageName "
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId "
         + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY, query = "SELECT pv FROM PackageVersion AS pv "
+        + " WHERE pv.generalPackage.name = :packageName "
+        + "   AND pv.generalPackage.packageType.name = :packageTypeName "
+        + "   AND pv.generalPackage.packageType.resourceType = :resourceType "
+        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),        
     @NamedQuery(name = PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID, query = "SELECT pv.id "
         + "  FROM PackageVersion AS pv " + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
         + " WHERE pv.generalPackage.name = :packageName "
@@ -258,6 +263,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
     public static final String QUERY_FIND_BY_PACKAGE_SHA = "PackageVersion.findByPackageSha";
     public static final String QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE = "PackageVersion.findByPackageShaResType";
+    public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE = "PackageVersion.findByPackageDetailsKeyWithNonNullResourceType";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_SHA = "PackageVersion.findByPackageDetailsSha";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";

@@ -1600,8 +1600,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             PackageType pt = new PackageType(key.getPackageTypeName(), rt);
 
             if (!knownPackageTypes.containsKey(pt)) {
-                q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
-                q.setParameter("typeId", rt != null ? rt.getId() : null);
+                if (rt != null) {
+                    q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
+                    q.setParameter("typeId", rt.getId());
+                } else {
+                    q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE);
+                }
+                
                 q.setParameter("name", pt.getName());
 
                 try {
@@ -1677,7 +1682,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             q.setParameter("packageName", newDetails.getName());
             q.setParameter("packageTypeName", pt.getName());
-            q.setParameter("resourceTypeId", rt.getId());
+            q.setParameter("resourceType", rt);
             q.setParameter("architectureName", arch.getName());
             q.setParameter("version", newDetails.getVersion());
 
@@ -1965,7 +1970,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         ResourceType childResourceType = (ResourceType) query.getSingleResult();
 
-        query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
         query.setParameter("packageName", packageDetailsKey.getName());
         query.setParameter("packageTypeName", packageDetailsKey.getPackageTypeName());
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());

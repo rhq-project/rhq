@@ -424,7 +424,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // Load the package version for the relationship
             PackageDetailsKey key = packageDetails.getKey();
             Query packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageVersionQuery.setParameter("packageName", key.getName());
             packageVersionQuery.setParameter("packageTypeName", key.getPackageTypeName());
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
@@ -489,7 +489,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // Load the package version for the relationship
             PackageDetailsKey key = singleResponse.getKey();
             Query packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageVersionQuery.setParameter("packageName", key.getName());
             packageVersionQuery.setParameter("packageTypeName", key.getPackageTypeName());
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
@@ -712,7 +712,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // Load the package version for the relationship
             PackageDetailsKey key = singleResponse.getKey();
             Query packageVersionQuery = entityManager
-                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+                .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageVersionQuery.setParameter("packageName", key.getName());
             packageVersionQuery.setParameter("packageTypeName", key.getPackageTypeName());
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
@@ -1022,7 +1022,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         long installationDate = System.currentTimeMillis();
 
         for (PackageDetailsKey key : keys) {
-            Query packageQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+            Query packageQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
             packageQuery.setParameter("packageName", key.getName());
             packageQuery.setParameter("packageTypeName", key.getPackageTypeName());
             packageQuery.setParameter("architectureName", key.getArchitectureName());
@@ -1123,8 +1123,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
-        Query q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
-        q.setParameter("typeId", resourceTypeId);
+        Query q = entityManager
+            .createNamedQuery(resourceTypeId == null ? PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE
+                : PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
+
+        if (resourceTypeId != null) {
+            q.setParameter("typeId", resourceTypeId);
+        }
         q.setParameter("name", packageTypeName);
         
         @SuppressWarnings("unchecked")
@@ -1323,7 +1328,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("version", pv.getVersion());
             
             ResourceType rt = pv.getGeneralPackage().getPackageType().getResourceType();
-            q.setParameter("resourceTypeId", rt != null ? rt.getId() : null);
+            q.setParameter("resourceType", rt);
 
             List<PackageVersion> found = q.getResultList();
             if (error != null && found.size() == 0) {
@@ -1561,7 +1566,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         // See if package version already exists for the resource package
-        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
         packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
         packageVersionQuery.setParameter("packageName", packageName);
         PackageType packageType = contentManager.getResourceCreationPackageType(newResourceTypeId);

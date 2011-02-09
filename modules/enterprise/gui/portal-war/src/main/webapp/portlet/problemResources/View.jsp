@@ -23,13 +23,6 @@
 </tiles:insert>
 
 <c:choose>
-  <c:when test="${not monitorEnabled}">   
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr class="ListRow">
-        <td class="ListCell"><fmt:message key="common.marketing.FeatureDisabled"/></td>
-      </tr>
-    </table>
-  </c:when>
   <c:when test="${not empty problemResources}">   
     <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
                    var="obj" items="${problemResources}" >

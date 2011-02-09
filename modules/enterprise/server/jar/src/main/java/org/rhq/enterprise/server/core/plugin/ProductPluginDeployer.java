@@ -44,7 +44,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityException;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
-import org.rhq.enterprise.server.license.LicenseManager;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -57,7 +56,6 @@ public class ProductPluginDeployer {
 
     private Log log = LogFactory.getLog(ProductPluginDeployer.class.getName());
     private File pluginDir = null;
-    private File licenseFile = null;
     private boolean isStarted = false;
     private boolean isReady = false;
 
@@ -87,30 +85,12 @@ public class ProductPluginDeployer {
         }
     }
 
-    public File getLicenseFile() {
-        return this.licenseFile;
-    }
-
-    public void setLicenseFile(File file) {
-        this.licenseFile = file;
-
-        // sanity check - log an ugly message if we don't have a license file named as we expect
-        String expectedName = LicenseManager.getLicenseFileName();
-        if (!file.getPath().endsWith(expectedName)) {
-            log.error("License file [" + file + "] is not named what we expect: " + expectedName);
-        }
-    }
-
     /**
      * This is called by the server's startup servlet which essentially informs us that
      * the server's internal EJB/SLSBs are ready and can be called. This means we are
      * allowed to begin registering types from deployed plugins.
      */
     public void startDeployment() {
-        // Do startup license checking. we should really pull out the licensing code into someplace else
-        LicenseManager licenseManager = LicenseManager.instance();
-        licenseManager.doStartupCheck(this.licenseFile.getAbsolutePath());
-
         // we can now register our initial set of plugins
         registerPlugins();
 

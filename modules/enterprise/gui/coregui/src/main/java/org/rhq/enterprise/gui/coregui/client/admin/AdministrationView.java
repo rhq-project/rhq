@@ -67,7 +67,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         .view_adminConfig_systemSettings());
     public static final ViewName PAGE_TEMPLATES_VIEW_ID = new ViewName("Templates", MSG.view_adminConfig_templates());
     private static final ViewName PAGE_DOWNLOADS_VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads());
-    private static final ViewName PAGE_LICENSE_VIEW_ID = new ViewName("License", MSG.view_adminConfig_license());
     private static final ViewName PAGE_PLUGINS_VIEW_ID = new ViewName("Plugins", MSG.view_adminConfig_plugins());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
@@ -199,14 +198,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem licenseItem = new NavigationItem(PAGE_LICENSE_VIEW_ID, "subsystems/bundle/Details_11.png",
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_LICENSE_VIEW_ID.getName()),
-                        "/admin/license/LicenseAdmin.do?mode=view&nomenu=true");
-                }
-            });
-
         NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, "global/Plugin_16.png",
             new ViewFactory() {
                 public Canvas createView() {
@@ -216,7 +207,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             });
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, templatesItem, downloadsItem,
-            licenseItem, pluginsItem);
+            pluginsItem);
     }
 
     private NavigationSection buildContentSection() {

@@ -107,7 +107,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
             }
             measurementSchedules = new PageList<MeasurementScheduleComposite>(composites, definitions.size(),
                 pageControl);
-            request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, Boolean.FALSE);
+            //request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, Boolean.FALSE);
             ResourceType rType = rtManager.getResourceTypeById(subject, resourceTypeId);
 
             request.setAttribute(AttrConstants.RESOURCE_TYPE_ATTR, rType);
@@ -115,7 +115,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
         } else {
             int resourceId = WebUtility.getOptionalIntRequestParameter(request, "id", -1);
             if ((parent > 0) && (type > 0)) {
-                request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true);
+                //request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true);
                 measurementSchedules = scheduleManager.getMeasurementScheduleCompositesByContext(subject, EntityContext
                     .forAutoGroup(parent, type), pageControl);
 
@@ -126,7 +126,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute("parentName", parentRes.getName());
             } else if (resourceId > 0) {
                 boolean monitoringConfigured = isMonitoringConfigured(resourceId);
-                request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, monitoringConfigured);
+                //request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, monitoringConfigured);
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for resource " + resourceId + "...");
                     measurementSchedules = scheduleManager.getMeasurementScheduleCompositesByContext(subject,
@@ -134,7 +134,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 }
             } else if (groupId > 0) {
                 boolean monitoringConfigured = true; // isMonitoringConfiguredForGroup(groupId); // TODO implement the method, see below
-                request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true); // TODO change true -> monitoringConfigured
+                //request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true); // TODO change true -> monitoringConfigured
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for comp group " + groupId + "...");
                     measurementSchedules = scheduleManager.getMeasurementScheduleCompositesByContext(subject,

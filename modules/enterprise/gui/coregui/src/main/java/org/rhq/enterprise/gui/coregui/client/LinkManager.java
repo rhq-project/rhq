@@ -330,14 +330,6 @@ public class LinkManager {
         return "/rhq/admin/downloads.xhtml";
     }
 
-    public static String getAdminLicenseLink() {
-        if (GWT) {
-            return "#Administration/Configuration/License";
-        } else {
-            return "/admin/license/LicenseAdmin.do?mode=view";
-        }
-    }
-
     public static String getDebugSqlLink() {
         return "/admin/test/sql.jsp";
     }

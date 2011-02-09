@@ -318,18 +318,6 @@
          name="administration.reports"
          placement="after" />
    </menu-item>
-   <menu-item
-      name="administration.license"
-      displayName="License"
-      url="/admin/license/LicenseAdmin.do?mode=view">
-      <position
-         name="administration.downloads"
-         placement="after" />
-      <activators>
-         <global-permission
-            name="MANAGE_SETTINGS" />
-      </activators>
-   </menu-item>
 
    <!--  Core Menu: Debug -->
    <menu-item

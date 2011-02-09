@@ -220,7 +220,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     }
 
     private AbstractNotificationSenderForm createNotificationSenderForm(String sender) {
-        String newLocatorId = extendLocatorId(sender);
+        String newLocatorId = extendLocatorId(SeleniumUtility.getSafeId(sender));
         AbstractNotificationSenderForm newCanvas;
 
         // NOTE: today there is no way for an alert server plugin developer

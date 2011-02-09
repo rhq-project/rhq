@@ -31,7 +31,7 @@ import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 
 /**
- * A convenients class for exposing an {@link Enum} as a multi-select form item. 
+ * A convenience class for exposing an {@link Enum} as a multi-select form item.
  *
  * @author Joseph Marques 
  */

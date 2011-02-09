@@ -378,8 +378,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         // there is a attribute on the select item that is a map<int,def> of all ops in the drop down list.
         // if there is a non-empty map (i.e. we know what ops are available) we need to show the arguments.
         // if there are no parameters needed for this operation, null out the extra config
-        LinkedHashMap<Integer, OperationDefinition> ops = (LinkedHashMap<Integer, OperationDefinition>) operationSelectItem
-            .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE);
+        LinkedHashMap<Integer, OperationDefinition> ops = ((MapWrapper) operationSelectItem
+            .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE)).getMap();
         if (ops == null || ops.isEmpty()) {
             // why did this happen? there are no op defs so we should not be able to see any drop down menu anyway
             hideOperationDropDownMenu();
@@ -446,7 +446,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                             opDefs.put(def.getId(), def);
                             valueMap.put(String.valueOf(def.getId()), def.getDisplayName());
                         }
-                        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) opDefs);
+                        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) new MapWrapper(opDefs));
                         operationSelectItem.setValueMap(valueMap);
                         if (selectedOpId != null && selectedOpId > 0 && opDefs.containsKey(selectedOpId)) {
                             operationSelectItem.setValue(String.valueOf(selectedOpId));
@@ -513,7 +513,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     private void hideOperationDropDownMenu() {
         LinkedHashMap<Integer, OperationDefinition> ops = new LinkedHashMap<Integer, OperationDefinition>(0);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(0);
-        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) ops);
+        operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) new MapWrapper(ops));
         operationSelectItem.setValueMap(valueMap);
         operationSelectItem.hide();
         hideOperationArguments();
@@ -639,7 +639,6 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             this.idItem = idItem;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         protected boolean condition(Object value) {
             Integer id = Integer.valueOf(idItem.getAttributeAsInt(RESOURCE_ID_ATTRIBUTE));
@@ -647,8 +646,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             if (!valid) {
                 setErrorMessage(MSG.view_alert_definition_notification_operation_editor_specific_pick_error_invalid());
             } else {
-                LinkedHashMap<Integer, OperationDefinition> ops = (LinkedHashMap<Integer, OperationDefinition>) operationSelectItem
-                    .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE);
+                LinkedHashMap<Integer, OperationDefinition> ops = ((MapWrapper) operationSelectItem
+                    .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE)).getMap();
                 if (ops == null || ops.isEmpty()) {
                     valid = false;
                     setErrorMessage(MSG
@@ -656,6 +655,20 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 }
             }
             return valid;
+        }
+    }
+
+    // We do not want smargwt to see we are storing our map into an attribute because it barfs on our key/value pairs
+    // so instead we have to wrap it in a non-Map POJO Object so smartgwt just handles it as a java.lang.Object.
+    private class MapWrapper {
+        private LinkedHashMap<Integer, OperationDefinition> map;
+
+        private MapWrapper(LinkedHashMap<Integer, OperationDefinition> map) {
+            this.map = map;
+        }
+
+        private LinkedHashMap<Integer, OperationDefinition> getMap() {
+            return this.map;
         }
     }
 }

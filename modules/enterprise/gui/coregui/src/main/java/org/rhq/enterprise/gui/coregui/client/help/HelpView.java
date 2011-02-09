@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.help;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -31,6 +32,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.MessageConstants;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
@@ -48,9 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class HelpView extends AbstractSectionedLeftNavigationView {
     public static final ViewName VIEW_ID = new ViewName("Help", MSG.common_title_help());
 
-    private static final ViewName SECTION_DOC_VIEW_ID = new ViewName("Documentation", MSG
-        .view_helpSection_documentation());
-    private static final ViewName SECTION_TUTORIAL_VIEW_ID = new ViewName("Tutorial", MSG.view_helpSection_tutorial());
+    private static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
+
     private static ProductInfo PRODUCT_INFO;
 
     public HelpView() {
@@ -62,11 +63,10 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     protected List<NavigationSection> getNavigationSections() {
         List<NavigationSection> sections = new ArrayList<NavigationSection>();
 
-        NavigationSection docSection = buildDocSection();
+        NavigationSection docSection = buildProductSection();
         sections.add(docSection);
 
-        NavigationSection tutorialSection = buildTutorialSection();
-        sections.add(tutorialSection);
+        addUrlSections(sections);
 
         return sections;
     }
@@ -79,9 +79,9 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         return flow;
     }
 
-    private NavigationSection buildDocSection() {
+    private NavigationSection buildProductSection() {
 
-        NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_docAbout()),
+        NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about()),
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
                     final AboutModalWindow aboutModalWindow = new AboutModalWindow();
@@ -104,58 +104,40 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem docItem = new NavigationItem(new ViewName("TOC", MSG.view_help_docToc()),
-            "[SKIN]/../headerIcons/document.png", new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId("TOC"), "http://www.rhq-project.org/display/JOPR2/Home");
-                }
-            });
-
-        NavigationItem faqItem = new NavigationItem(new ViewName("FAQ", MSG.view_help_docFaq()),
-            "[SKIN]/../headerIcons/document.png", new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId("FAQ"), "http://www.rhq-project.org/display/JOPR2/FAQ");
-                }
-            });
-
-        return new NavigationSection(SECTION_DOC_VIEW_ID, aboutItem, docItem, faqItem);
+        return new NavigationSection(SECTION_PRODUCT_VIEW_ID, aboutItem);
     }
 
-    private NavigationSection buildTutorialSection() {
+    private void addUrlSections(List<NavigationSection> sections) {
 
-        NavigationItem searchItem = new NavigationItem(new ViewName("TutorialSearch", MSG.view_help_tutorialSearch()),
-            "[SKIN]/../actions/help.png", new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId("TutorialSearch"),
-                        "http://www.rhq-project.org/display/JOPR2/Search");
+        MessageConstants mc = CoreGUI.getMessageConstants();
+        int numSections = Integer.valueOf(mc.view_help_section_count());
+
+        for (int i = 1; i <= numSections; ++i) {
+            int numItems = Integer.valueOf(mc.getString("view_help_section_" + i + "_item_count"));
+            NavigationItem[] items = new NavigationItem[numItems];
+            String sectionTitle = mc.getString("view_help_section_" + i + "_title");
+
+            for (int j = 1; j <= numItems; ++j) {
+                String title = mc.getString("view_help_section_" + i + "_propTitle_" + j);
+                final String url = mc.getString("view_help_section_" + i + "_propUrl_" + j);
+                String icon;
+                try {
+                    icon = mc.getString("view_help_section_" + i + "_propIcon_" + j);
+                } catch (MissingResourceException e) {
+                    icon = "[SKIN]/../headerIcons/document.png";
                 }
-            });
 
-        NavigationItem dynaGroupItem = new NavigationItem(new ViewName("TutorialDynaGroup", MSG
-            .view_help_tutorialDynaGroup()), "[SKIN]/../actions/help.png", new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(
-                    extendLocatorId("TutorialDynaGroup"),
-                    "http://docs.redhat.com/docs/en-US/JBoss_Operations_Network/2.4/html/Basic_Admin_Guide/sect-Basic_Admin_Guide-Managing_Groups.html#sect-Basic_Admin_Guide-Managing_Groups-Tutorial");
+                final String itemName = "Section" + i + "Item" + j;
+                NavigationItem item = new NavigationItem(new ViewName(itemName, title), icon, new ViewFactory() {
+                    public Canvas createView() {
+                        return new FullHTMLPane(extendLocatorId(itemName), url);
+                    }
+                });
+                items[j - 1] = item;
             }
-        });
 
-        NavigationItem demoAllItem = new NavigationItem(new ViewName("DemoAll", MSG.view_help_tutorialDemoAll()),
-            "[SKIN]/../headerIcons/document.png", new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId("DemoAll"),
-                        "http://www.rhq-project.org/display/JOPR2/Demos");
-                }
-            });
-
-        NavigationItem demoBundleItem = new NavigationItem(new ViewName("DemoBundle", MSG
-            .view_help_tutorialDemoBundle()), "[SKIN]/../headerIcons/document.png", new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId("DemoBundle"),
-                    "http://mazz.fedorapeople.org/demos/provisioning_beta/prov-beta.htm");
-            }
-        });
-
-        return new NavigationSection(SECTION_TUTORIAL_VIEW_ID, searchItem, dynaGroupItem, demoAllItem, demoBundleItem);
+            NavigationSection section = new NavigationSection(new ViewName("Section" + i, sectionTitle), items);
+            sections.add(section);
+        }
     }
 }

@@ -55,7 +55,20 @@ public class ResourceOperationScheduleDataSource extends AbstractOperationSchedu
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        operationService.findScheduledResourceOperations(this.resourceComposite.getResource().getId(),
+        final Integer scheduleId = request.getCriteria().getAttributeAsInt(Field.ID);
+        if (scheduleId != null) {
+            operationService.getResourceOperationSchedule(scheduleId,  new AsyncCallback<ResourceOperationSchedule>() {
+                public void onSuccess(ResourceOperationSchedule result) {
+                    sendSuccessResponse(request, response, result);
+                }
+
+                public void onFailure(Throwable caught) {
+                    sendFailureResponse(request, response, "Failed to fetch ResourceOperationSchedule with id "
+                            + scheduleId + ".", caught);
+                }
+            });
+        } else {
+            operationService.findScheduledResourceOperations(this.resourceComposite.getResource().getId(),
             new AsyncCallback<List<ResourceOperationSchedule>>() {
                 public void onSuccess(List<ResourceOperationSchedule> result) {
                     Record[] records = buildRecords(result);
@@ -68,6 +81,7 @@ public class ResourceOperationScheduleDataSource extends AbstractOperationSchedu
                         + resourceComposite.getResource() + ".", caught);
                 }
             });
+        }
     }
 
     @Override

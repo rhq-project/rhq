@@ -29,8 +29,10 @@ import java.util.List;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.widgets.form.fields.BooleanItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -101,7 +103,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 hasIdField = true;
             }
             if (this.isReadOnly) {
-                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem)) {
+                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem) || (item instanceof SpacerItem)) {
                     // note: EditableFormItem is a subclass of CanvasItem
                     if (item instanceof EditableFormItem) {
                         ((EditableFormItem) item).setReadOnly(true);
@@ -109,12 +111,14 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     itemsList.add(item);
                 } else {
                     StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());
+                    Boolean showTitle = (item.getShowTitle() != null) ? item.getShowTitle() : true;
+                    staticItem.setShowTitle(showTitle);
                     staticItem.setTooltip(item.getTooltip());
                     staticItem.setValue(item.getValue());
                     staticItem.setColSpan(item.getAttribute("colSpan"));
                     // TODO: Any other fields we should copy? icons?
 
-                    if (item instanceof BooleanItem) {
+                    if ((item instanceof BooleanItem) || (item instanceof CheckboxItem)) {
                         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
                         valueMap.put("true", MSG.common_val_yes());
                         valueMap.put("false", MSG.common_val_no());
@@ -152,4 +156,5 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     public boolean isReadOnly() {
         return isReadOnly;
     }
+
 }

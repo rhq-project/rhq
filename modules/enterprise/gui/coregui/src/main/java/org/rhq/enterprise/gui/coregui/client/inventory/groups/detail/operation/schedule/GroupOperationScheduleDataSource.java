@@ -60,19 +60,33 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        operationService.findScheduledGroupOperations(this.groupComposite.getResourceGroup().getId(),
-            new AsyncCallback<List<GroupOperationSchedule>>() {
-                public void onSuccess(List<GroupOperationSchedule> result) {
-                    Record[] records = buildRecords(result);
-                    response.setData(records);
-                    processResponse(request.getRequestId(), response);
+        final Integer scheduleId = request.getCriteria().getAttributeAsInt(AbstractOperationScheduleDataSource.Field.ID);
+        if (scheduleId != null) {
+            operationService.getGroupOperationSchedule(scheduleId,  new AsyncCallback<GroupOperationSchedule>() {
+                public void onSuccess(GroupOperationSchedule result) {
+                    sendSuccessResponse(request, response, result);
                 }
 
                 public void onFailure(Throwable caught) {
-                    throw new RuntimeException("Failed to find scheduled operations for "
-                        + groupComposite.getResourceGroup() + ".", caught);
+                    sendFailureResponse(request, response, "Failed to fetch GroupOperationSchedule with id "
+                            + scheduleId + ".", caught);
                 }
             });
+        } else {
+            operationService.findScheduledGroupOperations(this.groupComposite.getResourceGroup().getId(),
+                new AsyncCallback<List<GroupOperationSchedule>>() {
+                    public void onSuccess(List<GroupOperationSchedule> result) {
+                        Record[] records = buildRecords(result);
+                        response.setData(records);
+                        processResponse(request.getRequestId(), response);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        throw new RuntimeException("Failed to find scheduled operations for "
+                            + groupComposite.getResourceGroup() + ".", caught);
+                    }
+                });
+        }
     }
 
     @Override

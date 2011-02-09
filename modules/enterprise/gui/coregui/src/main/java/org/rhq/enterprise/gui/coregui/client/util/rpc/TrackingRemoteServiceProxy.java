@@ -53,6 +53,7 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
     private static final Set<String> bypassMethods = new HashSet<String>();
     static {
         bypassMethods.add("SubjectGWTService_Proxy.findSubjectsByCriteria");
+        bypassMethods.add("SubjectGWTService_Proxy.processSubjectForLdap");
         bypassMethods.add("SubjectGWTService_Proxy.logout");
     }
 

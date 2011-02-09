@@ -63,7 +63,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public abstract class AbstractEJB3Test extends AssertJUnit {
-    @BeforeSuite//(groups = {"integration.ejb3","PERF"}) // TODO investigate again
+    //@BeforeSuite(groups = {"integration.ejb3","PERF"}) // TODO investigate again
+    @BeforeSuite(alwaysRun = true)
     public static void startupEmbeddedJboss() throws Exception {
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));

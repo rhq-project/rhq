@@ -124,10 +124,8 @@
 <tiles:insert definition=".portlet.error"/>
 <tiles:insert definition=".portlet.confirm"/>
 
-<hq:constant symbol="MONITOR_ENABLED_ATTR" var="CONST_ENABLED"/>
-
 <c:choose>
-   <c:when test="${requestScope[CONST_ENABLED]}">
+   <c:when test="true">
       <br/>
       
       <tiles:insert definition=".resource.common.monitor.config.editConfigMetricsVisibility">

@@ -42,6 +42,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.RecordUtility;
 
 /**
  * @author Ian Springer
@@ -59,6 +60,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         public static final String DESCRIPTION = "description";
         public static final String NEXT_FIRE_TIME = "nextFireTime";
         public static final String TIMEOUT = "timeout";
+        public static final String JOB_TRIGGER = "jobTrigger";
 
         // job trigger fields
         public static final String START_TIME = "startTime";
@@ -89,7 +91,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         idField.setCanEdit(false);
         fields.add(idField);               
 
-        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation Name", null, 100,
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation", null, 100,
                 true);
         fields.add(operationNameField);
 
@@ -134,7 +136,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
         to.setSubject(subjectRecord.toSubject());
         Configuration parameters = (Configuration) from.getAttributeAsObject(Field.PARAMETERS);
-        Integer timeout = from.getAttributeAsInt(Field.TIMEOUT);
+        Integer timeout = RecordUtility.getAttributeAsInteger(from, Field.TIMEOUT);
         if (timeout != null) {
             if (parameters == null) {
                 parameters = new Configuration();

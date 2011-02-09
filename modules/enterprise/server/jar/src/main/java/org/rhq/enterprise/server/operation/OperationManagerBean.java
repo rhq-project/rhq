@@ -467,6 +467,26 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
+    public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, int scheduleId) {
+        OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
+        try {
+            ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(whoami, operationScheduleEntity.getJobId().toString());
+            return resourceOperationSchedule;
+        } catch (SchedulerException e) {
+            throw new RuntimeException("Failed to retrieve ResourceOperationSchedule with id [" + scheduleId + "].", e);
+        }
+    }
+
+    public GroupOperationSchedule getGroupOperationSchedule(Subject whoami, int scheduleId) {
+        OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
+        try {
+            GroupOperationSchedule groupOperationSchedule = getGroupOperationSchedule(whoami, operationScheduleEntity.getJobId().toString());
+            return groupOperationSchedule;
+        } catch (SchedulerException e) {
+            throw new RuntimeException("Failed to retrieve GroupOperationSchedule with id [" + scheduleId + "].", e);
+        }
+    }
+
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 

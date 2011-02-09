@@ -56,10 +56,8 @@ public class PortalColumn extends VStack {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
+    public void destroy() {
         SeleniumUtility.destroyMembers(this);
+        super.destroy();
     }
-
 }

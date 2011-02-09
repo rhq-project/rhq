@@ -52,8 +52,23 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  *    Else check server-side logged in state
  *       If logged out on server-side, LoginView will be shown, which sets local loggedIn bit to false.
  * 
+ * Additionally, all login checks go through checkLoginStatus where the following happens
+ *
+ *  1)HTTP Get request sent to portal.war SessionAccessServlet which when logged in:
+ *    yes)logged in returns (Subject.id):(Server side session id):(Last Accessed time)
+ *    no )empty text and Login screen displayed
+ *
+ *  2)If logged in there are two flavors of Subject logins that will occur
+ *    a)Regular RHQ logins and case sensitive LDAP users with established RHQ accounts:         Subject.id > 0
+ *    b)LDAP users i)registering new user ii)Existing but case-insensitive ldap username used : Subject.id == 0
+ *
+ *    Case a) is trivial and well understood. With case b) the credentials are used to retrieve or create RHQ Subject
+ *    instances by terminating previous sessions and creating new ones to be used with all future client
+ *    side UI requests.  In case b) the WebUser is updated appropriately.
+ *
  * @author Joseph Marques
  * @author Jay Shaughnessy
+ * @author Simeon Pinder
  */
 public class UserSessionManager {
     private static final Messages MSG = CoreGUI.getMessages();
@@ -66,6 +81,8 @@ public class UserSessionManager {
 
     // The web session scheduled to be logged out on the server side 
     private static final String DOOMED_SESSION_NAME = "RHQ_DoomedSession";
+    // header identifier for triggering updating portal war webUser
+    private static final String WEB_USER_UPDATE = "rhq_webuser_update";
     private static final String LOCATOR_ID = "SessionManagerLogin";
 
     private static Subject sessionSubject;
@@ -102,7 +119,8 @@ public class UserSessionManager {
 
     public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
         BrowserUtility.forceIe6Hacks();
-
+        //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
+        //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
         final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
@@ -212,7 +230,6 @@ public class UserSessionManager {
                                 new LoginView(LOCATOR_ID).showLoginDialog();
                                 return;
                             }
-
                             // BZ-586435: insert case insensitivity for usernames with ldap auth
                             // locate first matching subject and attach.
                             SubjectCriteria subjectCriteria = new SubjectCriteria();
@@ -234,15 +251,16 @@ public class UserSessionManager {
                                     }
 
                                     //pipe through method to handle case insensitive
-                                    public void onSuccess(PageList<Subject> results) {
-                                        if (results.size() == 0) {//no case insensitive matches found, launch registration
+                                    public void onSuccess(PageList<Subject> subjects) {
+                                        //no case insensitive matches found, launch registration
+                                        if (subjects.size() == 0) {
                                             Log.trace("Proceeding with registration for ldap user '" + user + "'.");
                                             sessionState = State.IS_REGISTERING;
                                             new LoginView(LOCATOR_ID).showRegistrationDialog(subject.getName(),
                                                 sessionId, password, callback);
                                             return;
                                         } else {//launch case sensitive code handling
-                                            Subject locatedSubject = results.get(0);
+                                            final Subject locatedSubject = subjects.get(0);
                                             Log
                                                 .trace("Checked credentials and determined that ldap case insensitive login '"
                                                     + locatedSubject.getName()
@@ -251,6 +269,7 @@ public class UserSessionManager {
                                                     + "'");
                                             //use the original username to pass session check.
                                             subject.setName(user);
+
                                             GWTServiceLookup.getSubjectService().processSubjectForLdap(subject,
                                                 password, new AsyncCallback<Subject>() {
                                                     public void onFailure(Throwable caught) {
@@ -261,23 +280,19 @@ public class UserSessionManager {
                                                         return;
                                                     }
 
-                                                    public void onSuccess(Subject checked) {
-                                                        Log.trace("Proceeding with registration for ldap user '" + user
-                                                            + "'.");
-                                                        sessionState = State.IS_LOGGED_IN;
-                                                        userPreferences = new UserPreferences(checked);
-                                                        refresh();
-
+                                                    public void onSuccess(final Subject checked) {
+                                                        Log.trace("Proceeding with case sensitive login of ldap user '"
+                                                            + user + "'.");
                                                         callback.onSuccess(checked);
                                                         return;
                                                     }
+
                                                 });//end processSubjectForLdap call
-                                        }
+                                        }//end of case insensitive processing
                                     }
                                 });//end findSubjectsByCriteria
 
                         } else {//else send through regular session check 
-
                             SubjectCriteria criteria = new SubjectCriteria();
                             criteria.fetchConfiguration(true);
                             criteria.addFilterId(subjectId);
@@ -308,28 +323,25 @@ public class UserSessionManager {
                                                     Log.warn("Errors occurred processing subject for LDAP."
                                                         + caught.getMessage());
                                                     //TODO: pass informative message to Login UI.
+                                                    callback.onSuccess(validSessionSubject);
                                                     return;
                                                 }
 
                                                 public void onSuccess(Subject result) {
                                                     Log.trace("Succesfully processed subject '"
                                                         + validSessionSubject.getName() + "' for LDAP.");
+                                                    callback.onSuccess(validSessionSubject);
                                                     return;
                                                 }
                                             });
 
-                                        // reset the session subject to the latest, for wrapping in user preferences
-                                        sessionSubject = validSessionSubject;
-                                        userPreferences = new UserPreferences(sessionSubject);
-                                        refresh();
-                                        sessionState = State.IS_LOGGED_IN;
+                                        //indicate success to 'login' Callback
                                         callback.onSuccess(validSessionSubject);
-                                        return;
                                     }
                                 });
                         }//end of server side session check;
-                    } else {
 
+                    } else {
                         //invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
                         new LoginView(LOCATOR_ID).showLoginDialog();
@@ -349,6 +361,36 @@ public class UserSessionManager {
         }
     }
 
+    /** Takes an updated Subject and signals SessionAccessServlet in portal.war to update the associated WebUser
+     *  because for this specific authenticated user.  Currently assumes Subject instances returned from SubjectManagerBean.processSubjectForLdap.
+     *
+     * @param loggedInSubject Subject with updated session
+     */
+    private static void scheduleWebUserUpdate(final Subject loggedInSubject) {
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
+        b.setHeader(WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
+        try {
+            b.setCallback(new RequestCallback() {
+                public void onResponseReceived(final Request request, final Response response) {
+                    Log.trace("Successfully submitted request to update server side WebUser for subject '"
+                        + loggedInSubject.getName() + "'.");
+                }
+
+                @Override
+                public void onError(Request request, Throwable exception) {
+                    Log.trace("Failed to submit request to update server side WebUser for subject '"
+                        + loggedInSubject.getName() + "'."
+                        + ((exception != null ? exception.getMessage() : " Exception ref null.")));
+                }
+            });
+            b.send();
+        } catch (RequestException e) {
+            Log.trace("Failure submitting update request for WebUser '" + loggedInSubject.getName() + "'."
+                + (e != null ? e.getMessage() : "RequestException reference is null."));
+        }
+    }
+
     public static void login() {
         login(null, null);
     }
@@ -361,9 +403,30 @@ public class UserSessionManager {
     public static void login(String user, String password) {
 
         checkLoginStatus(user, password, new AsyncCallback<Subject>() {
-            public void onSuccess(Subject result) {
+            public void onSuccess(final Subject loggedInSubject) {
                 // will build UI if necessary, then fires history event
                 sessionState = State.IS_LOGGED_IN;
+
+                int storedSessionSubjectId = -1;
+                if (sessionSubject != null) {
+                    sessionSubject.getId();
+                }
+
+                //update the sessionSubject appropriately
+                sessionSubject = loggedInSubject;
+                sessionState = State.IS_LOGGED_IN;
+                userPreferences = new UserPreferences(loggedInSubject);
+                refresh();
+
+                //conditionally update session information and server side WebUser when updated.
+                if ((sessionSubject != null) && (loggedInSubject.getId() != storedSessionSubjectId)) {
+                    //update the sessionSubject appropriately
+                    sessionSubject = loggedInSubject;
+                    //update the sessionId
+                    saveSessionId(String.valueOf(loggedInSubject.getSessionId().intValue()));
+                    //Update the portal war WebUser now that we've updated subject+session
+                    scheduleWebUserUpdate(loggedInSubject);
+                }
 
                 CoreGUI.get().buildCoreUI();
             }

@@ -8,6 +8,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
@@ -17,6 +18,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.sorter.ReorderableList;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
@@ -31,12 +33,17 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
 
     private ResourceGroupComposite groupComposite;
     private ListGridRecord[] memberResourceRecords;
-    private DynamicForm executionModeForm;
+    private EnhancedDynamicForm executionModeForm;
 
     public GroupOperationScheduleDetailsView(String locatorId, ResourceGroupComposite groupComposite, int scheduleId) {
         super(locatorId, new GroupOperationScheduleDataSource(groupComposite),
                 groupComposite.getResourceGroup().getResourceType(), scheduleId);
         this.groupComposite = groupComposite;
+    }
+
+    @Override
+    protected boolean hasControlPermission() {
+        return this.groupComposite.getResourcePermission().isControl();
     }
 
     @Override
@@ -60,6 +67,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
                     GroupOperationScheduleDetailsView.super.init(isReadOnly);
                 }
             });
+        } else {
+            super.init(isReadOnly);
         }
     }
 
@@ -70,7 +79,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        this.executionModeForm = new DynamicForm();
+        this.executionModeForm = new EnhancedDynamicForm(extendLocatorId("ExecutionModeForm"), isReadOnly());
         this.executionModeForm.setNumCols(2);
         this.executionModeForm.setColWidths("140", "*");
 
@@ -85,6 +94,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         haltOnFailureItem.setDefaultValue(false);
         haltOnFailureItem.setVisible(false);
         haltOnFailureItem.setLabelAsTitle(true);
+        haltOnFailureItem.setShowTitle(true);
 
         executionModeForm.setFields(executionModeItem, haltOnFailureItem);
 
@@ -119,10 +129,23 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     }
 
     @Override
+    protected void editExistingRecord(Record record) {
+        // TODO: execution order
+
+        FormItem haltOnFailureItem = this.executionModeForm.getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+        haltOnFailureItem.setValue(getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE));
+
+        super.editExistingRecord(record);
+    }
+
+    @Override
     protected void save(DSRequest requestProperties) {
+        // TODO: execution order
+
         Boolean haltOnFailure = (Boolean) this.executionModeForm.getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
         getForm().setValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE, haltOnFailure);
 
         super.save(requestProperties);
     }
+
 }

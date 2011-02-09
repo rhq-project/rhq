@@ -149,10 +149,4 @@ public class PortalLayout extends LocatableHLayout {
         }
     }
 
-    //    @Override
-    //    protected void onDestroy() {
-    //        destroyMembers();
-    //        super.onDestroy();
-    //    }
-
 }

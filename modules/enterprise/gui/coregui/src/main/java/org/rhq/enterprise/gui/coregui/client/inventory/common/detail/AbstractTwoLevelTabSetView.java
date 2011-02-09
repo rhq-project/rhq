@@ -265,9 +265,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    public void destroy() {
         tabSet.destroy();
+        super.destroy();
     }
-
 }

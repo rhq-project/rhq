@@ -34,6 +34,7 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 
 /**
  * @author Greg Hinkle
@@ -60,6 +61,10 @@ public interface OperationGWTService extends RemoteService {
     int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
 
     int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
+
+    ResourceOperationSchedule getResourceOperationSchedule(int scheduleId);
+
+    GroupOperationSchedule getGroupOperationSchedule(int scheduleId);
 
     void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
 

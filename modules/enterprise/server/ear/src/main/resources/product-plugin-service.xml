@@ -9,6 +9,5 @@
     <attribute name="AgentPluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
     <attribute name="ServerPluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-serverplugins</attribute>
     <attribute name="UserPluginDir">${jboss.home.dir}/../plugins</attribute>
-    <attribute name="LicenseFile">${jboss.server.home.dir}/deploy/${rhq.earName}/license/license.xml</attribute>
   </mbean>
 </server>

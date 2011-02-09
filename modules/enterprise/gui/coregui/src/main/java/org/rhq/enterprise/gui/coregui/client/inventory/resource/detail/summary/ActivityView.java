@@ -203,12 +203,12 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
+    public void destroy() {
         // destroy members of non-locatable layouts
         SeleniumUtility.destroyMembers(leftPane);
         SeleniumUtility.destroyMembers(rightPane);
+
+        super.destroy();
     }
 
     @Override
@@ -235,10 +235,9 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
         }
 
         @Override
-        protected void onDestroy() {
-            super.onDestroy();
-
+        public void destroy() {
             SeleniumUtility.destroyMembers(this);
+            super.destroy();
         }
     }
 

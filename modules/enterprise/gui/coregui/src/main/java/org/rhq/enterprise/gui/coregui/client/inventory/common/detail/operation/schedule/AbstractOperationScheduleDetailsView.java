@@ -22,28 +22,27 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -52,17 +51,21 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
+import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
+import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Ian Springer
  */
-public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor {
+public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor<AbstractOperationScheduleDataSource> {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
@@ -76,7 +79,6 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     private JobTriggerEditor triggerEditor;
     private Configuration parameters;
     private EnhancedDynamicForm notesForm;
-    private EnhancedDynamicForm timeoutForm;
 
     public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
                                                 ResourceType resourceType, int scheduleId) {
@@ -90,12 +92,14 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         }
     }
 
+    protected abstract boolean hasControlPermission();
+
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
         // Existing schedules are not editable. This may change in the future.
-        boolean isReadOnly = (getRecordId() != 0);
+        boolean isReadOnly = (!hasControlPermission() || (getRecordId() != 0));
         init(isReadOnly);
     }
 
@@ -114,11 +118,12 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         List<FormItem> items = new ArrayList<FormItem>();
 
         if (!isNewRecord()) {
-            StaticTextItem idItem = new StaticTextItem(ResourceOperationScheduleDataSource.Field.ID);
+            StaticTextItem idItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.ID);
             items.add(idItem);
         }
 
-        SelectItem operationNameItem = new SelectItem(ResourceOperationScheduleDataSource.Field.OPERATION_NAME, "Name");
+        SelectItem operationNameItem = new SelectItem(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+        operationNameItem.setShowTitle(true);
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
@@ -149,34 +154,10 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        if (isNewRecord()) {
-            this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"));
-            contentPane.addMember(this.triggerEditor);
-            hr = new HTMLFlow("<p/><hr/><p/>");
-            contentPane.addMember(hr);
-        }
-
-        this.timeoutForm = new EnhancedDynamicForm(extendLocatorId("TimeoutForm"), isReadOnly(), isNewRecord());
-        this.timeoutForm.setNumCols(4);
-        this.timeoutForm.setColWidths("140", "90", "105", "*");
-
-        IntegerItem timeoutItem = new IntegerItem("timeoutValue", "Timeout");
-        IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
-        integerRangeValidator.setMin(1);
-        timeoutItem.setValidators(integerRangeValidator);
-        ComboBoxItem timeoutUnitsItem = new ComboBoxItem("timeoutUnits");
-        timeoutUnitsItem.setShowTitle(false);
-        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(3);
-        valueMap.put("seconds", "seconds");
-        valueMap.put("minutes", "minutes");
-        valueMap.put("hours", "hours");
-        timeoutUnitsItem.setValueMap(valueMap);
-        timeoutUnitsItem.setDefaultValue("minutes");
-        FormUtility.addContextualHelp(timeoutUnitsItem, "a time duration - if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was initiated");
-        this.timeoutForm.setFields(timeoutItem, timeoutUnitsItem);
-        timeoutItem.setWidth(90);
-        timeoutUnitsItem.setWidth(105);
-        contentPane.addMember(this.timeoutForm);
+        this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"), isReadOnly());
+        contentPane.addMember(this.triggerEditor);
+        hr = new HTMLFlow("<p/><hr/><p/>");
+        contentPane.addMember(hr);
 
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
             isNewRecord());
@@ -184,8 +165,18 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
+        TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
+        supportedUnits.add(TimeUnit.SECONDS);
+        supportedUnits.add(TimeUnit.MINUTES);
+        supportedUnits.add(TimeUnit.HOURS);
+        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout",
+                supportedUnits, false, isReadOnly(), this.notesForm);
+        timeoutItem.setContextualHelp("a time duration - if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was already initiated");
+        notesFields.add(timeoutItem);
+
         if (!isNewRecord()) {
-            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME, "Next Fire Time");
+            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
+                    "Next Fire Time");
             notesFields.add(nextFireTimeItem);
         }
 
@@ -229,15 +220,29 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         refreshOperationDescriptionItem();
         refreshOperationParametersItem();
 
-        if (!isNewRecord()) {
-            FormItem nextFireTimeItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
-            nextFireTimeItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
-        }
-
-        FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
-        notesItem.setValue(getForm().getValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION));
-
         super.editRecord(record);
+    }
+
+    @Override
+    protected void editExistingRecord(Record record) {
+        JavaScriptObject jobTriggerJavaScriptObject =
+                (JavaScriptObject) getForm().getValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER);
+        Record jobTriggerRecord =  new ListGridRecord(jobTriggerJavaScriptObject);
+        JobTrigger jobTrigger = getDataSource().createJobTrigger(jobTriggerRecord);
+        this.triggerEditor.setJobTrigger(jobTrigger);
+
+        FormItem nextFireTimeItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
+        nextFireTimeItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
+
+        DurationItem timeoutItem = (DurationItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        Object value = getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        Integer integerValue = TypeConversionUtility.toInteger(value);
+        timeoutItem.setValue(integerValue, UnitType.TIME);
+
+        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
+
+        super.editExistingRecord(record);
     }
 
     @Override
@@ -253,24 +258,27 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         Record jobTriggerRecord = new ListGridRecord();
 
         Date startTime = this.triggerEditor.getStartTime();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.START_TIME, startTime);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.START_TIME, startTime);
 
         Date endTime = this.triggerEditor.getEndTime();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.END_TIME, endTime);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.END_TIME, endTime);
 
         Integer repeatCount = this.triggerEditor.getRepeatCount();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.REPEAT_COUNT, repeatCount);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.REPEAT_COUNT, repeatCount);
 
         Long repeatInterval = this.triggerEditor.getRepeatInterval();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.REPEAT_INTERVAL, repeatInterval);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.REPEAT_INTERVAL, repeatInterval);
 
         String cronExpression = this.triggerEditor.getCronExpression();
-        jobTriggerRecord.setAttribute(ResourceOperationScheduleDataSource.Field.CRON_EXPRESSION, cronExpression);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.CRON_EXPRESSION, cronExpression);
 
-        form.setValue("jobTrigger", jobTriggerRecord);
+        form.setValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER, jobTriggerRecord);
 
-        FormItem notesItem = this.notesForm.getField(ResourceOperationScheduleDataSource.Field.DESCRIPTION);
-        form.setValue(ResourceOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
+        DurationItem timeoutItem = (DurationItem)this.notesForm.getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeoutItem.getValueAsLong());
+
+        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
 
         super.save(requestProperties);
     }
@@ -326,7 +334,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     }
 
     private String getSelectedOperationName() {
-        FormItem operationNameItem = getForm().getField(ResourceOperationScheduleDataSource.Field.OPERATION_NAME);
+        FormItem operationNameItem = getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
         return (String)operationNameItem.getValue();
     }
 

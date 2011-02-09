@@ -40,6 +40,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * TODO
+ *
  * @author Greg Hinkle
  */
 public class RadioGroupWithComponentsItem extends CanvasItem {

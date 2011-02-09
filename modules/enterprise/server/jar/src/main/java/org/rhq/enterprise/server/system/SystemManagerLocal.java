@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.system;
 
-import java.util.Date;
 import java.util.Properties;
 
 import javax.ejb.Local;
@@ -26,7 +25,6 @@ import javax.ejb.Local;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.enterprise.server.license.License;
 
 /**
  * Provides access to the server cloud's system configuration as well as some methods
@@ -154,17 +152,6 @@ public interface SystemManagerLocal {
     boolean isDebugModeEnabled();
 
     boolean isExperimentalFeaturesEnabled();
-
-    //////////////////////////////////
-    // license specific methods follow
-
-    boolean isMonitoringEnabled();
-
-    License getLicense();
-
-    void updateLicense(Subject subject, byte[] licenseData);
-
-    Date getExpiration();
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

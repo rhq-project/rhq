@@ -39,8 +39,6 @@
         <module>plugins</module>
         <module>ear</module>
         <module>safe-invoker</module>
-        <module>license-gen/jar</module>
-        <module>license-gen/maven-plugin</module>
       </modules>
     </profile>
 

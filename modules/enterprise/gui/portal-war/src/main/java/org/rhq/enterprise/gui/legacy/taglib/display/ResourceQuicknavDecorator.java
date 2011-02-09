@@ -26,7 +26,6 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.server.resource.ResourceFacetsCache;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A {@link QuicknavDecorator} for {@link Resource}s.
@@ -110,7 +109,7 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isMonitorAllowed() {
-        return LookupUtil.getSystemManager().isMonitoringEnabled();
+        return true; // LookupUtil.getSystemManager().isMonitoringEnabled();
     }
 
     @Override
@@ -135,7 +134,7 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isAlertAllowed() {
-        return LookupUtil.getSystemManager().isMonitoringEnabled();
+        return true; //LookupUtil.getSystemManager().isMonitoringEnabled();
     }
 
     @Override

@@ -24,13 +24,6 @@
 </tiles:insert>
 
 <c:choose >
-  <c:when test="${not monitorEnabled}">   
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr class="ListRow">
-        <td class="ListCell"><fmt:message key="common.marketing.FeatureDisabled"/></td>
-      </tr>
-    </table>
-  </c:when>
   <c:when test="${not empty criticalAlerts}">  
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>

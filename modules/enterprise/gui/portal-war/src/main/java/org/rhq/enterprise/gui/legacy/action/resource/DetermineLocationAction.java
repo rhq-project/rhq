@@ -20,14 +20,15 @@ package org.rhq.enterprise.gui.legacy.action.resource;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * An <code>Action</code> that forwards a request to view a resource or group on to the appropriate default action.
@@ -66,9 +67,9 @@ public class DetermineLocationAction extends BaseAction {
             throw new IllegalArgumentException("Unknown type '" + type + "' was passed to DetermineLocationAction");
         }
 
-        if (!LookupUtil.getSystemManager().isMonitoringEnabled()) {
-            forwardConfigName += "-inventory";
-        }
+        //        if (!LookupUtil.getSystemManager().isMonitoringEnabled()) {
+        //            forwardConfigName += "-inventory";
+        //        }
 
         return mapping.findForward(forwardConfigName);
     }

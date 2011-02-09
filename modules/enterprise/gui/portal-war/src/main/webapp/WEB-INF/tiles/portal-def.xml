@@ -38,14 +38,6 @@
         <put name="breadcrumb" value="/admin/AdminHeader.jsp" />
     </definition>
 
-    <!-- JBMAN License Manager -->
-    <definition name=".admin.license.layout"
-                extends=".admin.home.layout"
-                controllerUrl="/admin/license/LicensePortal.do">
-        <put name="location" value="header.license" />
-    </definition>
-
-
     <definition name=".admin.role.layout"
                 extends=".admin.home.layout"
                 controllerUrl="/admin/role/RoleAdminPortal.do"> 

@@ -120,25 +120,6 @@
       <plugins>
 
          <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
-            <executions>
-               <execution>
-                  <phase>generate-sources</phase>
-                  <configuration>
-                     <tasks>
-                        <mkdir dir="${earDirectory}/license" />
-                          <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
-                     </tasks>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
-
-         <plugin>
             <artifactId>maven-ear-plugin</artifactId>
             <configuration>
                <displayName>RHQ</displayName>
@@ -736,8 +717,6 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <mkdir dir="${earDirectory}/license" />
-                              <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from
                                  target${file.separator}${project.build.finalName}${file.separator} to

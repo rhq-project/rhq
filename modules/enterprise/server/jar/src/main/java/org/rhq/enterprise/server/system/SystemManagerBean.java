@@ -19,21 +19,17 @@
 package org.rhq.enterprise.server.system;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
@@ -67,10 +63,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
-import org.rhq.enterprise.server.license.FeatureUnavailableException;
-import org.rhq.enterprise.server.license.License;
-import org.rhq.enterprise.server.license.LicenseManager;
-import org.rhq.enterprise.server.license.LicenseStoreManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Stateless
@@ -103,17 +95,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @javax.annotation.Resource
     private TimerService timerService;
 
-    private LicenseManager licenseManager;
-
     @EJB
     private SystemManagerLocal systemManager;
     private static Properties systemConfigurationCache = null;
     private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
-
-    @PostConstruct
-    public void initialize() {
-        licenseManager = LicenseManager.instance();
-    }
 
     @SuppressWarnings("unchecked")
     public void scheduleConfigCacheReloader() {
@@ -530,19 +515,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return;
     }
 
-    /**
-     * See if monitoring feature is enabled for product.
-     */
-    public boolean isMonitoringEnabled() {
-        try {
-            LicenseManager.instance().enforceFeatureLimit(LicenseManager.FEATURE_MONITOR);
-            return true;
-        } catch (FeatureUnavailableException e) {
-            log.debug("Monitoring feature is not enabled");
-            return false;
-        }
-    }
-
     public boolean isDebugModeEnabled() {
         try {
             return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode, "false"));
@@ -560,102 +532,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
-    /**
-     * Retrieves the currently active license. Returns null if there is no active license. Otherwise it needs to
-     * propogate the appropriate error back up to the caller, otherwise the error will be masked, and from a UI
-     * perspective the user will think no license has been installed yet.
-     *
-     * @return The License object
-     */
-    public License getLicense() {
-        // it's legal to return a null license, which then by-passes the check to
-        // whether the expirationDate in the backing store has been fiddled with
-        License license = LicenseManager.instance().getLicense();
-        if (license == null) {
-            return license;
-        }
-
-        // but if the license exists, it can only be returned if the data in the backing store is consistent.  so call
-        // the get method, which checks the backing store, and returns the license. if there are any errors, they will
-        // bubble up as exceptions for the UI to handle appropriately.  otherwise, the license will be synced with the
-        // backing store appropriately.
-        try {
-            LicenseStoreManager.store(license);
-        } catch (Exception ule) {
-            log.error(ule.getMessage());
-            throw new LicenseException(ule);
-        }
-
-        return license;
-    }
-
-    /**
-     * Update the deployed license file by writing it to disk and reinitializing the LicenseManager static singleton.
-     *
-     * @param licenseData a byte array of the license data
-     */
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void updateLicense(Subject subject, byte[] licenseData) {
-        try {
-            File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-
-            File deployDirectory = new File(serverHomeDir, "deploy");
-
-            String licenseFileName = LicenseManager.getLicenseFileName();
-
-            if (deployDirectory.exists()) {
-                String licenseDirectoryName = deployDirectory.getAbsolutePath() + File.separator
-                    + RHQConstants.EAR_FILE_NAME + File.separator + "license";
-                File licenseDir = new File(licenseDirectoryName);
-                if (licenseDir.exists()) {
-                    File licenseFile = saveLicenseFile(licenseDir, licenseFileName, licenseData);
-
-                    // Now, we've updated the licenses on disk and we'll re-initialize the LicenseManager
-                    LicenseManager.instance().doStartupCheck(licenseFile.getAbsolutePath());
-                } else {
-                    log.error("Could not update license file in non-existent directory: "
-                        + licenseDir.getAbsolutePath());
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private File saveLicenseFile(File dataDir, String licenseFileName, byte[] licenseData) throws IOException {
-        log.debug("Updating license file in directory: " + dataDir.getAbsolutePath());
-
-        // Copy file to data dir
-        File licenseFile = new File(dataDir, licenseFileName);
-        FileOutputStream fos = new FileOutputStream(licenseFile);
-
-        // Writing in a single block since
-        // a) we may be writing it twice, and
-        // b) the license files are fairly small
-        // c) this will be rare
-        fos.write(licenseData);
-        fos.close();
-        return licenseFile;
-    }
-
-    /**
-     * @return the expiration date, or null if the product never expires.
-     */
-    public Date getExpiration() {
-        long exp;
-        try {
-            exp = licenseManager.getExpiration();
-        } catch (Exception e) {
-            throw new LicenseException(e);
-        }
-
-        if (exp == -1) {
-            return null;
-        }
-
-        return new Date(exp);
-    }
-
     public ServerVersion getServerVersion(Subject subject) throws Exception {
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         String version = coreServer.getVersion();
@@ -668,5 +544,5 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         ProductInfo productInfo = coreServer.getProductInfo();
         return productInfo;
-    }    
+    }
 }

@@ -51,4 +51,7 @@ public interface ContentGWTService extends RemoteService {
     List<Architecture> getArchitectures() throws RuntimeException;
 
     PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException;
+    
+    PackageType findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException;
+    
 }

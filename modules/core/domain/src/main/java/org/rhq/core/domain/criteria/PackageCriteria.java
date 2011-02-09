@@ -40,13 +40,17 @@ public class PackageCriteria extends Criteria {
     private String filterName;
     private String filterClassification;
     private Integer filterPackageTypeId;
+    private Integer filterRepoId;
     
     private boolean fetchVersions;
     
     private PageOrdering sortName;
     
     public PackageCriteria() {
-        filterOverrides.put("packageTypeId", "packageType.id = ? "); 
+        filterOverrides.put("packageTypeId", "packageType.id = ? ");
+        filterOverrides.put("repoId", "id IN (" +
+            "SELECT rpv.packageVersion.generalPackage.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = ?" +
+            ")");
     }
     
     public Class<?> getPersistentClass() {
@@ -67,6 +71,10 @@ public class PackageCriteria extends Criteria {
     
     public void addFilterPackageTypeId(Integer packageTypeId) {
         this.filterPackageTypeId = packageTypeId;
+    }
+    
+    public void addFilterRepoId(Integer repoId) {
+        this.filterRepoId = repoId;
     }
     
     public void fetchVersions(boolean fetchVersions) {

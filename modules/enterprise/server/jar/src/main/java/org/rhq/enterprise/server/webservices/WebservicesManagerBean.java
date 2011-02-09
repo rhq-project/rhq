@@ -512,6 +512,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return contentManager.findPackageTypes(subject, resourceTypeName, pluginName);
     }
 
+    public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
+        return contentManager.findPackageType(subject, resourceTypeId, packageTypeName);
+    }
+    
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         return contentManager.getBackingPackageForResource(subject, resourceId);
     }

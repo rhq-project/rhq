@@ -107,4 +107,14 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
+    
+    @Override
+    public PackageType findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(contentManager.findPackageType(getSessionSubject(), resourceTypeId, packageTypeName),
+                "ContentService.findPackageType");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
 }

@@ -199,7 +199,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
-        checkAlertDefinition(alertDefinition, resourceId);
+        checkAlertDefinition(subject, alertDefinition, resourceId);
 
         // if this is an alert definition, set up the link to a resource
         if (resourceId != null) {
@@ -484,7 +484,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * is not currently deleted
          */
         boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
-        checkAlertDefinition(alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId() : null);
+        checkAlertDefinition(subject, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId() : null);
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
@@ -596,7 +596,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    private void checkAlertDefinition(AlertDefinition alertDefinition, Integer resourceId)
+    private void checkAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
         for (AlertCondition alertCondition : alertDefinition.getConditions()) {
             AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
@@ -619,7 +619,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
         }    
         
-        alertNotificationManager.finalizeNotifications(alertDefinition.getAlertNotifications());        
+        alertNotificationManager.finalizeNotifications(subject, alertDefinition.getAlertNotifications());        
     }
 
     private void notifyAlertConditionCacheManager(Subject subject, String methodName, AlertDefinition alertDefinition,

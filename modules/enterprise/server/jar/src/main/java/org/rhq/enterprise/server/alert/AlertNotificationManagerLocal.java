@@ -72,12 +72,13 @@ public interface AlertNotificationManagerLocal {
      * <p>
      * The notifications can be modified during this call. New properties can be added to their configurations, etc.
      * 
+     * @param subject the subject that is requesting the changes
      * @param notifications the notifications to process
      * @return true if everything went ok, false if the validation fails. In this case one or more properties
      * in the configuration or extra configuration of one or more of the notifications contains an error message
      * describing the error.
      */
-    boolean finalizeNotifications(List<AlertNotification> notifications);
+    boolean finalizeNotifications(Subject subject, List<AlertNotification> notifications);
     
     int purgeOrphanedAlertNotifications();
 

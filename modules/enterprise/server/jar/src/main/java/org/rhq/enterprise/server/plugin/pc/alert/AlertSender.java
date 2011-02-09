@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -111,9 +112,10 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
      * <p>
      * The default implementation makes no changes to the configurations.
      * 
+     * @param subject the subject requesting the changes in the configuration
      * @return the validation results
      */
-    public AlertSenderValidationResults validateAndFinalizeConfiguration() {
+    public AlertSenderValidationResults validateAndFinalizeConfiguration(Subject subject) {
         return new AlertSenderValidationResults(alertParameters, extraParameters);
     }
     

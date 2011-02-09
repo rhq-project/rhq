@@ -305,7 +305,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return notification;
     }
 
-    public boolean finalizeNotifications(List<AlertNotification> notifications) {
+    public boolean finalizeNotifications(Subject subject, List<AlertNotification> notifications) {
         boolean hasErrors = false;
         
         AlertSenderPluginManager pluginManager = alertManager.getAlertPluginManager();
@@ -313,7 +313,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         for(AlertNotification notification : notifications) {
             AlertSender<?> sender = pluginManager.getAlertSenderForNotification(notification);
             
-            AlertSenderValidationResults validation = sender.validateAndFinalizeConfiguration();
+            AlertSenderValidationResults validation = sender.validateAndFinalizeConfiguration(subject);
             
             notification.setConfiguration(validation.getAlertParameters());
             notification.setExtraConfiguration(validation.getExtraParameters());

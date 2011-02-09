@@ -46,6 +46,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -55,6 +56,7 @@ import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderValidationResults;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -135,6 +137,12 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
         }
     }
 
+    @Override
+    public AlertSenderValidationResults validateAndFinalizeConfiguration(Subject subject) {
+        // TODO Auto-generated method stub
+        return super.validateAndFinalizeConfiguration(subject);
+    }
+    
     private static ScriptEngine getScriptEngine(Alert alert, OutputStream scriptOutput, Config config) throws ScriptException,
         IOException {
         Subject user = config.subject;

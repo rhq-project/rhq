@@ -24,8 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
@@ -33,8 +31,6 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-
-import org.apache.tools.ant.taskdefs.LoadProperties;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
@@ -48,14 +44,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A form to configure the CLI script alert notification.
@@ -134,7 +124,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         if (!formBuilt) {     
             LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
             
-            repoSelector = new SelectItem("repoSelector", "Repository:"); //TODO i18n
+            repoSelector = new SelectItem("repoSelector", MSG.view_alert_definition_notification_cliScript_editor_repository());
             repoSelector.setDefaultToFirstOption(false);
             repoSelector.setWrapTitle(false);
             repoSelector.setRedrawOnChange(true);
@@ -142,7 +132,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             repoSelector.setValueMap(MSG.common_msg_loading());
             repoSelector.setDisabled(true);
 
-            packageSelector = new SelectItem("packageSelector", "Script:"); //TODO i18n
+            packageSelector = new SelectItem("packageSelector", MSG.view_alert_definition_notification_cliScript_editor_script());
             packageSelector.setDefaultToFirstOption(false);
             packageSelector.setWrapTitle(false);
             packageSelector.setRedrawOnChange(true);
@@ -150,6 +140,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             packageSelector.setValueMap(MSG.common_msg_loading());
             packageSelector.setDisabled(true);
 
+            
             DynamicForm anotherUserForm = createAnotherUserForm();
             
             LinkedHashMap<String, DynamicForm> userSelectItems = new LinkedHashMap<String, DynamicForm>();
@@ -196,6 +187,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         if (config.selectedSubject != null && !UserSessionManager.getSessionSubject().equals(config.selectedSubject)) {
             //TODO select the second radio and put it the user name..
         }
+        markForRedraw();
     }
 
     private void setupPackageSelector(Config config) {
@@ -212,6 +204,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         }
         
         packageSelector.setDisabled(false);
+        
+        markForRedraw();
     }
 
     private void setupRepoSelector(final Config config) {        
@@ -255,6 +249,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         });
         
         repoSelector.setDisabled(false);
+        
+        markForRedraw();
     }
 
     public boolean validate() {

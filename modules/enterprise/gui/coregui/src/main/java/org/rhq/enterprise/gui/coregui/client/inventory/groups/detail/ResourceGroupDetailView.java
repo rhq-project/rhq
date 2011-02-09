@@ -23,9 +23,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -39,6 +41,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
@@ -354,10 +357,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         criteria.addFilterId(groupId);
 
         // for autoclusters and autogroups we need to add more criteria
-        if (isAutoCluster()) {
+        final boolean isAutoCluster = isAutoCluster();
+        final boolean isAutoGroup = isAutoGroup();
+        if (isAutoCluster) {
             criteria.addFilterVisible(false);
 
-        } else if (isAutoGroup()) {
+        } else if (isAutoGroup) {
             criteria.addFilterVisible(false);
             criteria.addFilterPrivate(true);
         }
@@ -376,6 +381,24 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     } else {
                         groupComposite = result.get(0);
                         loadResourceType(groupComposite, viewPath);
+
+                        // to avoid multiple queries limit recently visited to standard (visible) groups
+                        if (!(isAutoCluster || isAutoGroup)) {
+                            UserSessionManager.getUserPreferences().addRecentResourceGroup(groupId,
+                                new AsyncCallback<Subject>() {
+
+                                    public void onFailure(Throwable caught) {
+                                        Log.error("Unable to update recently viewed resource groups", caught);
+                                    }
+
+                                    public void onSuccess(Subject result) {
+                                        if (Log.isDebugEnabled()) {
+                                            Log.debug("Updated recently viewed resource groups for " + result
+                                                + " with resourceGroupId [" + groupId + "]");
+                                        }
+                                    }
+                                });
+                        }
                     }
                 }
             });

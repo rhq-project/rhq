@@ -189,7 +189,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
             @Override
             public void onFailure(Throwable t) {
-                CoreGUI.getErrorHandler().handleError("Cannot obtain the current system settings", t);
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_cannotLoadSettings(), t);
             }
         });
     }
@@ -249,17 +249,17 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 @Override
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("You successfully saved the system properties", Message.Severity.Info));
+                        new Message(MSG.view_admin_systemSettings_savedSettings(), Message.Severity.Info));
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to save the system settings", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_saveFailure(), caught);
                 }
             });
         } else {
             CoreGUI.getMessageCenter().notify(
-                new Message("Please fix the invalid values before saving", Severity.Warning, EnumSet
+                new Message(MSG.view_admin_systemSettings_fixBeforeSaving(), Severity.Warning, EnumSet
                     .of(Message.Option.Transient)));
         }
     }
@@ -299,54 +299,51 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      * @return system settings config def
      */
     private ConfigurationDefinition getSystemSettingsDefinition(Configuration config) {
-        ConfigurationDefinition def = new ConfigurationDefinition("sysset", "System settings");
+        ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG
+            .view_admin_systemSettings_systemSettings());
 
         ///////////////////////////////////
         // General Configuration Properties
 
         PropertyGroupDefinition generalGroup = new PropertyGroupDefinition("general");
-        generalGroup.setDisplayName("General Configuration Properties");
+        generalGroup.setDisplayName(MSG.view_admin_systemSettings_group_general());
         generalGroup.setDefaultHidden(false);
         generalGroup.setOrder(0);
 
-        PropertyDefinitionSimple baseUrl = new PropertyDefinitionSimple(Constant.BaseURL,
-            "A URL to the server GUI, used mainly within alert email notification", true, PropertySimpleType.STRING);
-        baseUrl.setDisplayName("GUI Console URL");
+        PropertyDefinitionSimple baseUrl = new PropertyDefinitionSimple(Constant.BaseURL, MSG
+            .view_admin_systemSettings_BaseURL_desc(), true, PropertySimpleType.STRING);
+        baseUrl.setDisplayName(MSG.view_admin_systemSettings_BaseURL_name());
         baseUrl.setPropertyGroupDefinition(generalGroup);
         baseUrl.setDefaultValue("http://localhost:7080");
         def.put(baseUrl);
 
         PropertyDefinitionSimple agentMaxQuietTimeAllowed = new PropertyDefinitionSimple(
-            Constant.AgentMaxQuietTimeAllowed,
-            "If this amount of time passes without hearing from an agent, that quiet agent will be considered down. This value is specified in minutes.",
-            true, PropertySimpleType.INTEGER);
-        agentMaxQuietTimeAllowed.setDisplayName("Agent Max Quiet Time Allowed");
+            Constant.AgentMaxQuietTimeAllowed, MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_desc(), true,
+            PropertySimpleType.INTEGER);
+        agentMaxQuietTimeAllowed.setDisplayName(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_name());
         agentMaxQuietTimeAllowed.setPropertyGroupDefinition(generalGroup);
         agentMaxQuietTimeAllowed.addConstraints(new IntegerRangeConstraint(Long.valueOf(2), null)); // don't allow less than 2m since it will cause too many false backfills 
         agentMaxQuietTimeAllowed.setDefaultValue("15");
         def.put(agentMaxQuietTimeAllowed);
 
-        PropertyDefinitionSimple enableAgentAutoUpdate = new PropertyDefinitionSimple(
-            Constant.EnableAgentAutoUpdate,
-            "Determines if the server will allow agents to auto-update themselves. You will not be able to download agent distributions from the server if this is disabled.",
-            true, PropertySimpleType.BOOLEAN);
-        enableAgentAutoUpdate.setDisplayName("Enable Agent Auto-Updates");
+        PropertyDefinitionSimple enableAgentAutoUpdate = new PropertyDefinitionSimple(Constant.EnableAgentAutoUpdate,
+            MSG.view_admin_systemSettings_EnableAgentAutoUpdate_desc(), true, PropertySimpleType.BOOLEAN);
+        enableAgentAutoUpdate.setDisplayName(MSG.view_admin_systemSettings_EnableAgentAutoUpdate_name());
         enableAgentAutoUpdate.setPropertyGroupDefinition(generalGroup);
         enableAgentAutoUpdate.setDefaultValue("true");
         def.put(enableAgentAutoUpdate);
 
-        PropertyDefinitionSimple enableDebugMode = new PropertyDefinitionSimple(Constant.EnableDebugMode,
-            "If enabled, the server will enter debug mode", true, PropertySimpleType.BOOLEAN);
-        enableDebugMode.setDisplayName("Enable Debug Mode");
+        PropertyDefinitionSimple enableDebugMode = new PropertyDefinitionSimple(Constant.EnableDebugMode, MSG
+            .view_admin_systemSettings_EnableDebugMode_desc(), true, PropertySimpleType.BOOLEAN);
+        enableDebugMode.setDisplayName(MSG.view_admin_systemSettings_EnableDebugMode_name());
         enableDebugMode.setPropertyGroupDefinition(generalGroup);
         enableDebugMode.setDefaultValue("false");
         def.put(enableDebugMode);
 
         PropertyDefinitionSimple enableExperimentalFeatures = new PropertyDefinitionSimple(
-            Constant.EnableExperimentalFeatures,
-            "If enabled, any experimental features that exist in the current product will be available.", true,
+            Constant.EnableExperimentalFeatures, MSG.view_admin_systemSettings_EnableExperimentalFeatures_desc(), true,
             PropertySimpleType.BOOLEAN);
-        enableExperimentalFeatures.setDisplayName("Enable Experimental Features");
+        enableExperimentalFeatures.setDisplayName(MSG.view_admin_systemSettings_EnableExperimentalFeatures_name());
         enableExperimentalFeatures.setPropertyGroupDefinition(generalGroup);
         enableExperimentalFeatures.setDefaultValue("false");
         def.put(enableExperimentalFeatures);
@@ -355,68 +352,61 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         // Data Manager Configuration Properties
 
         PropertyGroupDefinition dataManagerGroup = new PropertyGroupDefinition("datamanager");
-        dataManagerGroup.setDisplayName("Data Manager Configuration Properties");
+        dataManagerGroup.setDisplayName(MSG.view_admin_systemSettings_group_dataMgr());
         dataManagerGroup.setDefaultHidden(false);
         dataManagerGroup.setOrder(1);
 
-        PropertyDefinitionSimple dataMaintenance = new PropertyDefinitionSimple(
-            Constant.DataMaintenance,
-            "How often database maintenance is performed (for example, vacuuming if using Postgres). This is specified in hours.",
-            true, PropertySimpleType.INTEGER);
-        dataMaintenance.setDisplayName("Database Maintenance Period");
+        PropertyDefinitionSimple dataMaintenance = new PropertyDefinitionSimple(Constant.DataMaintenance, MSG
+            .view_admin_systemSettings_DataMaintenance_desc(), true, PropertySimpleType.INTEGER);
+        dataMaintenance.setDisplayName(MSG.view_admin_systemSettings_DataMaintenance_name());
         dataMaintenance.setPropertyGroupDefinition(dataManagerGroup);
         dataMaintenance.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         dataMaintenance.setDefaultValue("1");
         def.put(dataMaintenance);
 
-        PropertyDefinitionSimple availabilityPurge = new PropertyDefinitionSimple(Constant.AvailabilityPurge,
-            "How old availability data must be before being purged from the database. This is specified in days.",
-            true, PropertySimpleType.INTEGER);
-        availabilityPurge.setDisplayName("Delete Availability Data Older Than");
+        PropertyDefinitionSimple availabilityPurge = new PropertyDefinitionSimple(Constant.AvailabilityPurge, MSG
+            .view_admin_systemSettings_AvailabilityPurge_desc(), true, PropertySimpleType.INTEGER);
+        availabilityPurge.setDisplayName(MSG.view_admin_systemSettings_AvailabilityPurge_name());
         availabilityPurge.setPropertyGroupDefinition(dataManagerGroup);
         availabilityPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         availabilityPurge.setDefaultValue("365");
         def.put(availabilityPurge);
 
-        PropertyDefinitionSimple alertPurge = new PropertyDefinitionSimple(Constant.AlertPurge,
-            "How old alert history items must be before being purged from the database. This is specified in days.",
-            true, PropertySimpleType.INTEGER);
-        alertPurge.setDisplayName("Delete Alerts Older Than");
+        PropertyDefinitionSimple alertPurge = new PropertyDefinitionSimple(Constant.AlertPurge, MSG
+            .view_admin_systemSettings_AlertPurge_desc(), true, PropertySimpleType.INTEGER);
+        alertPurge.setDisplayName(MSG.view_admin_systemSettings_AlertPurge_name());
         alertPurge.setPropertyGroupDefinition(dataManagerGroup);
         alertPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         alertPurge.setDefaultValue("31");
         def.put(alertPurge);
 
-        PropertyDefinitionSimple traitPurge = new PropertyDefinitionSimple(Constant.TraitPurge,
-            "How old measurement trait data must be before being purged from the database. This is specified in days.",
-            true, PropertySimpleType.INTEGER);
-        traitPurge.setDisplayName("Delete Measurement Traits Older Than");
+        PropertyDefinitionSimple traitPurge = new PropertyDefinitionSimple(Constant.TraitPurge, MSG
+            .view_admin_systemSettings_TraitPurge_desc(), true, PropertySimpleType.INTEGER);
+        traitPurge.setDisplayName(MSG.view_admin_systemSettings_TraitPurge_name());
         traitPurge.setPropertyGroupDefinition(dataManagerGroup);
         traitPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         traitPurge.setDefaultValue("365");
         def.put(traitPurge);
 
-        PropertyDefinitionSimple rtDataPurge = new PropertyDefinitionSimple(Constant.RtDataPurge,
-            "How old response time data must be before being purged from the database. This is specified in days.",
-            true, PropertySimpleType.INTEGER);
-        rtDataPurge.setDisplayName("Delete Response Time Data Older Than");
+        PropertyDefinitionSimple rtDataPurge = new PropertyDefinitionSimple(Constant.RtDataPurge, MSG
+            .view_admin_systemSettings_RtDataPurge_desc(), true, PropertySimpleType.INTEGER);
+        rtDataPurge.setDisplayName(MSG.view_admin_systemSettings_RtDataPurge_name());
         rtDataPurge.setPropertyGroupDefinition(dataManagerGroup);
         rtDataPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         rtDataPurge.setDefaultValue("31");
         def.put(rtDataPurge);
 
-        PropertyDefinitionSimple eventPurge = new PropertyDefinitionSimple(Constant.EventPurge,
-            "How old event data must be before being purged from the database. This is specified in days.", true,
-            PropertySimpleType.INTEGER);
-        eventPurge.setDisplayName("Delete Events Older Than");
+        PropertyDefinitionSimple eventPurge = new PropertyDefinitionSimple(Constant.EventPurge, MSG
+            .view_admin_systemSettings_EventPurge_desc(), true, PropertySimpleType.INTEGER);
+        eventPurge.setDisplayName(MSG.view_admin_systemSettings_EventPurge_name());
         eventPurge.setPropertyGroupDefinition(dataManagerGroup);
         eventPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         eventPurge.setDefaultValue("14");
         def.put(eventPurge);
 
-        PropertyDefinitionSimple dataReindex = new PropertyDefinitionSimple(Constant.DataReindex,
-            "If enabled, certain database tables will be re-indexed periodically.", true, PropertySimpleType.BOOLEAN);
-        dataReindex.setDisplayName("Reindex Data Tables Nightly");
+        PropertyDefinitionSimple dataReindex = new PropertyDefinitionSimple(Constant.DataReindex, MSG
+            .view_admin_systemSettings_DataReindex_desc(), true, PropertySimpleType.BOOLEAN);
+        dataReindex.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
         dataReindex.setPropertyGroupDefinition(dataManagerGroup);
         dataReindex.setDefaultValue("true");
         def.put(dataReindex);
@@ -425,24 +415,21 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         // Automatic Baseline Configuration Properties
 
         PropertyGroupDefinition baselineGroup = new PropertyGroupDefinition("baseline");
-        baselineGroup.setDisplayName("Automatic Baseline Configuration Properties");
+        baselineGroup.setDisplayName(MSG.view_admin_systemSettings_group_baseline());
         baselineGroup.setDefaultHidden(false);
         baselineGroup.setOrder(2);
 
-        PropertyDefinitionSimple baselineFrequency = new PropertyDefinitionSimple(
-            Constant.BaselineFrequency,
-            "The frequency which the auto-calculation of baselines will be performed. If 0, baseline auto-calculation is disabled. This is specified in days.",
-            true, PropertySimpleType.INTEGER);
-        baselineFrequency.setDisplayName("Baseline Calculation Frequency");
+        PropertyDefinitionSimple baselineFrequency = new PropertyDefinitionSimple(Constant.BaselineFrequency, MSG
+            .view_admin_systemSettings_BaselineFrequency_desc(), true, PropertySimpleType.INTEGER);
+        baselineFrequency.setDisplayName(MSG.view_admin_systemSettings_BaselineFrequency_name());
         baselineFrequency.setPropertyGroupDefinition(baselineGroup);
         baselineFrequency.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
         baselineFrequency.setDefaultValue("3");
         def.put(baselineFrequency);
 
-        PropertyDefinitionSimple baselineDataSet = new PropertyDefinitionSimple(Constant.BaselineDataSet,
-            "The amount of past measurement data that is used to determine a baseline. This is specified in days.",
-            true, PropertySimpleType.INTEGER);
-        baselineDataSet.setDisplayName("Baseline Dataset");
+        PropertyDefinitionSimple baselineDataSet = new PropertyDefinitionSimple(Constant.BaselineDataSet, MSG
+            .view_admin_systemSettings_BaselineDataSet_desc(), true, PropertySimpleType.INTEGER);
+        baselineDataSet.setDisplayName(MSG.view_admin_systemSettings_BaselineDataSet_name());
         baselineDataSet.setPropertyGroupDefinition(baselineGroup);
         baselineDataSet.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our raw tables don't hold more 
         baselineDataSet.setDefaultValue("7");
@@ -452,90 +439,76 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         // LDAP Configuration Properties
 
         PropertyGroupDefinition ldapGroup = new PropertyGroupDefinition("ldap");
-        ldapGroup.setDisplayName("LDAP Configuration Properties");
-        ldapGroup.setDefaultHidden(Boolean.parseBoolean(config.getSimpleValue(Constant.JAASProvider, "false"))); // show if LDAP is in use
+        ldapGroup.setDisplayName(MSG.view_admin_systemSettings_group_ldap());
+        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(Constant.JAASProvider, "false"))); // show if LDAP is in use
         ldapGroup.setOrder(3);
 
-        PropertyDefinitionSimple jaasProvider = new PropertyDefinitionSimple(Constant.JAASProvider,
-            "Should LDAP be used to determine user identity?", true, PropertySimpleType.BOOLEAN);
-        jaasProvider.setDisplayName("Enable LDAP");
+        PropertyDefinitionSimple jaasProvider = new PropertyDefinitionSimple(Constant.JAASProvider, MSG
+            .view_admin_systemSettings_JAASProvider_desc(), true, PropertySimpleType.BOOLEAN);
+        jaasProvider.setDisplayName(MSG.view_admin_systemSettings_JAASProvider_name());
         jaasProvider.setPropertyGroupDefinition(ldapGroup);
         jaasProvider.setDefaultValue("false");
         def.put(jaasProvider);
 
-        PropertyDefinitionSimple ldapUrl = new PropertyDefinitionSimple(Constant.LDAPUrl, "URL to the LDAP server",
-            true, PropertySimpleType.STRING);
-        ldapUrl.setDisplayName("LDAP URL");
+        PropertyDefinitionSimple ldapUrl = new PropertyDefinitionSimple(Constant.LDAPUrl, MSG
+            .view_admin_systemSettings_LDAPUrl_desc(), true, PropertySimpleType.STRING);
+        ldapUrl.setDisplayName(MSG.view_admin_systemSettings_LDAPUrl_name());
         ldapUrl.setPropertyGroupDefinition(ldapGroup);
         ldapUrl.setDefaultValue("ldap://localhost");
         def.put(ldapUrl);
 
-        PropertyDefinitionSimple ldapProtocol = new PropertyDefinitionSimple(Constant.LDAPProtocol,
-            "Should communication with the LDAP server be done over SSL", true, PropertySimpleType.BOOLEAN);
-        ldapProtocol.setDisplayName("SSL");
+        PropertyDefinitionSimple ldapProtocol = new PropertyDefinitionSimple(Constant.LDAPProtocol, MSG
+            .view_admin_systemSettings_LDAPProtocol_desc(), true, PropertySimpleType.BOOLEAN);
+        ldapProtocol.setDisplayName(MSG.view_admin_systemSettings_LDAPProtocol_name());
         ldapProtocol.setPropertyGroupDefinition(ldapGroup);
         ldapProtocol.setDefaultValue("false");
         def.put(ldapProtocol);
 
-        PropertyDefinitionSimple ldapLoginProperty = new PropertyDefinitionSimple(
-            Constant.LDAPLoginProperty,
-            "The LDAP property that contains the user name. Defaults to cn. If multiple matches are found, the first entry found is used.",
-            false, PropertySimpleType.STRING);
-        ldapLoginProperty.setDisplayName("Login Property");
+        PropertyDefinitionSimple ldapLoginProperty = new PropertyDefinitionSimple(Constant.LDAPLoginProperty, MSG
+            .view_admin_systemSettings_LDAPLoginProperty_desc(), false, PropertySimpleType.STRING);
+        ldapLoginProperty.setDisplayName(MSG.view_admin_systemSettings_LDAPLoginProperty_name());
         ldapLoginProperty.setPropertyGroupDefinition(ldapGroup);
         ldapLoginProperty.setDefaultValue("cn");
         def.put(ldapLoginProperty);
 
-        PropertyDefinitionSimple ldapFilter = new PropertyDefinitionSimple(
-            Constant.LDAPFilter,
-            "Any additional filters to apply when doing the LDAP search. This is useful if the population to authenticate can be identified via a given LDAP property, e.g. RHQUser=true",
-            false, PropertySimpleType.STRING);
-        ldapFilter.setDisplayName("Search Filter");
+        PropertyDefinitionSimple ldapFilter = new PropertyDefinitionSimple(Constant.LDAPFilter, MSG
+            .view_admin_systemSettings_LDAPFilter_desc(), false, PropertySimpleType.STRING);
+        ldapFilter.setDisplayName(MSG.view_admin_systemSettings_LDAPFilter_name());
         ldapFilter.setPropertyGroupDefinition(ldapGroup);
         ldapFilter.setDefaultValue("");
         def.put(ldapFilter);
 
-        PropertyDefinitionSimple ldapGroupFilter = new PropertyDefinitionSimple(
-            Constant.LDAPGroupFilter,
-            "LDAP search filter that must return all LDAP groups available for authorization. This is used for LDAP group authorization.",
-            false, PropertySimpleType.STRING);
-        ldapGroupFilter.setDisplayName("Group Search Filter");
+        PropertyDefinitionSimple ldapGroupFilter = new PropertyDefinitionSimple(Constant.LDAPGroupFilter, MSG
+            .view_admin_systemSettings_LDAPGroupFilter_desc(), false, PropertySimpleType.STRING);
+        ldapGroupFilter.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupFilter_name());
         ldapGroupFilter.setPropertyGroupDefinition(ldapGroup);
         ldapGroupFilter.setDefaultValue("rhqadmin");
         def.put(ldapGroupFilter);
 
-        PropertyDefinitionSimple ldapGroupMember = new PropertyDefinitionSimple(
-            Constant.LDAPGroupMember,
-            "LDAP search filter that is used in conjunction with the group search filter to determine user authorization. This is used for LDAP group authorization.",
-            false, PropertySimpleType.STRING);
-        ldapGroupMember.setDisplayName("Group Member Filter");
+        PropertyDefinitionSimple ldapGroupMember = new PropertyDefinitionSimple(Constant.LDAPGroupMember, MSG
+            .view_admin_systemSettings_LDAPGroupMember_desc(), false, PropertySimpleType.STRING);
+        ldapGroupMember.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
         ldapGroupMember.setPropertyGroupDefinition(ldapGroup);
         ldapGroupMember.setDefaultValue("");
         def.put(ldapGroupMember);
 
-        PropertyDefinitionSimple ldapBaseDN = new PropertyDefinitionSimple(
-            Constant.LDAPBaseDN,
-            "The base of the directory tree to search for usernames and passwords while authenticating users, e.g. ou=People,dc=jboss,dc=com",
-            false, PropertySimpleType.STRING);
-        ldapBaseDN.setDisplayName("Search Base");
+        PropertyDefinitionSimple ldapBaseDN = new PropertyDefinitionSimple(Constant.LDAPBaseDN, MSG
+            .view_admin_systemSettings_LDAPBaseDN_desc(), false, PropertySimpleType.STRING);
+        ldapBaseDN.setDisplayName(MSG.view_admin_systemSettings_LDAPBaseDN_name());
         ldapBaseDN.setPropertyGroupDefinition(ldapGroup);
         ldapBaseDN.setDefaultValue("o=RedHat,c=US");
         def.put(ldapBaseDN);
 
-        PropertyDefinitionSimple ldapBindDN = new PropertyDefinitionSimple(
-            Constant.LDAPBindDN,
-            "The username to connect to the LDAP server when querying the LDAP server's user database. This is typically the full LDAP distinguished name (DN) of a manager user, e.g. cn=Manager,dc=jboss,dc=com.",
-            false, PropertySimpleType.STRING);
-        ldapBindDN.setDisplayName("Username");
+        PropertyDefinitionSimple ldapBindDN = new PropertyDefinitionSimple(Constant.LDAPBindDN, MSG
+            .view_admin_systemSettings_LDAPBindDN_desc(), false, PropertySimpleType.STRING);
+        ldapBindDN.setDisplayName(MSG.view_admin_systemSettings_LDAPBindDN_name());
         ldapBindDN.setPropertyGroupDefinition(ldapGroup);
         ldapBindDN.setDefaultValue("");
         def.put(ldapBindDN);
 
-        PropertyDefinitionSimple ldapBindPW = new PropertyDefinitionSimple(
-            Constant.LDAPBindPW,
-            "The credentials of the user used to connect to the LDAP server when querying the LDAP server's user database.",
-            false, PropertySimpleType.PASSWORD);
-        ldapBindPW.setDisplayName("Password");
+        PropertyDefinitionSimple ldapBindPW = new PropertyDefinitionSimple(Constant.LDAPBindPW, MSG
+            .view_admin_systemSettings_LDAPBindPW_desc(), false, PropertySimpleType.PASSWORD);
+        ldapBindPW.setDisplayName(MSG.view_admin_systemSettings_LDAPBindPW_name());
         ldapBindPW.setPropertyGroupDefinition(ldapGroup);
         ldapBindPW.setDefaultValue("");
         def.put(ldapBindPW);
@@ -549,23 +522,30 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         form.setWidth100();
         form.setExtraSpace(15);
         form.setIsGroup(true);
-        form.setGroupTitle("Server Details");
+        form.setGroupTitle(MSG.view_admin_systemSettings_serverDetails());
 
-        final StaticTextItem productName = new StaticTextItem("productname", "Name");
-        final StaticTextItem productVersion = new StaticTextItem("productversion", "Version");
-        final StaticTextItem productBuildNumber = new StaticTextItem("productbuild", "Build Number");
+        final StaticTextItem productName = new StaticTextItem("productname", MSG.common_title_name());
+        final StaticTextItem productVersion = new StaticTextItem("productversion", MSG.common_title_version());
+        final StaticTextItem productBuildNumber = new StaticTextItem("productbuild", MSG
+            .view_admin_systemSettings_serverDetails_buildNumber());
 
-        final StaticTextItem serverTimezone = new StaticTextItem("timezone", "Server Time Zone");
-        final StaticTextItem serverTime = new StaticTextItem("localtime", "Server Local Time");
-        final StaticTextItem dbUrl = new StaticTextItem("dbUrl", "Database Connection URL");
-        final StaticTextItem dbProductName = new StaticTextItem("dbProductName", "Database Product Name");
-        final StaticTextItem dbProductVersion = new StaticTextItem("dbProductVersion", "Database Product Version");
-        final StaticTextItem dbDriverName = new StaticTextItem("dbDriverName", "Database Driver Name");
-        final StaticTextItem dbDriverVersion = new StaticTextItem("dbDriverVersion", "Database Driver Version");
-        final StaticTextItem currentMeasRawTable = new StaticTextItem("currentMeasRawTable",
-            "Current Measurement Raw Table");
-        final StaticTextItem nextMeasTableRotation = new StaticTextItem("nextMeasTableRotation",
-            "Next Measurement Table Rotation");
+        final StaticTextItem serverTimezone = new StaticTextItem("timezone", MSG
+            .view_admin_systemSettings_serverDetails_tz());
+        final StaticTextItem serverTime = new StaticTextItem("localtime", MSG
+            .view_admin_systemSettings_serverDetails_time());
+        final StaticTextItem dbUrl = new StaticTextItem("dbUrl", MSG.view_admin_systemSettings_serverDetails_dbUrl());
+        final StaticTextItem dbProductName = new StaticTextItem("dbProductName", MSG
+            .view_admin_systemSettings_serverDetails_dbName());
+        final StaticTextItem dbProductVersion = new StaticTextItem("dbProductVersion", MSG
+            .view_admin_systemSettings_serverDetails_dbVersion());
+        final StaticTextItem dbDriverName = new StaticTextItem("dbDriverName", MSG
+            .view_admin_systemSettings_serverDetails_dbDriverName());
+        final StaticTextItem dbDriverVersion = new StaticTextItem("dbDriverVersion", MSG
+            .view_admin_systemSettings_serverDetails_dbDriverVersion());
+        final StaticTextItem currentMeasRawTable = new StaticTextItem("currentMeasRawTable", MSG
+            .view_admin_systemSettings_serverDetails_currentTable());
+        final StaticTextItem nextMeasTableRotation = new StaticTextItem("nextMeasTableRotation", MSG
+            .view_admin_systemSettings_serverDetails_nextRotation());
 
         productName.setWrapTitle(false);
         productVersion.setWrapTitle(false);
@@ -606,7 +586,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Cannot get server details", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_cannotLoadServerDetails(), caught);
             }
         });
 

@@ -20,11 +20,13 @@
 package org.rhq.enterprise.gui.coregui.client.admin;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
@@ -130,7 +132,15 @@ public class DownloadsView extends LocatableVLayout {
                 linkItem.setLinkTitle(MSG.view_admin_downloads_agent_link_value(version, build));
                 linkItem.setValue("/agentupdate/download");
 
-                form.setItems(versionItem, buildItem, md5Item, linkItem);
+                SpacerItem spacerItem = new SpacerItem("agentSpacer");
+                spacerItem.setHeight(10);
+
+                StaticTextItem helpItem = new StaticTextItem("agentHelp");
+                helpItem.setColSpan(2);
+                helpItem.setShowTitle(false);
+                helpItem.setValue(MSG.view_admin_downloads_agent_help());
+
+                form.setItems(versionItem, buildItem, md5Item, linkItem, spacerItem, helpItem);
 
                 agentSection.setItems(form);
                 agentSection.setExpanded(true);
@@ -139,7 +149,7 @@ public class DownloadsView extends LocatableVLayout {
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Cannot get agent version info", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_agent_loadError(), caught);
             }
         });
     }
@@ -153,16 +163,51 @@ public class DownloadsView extends LocatableVLayout {
     }
 
     private void prepareConnectorsSection() {
-        // TODO Auto-generated method stub
-    }
+        systemManager.getConnectorDownloads(new AsyncCallback<HashMap<String, String>>() {
+            @Override
+            public void onSuccess(HashMap<String, String> result) {
+                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("connectors"));
+                form.setMargin(10);
+                form.setWidth100();
 
-    @Deprecated
-    private void cleanSectionStackSection(SectionStackSection section) {
-        Canvas[] items = section.getItems();
-        if (items != null) {
-            for (Canvas canvas : items) {
-                canvas.destroy();
+                if (result != null && !result.isEmpty()) {
+                    int i = 0;
+                    FormItem[] items = new FormItem[result.size() + 1];
+
+                    StaticTextItem helpText = new StaticTextItem("connectorHelp");
+                    helpText.setColSpan(2);
+                    helpText.setShowTitle(false);
+                    helpText.setValue(MSG.view_admin_downloads_connectors_help());
+                    items[i] = helpText;
+                    i++;
+
+                    for (Map.Entry<String, String> entry : result.entrySet()) {
+                        LinkItem linkItem = new LinkItem("connectorLink" + i);
+                        linkItem.setColSpan(2);
+                        linkItem.setShowTitle(false);
+                        linkItem.setLinkTitle(entry.getKey());
+                        linkItem.setValue(entry.getValue());
+                        items[i] = linkItem;
+                        i++;
+                    }
+                    form.setItems(items);
+                } else {
+                    StaticTextItem item = new StaticTextItem("noConnectors");
+                    item.setColSpan(2);
+                    item.setShowTitle(false);
+                    item.setValue(MSG.view_admin_downloads_connectors_none());
+                    form.setItems(item);
+                }
+
+                connectorsSection.setItems(form);
+                connectorsSection.setExpanded(true);
+                sectionStack.markForRedraw();
             }
-        }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_connectors_loadError(), caught);
+            }
+        });
     }
 }

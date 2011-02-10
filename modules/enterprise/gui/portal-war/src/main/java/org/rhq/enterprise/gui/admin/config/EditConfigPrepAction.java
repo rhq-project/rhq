@@ -20,11 +20,13 @@ package org.rhq.enterprise.gui.admin.config;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -34,7 +36,7 @@ public class EditConfigPrepAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         SystemConfigForm cForm = (SystemConfigForm) form;
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        cForm.loadConfigProperties(systemManager.getSystemConfiguration());
+        cForm.loadConfigProperties(systemManager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord()));
 
         return null;
     }

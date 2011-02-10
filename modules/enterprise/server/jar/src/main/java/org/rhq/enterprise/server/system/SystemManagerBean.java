@@ -24,11 +24,14 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -47,6 +50,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jboss.deployment.MainDeployerMBean;
 import org.jboss.mx.util.MBeanServerLocator;
 
@@ -55,15 +59,19 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
 @Stateless
 public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemote {
@@ -97,6 +105,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    @IgnoreDependency
+    private SubjectManagerLocal subjectManager;
+
     private static Properties systemConfigurationCache = null;
     private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
 
@@ -157,7 +170,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
-    public Properties getSystemConfiguration() {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public Properties getSystemConfiguration(Subject subject) {
 
         if (systemConfigurationCache == null) {
             loadSystemConfigurationCache();
@@ -199,7 +213,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) {
+    public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception {
         // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
         List<SystemConfiguration> configs;
         configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
@@ -517,7 +531,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     public boolean isDebugModeEnabled() {
         try {
-            return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode, "false"));
+            Subject su = this.subjectManager.getOverlord();
+            return Boolean.valueOf(getSystemConfiguration(su).getProperty(RHQConstants.EnableDebugMode, "false"));
         } catch (Throwable t) {
             return false; // paranoid catch-all
         }
@@ -525,22 +540,38 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     public boolean isExperimentalFeaturesEnabled() {
         try {
-            return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableExperimentalFeatures,
+            Subject su = this.subjectManager.getOverlord();
+            return Boolean.valueOf(getSystemConfiguration(su).getProperty(RHQConstants.EnableExperimentalFeatures,
                 "false"));
         } catch (Throwable t) {
             return false; // paranoid catch-all
         }
     }
 
-    public ServerVersion getServerVersion(Subject subject) throws Exception {
-        CoreServerMBean coreServer = LookupUtil.getCoreServer();
-        String version = coreServer.getVersion();
-        String buildNumber = coreServer.getBuildNumber();
-        ServerVersion serverVersion = new ServerVersion(version, buildNumber);
-        return serverVersion;
+    public ServerDetails getServerDetails(Subject subject) {
+        ServerDetails serverDetails = new ServerDetails();
+
+        serverDetails.setProductInfo(getProductInfo(subject));
+
+        HashMap<Detail, String> details = serverDetails.getDetails();
+
+        DateFormat localTimeFormatter = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL);
+        details.put(ServerDetails.Detail.SERVER_LOCAL_TIME, localTimeFormatter.format(new Date()));
+        details.put(ServerDetails.Detail.SERVER_TIMEZONE, TimeZone.getDefault().getDisplayName());
+
+        SystemDatabaseInformation dbInfo = SystemDatabaseInformation.getInstance();
+        details.put(ServerDetails.Detail.DATABASE_CONNECTION_URL, dbInfo.getDatabaseConnectionURL());
+        details.put(ServerDetails.Detail.DATABASE_DRIVER_NAME, dbInfo.getDatabaseDriverName());
+        details.put(ServerDetails.Detail.DATABASE_DRIVER_VERSION, dbInfo.getDatabaseDriverVersion());
+        details.put(ServerDetails.Detail.DATABASE_PRODUCT_NAME, dbInfo.getDatabaseProductName());
+        details.put(ServerDetails.Detail.DATABASE_PRODUCT_VERSION, dbInfo.getDatabaseProductVersion());
+        details.put(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE, dbInfo.getCurrentMeasurementTable());
+        details.put(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION, dbInfo.getNextMeasurementTableRotation());
+
+        return serverDetails;
     }
 
-    public ProductInfo getProductInfo(Subject subject) {
+    private ProductInfo getProductInfo(Subject subject) {
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         ProductInfo productInfo = coreServer.getProductInfo();
         return productInfo;

@@ -177,10 +177,10 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID.getName()),
-                        "/admin/config/Config.do?mode=edit&nomenu=true");
+                    return new SystemSettingsView(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID.getName()));
                 }
             });
+        systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
 
         NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, ImageManager.getMetricEditIcon(),
             new ViewFactory() {

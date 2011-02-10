@@ -28,6 +28,7 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
@@ -54,7 +55,6 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
-import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
@@ -187,9 +187,10 @@ public class RemoteClient {
         this.subject = getSubjectManagerRemote().login(user, password);
         this.loggedIn = true;
 
-        ServerVersion version = getSystemManagerRemote().getServerVersion(this.subject);
+        ServerDetails details = getSystemManagerRemote().getServerDetails(this.subject);
         // TODO: what to do with this?
-        System.out.println("Remote server version is: " + version);
+        System.out.println("Remote server version is: " + details.getProductInfo().getVersion() + " ("
+            + details.getProductInfo().getBuildNumber() + ")");
 
         return this.subject;
     }

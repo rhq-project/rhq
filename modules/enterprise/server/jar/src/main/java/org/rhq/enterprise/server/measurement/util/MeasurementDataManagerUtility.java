@@ -111,7 +111,8 @@ public class MeasurementDataManagerUtility {
         LOG.debug("Loading default purge intervals");
 
         try {
-            Properties conf = LookupUtil.getSystemManager().getSystemConfiguration();
+            Properties conf = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord());
             purge1h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Hour));
             purge6h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge6Hour));
             purge1d = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Day));

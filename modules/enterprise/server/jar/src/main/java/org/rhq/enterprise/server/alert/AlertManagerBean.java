@@ -247,11 +247,12 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
             deleteAlertsQuery.setParameter("resourceTypeId", context.resourceTypeId);
 
-            deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteConditionLogsQuery = entityManager
+                .createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
             deleteConditionLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
 
-            deleteNotificationLogsQuery = entityManager.createNamedQuery(
-                AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteNotificationLogsQuery = entityManager
+                .createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
             deleteNotificationLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
 
         } else {
@@ -925,7 +926,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
-        String baseUrl = systemManager.getSystemConfiguration().getProperty(RHQConstants.BaseURL);
+        String baseUrl = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
+            RHQConstants.BaseURL);
         builder.append(baseUrl);
         if (!baseUrl.endsWith("/")) {
             builder.append("/");

@@ -64,7 +64,6 @@ public class DownloadsView extends LocatableVLayout {
         super(locatorId);
         setHeight100();
         setWidth100();
-        setOverflow(Overflow.AUTO);
 
         TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_downloads(), "global/Download_24.png");
         addMember(titleBar);
@@ -74,6 +73,7 @@ public class DownloadsView extends LocatableVLayout {
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
+        sectionStack.setOverflow(Overflow.AUTO);
 
         agentSection = new SectionStackSection(MSG.view_admin_downloads_agentDownload());
         cliSection = new SectionStackSection(MSG.view_admin_downloads_cliDownload());

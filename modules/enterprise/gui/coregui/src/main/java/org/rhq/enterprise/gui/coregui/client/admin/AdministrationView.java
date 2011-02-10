@@ -25,7 +25,9 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
@@ -37,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -215,15 +218,15 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             "subsystems/content/Content_16.png", new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId(PAGE_CONTENT_SOURCES_VIEW_ID.getName()),
-                        "/rhq/content/listContentProviders.xhtml");
+                        "/rhq/content/listContentProviders.xhtml?nomenu=true");
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_REPOSITORIES));
 
         NavigationItem reposItem = new NavigationItem(PAGE_REPOS_VIEW_ID, "subsystems/content/Content_16.png",
             new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId(PAGE_REPOS_VIEW_ID.getName()),
-                        "/rhq/content/listRepos.xhtml");
+                        "/rhq/content/listRepos.xhtml?nomenu=true");
                 }
             });
 

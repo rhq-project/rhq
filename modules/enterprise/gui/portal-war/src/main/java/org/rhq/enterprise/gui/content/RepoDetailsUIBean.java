@@ -22,8 +22,10 @@ import javax.faces.application.FacesMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.richfaces.event.UploadEvent;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
@@ -87,6 +89,25 @@ public class RepoDetailsUIBean {
         return retval;
     }
 
+    public boolean isRepositoryManager() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        return LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES);
+    }
+    
+    public boolean isEditable() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        return LookupUtil.getAuthorizationManager().canUpdateRepo(subject, getRepo().getId());
+    }
+    
+    public boolean isInventoryManager() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        return LookupUtil.getAuthorizationManager().isInventoryManager(subject);
+    }
+    
+    public boolean getHasContentSources() {
+        return getRepo().getContentSources().size() > 0;
+    }
+    
     public String sync() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
@@ -140,6 +161,12 @@ public class RepoDetailsUIBean {
         return "success";
     }
 
+    public void packageUploadListener(UploadEvent event) {
+        if (!isEditable()) {
+            return;
+        }
+    }
+    
     private void loadRepo() {
         if (this.repo == null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();

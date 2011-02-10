@@ -64,13 +64,13 @@
               value="#{RepoDetailsUIBean.repo.description}" /> <h:outputText
               rendered="${mode ne 'edit'}"
               value="#{RepoDetailsUIBean.repo.description}" /></td>
-          </tr>
+          </tr>          
           <tr>
             <td align="right"><b>Sync Schedule:</b></td>
             <td align="left"><h:inputText
-              rendered="${mode eq 'edit'}"
+              rendered="${RepoDetailsUIBean.repositoryManager and mode eq 'edit'}"
               value="#{RepoDetailsUIBean.repo.syncSchedule}" /> <h:outputText
-              rendered="${mode ne 'edit'}"
+              rendered="${mode ne 'edit' or not RepoDetailsUIBean.repositoryManager}"
               value="#{RepoDetailsUIBean.repo.syncSchedule}" /></td>
           </tr>
           <tr>
@@ -190,13 +190,13 @@
 
       <h:panelGrid columns="3" styleClass="buttons-table"
         columnClasses="button-cell">
-        <h:commandButton rendered="${mode ne 'edit'}" value="EDIT"
+        <h:commandButton rendered="${mode ne 'edit' and RepoDetailsUIBean.editable}" value="EDIT"
           action="#{RepoDetailsUIBean.edit}" alt="Edit"
           styleClass="buttonmed" id="editButton" />
-        <h:commandButton rendered="${mode ne 'edit' and not RepoDetailsUIBean.currentlySyncing}"
+        <h:commandButton rendered="${mode ne 'edit' and not RepoDetailsUIBean.currentlySyncing and RepoDetailsUIBean.repositoryManager}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
-        <h:commandButton rendered="#{RepoDetailsUIBean.currentlySyncing}"
+        <h:commandButton rendered="#{RepoDetailsUIBean.repositoryManager and RepoDetailsUIBean.currentlySyncing}"
           value="CANCEL SYNCH" action="#{RepoDetailsUIBean.cancelSync}"
           alt="Cancel Synch" styleClass="buttonmed" id="cancelSyncButton" />
         <h:commandButton rendered="${mode eq 'edit'}" value="SAVE"
@@ -211,7 +211,7 @@
 
     <!-- CONTENT SOURCE LIST -->
 
-    <h:form id="repoContentProvidersListForm">
+    <h:form id="repoContentProvidersListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
       <input type="hidden" name="id" value="${param.id}" />
       <input type="hidden" name="mode" value="${param.mode}" />
 
@@ -364,7 +364,7 @@
 
     <!-- SUBSCRIBER RESOURCE LIST -->
 
-    <h:form id="repoResourcesListForm">
+    <h:form id="repoResourcesListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
       <input type="hidden" name="id" value="${param.id}" />
       <input type="hidden" name="mode" value="${param.mode}" />
 
@@ -617,8 +617,9 @@
                       action="#{RepoPackageVersionsUIBean.installSelectedPackages}"
                       value="INSTALL PACKAGES" target="selectedPackages"
                       onclick="if (!confirm('#{confirmInstallMessage}')) return false"
-                      styleClass="on-pager-button buttonsmall" />
-
+                      styleClass="on-pager-button buttonsmall"
+                      rendered="#{RepoDetailsUIBean.inventoryManager}" />
+                    
                     <ui:param name="paginationDataTableName"
                       value="repoPackageVersionsDataTable" />
                     <ui:param name="paginationDataModel"
@@ -632,14 +633,42 @@
               </f:facet>
 
             </rich:dataTable>
-
+            
           </h:panelGrid>
 
         </rich:panel>
+
+           <rich:panel rendered="#{not RepoDetailsUIBean.hasContentSources}">
+                <f:facet name="header">
+                    <h:outputText value="Upload New Package"/>
+                </f:facet>
+           
+               <h:messages id="uploadmessages"
+                           showSummary="true"
+                           showDetail="true"
+                           infoClass="InfoBlock"
+                           warnClass="WarnBlock"
+                           errorClass="ErrorBlock"
+                           fatalClass="FatalBlock"
+                           globalOnly="true"
+                           layout="table"
+                           width="100%"/>
+                                       
+              <rich:fileUpload
+                        id="upload"
+                        fileUploadListener="#{RepoDetailsUIBean.packageUploadListener}"
+                        acceptedTypes="*"
+                        noDuplicate="true"
+                        immediateUpload="true"
+                        autoclear="false"
+                        allowFlash="false">
+                        <a4j:support event="onuploadcomplete" reRender="uploadmessages" />
+              </rich:fileUpload>
+          </rich:panel>            
       </a4j:region>
     </h:form>
 
-    <h:form id="repoDistributionListForm" rendered="#{RepoDistributionUIBean.dataModel.rowCount gt 0}">
+    <h:form id="repoDistributionListForm" rendered="#{RepoDetailsUIBean.repositoryManager and RepoDistributionUIBean.dataModel.rowCount gt 0}">
       <a4j:region id="distributionList">
         <input type="hidden" name="id" value="${param.id}" />
         <input type="hidden" name="mode" value="${param.mode}" />
@@ -734,7 +763,7 @@
       </a4j:region>
     </h:form>
 
-    <h:form id="repoAdvisoryListForm" rendered="#{RepoAdvisoryUIBean.dataModel.rowCount gt 0}">
+    <h:form id="repoAdvisoryListForm" rendered="#{RepoDetailsUIBean.repositoryManager and RepoAdvisoryUIBean.dataModel.rowCount gt 0}">
       <a4j:region id="advisoryList">
         <input type="hidden" name="id" value="${param.id}" />
         <input type="hidden" name="mode" value="${param.mode}" />

@@ -57,6 +57,10 @@
                      <h:inputTextarea id="description" rows="3" cols="20" value="#{CreateRepoUIBean.repo.description}"/>
 	               </td>
 	            </tr>
+                <tr>
+                    <td align="right">Private:</td>
+                    <td align="left"><h:selectBooleanCheckbox id="isPrivate" value="#{CreateRepoUIBean.repo.private}"/></td>
+                </tr>
 	         </table>
 	      </rich:panel>
 

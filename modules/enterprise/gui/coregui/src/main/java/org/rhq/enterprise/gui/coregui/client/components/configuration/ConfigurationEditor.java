@@ -141,7 +141,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 // but there were problems with having different editors active for different rows in the table at the same time.
 // Smart says they're working on enhancing this area, but the DynamicForm might be a better option anyway. (ghinkle)
 //
-@SuppressWarnings( { "UnnecessarySemicolon" })
 public class ConfigurationEditor extends LocatableVLayout {
 
     private static final String RHQ_PROPERTY_ATTRIBUTE_NAME = "rhq:property";
@@ -155,8 +154,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     private Configuration originalConfiguration;
 
     private ValuesManager valuesManager = new ValuesManager();
-
-    private boolean changed = false;
 
     private Label loadingLabel = new Label("<b>" + MSG.common_msg_loading() + "</b>");
 
@@ -333,8 +330,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (groupDefinitions.isEmpty()) {
             // No prop groups, so we just need a single form for the non-grouped props.
-            List<PropertyDefinition> propertyDefinitions =
-                new ArrayList<PropertyDefinition>(configurationDefinition.getNonGroupedProperties());
+            List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(configurationDefinition
+                .getNonGroupedProperties());
 
             DynamicForm form = buildPropertiesForm(layout.extendLocatorId("Props"), propertyDefinitions, configuration);
             form.setBorder("1px solid #AAA");
@@ -622,7 +619,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private FormItem buildMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
         final PropertyMap propertyMap) {
-        String locatorId = parentLocatorId + "_" + propertyDefinitionMap.getName();
         boolean isDynamic = isDynamic(propertyDefinitionMap);
         if (isDynamic) {
             PropertyDefinitionMap propertyDefinitionMapClone = new PropertyDefinitionMap(propertyDefinitionMap
@@ -1224,6 +1220,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
+        // for more robust and repeatable item locators (not positional) assign a name and title   
+        valueItem.setName(propertySimple.getName());
+        valueItem.setTitle("none");
+        valueItem.setShowTitle(false);
         valueItem.setDefaultValue(propertySimple.getStringValue());
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
 
@@ -1244,7 +1244,6 @@ public class ConfigurationEditor extends LocatableVLayout {
                 });
         */
 
-        valueItem.setShowTitle(false);
         valueItem.setWidth(220);
 
         // Only update the underlying property when the input is changed if it's a top-level simple or a simple within a

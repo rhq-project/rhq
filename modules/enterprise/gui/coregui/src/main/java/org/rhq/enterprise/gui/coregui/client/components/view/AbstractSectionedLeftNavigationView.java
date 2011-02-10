@@ -178,15 +178,19 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         this.sectionStack.addSection(section);
     }
 
-    public void setContent(Canvas newContent) {
+    public void destroyCurrentContent() {
         // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
         // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
-        // are in the array.
-        Canvas[] children;
-        while ((children = contentCanvas.getChildren()).length > 0) {
-            children[0].destroy();
+        // are in the array. Note that we need to make sure we do this destroy before we create the new content
+        if (contentCanvas != null) {
+            Canvas[] children;
+            while ((children = contentCanvas.getChildren()).length > 0) {
+                children[0].destroy();
+            }
         }
+    }
 
+    public void setContent(Canvas newContent) {
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
         currentContent = newContent;
@@ -217,12 +221,15 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
 
         // Only update the content pane if the item has an associated view factory.
         ViewFactory viewFactory = item.getViewFactory();
-        Canvas content = (viewFactory != null) ? viewFactory.createView() : null;
-        if (content != null) {
-            setContent(content);
+        if (viewFactory != null) {
+            destroyCurrentContent();
+            Canvas content = viewFactory.createView();
+            if (content != null) {
+                setContent(content);
 
-            if (content instanceof BookmarkableView) {
-                ((BookmarkableView) content).renderView(viewPath.next().next());
+                if (content instanceof BookmarkableView) {
+                    ((BookmarkableView) content).renderView(viewPath.next().next());
+                }
             }
         }
     }
@@ -230,7 +237,8 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
             if (viewPath.isEnd()) {
-                // Display default view
+                // Display default view - note that defaultView() will create new content, so we have to destroy the old, current content
+                destroyCurrentContent();
                 setContent(defaultView());
                 initSectionPageTreeGrids();
             } else {

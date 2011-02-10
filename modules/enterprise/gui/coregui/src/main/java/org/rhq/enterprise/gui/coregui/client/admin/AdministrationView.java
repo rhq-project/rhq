@@ -63,7 +63,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         .view_adminTopology_partitionEvents());
 
     // TODO this iframe page view id should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_DOWNLOADS_VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads());
     private static final ViewName PAGE_PLUGINS_VIEW_ID = new ViewName("Plugins", MSG.view_adminConfig_plugins());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
@@ -187,11 +186,10 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         });
         templatesItem.setRefreshRequired(true); // we always need a new page
 
-        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID,
-            "subsystems/bundle/BundleDeployment_16.png", new ViewFactory() {
+        NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, "global/Download_16.png",
+            new ViewFactory() {
                 public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_DOWNLOADS_VIEW_ID.getName()),
-                        "/rhq/admin/downloads-body.xhtml?nomenu=true");
+                    return new DownloadsView(extendLocatorId(DownloadsView.VIEW_ID.getName()));
                 }
             });
 

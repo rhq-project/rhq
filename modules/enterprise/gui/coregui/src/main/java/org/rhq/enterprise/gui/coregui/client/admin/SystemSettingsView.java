@@ -106,7 +106,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         setHeight100();
         setWidth100();
 
-        TitleBar titleBar = new TitleBar(this, "System Settings", "subsystems/configure/Configure_24.png");
+        TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_systemSettings(),
+            "subsystems/configure/Configure_24.png");
         addMember(titleBar);
 
         canvas = new LocatableVLayout("innerLayout");
@@ -304,8 +305,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      * @return system settings config def
      */
     private ConfigurationDefinition getSystemSettingsDefinition(Configuration config) {
-        ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG
-            .view_admin_systemSettings_systemSettings());
+        ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
         ///////////////////////////////////
         // General Configuration Properties
@@ -538,6 +538,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
             .view_admin_systemSettings_serverDetails_tz());
         final StaticTextItem serverTime = new StaticTextItem("localtime", MSG
             .view_admin_systemSettings_serverDetails_time());
+        final StaticTextItem serverInstallDir = new StaticTextItem("installdir", MSG
+            .view_admin_systemSettings_serverDetails_installDir());
         final StaticTextItem dbUrl = new StaticTextItem("dbUrl", MSG.view_admin_systemSettings_serverDetails_dbUrl());
         final StaticTextItem dbProductName = new StaticTextItem("dbProductName", MSG
             .view_admin_systemSettings_serverDetails_dbName());
@@ -557,6 +559,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         productBuildNumber.setWrapTitle(false);
         serverTimezone.setWrapTitle(false);
         serverTime.setWrapTitle(false);
+        serverInstallDir.setWrapTitle(false);
         dbUrl.setWrapTitle(false);
         dbProductName.setWrapTitle(false);
         dbProductVersion.setWrapTitle(false);
@@ -565,8 +568,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         currentMeasRawTable.setWrapTitle(false);
         nextMeasTableRotation.setWrapTitle(false);
 
-        form.setItems(productName, productVersion, productBuildNumber, serverTimezone, serverTime, dbUrl,
-            dbProductName, dbProductVersion, dbDriverName, dbDriverVersion, currentMeasRawTable, nextMeasTableRotation);
+        form.setItems(productName, productVersion, productBuildNumber, serverTimezone, serverTime, serverInstallDir,
+            dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion, currentMeasRawTable,
+            nextMeasTableRotation);
 
         GWTServiceLookup.getSystemService().getServerDetails(new AsyncCallback<ServerDetails>() {
 
@@ -580,6 +584,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 HashMap<Detail, String> details = result.getDetails();
                 serverTimezone.setValue(details.get(ServerDetails.Detail.SERVER_TIMEZONE));
                 serverTime.setValue(details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
+                serverInstallDir.setValue(details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));
                 dbUrl.setValue(details.get(ServerDetails.Detail.DATABASE_CONNECTION_URL));
                 dbProductName.setValue(details.get(ServerDetails.Detail.DATABASE_PRODUCT_NAME));
                 dbProductVersion.setValue(details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));

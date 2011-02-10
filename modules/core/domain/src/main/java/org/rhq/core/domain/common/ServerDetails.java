@@ -45,6 +45,8 @@ public class ServerDetails implements Serializable {
         DATABASE_DRIVER_VERSION, //
         SERVER_TIMEZONE, //
         SERVER_LOCAL_TIME, //
+        SERVER_INSTALL_DIR, // where RHQ is installed, the top directory where everything else is
+        SERVER_HOME_DIR, // where the RHQ server's JBossAS deployment is; this is under the install dir 
         CURRENT_MEASUREMENT_TABLE, //
         NEXT_MEASUREMENT_TABLE_ROTATION;
     };

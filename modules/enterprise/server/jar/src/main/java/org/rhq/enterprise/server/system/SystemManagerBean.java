@@ -548,7 +548,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ServerDetails getServerDetails(Subject subject) {
+        CoreServerMBean coreServerMBean = LookupUtil.getCoreServer();
+
         ServerDetails serverDetails = new ServerDetails();
 
         serverDetails.setProductInfo(getProductInfo(subject));
@@ -558,6 +561,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         DateFormat localTimeFormatter = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL);
         details.put(ServerDetails.Detail.SERVER_LOCAL_TIME, localTimeFormatter.format(new Date()));
         details.put(ServerDetails.Detail.SERVER_TIMEZONE, TimeZone.getDefault().getDisplayName());
+        details.put(ServerDetails.Detail.SERVER_HOME_DIR, coreServerMBean.getJBossServerHomeDir().getAbsolutePath());
+        details.put(ServerDetails.Detail.SERVER_INSTALL_DIR, coreServerMBean.getInstallDir().getAbsolutePath());
 
         SystemDatabaseInformation dbInfo = SystemDatabaseInformation.getInstance();
         details.put(ServerDetails.Detail.DATABASE_CONNECTION_URL, dbInfo.getDatabaseConnectionURL());

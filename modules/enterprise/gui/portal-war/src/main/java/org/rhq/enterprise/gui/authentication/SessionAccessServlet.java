@@ -66,6 +66,19 @@ public class SessionAccessServlet extends HttpServlet {
         //check for web user update request from coregui. This is usually only set during ldap logins(case insensitive or registration.)
         String sessionWebUserUpdate = request.getHeader("rhq_webuser_update");
 
+        // check for HTTP session lastAccess update request from coregui. This "ping" happens at regular intervals
+        // to keep the http session alive until a coreGui logout event takes place. Note, the HTTP session
+        // lastAccess value is different than the rhq subject's session lastAccess. 
+        String sessionLastAccessUpdate = request.getHeader("rhq_last_access_update");
+
+        // If this is an HTTP session update request just return success. The access time has been updated already,
+        // just due to this request being sent.
+        if (sessionLastAccessUpdate != null) {
+            ServletOutputStream out = response.getOutputStream();
+            out.write("success".getBytes());
+            return;
+        }
+
         /* 
          * check if the user object is in the session.  if not, then the user is not validated, the response output
          * will not contain the "<subjectId>:<sessionId>:<lastAccess>", which will forward the user to the login page

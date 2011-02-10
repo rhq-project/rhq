@@ -445,9 +445,15 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     
     public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
         validateFields(repo);
-        
-        if (!authzManager.canUpdateRepo(subject, repo.getId())) {
-            throw new PermissionException("User [" + subject + "] can't update repo with id " + repo.getId());
+
+        if (!authzManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            if (!authzManager.canUpdateRepo(subject, repo.getId())) {
+                throw new PermissionException("User [" + subject + "] can't update repo with id " + repo.getId());
+            }
+            
+            //only the repo manager can update the owner of a repo.
+            //make sure that's the case.
+            repo.setOwner(subject);
         }
         
         // HHH-2864 - Leave this in until we move to hibernate > 3.2.r14201-2
@@ -471,7 +477,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     public Repo createRepo(Subject subject, Repo repo) throws RepoException {
         validateRepo(repo);
-
+        
+        if (!authzManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            //only the repo manager can update the owner of a repo.
+            //make sure that's the case.
+            repo.setOwner(subject);
+        }
+        
         log.debug("User [" + subject + "] is creating [" + repo + "]...");
         entityManager.persist(repo);
         log.info("User [" + subject + "] created [" + repo + "].");

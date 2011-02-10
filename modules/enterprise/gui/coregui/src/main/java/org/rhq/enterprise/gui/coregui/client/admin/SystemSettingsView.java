@@ -144,13 +144,30 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                         || Constant.EventPurge.equals(name) || Constant.BaselineFrequency.equals(name)
                         || Constant.BaselineDataSet.equals(name)) {
                         value = convertMillisToDays(value);
+                    } else if (Constant.EnableAgentAutoUpdate.equals(name)) {
+                        if (value.trim().length() == 0) {
+                            value = "false"; // if, for some reason, this value was empty, use false - let the user explicitly enable it
+                        }
+                    } else if (Constant.EnableDebugMode.equals(name)) {
+                        if (value.trim().length() == 0) {
+                            value = "false";
+                        }
+                    } else if (Constant.EnableExperimentalFeatures.equals(name)) {
+                        if (value.trim().length() == 0) {
+                            value = "false";
+                        }
+                    } else if (Constant.DataReindex.equals(name)) {
+                        if (value.trim().length() == 0) {
+                            value = "true";
+                        }
                     }
 
                     PropertySimple prop = new PropertySimple(name, value);
                     config.put(prop);
                 }
 
-                editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(), config);
+                editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config),
+                    config);
                 editor.addPropertyValueChangeListener(SystemSettingsView.this);
                 canvas.addMember(editor);
 
@@ -274,12 +291,19 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     /**
      * This returns the metadata describing the system settings.
      *
+     * @param config the current configuration settings from the server. Some values will
+     *               be converted to the types the definition will expect - for example,
+     *               the JAAS setting will not be "LDAP" or "JDBC" as the server would know it,
+     *               rather the value will be "true" or "false" (i.e. is ldap enabled or not?)
+     *
      * @return system settings config def
      */
-    private ConfigurationDefinition getSystemSettingsDefinition() {
+    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", "System settings");
 
+        ///////////////////////////////////
         // General Configuration Properties
+
         PropertyGroupDefinition generalGroup = new PropertyGroupDefinition("general");
         generalGroup.setDisplayName("General Configuration Properties");
         generalGroup.setDefaultHidden(false);
@@ -327,7 +351,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         enableExperimentalFeatures.setDefaultValue("false");
         def.put(enableExperimentalFeatures);
 
-        // Data Manager Configuration Properties 
+        ////////////////////////////////////////
+        // Data Manager Configuration Properties
+
         PropertyGroupDefinition dataManagerGroup = new PropertyGroupDefinition("datamanager");
         dataManagerGroup.setDisplayName("Data Manager Configuration Properties");
         dataManagerGroup.setDefaultHidden(false);
@@ -395,7 +421,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         dataReindex.setDefaultValue("true");
         def.put(dataReindex);
 
+        //////////////////////////////////////////////
         // Automatic Baseline Configuration Properties
+
         PropertyGroupDefinition baselineGroup = new PropertyGroupDefinition("baseline");
         baselineGroup.setDisplayName("Automatic Baseline Configuration Properties");
         baselineGroup.setDefaultHidden(false);
@@ -420,10 +448,12 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         baselineDataSet.setDefaultValue("7");
         def.put(baselineDataSet);
 
+        ////////////////////////////////
         // LDAP Configuration Properties
+
         PropertyGroupDefinition ldapGroup = new PropertyGroupDefinition("ldap");
         ldapGroup.setDisplayName("LDAP Configuration Properties");
-        ldapGroup.setDefaultHidden(true);
+        ldapGroup.setDefaultHidden(Boolean.parseBoolean(config.getSimpleValue(Constant.JAASProvider, "false"))); // show if LDAP is in use
         ldapGroup.setOrder(3);
 
         PropertyDefinitionSimple jaasProvider = new PropertyDefinitionSimple(Constant.JAASProvider,

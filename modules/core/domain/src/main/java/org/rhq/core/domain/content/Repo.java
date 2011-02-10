@@ -67,8 +67,8 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS_ADMIN, query = "SELECT c FROM Repo c WHERE c.candidate = false"),
-    @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS, query = "SELECT r FROM Repo r" //
-        + " WHERE r.isPrivate = false OR r.owner = :subject"),
+    @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS, query = "SELECT c FROM Repo c" //
+        + " WHERE c.isPrivate = false OR c.owner = :subject"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_IDS, query = "SELECT c FROM Repo c WHERE c.id IN ( :ids )"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name"),
     @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),

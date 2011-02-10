@@ -47,6 +47,7 @@
         <data ROLE_ID="1" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
         <data ROLE_ID="1" OPERATION="2"/>        <!-- Permission.MANAGE_SETTINGS -->
         <data ROLE_ID="1" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
+        <data ROLE_ID="1" OPERATION="15"/>       <!-- Permission.MANAGE_REPOSITORIES -->
         <!-- resource permissions start here-->
         <data ROLE_ID="1" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
         <data ROLE_ID="1" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->

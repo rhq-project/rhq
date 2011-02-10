@@ -23,7 +23,10 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceDateTimeField;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -44,7 +47,6 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
     public static abstract class Field {
         public static final String ID = "id";
         public static final String OPERATION_NAME = "operationName";
-        public static final String RESOURCE = "resource";
         public static final String STATUS = "status";
         public static final String STARTED_TIME = "startedTime";
         public static final String CREATED_TIME = "createdTime";
@@ -79,29 +81,26 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
     }
 
     @Override
+    // TODO: i18n
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        /*
-        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID);
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, "ID");
         idField.setPrimaryKey(true);
         fields.add(idField);
-        */
 
-        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME);
+        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME, "Operation");
         fields.add(nameField);
 
-        /*
-        DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE);
-        fields.add(resourceField);
-
-        DataSourceTextField statusField = new DataSourceTextField(Field.STATUS);
+        DataSourceTextField statusField = new DataSourceTextField(Field.STATUS, MSG.common_title_status());
         fields.add(statusField);
 
-        DataSourceTextField startedField = new DataSourceTextField(Field.STARTED_TIME);
-        startedField.setType(FieldType.DATETIME);
+        DataSourceDateTimeField startedField = new DataSourceDateTimeField(Field.STARTED_TIME,
+                MSG.dataSource_operationHistory_startedTime());
         fields.add(startedField);
-        */
+
+        DataSourceTextField subjectField = new DataSourceTextField(Field.SUBJECT, "Requester");
+        fields.add(subjectField);
 
         return fields;
     }

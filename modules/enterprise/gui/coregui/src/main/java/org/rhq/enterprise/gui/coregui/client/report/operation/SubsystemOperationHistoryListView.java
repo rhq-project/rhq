@@ -19,19 +19,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.operation;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -39,6 +29,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.h
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Ian Springer
@@ -74,35 +68,27 @@ public class SubsystemOperationHistoryListView extends AbstractOperationHistoryL
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = super.createFields();
 
+        ListGridField resourceField = createResourceField();
+        resourceField.setWidth("40%");
+        fields.add(1, resourceField);
+
         for (ListGridField field : fields) {
             String fieldName = field.getName();
+            if (fieldName.equals(AbstractOperationHistoryDataSource.Field.SUBJECT)) {
+                field.setWidth("10%");
+            }
             if (fieldName.equals(AbstractOperationHistoryDataSource.Field.OPERATION_NAME) ||
-                fieldName.equals(AbstractOperationHistoryDataSource.Field.SUBJECT) ||
                 fieldName.equals(AbstractOperationHistoryDataSource.Field.STARTED_TIME)) {
                 field.setWidth("25%");
             }
         }
-
-        ListGridField resourceField = new ListGridField(AbstractOperationHistoryDataSource.Field.RESOURCE,
-                MSG.common_title_resource());
-            resourceField.setAlign(Alignment.LEFT);
-            resourceField.setCellAlign(Alignment.LEFT);
-            resourceField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    Resource resource = (Resource) o;
-                    String url = LinkManager.getResourceLink(resource.getId());
-                    return "<a href=\"" + url + "\">" + resource.getName() + "</a>";
-                }
-            });
-        resourceField.setWidth("25%");
-        fields.add(resourceField);
 
         return fields;
     }
 
     @Override
     public Canvas getDetailsView(int id) {
-        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("DetailsView"));
+        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("DetailsView"), true);
     }
 
 }

@@ -37,6 +37,7 @@ public class DisambiguationReport<T> implements Serializable {
     private List<Resource> parents;
     private ResourceType resourceType;
     private String name;
+    private int id;
 
     public static class ResourceType implements Serializable {
 
@@ -127,13 +128,14 @@ public class DisambiguationReport<T> implements Serializable {
     public DisambiguationReport() {
     }
 
-    public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType, String name) {
+    public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType, String name, int id) {
         this.original = original;
         //        this.parents = Collections.unmodifiableList(parents);
         //spinder: the returned type is not Serializable and causes GWT serialization errors.
         this.parents = parents;
         this.resourceType = resourceType;
         this.name = name;
+        this.id = id;
     }
 
     public T getOriginal() {
@@ -164,8 +166,16 @@ public class DisambiguationReport<T> implements Serializable {
         return name;
     }
 
+    /**
+     *
+     * @return the Resource id
+     */
+    public int getId() {
+        return id;
+    }
+
     public String toString() {
         return "DisambiguationReport(type=" + resourceType + ", parents=" + parents + ", original=" + original
-            + ", name=" + name + ")";
+            + ", name=" + name + ", id=" + id + ")";
     }
 }

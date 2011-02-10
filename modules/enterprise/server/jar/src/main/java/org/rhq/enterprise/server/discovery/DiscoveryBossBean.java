@@ -119,15 +119,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private PluginManagerLocal pluginManager;
 
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report)
-        throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         validateInventoryReport(report);
 
-        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager,
-            pluginManager);
+        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager, pluginManager);
         if (!filter.accept(report)) {
-            throw new StaleTypeException("The report contains one or more resource types that have been marked for " +
-                "deletion.");
+            throw new StaleTypeException("The report contains one or more resource types that have been marked for "
+                + "deletion.");
         }
 
         Agent agent = report.getAgent();
@@ -136,10 +134,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Agent knownAgent = agentManager.getAgentByName(agent.getName());
         if (knownAgent == null) {
             throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName()
-                + "] sent an inventory report - that report will be ignored. " 
+                + "] sent an inventory report - that report will be ignored. "
                 + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
-                + agent.getName() 
-                + "] was recently removed from the inventory. In any other case this is a bug.");
+                + agent.getName() + "] was recently removed from the inventory. In any other case this is a bug.");
         }
 
         if (log.isDebugEnabled()) {
@@ -434,8 +431,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> result = new HashSet<ResourceUpgradeResponse>();
 
-        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration()
-            .getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
+        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration(
+            subjectManager.getOverlord()).getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
 
         for (ResourceUpgradeRequest request : upgradeRequests) {
             Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
@@ -508,9 +505,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest,
         boolean allowGenericPropertiesUpgrade) {
         if (upgradeRequest.getUpgradeErrorMessage() != null) {
-            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
-                upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(),
-                upgradeRequest.getTimestamp());
+            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, upgradeRequest
+                .getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(), upgradeRequest.getTimestamp());
             resourceManager.addResourceError(error);
             return null;
         }
@@ -688,8 +684,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                         continue;
                     }
                 }
-                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent,
-                    resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent, resource
+                    .getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }
 
             if (existingResource != null) {
@@ -918,8 +914,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             throw new IllegalArgumentException("Can only commit resources with status: " + results);
         }
 
-        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, false,
-            PageControl.getUnlimitedInstance());
+        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, false, PageControl
+            .getUnlimitedInstance());
         List<Resource> platforms = new ArrayList<Resource>();
         List<Resource> servers = new ArrayList<Resource>();
         for (Resource res : resources) {

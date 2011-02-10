@@ -19,11 +19,14 @@
 package org.rhq.enterprise.gui.legacy.taglib;
 
 import java.util.Properties;
+
 import javax.servlet.jsp.JspException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.taglibs.standard.tag.common.core.NullAttributeException;
 import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
+
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -77,7 +80,7 @@ public class ConfigTag extends VarSetterBaseTag {
             SystemManagerLocal systemManager = LookupUtil.getSystemManager();
 
             log.trace("getting CAM config property [" + prop + "]");
-            Properties conf = systemManager.getSystemConfiguration();
+            Properties conf = systemManager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord());
             String propVal = conf.getProperty(prop);
 
             if (value != null) {

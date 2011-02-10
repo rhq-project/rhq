@@ -18,13 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.HashMap;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.common.ServerDetails;
 
 /**
+ * Provides information about the server as well as a way to reconfigure parts of the server.
+ * 
+ * @author John Mazzitelli
  * @author Ian Springer
  */
 public interface SystemGWTService extends RemoteService {
+
     ProductInfo getProductInfo() throws RuntimeException;
+
+    ServerDetails getServerDetails() throws RuntimeException;
+
+    HashMap<String, String> getSystemConfiguration() throws RuntimeException;
+
+    void setSystemConfiguration(HashMap<String, String> properties, boolean skipValidation) throws RuntimeException;
 }

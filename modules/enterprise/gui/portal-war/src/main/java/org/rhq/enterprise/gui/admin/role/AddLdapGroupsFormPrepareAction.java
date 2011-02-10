@@ -20,16 +20,13 @@ package org.rhq.enterprise.gui.admin.role;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.ejb.EJBException;
 import javax.servlet.http.HttpServletRequest;
@@ -45,7 +42,6 @@ import org.apache.struts.action.ActionMessages;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -56,7 +52,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.exception.LdapCommunicationException;
 import org.rhq.enterprise.server.exception.LdapFilterException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
@@ -178,7 +173,7 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
                 } else if (cause instanceof LdapCommunicationException) {
                     ActionMessages actionMessages = new ActionMessages();
                     SystemManagerLocal manager = LookupUtil.getSystemManager();
-                    Properties options = manager.getSystemConfiguration();
+                    Properties options = manager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord());
                     String providerUrl = options.getProperty(RHQConstants.LDAPUrl, "(unavailable)");
                     actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
                         "admin.role.LdapCommunicationMessage", providerUrl));
@@ -192,7 +187,7 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
         } catch (LdapCommunicationException lce) {
             ActionMessages actionMessages = new ActionMessages();
             SystemManagerLocal manager = LookupUtil.getSystemManager();
-            Properties options = manager.getSystemConfiguration();
+            Properties options = manager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord());
             String providerUrl = options.getProperty(RHQConstants.LDAPUrl, "(unavailable)");
             actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("admin.role.LdapCommunicationMessage",
                 providerUrl));
@@ -318,8 +313,7 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             if (descending) {
                 keyList = new ArrayList<String>(groupNames.keySet());
                 Collections.reverse(keyList);
-            }
-            else {
+            } else {
                 keyList = new ArrayList<String>(groupNames.keySet());
                 Collections.sort(keyList);
             }
@@ -335,9 +329,8 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             if (descending) {
                 keyList = new ArrayList<String>(groupDescriptions.keySet());
                 Collections.reverse(keyList);
-            }
-            else {
-                keyList = new ArrayList<String>( groupDescriptions.keySet());
+            } else {
+                keyList = new ArrayList<String>(groupDescriptions.keySet());
                 Collections.sort(keyList);
             }
             for (String key : keyList) {

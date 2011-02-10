@@ -252,7 +252,7 @@ public class LinkManager {
 
     public static String getAdminSysConfigLink() {
         if (GWT) {
-            return "#Administration/Configuration/System Settings";
+            return "#Administration/Configuration/SystemSettings";
         } else {
             return "/admin/config/Config.do?mode=edit";
         }

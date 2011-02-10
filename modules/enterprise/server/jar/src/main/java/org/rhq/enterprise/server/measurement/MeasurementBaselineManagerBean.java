@@ -98,7 +98,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void calculateAutoBaselines() {
-        Properties conf = systemManager.getSystemConfiguration();
+        Properties conf = systemManager.getSystemConfiguration(subjectManager.getOverlord());
 
         // frequency is how often the baselines are recalculated
         // data set is how far back for a particular scheduled measurement is included in the baseline calcs
@@ -120,8 +120,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         measurementBaselineManager.calculateAutoBaselines(amountOfData, baselinesOlderThanTime);
 
         // everything was calculated successfully, remember this time
-        conf = systemManager.getSystemConfiguration(); // reload the config in case it was changed since we started
-        systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf, true);
+        conf = systemManager.getSystemConfiguration(subjectManager.getOverlord()); // reload the config in case it was changed since we started
+        try {
+            systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf, true);
+        } catch (Exception e) {
+            log.error("Failed to remember the time when we just calc'ed baselines - it may recalculate again soon.", e);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.NEVER)

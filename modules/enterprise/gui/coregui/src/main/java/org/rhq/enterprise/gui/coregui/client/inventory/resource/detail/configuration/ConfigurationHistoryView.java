@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -42,8 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
-    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges",
-        MSG.view_configurationHistoryList_title());
+    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
+        .view_configurationHistoryList_title());
 
     private Integer resourceId;
 
@@ -88,8 +89,12 @@ public class ConfigurationHistoryView extends TableSection {
             ListGridField resourceField = new ListGridField(ConfigurationHistoryDataSource.Field.RESOURCE);
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    Resource res = (Resource) o;
-                    return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
+                    if (listGridRecord == null) {
+                        return "unknown";
+                    }
+                    Resource res = (Resource) listGridRecord
+                        .getAttributeAsObject(ConfigurationHistoryDataSource.Field.RESOURCE);
+                    return "<a href=\"" + LinkManager.getResourceLink(res.getId()) + "\">" + res.getName() + "</a>";
                 }
             });
             fields.add(resourceField);
@@ -124,7 +129,7 @@ public class ConfigurationHistoryView extends TableSection {
                 ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
                 for (ListGridRecord record : selection) {
                     ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record
-                        .getAttributeAsObject("entity");
+                        .getAttributeAsObject(ConfigurationHistoryDataSource.Field.OBJECT);
                     configs.add(update);
                 }
                 ConfigurationComparisonView.displayComparisonDialog(configs);

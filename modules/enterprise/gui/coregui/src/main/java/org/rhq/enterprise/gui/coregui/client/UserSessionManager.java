@@ -121,7 +121,7 @@ public class UserSessionManager {
         BrowserUtility.forceIe6Hacks();
         //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
         //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -363,11 +363,13 @@ public class UserSessionManager {
 
     /** Takes an updated Subject and signals SessionAccessServlet in portal.war to update the associated WebUser
      *  because for this specific authenticated user.  Currently assumes Subject instances returned from SubjectManagerBean.processSubjectForLdap.
+     *  This should only ever be called by UI logic in LDAP logins(case insensitive/new registration) after RHQ sessions have been renewed server side
+     *  correctly.
      *
      * @param loggedInSubject Subject with updated session
      */
     private static void scheduleWebUserUpdate(final Subject loggedInSubject) {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
         //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
         b.setHeader(WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
         try {

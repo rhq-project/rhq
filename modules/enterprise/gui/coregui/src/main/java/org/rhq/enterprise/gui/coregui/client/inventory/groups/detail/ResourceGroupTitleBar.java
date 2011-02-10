@@ -69,6 +69,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private HTMLFlow title;
     private Img availabilityImage;
     private boolean favorite;
+    private boolean supportsFavorite;
     private GeneralProperties generalProperties;
 
     public ResourceGroupTitleBar(String locatorId, boolean isAutoGroup, boolean isAutoCluster) {
@@ -76,6 +77,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
         this.isAutoGroup = isAutoGroup;
         this.isAutoCluster = isAutoCluster;
+        this.supportsFavorite = (!(this.isAutoGroup || this.isAutoCluster));
 
         setWidth100();
         setHeight(30);
@@ -96,15 +98,17 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
         this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
-        this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
+        if (this.supportsFavorite) {
+            this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
 
-        this.favoriteButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                Set<Integer> favorites = toggleFavoriteLocally();
-                UserSessionManager.getUserPreferences().setFavoriteResourceGroups(favorites,
-                    new UpdateFavoritesCallback());
-            }
-        });
+            this.favoriteButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    Set<Integer> favorites = toggleFavoriteLocally();
+                    UserSessionManager.getUserPreferences().setFavoriteResourceGroups(favorites,
+                        new UpdateFavoritesCallback());
+                }
+            });
+        }
 
         expandCollapseArrow = new Img("[SKIN]/ListGrid/row_collapsed.png", 16, 16);
         expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
@@ -193,7 +197,9 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         hlayout.addMember(badge);
         hlayout.addMember(title);
         hlayout.addMember(availabilityImage);
-        hlayout.addMember(favoriteButton);
+        if (this.supportsFavorite) {
+            hlayout.addMember(favoriteButton);
+        }
         addMember(tagEditorView);
     }
 
@@ -246,6 +252,10 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     }
 
     private void updateFavoriteButton() {
+        if (!this.supportsFavorite) {
+            return;
+        }
+
         this.favoriteButton.setSrc(favorite ? FAV_ICON : NOT_FAV_ICON);
         if (favorite) {
             this.favoriteButton.setTooltip(MSG.view_titleBar_common_clickToRemoveFav());

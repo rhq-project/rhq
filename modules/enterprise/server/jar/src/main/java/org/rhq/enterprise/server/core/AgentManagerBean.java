@@ -58,6 +58,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -97,6 +98,10 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    @IgnoreDependency
+    private SubjectManagerLocal subjectManager;
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
@@ -212,7 +217,8 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         long maximumQuietTimeAllowed = 900000L;
         try {
-            String prop = systemManager.getSystemConfiguration().getProperty(RHQConstants.AgentMaxQuietTimeAllowed);
+            String prop = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
+                RHQConstants.AgentMaxQuietTimeAllowed);
             if (prop != null) {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
             }

@@ -36,6 +36,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.clientapi.util.TimeUtil;
@@ -43,6 +44,7 @@ import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -71,6 +73,9 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private SessionContext ctx;
 
     @EJB
+    @IgnoreDependency
+    private SubjectManagerLocal subjectManager;
+    @EJB
     private SystemManagerLocal systemManager;
     @EJB
     private MeasurementCompressionManagerLocal compressionManager;
@@ -85,7 +90,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private void loadPurgeDefaults() {
         this.log.debug("Loading default purge intervals");
 
-        Properties conf = systemManager.getSystemConfiguration();
+        Properties conf = systemManager.getSystemConfiguration(subjectManager.getOverlord());
 
         try {
             this.purge1h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Hour));

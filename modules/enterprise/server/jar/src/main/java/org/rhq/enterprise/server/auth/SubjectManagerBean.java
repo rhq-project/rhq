@@ -362,7 +362,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         // get the configuration properties and use the JAAS modules to perform the login
-        Properties config = systemManager.getSystemConfiguration();
+        Properties config = systemManager.getSystemConfiguration(getOverlord());
 
         try {
             UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
@@ -449,7 +449,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             } else {//Start LDAP check.
 
                 //retrieve configuration properties and do LDAP check(permissions check in SubjectGWTImpl)
-                Properties config = systemManager.getSystemConfiguration();
+                Properties config = systemManager.getSystemConfiguration(getOverlord());
 
                 //determine if ldap configured.
                 boolean ldapConfigured = config.getProperty(RHQConstants.JAASProvider).equals(
@@ -509,7 +509,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
                     //Subject.id guaranteed to be > 0 then iii)authorization updates for ldap groups necessary
                     //BZ-580127: only do group authz check if one or both of group filter fields is set
-                    Properties options = systemManager.getSystemConfiguration();
+                    Properties options = systemManager.getSystemConfiguration(getOverlord());
                     String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
                     String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
                     if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {

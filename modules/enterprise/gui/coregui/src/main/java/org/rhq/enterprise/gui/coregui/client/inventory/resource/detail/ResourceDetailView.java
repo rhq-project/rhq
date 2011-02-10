@@ -23,9 +23,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -39,6 +41,7 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
@@ -418,6 +421,22 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
                         loadResourceType(resourceComposite, viewPath);
+
+                        // add this resouce to the user's recently visited list
+                        UserSessionManager.getUserPreferences().addRecentResource(resourceId,
+                            new AsyncCallback<Subject>() {
+
+                                public void onFailure(Throwable caught) {
+                                    Log.error("Unable to update recently viewed resources", caught);
+                                }
+
+                                public void onSuccess(Subject result) {
+                                    if (Log.isDebugEnabled()) {
+                                        Log.debug("Updated recently viewed resources for " + result
+                                            + " with resourceId [" + resourceId + "]");
+                                    }
+                                }
+                            });
                     }
                 }
             });

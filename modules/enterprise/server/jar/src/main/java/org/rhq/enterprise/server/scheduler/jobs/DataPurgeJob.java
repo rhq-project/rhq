@@ -83,7 +83,8 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LOG.info("Data Purge Job STARTING");
 
         try {
-            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord());
             compressMeasurementData(LookupUtil.getMeasurementCompressionManager());
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);

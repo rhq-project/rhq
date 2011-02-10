@@ -206,7 +206,8 @@ public class AuthenticateUserAction extends TilesAction {
         String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
 
         if (provider == null) {
-            provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(RHQConstants.JAASProvider);
+            provider = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord()).getProperty(RHQConstants.JAASProvider);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }
 

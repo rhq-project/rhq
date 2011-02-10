@@ -73,6 +73,48 @@ public class UserPreferences {
         store(callback);
     }
 
+    public List<Integer> getRecentResources() {
+        return this.getPreferenceAsIntegerList(UserPreferenceNames.RECENT_RESOURCES);
+    }
+
+    public void addRecentResource(Integer resourceId, AsyncCallback<Subject> callback) {
+        List<Integer> recentResources = getRecentResources();
+        if (!recentResources.isEmpty() && recentResources.get(0).equals(resourceId)) {
+            return;
+        }
+
+        recentResources.remove(resourceId);
+        recentResources.add(0, resourceId);
+        // limit to the 10 most recent resources
+        int size = recentResources.size();
+        if (size > 10) {
+            recentResources.remove(10);
+        }
+        setPreference(UserPreferenceNames.RECENT_RESOURCES, recentResources);
+        store(callback);
+    }
+
+    public List<Integer> getRecentResourceGroups() {
+        return getPreferenceAsIntegerList(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
+    }
+
+    public void addRecentResourceGroup(Integer resourceGroupId, AsyncCallback<Subject> callback) {
+        List<Integer> recentResourceGroups = getRecentResourceGroups();
+        if (!recentResourceGroups.isEmpty() && recentResourceGroups.get(0).equals(resourceGroupId)) {
+            return;
+        }
+
+        recentResourceGroups.remove(resourceGroupId);
+        recentResourceGroups.add(0, resourceGroupId);
+        // limit to the 5 most recent resources
+        int size = recentResourceGroups.size();
+        if (size > 5) {
+            recentResourceGroups.remove(5);
+        }
+        setPreference(UserPreferenceNames.RECENT_RESOURCE_GROUPS, recentResourceGroups);
+        store(callback);
+    }
+
     public int getPageRefreshInterval() {
         if ((getPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD) == null)
             || (Integer.valueOf(getPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD)) == 60)) {//default to 60 seconds
@@ -155,6 +197,23 @@ public class UserPreferences {
             return result;
         } catch (Exception e) {
             return new HashSet<Integer>();
+        }
+    }
+
+    public List<Integer> getPreferenceAsIntegerList(String key) {
+        try {
+            List<String> value = getPreferenceAsList(key);
+            List<Integer> result = new ArrayList<Integer>(value.size());
+            for (String aValue : value) {
+                String trimmed = aValue.trim();
+                if (trimmed.length() > 0) {
+                    Integer intValue = Integer.valueOf(trimmed);
+                    result.add(intValue);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            return new ArrayList<Integer>();
         }
     }
 

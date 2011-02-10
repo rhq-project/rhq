@@ -1,8 +1,6 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 /**
  * Wrapper for com.smartgwt.client.widgets.grid.ListGrid that sets the ID for use with selenium scLocators.
@@ -31,10 +29,6 @@ public class LocatableListGrid extends ListGrid implements Locatable {
 
     public String extendLocatorId(String extension) {
         return this.locatorId + "_" + extension;
-    }
-
-    public String getValueIcon(ListGridField field, Object value, ListGridRecord record) {
-        return null;
     }
 
 }

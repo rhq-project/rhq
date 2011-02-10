@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -63,6 +64,7 @@ public class DownloadsView extends LocatableVLayout {
         super(locatorId);
         setHeight100();
         setWidth100();
+        setOverflow(Overflow.AUTO);
 
         TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_downloads(), "global/Download_24.png");
         addMember(titleBar);
@@ -155,11 +157,94 @@ public class DownloadsView extends LocatableVLayout {
     }
 
     private void prepareCLISection() {
-        // TODO Auto-generated method stub
+        systemManager.getClientVersionProperties(new AsyncCallback<HashMap<String, String>>() {
+            @Override
+            public void onSuccess(HashMap<String, String> result) {
+                String version = result.get("rhq-server.version");
+                String build = result.get("rhq-server.build-number");
+                String md5 = result.get("rhq-client.md5");
+
+                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("cliForm"));
+                form.setMargin(10);
+                form.setWidth100();
+
+                StaticTextItem versionItem = new StaticTextItem("cliVersion", MSG.view_admin_downloads_cli_version());
+                versionItem.setValue(version);
+                versionItem.setWrapTitle(false);
+
+                StaticTextItem buildItem = new StaticTextItem("cliBuild", MSG.view_admin_downloads_cli_buildNumber());
+                buildItem.setValue(build);
+                buildItem.setWrapTitle(false);
+
+                StaticTextItem md5Item = new StaticTextItem("cliMd5", MSG.view_admin_downloads_cli_md5());
+                md5Item.setValue(md5);
+                md5Item.setWrapTitle(false);
+
+                LinkItem linkItem = new LinkItem("cliLink");
+                linkItem.setTitle(MSG.view_admin_downloads_cli_link_label());
+                linkItem.setLinkTitle(MSG.view_admin_downloads_cli_link_value(version, build));
+                linkItem.setValue("/client/download");
+
+                SpacerItem spacerItem = new SpacerItem("clientSpacer");
+                spacerItem.setHeight(1);
+
+                StaticTextItem helpItem = new StaticTextItem("clientHelp");
+                helpItem.setColSpan(2);
+                helpItem.setShowTitle(false);
+                helpItem.setValue(MSG.view_admin_downloads_cli_help());
+
+                form.setItems(versionItem, buildItem, md5Item, linkItem, spacerItem, helpItem);
+
+                cliSection.setItems(form);
+                cliSection.setExpanded(true);
+                sectionStack.markForRedraw();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_cli_loadError(), caught);
+            }
+        });
     }
 
     private void prepareBundleSection() {
-        // TODO Auto-generated method stub
+        systemManager.getBundleDeployerDownload(new AsyncCallback<HashMap<String, String>>() {
+            @Override
+            public void onSuccess(HashMap<String, String> result) {
+                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("bundleForm"));
+                form.setMargin(10);
+                form.setWidth100();
+
+                // there is only one item in the returned map - key=name, value=url
+                String name = result.keySet().iterator().next();
+                String url = result.values().iterator().next();
+
+                LinkItem linkItem = new LinkItem("bundleLink");
+                linkItem.setTitle(MSG.view_admin_downloads_bundle_link_label());
+                linkItem.setLinkTitle(MSG.view_admin_downloads_bundle_link_value(name));
+                linkItem.setValue(url);
+
+                SpacerItem spacerItem = new SpacerItem("bundleSpacer");
+                spacerItem.setHeight(1);
+
+                StaticTextItem helpItem = new StaticTextItem("bundleHelp");
+                helpItem.setColSpan(2);
+                helpItem.setShowTitle(false);
+                helpItem.setValue(MSG.view_admin_downloads_bundle_help());
+
+                form.setItems(linkItem, spacerItem, helpItem);
+
+                bundleSection.setItems(form);
+                bundleSection.setExpanded(true);
+                sectionStack.markForRedraw();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_bundle_loadError(), caught);
+            }
+        });
+
     }
 
     private void prepareConnectorsSection() {

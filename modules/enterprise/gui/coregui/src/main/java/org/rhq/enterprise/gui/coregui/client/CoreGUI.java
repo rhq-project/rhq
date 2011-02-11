@@ -138,6 +138,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             }
         });
 
+        Window.addWindowClosingHandler(new Window.ClosingHandler() {
+            public void onWindowClosing(Window.ClosingEvent event) {
+                event.setMessage("Are you sure you want to leave RHQ?");
+            }
+        });
+
         messageCenter = new MessageCenter();
 
         UserSessionManager.login();

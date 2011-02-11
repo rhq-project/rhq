@@ -47,9 +47,11 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
@@ -65,6 +67,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author John Mazzitelli
  */
 public class ResourceTypeTreeView extends LocatableVLayout implements BookmarkableView {
+
+    public static final ViewName VIEW_ID = new ViewName("Templates", MSG.view_adminConfig_templates());
+    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
+        + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
     private Layout gridCanvas;
     private Layout alertTemplateCanvas;

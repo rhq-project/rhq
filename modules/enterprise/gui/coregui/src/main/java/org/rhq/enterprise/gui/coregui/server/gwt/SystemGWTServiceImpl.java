@@ -18,7 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -26,6 +30,7 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -41,11 +46,12 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     private static final long serialVersionUID = 1L;
 
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
 
     @Override
     public ProductInfo getProductInfo() throws RuntimeException {
         try {
-            return this.systemManager.getServerDetails(getSessionSubject()).getProductInfo();
+            return systemManager.getServerDetails(getSessionSubject()).getProductInfo();
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -54,7 +60,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     @Override
     public ServerDetails getServerDetails() throws RuntimeException {
         try {
-            return this.systemManager.getServerDetails(getSessionSubject());
+            return systemManager.getServerDetails(getSessionSubject());
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -63,7 +69,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     @Override
     public HashMap<String, String> getSystemConfiguration() throws RuntimeException {
         try {
-            Properties props = this.systemManager.getSystemConfiguration(getSessionSubject());
+            Properties props = systemManager.getSystemConfiguration(getSessionSubject());
             return convertFromProperties(props);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
@@ -74,10 +80,120 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     public void setSystemConfiguration(HashMap<String, String> map, boolean skipValidation) throws RuntimeException {
         try {
             Properties props = convertToProperties(map);
-            this.systemManager.setSystemConfiguration(getSessionSubject(), props, skipValidation);
+            systemManager.setSystemConfiguration(getSessionSubject(), props, skipValidation);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
+    }
+
+    @Override
+    public HashMap<String, String> getAgentVersionProperties() throws RuntimeException {
+        try {
+            File file = agentManager.getAgentUpdateVersionFile();
+
+            Properties props = new Properties();
+            props.load(new FileInputStream(file));
+
+            return convertFromProperties(props);
+        } catch (Throwable t) {
+            throw new RuntimeException("Agent download information not available. " + ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
+    public HashMap<String, String> getConnectorDownloads() throws RuntimeException {
+        try {
+            File downloadDir = getConnectorDownloadsDir();
+            List<File> files = getFiles(downloadDir);
+            if (files == null) {
+                return new HashMap<String, String>(0);
+            }
+            HashMap<String, String> map = new HashMap<String, String>(files.size());
+            for (File file : files) {
+                // key is the filename, value is the relative URL to download the file from the server
+                map.put(file.getName(), "/downloads/connectors/" + file.getName());
+            }
+            return map;
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+
+    }
+
+    private File getConnectorDownloadsDir() {
+        File serverHomeDir = getServerHomeDir();
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/connectors");
+        if (!downloadDir.exists()) {
+            throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+
+    private File getClientDownloadDir() {
+        File serverHomeDir = getServerHomeDir();
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");
+        if (!downloadDir.exists()) {
+            throw new RuntimeException("Server is missing client download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+
+    @Override
+    public HashMap<String, String> getClientVersionProperties() throws RuntimeException {
+        File versionFile = new File(getClientDownloadDir(), "rhq-client-version.properties");
+        try {
+            Properties p = new Properties();
+            p.load(new FileInputStream(versionFile));
+            return convertFromProperties(p);
+        } catch (Throwable t) {
+            throw new RuntimeException("Unable to retrieve client version info. " + ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
+    public HashMap<String, String> getBundleDeployerDownload() throws RuntimeException {
+        try {
+            File downloadDir = getBundleDeployerDownloadDir();
+            List<File> files = getFiles(downloadDir);
+            if (files.isEmpty()) {
+                throw new RuntimeException("Missing bundle deployer download file");
+            }
+            File file = files.get(0);
+            HashMap<String, String> ret = new HashMap<String, String>(1);
+            ret.put(file.getName(), "/downloads/bundle-deployer/" + file.getName());
+            return ret;
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+
+    }
+
+    private File getBundleDeployerDownloadDir() {
+        File serverHomeDir = getServerHomeDir();
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/bundle-deployer");
+        if (!downloadDir.exists()) {
+            throw new RuntimeException("Missing bundle deployer download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+
+    private File getServerHomeDir() {
+        ServerDetails details = systemManager.getServerDetails(LookupUtil.getSubjectManager().getOverlord());
+        File serverHomeDir = new File(details.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR));
+        return serverHomeDir;
+    }
+
+    private static List<File> getFiles(File downloadDir) {
+        File[] filesArray = downloadDir.listFiles();
+        List<File> files = new ArrayList<File>();
+        if (filesArray != null) {
+            for (File file : filesArray) {
+                if (file.isFile()) {
+                    files.add(file);
+                }
+            }
+        }
+        return files;
     }
 
     // GWT does not support java.util.Properties - we have to convert to/from Properties <-> HashMap

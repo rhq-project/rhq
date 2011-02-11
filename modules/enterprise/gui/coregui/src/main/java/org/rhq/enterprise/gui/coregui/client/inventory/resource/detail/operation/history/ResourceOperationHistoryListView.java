@@ -25,6 +25,8 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 
 /**
+ * A table that displays all of the operation histories for a particular Resource.
+ *
  * @author Ian Springer
  */
 public class ResourceOperationHistoryListView extends AbstractOperationHistoryListView {

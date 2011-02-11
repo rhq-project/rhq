@@ -62,11 +62,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_PARTITION_EVENTS_VIEW_ID = new ViewName("PartitionEvents", MSG
         .view_adminTopology_partitionEvents());
 
-    // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_SYSTEM_SETTINGS_VIEW_ID = new ViewName("SystemSettings", MSG
-        .view_adminConfig_systemSettings());
-    public static final ViewName PAGE_TEMPLATES_VIEW_ID = new ViewName("Templates", MSG.view_adminConfig_templates());
-    private static final ViewName PAGE_DOWNLOADS_VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads());
+    // TODO this iframe page view id should go away in favor of the gwt view page view_id, when available
     private static final ViewName PAGE_PLUGINS_VIEW_ID = new ViewName("Plugins", MSG.view_adminConfig_plugins());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
@@ -174,27 +170,26 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildConfigurationSection() {
-        NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID,
+        NavigationItem systemSettingsItem = new NavigationItem(SystemSettingsView.VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SystemSettingsView(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID.getName()));
+                    return new SystemSettingsView(extendLocatorId(SystemSettingsView.VIEW_ID.getName()));
                 }
             });
         systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
 
-        NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, ImageManager.getMetricEditIcon(),
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ResourceTypeTreeView(extendLocatorId(PAGE_TEMPLATES_VIEW_ID.getName()));
-                }
-            });
+        NavigationItem templatesItem = new NavigationItem(ResourceTypeTreeView.VIEW_ID, ImageManager
+            .getMetricEditIcon(), new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceTypeTreeView(extendLocatorId(ResourceTypeTreeView.VIEW_ID.getName()));
+            }
+        });
         templatesItem.setRefreshRequired(true); // we always need a new page
 
-        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID,
-            "subsystems/bundle/BundleDeployment_16.png", new ViewFactory() {
+        NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, "global/Download_16.png",
+            new ViewFactory() {
                 public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_DOWNLOADS_VIEW_ID.getName()),
-                        "/rhq/admin/downloads-body.xhtml?nomenu=true");
+                    return new DownloadsView(extendLocatorId(DownloadsView.VIEW_ID.getName()));
                 }
             });
 

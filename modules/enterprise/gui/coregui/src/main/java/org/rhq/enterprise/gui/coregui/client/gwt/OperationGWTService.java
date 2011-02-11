@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
  */
 public interface OperationGWTService extends RemoteService {
 
-    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
+    PageList<DisambiguationReport<ResourceOperationHistory>> findResourceOperationHistoriesByCriteria(
         ResourceOperationHistoryCriteria criteria) throws RuntimeException;
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)

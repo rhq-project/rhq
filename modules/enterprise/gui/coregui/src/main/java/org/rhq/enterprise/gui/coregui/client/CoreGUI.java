@@ -352,6 +352,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         public void renderView(final ViewPath viewPath) {
             Window.setTitle(getViewPathTitle(viewPath));
 
+            // keep our CoreGUI session alive by refreshing the session timer each time the user performs navigation
+            UserSessionManager.refresh();
+
             if (viewPath.isEnd()) {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);

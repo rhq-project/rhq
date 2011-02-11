@@ -154,7 +154,7 @@ public class ViewAction extends TilesAction {
         }
         
         public DisambiguatedRecentlyAddedResourceComposite(DisambiguationReport<RecentlyAddedResourceComposite> report) {
-            super(report.getOriginal(), report.getParents(), report.getResourceType(), report.getName());
+            super(report.getOriginal(), report.getParents(), report.getResourceType(), report.getName(), report.getId());
             children = new ArrayList<DisambiguatedRecentlyAddedResourceComposite>();
         }
         

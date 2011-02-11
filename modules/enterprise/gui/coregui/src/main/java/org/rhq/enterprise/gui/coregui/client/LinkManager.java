@@ -327,7 +327,11 @@ public class LinkManager {
     }
 
     public static String getAdminDownloadsLink() {
-        return "/rhq/admin/downloads.xhtml";
+        if (GWT) {
+            return "#Administration/Configuration/Downloads";
+        } else {
+            return "/rhq/admin/downloads.xhtml";
+        }
     }
 
     public static String getDebugSqlLink() {

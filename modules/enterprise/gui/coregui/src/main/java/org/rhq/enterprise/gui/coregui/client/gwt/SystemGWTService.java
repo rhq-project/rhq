@@ -39,5 +39,37 @@ public interface SystemGWTService extends RemoteService {
 
     HashMap<String, String> getSystemConfiguration() throws RuntimeException;
 
-    void setSystemConfiguration(HashMap<String, String> properties, boolean skipValidation) throws RuntimeException;
+    void setSystemConfiguration(HashMap<String, String> properties, boolean skipValidation);
+
+    /**
+     * @return metadata properties about the agent download available on the server. 
+     */
+    HashMap<String, String> getAgentVersionProperties();
+
+    /**
+     * Returns the name and download URL (key and value respectively) of all connector downloads
+     * available on the server. The URL is relative to the server's host and port (i.e. only
+     * the path of the URL is returned).
+     * 
+     * @return information about connectors that can be downloaded from the server
+     */
+    HashMap<String, String> getConnectorDownloads();
+
+    /**
+     * @return metadata properties about the CLI download available on the server. 
+     */
+    HashMap<String, String> getClientVersionProperties();
+
+    /**
+     * Returns the name and download URL (key and value respectively) of the
+     * standalone bundle deployer tool available on the server for download.
+     * The URL is relative to the server's host and port (i.e. only
+     * the path of the URL is returned).
+     * 
+     * The bundle deployer is a standalone tool that bundle authors/developers can use
+     * to test their bundles prior to uploading to RHQ and deploying to managed platforms.
+     * 
+     * @return information about the bundle deployer tool that can be downloaded from the server
+     */
+    HashMap<String, String> getBundleDeployerDownload();
 }

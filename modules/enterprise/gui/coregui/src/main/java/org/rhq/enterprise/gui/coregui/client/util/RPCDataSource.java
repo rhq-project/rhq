@@ -50,6 +50,7 @@ import org.hibernate.validator.RangeValidator;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;

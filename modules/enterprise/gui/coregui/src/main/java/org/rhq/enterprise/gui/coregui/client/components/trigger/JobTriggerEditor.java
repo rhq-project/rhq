@@ -750,7 +750,15 @@ public class JobTriggerEditor extends LocatableVLayout {
         }
     }
 
+    /**
+     * Returns the start time, if one was specified, otherwise returns null to indicate an immediate start.
+     *
+     * @return the start time, if one was specified, otherwise returns null to indicate an immediate start
+     */
     public Date getStartTime() {
+        if (!this.isStartLater) {
+            return null;
+        }
         Date startTime;
         if (this.isStartDelay) {
             // start delay - compute start time

@@ -87,7 +87,8 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
                 }
 
                 public void onSuccess(PageList<DisambiguationReport<ResourceOperationHistory>> result) {
-                    response.setData(buildRecordsFromDisambiguationReports(result));
+                    ListGridRecord[] resourceOperationHistoryRecords = buildRecordsFromDisambiguationReports(result);
+                    response.setData(resourceOperationHistoryRecords);
                     processResponse(request.getRequestId(), response);
                 }
             });

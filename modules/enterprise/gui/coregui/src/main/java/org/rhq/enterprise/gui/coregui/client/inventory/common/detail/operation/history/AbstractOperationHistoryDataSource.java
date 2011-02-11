@@ -26,7 +26,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -95,9 +94,13 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
         DataSourceTextField statusField = new DataSourceTextField(Field.STATUS, MSG.common_title_status());
         fields.add(statusField);
 
-        DataSourceDateTimeField startedField = new DataSourceDateTimeField(Field.STARTED_TIME,
+        DataSourceDateTimeField createdTimeField = new DataSourceDateTimeField(Field.CREATED_TIME,
+                "Created Time");
+        fields.add(createdTimeField);
+
+        DataSourceDateTimeField startedTimeField = new DataSourceDateTimeField(Field.STARTED_TIME,
                 MSG.dataSource_operationHistory_startedTime());
-        fields.add(startedField);
+        fields.add(startedTimeField);
 
         DataSourceTextField subjectField = new DataSourceTextField(Field.SUBJECT, "Requester");
         fields.add(subjectField);
@@ -117,8 +120,8 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(Field.ID, from.getId());
-        record.setAttribute(Field.CREATED_TIME, from.getCreatedTime());
-        record.setAttribute(Field.STARTED_TIME, new Date(from.getStartedTime()));
+        record.setAttribute(Field.CREATED_TIME, convertTimestampToDate(from.getCreatedTime()));
+        record.setAttribute(Field.STARTED_TIME, convertTimestampToDate(from.getStartedTime()));
         record.setAttribute(Field.DURATION, from.getDuration());
         record.setAttribute(Field.SUBJECT, from.getSubjectName());
         record.setAttribute(Field.OPERATION_DEFINITION, from.getOperationDefinition());
@@ -129,5 +132,7 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
 
         return record;
     }
+
+
 
 }

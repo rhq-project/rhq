@@ -28,6 +28,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -150,10 +151,8 @@ public class ResourceOperationJob extends OperationJob {
      * call this for each member resource in the group. If groupHistory is not <code>null</code>, it means this resource
      * job is being executed as part of a group execution.
      *
-     * @param  jobName
-     * @param  jobGroup
      * @param  schedule
-     * @param  groupHistory
+     * @param  resourceHistory
      * @param  operationManager
      *
      * @return the history item that you can use to track progress
@@ -164,6 +163,10 @@ public class ResourceOperationJob extends OperationJob {
         OperationManagerLocal operationManager) throws Exception {
         // make sure the session is still valid
         schedule.setSubject(getUserWithSession(schedule.getSubject(), true));
+
+        resourceHistory.setStartedTime();
+        resourceHistory = (ResourceOperationHistory) operationManager.updateOperationHistory(
+                getUserWithSession(schedule.getSubject(), true), resourceHistory);
 
         // now tell the agent to invoke it!
         try {

@@ -19,14 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DateDisplayFormat;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
@@ -132,10 +132,20 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     protected ListGridField createStartedTimeField() {
         ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME);
-        startedTimeField.setType(ListGridFieldType.DATE);
-        startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        //startedTimeField.setType(ListGridFieldType.DATE);
+        //startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
+        startedTimeField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value != null) {
+                    Date date = (Date) value;
+                    return DateTimeFormat.getMediumDateTimeFormat().format(date);
+                } else {
+                    return "<i>not yet started</i>";
+                }
+            }
+        });
         return startedTimeField;
     }
 

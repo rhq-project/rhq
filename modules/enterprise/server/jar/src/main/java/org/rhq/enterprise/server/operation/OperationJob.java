@@ -99,11 +99,6 @@ public abstract class OperationJob implements Job {
         history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
             schedule.getResource(), groupHistory);
 
-        // resource-level ops can start immediately, group ops will be started as appropriate by the GroupOperationJob
-        if (groupHistory == null) {
-            history.setStartedTime();
-        }
-
         // persist the results of the initial create
         history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
 

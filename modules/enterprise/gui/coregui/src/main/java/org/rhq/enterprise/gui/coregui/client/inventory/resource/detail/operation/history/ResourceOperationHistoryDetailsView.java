@@ -26,12 +26,14 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
@@ -63,9 +65,20 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         List<FormItem> items = super.createFields(operationHistory);
 
         if (this.showResourceField) {
-            StaticTextItem resourceItem = new StaticTextItem("resource", "Resource");
+            StaticTextItem resourceItem = new StaticTextItem(ResourceOperationHistoryDataSource.Field.RESOURCE,
+                    "Resource");
             resourceItem.setValue(this.disambiguatedResourceName);
-            items.add(0, resourceItem);
+            items.add(1, resourceItem);
+        }
+
+        GroupOperationHistory groupOperationHistory = operationHistory.getGroupOperationHistory();
+        if (groupOperationHistory != null) {
+            StaticTextItem groupOperationHistoryItem = new StaticTextItem(
+                    ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
+            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup().getId(), groupOperationHistory.getId());
+            String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId() + "</a> (on group '" + groupOperationHistory.getGroup().getName() + "')";
+            groupOperationHistoryItem.setValue(value);
+            items.add(groupOperationHistoryItem);
         }
 
         return items;

@@ -142,6 +142,10 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         OperationRequestStatus status = operationHistory.getStatus();
 
+        StaticTextItem idItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.ID, "Execution ID");
+        idItem.setValue(operationHistory.getId());
+        items.add(idItem);
+
         StaticTextItem operationItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.OPERATION_NAME, MSG
             .view_operationHistoryDetails_operation());
         OperationDefinition operationDefinition = operationHistory.getOperationDefinition();

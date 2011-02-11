@@ -47,6 +47,7 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
 
     public static abstract class Field extends AbstractOperationHistoryDataSource.Field {
         public static final String RESOURCE = "resource";
+        public static final String GROUP_OPERATION_HISTORY = "groupOperationHistory";
     }
 
     public static abstract class CriteriaField {

@@ -87,6 +87,10 @@ public class LinkManager {
         return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
 
+    public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {
+        return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
+    }
+
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
             return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;

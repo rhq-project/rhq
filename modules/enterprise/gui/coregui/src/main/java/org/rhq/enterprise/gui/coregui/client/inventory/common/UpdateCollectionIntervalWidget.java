@@ -82,6 +82,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         intervalItem.setTitle(MSG.view_inventory_collectionInterval());
         IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
+        integerRangeValidator.setMax(10000000); // avoids exceptions if someone enters really large nums; no one needs to go higher anyway
         intervalItem.setValidators(integerRangeValidator);
         intervalItem.setValidateOnChange(true);
         intervalItem.addChangedHandler(new ChangedHandler() {

@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -94,7 +95,8 @@ public class ConfigurationHistoryView extends TableSection {
                     }
                     Resource res = (Resource) listGridRecord
                         .getAttributeAsObject(ConfigurationHistoryDataSource.Field.RESOURCE);
-                    return "<a href=\"" + LinkManager.getResourceLink(res.getId()) + "\">" + res.getName() + "</a>";
+                    String url = LinkManager.getResourceLink(res.getId());
+                    return SeleniumUtility.getLocatableHref(url, res.getName(), null);
                 }
             });
             fields.add(resourceField);

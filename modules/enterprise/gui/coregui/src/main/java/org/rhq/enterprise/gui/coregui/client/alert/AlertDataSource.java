@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -153,7 +154,8 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
-                    return "<a href=\"" + LinkManager.getResourceLink(resourceId) + "\">" + o + "</a>";
+                    String url = LinkManager.getResourceLink(resourceId);
+                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
             fields.add(resourceNameField);

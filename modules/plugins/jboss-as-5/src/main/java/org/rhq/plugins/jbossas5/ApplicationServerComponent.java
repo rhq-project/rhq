@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -123,6 +123,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private ProfileServiceConnection connection;
     private JmxConnectionHelper jmxConnectionHelper;
 
+    private long lastReloadTime = System.currentTimeMillis();
+
     private ApplicationServerContentFacetDelegate contentFacetDelegate;
     private ApplicationServerOperationsDelegate operationDelegate;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
@@ -144,7 +146,14 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         if (this.connection != null) {
             try {
                 ManagementView managementView = this.connection.getManagementView();
-                managementView.load();
+                
+                // If 1 minute has passed since we last called managementView.reload(), we call it.
+                if((System.currentTimeMillis() - this.lastReloadTime) > 60000) {
+                    managementView.reload();
+                    this.lastReloadTime = System.currentTimeMillis();
+                } else {
+                    managementView.load();
+                }
                 
                 //let's see if the connection corresponds to the server
                 //this component represents. This is to prevent 2 servers

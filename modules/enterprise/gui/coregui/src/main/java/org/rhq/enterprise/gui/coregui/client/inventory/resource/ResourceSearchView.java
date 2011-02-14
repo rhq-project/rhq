@@ -33,7 +33,10 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -50,6 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -126,8 +130,8 @@ public class ResourceSearchView extends Table {
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
-                    + "</a>";
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id"));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
             }
         });
 
@@ -186,8 +190,16 @@ public class ResourceSearchView extends Table {
             }
         });
 
-        //        //load double click handler for this table
-        //        configureDoubleClickHandler();
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String selectedId = selectedRows[0].getAttribute("id");
+                    CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                }
+            }
+        });
 
         /*searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
@@ -207,22 +219,7 @@ public class ResourceSearchView extends Table {
                 }
             }
         });*/
-
     }
-
-    //    /** Defines the double click handler action for ResourceSearch.  This means that on double
-    //     * click a (Resource-relative) url, specifically Summary/Overview is what will happen
-    //     * with this action. Override in subclasses to define alternate behavior.
-    //     */
-    //    protected void configureDoubleClickHandler() {
-    //        //adding cell double click handler
-    //        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
-    //            @Override
-    //            public void onCellDoubleClick(CellDoubleClickEvent event) {
-    //                CoreGUI.goToView("Resource/" + event.getRecord().getAttribute("id") + "/Summary/Overview");
-    //            }
-    //        });
-    //    }
 
     public int getMatches() {
         return this.getListGrid().getTotalRows();

@@ -32,11 +32,12 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -229,14 +230,16 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 });
         }
 
-        //adding cell double click handler
-        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
-            @Override
-            public void onCellDoubleClick(CellDoubleClickEvent event) {
-                CoreGUI.goToView("ResourceGroup/" + event.getRecord().getAttribute("id"));
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String selectedId = selectedRows[0].getAttribute("id");
+                    CoreGUI.goToView(LinkManager.getResourceGroupLink(Integer.valueOf(selectedId)));
+                }
             }
         });
-
     }
 
     // -------- Static Utility loaders ------------

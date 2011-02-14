@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 
@@ -42,6 +43,7 @@ public class SearchBarItem extends CanvasItem {
 
         setCanvas(canvas);
         setHeight(30);
+        setTitleVAlign(VerticalAlignment.TOP);
     }
 
     @Override

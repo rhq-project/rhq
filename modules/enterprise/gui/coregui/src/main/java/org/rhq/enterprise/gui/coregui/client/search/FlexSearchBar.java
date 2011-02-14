@@ -128,7 +128,7 @@ public class FlexSearchBar extends AbstractSearchBar {
 
         this.searchSubsystem = searchSubsystem;
         this.savedSearchesGrid = new SavedSearchGrid(searchSubsystem);
-        // TODO: load default saved search pattern, if used has selected one
+        // TODO: load default saved search pattern, if user has selected one
         // populate default search text
         // ensure that search subsystem is selected, probably want to force it to be a ctor argument
 

@@ -190,7 +190,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         if (getSearchSubsystem() == null) {
             configureTableFilters();
         } else {
-            final SearchBarItem searchFilter = new SearchBarItem("search", "Search", getSearchSubsystem());
+            final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
+                getSearchSubsystem());
             setFilterFormItems(searchFilter);
         }
 

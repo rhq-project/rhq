@@ -146,8 +146,15 @@ public class LinkManager {
         return link;
     }
 
-    public static String getSubsystemAlertDefsLink() {
-        return "/rhq/subsystem/alertDefinitions.xhtml";
+    public static String getSubsystemAlertDefinitionLink(int resourceId, int alertDefinitionId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Alerts/Definitions/" + alertDefinitionId;
+        } else {
+            link = "/rhq/subsystem/alertDefinitions.xhtml";
+        }
+
+        return link;
     }
 
     public static String getAutodiscoveryQueueLink() {

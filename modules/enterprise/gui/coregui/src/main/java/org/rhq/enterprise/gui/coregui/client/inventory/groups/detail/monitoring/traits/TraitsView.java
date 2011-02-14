@@ -22,8 +22,8 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
-
 import com.smartgwt.client.widgets.grid.ListGridField;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 
@@ -42,8 +42,6 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         ListGrid listGrid = getListGrid();
 
         listGrid.setShowAllRecords(true);
@@ -55,7 +53,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         resourceNameField.setWidth("20%");
         resourceNameField.setCanGroupBy(true);
 
-
+        super.configureTable();
     }
 
     @Override

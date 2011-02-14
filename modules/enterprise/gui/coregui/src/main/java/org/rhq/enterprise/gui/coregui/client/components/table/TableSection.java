@@ -30,12 +30,12 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -107,9 +107,18 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         }
     }
 
+    /* 
+     * The default implementation wraps the @{link getDetailsLinkColumnCellFormatter()} column with the
+     * @{link getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
+     * view, given the 'id'. Also, establishes a double click handler for the row which invokes
+     * @{link showDetails()}</br>
+     * </br>
+     * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields. 
+     * 
+     * @see org.rhq.enterprise.gui.coregui.client.components.table.Table#configureTable()
+     */
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void configureTable() {
 
         // Make the value of some specific field a link to the details view for the corresponding record
         ListGrid grid = getListGrid();
@@ -118,13 +127,24 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             field.setCellFormatter(getDetailsLinkColumnCellFormatter());
         }
 
-        // Make double-clicking the row an alternate means to go to the details view.
-        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
             @Override
-            public void onCellDoubleClick(CellDoubleClickEvent event) {
-                showDetails(event.getRecord());
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    showDetails(selectedRows[0]);
+                }
             }
         });
+    }
+
+    /**
+     * Override if you don't want FIELD_NAME to be wrapped ina link.
+     * @return the name of the field to be wrapped, or null if no field should be wrapped. 
+     */
+    protected String getDetailsLinkColumnName() {
+        return FIELD_NAME;
     }
 
     /**
@@ -139,14 +159,6 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
             }
         };
-    }
-
-    /**
-     * Override if you don't want FIELD_NAME to be wrapped ina link.
-     * @return the name of the field to be wrapped, or null if no field should be wrapped. 
-     */
-    protected String getDetailsLinkColumnName() {
-        return FIELD_NAME;
     }
 
     /**

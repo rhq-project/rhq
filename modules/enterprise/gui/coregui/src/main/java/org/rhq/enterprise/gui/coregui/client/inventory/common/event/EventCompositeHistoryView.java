@@ -121,7 +121,7 @@ public class EventCompositeHistoryView extends TableSection {
 
         setupTableInteractions();
 
-
+        super.configureTable();
     }
 
     private void setupTableInteractions() {

@@ -31,7 +31,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  */
 public abstract class AbstractOperationScheduleListView extends TableSection<AbstractOperationScheduleDataSource> {
 
-    public AbstractOperationScheduleListView(String locatorId, AbstractOperationScheduleDataSource dataSource, String title) {
+    public AbstractOperationScheduleListView(String locatorId, AbstractOperationScheduleDataSource dataSource,
+        String title) {
         super(locatorId, title);
 
         setDataSource(dataSource);
@@ -41,11 +42,10 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         ListGridField idField = new ListGridField(AbstractOperationScheduleDataSource.Field.ID, 70);
 
-        ListGridField operationField = new ListGridField(AbstractOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 180);
+        ListGridField operationField = new ListGridField(
+            AbstractOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME, 180);
 
         ListGridField subjectField = new ListGridField(AbstractOperationScheduleDataSource.Field.SUBJECT, 110);
         subjectField.setCellFormatter(new SubjectRecordCellFormatter());
@@ -53,7 +53,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
         //ListGridField jobTriggerField = new ListGridField(OperationScheduleDataSource.Field.JOB_TRIGGER, 300);
 
         ListGridField nextFireTimeField = new ListGridField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
-                "Next Scheduled Execution", 190);
+            "Next Scheduled Execution", 190);
 
         ListGridField descriptionField = new ListGridField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
 
@@ -79,7 +79,9 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     deleteSelectedRecords();
                 }
-            });        
+            });
+
+        super.configureTable();
     }
 
     @Override

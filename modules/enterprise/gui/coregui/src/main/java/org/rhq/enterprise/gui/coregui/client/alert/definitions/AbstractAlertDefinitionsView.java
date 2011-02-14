@@ -99,6 +99,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
             }
         });
 
+        super.configureTable();
     }
 
     @Override

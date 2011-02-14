@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryDataSource.Field;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -146,11 +147,12 @@ public class ConfigurationHistoryView extends TableSection {
             }
         });
 
+        super.configureTable();
     }
 
     @Override
     protected String getDetailsLinkColumnName() {
-        return FIELD_ID;
+        return Field.CREATED_TIME;
     }
 
     @Override

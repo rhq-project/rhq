@@ -144,6 +144,8 @@ public class GroupDefinitionListView extends TableSection {
                 });
             }
         });
+
+        super.configureTable();
     }
 
     @Override

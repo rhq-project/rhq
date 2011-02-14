@@ -52,7 +52,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public abstract class AbstractOperationHistoryListView<T extends AbstractOperationHistoryDataSource> extends TableSection<T > {
+public abstract class AbstractOperationHistoryListView<T extends AbstractOperationHistoryDataSource> extends
+    TableSection<T> {
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
 
@@ -62,8 +63,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         setHeaderIcon(HEADER_ICON);
     }
 
-    public AbstractOperationHistoryListView(String locatorId, T dataSource, String title,
-                                    Criteria criteria) {
+    public AbstractOperationHistoryListView(String locatorId, T dataSource, String title, Criteria criteria) {
         super(locatorId, title, criteria);
         setDataSource(dataSource);
     }
@@ -72,8 +72,6 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
@@ -90,19 +88,20 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             });
 
         // TODO: i18n
-        addTableAction(extendLocatorId("ForceDelete"), "Force Delete", getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return (count >= 1 && hasControlPermission());
-                }
+        addTableAction(extendLocatorId("ForceDelete"), "Force Delete", getDeleteConfirmMessage(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return (count >= 1 && hasControlPermission());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    DSRequest requestProperties = new DSRequest();
-                    requestProperties.setAttribute("force", true);
-                    deleteSelectedRecords(requestProperties);
-                }
-            });
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                DSRequest requestProperties = new DSRequest();
+                requestProperties.setAttribute("force", true);
+                deleteSelectedRecords(requestProperties);
+            }
+        });
+
+        super.configureTable();
     }
 
     protected List<ListGridField> createFields() {
@@ -231,8 +230,8 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     }
 
     protected ListGridField createResourceField() {
-        ListGridField resourceField = new ListGridField(ResourceOperationHistoryDataSource.Field.RESOURCE,
-                MSG.common_title_resource());
+        ListGridField resourceField = new ListGridField(ResourceOperationHistoryDataSource.Field.RESOURCE, MSG
+            .common_title_resource());
         resourceField.setAlign(Alignment.LEFT);
         resourceField.setCellAlign(Alignment.LEFT);
         //resourceField.setSuppressValueIcon(true);
@@ -251,7 +250,5 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     protected String getDetailsLinkColumnName() {
         return AbstractOperationHistoryDataSource.Field.OPERATION_NAME;
     }
-
-
 
 }

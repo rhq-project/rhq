@@ -2284,9 +2284,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.warn("RESOURCE ID IS 0! Operation features may not work - resource needs to be synced with server");
         }
 
-        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
-        OperationServices operationServices = new OperationServicesAdapter(operationManager);
-        OperationContext operationContext = new OperationContextImpl(resource.getId(), operationServices);
+        OperationContext operationContext = new OperationContextImpl(resource.getId());
         return operationContext;
     }
 
@@ -2310,9 +2308,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getId() == 0) {
             log.warn("RESOURCE ID IS 0! Content features may not work - Resource needs to be synced with server");
         }
-        ContentServices contentManager = PluginContainer.getInstance().getContentManager();
-        //noinspection UnnecessaryLocalVariable
-        ContentContext contentContext = new ContentContextImpl(resource.getId(), contentManager);
+        ContentContext contentContext = new ContentContextImpl(resource.getId());
         return contentContext;
     }
 

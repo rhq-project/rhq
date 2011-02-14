@@ -22,6 +22,7 @@
   */
 package org.rhq.core.pc.content;
 
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
 
@@ -34,11 +35,9 @@ import org.rhq.core.pluginapi.content.ContentServices;
  */
 public class ContentContextImpl implements ContentContext {
     private int resourceId;
-    private ContentServices contentServices;
 
-    public ContentContextImpl(int resourceId, ContentServices contentServices) {
+    public ContentContextImpl(int resourceId) {
         this.resourceId = resourceId;
-        this.contentServices = contentServices;
     }
 
     public int getResourceId() {
@@ -46,6 +45,6 @@ public class ContentContextImpl implements ContentContext {
     }
 
     public ContentServices getContentServices() {
-        return contentServices;
+        return PluginContainer.getInstance().getContentManager();
     }
 }

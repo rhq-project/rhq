@@ -135,6 +135,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                     return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE.getName()));
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
+        autodiscoveryQueueItem.setRefreshRequired(true);
 
         // TODO: Specify an icon for this item.
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null, new ViewFactory() {

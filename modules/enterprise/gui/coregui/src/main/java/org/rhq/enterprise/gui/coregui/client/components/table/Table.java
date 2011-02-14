@@ -127,8 +127,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
-    protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
+    protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
+    protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
     private ToolStrip footer;
+    private ToolStrip footerExtraWidgets;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -268,6 +270,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             contents.addMember(listGrid);
 
             // Footer
+
+            // A second toolstrip that optionaly appears before the main footer - it will contain extra widgets.
+            // This is hidden from view unless extra widgets are actually added to the table above the main footer.
+            this.footerExtraWidgets = new ToolStrip();
+            footerExtraWidgets.setPadding(5);
+            footerExtraWidgets.setWidth100();
+            footerExtraWidgets.setMembersMargin(15);
+            footerExtraWidgets.hide();
+            contents.addMember(footerExtraWidgets);
+
             this.footer = new ToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
@@ -338,6 +350,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     private void drawFooter() {
+        // populate the extraWidgets toolstrip
+        footerExtraWidgets.removeMembers(footerExtraWidgets.getMembers());
+        if (!extraWidgetsAboveFooter.isEmpty()) {
+            for (Canvas extraWidgetCanvas : extraWidgetsAboveFooter) {
+                footerExtraWidgets.addMember(extraWidgetCanvas);
+            }
+            footerExtraWidgets.show();
+        }
+
         footer.removeMembers(footer.getMembers());
 
         for (final TableActionInfo tableAction : tableActions) {
@@ -398,7 +419,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        for (Canvas extraWidgetCanvas : extraWidgets) {
+        for (Canvas extraWidgetCanvas : extraWidgetsInMainFooter) {
             footer.addMember(extraWidgetCanvas);
         }
 
@@ -636,8 +657,21 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         doubleClickHandler = handler;
     }
 
-    public void addExtraWidget(Canvas canvas) {
-        this.extraWidgets.add(canvas);
+    /**
+     * Adds extra widgets to the bottom of the table view.
+     *
+     * @param widget the new widget to add to the table view
+     * @param aboveFooter if true, the widget will be placed in a second toolstrip just above the main footer.
+     *                    if false, the widget will be placed in the main footer toolstrip itself. This is
+     *                    useful if the widget is really big and won't fit in the main footer along with the
+     *                    rest of the main footer members.
+     */
+    public void addExtraWidget(Canvas widget, boolean aboveFooter) {
+        if (aboveFooter) {
+            this.extraWidgetsAboveFooter.add(widget);
+        } else {
+            this.extraWidgetsInMainFooter.add(widget);
+        }
     }
 
     public void setHeaderIcon(String headerIcon) {
@@ -690,7 +724,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     tableAction.actionCanvas.setDisabled(!enabled);
                 }
             }
-            for (Canvas extraWidget : extraWidgets) {
+            for (Canvas extraWidget : extraWidgetsAboveFooter) {
+                if (extraWidget instanceof TableWidget) {
+                    ((TableWidget) extraWidget).refresh(this.listGrid);
+                }
+            }
+            for (Canvas extraWidget : extraWidgetsInMainFooter) {
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }

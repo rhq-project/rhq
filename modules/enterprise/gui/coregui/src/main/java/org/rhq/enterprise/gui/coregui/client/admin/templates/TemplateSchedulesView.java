@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  * @author Ian Springer
  */
 public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
-    private static final String TITLE = "Template Metric Collection Schedules";
+    private static final String TITLE = MSG.view_admin_measTemplates_title();
 
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID };
 
@@ -47,10 +47,10 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
     }
 
     @Override
-    protected void configureTable() {        
+    protected void configureTable() {
         super.configureTable();
 
-        addExtraWidget(new UpdateExistingSchedulesWidget(this));        
+        addExtraWidget(new UpdateExistingSchedulesWidget(this), true);
     }
 
     public boolean isUpdateExistingSchedules() {

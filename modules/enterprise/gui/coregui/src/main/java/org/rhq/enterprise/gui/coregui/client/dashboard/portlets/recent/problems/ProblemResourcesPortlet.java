@@ -109,7 +109,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setCellHeight(50);
             //wrap to display disambiguation
             listGrid.setWrapCells(true);
-            addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this));
+            addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this), false);
         }
 
     }
@@ -295,11 +295,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             } else {
                 timeRange = new String[] { MeasurementUtility.getDateTimeFormatter().format(new Date(begin)),
                     MeasurementUtility.getDateTimeFormatter().format(new Date(end)) };
-            }
-            for (Object extraWidget : extraWidgets) {
-                if (extraWidget instanceof TableWidget) {
-                    ((TableWidget) extraWidget).refresh(getListGrid());
-                }
             }
             //remove selected count as portlet is view only. Selection not used.
             getTableInfo().setContents(MSG.common_title_total() + ": " + getListGrid().getTotalRows());

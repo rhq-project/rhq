@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  * @author Ian Springer
  */
 public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
+
     private static final String ITEM_INTERVAL = "interval";
     private static final String ITEM_UNITS = "units";
 
@@ -75,16 +76,15 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         this.form = new LocatableDynamicForm(this.getLocatorId());
         this.form.setNumCols(3);
 
-        IntegerItem intervalItem = new IntegerItem();
+        final IntegerItem intervalItem = new IntegerItem();
         intervalItem.setWrapTitle(false);
         intervalItem.setWidth(75);
         intervalItem.setName(ITEM_INTERVAL);
         intervalItem.setTitle(MSG.view_inventory_collectionInterval());
-        IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
+        final IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
         integerRangeValidator.setMax(10000000); // avoids exceptions if someone enters really large nums; no one needs to go higher anyway
         intervalItem.setValidators(integerRangeValidator);
-        intervalItem.setValidateOnChange(true);
         intervalItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
@@ -97,6 +97,18 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         unitsItem.setDefaultValue(UNITS_MINUTES);
         unitsItem.setShowTitle(false);
         unitsItem.setWidth(125);
+        unitsItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                String value = (String) event.getValue();
+                if (value.equals(UNITS_SECONDS)) {
+                    integerRangeValidator.setMin(30);
+                } else {
+                    integerRangeValidator.setMin(1);
+                }
+                refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
+            }
+        });
 
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
@@ -118,9 +130,10 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     @Override
     public void refresh(ListGrid listGrid) {
         if (isDrawn()) {
+            boolean isValid = this.form.validate();
             int count = listGrid.getSelection().length;
             Long interval = getInterval();
-            this.setButton.setDisabled(count == 0 || interval == null);
+            this.setButton.setDisabled(!isValid || count == 0 || interval == null);
         } else {
             markForRedraw();
         }
@@ -143,4 +156,5 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         }
         return longValue;
     }
+
 }

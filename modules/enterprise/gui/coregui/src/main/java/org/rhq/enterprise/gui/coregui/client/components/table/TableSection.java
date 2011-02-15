@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -91,10 +92,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void onInit() {
         super.onInit();
 
-        detailsHolder = new VLayout();
+        detailsHolder = new LocatableVLayout(extendLocatorId("tableSection"));
         detailsHolder.setAlign(VerticalAlignment.TOP);
-        //detailsHolder.setWidth100();
-        //detailsHolder.setHeight100();
+        detailsHolder.setWidth100();
+        detailsHolder.setHeight100();
         detailsHolder.setMargin(4);
         detailsHolder.hide();
 
@@ -323,7 +324,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
                 basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new VLayout();
+            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }

@@ -83,7 +83,6 @@ public class GroupDefinitionListView extends TableSection {
 
         ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime", MSG
             .view_dynagroup_nextCalculationTime(), 175);
-        //nextCalculationTimeField.setAlign(Alignment.CENTER);
         nextCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 if (value == null || "0".equals(value.toString())) {
@@ -92,7 +91,6 @@ public class GroupDefinitionListView extends TableSection {
                 return super.format(value, record, rowNum, colNum);
             }
         });
-
         getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 

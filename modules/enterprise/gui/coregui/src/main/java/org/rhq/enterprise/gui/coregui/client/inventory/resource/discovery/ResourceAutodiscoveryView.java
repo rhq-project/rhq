@@ -40,7 +40,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
@@ -97,27 +96,12 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             title.setPadding(4);
             title.setStyleName("HeaderLabel");
 
-            DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
-            final SelectItem statusSelectItem = new SelectItem("status", MSG.common_title_status());
-            statusSelectItem.setValueMap(AutodiscoveryQueueDataSource.NEW, AutodiscoveryQueueDataSource.IGNORED,
-                AutodiscoveryQueueDataSource.NEW_AND_IGNORED);
-            statusSelectItem.setValue(AutodiscoveryQueueDataSource.NEW);
-            form.setItems(statusSelectItem);
-
-            statusSelectItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent changedEvent) {
-                    treeGrid.fetchData(new Criteria("status", (String) statusSelectItem.getValue()));
-                }
-            });
-
             HLayout titleLayout = new HLayout();
             titleLayout.setAutoHeight();
             titleLayout.setAlign(VerticalAlignment.BOTTOM);
 
             titleLayout.addMember(img);
             titleLayout.addMember(title);
-            titleLayout.addMember(new LayoutSpacer());
-            titleLayout.addMember(form);
 
             addMember(titleLayout);
         }
@@ -179,6 +163,21 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         importButton.setDisabled(true);
         ignoreButton.setDisabled(true);
         unignoreButton.setDisabled(true);
+
+        DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
+        final SelectItem statusSelectItem = new SelectItem("status", MSG.view_autoDiscoveryQ_showStatus());
+        statusSelectItem.setValueMap(AutodiscoveryQueueDataSource.NEW, AutodiscoveryQueueDataSource.IGNORED,
+            AutodiscoveryQueueDataSource.NEW_AND_IGNORED);
+        statusSelectItem.setValue(AutodiscoveryQueueDataSource.NEW);
+        statusSelectItem.setWrapTitle(false);
+        form.setItems(statusSelectItem);
+
+        statusSelectItem.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                treeGrid.fetchData(new Criteria("status", (String) statusSelectItem.getValue()));
+            }
+        });
+        footer.addMember(form);
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {

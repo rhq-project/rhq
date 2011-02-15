@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE plugin [
+
+        <!ENTITY logSources '
+    <c:group name="event" displayName="Events">
+        <c:list-property name="logEventSources">
+            <c:map-property name="logEventSource">
+                <c:simple-property name="logFilePath" type="file" summary="true"
+                                   description="The absolute path to the source log file."/>
+                <c:simple-property name="enabled" type="boolean" summary="true"
+                                   description="A flag indicating whether of not this log Event source is currently
+                                                enabled (i.e. whether the associated log file should be tailed for
+                                                new entries)."/>
+                <c:simple-property name="dateFormat" required="false"
+                                   description="The date format to use when parsing the dates in log entries. The
+                                                format must be in the syntax defined by the Java SimpleDateFormat
+                                                class. If not specified, the three date formats that are predefined
+                                                by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                <c:simple-property name="includesPattern" required="false"
+                                   description="A regular expression against which a log entrys detail is matched
+                                                to determine if an Event should be fired for that entry. If not
+                                                specified, no filtering of log entries will be done based on their
+                                                detail."/>
+                <c:simple-property name="minimumSeverity" required="false" default="error"
+                                   description="The minimum severity of Events that should be collected for this
+                                                source. If not specified, there is no minimum severity (i.e. all
+                                                events will be collected).">
+                    <c:property-options>
+                       <c:option name="debug" value="debug"/>
+                       <c:option name="info"  value="info"/>
+                       <c:option name="warn"  value="warn"/>
+                       <c:option name="error" value="error"/>
+                       <c:option name="fatal" value="fatal"/>
+                    </c:property-options>
+                </c:simple-property>
+            </c:map-property>
+        </c:list-property>
+    </c:group>
+'>
+
+        ]>
+
+<plugin name="jboss-as-7"
+        displayName="JBoss-AS-7-Plugin"
+        description="Management of JBossAS 7"
+        package="org.rhq.modules.plugins.jbossas7"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        version="4.0.0-SNAPSHOT"
+        >
+
+    <depends plugin="JMX"/>
+
+
+    <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
+      ~~      additional 'Personalities' for the kinds of servers (PM, SM, Standalone AS, Managed AS)
+      -->
+
+    <server name="ProcessController"
+            discovery="BaseDiscovery"
+            class="BaseComponent"
+            description="Reaper process for other AS7 servicees"
+            >
+
+        <plugin-configuration>
+            <c:simple-property name="hostname" default="localhost" required="true"/>
+            <c:simple-property name="port" default="9990" type="integer" required="true"/>
+
+            &logSources;
+        </plugin-configuration>
+
+        <process-scan name="ProcessManager" query="process|basename|match=^java.*,arg|org.jboss.as.process-controller|match=.*"/>
+
+
+        <operation name="dummyOperation">
+            <!-- TODO supply parameters and return values -->
+        </operation>
+
+        <!--
+        <server name="ProcessManager JVM"
+                description="JVM of the ProcessManager"
+                sourcePlugin="JMX"
+                sourceType="JMX Server"
+                discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
+                class="org.rhq.plugins.jmx.JMXServerComponent"
+                singleton="true"
+        />
+        -->
+
+
+
+    </server>
+
+    <server name="JBossAS (Standalone)"
+            discovery="BaseDiscovery"
+            class="BaseComponent"
+            >
+
+        <plugin-configuration>
+            <c:simple-property name="hostname" default="localhost" required="true"/>
+            <c:simple-property name="port" default="9990" type="integer" required="true"/>
+            <c:list-property name="system-properties">
+                <c:map-property name="system-property">
+                    <c:simple-property name="key" readOnly="true"/>
+                    <c:simple-property name="value" readOnly="true"/>
+                </c:map-property>
+            </c:list-property>
+            &logSources;
+        </plugin-configuration>
+
+        <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
+
+
+        <operation name="dummyOperation">
+            <!-- TODO supply parameters and return values -->
+        </operation>
+        <!--
+        <server name="JBoss AS standalone JVM"
+                description="JVM of the standalone JBossAS"
+                sourcePlugin="JMX"
+                sourceType="JMX Server"
+                discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
+                class="org.rhq.plugins.jmx.JMXServerComponent"
+                singleton="true"
+        />
+        -->
+
+       <server name="Messaging"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent">
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
+            </plugin-configuration>
+
+           <resource-configuration>
+               <c:simple-property name="journal-min-files" />
+               <c:simple-property name="journal-type" />
+           </resource-configuration>
+
+
+           <service name="Acceptor"
+               discovery="SubsystemDiscovery"
+               class="BaseComponent"
+               >
+               <plugin-configuration>
+                   <c:simple-property name="path" readOnly="true" default="/subsystem/messaging/acceptor"/>
+               </plugin-configuration>
+
+
+           </service>
+
+        </server>
+
+        <server name="JBossWeb"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/subsystem/web"/>
+            </plugin-configuration>
+
+            <service name="Connector"
+                     discovery="SubsystemDiscovery"
+                     class="BaseComponent"
+                     >
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="/subsystem/web/connector/*"/>
+                </plugin-configuration>
+
+                <metric property="bytesSent" measurementType="trendsup"/>
+                <metric property="bytesReceived" measurementType="trendsup"/>
+                <metric property="processingTime" measurementType="trendsup"/>
+                <metric property="errorCount" measurementType="trendsup"/>
+                <metric property="maxTime" />
+                <metric property="requestCount" measurementType="trendsup"/>
+
+             </service>
+
+
+        </server>
+    </server>
+
+    <server name="JBossAS (Managed)"
+            discovery="BaseDiscovery"
+            class="BaseComponent"
+            >
+        <plugin-configuration>
+            <c:simple-property name="hostname" default="localhost" required="true"/>
+            <c:simple-property name="port" default="9990" type="integer" required="true"/>
+
+            &logSources;
+        </plugin-configuration>
+
+        <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
+
+
+        <metric property="serverGroup" dataType="trait" displayType="summary" />
+        <resource-configuration>
+            <!--<c:group name="interfaces">-->
+                <c:simple-property name="loopback" default="127.0.0.1" />
+                <c:simple-property name="external" default="any" />
+                <c:simple-property name="public" default="any" />
+            <!--</c:group>-->
+        </resource-configuration>
+
+        <server name="JBoss AS managed JVM"
+                description="JVM of the managed JBossAS"
+                sourcePlugin="JMX"
+                sourceType="JMX Server"
+                discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
+                class="org.rhq.plugins.jmx.JMXServerComponent"
+                singleton="true"
+        />
+
+    </server>
+
+</plugin>

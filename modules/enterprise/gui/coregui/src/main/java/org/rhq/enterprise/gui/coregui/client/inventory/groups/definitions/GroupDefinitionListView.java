@@ -22,6 +22,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -59,7 +60,10 @@ public class GroupDefinitionListView extends TableSection {
 
     @Override
     protected void configureTable() {
-        ListGridField idField = new ListGridField("id", MSG.common_title_id(), 50);
+        ListGridField idField = new ListGridField("id", MSG.common_title_id());
+        idField.setType(ListGridFieldType.INTEGER);
+        idField.setWidth(50);
+
         ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 150);
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
         ListGridField expressionField = new ListGridField("expression", MSG.view_dynagroup_expressionSet(), 250);
@@ -91,7 +95,7 @@ public class GroupDefinitionListView extends TableSection {
                 return super.format(value, record, rowNum, colNum);
             }
         });
-        getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
+        setListGridFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), null, new AbstractTableAction(

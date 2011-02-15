@@ -34,9 +34,9 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -48,12 +48,14 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -102,8 +104,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     public SingleGroupDefinitionView(String locatorId) {
         super(locatorId);
         buildForm();
-        setAutoWidth();
-        setOverflow(Overflow.AUTO);
+        setWidth100();
     }
 
     public void setGroupDefinition(final GroupDefinition groupDefinition) {
@@ -222,24 +223,49 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         @Override
         protected void configureTable() {
+            // i couldn't use percentage widths to work for some reason; using auto-fit instead
+
             ListGridField idField = new ListGridField("id", MSG.common_title_id());
             idField.setType(ListGridFieldType.INTEGER);
             idField.setWidth("50");
 
             ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-            nameField.setWidth("100");
+            nameField.setAutoFitWidth(true);
+            nameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+            //nameField.setWidth("300");
 
             ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-            descriptionField.setWidth("100");
+            descriptionField.setAutoFitWidth(true);
+            descriptionField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
+            //descriptionField.setWidth("300");
 
             ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-            typeNameField.setWidth("100");
+            typeNameField.setAutoFitWidth(true);
+            typeNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+            //typeNameField.setWidth("100");
 
             ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-            pluginNameField.setWidth("100");
+            pluginNameField.setAutoFitWidth(true);
+            pluginNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+            //pluginNameField.setWidth("100");
 
             ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-            categoryField.setWidth("100");
+            categoryField.setAutoFitWidth(true);
+            categoryField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+            //categoryField.setWidth("100");
+            categoryField.setCellFormatter(new CellFormatter() {
+                @Override
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    if (value != null) {
+                        if (value.toString().equals(GroupCategory.MIXED.name())) {
+                            return MSG.view_dynagroup_mixed();
+                        } else if (value.toString().equals(GroupCategory.COMPATIBLE.name())) {
+                            return MSG.view_dynagroup_compatible();
+                        }
+                    }
+                    return "";
+                }
+            });
 
             setListGridFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField);
         }
@@ -305,7 +331,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         });
 
         recalculationInterval = new SpinnerItem("recalculationInterval", MSG.view_dynagroup_recalculationInterval());
-        recalculationInterval.setWrapTitle(false);
+        //recalculationInterval.setWrapTitle(false); // do not set this - it causes the form to grow abnormally width-wise for some reason
         recalculationInterval.setMin(0);
         recalculationInterval.setDefaultValue(0);
     }

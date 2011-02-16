@@ -77,13 +77,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class SingleGroupDefinitionView extends LocatableVLayout implements BookmarkableView {
 
-    private static final String TEMPLATE_JBOSSAS_CLUSTERS = MSG.view_dynagroup_template_jbossAsClusters();
-    private static final String TEMPLATE_EAR_CLUSTERS = MSG.view_dynagroup_template_earClusters();
-    private static final String TEMPLATE_UNIQUE_JBOSSAS_VERSIONS = MSG.view_dynagroup_template_uniqueJBossASVersions();
+    private static final String TEMPLATE_JBOSSAS4_CLUSTERS = MSG.view_dynagroup_template_jbossas4_clusters();
+    private static final String TEMPLATE_JBOSSAS5_CLUSTERS = MSG.view_dynagroup_template_jbossas5_clusters(); // true for AS 5 and 6
+    private static final String TEMPLATE_JBOSSAS4_EAR_CLUSTERS = MSG.view_dynagroup_template_jbossas4_earClusters();
+    private static final String TEMPLATE_JBOSSAS4_UNIQUE_VERSIONS = MSG
+        .view_dynagroup_template_jbossas4_uniqueVersions();
     private static final String TEMPLATE_PLATFORMS = MSG.view_dynagroup_template_platforms();
     private static final String TEMPLATE_UNIQUE_RESOURCE_TYPES = MSG.view_dynagroup_template_uniqueResourceTypes();
-    private static final String TEMPLATE_JBOSSAS_HOSTING_APP = MSG.view_dynagroup_template_jbossAsHostingApp();
-    private static final String TEMPLATE_NONSECURED_JBOSSAS = MSG.view_dynagroup_template_nonsecuredJBossAS();
+    private static final String TEMPLATE_JBOSSAS4_HOSTING_APP = MSG.view_dynagroup_template_jbossas4_hostingApp();
+    private static final String TEMPLATE_JBOSSAS4_NONSECURED = MSG.view_dynagroup_template_jbossas4_nonsecured();
     private static final String TEMPLATE_DOWNED_RESOURCES = MSG.view_dynagroup_template_downedResources();
 
     private int groupDefinitionId;
@@ -340,16 +342,20 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         LinkedHashMap<String, String> items = new LinkedHashMap<String, String>();
 
         // grouped items
-        items.put(TEMPLATE_JBOSSAS_CLUSTERS, //
+        items.put(TEMPLATE_JBOSSAS4_CLUSTERS, //
             buildTemplate("groupby resource.trait[partitionName]", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));
-        items.put(TEMPLATE_EAR_CLUSTERS, //
+        items.put(TEMPLATE_JBOSSAS5_CLUSTERS, //
+            buildTemplate("groupby resource.trait[MCBean|ServerConfig|*|partitionName]", //
+                "resource.type.plugin = JBossAS5", //
+                "resource.type.name = JBossAS Server"));
+        items.put(TEMPLATE_JBOSSAS4_EAR_CLUSTERS, //
             buildTemplate("groupby resource.parent.trait[partitionName]", //
                 "groupby resource.name", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = Enterprise Application (EAR)"));
-        items.put(TEMPLATE_UNIQUE_JBOSSAS_VERSIONS, //
+        items.put(TEMPLATE_JBOSSAS4_UNIQUE_VERSIONS, //
             buildTemplate("groupby resource.trait[jboss.system:type=Server:VersionName]", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));
@@ -361,11 +367,11 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 "groupby resource.type.name"));
 
         // simple items
-        items.put(TEMPLATE_JBOSSAS_HOSTING_APP, //
+        items.put(TEMPLATE_JBOSSAS4_HOSTING_APP, //
             buildTemplate("resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server", //
                 "resource.child.name.contains = my"));
-        items.put(TEMPLATE_NONSECURED_JBOSSAS, //
+        items.put(TEMPLATE_JBOSSAS4_NONSECURED, //
             buildTemplate("empty resource.pluginConfiguration[principal]", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));

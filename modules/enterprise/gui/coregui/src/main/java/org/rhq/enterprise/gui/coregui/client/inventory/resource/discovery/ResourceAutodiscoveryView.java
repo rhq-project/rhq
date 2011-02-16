@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -59,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout {
+
     private static final String TITLE = MSG.view_autoDiscoveryQ_title();
     private static final String HEADER_ICON = "global/AutoDiscovery_24.png";
 
@@ -160,9 +162,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         footer.addMember(ignoreButton);
         footer.addMember(unignoreButton);
 
-        importButton.setDisabled(true);
-        ignoreButton.setDisabled(true);
-        unignoreButton.setDisabled(true);
+        disableButtons(importButton, ignoreButton, unignoreButton);
 
         DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
         final SelectItem statusSelectItem = new SelectItem("status", MSG.view_autoDiscoveryQ_showStatus());
@@ -181,25 +181,28 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                boolean noneSelected = treeGrid.getSelection().length == 0;
-                importButton.setDisabled(noneSelected);
-                ignoreButton.setDisabled(noneSelected);
-                unignoreButton.setDisabled(noneSelected);
+                updateButtonEnablement(importButton, ignoreButton, unignoreButton);
             }
         });
 
         importButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
+                disableButtons(importButton, ignoreButton, unignoreButton);
+                CoreGUI.getMessageCenter().notify(
+                                new Message("Importing the selected Resources...",
+                                        Message.Severity.Info, EnumSet.of(Message.Option.Transient)));
+
                 resourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
+                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
                         CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_importFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
-                        treeGrid.invalidateCache();
-                        treeGrid.markForRedraw();
+                                new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
+                        refresh();
+                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
                     }
                 });
             }
@@ -207,16 +210,22 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         ignoreButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
+                disableButtons(importButton, ignoreButton, unignoreButton);
+                CoreGUI.getMessageCenter().notify(
+                                new Message("Ignoring the selected Resources...",
+                                        Message.Severity.Info, EnumSet.of(Message.Option.Transient)));
+
                 resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
+                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
                         CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_ignoreFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_autoDiscoveryQ_ignoreSuccessful(), Message.Severity.Info));
-                        treeGrid.invalidateCache();
-                        treeGrid.markForRedraw();
+                                new Message(MSG.view_autoDiscoveryQ_ignoreSuccessful(), Message.Severity.Info));
+                        refresh();
+                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
                     }
                 });
             }
@@ -224,21 +233,40 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         unignoreButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
+                disableButtons(importButton, ignoreButton, unignoreButton);
+                CoreGUI.getMessageCenter().notify(
+                                new Message("Unignoring the selected Resources...",
+                                        Message.Severity.Info, EnumSet.of(Message.Option.Transient)));
+
                 resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
+                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
                         CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_unignoreFailure(), caught);
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_autoDiscoveryQ_unignoreSuccessful(), Message.Severity.Info));
-                        treeGrid.invalidateCache();
-                        treeGrid.markForRedraw();
+                                new Message(MSG.view_autoDiscoveryQ_unignoreSuccessful(), Message.Severity.Info));
+                        refresh();
+                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
                     }
                 });
             }
         });
 
+    }
+
+    private void updateButtonEnablement(IButton importButton, IButton ignoreButton, IButton unignoreButton) {
+        boolean noneSelected = treeGrid.getSelection().length == 0;
+        importButton.setDisabled(noneSelected);
+        ignoreButton.setDisabled(noneSelected);
+        unignoreButton.setDisabled(noneSelected);
+    }
+
+    private void disableButtons(IButton... buttons) {
+        for (IButton button : buttons) {
+            button.setDisabled(true);
+        }
     }
 
     private int[] getSelectedIds() {
@@ -253,12 +281,16 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
     }
 
     /** Custom refresh operation as we cannot directly extend Table because it
-     * contains a TreeGrid which is not a Table.
+     * contains a TreeGrid, not a ListGrid.
      */
     @Override
     public void redraw() {
         super.redraw();
-        //now reload the table data
+        // Now reload the table data.
+        refresh();
+    }
+
+    private void refresh() {
         this.treeGrid.invalidateCache();
         this.treeGrid.markForRedraw();
     }
@@ -270,4 +302,5 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
     public TreeGrid getTreeGrid() {
         return treeGrid;
     }
+
 }

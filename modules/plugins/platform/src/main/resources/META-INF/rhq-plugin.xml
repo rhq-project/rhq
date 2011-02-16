@@ -76,6 +76,7 @@
               property="Native.MemoryInfo.total"
               defaultOn="true"
               units="bytes"
+              defaultInterval="1200000"
               description="The total system memory"/>
               
       <metric displayName="Free Swap Space"
@@ -95,6 +96,7 @@
               property="Native.SwapInfo.total"
               defaultOn="true"
               units="bytes"
+              defaultInterval="1200000"
               description="The total system swap"/>
 '>
 

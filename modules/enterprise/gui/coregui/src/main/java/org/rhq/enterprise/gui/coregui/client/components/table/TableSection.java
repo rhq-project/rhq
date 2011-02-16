@@ -94,8 +94,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
 
         detailsHolder = new LocatableVLayout(extendLocatorId("tableSection"));
         detailsHolder.setAlign(VerticalAlignment.TOP);
-        detailsHolder.setWidth100();
-        detailsHolder.setHeight100();
+        //detailsHolder.setWidth100();
+        //detailsHolder.setHeight100();
         detailsHolder.setMargin(4);
         detailsHolder.hide();
 

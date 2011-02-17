@@ -39,8 +39,10 @@ import javax.script.ScriptException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.SandboxedScriptEngine;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
+import org.rhq.bindings.StandardScriptPermissions;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
@@ -64,12 +66,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-public class CliSender extends AlertSender<ServerPluginComponent> {
+public class CliSender extends AlertSender<CliComponent> {
 
     public static final String PROP_PACKAGE_ID = "packageId";
     public static final String PROP_REPO_ID = "repoId";
     public static final String PROP_USER_ID = "userId";
-
+    
     private static final Log LOG = LogFactory.getLog(CliSender.class);
 
     private static final String SUMMARY_TEMPLATE = "Ran script $packageName in version $packageVersion from repo $repoName as user $userName.";
@@ -83,6 +85,10 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
         int packageId;
         int repoId;
     }
+
+    private static class ExceptionHolder {
+        public Throwable throwable;
+    }
     
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
@@ -94,13 +100,41 @@ public class CliSender extends AlertSender<ServerPluginComponent> {
             ByteArrayOutputStream scriptOutputStream = new ByteArrayOutputStream();
 
             ScriptEngine engine = getScriptEngine(alert, scriptOutputStream, config);
-
+            
+            final SandboxedScriptEngine sandbox = new SandboxedScriptEngine(engine, new StandardScriptPermissions());
+            
             InputStream packageBits = getPackageBits(config.packageId, config.repoId);
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
 
-            engine.eval(reader);
+            final BufferedReader rdr = reader;
+            
+            final ExceptionHolder exceptionHolder = new ExceptionHolder();
+            
+            Thread scriptRunner = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        sandbox.eval(rdr);
+                    } catch (ScriptException e) {
+                        exceptionHolder.throwable = e;
+                    }
+                }
+            }, "Script Runner for alert " + alert);
+            scriptRunner.setDaemon(true);            
+            scriptRunner.start();
+            
+            if (pluginComponent.getScriptTimeout() <= 0) {
+                scriptRunner.join();
+            } else {
+                scriptRunner.join(pluginComponent.getScriptTimeout() * 1000);
+            }
+            
+            scriptRunner.interrupt();
 
+            if (exceptionHolder.throwable != null) {
+                throw new Exception("Script failed with an exception.", exceptionHolder.throwable);
+            }
+            
             String scriptOutput = scriptOutputStream.toString(Charset.defaultCharset().name());
 
             if (scriptOutput.length() == 0) {

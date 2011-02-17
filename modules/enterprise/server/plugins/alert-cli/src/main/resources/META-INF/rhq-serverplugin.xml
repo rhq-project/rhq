@@ -48,6 +48,11 @@
         </serverplugin:control>
     </serverplugin:plugin-component>
 
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="scriptTimeout" type="integer" required="true" default="60" 
+            description="The maximum number of seconds a CLI script is allowed run while handling an alert."/>
+    </serverplugin:plugin-configuration>
+    
     <!-- How does this sender show up in drop downs etc -->
     <short-name>CLI Script</short-name>
 
@@ -58,5 +63,7 @@
         <c:simple-property name="packageId" type="integer" required="true" description="The id of the package containing the script to execute."/>
         <c:simple-property name="repoId" type="integer" required="true" description="The id of the repo to download the package from."/>
         <c:simple-property name="userId" type="integer" required="true" description="The user the script will be run as."/>
+        <c:simple-property name="userName" type="string" required="true" description="The name of the user. This is used while creating/updating the notification to check the authentization. It is only required if the userId is different than the currently logged in user." />
+        <c:simple-property name="userPassword" type="string" required="false" description="The password of the user. This is used while creating/updating the notification to check the authentization. It is only required if the userId is different than the currently logged in user." />
     </alert-configuration>
 </alert-plugin>

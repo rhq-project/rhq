@@ -78,9 +78,11 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private static final String PROP_ALERT_DEFINITION_ID = "alertDefinitionId";
     private static final String PROP_USER_NAME = "userName";
     private static final String PROP_ALERT_DEF_IDS = "alertDefIds";
+    private static final String PROP_SCRIPT_TIMEOUT = "scriptTimeout";
     
     private String pluginName;
     private PackageType packageType;
+    private int scriptTimeout;
     
     private SubjectManagerLocal subjectManager;
     
@@ -105,10 +107,18 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
             
             packageType = cm.persistServersidePackageType(packageType);
         }
+        
+        String timeoutValue = context.getPluginConfiguration() == null ? "60" : context.getPluginConfiguration().getSimpleValue(PROP_SCRIPT_TIMEOUT, "60");
+        
+        scriptTimeout = Integer.parseInt(timeoutValue);
     }
 
     public PackageType getScriptPackageType() {
         return packageType;
+    }
+    
+    public int getScriptTimeout() {
+        return scriptTimeout;
     }
     
     public void start() {

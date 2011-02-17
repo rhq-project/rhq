@@ -1556,32 +1556,42 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @SuppressWarnings("unchecked")
     public PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version,
         int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
-        int newResourceTypeId) {
+        Integer newResourceTypeId) {
 
         PackageVersion packageVersion = null;
-
+        PackageType packageType = null;
+        
         //default version to 1.0 if is null, not provided for any reason.
         if ((version == null) || (version.trim().length() == 0)) {
             version = "1.0";
         }
 
-        // See if package version already exists for the resource package
-        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
-        packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
-        packageVersionQuery.setParameter("packageName", packageName);
-        PackageType packageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
-        packageVersionQuery.setParameter("packageTypeName", packageType.getName());
-        packageVersionQuery.setParameter("resourceTypeId", newResourceTypeId);
-
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
-        packageVersionQuery.setParameter("architectureName", architecture.getName());
-        packageVersionQuery.setParameter("version", version);
 
-        // Result of the query should be either 0 or 1
-        List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
+        // See if package version already exists for the resource package        
+        if (newResourceTypeId != null) {
+            Query packageVersionQuery = null;
 
-        if (existingPackageVersionList.size() > 0) {
-            packageVersion = existingPackageVersionList.get(0);
+            packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
+            packageVersionQuery.setParameter("resourceTypeId", newResourceTypeId);
+            
+            packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
+            packageVersionQuery.setParameter("packageName", packageName);
+            
+            packageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
+            packageVersionQuery.setParameter("packageTypeName", packageType.getName());
+
+            packageVersionQuery.setParameter("architectureName", architecture.getName());
+            packageVersionQuery.setParameter("version", version);
+
+            // Result of the query should be either 0 or 1
+            List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
+
+            if (existingPackageVersionList.size() > 0) {
+                packageVersion = existingPackageVersionList.get(0);
+            }
+        } else {
+            packageType = entityManager.find(PackageType.class, packageTypeId);
         }
 
         Package existingPackage = null;

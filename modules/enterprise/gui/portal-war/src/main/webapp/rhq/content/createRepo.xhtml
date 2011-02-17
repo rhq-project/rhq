@@ -61,6 +61,17 @@
                     <td align="right">Private:</td>
                     <td align="left"><h:selectBooleanCheckbox id="isPrivate" value="#{CreateRepoUIBean.repo.private}"/></td>
                 </tr>
+                <tr>
+                    <td align="right">Owner:</td>
+                    <td align="left">
+                        <h:selectOneMenu rendered="#{CreateRepoUIBean.repositoryManager}"
+                            value="#{CreateRepoUIBean.repo.owner.name}">
+                            <f:selectItems value="#{CreateRepoUIBean.availableOwners}" />
+                        </h:selectOneMenu>
+                        <h:outputText rendered="#{not CreateRepoUIBean.repositoryManager}"
+                            value="#{CreateRepoUIBean.repo.owner.name}"/>
+                    </td>
+                </tr>
 	         </table>
 	      </rich:panel>
 

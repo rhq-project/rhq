@@ -215,7 +215,7 @@ public interface ContentManagerLocal {
         InputStream packageBitStream);
 
     PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
-        InputStream packageBitStream, Map<String, String> packageUploadDetails, int newResourceTypeId);
+        InputStream packageBitStream, Map<String, String> packageUploadDetails, Integer newResourceTypeId);
 
     /**
      * Very simple method that persists the given package version within its own transaction.

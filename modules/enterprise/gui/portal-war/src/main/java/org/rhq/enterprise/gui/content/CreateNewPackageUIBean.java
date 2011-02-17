@@ -90,7 +90,7 @@ public class CreateNewPackageUIBean {
     private static final String REPO_OPTION_NONE = "none";
 
     private String packageName;
-    private String version;
+    private String version = "1.0";
     private int selectedArchitectureId;
     private int selectedPackageTypeId;
 
@@ -141,7 +141,7 @@ public class CreateNewPackageUIBean {
 
         // Collect the necessary information
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
 
         HttpServletRequest request = FacesContextUtility.getRequest();
         UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
@@ -185,16 +185,22 @@ public class CreateNewPackageUIBean {
         // Determine which repo the package will go into
         String repoId = null;
         if (usingARepo) {
-            try {
-                repoId = determineRepo(repoOption, subject, resource.getId());
-            } catch (ContentException ce) {
-                String errorMessages = ThrowableUtil.getAllMessages(ce);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
-                    + errorMessages);
-                return "failure";
+            if (resource != null) {
+                try {
+                    repoId = determineRepo(repoOption, subject, resource.getId());
+                } catch (ContentException ce) {
+                    String errorMessages = ThrowableUtil.getAllMessages(ce);
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
+                        + errorMessages);
+                    return "failure";
+                }
+            } else {
+                //we're creating a package directly inside a repo. The repo id
+                //will be in the request params.
+                repoId = FacesContextUtility.getRequiredRequestParameter("id");
             }
         }
-
+        
         try {
             // Grab a stream for the file being uploaded
             InputStream packageStream;
@@ -240,7 +246,7 @@ public class CreateNewPackageUIBean {
                 }
 
                 //TODO: need to get parent id instead right? ref to app server inst itself?
-                int newResourceTypeId = resource.getResourceType().getId();
+                Integer newResourceTypeId = resource == null ? null : resource.getResourceType().getId();
                 packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId, version,
                     architectureId, packageStream, packageUploadDetails, newResourceTypeId);
 
@@ -323,10 +329,15 @@ public class CreateNewPackageUIBean {
     }
 
     public SelectItem[] getPackageTypes() {
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
 
+        List<PackageType> packageTypes = null;
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-        List<PackageType> packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+        if (resource != null) {
+            packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+        } else {
+            packageTypes = contentUIManager.getPackageTypes();
+        }
 
         SelectItem[] items = new SelectItem[packageTypes.size()];
         int itemCounter = 0;
@@ -373,12 +384,20 @@ public class CreateNewPackageUIBean {
     }
 
     public boolean isNeedRequestPackageDetails() {
+        if (!isResourcePackage()) {
+            return true;
+        }
+        
         boolean isPackageBacked = isResourcePackageBacked();
         boolean backingPackageExists = lookupBackingPackage() != null;
 
         return !isPackageBacked || !backingPackageExists;
     }
 
+    public boolean isResourcePackage() {
+        return EnterpriseFacesContextUtility.getResourceIfExists() != null;
+    }
+    
     public boolean isResourcePackageBacked() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
         ResourceType resourceType = resource.getResourceType();
@@ -426,7 +445,14 @@ public class CreateNewPackageUIBean {
     }
 
     public String getPackageName() {
-        return packageName;
+        if (packageName != null) {
+            return packageName;
+        }
+        
+        UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
+        UploadItem fileItem = uploadUIBean.getFileItem();
+        
+        return fileItem == null ? null : fileItem.getFileName();
     }
 
     public void setPackageName(String packageName) {

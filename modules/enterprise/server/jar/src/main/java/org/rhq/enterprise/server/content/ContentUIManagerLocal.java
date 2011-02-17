@@ -75,6 +75,11 @@ public interface ContentUIManagerLocal {
     PackageType getPackageType(int id);
 
     /**
+     * @return all package types
+     */
+    List<PackageType> getPackageTypes();
+    
+    /**
      * Returns all package types that are available to the specified resource type.
      *
      * @param resourceTypeId identifies the resource type

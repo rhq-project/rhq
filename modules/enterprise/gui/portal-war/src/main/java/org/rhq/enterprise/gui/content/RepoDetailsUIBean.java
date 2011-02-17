@@ -18,7 +18,11 @@
  */
 package org.rhq.enterprise.gui.content;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.faces.application.FacesMessage;
+import javax.faces.model.SelectItem;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,8 +33,11 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.auth.SubjectManagerBean;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -50,6 +57,11 @@ public class RepoDetailsUIBean {
         return "edit";
     }
 
+    public void reloadRepo() {
+        this.repo = null;
+        loadRepo();
+    }
+    
     public boolean getCurrentlySyncing() {
         String syncStatus = getSyncStatus();
         if (!syncStatus.equals(ContentSyncStatus.SUCCESS.toString())
@@ -108,6 +120,23 @@ public class RepoDetailsUIBean {
         return getRepo().getContentSources().size() > 0;
     }
     
+    public SelectItem[] getAvailableOwners() {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        
+        List<Subject> subjects = subjectManager.findAllSubjects(PageControl.getUnlimitedInstance());
+        
+        ArrayList<SelectItem> items = new ArrayList<SelectItem>(subjects.size());
+        
+        items.add(new SelectItem(null, "--None--"));
+        
+        for(Subject s : subjects) {
+            SelectItem item = new SelectItem(s.getName(), s.getName());
+            items.add(item);
+        }
+        
+        return items.toArray(new SelectItem[items.size()]);
+    }
+    
     public String sync() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
@@ -132,6 +161,7 @@ public class RepoDetailsUIBean {
         RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
 
         try {
+            updateRepoOwner(subject);
             manager.updateRepo(subject, repo);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository has been updated.");
         } catch (ContentException ce) {
@@ -161,12 +191,6 @@ public class RepoDetailsUIBean {
         return "success";
     }
 
-    public void packageUploadListener(UploadEvent event) {
-        if (!isEditable()) {
-            return;
-        }
-    }
-    
     private void loadRepo() {
         if (this.repo == null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -174,6 +198,21 @@ public class RepoDetailsUIBean {
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
             this.repo = manager.getRepo(subject, id);
             this.repo.setSyncStatus(manager.calculateSyncStatus(subject, id));
+            if (repo.getOwner() == null) {
+                repo.setOwner(new Subject());
+            }
+        }
+    }
+    
+    private void updateRepoOwner(Subject loggedInSubject) {
+        if (repo.getOwner().getName() == null) {
+            repo.setOwner(null);
+        } else if (repo.getOwner().getName().equals(loggedInSubject.getName())) {
+            repo.setOwner(loggedInSubject);
+        } else {
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            Subject s = subjectManager.getSubjectByName(repo.getOwner().getName());
+            repo.setOwner(s);
         }
     }
 }

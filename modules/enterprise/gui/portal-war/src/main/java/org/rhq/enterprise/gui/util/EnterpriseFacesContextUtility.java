@@ -71,18 +71,22 @@ public class EnterpriseFacesContextUtility {
             int resourceId = FacesContextUtility.getOptionalRequestParameter(ParamConstants.CURRENT_RESOURCE_ID_PARAM,
                 Integer.class, -1);
 
-            if (resourceId == -1) {
+            if (resourceId == -1 && externalContext.getRequestServletPath().contains("/resource/")) {
                 resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
                     Integer.class);
+                // TODO: Instead call a manager method that returns a ResourceComposite, so we can stick the
+                //       ResourceComposite in the request map, rather than just the Resource.
+                resource = LookupUtil.getResourceManager().getResourceById(EnterpriseFacesContextUtility.getSubject(),
+                    resourceId);
+                externalContext.getRequestMap().put(AttrConstants.RESOURCE_ATTR, resource);
+                
+                return resource;
             }
-            // TODO: Instead call a manager method that returns a ResourceComposite, so we can stick the
-            //       ResourceComposite in the request map, rather than just the Resource.
-            resource = LookupUtil.getResourceManager().getResourceById(EnterpriseFacesContextUtility.getSubject(),
-                resourceId);
-            externalContext.getRequestMap().put(AttrConstants.RESOURCE_ATTR, resource);
+        } else {
+            return resource;
         }
 
-        return resource;
+        throw new IllegalStateException("Resource not found in the request params.");
     }
 
     /**

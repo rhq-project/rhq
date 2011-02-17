@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.0.0.B03</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -339,8 +339,7 @@
                            Using it turned out not t be a current option since the instrumented class carries with
                            it hibernate imports that we can't put in the domain jar since it's used on the Agent and
                            in Remote Java Clients. But this worked, so here ya go...
-                              <taskdef name="instrument"
-                                 classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
+                              <taskdef name="instrument" classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
                                  <classpath>
                                     <path refid="maven.runtime.classpath" />
                                     <path refid="maven.plugin.classpath" />

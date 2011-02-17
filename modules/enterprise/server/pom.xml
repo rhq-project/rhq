@@ -39,6 +39,7 @@
         <module>plugins</module>
         <module>ear</module>
         <module>safe-invoker</module>
+        <module>client-api</module>
       </modules>
     </profile>
 

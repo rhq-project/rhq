@@ -78,6 +78,20 @@
          <version>${project.version}</version> <type>sar</type> </dependency>
       -->
 
+      <!-- ** JARs -->
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-script-bindings</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-server-client-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      
       <!-- 3rd Party Deps -->
 
       <!-- ** WARs -->
@@ -182,7 +196,6 @@
                      <jarModule> <groupId>jboss</groupId> <artifactId>jboss-seam</artifactId> <bundleDir>lib</bundleDir>
                      <includeInApplicationXml>true</includeInApplicationXml> </jarModule>
                   -->
-
                </modules>
             </configuration>
          </plugin>

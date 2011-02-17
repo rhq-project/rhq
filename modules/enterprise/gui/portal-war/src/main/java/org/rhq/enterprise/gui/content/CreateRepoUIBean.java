@@ -36,15 +36,10 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateRepoUIBean {
-    private Repo newRepo = new Repo();
+    private Repo newRepo;
 
-    {
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        
-        //use a copy so that we can modify it without invalidating the user in the session
-        Subject currenUserCopy = subjectManager.getSubjectById(EnterpriseFacesContextUtility.getSubject().getId());
-        
-        newRepo.setOwner(currenUserCopy);
+    public CreateRepoUIBean() {
+        initNewRepo();
     }
     
     public Repo getRepo() {
@@ -92,12 +87,12 @@ public class CreateRepoUIBean {
             return "failed";
         }
 
-        newRepo = new Repo();
+        initNewRepo();
         return "save";
     }
     
     public String cancel() {
-        newRepo = new Repo();
+        initNewRepo();
         return "cancel";
     }
     
@@ -111,5 +106,16 @@ public class CreateRepoUIBean {
             Subject s = subjectManager.getSubjectByName(newRepo.getOwner().getName());
             newRepo.setOwner(s);
         }
+    }
+    
+    private void initNewRepo() {
+        newRepo = new Repo();
+        
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        
+        //use a copy so that we can modify it without invalidating the user in the session
+        Subject currenUserCopy = subjectManager.getSubjectById(EnterpriseFacesContextUtility.getSubject().getId());
+        
+        newRepo.setOwner(currenUserCopy);
     }
 }

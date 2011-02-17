@@ -56,8 +56,8 @@ public class FileUploadForm extends DynamicCallbackForm {
     private String uploadError;
     private boolean uploadInProgress;
 
-    private final String name;
-    private final String version;
+    private String name;
+    private String version;
     private final boolean showNameLabel;
     private final boolean showUploadButton;
     private final FormItemIcon iconLoading;
@@ -111,6 +111,24 @@ public class FileUploadForm extends DynamicCallbackForm {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+        if (onDrawCalled()) {
+            getItem("name").setValue(name);
+        }
+    }
+    
+    public String getVersion() {
+        return version;
+    }
+    
+    public void setVersion(String version) {
+        this.version = version;
+        if (onDrawCalled()) {
+            getItem("version").setValue(version);
+        }
+    }
+    
     /**
      * Returns true if the file was successfully uploaded, false if an error occurred.
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
@@ -280,8 +298,10 @@ public class FileUploadForm extends DynamicCallbackForm {
     protected void onDraw() {
         super.onDraw();
 
-        List<FormItem> onDrawItems = getOnDrawItems();
+        //set the number of columns before we create the items so that
+        //they have this value available
         setNumCols(((this.showUploadButton) ? 2 : 1) + ((this.showNameLabel) ? 1 : 0));
+        List<FormItem> onDrawItems = getOnDrawItems();
         setItems(onDrawItems.toArray(new FormItem[onDrawItems.size()]));
 
         // push the form handler so it executes first if the form creator has also added a handler
@@ -293,6 +313,10 @@ public class FileUploadForm extends DynamicCallbackForm {
         if (null != submitFailedHandler) {
             this.addFormSubmitFailedHandler(submitFailedHandler);
         }
+    }
+
+    protected boolean onDrawCalled() {
+        return getItem("sessionid") != null;
     }
 
     public List<String> getUploadedFilePaths() {

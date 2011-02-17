@@ -30,21 +30,24 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * Upload a single file and use it to create a new PackageVersion. 
  * 
  * @author Jay Shaughnessy
+ * @author Lukas Krejci
  */
 public class PackageVersionFileUploadForm extends FileUploadForm {
 
     private int packageTypeId;
     private Integer archId;
+    private Integer repoId;
     private int packageVersionId;
 
     public PackageVersionFileUploadForm(String locatorId, int packageTypeId, String packageName, String version,
-        Integer archId, boolean showNameLabel, Boolean isAlreadyUploaded) {
+        Integer archId, Integer repoId, boolean showNameLabel, boolean showUploadButton, Boolean isAlreadyUploaded) {
 
-        super(locatorId, packageName, version, showNameLabel, true, isAlreadyUploaded);
+        super(locatorId, packageName, version, showNameLabel, showUploadButton, isAlreadyUploaded);
 
         this.packageTypeId = packageTypeId;
         this.archId = archId;
-
+        this.repoId = repoId;
+        
         setAction(GWT.getModuleBaseURL() + "PackageVersionFileUploadServlet");
     }
 
@@ -58,6 +61,57 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
         return this.packageVersionId;
     }
 
+    public int getPackageTypeId() {
+        return packageTypeId;
+    }
+    
+    public void setPackageTypeId(int value) {
+        packageTypeId = value;
+        if (onDrawCalled()) {
+            getItem("packageTypeId").setValue(value);
+        }
+    }
+    
+    public Integer getArchitectureId() {
+        return archId;
+    }
+    
+    public void setArchitectureId(Integer value) {
+        archId = value; 
+        FormItem item = getItem("archId");
+        if (item != null) {
+            if (value == null) {
+                removeField("archId");
+            } else {
+                item.setDefaultValue(value);
+            }
+        } else if (value != null && onDrawCalled()) {
+            HiddenItem archIdField = new HiddenItem("archId");
+            archIdField.setDefaultValue(value);
+            addField(archIdField);
+        }
+    }
+    
+    public Integer getRepoId() {
+        return repoId;
+    }
+    
+    public void setRepoId(Integer value) {
+        repoId = value;
+        FormItem item = getItem("repoId");
+        if (item != null) {
+            if (value != null) {
+                removeField("repoId");
+            } else {
+                item.setDefaultValue(value);
+            }
+        } else if (value != null && onDrawCalled()) {
+            HiddenItem repoIdField = new HiddenItem("repoId");
+            repoIdField.setDefaultValue(value);
+            addField(repoIdField);
+        }
+    }
+    
     @Override
     protected List<FormItem> getOnDrawItems() {
         List<FormItem> onDrawItems = super.getOnDrawItems();
@@ -72,6 +126,12 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
             onDrawItems.add(archIdField);
         }
 
+        if (null != repoId) {
+            HiddenItem repoIdField = new HiddenItem("repoId");
+            repoIdField.setDefaultValue(repoId);
+            onDrawItems.add(repoIdField);
+        }
+        
         return onDrawItems;
     }
 
@@ -114,4 +174,25 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
         super.submitForm();
     }
 
+    private void removeField(String fieldName) {
+        FormItem[] items = getFields();
+        FormItem[] newItems = new FormItem[items.length - 1];
+        int idx = 0;
+        for (FormItem i : items) {
+            if (!fieldName.equals(i.getName())) {
+                newItems[idx] = i;
+            }
+            ++idx;
+        }
+        
+        setFields(newItems);
+    }
+    
+    private void addField(FormItem item) {
+        FormItem[] items = getFields();
+        FormItem[] newItems = new FormItem[items.length + 1];
+        
+        System.arraycopy(items, 0, newItems, 0, items.length);
+        newItems[items.length] = item;
+    }    
 }

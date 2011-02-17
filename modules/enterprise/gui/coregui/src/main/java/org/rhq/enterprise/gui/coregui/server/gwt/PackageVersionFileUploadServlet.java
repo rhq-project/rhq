@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -65,10 +66,22 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             String archIdField = getFormField(formFields, "archId", null);
             int architectureId = (null != archIdField) ? Integer.parseInt(archIdField) : contentManager
                 .getNoArchitecture().getId();
+            Integer repoId = null;
+            String repoIdS = getFormField(formFields, "repoId", null);
+            if (repoIdS != null) {
+                repoId = Integer.parseInt(repoIdS);
+            }
+            
             InputStream fileStream = new FileInputStream(file);
 
             PackageVersion packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
                 architectureId, fileStream);
+            
+            if (repoId != null) {
+                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+                repoManager.addPackageVersionsToRepo(subject, repoId, new int[] { packageVersion.getId() });
+            }
+            
             successMsg = "success [" + packageVersion.getId() + "]";
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload file", e); // clients will look for this string!

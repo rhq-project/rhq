@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * TODO
  *
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
 public class RadioGroupWithComponentsItem extends CanvasItem {
 
@@ -72,12 +73,38 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         return this.selected;
     }
 
+    public int getSelectedIndex() {
+        if (selected == null) {
+            return -1;
+        }
+        
+        int idx = 0;
+        for(NameAndTitle t : valueMap.keySet()) {
+            if (selected.equals(t.getTitle())) {
+                break;
+            }
+            ++idx;
+        }
+        
+        return idx;
+    }
+    
+    public void setSelected(String selected) {
+        RadioGroupItem radio = (RadioGroupItem) canvas.getItem(SeleniumUtility.getSafeId(selected));
+        if (radio != null) {
+            this.selected = selected;
+            radio.setValue(selected);
+            canvas.updateEnablement();
+            form.markForRedraw();
+        }
+    }
+    
     public Canvas getSelectedComponent() {
         if (null == this.selected) {
             return null;
         }
 
-        return valueMap.get(this.selected);
+        return valueMap.get(new NameAndTitle(this.selected));
     }
 
     private static class NameAndTitle {
@@ -162,7 +189,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
 
             for (NameAndTitle key : valueMap.keySet()) {
                 Canvas value = valueMap.get(key);
-                Boolean disabled = !selected.equals(key.getName());
+                Boolean disabled = !selected.equals(key.getTitle());
                 if (disabled) {
                     canvas.getItem(key.getName()).clearValue();
                     canvas.getItem(key.getName()).redraw();

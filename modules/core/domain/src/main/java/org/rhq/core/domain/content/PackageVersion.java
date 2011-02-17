@@ -157,7 +157,11 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "   AND pv.repoPackageVersions IS EMPTY " //
         + "   AND pv.installedPackages IS EMPTY " //
         + "   AND pv.installedPackageHistory IS EMPTY "),
-
+    @NamedQuery(name = PackageVersion.DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
+        + " WHERE pv.id IN ( :packageVersionIds )" //
+        + "   AND pv.repoPackageVersions IS EMPTY " //
+        + "   AND pv.installedPackages IS EMPTY " //
+        + "   AND pv.installedPackageHistory IS EMPTY "),
     // the bulk delete that removes the PVPV mapping from orphaned package versions
     @NamedQuery(name = PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE ProductVersionPackageVersion pvpv "
         + " WHERE pvpv.packageVersion.id NOT IN (SELECT pvcs.packageVersion.id "
@@ -250,7 +254,13 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + " FROM PackageVersion pv"
         + " JOIN pv.repoPackageVersions rpv"
         + " WHERE pv.generalPackage.id = :packageId"
-        + "     AND rpv.repo.id = :repoId")
+        + "     AND rpv.repo.id = :repoId"),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_DELETEABLE_IDS_IN_REPO, query = "SELECT pv.id FROM PackageVersion pv" 
+        + " WHERE (pv.id, 1) IN"
+        + "   (SELECT pv2.id, (SELECT COUNT(rpv) FROM RepoPackageVersion rpv WHERE rpv.packageVersion.id = pv2.id)"
+        + "    FROM PackageVersion pv2"
+        + "    WHERE pv2.id IN ( :packageVersionIds )"
+        + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId))")
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
@@ -278,6 +288,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";
     public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
     public static final String DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteSingleIfNoContentSourcesOrRepos";
+    public static final String DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteMultipleIfNoContentSourcesOrRepos";
     public static final String DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deletePVPVIfNoContentSourcesOrRepos";
     public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedExtraProps";
     public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedFiles";
@@ -288,6 +299,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
     public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
+    public static final String QUERY_FIND_DELETEABLE_IDS_IN_REPO = "PackageVersion.findDeleteableVersionIds";
     
     /**
      * This is a default {@link Comparator} implementation for package versions.

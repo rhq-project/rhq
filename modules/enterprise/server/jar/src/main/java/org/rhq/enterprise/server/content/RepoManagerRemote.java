@@ -185,6 +185,24 @@ public interface RepoManagerRemote {
         @WebParam(name = "pageControl") PageControl pc);
 
     /**
+     * Deletes package versions from a repo if they are not referenced by 
+     * a content source.
+     * <p>
+     * The package versions themselves are not deleted until some content source or repository
+     * is deleted at which point orphans detection is performed.
+     *  
+     * @param subject
+     * @param repoId
+     * @param packageVersionIds
+     * @return true if all the package versions were successfully deleted, false if some references exist.
+     */
+    @WebMethod
+    boolean deletePackageVersionsFromRepo(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "repoId") int repoId,
+        @WebParam(name = "packageVersionIds") int[] packageVersionId);
+    
+    /**
      * Gets all resources that are subscribed to the given repo.
      *
      * @param subject The logged in user's subject.

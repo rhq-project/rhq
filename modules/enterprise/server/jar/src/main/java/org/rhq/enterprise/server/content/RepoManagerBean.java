@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.content;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -157,6 +158,45 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         entityManager.remove(deleteMe);
     }
 
+    public boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        if (packageVersionIds == null || packageVersionIds.length == 0) {
+            return true;
+        }
+        
+        if (!authzManager.canUpdateRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot update the repo with id " + repoId + " and therefore cannot delete package versions from it.");
+        }
+        
+        ArrayList<Integer> ids = new ArrayList<Integer>();
+        for(int id : packageVersionIds) {
+            ids.add(id);
+        }
+
+        Query deleteable = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_DELETEABLE_IDS_IN_REPO);
+        deleteable.setParameter("repoId", repoId);
+        deleteable.setParameter("packageVersionIds", ids);
+        
+        @SuppressWarnings("unchecked")
+        List<Integer> deleteableIds = (List<Integer>) deleteable.getResultList();
+        
+        if (deleteableIds.isEmpty()) {
+            return false;
+        }
+        
+        Query deleteRepoPackageVersions = entityManager.createNamedQuery(RepoPackageVersion.DELETE_MULTIPLE_WHEN_NO_PROVIDER);
+        deleteRepoPackageVersions.setParameter("repoId", repoId);            
+        deleteRepoPackageVersions.setParameter("packageVersionIds", deleteableIds);
+        
+        deleteRepoPackageVersions.executeUpdate();
+        
+        Query deletePackageVersions = entityManager.createNamedQuery(PackageVersion.DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS);
+        deletePackageVersions.setParameter("packageVersionIds", deleteableIds);
+        
+        int deleted = deletePackageVersions.executeUpdate();
+        
+        return deleted == packageVersionIds.length;
+    }
+    
     @SuppressWarnings("unchecked")
     public PageList<Repo> findRepos(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("c.name");

@@ -795,6 +795,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.getLatestPackageVersion(subject, packageId, repoId);
     }
     
+    public boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        return repoManager.deletePackageVersionsFromRepo(subject, repoId, packageVersionIds);
+    }
+    
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
         return repoManager.findSubscribedResources(subject, repoId, pc);
     }

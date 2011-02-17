@@ -110,6 +110,11 @@ public interface RepoManagerLocal {
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
+     * @see RepoManagerRemote#deletePackageVersionsFromRepo(Subject, int, int) 
+     */
+    boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionId);
+    
+    /**
      * @see RepoManagerRemote#getLatestPackageVersion(Subject, int, int) 
      */
     PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId);

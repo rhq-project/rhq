@@ -208,7 +208,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
         String link = perspectiveManager.getPageLink(subject, "createContentProvider", typeName, null);
 
         if (null == link) {
-            link = "/rhq/content/createContentProvider.xhtml?mode=new&typeName=" + typeName;
+            link = "/rhq/content/createContentProvider-plain.xhtml?mode=new&typeName=" + typeName;
         } else {
             link += "&mode=new&typeName=" + typeName;
         }

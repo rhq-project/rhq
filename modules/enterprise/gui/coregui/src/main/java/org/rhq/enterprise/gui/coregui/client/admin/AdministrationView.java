@@ -218,7 +218,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             "subsystems/content/Content_16.png", new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId(PAGE_CONTENT_SOURCES_VIEW_ID.getName()),
-                        "/rhq/content/listContentProviders.xhtml?nomenu=true");
+                        "/rhq/content/listContentProviders-plain.xhtml");
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_REPOSITORIES));
 
@@ -226,7 +226,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane(extendLocatorId(PAGE_REPOS_VIEW_ID.getName()),
-                        "/rhq/content/listRepos.xhtml?nomenu=true");
+                        "/rhq/content/listRepos-plain.xhtml");
                 }
             });
 

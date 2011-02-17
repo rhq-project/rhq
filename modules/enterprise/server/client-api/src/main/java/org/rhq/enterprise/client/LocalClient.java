@@ -20,6 +20,7 @@
 package org.rhq.enterprise.client;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.util.InterfaceSimplifier;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
@@ -218,6 +220,10 @@ public class LocalClient implements RhqFacade {
     private <T> T getProxy(Object slsb, Class<T> iface) {
         RhqManagers manager = RhqManagers.forInterface(iface);
 
-        return iface.cast(new LocalClientProxy(slsb, this, manager));
+        Class<?> simplified = InterfaceSimplifier.simplify(iface);
+        
+        Object proxy = Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified }, new LocalClientProxy(slsb, this, manager));
+        
+        return iface.cast(proxy);
     }
 }

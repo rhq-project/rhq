@@ -207,6 +207,7 @@
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                     <!-- <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE 
                         -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
+                    <argLine>-Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>    
                 </configuration>
             </plugin>
 

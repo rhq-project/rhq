@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -223,14 +224,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
 
         queryCount.setParameter("inventoryStatuses", statuses);
         long count = (Long) queryCount.getSingleResult();
 
-        query.setParameter("inventoryStatuses", statuses);
-        List<Resource> results = query.getResultList();
+        List<Resource> results;
+        if (count>0) {
+            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
+
+            query.setParameter("inventoryStatuses", statuses);
+            results = query.getResultList();
+        }
+        else
+            results = Collections.emptyList();
 
         return new PageList<Resource>(results, (int) count, pc);
     }
@@ -269,7 +276,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // on status change request an agent sync on the affected resources.  The agent will sync status and determine
         // what other sync work needs to be performed. Synchronize the platforms, then the servers, omitting servers
-        // under synced platforms since they will have been handled already.        
+        // under synced platforms since they will have been handled already.
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
@@ -335,7 +342,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         try {
             ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
-            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear 
+            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear
             entityManager.clear();
             MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
                 pluginConfiguration);
@@ -456,10 +463,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * the same as <code>newVersion</code>, its version string will be set to it. If
      * the resource's version was different and was changed by this method, <code>true</code>
      * will be returned.
-     * 
+     *
      * @param resource the resource whose version is to be checked
      * @param newVersion what the version of the resource should be
-     * 
+     *
      * @return <code>true</code> if the resource's version was not <code>newVersion</code> and was
      *         changed to it. <code>false</code> if the version was already the same as <code>newVersion</code>
      *         or <code>resource</code> was <code>null</code>. In other words, this returns <code>true</code>
@@ -723,7 +730,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
          * the quartz job has not yet come along to remove this resource from the database) we should stop all
          * processing from this node and return immediately.  this short-cuts the processing for the entire sub-tree
          * under this resource, but that's OK because the in-band uninventory logic will have marked entire sub-tree
-         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked 
+         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked
          * for async uninventory too.
          */
         if (existingResource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {

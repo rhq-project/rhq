@@ -196,7 +196,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
                 if (isPlatform) {
                     if (isCheckboxMarked) {
-                        SC.ask("Also select the platform children?", new BooleanCallback() {
+                        SC.ask(MSG.view_autoDiscoveryQ_confirmSelect(), new BooleanCallback() {
                             public void execute(Boolean confirmed) {
                                 if (confirmed) {
                                     for (ListGridRecord child : treeGrid.getTree().getChildren(selectedNode)) {

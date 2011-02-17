@@ -2019,7 +2019,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         int resourceId = 0; //set to dummy value
 
-        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        log.debug("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
         return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, 0, -1, packageVersion
             .getId());
     }
@@ -2036,7 +2036,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         int resourceId = 0; //set to dummy value
 
-        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        log.debug("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
         return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, startByte, endByte,
             packageVersion.getId());
     }

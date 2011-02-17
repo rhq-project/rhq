@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
@@ -48,6 +49,8 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -66,6 +69,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -91,6 +95,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
     private String basePath;
+
+    private GroupDefinitionExpressionBuilder builder;
 
     // editable form
     private TextItem id;
@@ -285,6 +291,16 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     }
 
     private void buildForm() {
+        FormItemIcon expressionBuilderIcon = new FormItemIcon();
+        expressionBuilderIcon.setSrc("[SKIN]/actions/add.png");
+        expressionBuilderIcon.setPrompt(MSG.view_dynagroup_expressionBuilderIconTooltip());
+        expressionBuilderIcon.addFormItemClickHandler(new FormItemClickHandler() {
+            @Override
+            public void onFormItemClick(FormItemIconClickEvent event) {
+                showExpressionBuilder();
+            }
+        });
+
         id = new TextItem("id", MSG.common_title_id());
         id.setVisible(false);
 
@@ -313,17 +329,32 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         templateSelector.setColSpan(1);
         templateSelector.setEndRow(true);
         templateSelector.setStartRow(false);
+        templateSelector.setIcons(expressionBuilderIcon);
+        templateSelector.setHoverWidth(200);
 
         expression = new TextAreaItem("expression", MSG.view_dynagroup_expression());
         expression.setWidth(400);
         expression.setHeight(150);
         expression.setDefaultValue("");
+        expression.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                // the user changed the expression text, clear the template drop down
+                // so the user isn't confused thinking this new value is the template text
+                templateSelector.clearValue();
+            }
+        });
+        if (builder != null) {
+            builder.destroy();
+            builder = null;
+        }
 
         templateSelector.addChangedHandler(new ChangedHandler() {
             @Override
             public void onChanged(ChangedEvent event) {
                 if (event.getValue() != null) {
                     String selectedTemplateId = event.getValue().toString();
+                    // user picked one of the canned templates - put it in the expression text area
                     String selectedTemplate = templateStrings.get(selectedTemplateId);
                     expression.setValue((selectedTemplate != null) ? selectedTemplate : "");
                 } else {
@@ -341,7 +372,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     public static LinkedHashMap<String, String> getTemplates() {
         LinkedHashMap<String, String> items = new LinkedHashMap<String, String>();
 
-        // grouped items
+        // grouped items (these can potentially create multiple groups)
         items.put(TEMPLATE_JBOSSAS4_CLUSTERS, //
             buildTemplate("groupby resource.trait[partitionName]", //
                 "resource.type.plugin = JBossAS", //
@@ -366,7 +397,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             buildTemplate("groupby resource.type.plugin", //
                 "groupby resource.type.name"));
 
-        // simple items
+        // simple items (these create one group)
         items.put(TEMPLATE_JBOSSAS4_HOSTING_APP, //
             buildTemplate("resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server", //
@@ -425,6 +456,27 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     }
                 });
         }
+    }
+
+    private void showExpressionBuilder() {
+        if (builder == null) {
+            builder = new GroupDefinitionExpressionBuilder(extendLocatorId("exprBuilder"), new AddExpressionHandler() {
+                @Override
+                public void addExpression(String newExpression) {
+                    String currentExpression = "";
+                    String value = expression.getValueAsString();
+                    if (value != null) {
+                        currentExpression = value + "\n";
+                    }
+                    expression.setValue(currentExpression + newExpression);
+
+                    // the user changed the expression text, clear the template drop down
+                    // so the user isn't confused thinking this new value is the template text
+                    templateSelector.clearValue();
+                }
+            });
+        }
+        builder.show();
     }
 
     @Override

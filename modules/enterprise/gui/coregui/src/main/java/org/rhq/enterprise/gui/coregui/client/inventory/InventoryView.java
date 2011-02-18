@@ -68,7 +68,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_PLATFORMS = new ViewName("Platforms", MSG.view_inventory_platforms());
     private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers());
     private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services());
-    private static final ViewName PAGE_DOWN_SERVERS = new ViewName("DownServers", MSG.view_inventory_downServers());
+    private static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers", MSG
+        .view_inventory_unavailableServers());
 
     // view IDs for Groups section
     private static final ViewName GROUPS_SECTION_VIEW_ID = new ViewName("Groups", MSG.view_inventory_groups());
@@ -174,15 +175,15 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem downServersItem = new NavigationItem(PAGE_DOWN_SERVERS, ImageManager.getResourceIcon(
+        NavigationItem downServersItem = new NavigationItem(PAGE_UNAVAIL_SERVERS, ImageManager.getResourceIcon(
             ResourceCategory.SERVER, Boolean.FALSE), new ViewFactory() {
             public Canvas createView() {
                 Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
                     AvailabilityType.DOWN.name());
                 criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
                 // TODO (ips, 10/28/10): Should we include down platforms too?
-                return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS.getName()), criteria, MSG
-                    .view_inventory_downServers(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
+                return new ResourceSearchView(extendLocatorId(PAGE_UNAVAIL_SERVERS.getName()), criteria, MSG
+                    .view_inventory_unavailableServers(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
                     Boolean.FALSE));
             }
         });

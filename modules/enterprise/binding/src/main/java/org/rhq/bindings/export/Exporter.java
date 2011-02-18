@@ -31,49 +31,52 @@ import java.io.PrintWriter;
 
 public class Exporter {
 
-    private String format;
+    private String format = "raw";
 
     private String file;
 
+    private int pageWidth = 160;
+
     private TabularWriter tabularWriter;
 
-    private FileWriter fileWriter;
+    private PrintWriter fileWriter;
+
+    private boolean newWriterNeeded;
 
     public void setTarget(String format, String file) {
-        try {
-            this.format = format;
-            this.file = file;
-            fileWriter = new FileWriter(this.file);
-            tabularWriter = new TabularWriter(new PrintWriter(fileWriter), format);
-            tabularWriter.setExportMode(true);
-        } catch (IOException e) {
-            throw new ExportException(e);
-        }
+        setFormat(format);
+        setFile(file);
+        initWriter();
     }
 
     public int getPageWidth() {
-        return tabularWriter.getWidth();
+        return pageWidth;
     }
 
     public void setPageWidth(int width) {
-        tabularWriter.setWidth(width);
+        pageWidth = width;
     }
 
     public void write(Object object) {
-        try {
-            tabularWriter.print(object);
-            fileWriter.flush();
-        } catch (IOException e) {
-            throw new ExportException(e);
-        }
+        initWriter();
+        tabularWriter.print(object);
+        fileWriter.flush();
     }
 
+    public void close() {
+        if (fileWriter != null) {
+            fileWriter.close();
+            newWriterNeeded = true;
+        }
+    }
+    
     public String getFormat() {
         return format;
     }
 
     public void setFormat(String format) {
         this.format = format;
+        newWriterNeeded = true;
     }
 
     public String getFile() {
@@ -82,5 +85,37 @@ public class Exporter {
 
     public void setFile(String file) {
         this.file = file;
+        newWriterNeeded = true;
+    }
+
+    private void initWriter() {
+        if (newWriterNeeded || tabularWriter == null) {
+            if (fileWriter != null) {
+                fileWriter.close();
+            }
+            
+            if (format == null) {
+                throw new IllegalStateException("No format is set. Please set it to 'raw' or 'csv'.");
+            }
+
+            if (file == null) {
+                throw new IllegalStateException("No file is set. Please specify the file to outut the data to.");
+            }
+
+            newWriterNeeded = false;
+
+            try {
+                fileWriter = new PrintWriter(new FileWriter(this.file));
+                tabularWriter = new TabularWriter(fileWriter, format);
+                tabularWriter.setExportMode(true);
+            } catch (IOException e) {
+                if (fileWriter != null) {
+                    fileWriter.close();
+                }
+
+                throw new ExportException("Failed to initialize the exporter.", e);
+            }
+        }
+        tabularWriter.setWidth(pageWidth);
     }
 }

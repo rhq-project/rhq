@@ -530,6 +530,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
 
         fixRecoveryId(oldAlertDefinition);
+        oldAlertDefinition.setMtime(System.currentTimeMillis());
+
         AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 
         if (isResourceLevel

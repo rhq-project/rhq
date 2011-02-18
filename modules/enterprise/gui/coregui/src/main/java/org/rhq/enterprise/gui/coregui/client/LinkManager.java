@@ -87,6 +87,10 @@ public class LinkManager {
         return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
 
+    public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {
+        return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
+    }
+
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
             return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;
@@ -142,8 +146,15 @@ public class LinkManager {
         return link;
     }
 
-    public static String getSubsystemAlertDefsLink() {
-        return "/rhq/subsystem/alertDefinitions.xhtml";
+    public static String getSubsystemAlertDefinitionLink(int resourceId, int alertDefinitionId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Alerts/Definitions/" + alertDefinitionId;
+        } else {
+            link = "/rhq/subsystem/alertDefinitions.xhtml";
+        }
+
+        return link;
     }
 
     public static String getAutodiscoveryQueueLink() {
@@ -252,7 +263,7 @@ public class LinkManager {
 
     public static String getAdminSysConfigLink() {
         if (GWT) {
-            return "#Administration/Configuration/System Settings";
+            return "#Administration/Configuration/SystemSettings";
         } else {
             return "/admin/config/Config.do?mode=edit";
         }
@@ -327,7 +338,11 @@ public class LinkManager {
     }
 
     public static String getAdminDownloadsLink() {
-        return "/rhq/admin/downloads.xhtml";
+        if (GWT) {
+            return "#Administration/Configuration/Downloads";
+        } else {
+            return "/rhq/admin/downloads.xhtml";
+        }
     }
 
     public static String getDebugSqlLink() {

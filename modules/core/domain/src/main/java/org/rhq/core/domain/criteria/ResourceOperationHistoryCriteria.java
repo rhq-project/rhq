@@ -41,11 +41,13 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     private static final long serialVersionUID = 1L;
 
     private List<Integer> filterResourceIds; // requires override
+    private Integer filterGroupOperationHistoryId; // requires override
 
     private boolean fetchResults;
 
     public ResourceOperationHistoryCriteria() {
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
+        filterOverrides.put("groupOperationHistoryId", "groupOperationHistory.id = ?");
     }
 
     @Override
@@ -55,6 +57,10 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
 
     public void addFilterResourceIds(Integer... filterResourceIds) {
         this.filterResourceIds = Arrays.asList(filterResourceIds);
+    }
+
+    public void addFilterGroupOperationHistoryId(Integer groupOperationHistoryId) {
+        this.filterGroupOperationHistoryId = groupOperationHistoryId;
     }
 
     public void fetchResults(boolean fetchResults) {

@@ -80,8 +80,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this));
-
+        addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this), true);
 
     }
 

@@ -56,19 +56,19 @@ public class Authorization extends ConditionalTagSupport {
             }
 
             Context context = Context.Global;
-            int objectId = getResourceId(request);
-            if (objectId != 0) {
+            int resourceId = getResourceId(request);
+            if (resourceId != 0) {
                 context = Context.Resource;
             }
-            objectId = getResourceGroupId(request);
-            if (objectId != 0) {
+            int groupId = getResourceGroupId(request);
+            if (groupId != 0) {
                 context = Context.Group;
             }
 
             if (context == Context.Resource) {
-                return authorizationManager.hasResourcePermission(user, permission, objectId);
+                return authorizationManager.hasResourcePermission(user, permission, resourceId);
             } else if (context == Context.Group) {
-                return authorizationManager.hasGroupPermission(user, permission, objectId);
+                return authorizationManager.hasGroupPermission(user, permission, groupId);
             } else if (context == Context.Global) {
                 return authorizationManager.hasGlobalPermission(user, permission);
             } else {

@@ -53,11 +53,19 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-    public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
+    public PageList<DisambiguationReport<ResourceOperationHistory>> findResourceOperationHistoriesByCriteria(
         ResourceOperationHistoryCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(operationManager.findResourceOperationHistoriesByCriteria(getSessionSubject(),
-                criteria), "OperationService.findResourceOperationHistoriesByCriteria");
+            PageList<ResourceOperationHistory> resourceOperationHistories =
+                    SerialUtility.prepare(operationManager.findResourceOperationHistoriesByCriteria(getSessionSubject(),
+                    criteria), "OperationService.findResourceOperationHistoriesByCriteria");
+
+            List<DisambiguationReport<ResourceOperationHistory>> disambiguatedLastCompletedResourceOps = resourceManager
+                .disambiguate(resourceOperationHistories, RESOURCE_OPERATION_HISTORY_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
+
+            return new PageList<DisambiguationReport<ResourceOperationHistory>>(disambiguatedLastCompletedResourceOps,
+                    resourceOperationHistories.getTotalSize(), resourceOperationHistories.getPageControl());
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -219,15 +227,22 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
+    private static final IntExtractor<ResourceOperationHistory> RESOURCE_OPERATION_HISTORY_RESOURCE_ID_EXTRACTOR =
+            new IntExtractor<ResourceOperationHistory>() {
+        public int extract(ResourceOperationHistory resourceOperationHistory) {
+            return resourceOperationHistory.getResource().getId();
+        }
+    };
+
     private static final IntExtractor<ResourceOperationLastCompletedComposite> RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceOperationLastCompletedComposite>() {
-        public int extract(ResourceOperationLastCompletedComposite object) {
-            return object.getResourceId();
+        public int extract(ResourceOperationLastCompletedComposite resourceOperationLastCompletedComposite) {
+            return resourceOperationLastCompletedComposite.getResourceId();
         }
     };
 
     private static final IntExtractor<ResourceOperationScheduleComposite> RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceOperationScheduleComposite>() {
-        public int extract(ResourceOperationScheduleComposite object) {
-            return object.getResourceId();
+        public int extract(ResourceOperationScheduleComposite resourceOperationScheduleComposite) {
+            return resourceOperationScheduleComposite.getResourceId();
         }
     };
 

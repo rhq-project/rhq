@@ -466,7 +466,7 @@ public class LoginView extends LocatableCanvas {
 
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_login_registerLdapSuccess(), Message.Severity.Info));
-                        Log.trace("Succesfully registered the new ldap Subject.");
+                        Log.trace("Successfully registered the new ldap Subject.");
                         window.destroy();
                         loginShowing = false;
                         //indicate to login callback success
@@ -516,7 +516,7 @@ public class LoginView extends LocatableCanvas {
         loginButton.setDisabled(true);
 
         try {
-            RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/j_security_check.do?j_username=" + user
+            RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do?j_username=" + user
                 + "&j_password=" + password);
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {

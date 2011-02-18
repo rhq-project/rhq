@@ -35,12 +35,12 @@
     <product.sales.email>sales@rhq-project.org</product.sales.email>
     <product.support.email>info@rhq-project.org</product.support.email>
     <product.version>${project.version}</product.version>
-    <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
-    <product.help.installation>Installing</product.help.installation>
-    <product.help.guide.server>Running+the+Server</product.help.guide.server>
-    <product.help.guide.agent>Running+the+Agent</product.help.guide.agent>
+    <product.help.doc.root>http://support.rhq-project.org/display/JOPR2/</product.help.doc.root>
+    <product.help.installation>Installation</product.help.installation>
+    <product.help.guide.server>Running+the+RHQ+Server</product.help.guide.server>
+    <product.help.guide.agent>Running+the+RHQ+Agent</product.help.guide.agent>
     <product.help.FAQ>FAQ</product.help.FAQ>
-    <product.help.config.props>http://support.rhq-project.org/display/RHQ/Configuring+the+Server#ConfiguringtheServer</product.help.config.props>
+    <product.help.config.props>http://support.rhq-project.org/display/JOPR2/Startup+Properties#ConfiguringtheServer</product.help.config.props>
   </properties>
 
   <dependencies>
@@ -194,6 +194,29 @@
             <goals>
               <goal>run</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <!-- here the phase you need -->
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/resources</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
       </plugin>

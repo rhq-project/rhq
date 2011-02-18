@@ -18,9 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.footer;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -78,124 +79,212 @@ public class FavoritesButton extends LocatableIMenuButton {
         favoritesMenu.setItems(favoriteResourcesMenuItem, favoriteGroupsMenuItem, recentlyViewedMenuItem);
 
         addClickHandler(new ClickHandler() {
-            private boolean contextMenuIsShown = false;
 
             public void onClick(ClickEvent clickEvent) {
                 // Cancel the click event. We'll call show() on the menu ourselves only if we're able to load the
                 // favorite Resources successfully.
                 clickEvent.cancel();
-                contextMenuIsShown = false; // so at least one of our two callbacks will show it
 
-                Set<Integer> favoriteResources;
-                Set<Integer> favoriteGroups;
-                Set<Integer> recentlyViewed;
+                final Set<Integer> favoriteResourceIds = UserSessionManager.getUserPreferences().getFavoriteResources();
+                final Set<Integer> favoriteGroupIds = UserSessionManager.getUserPreferences()
+                    .getFavoriteResourceGroups();
+                final List<Integer> recentResourceIds = UserSessionManager.getUserPreferences().getRecentResources();
+                final List<Integer> recentGroupIds = UserSessionManager.getUserPreferences().getRecentResourceGroups();
 
-                favoriteResources = UserSessionManager.getUserPreferences().getFavoriteResources();
-                favoriteGroups = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
-                recentlyViewed = new HashSet<Integer>(0); // TODO: get the IDs of the recently visited resources
-
-                if (!favoriteResources.isEmpty()) {
-
-                    Integer[] resourceIds = new Integer[favoriteResources.size()];
-                    final MenuItem[] items = new MenuItem[favoriteResources.size()];
-                    final Map<Integer, MenuItem> resIdToMenuItemMap = new HashMap<Integer, MenuItem>(favoriteResources
-                        .size());
-                    int i = 0;
-                    for (final Integer resourceId : favoriteResources) {
-                        resourceIds[i] = resourceId;
-                        MenuItem item = new MenuItem(String.valueOf(resourceId));
-                        item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                            public void onClick(MenuItemClickEvent event) {
-                                CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
-                            }
-                        });
-                        items[i] = item;
-                        resIdToMenuItemMap.put(resourceId, item);
-                        i++;
-                    }
-
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterIds(resourceIds);
-                    GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                        new AsyncCallback<PageList<Resource>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
-                            }
-
-                            public void onSuccess(PageList<Resource> resources) {
-                                for (Resource resource : resources) {
-                                    MenuItem item = resIdToMenuItemMap.get(resource.getId());
-                                    // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
-                                    //       disambiguated Resource names.
-                                    item.setTitle(resource.getName());
-                                    item.setIcon(ImageManager.getResourceIcon(resource));
-                                }
-                                favoriteResourcesMenu.setItems(items);
-                                if (!contextMenuIsShown) {
-                                    contextMenuIsShown = true;
-                                    favoritesMenu.showContextMenu();
-                                }
-                            }
-                        });
-                }
-
-                if (!favoriteGroups.isEmpty()) {
-
-                    Integer[] groupIds = new Integer[favoriteGroups.size()];
-                    final MenuItem[] items = new MenuItem[favoriteGroups.size()];
-                    final Map<Integer, MenuItem> grpIdToMenuItemMap = new HashMap<Integer, MenuItem>(favoriteGroups
-                        .size());
-                    int i = 0;
-                    for (final Integer groupId : favoriteGroups) {
-                        groupIds[i] = groupId;
-                        MenuItem item = new MenuItem(String.valueOf(groupId));
-                        item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                            public void onClick(MenuItemClickEvent event) {
-                                CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
-                            }
-                        });
-                        items[i] = item;
-                        grpIdToMenuItemMap.put(groupId, item);
-                        i++;
-                    }
-
-                    ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-                    criteria.addFilterIds(groupIds);
-                    GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
-                        new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
-                            }
-
-                            public void onSuccess(PageList<ResourceGroupComposite> groups) {
-                                for (ResourceGroupComposite groupInfo : groups) {
-                                    ResourceGroup theGroup = groupInfo.getResourceGroup();
-                                    MenuItem item = grpIdToMenuItemMap.get(theGroup.getId());
-                                    item.setTitle(theGroup.getName());
-                                    item.setIcon(ImageManager.getGroupIcon(theGroup.getGroupCategory(), groupInfo
-                                        .getImplicitAvail()));
-                                }
-                                favoriteGroupsMenu.setItems(items);
-                                if (!contextMenuIsShown) {
-                                    contextMenuIsShown = true;
-                                    favoritesMenu.showContextMenu();
-                                }
-
-                            }
-                        });
-                }
-
-                if (!recentlyViewed.isEmpty()) {
-                    // TODO populate the menu. this is different than the other two because there could be a mix
-                    //      of both resources and groups in here. presumably, the user prefs will be able to tell
-                    //      us which is which so we can call the proper server API and use the proper icons
-                }
-
-                // if we have no menu items at all, then show the menu now
-                if (favoriteGroups.isEmpty() && favoriteResources.isEmpty() && recentlyViewed.isEmpty()) {
+                // if we have no menu items at all, then show the empty menu now
+                if (favoriteGroupIds.isEmpty() && favoriteResourceIds.isEmpty() && recentResourceIds.isEmpty()
+                    && recentGroupIds.isEmpty()) {
                     favoritesMenu.showContextMenu();
+                    return;
                 }
+
+                // keep a list of all the ids we need to pull from the db. combine favs and recents to minimize
+                // db round trips.
+                Set<Integer> resourceIds = new HashSet<Integer>();
+                Set<Integer> groupIds = new HashSet<Integer>();
+
+                resourceIds.addAll(favoriteResourceIds);
+                resourceIds.addAll(recentResourceIds);
+                groupIds.addAll(favoriteGroupIds);
+                groupIds.addAll(recentGroupIds);
+
+                fetchFavorites(resourceIds, groupIds, new AsyncCallback<Favorites>() {
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
+                    }
+
+                    public void onSuccess(Favorites favorites) {
+                        // generate the menus
+                        if (!favoriteResourceIds.isEmpty()) {
+                            List<MenuItem> items = new ArrayList<MenuItem>(favoriteResourceIds.size());
+
+                            for (final Integer resourceId : favoriteResourceIds) {
+                                Resource resource = favorites.getResource(resourceId);
+                                if (null == resource) {
+                                    // if the resource is gone just skip it
+                                    continue;
+                                }
+
+                                MenuItem item = new MenuItem(String.valueOf(resourceId));
+                                // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
+                                //       disambiguated Resource names.
+                                item.setTitle(resource.getName());
+                                item.setIcon(ImageManager.getResourceIcon(resource));
+                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                                    public void onClick(MenuItemClickEvent event) {
+                                        CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
+                                    }
+                                });
+                                items.add(item);
+                            }
+                            favoriteResourcesMenu.setItems(items.toArray(new MenuItem[items.size()]));
+                        }
+
+                        if (!favoriteGroupIds.isEmpty()) {
+                            List<MenuItem> items = new ArrayList<MenuItem>(favoriteGroupIds.size());
+
+                            for (final Integer groupId : favoriteGroupIds) {
+                                ResourceGroupComposite groupComposite = favorites.getGroupComposite(groupId);
+                                if (null == groupComposite) {
+                                    // if the resource group is gone just skip it
+                                    continue;
+                                }
+                                ResourceGroup group = groupComposite.getResourceGroup();
+
+                                MenuItem item = new MenuItem(String.valueOf(groupId));
+                                item.setTitle(group.getName());
+                                item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite
+                                    .getImplicitAvail()));
+
+                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                                    public void onClick(MenuItemClickEvent event) {
+                                        CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                                    }
+                                });
+                                items.add(item);
+                            }
+                            favoriteGroupsMenu.setItems(items.toArray(new MenuItem[items.size()]));
+                        }
+
+                        if (!(recentResourceIds.isEmpty() && recentGroupIds.isEmpty())) {
+                            List<MenuItem> items = new ArrayList<MenuItem>(recentResourceIds.size()
+                                + recentGroupIds.size());
+
+                            for (final Integer resourceId : recentResourceIds) {
+                                Resource resource = favorites.getResource(resourceId);
+                                if (null == resource) {
+                                    // if the resource is gone just skip it
+                                    continue;
+                                }
+
+                                MenuItem item = new MenuItem(String.valueOf(resourceId));
+                                // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
+                                //       disambiguated Resource names.
+                                item.setTitle(resource.getName());
+                                item.setIcon(ImageManager.getResourceIcon(resource));
+                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                                    public void onClick(MenuItemClickEvent event) {
+                                        CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
+                                    }
+                                });
+                                items.add(item);
+                            }
+                            if (!recentResourceIds.isEmpty() && !recentGroupIds.isEmpty()) {
+                                items.add(new MenuItemSeparator());
+                            }
+                            for (final Integer groupId : recentGroupIds) {
+                                ResourceGroupComposite groupComposite = favorites.getGroupComposite(groupId);
+                                if (null == groupComposite) {
+                                    // if the resource group is gone just skip it
+                                    continue;
+                                }
+                                ResourceGroup group = groupComposite.getResourceGroup();
+
+                                MenuItem item = new MenuItem(String.valueOf(groupId));
+                                item.setTitle(group.getName());
+                                item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite
+                                    .getImplicitAvail()));
+
+                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                                    public void onClick(MenuItemClickEvent event) {
+                                        CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                                    }
+                                });
+                                items.add(item);
+                            }
+
+                            recentlyViewedMenu.setItems(items.toArray(new MenuItem[items.size()]));
+                        }
+
+                        favoritesMenu.showContextMenu();
+                    }
+                });
             }
         });
     }
+
+    private void fetchFavorites(Set<Integer> resourceIds, final Set<Integer> groupIds,
+        final AsyncCallback<Favorites> callback) {
+
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterIds(resourceIds.toArray(new Integer[resourceIds.size()]));
+        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+            new AsyncCallback<PageList<Resource>>() {
+                public void onFailure(Throwable caught) {
+                    callback.onFailure(caught);
+                }
+
+                public void onSuccess(final PageList<Resource> resources) {
+
+                    if (groupIds.isEmpty()) {
+                        callback.onSuccess(new Favorites(resources, new PageList<ResourceGroupComposite>()));
+                        return;
+                    }
+
+                    ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                    criteria.addFilterIds(groupIds.toArray(new Integer[groupIds.size()]));
+                    GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+                        new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                            public void onFailure(Throwable caught) {
+                                callback.onFailure(caught);
+                            }
+
+                            public void onSuccess(PageList<ResourceGroupComposite> groups) {
+                                callback.onSuccess(new Favorites(resources, groups));
+                            }
+                        });
+
+                }
+            });
+    }
+
+    private static class Favorites {
+        private PageList<Resource> resources;
+        private PageList<ResourceGroupComposite> groupComposites;
+
+        public Favorites(PageList<Resource> resources, PageList<ResourceGroupComposite> groupComposites) {
+            this.resources = resources;
+            this.groupComposites = groupComposites;
+        }
+
+        public Resource getResource(int resourceId) {
+            for (Resource resource : resources) {
+                if (resourceId == resource.getId()) {
+                    return resource;
+                }
+            }
+            return null;
+        }
+
+        public ResourceGroupComposite getGroupComposite(int groupId) {
+            for (ResourceGroupComposite groupComposite : groupComposites) {
+                if (groupId == groupComposite.getResourceGroup().getId()) {
+                    return groupComposite;
+                }
+            }
+            return null;
+        }
+    }
+
 }

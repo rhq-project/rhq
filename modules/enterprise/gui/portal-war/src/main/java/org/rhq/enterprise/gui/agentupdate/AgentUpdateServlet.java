@@ -161,7 +161,8 @@ public class AgentUpdateServlet extends HttpServlet {
 
     private int getDownloadLimit() {
         // if the server cloud was configured to disallow updates, return 0
-        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+            LookupUtil.getSubjectManager().getOverlord());
         if (!Boolean.parseBoolean(systemConfig.getProperty(RHQConstants.EnableAgentAutoUpdate))) {
             return 0;
         }

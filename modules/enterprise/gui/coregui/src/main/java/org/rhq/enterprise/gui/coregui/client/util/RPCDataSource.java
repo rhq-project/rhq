@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,6 +51,7 @@ import org.hibernate.validator.RangeValidator;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -571,6 +573,14 @@ public abstract class RPCDataSource<T> extends DataSource {
             textField.setValidators(integerRangeValidator);
         }
         return textField;
+    }
+
+    protected static Date convertTimestampToDate(Long timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        // Assume 0 means null, not Jan 1, 1970.
+        return (timestamp != 0) ? new Date(timestamp) : null;
     }
 
 }

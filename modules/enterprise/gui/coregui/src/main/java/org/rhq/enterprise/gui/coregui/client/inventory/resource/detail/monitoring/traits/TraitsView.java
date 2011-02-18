@@ -19,8 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
-
 import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 
@@ -44,7 +44,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
     @Override
     protected void configureTable() {
-
+        super.configureTable();
     }
 
     private static Criteria createCriteria(int resourceId) {

@@ -109,6 +109,13 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
         setupTableInteractions(this.hasWriteAccess);
+
+        super.configureTable();
+    }
+
+    @Override
+    protected String getDetailsLinkColumnName() {
+        return AlertCriteria.SORT_FIELD_CTIME;
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {

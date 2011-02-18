@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,15 +120,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private PluginManagerLocal pluginManager;
 
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report)
-        throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         validateInventoryReport(report);
 
-        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager,
-            pluginManager);
+        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager, pluginManager);
         if (!filter.accept(report)) {
-            throw new StaleTypeException("The report contains one or more resource types that have been marked for " +
-                "deletion.");
+            throw new StaleTypeException("The report contains one or more resource types that have been marked for "
+                + "deletion.");
         }
 
         Agent agent = report.getAgent();
@@ -136,10 +135,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Agent knownAgent = agentManager.getAgentByName(agent.getName());
         if (knownAgent == null) {
             throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName()
-                + "] sent an inventory report - that report will be ignored. " 
+                + "] sent an inventory report - that report will be ignored. "
                 + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
-                + agent.getName() 
-                + "] was recently removed from the inventory. In any other case this is a bug.");
+                + agent.getName() + "] was recently removed from the inventory. In any other case this is a bug.");
         }
 
         if (log.isDebugEnabled()) {
@@ -226,14 +224,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
 
         queryCount.setParameter("inventoryStatuses", statuses);
         long count = (Long) queryCount.getSingleResult();
 
-        query.setParameter("inventoryStatuses", statuses);
-        List<Resource> results = query.getResultList();
+        List<Resource> results;
+        if (count>0) {
+            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
+
+            query.setParameter("inventoryStatuses", statuses);
+            results = query.getResultList();
+        }
+        else
+            results = Collections.emptyList();
 
         return new PageList<Resource>(results, (int) count, pc);
     }
@@ -272,7 +276,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // on status change request an agent sync on the affected resources.  The agent will sync status and determine
         // what other sync work needs to be performed. Synchronize the platforms, then the servers, omitting servers
-        // under synced platforms since they will have been handled already.        
+        // under synced platforms since they will have been handled already.
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
@@ -338,7 +342,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         try {
             ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
-            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear 
+            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear
             entityManager.clear();
             MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
                 pluginConfiguration);
@@ -434,8 +438,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> result = new HashSet<ResourceUpgradeResponse>();
 
-        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration()
-            .getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
+        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration(
+            subjectManager.getOverlord()).getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
 
         for (ResourceUpgradeRequest request : upgradeRequests) {
             Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
@@ -459,10 +463,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * the same as <code>newVersion</code>, its version string will be set to it. If
      * the resource's version was different and was changed by this method, <code>true</code>
      * will be returned.
-     * 
+     *
      * @param resource the resource whose version is to be checked
      * @param newVersion what the version of the resource should be
-     * 
+     *
      * @return <code>true</code> if the resource's version was not <code>newVersion</code> and was
      *         changed to it. <code>false</code> if the version was already the same as <code>newVersion</code>
      *         or <code>resource</code> was <code>null</code>. In other words, this returns <code>true</code>
@@ -508,9 +512,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest,
         boolean allowGenericPropertiesUpgrade) {
         if (upgradeRequest.getUpgradeErrorMessage() != null) {
-            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
-                upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(),
-                upgradeRequest.getTimestamp());
+            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, upgradeRequest
+                .getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(), upgradeRequest.getTimestamp());
             resourceManager.addResourceError(error);
             return null;
         }
@@ -688,8 +691,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                         continue;
                     }
                 }
-                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent,
-                    resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent, resource
+                    .getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }
 
             if (existingResource != null) {
@@ -727,7 +730,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
          * the quartz job has not yet come along to remove this resource from the database) we should stop all
          * processing from this node and return immediately.  this short-cuts the processing for the entire sub-tree
          * under this resource, but that's OK because the in-band uninventory logic will have marked entire sub-tree
-         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked 
+         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked
          * for async uninventory too.
          */
         if (existingResource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {
@@ -918,8 +921,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             throw new IllegalArgumentException("Can only commit resources with status: " + results);
         }
 
-        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, false,
-            PageControl.getUnlimitedInstance());
+        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, false, PageControl
+            .getUnlimitedInstance());
         List<Resource> platforms = new ArrayList<Resource>();
         List<Resource> servers = new ArrayList<Resource>();
         for (Resource res : resources) {

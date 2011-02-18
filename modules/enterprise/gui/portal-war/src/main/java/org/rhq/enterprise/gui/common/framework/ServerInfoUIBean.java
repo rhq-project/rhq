@@ -51,13 +51,14 @@ public class ServerInfoUIBean {
 
     public boolean isDebugModeEnabled() {
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        return Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode));
+        return Boolean.valueOf(systemManager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord())
+            .getProperty(RHQConstants.EnableDebugMode));
     }
 
     public boolean isExperimentalFeaturesEnabled() {
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        return Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(
-            RHQConstants.EnableExperimentalFeatures));
+        return Boolean.valueOf(systemManager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord())
+            .getProperty(RHQConstants.EnableExperimentalFeatures));
     }
 
     public String getFacesVersion() {

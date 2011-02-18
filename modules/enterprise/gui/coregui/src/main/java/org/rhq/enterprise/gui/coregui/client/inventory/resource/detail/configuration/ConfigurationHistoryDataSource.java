@@ -55,6 +55,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         public static final String DURATION = "duration";
         public static final String ERROR_MESSAGE = "errorMessage";
         public static final String MODIFIED_TIME = "modifiedTime";
+        public static final String OBJECT = "object"; // the full entity object is stored in this attribute
     }
 
     public static abstract class CriteriaField {
@@ -131,7 +132,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
 
     @Override
     public ResourceConfigurationUpdate copyValues(Record from) {
-        throw new UnsupportedOperationException("Updates are not supported.");
+        return (ResourceConfigurationUpdate) from.getAttributeAsObject(Field.OBJECT);
     }
 
     @Override
@@ -147,7 +148,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         record.setAttribute(Field.ERROR_MESSAGE, from.getErrorMessage());
         record.setAttribute(Field.MODIFIED_TIME, new Date(from.getModifiedTime()));
         record.setAttribute(Field.STATUS, from.getStatus().name());
-
+        record.setAttribute(Field.OBJECT, from);
         return record;
     }
 }

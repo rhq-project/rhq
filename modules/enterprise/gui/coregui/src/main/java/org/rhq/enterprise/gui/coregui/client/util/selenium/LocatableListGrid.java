@@ -30,4 +30,5 @@ public class LocatableListGrid extends ListGrid implements Locatable {
     public String extendLocatorId(String extension) {
         return this.locatorId + "_" + extension;
     }
+
 }

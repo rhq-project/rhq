@@ -50,8 +50,16 @@ public class GWTServiceLookup {
         return secure(GroupAlertDefinitionGWTServiceAsync.Util.getInstance());
     }
 
+    public static GroupDefinitionExpressionBuilderGWTServiceAsync getGroupDefinitionExpressionBuilderService() {
+        return secure(GroupDefinitionExpressionBuilderGWTServiceAsync.Util.getInstance());
+    }
+
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
+    }
+
+    public static PluginGWTServiceAsync getPluginService() {
+        return secure(PluginGWTServiceAsync.Util.getInstance());
     }
 
     public static ResourceGWTServiceAsync getResourceService() {

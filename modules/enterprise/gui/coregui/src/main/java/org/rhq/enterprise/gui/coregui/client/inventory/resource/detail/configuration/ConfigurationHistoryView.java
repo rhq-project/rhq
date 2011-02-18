@@ -32,18 +32,21 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryDataSource.Field;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
-    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges",
-        MSG.view_configurationHistoryList_title());
+    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
+        .view_configurationHistoryList_title());
 
     private Integer resourceId;
 
@@ -88,8 +91,13 @@ public class ConfigurationHistoryView extends TableSection {
             ListGridField resourceField = new ListGridField(ConfigurationHistoryDataSource.Field.RESOURCE);
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    Resource res = (Resource) o;
-                    return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
+                    if (listGridRecord == null) {
+                        return "unknown";
+                    }
+                    Resource res = (Resource) listGridRecord
+                        .getAttributeAsObject(ConfigurationHistoryDataSource.Field.RESOURCE);
+                    String url = LinkManager.getResourceLink(res.getId());
+                    return SeleniumUtility.getLocatableHref(url, res.getName(), null);
                 }
             });
             fields.add(resourceField);
@@ -124,7 +132,7 @@ public class ConfigurationHistoryView extends TableSection {
                 ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
                 for (ListGridRecord record : selection) {
                     ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record
-                        .getAttributeAsObject("entity");
+                        .getAttributeAsObject(ConfigurationHistoryDataSource.Field.OBJECT);
                     configs.add(update);
                 }
                 ConfigurationComparisonView.displayComparisonDialog(configs);
@@ -139,11 +147,12 @@ public class ConfigurationHistoryView extends TableSection {
             }
         });
 
+        super.configureTable();
     }
 
     @Override
     protected String getDetailsLinkColumnName() {
-        return FIELD_ID;
+        return Field.CREATED_TIME;
     }
 
     @Override

@@ -18,13 +18,15 @@
  */
 package org.rhq.enterprise.server.system;
 
+import java.util.Properties;
+
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.common.ServerDetails;
 
 /**
  * @author John Mazzitelli
@@ -33,15 +35,39 @@ import org.rhq.core.domain.common.ProductInfo;
 @Remote
 public interface SystemManagerRemote {
     /**
-     * Provides version information of the server processing the request. 
+     * Provides details (such as product version) of the server processing the request. 
      * 
-     * @return server version information
+     * @param subject user making the request
+     * 
+     * @return server details
      */
     @WebMethod
-    ServerVersion getServerVersion( //
-        @WebParam(name = "subject") Subject subject) throws Exception;
-
-    @WebMethod
-    ProductInfo getProductInfo(
+    ServerDetails getServerDetails( //
         @WebParam(name = "subject") Subject subject);
+
+    /**
+     * Get the server cloud configuration. These are the server configurations that will be
+     * the same for all servers in the HA server cloud.
+     *
+     * @param subject user making the request
+     *
+     * @return Properties
+     */
+    @WebMethod
+    Properties getSystemConfiguration( //
+        @WebParam(name = "subject") Subject subject);
+
+    /**
+     * Set the server cloud configuration.  The given properties will be the new settings
+     * for all servers in the HA server cloud.
+     *
+     * @param subject        the user who wants to change the settings
+     * @param properties     the new system configuration settings
+     * @param skipValidation if true, validation will not be performed on the properties
+     */
+    @WebMethod
+    void setSystemConfiguration( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "properties") Properties properties, //
+        @WebParam(name = "skipValidation") boolean skipValidation) throws Exception;
 }

@@ -72,6 +72,8 @@ public class UsersView extends TableSection<UsersDataSource> {
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
 
         fetchManageSecurityPermissionAsync();
+
+        super.configureTable();
     }
 
     private void fetchManageSecurityPermissionAsync() {

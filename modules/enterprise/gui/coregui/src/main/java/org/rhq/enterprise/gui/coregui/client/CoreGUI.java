@@ -72,12 +72,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
 
-    // just to avoid constructing this over and over
+    // just to avoid constructing this over and over. the ordering is important, more complex viewPaths first,
+    // javascript will greedily match "Resource" and give up trying after that, missing "Resource/AutoGroup" for
+    // example.
     private static final String TREE_NAV_VIEW_PATTERN = "(" //
-        + ResourceTopView.VIEW_ID + "|" //
-        + ResourceGroupTopView.VIEW_ID + "|" //
         + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "|" //
         + ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH //
+        + ResourceGroupTopView.VIEW_ID + "|" //
+        + ResourceTopView.VIEW_ID + "|" // 
         + ")/[^/]*";
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
@@ -135,6 +137,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
                 getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+            }
+        });
+
+        Window.addWindowClosingHandler(new Window.ClosingHandler() {
+            public void onWindowClosing(Window.ClosingEvent event) {
+                event.setMessage("Are you sure you want to leave RHQ?");
             }
         });
 
@@ -351,6 +359,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         public void renderView(final ViewPath viewPath) {
             Window.setTitle(getViewPathTitle(viewPath));
+
+            // keep our CoreGUI session alive by refreshing the session timer each time the user performs navigation
+            UserSessionManager.refresh();
 
             if (viewPath.isEnd()) {
                 // default view

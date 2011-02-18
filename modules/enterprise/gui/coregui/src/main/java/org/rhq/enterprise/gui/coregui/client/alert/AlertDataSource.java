@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -106,6 +107,14 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         fields.add(ctimeField);
 
         ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
+                Integer defId = listGridRecord.getAttributeAsInt("definitionId");
+                String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
@@ -153,7 +162,8 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
-                    return "<a href=\"" + LinkManager.getResourceLink(resourceId) + "\">" + o + "</a>";
+                    String url = LinkManager.getResourceLink(resourceId);
+                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
             fields.add(resourceNameField);
@@ -229,6 +239,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
+        record.setAttribute("definitionId", from.getAlertDefinition().getId());
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
         record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());

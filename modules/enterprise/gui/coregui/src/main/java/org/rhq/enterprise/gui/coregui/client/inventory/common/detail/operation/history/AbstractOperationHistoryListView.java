@@ -19,14 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DateDisplayFormat;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
@@ -43,25 +43,27 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  * @author John Mazzitelli
+ * @author Ian Springer
  */
-public abstract class AbstractOperationHistoryListView extends TableSection<AbstractOperationHistoryDataSource> {
+public abstract class AbstractOperationHistoryListView<T extends AbstractOperationHistoryDataSource> extends
+    TableSection<T> {
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
 
-    public AbstractOperationHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource, String title) {
+    public AbstractOperationHistoryListView(String locatorId, T dataSource, String title) {
         super(locatorId, title);
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
     }
 
-    public AbstractOperationHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource, String title,
-                                    Criteria criteria) {
+    public AbstractOperationHistoryListView(String locatorId, T dataSource, String title, Criteria criteria) {
         super(locatorId, title, criteria);
         setDataSource(dataSource);
     }
@@ -70,8 +72,6 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Abst
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
@@ -88,40 +88,68 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Abst
             });
 
         // TODO: i18n
-        addTableAction(extendLocatorId("ForceDelete"), "Force Delete", getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return (count >= 1 && hasControlPermission());
-                }
+        addTableAction(extendLocatorId("ForceDelete"), "Force Delete", getDeleteConfirmMessage(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return (count >= 1 && hasControlPermission());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    DSRequest requestProperties = new DSRequest();
-                    requestProperties.setAttribute("force", true);
-                    deleteSelectedRecords(requestProperties);
-                }
-            });
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                DSRequest requestProperties = new DSRequest();
+                requestProperties.setAttribute("force", true);
+                deleteSelectedRecords(requestProperties);
+            }
+        });
+
+        super.configureTable();
     }
 
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID, MSG.common_title_id());
+        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID);
         idField.setWidth(38);
         fields.add(idField);
 
-        ListGridField opNameField = new ListGridField(AbstractOperationHistoryDataSource.Field.OPERATION_NAME,
-            MSG.dataSource_operationHistory_operationName());
+        ListGridField opNameField = new ListGridField(AbstractOperationHistoryDataSource.Field.OPERATION_NAME);
         opNameField.setWidth("34%");
         fields.add(opNameField);
 
-        ListGridField subjectField = new ListGridField(AbstractOperationHistoryDataSource.Field.SUBJECT,
-            MSG.common_title_user());
+        ListGridField subjectField = new ListGridField(AbstractOperationHistoryDataSource.Field.SUBJECT);
         subjectField.setWidth("33%");
         fields.add(subjectField);
 
-        ListGridField statusField = new ListGridField(AbstractOperationHistoryDataSource.Field.STATUS,
-            MSG.common_title_status());
+        ListGridField statusField = createStatusField();
+        fields.add(statusField);
+
+        ListGridField startedTimeField = createStartedTimeField();
+        startedTimeField.setWidth("33%");
+        fields.add(startedTimeField);
+
+        return fields;
+    }
+
+    protected ListGridField createStartedTimeField() {
+        ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME);
+        //startedTimeField.setType(ListGridFieldType.DATE);
+        //startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        startedTimeField.setAlign(Alignment.LEFT);
+        startedTimeField.setCellAlign(Alignment.LEFT);
+        startedTimeField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value != null) {
+                    Date date = (Date) value;
+                    return DateTimeFormat.getMediumDateTimeFormat().format(date);
+                } else {
+                    return "<i>not yet started</i>";
+                }
+            }
+        });
+        return startedTimeField;
+    }
+
+    protected ListGridField createStatusField() {
+        ListGridField statusField = new ListGridField(AbstractOperationHistoryDataSource.Field.STATUS);
         statusField.setAlign(Alignment.CENTER);
         statusField.setCellAlign(Alignment.CENTER);
         statusField.setShowHover(true);
@@ -197,18 +225,25 @@ public abstract class AbstractOperationHistoryListView extends TableSection<Abst
             }
         });
         statusField.setWidth(44);
-        fields.add(statusField);
 
-        ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
-            MSG.dataSource_operationHistory_startedTime());
-        startedTimeField.setType(ListGridFieldType.DATE);
-        startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
-        startedTimeField.setAlign(Alignment.LEFT);
-        startedTimeField.setCellAlign(Alignment.LEFT);
-        startedTimeField.setWidth("33%");
-        fields.add(startedTimeField);
+        return statusField;
+    }
 
-        return fields;
+    protected ListGridField createResourceField() {
+        ListGridField resourceField = new ListGridField(ResourceOperationHistoryDataSource.Field.RESOURCE, MSG
+            .common_title_resource());
+        resourceField.setAlign(Alignment.LEFT);
+        resourceField.setCellAlign(Alignment.LEFT);
+        //resourceField.setSuppressValueIcon(true);
+        //resourceField.setValueIcons(new HashMap<String, String>(0));
+        /*resourceField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                Resource resource = (Resource) value;
+                String url = LinkManager.getResourceLink(resource.getId());
+                return "<a href=\"" + url + "\">" + resource.getName() + "</a>";
+            }
+        });*/
+        return resourceField;
     }
 
     @Override

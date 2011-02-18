@@ -29,14 +29,21 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 
 /**
+ * Returns information about the database.
+ * 
+ * @see ServerDetails
+ *
  * @author Joseph Marques
+ * @author John Mazzitelli
  */
-public final class SystemInformation {
+public final class SystemDatabaseInformation {
 
-    private final Log log = LogFactory.getLog(SystemInformation.class);
+    private final Log log = LogFactory.getLog(SystemDatabaseInformation.class);
 
     private Map<Property, String> properties;
 
@@ -45,10 +52,12 @@ public final class SystemInformation {
         DATABASE_PRODUCT_NAME, //
         DATABASE_PRODUCT_VERSION, //
         DATABASE_DRIVER_NAME, //
-        DATABASE_DRIVER_VERSION;
+        DATABASE_DRIVER_VERSION, //
+        CURRENT_MEASUREMENT_TABLE, //
+        NEXT_MEASUREMENT_TABLE_ROTATION;
     }
 
-    private SystemInformation() {
+    private SystemDatabaseInformation() {
         DataSource ds = null;
         Connection conn = null;
         try {
@@ -68,15 +77,19 @@ public final class SystemInformation {
             values.put(Property.DATABASE_PRODUCT_VERSION, productVersion);
             values.put(Property.DATABASE_DRIVER_NAME, driverName);
             values.put(Property.DATABASE_DRIVER_VERSION, driverVersion);
+
+            values.put(Property.CURRENT_MEASUREMENT_TABLE, MeasurementDataManagerUtility.getCurrentRawTable());
+            values.put(Property.NEXT_MEASUREMENT_TABLE_ROTATION, MeasurementDataManagerUtility.getNextRotationTime());
+
             properties = Collections.unmodifiableMap(values);
 
         } catch (Exception e) {
-            log.error("Could not load properties for " + SystemInformation.class.getSimpleName());
+            log.error("Could not load properties for " + SystemDatabaseInformation.class.getSimpleName());
         } finally {
             if (properties == null) {
                 Map<Property, String> values = new HashMap<Property, String>();
                 for (Property prop : Property.values()) {
-                    values.put(prop, "Could not determine");
+                    values.put(prop, "unknown");
                 }
                 properties = Collections.unmodifiableMap(values);
             }
@@ -84,8 +97,8 @@ public final class SystemInformation {
         }
     }
 
-    public static SystemInformation getInstance() {
-        return new SystemInformation();
+    public static SystemDatabaseInformation getInstance() {
+        return new SystemDatabaseInformation();
     }
 
     public Map<Property, String> getProperties(Property property) {
@@ -110,5 +123,13 @@ public final class SystemInformation {
 
     public String getDatabaseDriverVersion() {
         return properties.get(Property.DATABASE_DRIVER_VERSION);
+    }
+
+    public String getCurrentMeasurementTable() {
+        return properties.get(Property.CURRENT_MEASUREMENT_TABLE);
+    }
+
+    public String getNextMeasurementTableRotation() {
+        return properties.get(Property.NEXT_MEASUREMENT_TABLE_ROTATION);
     }
 }

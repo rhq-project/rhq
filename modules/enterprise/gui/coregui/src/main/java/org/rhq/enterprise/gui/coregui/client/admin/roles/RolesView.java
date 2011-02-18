@@ -60,8 +60,6 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
         ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
 
         ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION);
@@ -102,6 +100,8 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         });
 
         fetchManageSecurityPermissionAsync();
+
+        super.configureTable();
     }
 
     private void fetchManageSecurityPermissionAsync() {

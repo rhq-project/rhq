@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -42,7 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -50,21 +53,12 @@ import java.util.Date;
 public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVLayout
         implements BookmarkableView {
 
-    private OperationDefinition definition;
     private T operationHistory;
 
     private DynamicForm form;
 
     public AbstractOperationHistoryDetailsView(String locatorId) {
-        this(locatorId, null, null);
-    }
-
-    public AbstractOperationHistoryDetailsView(String locatorId, OperationDefinition definition,
-                                               T operationHistory) {
         super(locatorId);
-
-        this.definition = definition;
-        this.operationHistory = operationHistory;
 
         setWidth100();
         setHeight100();
@@ -80,17 +74,21 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         destroyMembers();
 
         if (this.operationHistory != null) {
-            displayDetails(operationHistory);
+            displayDetails(this.operationHistory);
         }
     }
 
+    /**
+     * This method should be called by {@link #lookupDetails(int)} upon successful lookup of an operation history.
+     *
+     * @param operationHistory the operation history to be displayed
+     */
     protected void displayDetails(final T operationHistory) {
 
         for (Canvas child : getMembers()) {
             removeChild(child);
         }
 
-        this.definition = operationHistory.getOperationDefinition();
         this.operationHistory = operationHistory;
 
         // Information Form
@@ -98,16 +96,66 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         form = new DynamicForm();
         form.setWidth100();
         form.setWrapItemTitles(false);
+        List<FormItem> items = createFields(operationHistory);
+        form.setFields(items.toArray(new FormItem[items.size()]));
+        addMember(form);
+
+        // params/results
+
+        if (operationHistory.getParameters() != null) {
+            LocatableVLayout parametersSection = new LocatableVLayout(extendLocatorId("ParametersSection"));
+
+            Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_parameters() + "</h4>");
+            title.setHeight(27);
+            parametersSection.addMember(title);
+
+            OperationDefinition operationDefinition = operationHistory.getOperationDefinition();
+            ConfigurationDefinition parametersConfigurationDefinition = operationDefinition
+                    .getParametersConfigurationDefinition();
+            if (parametersConfigurationDefinition != null &&
+                    !parametersConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
+                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"),
+                        parametersConfigurationDefinition, operationHistory.getParameters());
+                editor.setReadOnly(true);
+                parametersSection.addMember(editor);
+            } else {
+                Label noParametersLabel = new Label("This operation does not take any parameters.");
+                noParametersLabel.setHeight(17);
+                parametersSection.addMember(noParametersLabel);
+            }
+
+            addMember(parametersSection);
+        }
+
+        Canvas resultsSection = buildResultsSection(operationHistory);
+        if (resultsSection != null) {
+            addMember(resultsSection);
+        }
+
+        VLayout verticalSpacer = new VLayout();
+        verticalSpacer.setHeight100();
+        addMember(verticalSpacer);
+    }
+
+    protected List<FormItem> createFields(final T operationHistory) {
+        List<FormItem> items = new ArrayList<FormItem>();
 
         OperationRequestStatus status = operationHistory.getStatus();
 
+        StaticTextItem idItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.ID, "Execution ID");
+        idItem.setValue(operationHistory.getId());
+        items.add(idItem);
+
         StaticTextItem operationItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.OPERATION_NAME, MSG
             .view_operationHistoryDetails_operation());
-        operationItem.setValue(definition.getDisplayName());
+        OperationDefinition operationDefinition = operationHistory.getOperationDefinition();
+        operationItem.setValue(operationDefinition.getDisplayName());
+        items.add(operationItem);
 
         StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME, MSG
             .view_operationHistoryDetails_dateSubmitted());
         submittedItem.setValue(new Date(operationHistory.getStartedTime()));
+        items.add(submittedItem);
 
         StaticTextItem completedItem = new StaticTextItem("completed", MSG.view_operationHistoryDetails_dateCompleted());
         if (status == OperationRequestStatus.INPROGRESS) {
@@ -117,12 +165,12 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         } else {
             completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
         }
+        items.add(completedItem);
 
         StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT, MSG
             .view_operationHistoryDetails_requestor());
         requesterItem.setValue(operationHistory.getSubjectName());
-
-        LinkItem errorLinkItem = null;
+        items.add(requesterItem);
 
         StaticTextItem statusItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STATUS, MSG
             .view_operationHistoryDetails_status());
@@ -134,7 +182,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             break;
         case FAILURE:
             statusItem.setTooltip(MSG.common_status_failed());
-            errorLinkItem = new LinkItem("errorLink");
+            LinkItem errorLinkItem = new LinkItem("errorLink");
             errorLinkItem.setTitle(MSG.common_title_error());
             errorLinkItem.setLinkTitle(getShortErrorMessage(operationHistory));
             errorLinkItem.addClickHandler(new ClickHandler() {
@@ -174,7 +222,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
                     winModal.show();
                 }
             });
-
+            items.add(errorLinkItem);
             break;
         case INPROGRESS:
             statusItem.setTooltip(MSG.common_status_inprogress());
@@ -190,56 +238,19 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         Date Completed: 3/11/10, 12:24:03 PM, EST
         Requester:      rhqadmin
         Status:         Failure
-        Error Message:  __Exception: Cannot connect...__ 
+        Error Message:  __Exception: Cannot connect...__
         */
 
-        if (errorLinkItem != null) {
-            form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem, errorLinkItem);
-        } else {
-            form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem);
-        }
-
-        addMember(form);
-
-        // params/results
-
-        if (operationHistory.getParameters() != null) {
-            LocatableVLayout parametersSection = new LocatableVLayout(extendLocatorId("ParametersSection"));
-
-            Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_parameters() + "</h4>");
-            title.setHeight(27);
-            parametersSection.addMember(title);
-
-            ConfigurationDefinition parametersConfigurationDefinition = definition
-                    .getParametersConfigurationDefinition();
-            if (parametersConfigurationDefinition != null &&
-                    !parametersConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
-                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"),
-                        parametersConfigurationDefinition, operationHistory.getParameters());
-                editor.setReadOnly(true);
-                parametersSection.addMember(editor);
-            } else {
-                Label noParametersLabel = new Label("This operation does not take any parameters.");
-                noParametersLabel.setHeight(17);
-                parametersSection.addMember(noParametersLabel);
-            }
-
-            addMember(parametersSection);
-        }
-
-        Canvas resultsSection = buildResultsSection(operationHistory);
-        if (resultsSection != null) {
-            addMember(resultsSection);
-        }
-
-        VLayout verticalSpacer = new VLayout();
-        verticalSpacer.setHeight100();
-        addMember(verticalSpacer);
+        return items;
     }
 
     protected abstract Canvas buildResultsSection(T operationHistory);
 
     protected abstract void lookupDetails(int historyId);
+
+    protected T getOperationHistory() {
+        return this.operationHistory;
+    }
 
     @Override
     public void renderView(ViewPath viewPath) {

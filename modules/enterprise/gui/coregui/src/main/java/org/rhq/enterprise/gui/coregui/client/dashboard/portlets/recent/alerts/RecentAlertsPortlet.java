@@ -24,6 +24,8 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -32,6 +34,7 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -126,13 +129,6 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         setShowFilterForm(false); //disable filter form for portlet
 
         setOverflow(Overflow.VISIBLE);
-    }
-
-    @Override
-    public void showDetails(int id) {
-        // the way our superclass AlertDetailsView is impl'ed, we can't view details from portlet
-        // so disallow showing details
-        return;
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -627,6 +623,26 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
             }
         };
     }
+
+    @Override
+    protected void configureTable() {
+        // TODO Auto-generated method stub
+        super.configureTable();
+
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    Integer recordId = getId(selectedRows[0]);
+                    Integer resourceId = selectedRows[0].getAttributeAsInt("resourceId");
+                    CoreGUI.goToView(LinkManager.getSubsystemAlertHistoryLink(resourceId, recordId));
+                }
+            }
+        });
+    }
+
 }
 
 /** Bundles a ResourceSelector instance with labelling in Canvas for display.

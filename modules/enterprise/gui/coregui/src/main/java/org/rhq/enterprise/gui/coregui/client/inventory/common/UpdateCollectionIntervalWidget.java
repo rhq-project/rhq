@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.LinkedHashMap;
 
-import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -30,12 +30,11 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
  * Widget for updating the collection intervals for the selected metrics. It displays two form fields for
@@ -45,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
  * @author Ian Springer
  */
 public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
+
     private static final String ITEM_INTERVAL = "interval";
     private static final String ITEM_UNITS = "units";
 
@@ -55,7 +55,6 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     // Maps values to labels for the units select list.
     private static final LinkedHashMap<String, String> VALUE_MAP = new LinkedHashMap<String, String>();
     static {
-        // TODO: Internationalize the values in this map.
         VALUE_MAP.put(UNITS_SECONDS, MSG.common_label_seconds());
         VALUE_MAP.put(UNITS_MINUTES, MSG.common_label_minutes());
         VALUE_MAP.put(UNITS_HOURS, MSG.common_label_hours());
@@ -63,7 +62,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
 
     private AbstractMeasurementScheduleListView schedulesView;
     private DynamicForm form;
-    private IButton setButton;
+    private LocatableButton setButton;
 
     public UpdateCollectionIntervalWidget(String locatorId, AbstractMeasurementScheduleListView schedulesView) {
         super(locatorId);
@@ -74,33 +73,47 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     protected void onDraw() {
         super.onDraw();
 
-        VLayout spacer = new VLayout();
-        spacer.setWidth(20);
-        addMember(spacer);
-
         this.form = new LocatableDynamicForm(this.getLocatorId());
         this.form.setNumCols(3);
-        IntegerItem intervalItem = new IntegerItem();
+
+        final IntegerItem intervalItem = new IntegerItem();
+        intervalItem.setWrapTitle(false);
+        intervalItem.setWidth(75);
         intervalItem.setName(ITEM_INTERVAL);
         intervalItem.setTitle(MSG.view_inventory_collectionInterval());
-        IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
+        final IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
+        integerRangeValidator.setMax(10000000); // avoids exceptions if someone enters really large nums; no one needs to go higher anyway
         intervalItem.setValidators(integerRangeValidator);
-        intervalItem.setValidateOnChange(true);
         intervalItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
             }
         });
+
         // Specify a null title so no label is rendered to the left of the combo box.
         SelectItem unitsItem = new SelectItem(ITEM_UNITS, null);
         unitsItem.setValueMap(VALUE_MAP);
         unitsItem.setDefaultValue(UNITS_MINUTES);
         unitsItem.setShowTitle(false);
+        unitsItem.setWidth(125);
+        unitsItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                String value = (String) event.getValue();
+                if (value.equals(UNITS_SECONDS)) {
+                    integerRangeValidator.setMin(30);
+                } else {
+                    integerRangeValidator.setMin(1);
+                }
+                refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
+            }
+        });
+
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
 
-        this.setButton = new LocatableIButton(this.extendLocatorId("Set"), "Set");
+        this.setButton = new LocatableButton(this.extendLocatorId("Set"), MSG.common_button_set());
         this.setButton.setDisabled(true);
         this.setButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -109,15 +122,18 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
                     UpdateCollectionIntervalWidget.this.schedulesView, getInterval());
             }
         });
+        this.setButton.setOverflow(Overflow.VISIBLE);
+        this.setButton.setMargin(3);
         addMember(this.setButton);
     }
 
     @Override
     public void refresh(ListGrid listGrid) {
         if (isDrawn()) {
+            boolean isValid = this.form.validate();
             int count = listGrid.getSelection().length;
             Long interval = getInterval();
-            this.setButton.setDisabled(count == 0 || interval == null);
+            this.setButton.setDisabled(!isValid || count == 0 || interval == null);
         } else {
             markForRedraw();
         }
@@ -140,4 +156,5 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         }
         return longValue;
     }
+
 }

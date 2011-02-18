@@ -73,16 +73,33 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 public class UserSessionManager {
     private static final Messages MSG = CoreGUI.getMessages();
 
-    public static int SESSION_TIMEOUT = 29 * 60 * 1000; // 29 mins, just shorter than the 30-min web session timeout
-    private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
+    // The length of CoreGUI inactivity (no call to refresh()) before a CoreGUI session timeout
+    // Currently: 1 hour
+    private static int SESSION_TIMEOUT = 60 * 60 * 1000;
+
+    // After CoreGUI logiut, the delay before the server-side logout. Thisis the period in which we allow in-flight
+    // async requests to complete. 
+    // Currently: 5 seconds
+    private static int LOGOUT_DELAY = 5 * 1000; // 5 seconds
+
+    // We want the CoreGUI session timeout to rule them all.  The rhq subject session is refreshed on each SLSB
+    // call. But the HTTP session will die after 30 minutes. Keep it alive until logout by pinging SessionAccessServlet
+    // occasionaly, as specified by this interval (which must be less than the 30 minutes).
+    // Currently: 20 minutes
+    private static int SESSION_ACCESS_REFRESH = 20 * 60 * 1000;
 
     // The web session
     public static final String SESSION_NAME = "RHQ_Session";
 
     // The web session scheduled to be logged out on the server side 
     private static final String DOOMED_SESSION_NAME = "RHQ_DoomedSession";
-    // header identifier for triggering updating portal war webUser
-    private static final String WEB_USER_UPDATE = "rhq_webuser_update";
+
+    // HTTP Header indicating to SessionAccessServlet to update the portal war webUser
+    private static final String HEADER_WEB_USER_UPDATE = "rhq_webuser_update";
+
+    // HTTP Header indicating to SessionAccessServlet to update the HTTP session access time
+    private static final String HEADER_LAST_ACCESS_UPDATE = "rhq_last_access_update";
+
     private static final String LOCATOR_ID = "SessionManagerLogin";
 
     private static Subject sessionSubject;
@@ -95,11 +112,19 @@ public class UserSessionManager {
         }
     };
 
-    private static Timer sessionTimer = new Timer() {
+    private static Timer coreGuiSessionTimer = new Timer() {
         @Override
         public void run() {
             Log.info("Session timer expired.");
             new LoginView(LOCATOR_ID).showLoginDialog();
+        }
+    };
+
+    private static Timer httpSessionTimer = new Timer() {
+        @Override
+        public void run() {
+            Log.info("HTTP Session refresh timer expired.");
+            refreshHttpSession();
         }
     };
 
@@ -121,7 +146,7 @@ public class UserSessionManager {
         BrowserUtility.forceIe6Hacks();
         //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
         //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -169,7 +194,7 @@ public class UserSessionManager {
 
                             // new sessions get the full 29 minutes to expire
                             Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
-                            sessionTimer.schedule(SESSION_TIMEOUT);
+                            coreGuiSessionTimer.schedule(SESSION_TIMEOUT);
                         } else {
 
                             // existing sessions should expire 29 minutes from the previous access time
@@ -184,7 +209,7 @@ public class UserSessionManager {
                             }
 
                             Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
-                            sessionTimer.schedule((int) expiryMillis);
+                            coreGuiSessionTimer.schedule((int) expiryMillis);
                         }
 
                         // Certain logins may not follow a "LogOut" history item. Specifically, if the session timer
@@ -363,13 +388,15 @@ public class UserSessionManager {
 
     /** Takes an updated Subject and signals SessionAccessServlet in portal.war to update the associated WebUser
      *  because for this specific authenticated user.  Currently assumes Subject instances returned from SubjectManagerBean.processSubjectForLdap.
+     *  This should only ever be called by UI logic in LDAP logins(case insensitive/new registration) after RHQ sessions have been renewed server side
+     *  correctly.
      *
      * @param loggedInSubject Subject with updated session
      */
     private static void scheduleWebUserUpdate(final Subject loggedInSubject) {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
         //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
-        b.setHeader(WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
+        b.setHeader(HEADER_WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -417,6 +444,7 @@ public class UserSessionManager {
                 sessionState = State.IS_LOGGED_IN;
                 userPreferences = new UserPreferences(loggedInSubject);
                 refresh();
+                httpSessionTimer.schedule(SESSION_ACCESS_REFRESH);
 
                 //conditionally update session information and server side WebUser when updated.
                 if ((sessionSubject != null) && (loggedInSubject.getId() != storedSessionSubjectId)) {
@@ -470,7 +498,7 @@ public class UserSessionManager {
         sessionState = State.IS_LOGGED_IN;
 
         Log.info("Refreshing session timer...");
-        sessionTimer.schedule(millis);
+        coreGuiSessionTimer.schedule(millis);
     }
 
     public static void logout() {
@@ -480,12 +508,13 @@ public class UserSessionManager {
 
         sessionState = State.IS_LOGGED_OUT;
         Log.info("Destroying session timer...");
-        sessionTimer.cancel();
+        coreGuiSessionTimer.cancel();
+        Log.info("Destroying http session refresh timer...");
+        httpSessionTimer.cancel();
 
         // log out the web session on the server-side in a delayed fashion,
         // allowing enough time to pass to let in-flight requests complete
         scheduleLogoutServerSide(String.valueOf(sessionSubject.getSessionId()));
-
     }
 
     private static void scheduleLogoutServerSide(String sessionId) {
@@ -582,4 +611,31 @@ public class UserSessionManager {
     public static UserPreferences getUserPreferences() {
         return userPreferences;
     }
+
+    private static void refreshHttpSession() {
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+
+        // add header to signal SessionAccessServlet to refresh the http lastAccess time (basically a no-op as the
+        // request will make that happen).
+        b.setHeader(HEADER_LAST_ACCESS_UPDATE, "dummy");
+
+        try {
+            b.setCallback(new RequestCallback() {
+                public void onResponseReceived(final Request request, final Response response) {
+                    Log.trace("Successfully submitted request to update HTTP accessTime");
+                }
+
+                @Override
+                public void onError(Request request, Throwable t) {
+                    Log.trace("Error updating HTTP accessTime", t);
+                }
+            });
+            b.send();
+        } catch (RequestException e) {
+            Log.trace("Error requesting update of HTTP accessTime", e);
+        } finally {
+            httpSessionTimer.schedule(SESSION_ACCESS_REFRESH);
+        }
+    }
+
 }

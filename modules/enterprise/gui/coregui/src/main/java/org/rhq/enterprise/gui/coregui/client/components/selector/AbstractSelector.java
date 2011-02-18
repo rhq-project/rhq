@@ -214,18 +214,30 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         // For reasons unknown, possibly issues in smartgwt's cleanup of VStack and SectionStack, these
         // widgets did not always get destroyed (for example, if something was moved to assigned, but nothing
         // was moved to available - go figure), so destroy them manually when the other cleanup is already done.
-        availableGrid.removeFromParent();
-        availableGrid.destroy();
-        assignedGrid.removeFromParent();
-        assignedGrid.destroy();
-        addButton.removeFromParent();
-        addButton.destroy();
-        addAllButton.removeFromParent();
-        addAllButton.destroy();
-        removeButton.removeFromParent();
-        removeButton.destroy();
-        removeAllButton.removeFromParent();
-        removeAllButton.destroy();
+        if (null != availableGrid) {
+            availableGrid.removeFromParent();
+            availableGrid.destroy();
+        }
+        if (null != assignedGrid) {
+            assignedGrid.removeFromParent();
+            assignedGrid.destroy();
+        }
+        if (null != addButton) {
+            addButton.removeFromParent();
+            addButton.destroy();
+        }
+        if (null != addAllButton) {
+            addAllButton.removeFromParent();
+            addAllButton.destroy();
+        }
+        if (null != removeButton) {
+            removeButton.removeFromParent();
+            removeButton.destroy();
+        }
+        if (null != removeAllButton) {
+            removeAllButton.removeFromParent();
+            removeAllButton.destroy();
+        }
     }
 
     private SectionStack buildAvailableItemsStack() {

@@ -396,9 +396,8 @@ public class StandaloneContainer {
         }
 
 
-        OperationManager opMan = pc.getOperationManager();
-        OperationServices operationServices = new OperationServicesAdapter(opMan);
-        OperationContext operationContext = new OperationContextImpl(resourceId, operationServices);
+        OperationContext operationContext = new OperationContextImpl(resourceId);
+        OperationServices operationServices = operationContext.getOperationServices();
         opId++;
 
         Configuration config = null;

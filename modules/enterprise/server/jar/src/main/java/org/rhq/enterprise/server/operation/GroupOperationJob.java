@@ -82,7 +82,7 @@ public class GroupOperationJob extends OperationJob {
 
     public void execute(JobExecutionContext context) throws JobExecutionException {
         GroupOperationSchedule schedule = null;
-        GroupOperationHistory groupHistory = null;
+        GroupOperationHistory groupHistory;
 
         try {
             JobDetail jobDetail = context.getJobDetail();

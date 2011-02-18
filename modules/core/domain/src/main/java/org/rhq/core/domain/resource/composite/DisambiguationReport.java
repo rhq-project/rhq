@@ -179,6 +179,17 @@ public class DisambiguationReport<T> implements Serializable {
         return resource.getName();
     }
 
+    /**
+     *
+     * @return the Resource id
+     * 
+     * @deprecated use {@link #getResource()}.{@link Resource#getId() getId()}
+     */
+    @Deprecated
+    public int getId() {
+        return resource.getId();
+    }
+
     public String toString() {
         return "DisambiguationReport(resource=" + resource + ", parents=" + parents + ", original=" + original
             + ")";

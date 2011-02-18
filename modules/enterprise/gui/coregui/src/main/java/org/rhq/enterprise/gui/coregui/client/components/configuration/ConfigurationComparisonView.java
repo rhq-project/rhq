@@ -24,6 +24,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -44,6 +46,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -79,7 +82,7 @@ public class ConfigurationComparisonView extends VLayout {
         nameField.setFrozen(true);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                if (listGridRecord.getAttributeAsBoolean("consistent")) {
+                if (listGridRecord == null || listGridRecord.getAttributeAsBoolean("consistent")) {
                     return String.valueOf(o);
                 } else {
                     return "<span style=\"color: red;\">" + String.valueOf(o) + "</span>";
@@ -194,15 +197,26 @@ public class ConfigurationComparisonView extends VLayout {
         ArrayList<Configuration> configurations, ArrayList<String> titles) {
 
         ConfigurationComparisonView view = new ConfigurationComparisonView(definition, configurations, titles);
-        Window dialog = new Window();
+        final Window dialog = new LocatableWindow("configCompare");
         dialog.setTitle(MSG.view_configCompare_comparingConfigs());
-        dialog.setWidth(800);
-        dialog.setHeight(800);
+        dialog.setShowMinimizeButton(true);
+        dialog.setShowMaximizeButton(true);
+        dialog.setWidth(700);
+        dialog.setHeight(500);
         dialog.setIsModal(true);
         dialog.setShowModalMask(true);
+        dialog.setShowResizer(true);
+        dialog.setShowFooter(true);
         dialog.setCanDragResize(true);
+        dialog.setAutoCenter(true);
         dialog.centerInPage();
         dialog.addItem(view);
+        dialog.addCloseClickHandler(new CloseClickHandler() {
+            @Override
+            public void onCloseClick(CloseClientEvent event) {
+                dialog.markForDestroy();
+            }
+        });
         dialog.show();
     }
 
@@ -238,9 +252,5 @@ public class ConfigurationComparisonView extends VLayout {
                 setAttribute("consistent", allTheSame);
             }
         }
-    }
-
-    private static class ColoredTreeGrid extends TreeGrid {
-
     }
 }

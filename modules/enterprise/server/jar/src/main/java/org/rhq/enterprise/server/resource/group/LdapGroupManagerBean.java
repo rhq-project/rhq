@@ -53,7 +53,6 @@ import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
-import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -87,7 +86,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     private SystemManagerLocal systemManager;
 
     public Set<Map<String, String>> findAvailableGroups() {
-        Properties options = systemManager.getSystemConfiguration();
+        Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
         Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
 
         //retrieve the filters.
@@ -100,7 +99,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
-        Properties options = systemManager.getSystemConfiguration();
+        Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
         String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
@@ -257,7 +256,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Map<String, String> findLdapUserDetails(String userName) {
-        Properties options = systemManager.getSystemConfiguration();
+        Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
         HashMap<String, String> userDetails = new HashMap<String, String>();
         // Load our LDAP specific properties
         Properties env = getProperties(options);

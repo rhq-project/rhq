@@ -24,6 +24,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -34,12 +35,13 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -52,6 +54,8 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -63,6 +67,8 @@ import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -238,51 +244,66 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         @Override
         protected void configureTable() {
-            // i couldn't use percentage widths to work for some reason; using auto-fit instead
+            // i couldn't use percentage widths to work for some reason
 
             ListGridField idField = new ListGridField("id", MSG.common_title_id());
             idField.setType(ListGridFieldType.INTEGER);
             idField.setWidth("50");
 
             ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-            nameField.setAutoFitWidth(true);
-            nameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-            //nameField.setWidth("300");
-
-            ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-            descriptionField.setAutoFitWidth(true);
-            descriptionField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
-            //descriptionField.setWidth("300");
-
-            ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-            typeNameField.setAutoFitWidth(true);
-            typeNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-            //typeNameField.setWidth("100");
-
-            ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-            pluginNameField.setAutoFitWidth(true);
-            pluginNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-            //pluginNameField.setWidth("100");
-
-            ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-            categoryField.setAutoFitWidth(true);
-            categoryField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-            //categoryField.setWidth("100");
-            categoryField.setCellFormatter(new CellFormatter() {
+            nameField.setWidth("300");
+            nameField.setCellFormatter(new CellFormatter() {
                 @Override
                 public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    if (value != null) {
-                        if (value.toString().equals(GroupCategory.MIXED.name())) {
-                            return MSG.view_dynagroup_mixed();
-                        } else if (value.toString().equals(GroupCategory.COMPATIBLE.name())) {
-                            return MSG.view_dynagroup_compatible();
-                        }
+                    String linkName = record.getAttributeAsString(NAME.propertyName());
+                    String linkUrl = LinkManager.getResourceGroupLink(record.getAttributeAsInt("id"));
+                    return "<a href=\"" + linkUrl + "\">" + linkName + "</a>";
+                }
+            });
+
+            ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+            descriptionField.setWidth("100");
+
+            ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
+            typeNameField.setWidth("100");
+
+            ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
+            pluginNameField.setWidth("100");
+
+            ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
+            categoryField.setWidth("100");
+            categoryField.setType(ListGridFieldType.ICON);
+            HashMap<String, String> categoryImages = new HashMap<String, String>(2);
+            categoryImages.put(GroupCategory.COMPATIBLE.name(), ImageManager.getGroupIcon(GroupCategory.COMPATIBLE));
+            categoryImages.put(GroupCategory.MIXED.name(), ImageManager.getGroupIcon(GroupCategory.MIXED));
+            categoryField.setValueIcons(categoryImages);
+            categoryField.setShowHover(true);
+            categoryField.setHoverCustomizer(new HoverCustomizer() {
+                @Override
+                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String category = record.getAttributeAsString(CATEGORY.propertyName());
+                    if (GroupCategory.COMPATIBLE.name().equals(category)) {
+                        return MSG.view_dynagroup_compatible();
+                    } else if (GroupCategory.MIXED.name().equals(category)) {
+                        return MSG.view_dynagroup_mixed();
+                    } else {
+                        return category; // should never happen
                     }
-                    return "";
                 }
             });
 
             setListGridFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField);
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        String groupUrl = LinkManager.getResourceGroupLink(selectedRows[0].getAttributeAsInt("id"));
+                        CoreGUI.goToView(groupUrl);
+                    }
+                }
+            });
         }
     }
 

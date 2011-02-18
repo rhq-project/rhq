@@ -594,6 +594,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     private void checkAlertDefinition(AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
+        // if someone enters a really long description, we need to truncate it - the column is only 250 chars
+        if (alertDefinition.getDescription().length() > 250) {
+            alertDefinition.setDescription(alertDefinition.getDescription().substring(0, 250));
+        }
+
         for (AlertCondition alertCondition : alertDefinition.getConditions()) {
             AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
             if (alertConditionCategory == AlertConditionCategory.ALERT) {

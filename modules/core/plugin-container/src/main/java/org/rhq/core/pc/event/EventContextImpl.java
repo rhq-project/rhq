@@ -39,16 +39,11 @@ import java.util.Set;
  */
 public class EventContextImpl implements EventContext {
     private Resource resource;
+    private EventManager eventManager;
 
     public EventContextImpl(@NotNull Resource resource) {
         this.resource = resource;
-    }
-
-    // A reference to EventManager was previously stored in a member variable named eventManager. That should *not*
-    // be done because of possible concurrency issues. See https://bugzilla.redhat.com/show_bug.cgi?id=677349 for
-    // details.
-    private EventManager getEventManager() {
-        return PluginContainer.getInstance().getEventManager();
+        this.eventManager = PluginContainer.getInstance().getEventManager();
     }
 
     public void publishEvent(@NotNull Event event) {
@@ -60,7 +55,7 @@ public class EventContextImpl implements EventContext {
             throw new IllegalArgumentException("Event has unknown event type - no EventDefinition exists with name '" + event.getType() + "'.");
         Set<Event> events = new HashSet<Event>();
         events.add(event);
-        getEventManager().publishEvents(events, this.resource);
+        this.eventManager.publishEvents(events, this.resource);
     }
 
     public void registerEventPoller(@NotNull EventPoller poller, int pollingInterval) {
@@ -101,7 +96,7 @@ public class EventContextImpl implements EventContext {
 
     @NotNull
     public SigarProxy getSigar() {
-        return getEventManager().getSigar();
+        return this.eventManager.getSigar();
     }
     
     private void registerEventPollerInternal(EventPoller poller, int pollingInterval, String sourceLocation) {
@@ -109,13 +104,13 @@ public class EventContextImpl implements EventContext {
         if (eventDefinition == null)
             throw new IllegalArgumentException("Poller has unknown event type - no EventDefinition exists with name '" + poller.getEventType() + "'.");
         int adjustedPollingInterval = Math.max(EventContext.MINIMUM_POLLING_INTERVAL, pollingInterval);
-        getEventManager().registerEventPoller(poller, adjustedPollingInterval, this.resource, sourceLocation);
+        this.eventManager.registerEventPoller(poller, adjustedPollingInterval, this.resource, sourceLocation);
     }
 
     private void unregisterEventPollerInternal(String eventType, String sourceLocation) {
         EventDefinition eventDefinition = EventUtility.getEventDefinition(eventType, this.resource.getResourceType());
         if (eventDefinition == null)
             throw new IllegalArgumentException("Unknown event type - no EventDefinition exists with name '" + eventType + "'.");
-        getEventManager().unregisterEventPoller(this.resource, eventType, sourceLocation);
+        this.eventManager.unregisterEventPoller(this.resource, eventType, sourceLocation);
     }
 }

@@ -2,6 +2,7 @@
 
 # Constants
 
+
 PROJECT_NAME="rhq"
 PROJECT_DISPLAY_NAME="RHQ"
 PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"

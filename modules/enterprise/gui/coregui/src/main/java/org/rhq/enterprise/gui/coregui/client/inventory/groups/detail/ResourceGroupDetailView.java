@@ -62,6 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView2;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
@@ -88,6 +89,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     // subtabs
     private SubTab summaryActivity;
+    private SubTab summaryActivity2;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorTables;
@@ -151,9 +153,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .view_tabs_common_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
         summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity", MSG
             .view_tabs_common_activity()), null);
+        summaryActivity2 = new SubTab(summaryTab.extendLocatorId("Activity2"), new ViewName("Activity2", MSG
+            .view_tabs_common_activity()
+            + "2"), null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline", MSG
             .view_tabs_common_timeline()), null);
-        summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
+        //        summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
+        summaryTab.registerSubTabs(summaryActivity, summaryActivity2, summaryTimeline);
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
@@ -248,6 +254,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         // Summary tab is always visible and enabled.
         updateSubTab(this.summaryTab, this.summaryActivity, new ActivityView(this.summaryActivity
             .extendLocatorId("View"), this.groupComposite), true, true);
+        updateSubTab(this.summaryTab, this.summaryActivity2, new ActivityView2(this.summaryActivity2
+            .extendLocatorId("View2"), this.groupComposite), true, true);
         // TODO (ips): Add Timeline subtab?
     }
 

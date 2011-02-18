@@ -142,61 +142,20 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             groupDefinitionId);
 
         // button setup
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("save"), MSG.common_button_save());
         //saveButton.addClickHandler(new SaveOrUpdateClickHandler(form, operationType, dynaGroupChildrenView));
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate()) {
-                    form.saveData(new DSCallback() {
-                        @Override
-                        public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            if (form.isNewRecord()) {
-                                Record[] results = response.getData();
-                                if (results.length != 1) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
-                                } else {
-                                    Record newRecord = results[0];
-                                    GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance()
-                                        .copyValues((ListGridRecord) newRecord);
-                                    History.newItem(basePath + "/" + newGroupDefinition.getId());
-                                }
-                            } else {
-                                dynaGroupChildrenView.refresh();
-                            }
-                        }
-                    });
-                }
+                saveForm(form, dynaGroupChildrenView, false);
             }
         });
 
-        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("Recalculate"), MSG
+        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("saveAndRecalculate"), MSG
             .view_dynagroup_saveAndRecalculate());
         recalculateButton.setWidth(150);
         recalculateButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate()) {
-                    form.saveData(new DSCallback() {
-                        @Override
-                        public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            GWTServiceLookup.getResourceGroupService(600000).recalculateGroupDefinitions(
-                                new int[] { groupDefinitionId }, new AsyncCallback<Void>() {
-                                    @Override
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(),
-                                            caught);
-                                    }
-
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        dynaGroupChildrenView.refresh();
-                                        CoreGUI.getMessageCenter().notify(
-                                            new Message(MSG.view_dynagroup_recalcSuccessful(), Severity.Info));
-                                    }
-                                });
-                        }
-                    });
-                }
+                saveForm(form, dynaGroupChildrenView, true);
             }
         });
 
@@ -219,6 +178,54 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         addMember(dynaGroupChildrenView);
 
         markForRedraw();
+    }
+
+    private void saveForm(final LocatableDynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
+        final boolean recalc) {
+        if (form.validate()) {
+            form.saveData(new DSCallback() {
+                @Override
+                public void execute(DSResponse response, Object rawData, DSRequest request) {
+                    if (form.isNewRecord()) {
+                        Record[] results = response.getData();
+                        if (results.length != 1) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
+                        } else {
+                            Record newRecord = results[0];
+                            GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance().copyValues(
+                                (ListGridRecord) newRecord);
+                            if (recalc) {
+                                recalculate(dynaGroupChildrenView, newGroupDefinition.getId());
+                            }
+                            History.newItem(basePath + "/" + newGroupDefinition.getId());
+                        }
+                    } else {
+                        dynaGroupChildrenView.refresh();
+                        if (recalc) {
+                            recalculate(dynaGroupChildrenView, groupDefinitionId);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private void recalculate(final DynaGroupChildrenView dynaGroupChildrenView, int groupDefId) {
+        GWTServiceLookup.getResourceGroupService(600000).recalculateGroupDefinitions(new int[] { groupDefId },
+            new AsyncCallback<Void>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(), caught);
+                }
+
+                @Override
+                public void onSuccess(Void result) {
+                    dynaGroupChildrenView.refresh();
+                    CoreGUI.getMessageCenter()
+                        .notify(new Message(MSG.view_dynagroup_recalcSuccessful(), Severity.Info));
+                }
+            });
     }
 
     class DynaGroupChildrenView extends Table {

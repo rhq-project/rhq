@@ -63,12 +63,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A view for viewing or editing an RHQ {@link org.rhq.core.domain.operation.bean.OperationSchedule operation schedule}.
+ *
  * @author Ian Springer
  */
 public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor<AbstractOperationScheduleDataSource> {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
+
+    protected static final int FIRST_COLUMN_WIDTH = 140;
 
     private Map<String, String> operationNameToDescriptionMap = new HashMap<String, String>();
     private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap =
@@ -108,7 +112,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         EnhancedDynamicForm form = super.buildForm();
 
         form.setNumCols(3);
-        form.setColWidths("140", "140", "*");
+        form.setColWidths(FIRST_COLUMN_WIDTH, "140", "*");
 
         return form;
     }
@@ -159,9 +163,8 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         hr = new HTMLFlow("<p/><hr/><p/>");
         contentPane.addMember(hr);
 
-        this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(),
-            isNewRecord());
-        this.notesForm.setColWidths("140", "50%", "140", "50%");
+        this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(), isNewRecord());
+        this.notesForm.setColWidths(FIRST_COLUMN_WIDTH, "50%", "140", "50%");
 
         List<FormItem> notesFields = new ArrayList<FormItem>();
 
@@ -183,6 +186,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
         notesItem.setWidth(450);
         notesItem.setHeight(60);
+        notesItem.setShowTitle(true);
         FormUtility.addContextualHelp(notesItem, "an optional description of this scheduled operation (e.g. \"nightly maintenance app server restart\")");
         notesFields.add(notesItem);
 
@@ -191,13 +195,6 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         contentPane.addMember(this.notesForm);
 
         return contentPane;
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-        refreshOperationDescriptionItem();
-        refreshOperationParametersItem();
     }
 
     @Override
@@ -242,12 +239,14 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
         notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
 
+        this.parameters = (Configuration) record.getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
+
         super.editExistingRecord(record);
     }
 
     @Override
     protected void save(DSRequest requestProperties) {
-        requestProperties.setAttribute("parameters", this.parameters);
+        requestProperties.setAttribute(AbstractOperationScheduleDataSource.RequestProperty.PARAMETERS, this.parameters);
 
         if (!this.triggerEditor.validate()) {
             // TODO: print error Message
@@ -275,7 +274,12 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         form.setValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER, jobTriggerRecord);
 
         DurationItem timeoutItem = (DurationItem)this.notesForm.getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
-        form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeoutItem.getValueAsLong());
+        Long timeout = timeoutItem.getValueAsLong();
+        if (timeout != null) {
+            form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeout);
+        } else {
+            form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, (String)null);
+        }
 
         FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
         form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
@@ -317,15 +321,18 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
                 // Add spacer so params are indented.
                 VLayout horizontalSpacer = new VLayout();
-                horizontalSpacer.setWidth(165);
+                horizontalSpacer.setWidth(FIRST_COLUMN_WIDTH);
                 this.operationParametersConfigurationHolder.addMember(horizontalSpacer);
 
-                Configuration defaultConfiguration = (parametersDefinition.getDefaultTemplate() != null) ?
-                    parametersDefinition.getDefaultTemplate().createConfiguration() : new Configuration();
+                if (isNewRecord()) {
+                    this.parameters = (parametersDefinition.getDefaultTemplate() != null) ?
+                        parametersDefinition.getDefaultTemplate().createConfiguration() : new Configuration();
+                } else {
+
+                }
                 ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor", parametersDefinition,
-                    defaultConfiguration);
+                    this.parameters);
                 configurationEditor.setReadOnly(isReadOnly());
-                this.parameters = configurationEditor.getConfiguration();
                 this.operationParametersConfigurationHolder.addMember(configurationEditor);
                 this.operationParametersConfigurationHolder.show();
             }

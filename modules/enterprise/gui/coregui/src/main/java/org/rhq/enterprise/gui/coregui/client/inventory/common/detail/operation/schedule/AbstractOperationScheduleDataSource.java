@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RecordUtility;
 
@@ -68,6 +70,10 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         public static final String REPEAT_COUNT = "repeatCount";
         public static final String END_TIME = "endTime";
         public static final String CRON_EXPRESSION = "cronExpression";
+    }
+
+    public static abstract class RequestProperty {
+        public static final String PARAMETERS = "parameters";
     }
 
     protected OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
@@ -231,6 +237,11 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         }
 
         return jobTrigger;
+    }
+
+    protected void addRequestPropertiesToRecord(DSRequest request, Record record) {
+        Configuration parameters = (Configuration) request.getAttributeAsObject(GroupOperationScheduleDataSource.RequestProperty.PARAMETERS);
+        record.setAttribute(GroupOperationScheduleDataSource.Field.PARAMETERS, parameters);
     }
 
     public static class SubjectRecord extends ListGridRecord {

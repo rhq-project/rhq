@@ -114,7 +114,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     Boolean showTitle = (item.getShowTitle() != null) ? item.getShowTitle() : true;
                     staticItem.setShowTitle(showTitle);
                     staticItem.setTooltip(item.getTooltip());
-                    staticItem.setValue(item.getValue());
+                    staticItem.setValue(item.getDisplayValue());
                     staticItem.setColSpan(item.getAttribute("colSpan"));
                     // TODO: Any other fields we should copy? icons?
 

@@ -26,7 +26,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -86,9 +85,10 @@ public class ResourceOperationScheduleDataSource extends AbstractOperationSchedu
 
     @Override
     protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
-        Configuration parameters = (Configuration) request.getAttributeAsObject("parameters");
-        recordToAdd.setAttribute(Field.PARAMETERS, parameters);
+        addRequestPropertiesToRecord(request, recordToAdd);
+
         final ResourceOperationSchedule scheduleToAdd = copyValues(recordToAdd);
+
         operationService.scheduleResourceOperation(scheduleToAdd, new AsyncCallback<Integer>() {
             public void onSuccess(Integer scheduleId) {
                 scheduleToAdd.setId(scheduleId);

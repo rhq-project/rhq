@@ -91,6 +91,14 @@ public class ReorderableList extends LocatableVLayout {
         return this.listGrid.getRecords();
     }
 
+    /**
+     *
+     */
+    public void setRecords(ListGridRecord[] records) {
+        this.initialSelection = records;
+        this.listGrid.setRecords(records);
+    }
+
     @Override
     protected void onInit() {
         super.onInit();

@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -30,15 +33,17 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -60,7 +65,7 @@ public class ActivityView2 extends AbstractActivityView {
      */
     protected void loadData() {
         getRecentAlerts();
-        //        getRecentEventUpdates();
+        getRecentEventUpdates();
         //        getRecentOperations();
         //        getRecentConfigurationUpdates();
         //        getRecentOobs();
@@ -72,7 +77,6 @@ public class ActivityView2 extends AbstractActivityView {
      *  alert information.
      */
     private void getRecentAlerts() {
-        //        final int resourceId = this.resourceComposite.getResource().getId();
         final int groupId = this.groupComposite.getResourceGroup().getId();
         Integer[] filterGroupAlertDefinitionIds;
         Set<AlertDefinition> alertDefinitions = this.groupComposite.getResourceGroup().getAlertDefinitions();
@@ -86,7 +90,6 @@ public class ActivityView2 extends AbstractActivityView {
         PageControl pageControl = new PageControl(0, 5);
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
         criteria.setPageControl(pageControl);
-        //        criteria.addFilterResourceIds(resourceId);
         criteria.addFilterGroupAlertDefinitionIds(filterGroupAlertDefinitionIds);
         GWTServiceLookup.getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             @Override
@@ -104,10 +107,9 @@ public class ActivityView2 extends AbstractActivityView {
 
                         StaticTextItem iconItem = newTextItemIcon(ImageManager.getAlertIcon(alert.getAlertDefinition()
                             .getPriority()), alert.getAlertDefinition().getPriority().getDisplayName());
-                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ",
-                        //                            ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/History/" + alert.getId());
-                            //TODO: spinder: fix
-                            ReportDecorator.GWT_RESOURCE_URL + groupId + "/Alerts/History/" + alert.getId());
+                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ", LinkManager
+                            .getResourceGroupLink(groupId)
+                            + "/Alerts/History/" + alert.getId());
                         StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(alert.getCtime()));
                         row.setItems(iconItem, link, time);
 
@@ -250,72 +252,71 @@ public class ActivityView2 extends AbstractActivityView {
     //            });
     //    }
     //
-    //    /** Fetches recent events and updates the DynamicForm instance with the latest
-    //     *  event information over last 24hrs.
-    //     */
-    //    private void getRecentEventUpdates() {
-    //
-    //        final int resourceId = this.resourceComposite.getResource().getId();
-    //        long now = System.currentTimeMillis();
-    //        long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
-    //
-    //        GWTServiceLookup.getEventService().getEventCountsBySeverity(resourceId, nowMinus24Hours, now,
-    //            new AsyncCallback<Map<EventSeverity, Integer>>() {
-    //
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving recent event counts for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(Map<EventSeverity, Integer> eventCounts) {
-    //                    //Now populated Tuples
-    //                    List<GwtTuple<EventSeverity, Integer>> results = new ArrayList<GwtTuple<EventSeverity, Integer>>();
-    //                    for (EventSeverity severity : eventCounts.keySet()) {
-    //                        int count = eventCounts.get(severity);
-    //                        if (count > 0) {
-    //                            results.add(new GwtTuple<EventSeverity, Integer>(severity, count));
-    //                        }
-    //                    }
-    //                    //build display
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //
-    //                    if (!results.isEmpty()) {
-    //                        int rowNum = 0;
-    //                        for (GwtTuple<EventSeverity, Integer> tuple : results) {
-    //                            // event history records do not have a usable locatorId, we'll use rownum, which is unique and
-    //                            // may be repeatable.
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-    //                                .extendLocatorId(String.valueOf(rowNum)));
-    //                            row.setNumCols(2);
-    //                            row.setWidth(10);//pack.
-    //
-    //                            //icon
-    //                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getEventSeverityIcon(tuple
-    //                                .getLefty()), tuple.getLefty().name());
-    //                            //count
-    //                            StaticTextItem count = newTextItem(String.valueOf(tuple.righty));
-    //                            row.setItems(iconItem, count);
-    //
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
-    //                            RECENT_EVENTS_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    //cleanup
-    //                    for (Canvas child : recentEventsContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentEventsContent.addChild(column);
-    //                    recentEventsContent.markForRedraw();
-    //                }
-    //            });
-    //    }
-    //
+    /** Fetches recent events and updates the DynamicForm instance with the latest
+     *  event information over last 24hrs.
+     */
+    private void getRecentEventUpdates() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        long now = System.currentTimeMillis();
+        long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
+        GWTServiceLookup.getEventService().getEventCountsBySeverityForGroup(groupId, nowMinus24Hours, now,
+            new AsyncCallback<Map<EventSeverity, Integer>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log
+                        .debug("Error retrieving recent event counts for group [" + groupId + "]:"
+                            + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(Map<EventSeverity, Integer> eventCounts) {
+                    //Now populated Tuples
+                    List<GwtTuple<EventSeverity, Integer>> results = new ArrayList<GwtTuple<EventSeverity, Integer>>();
+                    for (EventSeverity severity : eventCounts.keySet()) {
+                        int count = eventCounts.get(severity);
+                        if (count > 0) {
+                            results.add(new GwtTuple<EventSeverity, Integer>(severity, count));
+                        }
+                    }
+                    //build display
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+
+                    if (!results.isEmpty()) {
+                        int rowNum = 0;
+                        for (GwtTuple<EventSeverity, Integer> tuple : results) {
+                            // event history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(2);
+                            row.setWidth(10);//pack.
+
+                            //icon
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getEventSeverityIcon(tuple
+                                .getLefty()), tuple.getLefty().name());
+                            //count
+                            StaticTextItem count = newTextItem(String.valueOf(tuple.righty));
+                            row.setItems(iconItem, count);
+
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
+                            RECENT_EVENTS_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentEventsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentEventsContent.addChild(column);
+                    recentEventsContent.markForRedraw();
+                }
+            });
+    }
+
     //    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
     //     *  oob change details.
     //     */

@@ -158,10 +158,18 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 if (validate(false)) {
                     AbstractNotificationSenderForm senderForm = (AbstractNotificationSenderForm) senderCanvasItem
                         .getCanvas();
-                    if (senderForm.validate()) {
-                        saveNewNotification();
-                        closeFunction.run();
-                    }
+                    senderForm.validate(new AsyncCallback<Void>() {
+                        public void onSuccess(Void o) {
+                            saveNewNotification();
+                            closeFunction.run();
+                        }
+                        
+                        public void onFailure(Throwable t) {
+                            //do nothing
+                            //the sender form is supposed to warn the user about what is wrong
+                            //with the supplied values.
+                        }
+                    });
                 }
             }
         });

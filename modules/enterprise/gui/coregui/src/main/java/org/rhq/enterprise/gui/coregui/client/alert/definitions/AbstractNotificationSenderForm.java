@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -110,5 +112,15 @@ public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
         }
     }
 
-    public abstract boolean validate();
+    /**
+     * Kicks off the validation, possibly doing some asynchronous work.
+     * Upon successful validation the <code>callback</code>'s <code>onSuccess</code>
+     * method must be invoked, <code>onFailure</code> on validation failure.
+     * <p>
+     * Both <code>onSuccess</code> and <code>onFailure</code> can be passed <code>null</code>
+     * as their arguments.
+     * 
+     * @param callback
+     */
+    public abstract void validate(AsyncCallback<Void> callback);
 }

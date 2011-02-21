@@ -134,4 +134,11 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
+    public Subject checkAuthentication(String username, String password) {
+        try {
+            return subjectManager.checkAuthentication(username, password);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
 }

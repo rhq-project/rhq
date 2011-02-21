@@ -25,17 +25,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
+import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.validator.Validator;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
@@ -43,13 +50,17 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.upload.FileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -65,14 +76,16 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private static final String PROP_PACKAGE_ID = "packageId";
     private static final String PROP_REPO_ID = "repoId";
     private static final String PROP_USER_ID = "userId";
+    private static final String PROP_USER_NAME = "userName";
+    private static final String PROP_USER_PASSWORD = "userPassword";
     private static final String PACKAGE_TYPE_NAME = "__SERVER_SIDE_CLI_SCRIPT";
 
     private static class Config {
         List<Repo> allRepos;
         Repo selectedRepo;
         
-        List<Package> allPackages;
-        Package selectedPackage;
+        List<PackageAndLatestVersionComposite> allPackages;
+        PackageAndLatestVersionComposite selectedPackage;
         
         Subject selectedSubject;
         
@@ -103,8 +116,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
         public void setSelectedPackage(int packageId) {
             if (allPackages != null) {
-                for(Package p : allPackages) { 
-                    if (p.getId() == packageId) {
+                for(PackageAndLatestVersionComposite p : allPackages) { 
+                    if (p.getGeneralPackage().getId() == packageId) {
                         selectedPackage = p;
                         break;
                     }
@@ -150,8 +163,16 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private RadioGroupWithComponentsItem userSelector;
     private PackageVersionFileUploadFormWithVersion uploadForm;
     private PackageType cliScriptPackageType;
+    private TextItem anotherUserName;
+    private TextItem anotherUserPassword;
+    private ButtonItem verifyUserButton;
+    private FormItemIcon authSuccessIcon;
+    private FormItemIcon authFailureIcon;
+    private HandlerRegistration currentUploadFailureRegistration;
+    private DynamicFormHandler currentUploadSuccessHandler;
+
     private Config config;
-    
+        
     public CliNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
         super(locatorId, notif, sender);
     }
@@ -249,13 +270,14 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private void setupPackageSelector() {
         LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
-        for(Package p : config.allPackages) {
-            map.put(String.valueOf(p.getId()), p.getName());
+        for(PackageAndLatestVersionComposite p : config.allPackages) {
+            String label = p.getGeneralPackage().getName() + " (" + p.getLatestPackageVersion().getVersion() + ")";
+            map.put(String.valueOf(p.getGeneralPackage().getId()), label);
         }
         
         existingPackageSelector.setValueMap(map);
         if (config.selectedPackage != null) {
-            existingPackageSelector.setValue(config.selectedPackage.getId());
+            existingPackageSelector.setValue(config.selectedPackage.getGeneralPackage().getId());
             packageSelector.setSelected(MSG.view_alert_definition_notification_cliScript_editor_existingScript());
         } else {
             packageSelector.setSelected(MSG.view_alert_definition_notification_cliScript_editor_uploadNewScript());
@@ -285,9 +307,11 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         if (config.selectedRepo != null) {
             repoSelector.setValue(config.selectedRepo.getId());
             packageSelector.setDisabled(false);
+            uploadForm.setRepoId(config.selectedRepo.getId());
         } else {
             repoSelector.setValue("");
             packageSelector.setDisabled(true);
+            uploadForm.setRepoId(null);
         }
         
         if (!formBuilt) {
@@ -304,8 +328,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     existingPackageSelector.setDisabled(true);
                     existingPackageSelector.setValueMap(MSG.common_msg_loading());
                                     
-                    GWTServiceLookup.getContentService().findPackagesByCriteria(pc, new AsyncCallback<PageList<Package>>() {
-                        public void onSuccess(PageList<Package> result) {
+                    GWTServiceLookup.getContentService().findPackagesWithLatestVersion(pc, new AsyncCallback<PageList<PackageAndLatestVersionComposite>>() {
+                        public void onSuccess(PageList<PackageAndLatestVersionComposite> result) {
                             config.allPackages = result;
                             config.selectedPackage = result.isEmpty() ? null : result.get(0); //we're autoselecting the first item
                             setupPackageSelector();
@@ -327,36 +351,63 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         markForRedraw();
     }
 
-    public boolean validate() {
-        // TODO add validation messages to the individual fields
-        
-        if (userSelector.getSelectedIndex() != 0 && config.selectedSubject == null) {
-            return false;
-        }
-        
-        if (config.selectedRepo == null) {
-            return false;
-        }
-        
-        if (packageSelector.getSelectedIndex() == 0 && config.selectedPackage == null) {
-            return false;
-        }
-        
+    @Override
+    public void validate(final AsyncCallback<Void> callback) {
         if (userSelector.getSelectedIndex() == 0) {
             getConfiguration().put(new PropertySimple(PROP_USER_ID, UserSessionManager.getSessionSubject().getId()));
+            validatePackage(callback);
         } else {
-            getConfiguration().put(new PropertySimple(PROP_USER_ID, config.selectedSubject.getId()));
-        }
-        
+            checkAuthenticationAndDo(new AsyncCallback<Void>() {
+                public void onFailure(Throwable caught) {
+                    callback.onFailure(caught);
+                }
+                
+                public void onSuccess(Void result) {
+                    getConfiguration().put(new PropertySimple(PROP_USER_ID, config.selectedSubject.getId()));
+                    getConfiguration().put(new PropertySimple(PROP_USER_NAME, anotherUserName.getEnteredValue()));
+                    getConfiguration().put(new PropertySimple(PROP_USER_PASSWORD, anotherUserPassword.getEnteredValue()));
+                    
+                    validatePackage(callback);
+                }
+            });
+        }        
+    }
+    
+    private void validatePackage(final AsyncCallback<Void> callback) {
         getConfiguration().put(new PropertySimple(PROP_REPO_ID, config.selectedRepo.getId()));
-        
+
         if (packageSelector.getSelectedIndex() == 0) {
-            getConfiguration().put(new PropertySimple(PROP_PACKAGE_ID, config.selectedPackage.getId()));
+            getConfiguration().put(new PropertySimple(PROP_PACKAGE_ID, config.selectedPackage.getGeneralPackage().getId()));            
+            callback.onSuccess(null);
         } else {
-            //TODO do upload here and wait for the result before returning...
+            currentUploadFailureRegistration = uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+                public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                    uploadForm.removeFormHandler(currentUploadSuccessHandler);
+                    currentUploadFailureRegistration.removeHandler();
+                    callback.onFailure(null);
+                }
+            });
+            
+            currentUploadSuccessHandler = new DynamicFormHandler() {
+                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                    if (uploadForm.getPackageId() == 0 || uploadForm.getPackageVersionId() == 0) {
+                        uploadForm.removeFormHandler(this);
+                        currentUploadFailureRegistration.removeHandler();
+                        callback.onFailure(null);
+                        return;
+                    }
+
+                    getConfiguration().put(new PropertySimple(PROP_PACKAGE_ID, uploadForm.getPackageId()));
+                    
+                    uploadForm.removeFormHandler(this);
+                    currentUploadFailureRegistration.removeHandler();
+                    callback.onSuccess(null);
+                }
+            };
+            uploadForm.addFormHandler(currentUploadSuccessHandler);
+            
+            uploadForm.submitForm();
         }
-        
-        return true;
     }
     
     private void loadConfig(final AsyncCallback<Config> handler) {
@@ -391,9 +442,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             PackageCriteria pc = new PackageCriteria();
             pc.addFilterRepoId(Integer.parseInt(repoId));
             pc.addFilterPackageTypeId(cliScriptPackageType.getId());
-            
-            GWTServiceLookup.getContentService().findPackagesByCriteria(pc, new AsyncCallback<PageList<Package>>() {
-                public void onSuccess(PageList<Package> result) {
+            GWTServiceLookup.getContentService().findPackagesWithLatestVersion(pc, new AsyncCallback<PageList<PackageAndLatestVersionComposite>>() {
+                public void onSuccess(PageList<PackageAndLatestVersionComposite> result) {
                     config.allPackages = result;
                     
                     if (packageId != null && packageId.trim().length() > 0) {
@@ -443,12 +493,34 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private DynamicForm createAnotherUserForm() {
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("anotherUserForm"));
         form.setTitleOrientation(TitleOrientation.TOP);
-        TextItem userNameItem = new TextItem("userName", MSG.dataSource_users_field_name());
-        PasswordItem passwordItem = new PasswordItem("password", MSG.dataSource_users_field_password());
-        ButtonItem verifyItem = new ButtonItem("verify", MSG.view_alert_definition_notification_cliScript_editor_verifyAuthentication());
-        form.setFields(userNameItem, passwordItem, verifyItem);
+        anotherUserName = new TextItem("userName", MSG.dataSource_users_field_name());
+        anotherUserPassword = new PasswordItem("password", MSG.dataSource_users_field_password());
+        verifyUserButton = new ButtonItem("verify", MSG.view_alert_definition_notification_cliScript_editor_verifyAuthentication());
         
-        //TODO add verification functionality
+        authSuccessIcon = new FormItemIcon();
+        authSuccessIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
+        authSuccessIcon.setWidth(16);
+        authSuccessIcon.setHeight(16);
+
+        authFailureIcon = new FormItemIcon();
+        authFailureIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
+        authFailureIcon.setWidth(16);
+        authFailureIcon.setHeight(16);
+        
+        form.setFields(anotherUserName, anotherUserPassword, verifyUserButton);
+        
+        verifyUserButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                //just checking the auth is ok, no other action is needed.
+                checkAuthenticationAndDo(new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                    }
+                    
+                    public void onSuccess(Void result) {
+                    }
+                });
+            }
+        });
         return form;
     }
     
@@ -459,7 +531,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         existingPackageSelector.setDefaultToFirstOption(true);
         existingPackageSelector.setWrapTitle(false);
         existingPackageSelector.setRedrawOnChange(true);
-        existingPackageSelector.setWidth("*");            
+        existingPackageSelector.setWidth(300);            
         existingPackageSelector.setValueMap(MSG.common_msg_loading());
         existingPackageSelector.setDisabled(true);
         
@@ -470,11 +542,33 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private DynamicForm createUploadNewScriptForm() {
         uploadForm = new PackageVersionFileUploadFormWithVersion(extendLocatorId("uploadForm"), cliScriptPackageType.getId());         
         uploadForm.setTitleOrientation(TitleOrientation.TOP);
-
+        uploadForm.setPackageTypeId(cliScriptPackageType.getId());
+        
         return uploadForm;
     }
     
     private void loadPackageType(AsyncCallback<PackageType> handler) {
         GWTServiceLookup.getContentService().findPackageType(null, PACKAGE_TYPE_NAME, handler);
+    }
+    
+    private void checkAuthenticationAndDo(final AsyncCallback<Void> action) {
+        String username = anotherUserName.getEnteredValue();
+        String password = anotherUserPassword.getEnteredValue();
+        
+        GWTServiceLookup.getSubjectService().checkAuthentication(username, password, new AsyncCallback<Subject>() {
+            public void onFailure(Throwable caught) {
+                config.selectedSubject = null;
+                verifyUserButton.setIcons(authFailureIcon);
+                markForRedraw();
+                action.onFailure(caught);
+            }
+            
+            public void onSuccess(Subject result) {
+                config.selectedSubject = result;
+                verifyUserButton.setIcons(authSuccessIcon);   
+                markForRedraw();
+                action.onSuccess(null);
+            }
+        });
     }
 }       

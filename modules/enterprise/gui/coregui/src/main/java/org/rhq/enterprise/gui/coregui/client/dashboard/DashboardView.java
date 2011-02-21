@@ -28,15 +28,14 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.ColorSelectedEvent;
+import com.smartgwt.client.widgets.form.events.ColorSelectedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.ColorPickerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
 import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
@@ -54,6 +53,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.ColorButtonItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -243,18 +243,21 @@ public class DashboardView extends LocatableVLayout {
         addCanvas.setStartRow(false);
         addCanvas.setEndRow(false);
 
-        ColorPickerItem picker = new ColorPickerItem();
-        picker.setTitle(MSG.common_title_background());
-        picker.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent changedEvent) {
-                Object v = changedEvent.getValue();
-                com.allen_sauer.gwt.log.client.Log.info("color changed to " + v);
-                setBackgroundColor(String.valueOf(v));
-                storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, String.valueOf(v)));
-                save();
+        ColorButtonItem picker = new ColorButtonItem("colorButton", MSG.common_title_background());
+        picker.setStartRow(false);
+        picker.setEndRow(false);
+        picker.setCurrentColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
+        picker.setColorSelectedHandler(new ColorSelectedHandler() {
+            @Override
+            public void onColorSelected(ColorSelectedEvent event) {
+                String selectedColor = event.getColor();
+                if (selectedColor != null) {
+                    setBackgroundColor(selectedColor);
+                    storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, selectedColor));
+                    save();
+                }
             }
         });
-        picker.setValue(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
         //refresh interval
         LocatableMenu refreshMenu = new LocatableMenu(editForm.extendLocatorId("AutoRefreshMenu"));

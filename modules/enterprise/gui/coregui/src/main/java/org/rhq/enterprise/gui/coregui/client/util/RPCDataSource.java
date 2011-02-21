@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -298,7 +299,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             return null;
         }
 
-        Set<T> results = new HashSet<T>(records.length);
+        Set<T> results = new LinkedHashSet<T>(records.length);
         int i = 0;
         for (Record record : records) {
             results.add(copyValues(record));

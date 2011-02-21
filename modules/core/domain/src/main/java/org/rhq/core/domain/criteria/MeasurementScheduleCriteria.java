@@ -51,9 +51,12 @@ public class MeasurementScheduleCriteria extends Criteria {
     public static final String SORT_FIELD_DATA_TYPE = "dataType";
 
     // filter fields
+    public static final String FILTER_FIELD_DEFINITION_IDS = "definitionIds";
     public static final String FILTER_FIELD_RESOURCE_ID = "resourceId";
     public static final String FILTER_FIELD_RESOURCE_GROUP_ID = "resourceGroupId";
     public static final String FILTER_FIELD_RESOURCE_TYPE_ID = "resourceTypeId";
+    public static final String FILTER_FIELD_AUTO_GROUP_RESOURCE_TYPE_ID = "autoGroupResourceTypeId";
+    public static final String FILTER_FIELD_AUTO_GROUP_PARENT_RESOURCE_ID = "autoGroupParentResourceId";
 
     private Integer filterId;
     private Boolean filterEnabled;
@@ -73,19 +76,19 @@ public class MeasurementScheduleCriteria extends Criteria {
     private PageOrdering sortDataType; // requires overrides
 
     public MeasurementScheduleCriteria() {
-        filterOverrides.put("definitionIds", "definition.id IN ( ? )");
+        filterOverrides.put(FILTER_FIELD_DEFINITION_IDS, "definition.id IN ( ? )");
         filterOverrides.put(FILTER_FIELD_RESOURCE_ID, "resource.id IN ( ? )");
         filterOverrides.put(FILTER_FIELD_RESOURCE_GROUP_ID, "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
-            + "    JOIN res.implicitGroups ig " //
-            + "   WHERE ig.id = ? )");
-        filterOverrides.put("autoGroupResourceTypeId", "resource.id IN " //
+            + "    JOIN res.explicitGroups eg " //
+            + "   WHERE eg.id = ? )");
+        filterOverrides.put(FILTER_FIELD_AUTO_GROUP_RESOURCE_TYPE_ID, "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
             + "    JOIN res.resourceType type " //
             + "   WHERE type.id = ? )");
-        filterOverrides.put("autoGroupParentResourceId", "resource.id IN " //
+        filterOverrides.put(FILTER_FIELD_AUTO_GROUP_PARENT_RESOURCE_ID, "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
             + "    JOIN res.parentResource parent " //

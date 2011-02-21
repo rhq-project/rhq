@@ -25,7 +25,7 @@
    </properties>
 
    <dependencies>
-      
+
       <dependency>
          <groupId>ant</groupId>
          <artifactId>ant</artifactId>
@@ -65,8 +65,8 @@
      The plugin poms therefore must copy the dependencies of this library into their
      /lib dirs manually (until we find a better way of solving this...).
 -->
-<!-- 
-   <build>      
+<!--
+   <build>
       <plugins>
 
          <plugin>
@@ -105,43 +105,43 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <path id="cobertura.classpath"> 
-                         <fileset dir="${user.home}/.m2/repository/net/sourceforge/cobertura/cobertura/1.9.4.1/">
+                   <path id="cobertura.classpath">
+                         <fileset dir="${user.home}/.m2/repository/net/sourceforge/cobertura/cobertura/${cobertura.version}/">
                             <include name="cobertura*.jar" />
                             <include name="lib/**/*.jar" />
                          </fileset>
-                   </path> 
+                   </path>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -149,7 +149,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
@@ -162,11 +162,11 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -174,15 +174,15 @@
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
      </profile>

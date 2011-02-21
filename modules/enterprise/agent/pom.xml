@@ -59,7 +59,7 @@
       <artifactId>rhq-core-client-api</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
+
    <dependency>
        <groupId>jline</groupId>
        <artifactId>jline</artifactId>
@@ -68,7 +68,7 @@
 
     <dependency>
       <!-- The only reason why this is here is so we can pull this down from the repo.
-           Its scope is provided so we don't actually put it anywhere. 
+           Its scope is provided so we don't actually put it anywhere.
            Our assembly process will place this library in the connector directory.
            I'm not convinced this is actually needed, but it isn't hurting anything. -->
       <groupId>org.rhq</groupId>
@@ -176,7 +176,7 @@ Build-Number=${buildNumber}
               <tasks>
                 <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist" inheritAll="false" inheritRefs="false">
                    <property name="settings.localRepository" value="${settings.localRepository}" />
-                   <property name="project.version" value="${project.version}" />                   
+                   <property name="project.version" value="${project.version}" />
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
                    <property name="jboss.version" value="${jboss.version}" />
@@ -186,7 +186,7 @@ Build-Number=${buildNumber}
                    <property name="sigar.version" value="${sigar.version}" />
                    <property name="jaxb-api.version" value="${jaxb-api.version}" />
                    <property name="jaxb-impl.version" value="${jaxb-impl.version}" />
-                   <property name="jline.version" value="${jline.version}" />                   
+                   <property name="jline.version" value="${jline.version}" />
                 </ant>
               </tasks>
             </configuration>
@@ -237,7 +237,7 @@ Build-Number=${buildNumber}
 
     </plugins>
   </build>
-  
+
  <profiles>
      <profile>
       <id>cobertura</id>
@@ -252,32 +252,32 @@ Build-Number=${buildNumber}
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -285,7 +285,7 @@ Build-Number=${buildNumber}
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
@@ -298,11 +298,11 @@ Build-Number=${buildNumber}
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -310,20 +310,20 @@ Build-Number=${buildNumber}
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
-     </profile> 
+     </profile>
  </profiles>
-  
+
   <repositories>
      <!-- This is for SIGAR 1.6.4. -->
      <repository>
@@ -346,6 +346,6 @@ Build-Number=${buildNumber}
 
     </plugins>
   </reporting>
-    
+
 </project>
 

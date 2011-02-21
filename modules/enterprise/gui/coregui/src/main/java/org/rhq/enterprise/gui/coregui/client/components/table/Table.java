@@ -84,6 +84,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -231,9 +232,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             listGrid.setDataSource(dataSource);
         }
 
-        contents = new VLayout();
+        contents = new LocatableVLayout(extendLocatorId("tableContents"));
         contents.setWidth100();
         contents.setHeight100();
+        //contents.setOverflow(Overflow.AUTO);
         addMember(contents);
 
         contents.addMember(listGrid);

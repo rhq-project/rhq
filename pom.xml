@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -99,6 +97,8 @@
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
     <testng.version>5.13.1</testng.version>
+    <cobertura.version>1.9.4.1</cobertura.version>
+
 
     <!--
        defaults for datasource used by integration tests -
@@ -149,7 +149,7 @@
 
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
-    <localRepository>${user.home}/.m2/repository</localRepository>   
+    <localRepository>${user.home}/.m2/repository</localRepository>
   </properties>
 
 
@@ -454,9 +454,9 @@
     <dependency>
       <groupId>net.sourceforge.cobertura</groupId>
       <artifactId>cobertura</artifactId>
-      <version>1.9.4.1</version>          
+      <version>${cobertura.version}</version>
       <scope>test</scope>
-    </dependency>   
+    </dependency>
 
   </dependencies>
 
@@ -471,16 +471,16 @@
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.6</version>
            <dependencies>
-             <!-- We must declare this here to workaround 
-                  http://jira.codehaus.org/browse/MANTRUN-51. 
+             <!-- We must declare this here to workaround
+                  http://jira.codehaus.org/browse/MANTRUN-51.
                   Once we require Maven 3.0, this will no
                   no longer needed. -->
              <dependency>
                <groupId>net.sourceforge.cobertura</groupId>
                <artifactId>cobertura</artifactId>
-               <version>1.9.4.1</version> 
+               <version>${cobertura.version}</version>
              </dependency>
-           </dependencies>           
+           </dependencies>
          </plugin>
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
@@ -552,7 +552,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-site-plugin</artifactId>
-           <version>2.1.1</version>
+           <version>2.2</version>
          </plugin>
          <plugin>
            <artifactId>maven-source-plugin</artifactId>
@@ -581,7 +581,7 @@
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
-           <artifactId>exec-maven-plugin</artifactId>           
+           <artifactId>exec-maven-plugin</artifactId>
            <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
                       upgrade to that version. -->
            <version>1.1</version>
@@ -808,7 +808,7 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
-          <appendAssemblyId>false</appendAssemblyId>               
+          <appendAssemblyId>false</appendAssemblyId>
         </configuration>
       </plugin>
 
@@ -852,7 +852,7 @@
     <pluginRepository>
        <id>jboss-public-repo-group</id>
        <name>JBoss Public Repository Group</name>
-       <url>http://repository.jboss.org/nexus/content/groups/public/</url>       
+       <url>http://repository.jboss.org/nexus/content/groups/public/</url>
     </pluginRepository>
 
   </pluginRepositories>
@@ -1056,10 +1056,9 @@
                           <configuration>
                               <tasks>
                                   <tstamp>
-                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
-                                              timezone="GMT"/>
+                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
                                   </tstamp>
-                                  <mkdir dir="target"/>
+                                  <mkdir dir="target" />
                                   <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}
                                   </echo>
                               </tasks>
@@ -1183,7 +1182,7 @@
                 <version>1.0-alpha-2</version>
                 <inherited>true</inherited>
             </plugin>
--->          
+-->
             <plugin>
                 <!-- must be last plugin in the list -->
                 <groupId>org.codehaus.mojo</groupId>
@@ -1221,6 +1220,9 @@
             <name>Greg Hinkle</name>
             <timezone>-5</timezone>
             <url>http://www.jroller.com/ghinkle/</url>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Lukas Krejci</name>
@@ -1230,6 +1232,9 @@
             <name>Joseph Marques</name>
             <url>http://josephmarques.wordpress.com</url>
             <timezone>-5</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Fady Matar</name>
@@ -1276,6 +1281,10 @@
     </developers>
 
     <contributors>
+        <contributor>
+            <name>Steve Millidge</name>
+            <timezone>0</timezone>
+        </contributor>
         <contributor>
             <name>Alex Kiefer</name>
             <timezone>+1</timezone>

@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -29,30 +36,46 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -64,27 +87,38 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class SingleGroupDefinitionView extends LocatableVLayout implements BookmarkableView {
 
+    private static final String TEMPLATE_JBOSSAS4_CLUSTERS = MSG.view_dynagroup_template_jbossas4_clusters();
+    private static final String TEMPLATE_JBOSSAS5_CLUSTERS = MSG.view_dynagroup_template_jbossas5_clusters(); // true for AS 5 and 6
+    private static final String TEMPLATE_JBOSSAS4_EAR_CLUSTERS = MSG.view_dynagroup_template_jbossas4_earClusters();
+    private static final String TEMPLATE_JBOSSAS4_UNIQUE_VERSIONS = MSG
+        .view_dynagroup_template_jbossas4_uniqueVersions();
+    private static final String TEMPLATE_PLATFORMS = MSG.view_dynagroup_template_platforms();
+    private static final String TEMPLATE_UNIQUE_RESOURCE_TYPES = MSG.view_dynagroup_template_uniqueResourceTypes();
+    private static final String TEMPLATE_JBOSSAS4_HOSTING_APP = MSG.view_dynagroup_template_jbossas4_hostingApp();
+    private static final String TEMPLATE_JBOSSAS4_NONSECURED = MSG.view_dynagroup_template_jbossas4_nonsecured();
+    private static final String TEMPLATE_DOWNED_RESOURCES = MSG.view_dynagroup_template_downedResources();
+
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
     private String basePath;
+
+    private GroupDefinitionExpressionBuilder builder;
 
     // editable form
     private TextItem id;
     private TextItem name;
     private TextAreaItem description;
     private CheckboxItem recursive;
+    private SpacerItem templateSelectorTitleSpacer;
     private SelectItem templateSelector;
+    private LinkedHashMap<String, String> templateStrings;
     private TextAreaItem expression;
     private SpinnerItem recalculationInterval;
 
     public SingleGroupDefinitionView(String locatorId) {
         super(locatorId);
-
-        setPadding(10);
-        setOverflow(Overflow.VISIBLE);
-        setWidth(5);
-
         buildForm();
+        setWidth100();
     }
 
     public void setGroupDefinition(final GroupDefinition groupDefinition) {
@@ -99,7 +133,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         expression.setValue(groupDefinition.getExpression());
 
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
-        form.setFields(id, name, description, expression, recursive, recalculationInterval);
+        form.setFields(id, name, description, templateSelectorTitleSpacer, templateSelector, expression, recursive,
+            recalculationInterval);
         form.setDataSource(GroupDefinitionDataSource.getInstance());
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
@@ -113,61 +148,20 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             groupDefinitionId);
 
         // button setup
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("save"), MSG.common_button_save());
         //saveButton.addClickHandler(new SaveOrUpdateClickHandler(form, operationType, dynaGroupChildrenView));
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate()) {
-                    form.saveData(new DSCallback() {
-                        @Override
-                        public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            if (form.isNewRecord()) {
-                                Record[] results = response.getData();
-                                if (results.length != 1) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
-                                } else {
-                                    Record newRecord = results[0];
-                                    GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance()
-                                        .copyValues((ListGridRecord) newRecord);
-                                    History.newItem(basePath + "/" + newGroupDefinition.getId());
-                                }
-                            } else {
-                                dynaGroupChildrenView.refresh();
-                            }
-                        }
-                    });
-                }
+                saveForm(form, dynaGroupChildrenView, false);
             }
         });
 
-        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("Recalculate"), MSG
+        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("saveAndRecalculate"), MSG
             .view_dynagroup_saveAndRecalculate());
         recalculateButton.setWidth(150);
         recalculateButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate()) {
-                    form.saveData(new DSCallback() {
-                        @Override
-                        public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            GWTServiceLookup.getResourceGroupService(600000).recalculateGroupDefinitions(
-                                new int[] { groupDefinitionId }, new AsyncCallback<Void>() {
-                                    @Override
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(),
-                                            caught);
-                                    }
-
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        dynaGroupChildrenView.refresh();
-                                        CoreGUI.getMessageCenter().notify(
-                                            new Message(MSG.view_dynagroup_recalcSuccessful(), Severity.Info));
-                                    }
-                                });
-                        }
-                    });
-                }
+                saveForm(form, dynaGroupChildrenView, true);
             }
         });
 
@@ -192,6 +186,54 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         markForRedraw();
     }
 
+    private void saveForm(final LocatableDynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
+        final boolean recalc) {
+        if (form.validate()) {
+            form.saveData(new DSCallback() {
+                @Override
+                public void execute(DSResponse response, Object rawData, DSRequest request) {
+                    if (form.isNewRecord()) {
+                        Record[] results = response.getData();
+                        if (results.length != 1) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
+                        } else {
+                            Record newRecord = results[0];
+                            GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance().copyValues(
+                                (ListGridRecord) newRecord);
+                            if (recalc) {
+                                recalculate(dynaGroupChildrenView, newGroupDefinition.getId());
+                            }
+                            History.newItem(basePath + "/" + newGroupDefinition.getId());
+                        }
+                    } else {
+                        dynaGroupChildrenView.refresh();
+                        if (recalc) {
+                            recalculate(dynaGroupChildrenView, groupDefinitionId);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private void recalculate(final DynaGroupChildrenView dynaGroupChildrenView, int groupDefId) {
+        GWTServiceLookup.getResourceGroupService(600000).recalculateGroupDefinitions(new int[] { groupDefId },
+            new AsyncCallback<Void>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailure(), caught);
+                }
+
+                @Override
+                public void onSuccess(Void result) {
+                    dynaGroupChildrenView.refresh();
+                    CoreGUI.getMessageCenter()
+                        .notify(new Message(MSG.view_dynagroup_recalcSuccessful(), Severity.Info));
+                }
+            });
+    }
+
     class DynaGroupChildrenView extends Table {
         public DynaGroupChildrenView(String locatorId, int groupDefinitionId) {
             super(locatorId, MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String
@@ -199,18 +241,94 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             setDataSource(ResourceGroupsDataSource.getInstance());
             setMinHeight(250);
         }
+
+        @Override
+        protected void configureTable() {
+            // i couldn't use percentage widths to work for some reason
+
+            ListGridField idField = new ListGridField("id", MSG.common_title_id());
+            idField.setType(ListGridFieldType.INTEGER);
+            idField.setWidth("50");
+
+            ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
+            nameField.setWidth("300");
+            nameField.setCellFormatter(new CellFormatter() {
+                @Override
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String linkName = record.getAttributeAsString(NAME.propertyName());
+                    String linkUrl = LinkManager.getResourceGroupLink(record.getAttributeAsInt("id"));
+                    return "<a href=\"" + linkUrl + "\">" + linkName + "</a>";
+                }
+            });
+
+            ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+            descriptionField.setWidth("100");
+
+            ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
+            typeNameField.setWidth("100");
+
+            ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
+            pluginNameField.setWidth("100");
+
+            ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
+            categoryField.setWidth("100");
+            categoryField.setType(ListGridFieldType.ICON);
+            HashMap<String, String> categoryImages = new HashMap<String, String>(2);
+            categoryImages.put(GroupCategory.COMPATIBLE.name(), ImageManager.getGroupIcon(GroupCategory.COMPATIBLE));
+            categoryImages.put(GroupCategory.MIXED.name(), ImageManager.getGroupIcon(GroupCategory.MIXED));
+            categoryField.setValueIcons(categoryImages);
+            categoryField.setShowHover(true);
+            categoryField.setHoverCustomizer(new HoverCustomizer() {
+                @Override
+                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String category = record.getAttributeAsString(CATEGORY.propertyName());
+                    if (GroupCategory.COMPATIBLE.name().equals(category)) {
+                        return MSG.view_dynagroup_compatible();
+                    } else if (GroupCategory.MIXED.name().equals(category)) {
+                        return MSG.view_dynagroup_mixed();
+                    } else {
+                        return category; // should never happen
+                    }
+                }
+            });
+
+            setListGridFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField);
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        String groupUrl = LinkManager.getResourceGroupLink(selectedRows[0].getAttributeAsInt("id"));
+                        CoreGUI.goToView(groupUrl);
+                    }
+                }
+            });
+        }
     }
 
     public void switchToEditMode() {
         name.show();
         description.show();
         recursive.show();
+        templateSelectorTitleSpacer.show();
+        templateSelector.show();
         expression.show();
         recalculationInterval.show();
         markForRedraw();
     }
 
     private void buildForm() {
+        FormItemIcon expressionBuilderIcon = new FormItemIcon();
+        expressionBuilderIcon.setSrc("[SKIN]/actions/add.png");
+        expressionBuilderIcon.setPrompt(MSG.view_dynagroup_expressionBuilderIconTooltip());
+        expressionBuilderIcon.addFormItemClickHandler(new FormItemClickHandler() {
+            @Override
+            public void onFormItemClick(FormItemIconClickEvent event) {
+                showExpressionBuilder();
+            }
+        });
+
         id = new TextItem("id", MSG.common_title_id());
         id.setVisible(false);
 
@@ -225,60 +343,104 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         recursive = new CheckboxItem("recursive", MSG.view_dynagroup_recursive());
 
+        templateSelectorTitleSpacer = new SpacerItem();
+        templateSelectorTitleSpacer.setShowTitle(false);
+        templateSelectorTitleSpacer.setColSpan(1);
+        templateSelectorTitleSpacer.setEndRow(false);
+
+        templateSelector = new SelectItem("templateSelector");
+        templateStrings = getTemplates();
+        templateSelector.setValueMap(templateStrings.keySet().toArray(new String[templateStrings.size()]));
+        templateSelector.setAllowEmptyValue(true);
+        templateSelector.setWidth(300);
+        templateSelector.setShowTitle(false);
+        templateSelector.setColSpan(1);
+        templateSelector.setEndRow(true);
+        templateSelector.setStartRow(false);
+        templateSelector.setIcons(expressionBuilderIcon);
+        templateSelector.setHoverWidth(200);
+
         expression = new TextAreaItem("expression", MSG.view_dynagroup_expression());
         expression.setWidth(400);
         expression.setHeight(150);
         expression.setDefaultValue("");
+        expression.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                // the user changed the expression text, clear the template drop down
+                // so the user isn't confused thinking this new value is the template text
+                templateSelector.clearValue();
+            }
+        });
+        if (builder != null) {
+            builder.destroy();
+            builder = null;
+        }
+
+        templateSelector.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                if (event.getValue() != null) {
+                    String selectedTemplateId = event.getValue().toString();
+                    // user picked one of the canned templates - put it in the expression text area
+                    String selectedTemplate = templateStrings.get(selectedTemplateId);
+                    expression.setValue((selectedTemplate != null) ? selectedTemplate : "");
+                } else {
+                    expression.setValue("");
+                }
+            }
+        });
 
         recalculationInterval = new SpinnerItem("recalculationInterval", MSG.view_dynagroup_recalculationInterval());
-        recalculationInterval.setWrapTitle(false);
+        //recalculationInterval.setWrapTitle(false); // do not set this - it causes the form to grow abnormally width-wise for some reason
         recalculationInterval.setMin(0);
         recalculationInterval.setDefaultValue(0);
-
-        templateSelector = new SelectItem();
-        templateSelector.setValueMap(getTemplates());
     }
 
     public static LinkedHashMap<String, String> getTemplates() {
         LinkedHashMap<String, String> items = new LinkedHashMap<String, String>();
 
-        // grouped items
-        items.put("JBossAS clusters in the system", //
-            get("groupby resource.trait[partitionName]", //
+        // grouped items (these can potentially create multiple groups)
+        items.put(TEMPLATE_JBOSSAS4_CLUSTERS, //
+            buildTemplate("groupby resource.trait[partitionName]", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));
-        items.put("Clustered enterprise application archive (EAR)", //
-            get("groupby resource.parent.trait[partitionName]", //
+        items.put(TEMPLATE_JBOSSAS5_CLUSTERS, //
+            buildTemplate("groupby resource.trait[MCBean|ServerConfig|*|partitionName]", //
+                "resource.type.plugin = JBossAS5", //
+                "resource.type.name = JBossAS Server"));
+        items.put(TEMPLATE_JBOSSAS4_EAR_CLUSTERS, //
+            buildTemplate("groupby resource.parent.trait[partitionName]", //
                 "groupby resource.name", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = Enterprise Application (EAR)"));
-        items.put("Unique JBossAS versions in inventory", //
-            get("groupby resource.trait[jboss.system:type=Server:VersionName]", //
+        items.put(TEMPLATE_JBOSSAS4_UNIQUE_VERSIONS, //
+            buildTemplate("groupby resource.trait[jboss.system:type=Server:VersionName]", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));
-        items.put("Platform resource in inventory", //
-            get("resource.type.category = PLATFORM", // 
+        items.put(TEMPLATE_PLATFORMS, //
+            buildTemplate("resource.type.category = PLATFORM", // 
                 "groupby resource.name"));
-        items.put("Unique resource type in inventory", //
-            get("groupby resource.type.plugin", //
+        items.put(TEMPLATE_UNIQUE_RESOURCE_TYPES, //
+            buildTemplate("groupby resource.type.plugin", //
                 "groupby resource.type.name"));
 
-        // simple items
-        items.put("All JBossAS hosting any version of 'my' app", //
-            get("resource.type.plugin = JBossAS", //
+        // simple items (these create one group)
+        items.put(TEMPLATE_JBOSSAS4_HOSTING_APP, //
+            buildTemplate("resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server", //
                 "resource.child.name.contains = my"));
-        items.put("All Non-secured JBossAS servers", //
-            get("empty resource.pluginConfiguration[principal]", //
+        items.put(TEMPLATE_JBOSSAS4_NONSECURED, //
+            buildTemplate("empty resource.pluginConfiguration[principal]", //
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));
-        items.put("All resources currently down", //
-            get("resource.availability = DOWN"));
+        items.put(TEMPLATE_DOWNED_RESOURCES, //
+            buildTemplate("resource.availability = DOWN"));
 
         return items;
     }
 
-    private static String get(String... pieces) {
+    private static String buildTemplate(String... pieces) {
         StringBuilder results = new StringBuilder();
         boolean first = true;
         for (String next : pieces) {
@@ -322,6 +484,27 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     }
                 });
         }
+    }
+
+    private void showExpressionBuilder() {
+        if (builder == null) {
+            builder = new GroupDefinitionExpressionBuilder(extendLocatorId("exprBuilder"), new AddExpressionHandler() {
+                @Override
+                public void addExpression(String newExpression) {
+                    String currentExpression = "";
+                    String value = expression.getValueAsString();
+                    if (value != null) {
+                        currentExpression = value + "\n";
+                    }
+                    expression.setValue(currentExpression + newExpression);
+
+                    // the user changed the expression text, clear the template drop down
+                    // so the user isn't confused thinking this new value is the template text
+                    templateSelector.clearValue();
+                }
+            });
+        }
+        builder.show();
     }
 
     @Override

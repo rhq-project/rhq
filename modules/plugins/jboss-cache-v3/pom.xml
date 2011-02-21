@@ -7,7 +7,7 @@
       <artifactId>rhq-plugins-parent</artifactId>
       <version>4.0.0-SNAPSHOT</version>
     </parent>
-    
+
    <groupId>org.jboss.on</groupId>
    <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
    <packaging>jar</packaging>
@@ -25,7 +25,7 @@
         <jbossas.version>6.0.0.M1</jbossas.version>
         <rhq.groupId>org.rhq</rhq.groupId>
     </properties>
-                      
+
     <dependencyManagement>
         <dependencies>
           <dependency>
@@ -43,8 +43,8 @@
             <scope>import</scope>
           </dependency>
         </dependencies>
-    </dependencyManagement>    
-       
+    </dependencyManagement>
+
     <dependencies>
 
      <dependency>
@@ -63,7 +63,7 @@
 
      <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-profileservice-spi</artifactId>          
+          <artifactId>jboss-profileservice-spi</artifactId>
           <scope>provided</scope>
      </dependency>
 
@@ -72,19 +72,19 @@
           <artifactId>jboss-remoting</artifactId>
           <scope>provided</scope>
       </dependency>
-       
+
        <dependency>
           <groupId>org.jboss.naming</groupId>
           <artifactId>jnp-client</artifactId>
           <scope>test</scope>
        </dependency>
-        
+
         <dependency>
           <groupId>org.jboss.microcontainer</groupId>
           <artifactId>jboss-kernel</artifactId>
           <scope>test</scope>
         </dependency>
-        
+
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
           <artifactId>jboss-as-aspects</artifactId>
@@ -278,7 +278,7 @@
             <groupId>jboss.messaging</groupId>
             <artifactId>jboss-messaging-client</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
 
     </dependencies>
 
@@ -320,7 +320,7 @@
                         </goals>
                         <configuration>
                             <skip>${maven.test.skip}</skip>
-                          <excludedGroups>jbosscache3-test</excludedGroups>   
+                          <excludedGroups>jbosscache3-test</excludedGroups>
                             <useSystemClassLoader>false</useSystemClassLoader>
                             <additionalClasspathElements>
                                <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
@@ -381,7 +381,7 @@
                           <configuration>
                           <additionalClasspathElements>
                                    <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
-                          </additionalClasspathElements>   
+                          </additionalClasspathElements>
                              <tasks>
                                 <echo>Setting up plugin dependencies...</echo>
                                 <property name="settings.localRepository" location="${user.home}/.m2/repository" />
@@ -438,12 +438,12 @@
                           </goals>
                           <configuration>
                              <skip>${maven.test.skip}</skip>
-                             <parallel>false</parallel>                             
+                             <parallel>false</parallel>
                              <useSystemClassLoader>false</useSystemClassLoader>
                              <additionalClasspathElements>
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
-                            </additionalClasspathElements>                         
-                                 <excludedGroups>jbosscache3-test</excludedGroups> 
+                            </additionalClasspathElements>
+                                 <excludedGroups>jbosscache3-test</excludedGroups>
                              <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                              <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                              <systemProperties>
@@ -562,37 +562,37 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId> 
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -600,7 +600,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
@@ -613,11 +613,11 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -625,20 +625,20 @@
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
      </profile>
     </profiles>
-  
+
 
     <reporting>
        <plugins>
@@ -649,6 +649,6 @@
           </plugin>
        </plugins>
     </reporting>
- 
+
 </project>
 

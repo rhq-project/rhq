@@ -218,14 +218,16 @@ public class GroupDefinition implements Serializable {
     }
 
     public Long getNextCalculationTime() {
-        if (getRecalculationInterval() == 0) {
+        Long ri = getRecalculationInterval();
+        if (ri == null || ri == 0) {
             return 0L; // never recalculate
         } else {
             if (getLastCalculationTime() != null) {
-                return getLastCalculationTime() + getRecalculationInterval();
+                return getLastCalculationTime() + ri;
             } else {
                 // interval millis after the user saves the changes to the group, to prevent flooding
-                return getModifiedTime() + getRecalculationInterval();
+                Long mt = getModifiedTime();
+                return ((mt != null) ? mt.longValue() : System.currentTimeMillis()) + ri.longValue();
             }
         }
     }

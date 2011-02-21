@@ -54,6 +54,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.client.LocalClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -71,12 +72,16 @@ public class CliSender extends AlertSender<CliComponent> {
     public static final String PROP_PACKAGE_ID = "packageId";
     public static final String PROP_REPO_ID = "repoId";
     public static final String PROP_USER_ID = "userId";
+    public static final String PROP_USER_NAME = "userName";
+    public static final String PROP_USER_PASSWORD = "userPassword";
     
     private static final Log LOG = LogFactory.getLog(CliSender.class);
 
     private static final String SUMMARY_TEMPLATE = "Ran script $packageName in version $packageVersion from repo $repoName as user $userName.";
     private static final String PREVIEW_TEMPLATE = "Run script $packageName from repo $repoName as user $userName.";
 
+    private static final String VALIDATION_ERROR_MESSAGE = "The provided user failed to authenticate.";
+    
     /**
      * Simple strongly typed representation of the alert configuration
      */
@@ -173,8 +178,39 @@ public class CliSender extends AlertSender<CliComponent> {
 
     @Override
     public AlertSenderValidationResults validateAndFinalizeConfiguration(Subject subject) {
-        // TODO Auto-generated method stub
-        return super.validateAndFinalizeConfiguration(subject);
+        AlertSenderValidationResults results = new AlertSenderValidationResults(alertParameters, extraParameters);
+        
+        String userIdString = alertParameters.getSimpleValue(PROP_USER_ID, null);
+        String userName = alertParameters.getSimpleValue(PROP_USER_NAME, null);
+        String userPassword = alertParameters.getSimpleValue(PROP_USER_PASSWORD, null);
+        
+        Integer userId = userIdString == null ? null : Integer.valueOf(userIdString);
+        
+        if (userId == null || userId != subject.getId()) {
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            
+            Subject authSubject = subjectManager.checkAuthentication(userName, userPassword);
+            
+            if (authSubject == null) {
+                PropertySimple userNameProp = new PropertySimple(PROP_USER_NAME, userName);
+                userNameProp.setErrorMessage(VALIDATION_ERROR_MESSAGE);
+                alertParameters.put(userNameProp);
+                alertParameters.put(new PropertySimple(PROP_USER_ID, null));
+            } else {
+                //make sure we store the id of the user that actually authenticated to prevent
+                //security breaches.
+                alertParameters.put(new PropertySimple(PROP_USER_ID, authSubject.getId()));
+            }
+        } else {
+            //make sure to store the username of the user... not that it is functionally
+            //required but prevent confusions in case of debugging some errorneous situation
+            alertParameters.put(new PropertySimple(PROP_USER_NAME, subject.getName()));
+        }
+
+        //do not store the password in the database ever
+        alertParameters.put(new PropertySimple(PROP_USER_PASSWORD, null));
+        
+        return results;
     }
     
     private static ScriptEngine getScriptEngine(Alert alert, OutputStream scriptOutput, Config config) throws ScriptException,
@@ -250,7 +286,7 @@ public class CliSender extends AlertSender<CliComponent> {
             PackageVersion versionToUse = rm.getLatestPackageVersion(overlord, config.packageId, config.repoId);
 
             ret = ret.replace("$packageName", versionToUse.getDisplayName());
-            ret = ret.replace("$pacakgeVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
+            ret = ret.replace("$packageVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
                 : versionToUse.getDisplayVersion());
 
             RepoCriteria criteria = new RepoCriteria();

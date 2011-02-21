@@ -67,6 +67,7 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -527,6 +528,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return contentManager.findPackagesByCriteria(subject, criteria); 
+    }
+    
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
+        PackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return contentManager.findPackagesWithLatestVersion(subject, criteria); 
     }
         
     //CONTENTMANAGER: END ----------------------------------

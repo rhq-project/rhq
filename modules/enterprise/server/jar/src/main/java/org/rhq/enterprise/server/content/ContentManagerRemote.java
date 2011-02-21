@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -182,11 +183,9 @@ public interface ContentManagerRemote {
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
     /**
-     * This method requires InventoryManager permissions if the criteria is set up to fetch the package
-     * versions via {@link PackageCriteria#fetchVersions(boolean)}. There are no privileges required
-     * if only a list of packages without their associated package versions is requested.
-     * <p>
-     * TODO the privileges need to be worked out for this...
+     * If the criteria object filters on repo id, the subject needs to be able to 
+     * access that repo. If there is no filter on repos, the subject needs to have 
+     * MANAGE_REPOSITORIES permission.
      * 
      * @param subject
      * @param criteria
@@ -195,6 +194,22 @@ public interface ContentManagerRemote {
     @WebMethod
     PageList<Package> findPackagesByCriteria(
         @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "criteria") PackageCriteria criteria);
+    
+    /**
+     * Akin to {@link #findPackagesByCriteria(Subject, PackageCriteria)} but also
+     * determines the latest version of the returned packages.
+     * <p>
+     * The provided criteria has to be limited to a specific repo using {@link PackageCriteria#addFilterRepoId(Integer)}.
+     * 
+     * @param subject
+     * @param criteria
+     * @return
+     * @throws IllegalArgumentException if the criteria doesn't define a repo filter
+     */
+    @WebMethod    
+    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(
+        @WebParam(name = "subject") Subject subject, 
         @WebParam(name = "criteria") PackageCriteria criteria);
     
     /**

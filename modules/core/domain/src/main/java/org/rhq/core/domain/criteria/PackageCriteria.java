@@ -77,6 +77,10 @@ public class PackageCriteria extends Criteria {
         this.filterRepoId = repoId;
     }
     
+    public Integer getFilterRepoId() {
+        return filterRepoId;
+    }
+    
     public void fetchVersions(boolean fetchVersions) {
         this.fetchVersions = fetchVersions;
     }
@@ -84,9 +88,5 @@ public class PackageCriteria extends Criteria {
     public void addSortName(PageOrdering sort) {
         addSortField("name");
         this.sortName = sort;
-    }
-    
-    public boolean isInventoryManagerRequired() {
-        return fetchVersions;
     }
 }

@@ -77,6 +77,7 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -149,6 +150,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
+    
+    @EJB
+    private RepoManagerLocal repoManager;
+    
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
@@ -1517,9 +1522,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
         
-        if (criteria.isInventoryManagerRequired() && !authorizationManager.isInventoryManager(subject)) {
-            throw new PermissionException("Subject [" + subject.getName() 
-                + "] is required to have InventoryManager permission for requested query criteria.");
+        if (criteria.getFilterRepoId() != null) {
+            if (!authorizationManager.canViewRepo(subject, criteria.getFilterRepoId())) {
+                throw new PermissionException("Subject [" + subject.getName() + "] cannot view the repo with id " + criteria.getFilterRepoId());
+            }
+        } else if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            throw new PermissionException("Only repository managers can search for packages across all repos.");
         }
         
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -1527,6 +1535,24 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         CriteriaQueryRunner<Package> runner = new CriteriaQueryRunner<Package>(criteria, generator, entityManager);
         
         return runner.execute();
+    }
+    
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject, PackageCriteria criteria) {
+        if (criteria.getFilterRepoId() == null) {
+            throw new IllegalArgumentException("The criteria query has to have a filter for a specific repo.");
+        }
+        
+        criteria.fetchVersions(true);        
+        PageList<Package> packages = findPackagesByCriteria(subject, criteria);
+        
+        PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(packages.getTotalSize(), packages.getPageControl());
+                
+        for(Package p : packages) {
+            PackageVersion latest = repoManager.getLatestPackageVersion(subject, p.getId(), criteria.getFilterRepoId());
+            ret.add(new PackageAndLatestVersionComposite(p, latest));
+        }
+        
+        return ret;
     }
     
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {

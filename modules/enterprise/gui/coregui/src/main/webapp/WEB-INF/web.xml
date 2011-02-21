@@ -41,6 +41,10 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementChartsGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl</servlet-class>
     </servlet>
@@ -173,6 +177,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementDataGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementChartsGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>

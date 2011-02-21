@@ -37,6 +37,7 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
@@ -56,6 +57,29 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 public interface ContentManagerLocal {
 
     // Use case logic  --------------------------------------------
+
+    /**
+     * This is currently ignored as the file size is computed
+     * upon persist.
+     */
+    public static final String UPLOAD_FILE_SIZE = "fileSize";
+    
+    public static final String UPLOAD_FILE_INSTALL_DATE = "fileInstallDate";
+    
+    /**
+     * This doesn't seem to serve any purpose.
+     */
+    public static final String UPLOAD_OWNER = "owner";
+    
+    public static final String UPLOAD_FILE_NAME = "fileName";
+    
+    public static final String UPLOAD_MD5 = "md5";
+    
+    /**
+     * This is currently ignored as the SHA is computed upon
+     * persist.
+     */
+    public static final String UPLOAD_SHA256 = "sha256";
 
     /**
      * Deploys a package on the specified resource. Each installed package entry should be populated with the <code>
@@ -314,6 +338,7 @@ public interface ContentManagerLocal {
      */
     PackageType getResourceCreationPackageType(int resourceTypeId);
 
+   
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

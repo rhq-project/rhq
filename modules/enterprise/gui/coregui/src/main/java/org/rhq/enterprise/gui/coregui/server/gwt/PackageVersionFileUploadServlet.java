@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * 
  * @author Jay Shaughnessy
  * @author John Mazzitelli
+ * @author Lukas Krejci
  */
 public class PackageVersionFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
@@ -74,15 +76,24 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             
             InputStream fileStream = new FileInputStream(file);
 
-            PackageVersion packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
-                architectureId, fileStream);
+            //use getUploadedPackageVersion instead of createPackageVersion here
+            //because createPackageVersion successfully returns an already existing
+            //package version with the provided "location". This is not what we want
+            //here since we want to make sure that the uploaded file actually gets
+            //persisted.
+            Map<String, String> metaData = new HashMap<String, String>();
+            metaData.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, Long.toString(file.lastModified()));
+            metaData.put(ContentManagerLocal.UPLOAD_FILE_NAME, files.keySet().iterator().next());
+            PackageVersion packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId,
+                version, architectureId, fileStream, metaData, null);
             
             if (repoId != null) {
+                //XXX create a new SLSB method that would combine this and the above call in one transaction?
                 RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
                 repoManager.addPackageVersionsToRepo(subject, repoId, new int[] { packageVersion.getId() });
             }
             
-            successMsg = "success [" + packageVersion.getId() + "]";
+            successMsg = "success [packageVersionId=" + packageVersion.getId() + ",packageId=" + packageVersion.getGeneralPackage().getId() + "]";
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload file", e); // clients will look for this string!
             return;

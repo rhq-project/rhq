@@ -122,15 +122,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      */
     private static final int REQUEST_TIMEOUT = 1000 * 60 * 60;
 
-    public static final String UPLOAD_FILE_SIZE = "fileSize";
-    public static final String UPLOAD_FILE_INSTALL_DATE = "fileInstallDate";
-    public static final String UPLOAD_OWNER = "owner";
-    public static final String UPLOAD_FILE_NAME = "fileName";
-    public static final String UPLOAD_MD5 = "md5";
-    public static final String UPLOAD_SHA256 = "sha256";
-
-    // Attributes  --------------------------------------------
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -1271,7 +1262,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
-        entityManager.persist(newPackageVersion);
+        
+        newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         Map<String, String> contentDetails = new HashMap<String, String>();
         PackageBits bits = loadPackageBits(packageBitStream, newPackageVersion.getId(), packageName, version, null,
@@ -1280,8 +1272,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion.setPackageBits(bits);
         newPackageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         newPackageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
-        newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
-
+        
         existingPackage.addVersion(newPackageVersion);
 
         return newPackageVersion;
@@ -1643,18 +1634,20 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         //get the data
-        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null, null);
+        Map<String, String> contentDetails = new HashMap<String, String>();
+        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null, contentDetails);
 
         packageVersion.setPackageBits(bits);
 
+        packageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
+        packageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
+        
         //populate extra details, persist
         if (packageUploadDetails != null) {
             packageVersion.setFileCreatedDate(Long.valueOf(packageUploadDetails
-                .get(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE)));
-            packageVersion.setFileName(packageUploadDetails.get(ContentManagerBean.UPLOAD_FILE_NAME));
-            packageVersion.setFileSize(Long.valueOf(packageUploadDetails.get(ContentManagerBean.UPLOAD_FILE_SIZE)));
-            packageVersion.setMD5(packageUploadDetails.get(ContentManagerBean.UPLOAD_MD5));
-            packageVersion.setSHA256(packageUploadDetails.get(ContentManagerBean.UPLOAD_SHA256));
+                .get(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE)));
+            packageVersion.setFileName(packageUploadDetails.get(ContentManagerLocal.UPLOAD_FILE_NAME));
+            packageVersion.setMD5(packageUploadDetails.get(ContentManagerLocal.UPLOAD_MD5));
         }
 
         entityManager.merge(packageVersion);

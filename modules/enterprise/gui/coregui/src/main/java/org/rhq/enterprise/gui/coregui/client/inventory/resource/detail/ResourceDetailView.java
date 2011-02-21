@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
@@ -308,8 +309,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
 
         // visible = same test as above
-        canvas = (visible) ? new FullHTMLPane(this.monitorTables.extendLocatorId("View"),
-            "/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()) : null;
+        canvas = (visible) ? new MeasurementTableView(this.monitorTables.extendLocatorId("View"), resource.getId())
+            : null;
         updateSubTab(this.monitoringTab, this.monitorTables, canvas, visible, true);
 
         visible = hasMetricsOfType(this.resourceComposite, DataType.TRAIT);

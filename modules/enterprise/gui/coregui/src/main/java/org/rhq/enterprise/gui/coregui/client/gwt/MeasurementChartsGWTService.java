@@ -18,23 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 @RemoteServiceRelativePath("MeasurementChartsGWTService")
 public interface MeasurementChartsGWTService extends RemoteService {
 
-    List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
         throws RuntimeException;
 
-    List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, String viewName)
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, String viewName)
         throws RuntimeException;
 
-    List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId, String viewName)
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, String viewName)
         throws RuntimeException;
 }

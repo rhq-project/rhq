@@ -20,13 +20,11 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementChartsGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl implements MeasurementChartsGWTService {
@@ -37,7 +35,8 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
 
     @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, String viewName) {
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, String viewName)
+        throws RuntimeException {
         try {
             if (viewName == null) {
                 viewName = DEFAULT_VIEW_NAME;
@@ -51,7 +50,8 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     }
 
     @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName) {
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
+        throws RuntimeException {
         try {
             if (viewName == null) {
                 viewName = DEFAULT_VIEW_NAME;
@@ -65,8 +65,8 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     }
 
     @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
-        String viewName) throws MeasurementException {
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, String viewName)
+        throws RuntimeException {
         try {
             if (viewName == null) {
                 viewName = DEFAULT_VIEW_NAME;

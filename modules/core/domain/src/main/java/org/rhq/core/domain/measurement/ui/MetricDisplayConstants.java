@@ -21,50 +21,50 @@ package org.rhq.core.domain.measurement.ui;
 /**
  * TODO we should convert this to an enum
  */
-public class MetricDisplayConstants {
+public interface MetricDisplayConstants {
     /**
      * the peak value per interval of the set of metrics of this type measured in the timeframe under question. The peak
      * is the highest of the high values.
      */
-    public static final String MAX_KEY = "max";
+    String MAX_KEY = "max";
 
     /**
      * the low value of the set of metrics of this type per interval measured in the timeframe under question. The low
      * value is the lowest of the low values.
      */
-    public static final String MIN_KEY = "min";
+    String MIN_KEY = "min";
 
     /**
      * the average value per interval of the set of metrics of this type measured in the timeframe under question. The
      * average is the average of all the values.
      */
-    public static final String AVERAGE_KEY = "average";
+    String AVERAGE_KEY = "average";
 
     /**
      * the last value per interval of the set of metrics of this type measured in the timeframe under question
      */
-    public static final String LAST_KEY = "last";
+    String LAST_KEY = "last";
 
     /**
      * the user defined main baseline to compare against for this metric
      */
-    public static final String BASELINE_KEY = "baseline";
+    String BASELINE_KEY = "baseline";
 
     /**
      * the user defined high range of values to compare against for this metric
      */
-    public static final String HIGH_RANGE_KEY = "high";
+    String HIGH_RANGE_KEY = "high";
 
     /**
      * the user defined low range of values to compare against for this metric
      */
-    public static final String LOW_RANGE_KEY = "low";
+    String LOW_RANGE_KEY = "low";
 
     /**
      * a summary value for groups
      */
-    public static final String SUMMARY_KEY = "summary";
+    String SUMMARY_KEY = "summary";
 
-    public static final String[] attrKey = { MAX_KEY, MIN_KEY, AVERAGE_KEY, LAST_KEY, BASELINE_KEY, HIGH_RANGE_KEY,
-        LOW_RANGE_KEY, SUMMARY_KEY };
+    String[] attrKey = { MAX_KEY, MIN_KEY, AVERAGE_KEY, LAST_KEY, BASELINE_KEY, HIGH_RANGE_KEY, LOW_RANGE_KEY,
+        SUMMARY_KEY };
 }

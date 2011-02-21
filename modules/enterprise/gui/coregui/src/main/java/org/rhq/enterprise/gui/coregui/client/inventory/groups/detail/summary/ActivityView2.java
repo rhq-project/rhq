@@ -180,9 +180,9 @@ public class ActivityView2 extends AbstractActivityView {
 
                             StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
                                 .getOriginal().getStatus()), report.getOriginal().getStatus().getDisplayName());
-                            LinkItem link = newLinkItem(report.getOriginal().getOperationDefinition().getName() + ": ",
-                                ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/"
-                                    + report.getOriginal().getId());
+                            LinkItem link = newLinkItem(report.getOriginal().getOperationDefinition().getDisplayName()
+                                + ": ", ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/"
+                                + report.getOriginal().getId());
                             StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
                                 .getStartedTime()));
                             row.setItems(iconItem, link, time);

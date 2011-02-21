@@ -29,6 +29,8 @@ import java.util.Map;
  * the monitoring UI.
  */
 public abstract class BaseMetricDisplay extends MeasurementSummary implements java.io.Serializable, Comparable {
+    private static final long serialVersionUID = 1L;
+
     private Long beginTimeFrame;
 
     private Long endTimeFrame;

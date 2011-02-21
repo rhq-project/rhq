@@ -619,7 +619,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
         }    
         
-        alertNotificationManager.finalizeNotifications(subject, alertDefinition.getAlertNotifications());        
+        if (!alertNotificationManager.finalizeNotifications(subject, alertDefinition.getAlertNotifications())) {
+            throw new InvalidAlertDefinitionException("Some of the notifications failed to validate.");
+        }
     }
 
     private void notifyAlertConditionCacheManager(Subject subject, String methodName, AlertDefinition alertDefinition,

@@ -322,7 +322,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
                 hasErrors(validation.getExtraParameters());
         }   
         
-        return hasErrors;
+        return !hasErrors;
     }
     
     public int cleanseAlertNotificationBySubject(int subjectId) {

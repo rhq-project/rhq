@@ -32,8 +32,10 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
@@ -73,8 +75,9 @@ public class ActivityView2 extends AbstractActivityView {
         getRecentEventUpdates();
         if ((groupComposite != null)
             && (groupComposite.getResourceGroup().getGroupCategory().equals(GroupCategory.COMPATIBLE))) {//CompatibleGroup
+            //TODO: spinder need to drive these calls off off facet availability
             getRecentOperations();
-            //        getRecentConfigurationUpdates();
+            getRecentConfigurationUpdates();
             //        getRecentOobs();
             //        getRecentPkgHistory();
             //        getRecentMetrics();
@@ -203,67 +206,73 @@ public class ActivityView2 extends AbstractActivityView {
             });
     }
 
-    //    /** Fetches configuration updates and updates the DynamicForm instance with the latest
-    //     *  config change information.
-    //     */
-    //    private void getRecentConfigurationUpdates() {
-    //        final int resourceId = this.resourceComposite.getResource().getId();
-    //
-    //        PageControl lastFive = new PageControl(0, 5);
-    //        lastFive.initDefaultOrderingField("cu.createdTime", PageOrdering.DESC);
-    //
-    //        GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdates(resourceId, null, null, true,
-    //            lastFive, new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
-    //
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving recent configuration updates for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //                    if (!result.isEmpty()) {
-    //                        int rowNum = 0;
-    //                        for (ResourceConfigurationUpdate update : result) {
-    //                            // config update history records do not have a usable locatorId, we'll use rownum, which is unique and
-    //                            // may be repeatable.
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
-    //                                .extendLocatorId(String.valueOf(rowNum)));
-    //                            row.setNumCols(3);
-    //
-    //                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getResourceConfigurationIcon(update
-    //                                .getStatus()), null);
-    //                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
-    //                                + update.getSubjectName() + ":";
-    //                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
-    //                                linkTitle = MSG.common_msg_changeAutoDetected();
-    //                            }
-    //                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_RESOURCE_URL + resourceId
-    //                                + "/Configuration/History/" + update.getId());
-    //                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
-    //                                .getCreatedTime()));
-    //
-    //                            row.setItems(iconItem, link, time);
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
-    //                            .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    //cleanup
-    //                    for (Canvas child : recentConfigurationContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentConfigurationContent.addChild(column);
-    //                    recentConfigurationContent.markForRedraw();
-    //                }
-    //            });
-    //    }
-    //
+    /** Fetches configuration updates and updates the DynamicForm instance with the latest
+     *  config change information.
+     */
+    private void getRecentConfigurationUpdates() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        PageControl lastFive = new PageControl(0, 5);
+        GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
+        criteria.setPageControl(lastFive);
+        criteria.addSortStatus(PageOrdering.DESC);
+        List<Integer> filterResourceGroupIds = new ArrayList<Integer>();
+        filterResourceGroupIds.add(groupId);
+        criteria.addFilterResourceGroupIds(filterResourceGroupIds);
+
+        GWTServiceLookup.getConfigurationService().findGroupResourceConfigurationUpdatesByCriteria(criteria,
+            new AsyncCallback<PageList<GroupResourceConfigurationUpdate>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent configuration updates for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<GroupResourceConfigurationUpdate> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        int rowNum = 0;
+                        for (GroupResourceConfigurationUpdate update : result) {
+                            // config update history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getResourceConfigurationIcon(update
+                                .getStatus()), null);
+                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
+                                + update.getSubjectName() + ":";
+                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
+                                linkTitle = MSG.common_msg_changeAutoDetected();
+                            }
+                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_GROUP_URL + groupId
+                                + "/Configuration/History/" + update.getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
+                                .getCreatedTime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
+                            .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentConfigurationContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentConfigurationContent.addChild(column);
+                    recentConfigurationContent.markForRedraw();
+
+                }
+            });
+    }
+
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */

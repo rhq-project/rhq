@@ -1220,6 +1220,9 @@
             <name>Greg Hinkle</name>
             <timezone>-5</timezone>
             <url>http://www.jroller.com/ghinkle/</url>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Lukas Krejci</name>
@@ -1229,6 +1232,9 @@
             <name>Joseph Marques</name>
             <url>http://josephmarques.wordpress.com</url>
             <timezone>-5</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Fady Matar</name>
@@ -1275,6 +1281,10 @@
     </developers>
 
     <contributors>
+        <contributor>
+            <name>Steve Millidge</name>
+            <timezone>0</timezone>
+        </contributor>
         <contributor>
             <name>Alex Kiefer</name>
             <timezone>+1</timezone>

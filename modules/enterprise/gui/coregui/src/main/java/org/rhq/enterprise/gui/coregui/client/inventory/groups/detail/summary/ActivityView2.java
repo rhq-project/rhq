@@ -33,7 +33,11 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -42,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -66,11 +71,14 @@ public class ActivityView2 extends AbstractActivityView {
     protected void loadData() {
         getRecentAlerts();
         getRecentEventUpdates();
-        //        getRecentOperations();
-        //        getRecentConfigurationUpdates();
-        //        getRecentOobs();
-        //        getRecentPkgHistory();
-        //        getRecentMetrics();
+        if ((groupComposite != null)
+            && (groupComposite.getResourceGroup().getGroupCategory().equals(GroupCategory.COMPATIBLE))) {//CompatibleGroup
+            getRecentOperations();
+            //        getRecentConfigurationUpdates();
+            //        getRecentOobs();
+            //        getRecentPkgHistory();
+            //        getRecentMetrics();
+        }
     }
 
     /** Fetches alerts and updates the DynamicForm instance with the latest
@@ -134,62 +142,66 @@ public class ActivityView2 extends AbstractActivityView {
         });
     }
 
-    //    /** Fetches operations and updates the DynamicForm instance with the latest
-    //     *  operation information.
-    //     */
-    //    private void getRecentOperations() {
-    ////        final int resourceId = this.resourceComposite.getResource().getId();
-    //        final int groupId = this.groupComposite.getResourceGroup().getId();
-    //        //fetches five most recent operations.
-    //        PageControl pageControl = new PageControl(0, 5);
-    //        pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-    //        GWTServiceLookup.getOperationService().findRecentCompletedOperations(resourceId, pageControl,
-    //            new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
-    //
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving recent operations for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(List<DisambiguationReport<ResourceOperationLastCompletedComposite>> result) {
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //                    if (!result.isEmpty()) {
-    //                        int rowNum = 0;
-    //                        for (DisambiguationReport<ResourceOperationLastCompletedComposite> report : result) {
-    //                            // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
-    //                            // may be repeatable.
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
-    //                                .extendLocatorId(String.valueOf(rowNum)));
-    //                            row.setNumCols(3);
-    //
-    //                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
-    //                                .getOriginal().getOperationStatus()), report.getOriginal().getOperationStatus()
-    //                                .getDisplayName());
-    //                            LinkItem link = newLinkItem(report.getOriginal().getOperationName() + ": ",
-    //                                ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Operations/History/"
-    //                                    + report.getOriginal().getOperationHistoryId());
-    //                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
-    //                                .getOperationStartTime()));
-    //                            row.setItems(iconItem, link, time);
-    //
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
-    //                            .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    for (Canvas child : recentOperationsContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentOperationsContent.addChild(column);
-    //                    recentOperationsContent.markForRedraw();
-    //                }
-    //            });
-    //    }
+    /** Fetches operations and updates the DynamicForm instance with the latest
+     *  operation information.
+     */
+    private void getRecentOperations() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        //fetches five most recent operations.
+        PageControl pageControl = new PageControl(0, 5);
+
+        GroupOperationHistoryCriteria criteria = new GroupOperationHistoryCriteria();
+        List<Integer> filterResourceGroupIds = new ArrayList<Integer>();
+        filterResourceGroupIds.add(groupId);
+        criteria.addFilterResourceGroupIds(filterResourceGroupIds);
+        criteria.setPageControl(pageControl);
+        criteria.addSortStatus(PageOrdering.DESC);
+
+        GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteriaDisambiguated(criteria,
+            new AsyncCallback<List<DisambiguationReport<GroupOperationHistory>>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent operations for group [" + groupId + "]:" + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(List<DisambiguationReport<GroupOperationHistory>> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        int rowNum = 0;
+                        for (DisambiguationReport<GroupOperationHistory> report : result) {
+                            // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
+                                .getOriginal().getStatus()), report.getOriginal().getStatus().getDisplayName());
+                            LinkItem link = newLinkItem(report.getOriginal().getOperationDefinition().getName() + ": ",
+                                ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/"
+                                    + report.getOriginal().getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
+                                .getStartedTime()));
+                            row.setItems(iconItem, link, time);
+
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
+                            .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
+                        column.addMember(row);
+                    }
+                    for (Canvas child : recentOperationsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentOperationsContent.addChild(column);
+                    recentOperationsContent.markForRedraw();
+                }
+            });
+    }
 
     //    /** Fetches configuration updates and updates the DynamicForm instance with the latest
     //     *  config change information.

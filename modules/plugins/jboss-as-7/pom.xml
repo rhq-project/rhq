@@ -21,7 +21,7 @@
 
     <properties>
         <scm.module.path>TODO</scm.module.path>
-        <json.version>20080701</json.version>
+        <json.version>${project.json.version}</json.version>
     </properties>
 
     <build>

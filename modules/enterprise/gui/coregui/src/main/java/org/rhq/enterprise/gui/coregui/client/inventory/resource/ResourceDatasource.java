@@ -184,14 +184,21 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     @Override
     public Resource copyValues(Record from) {
-        return new Resource(from.getAttributeAsInt("id"));
+        Resource resource = new Resource();
+
+        resource.setId(from.getAttributeAsInt("id"));
+        resource.setUuid(from.getAttributeAsString("uuid"));
+
+        return resource;
     }
 
     @Override
     public ListGridRecord copyValues(Resource from) {
         ListGridRecord record = new ListGridRecord();
+
         record.setAttribute("resource", from);
         record.setAttribute("id", from.getId());
+        record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());

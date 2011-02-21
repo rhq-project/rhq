@@ -47,10 +47,20 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException {
+        try {
+            ResourceConfigurationUpdate update = configurationManager.getLatestResourceConfigurationUpdate(
+                getSessionSubject(), resourceId);
+            return SerialUtility.prepare(update, "ConfigurationService.getLatestResourceConfigurationUpdate");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
     public Configuration getPluginConfiguration(int resourceId) throws RuntimeException {
         try {
             Configuration configuration = configurationManager.getPluginConfiguration(getSessionSubject(), resourceId);
-            return SerialUtility.prepare(configuration, "PluginConfiguration");
+            return SerialUtility.prepare(configuration, "ConfigurationService.getPluginConfiguration");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -60,7 +70,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             ConfigurationDefinition definition = configurationManager.getPluginConfigurationDefinitionForResourceType(
                 getSessionSubject(), resourceTypeId);
-            return SerialUtility.prepare(definition, "PluginDefinition");
+            return SerialUtility.prepare(definition, "ConfigurationService.getPluginConfigDefinition");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

@@ -65,6 +65,7 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         // add two more columns
         ListGridField parentIdField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
         parentIdField.setType(ListGridFieldType.LINK);
+        parentIdField.setTarget("_self");
         parentIdField.setWidth(100);
         fields.add(parentIdField);
 

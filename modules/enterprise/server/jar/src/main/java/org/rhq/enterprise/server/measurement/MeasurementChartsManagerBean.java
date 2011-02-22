@@ -333,6 +333,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
         MeasurementDefinition definition = schedule.getDefinition();
         summary.setDefinitionId(definition.getId());
+        summary.setMetricName(definition.getName());
         summary.setLabel(definition.getDisplayName());
         summary.setDescription(definition.getDescription());
         summary.setMetricSource(schedule.getResource().getName());
@@ -496,6 +497,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             summary.setDefinitionId(definition.getId());
             summary.setUnits(definition.getUnits().getName());
             summary.setDescription(definition.getDescription());
+            summary.setMetricName(definition.getName());
             summary.setLabel(definition.getDisplayName());
             summary.setDescription(definition.getDescription());
             summary.setMetricSource(definition.getResourceType().getName());
@@ -593,6 +595,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 summary.setParent(resource.getParentResource());
                 summary.setUnits(definition.getUnits().getName());
                 summary.setDescription(definition.getDescription());
+                summary.setMetricName(definition.getName());
                 summary.setLabel(definition.getDisplayName());
                 summary.setMetricSource(definition.getResourceType().getName());
 

@@ -31,12 +31,16 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  */
 public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySummary> {
 
-    public static final String FIELD_NAME = "name";
+    public static final String FIELD_METRIC_LABEL = "label";
     public static final String FIELD_ALERT_COUNT = "alertCount";
     public static final String FIELD_MIN_VALUE = "min";
     public static final String FIELD_MAX_VALUE = "max";
     public static final String FIELD_AVG_VALUE = "avg";
     public static final String FIELD_LAST_VALUE = "last";
+    public static final String FIELD_METRIC_DEF_ID = "defId";
+    public static final String FIELD_METRIC_SCHED_ID = "schedId";
+    public static final String FIELD_METRIC_UNITS = "units";
+    public static final String FIELD_METRIC_NAME = "name";
 
     private int resourceId;
 
@@ -53,7 +57,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField nameField = new ListGridField(FIELD_NAME, MSG.common_title_name());
+        ListGridField nameField = new ListGridField(FIELD_METRIC_LABEL, MSG.common_title_name());
         nameField.setWidth("30%");
         fields.add(nameField);
 
@@ -94,12 +98,16 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         MeasurementUtility.formatSimpleMetrics(from);
 
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_NAME, from.getLabel());
+        record.setAttribute(FIELD_METRIC_LABEL, from.getLabel());
         record.setAttribute(FIELD_ALERT_COUNT, String.valueOf(from.getAlertCount()));
         record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
         record.setAttribute(FIELD_MAX_VALUE, getMetricStringValue(from.getMaxMetric()));
         record.setAttribute(FIELD_AVG_VALUE, getMetricStringValue(from.getAvgMetric()));
         record.setAttribute(FIELD_LAST_VALUE, getMetricStringValue(from.getLastMetric()));
+        record.setAttribute(FIELD_METRIC_DEF_ID, from.getDefinitionId());
+        record.setAttribute(FIELD_METRIC_SCHED_ID, from.getScheduleId());
+        record.setAttribute(FIELD_METRIC_UNITS, from.getUnits());
+        record.setAttribute(FIELD_METRIC_NAME, from.getMetricName());
         return record;
     }
 
@@ -113,7 +121,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         // see MetricsTableUIBean for the old JSF class to see where this came from
 
         GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resourceId,
-            DataType.MEASUREMENT, null, false, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
+            DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
                 @Override
                 public void onSuccess(ArrayList<MeasurementSchedule> result) {
                     int[] schedIds = new int[result.size()];

@@ -409,6 +409,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                     mds.setBeginTimeFrame(begin);
                     mds.setEndTimeFrame(end);
                     mds.setDefinitionId(defId);
+                    mds.setMetricName(defMap.get(defId).getName());
                     mds.setLabel(defMap.get(defId).getDisplayName());
                     mds.setParentId(parentId);
                     mds.setChildTypeId(resourceTypeId);
@@ -539,6 +540,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             for (MeasurementDefinition def : defs) {
                 MetricDisplaySummary sum = new MetricDisplaySummary();
                 sum.setDefinitionId(def.getId());
+                sum.setMetricName(def.getName());
                 sum.setLabel(def.getDisplayName());
                 sum.setBeginTimeFrame(beginTime);
                 sum.setEndTimeFrame(endTime);
@@ -786,7 +788,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         AgentClient ac = agentClientManager.getAgentClient(agent);
         Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
-            createRequests(definitions));    
+            createRequests(definitions));
 
         return values;
     }

@@ -23,6 +23,7 @@ public class ReportDecorator {
 
     //TODO: pull value from more bookmarking/history definition 
     public final static String GWT_RESOURCE_URL = "#Resource/";
+    public final static String GWT_GROUP_URL = "#ResourceGroup/";
     public static final String DEFAULT_SEPARATOR = " > ";
 
     /**
@@ -35,7 +36,7 @@ public class ReportDecorator {
      * @return the HTML label
      */
     public static String decorateDisambiguationReport(DisambiguationReport disambiguationReport, int resourceId,
-                                                      boolean makeLink) {
+        boolean makeLink) {
         String parentsHtml = decorateResourceLineage(disambiguationReport.getParents(), true);
         String resourceHtml = ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
             disambiguationReport.getResourceType(), disambiguationReport.getName(), resourceId, makeLink);
@@ -59,7 +60,7 @@ public class ReportDecorator {
      * @return String of generated html for a ResourceName.
      */
     public static String decorateResourceName(String specificUrl, ResourceType type, String resourceName,
-                                              int resourceId, boolean makeLink) {
+        int resourceId, boolean makeLink) {
         String decorated = "";
         if (type != null) {
             decorated += type.getName();
@@ -117,8 +118,7 @@ public class ReportDecorator {
      * @param resourceType
      * @return
      */
-    private static StringBuilder writeResource(StringBuilder existing, String url,
-                                               ResourceType resourceType) {
+    private static StringBuilder writeResource(StringBuilder existing, String url, ResourceType resourceType) {
         if (!resourceType.isSingleton()) {
             existing.append(resourceType.getName()).append(" ");
 

@@ -89,6 +89,17 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    //    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int resourceId, int[] definitionIds,
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int resourceId,
+        int definitionId, long beginTime, long endTime, int numPoints) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(dataManager.findDataForCompatibleGroup(getSessionSubject(), resourceId,
+                definitionId, beginTime, endTime, numPoints), "MeasurementDataService.findDataForCompatibleGroup");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
         PageControl pageControl) throws RuntimeException {
         try {

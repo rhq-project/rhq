@@ -34,7 +34,6 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 
 /**
  * @author Greg Hinkle
@@ -46,6 +45,9 @@ public interface OperationGWTService extends RemoteService {
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
         throws RuntimeException;
+
+    List<DisambiguationReport<GroupOperationHistory>> findGroupOperationHistoriesByCriteriaDisambiguated(
+        GroupOperationHistoryCriteria criteria) throws RuntimeException;
 
     void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException;
 

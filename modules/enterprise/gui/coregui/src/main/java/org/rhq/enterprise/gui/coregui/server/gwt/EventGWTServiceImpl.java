@@ -87,6 +87,15 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
         }
     }
 
+    public Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(int groupId, long startDate, long endDate) {
+        try {
+            return SerialUtility.prepare(eventManager.getEventCountsBySeverityForGroup(getSessionSubject(), groupId,
+                startDate, endDate), "EventService.getEventCountsBySeverityForGroup");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public PageList<Event> findEventsByCriteria(EventCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.findEventsByCriteria(getSessionSubject(), criteria),

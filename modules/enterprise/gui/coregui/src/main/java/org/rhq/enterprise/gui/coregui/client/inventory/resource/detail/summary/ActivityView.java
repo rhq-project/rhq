@@ -30,12 +30,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
@@ -54,139 +51,33 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The content pane of the Resource Summary>Activity tab.
  *
  * @author Simeon Pinder
  */
-public class ActivityView extends LocatableHLayout implements RefreshableView {
-
-    //Locatable ui references
-    private VLayout leftPane = new VLayout();
-    private VLayout rightPane = new VLayout();
-    private LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
-    private LocatableCanvas recentAlertsContent = new LocatableCanvas(extendLocatorId("RecentAlerts"));
-    private LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
-    private LocatableCanvas recentConfigurationContent = new LocatableCanvas(extendLocatorId("RecentConfig"));
-    private LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
-    private LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
-    private LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
-
-    //retrieve localized text
-    private String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
-    private String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
-    private String RECENT_ALERTS = MSG.common_title_recent_alerts();
-    private String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
-    private String RECENT_OOB = MSG.common_title_recent_oob_metrics();
-    private String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
-    private String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
-    private String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
-    private String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    private String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
-    private String RECENT_EVENTS = MSG.common_title_recent_event_counts();
-    private String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
-    private String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
-    private String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
+public class ActivityView extends AbstractActivityView {
 
     private ResourceComposite resourceComposite;
 
     public ActivityView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+        super(locatorId, null);
         this.resourceComposite = resourceComposite;
-        initializeUi();
-    }
-
-    /**Defines layout for the Activity page.
-     */
-    private void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        //dividers definition
-        HTMLFlow divider1 = new HTMLFlow("<hr/>");
-        HTMLFlow divider2 = new HTMLFlow("<hr/>");
-        HTMLFlow divider3 = new HTMLFlow("<hr/>");
-        HTMLFlow divider4 = new HTMLFlow("<hr/>");
-        HTMLFlow divider5 = new HTMLFlow("<hr/>");
-        divider1.setWidth("50%");
-        divider2.setWidth("50%");
-        divider3.setWidth("50%");
-        divider4.setWidth("50%");
-        divider5.setWidth("50%");
-
-        //leftPane
-        leftPane.setWidth("50%");
-        leftPane.setPadding(5);
-        leftPane.setMembersMargin(5);
-        leftPane.setAutoHeight();
-
-        //recentMetrics.xhtml
-        HLayout recentMetricsTitle = new TitleWithIcon("subsystems/monitor/Monitor_24.png", RECENT_MEASUREMENTS);
-        leftPane.addMember(recentMetricsTitle);
-        leftPane.addMember(recentMeasurementsContent);
-        recentMeasurementsContent.setHeight(20);
-        leftPane.addMember(divider1);
-        //recentAlerts.xhtml
-        HLayout recentAlertsTitle = new TitleWithIcon("subsystems/alert/Flag_blue_24.png", RECENT_ALERTS);
-        leftPane.addMember(recentAlertsTitle);
-        leftPane.addMember(recentAlertsContent);
-        recentAlertsContent.setHeight(20);
-        leftPane.addMember(divider2);
-        //recentOOBs.xhtml
-        HLayout recentOobsTitle = new TitleWithIcon("subsystems/monitor/Monitor_failed_24.png", RECENT_OOB);
-        leftPane.addMember(recentOobsTitle);
-        leftPane.addMember(recentOobContent);
-        recentOobContent.setHeight(20);
-
-        //rightPane
-        rightPane.setWidth("50%");
-        rightPane.setPadding(5);
-        rightPane.setMembersMargin(5);
-        rightPane.setAutoHeight();
-        //recentConfigUpdates.xhtml
-        HLayout recentConfigUpdatesTitle = new TitleWithIcon("subsystems/configure/Configure_24.png",
-            RECENT_CONFIGURATIONS);
-        rightPane.addMember(recentConfigUpdatesTitle);
-        rightPane.addMember(recentConfigurationContent);
-        recentConfigurationContent.setHeight(20);
-        rightPane.addMember(divider3);
-        //recentOperations.xhtml
-        HLayout recentOperationsTitle = new TitleWithIcon("subsystems/control/Operation_24.png", RECENT_OPERATIONS);
-        rightPane.addMember(recentOperationsTitle);
-        rightPane.addMember(recentOperationsContent);
-        recentOperationsContent.setHeight(20);
-        rightPane.addMember(divider4);
-        //recentEventCounts.xhtml
-        HLayout recentEventsTitle = new TitleWithIcon("subsystems/event/Events_24.png", RECENT_EVENTS);
-        rightPane.addMember(recentEventsTitle);
-        rightPane.addMember(recentEventsContent);
-        recentEventsContent.setHeight(20);
-        rightPane.addMember(divider5);
-        //recentPackageHistory.xhtml
-        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_PKG_HISTORY);
-        rightPane.addMember(recentPkgHistoryTitle);
-        rightPane.addMember(recentPkgHistoryContent);
-        recentPkgHistoryContent.setHeight(20);
-
-        addMember(leftPane);
-        addMember(rightPane);
-
         loadData();
     }
 
     /**Initiates data request.
      */
-    private void loadData() {
+    protected void loadData() {
         getRecentAlerts();
         getRecentOperations();
         getRecentConfigurationUpdates();
@@ -194,51 +85,6 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
         getRecentOobs();
         getRecentPkgHistory();
         getRecentMetrics();
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-        refresh();
-    }
-
-    @Override
-    public void destroy() {
-        // destroy members of non-locatable layouts
-        SeleniumUtility.destroyMembers(leftPane);
-        SeleniumUtility.destroyMembers(rightPane);
-
-        super.destroy();
-    }
-
-    @Override
-    public void refresh() {
-        markForRedraw();
-        //call out to 3rd party javascript lib
-        graphSparkLines();
-    }
-
-    /**Creates the section top titles with icon for regions of Activity page.
-     */
-    class TitleWithIcon extends HLayout {
-
-        public TitleWithIcon(String imageUrl, String title) {
-            super();
-            Img titleImage = new Img(imageUrl, 24, 24);
-            HTMLFlow titleElement = new HTMLFlow();
-            titleElement.setWidth("*");
-            titleElement.setContents(title);
-            titleElement.setStyleName("HeaderLabel");
-            addMember(titleImage);
-            addMember(titleElement);
-            setMembersMargin(10);
-        }
-
-        @Override
-        public void destroy() {
-            SeleniumUtility.destroyMembers(this);
-            super.destroy();
-        }
     }
 
     /** Fetches alerts and updates the DynamicForm instance with the latest
@@ -699,7 +545,7 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
                             column.addMember(row);
                         }
                         //call out to 3rd party javascript lib
-                        graphSparkLines();
+                        BrowserUtility.graphSparkLines();
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
                             .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
@@ -732,63 +578,4 @@ public class ActivityView extends LocatableHLayout implements RefreshableView {
 
         return convertedValue;
     }
-
-    /** Create empty display row(LocatableDynamicForm) that is constently defined and displayed.
-     *
-     * @param column Locatable parent colum.
-     * @param emptyMessage Contents of the empty region
-     * @return
-     */
-    private LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
-        LocatableDynamicForm row = null;
-        row = new LocatableDynamicForm(locatorId);
-
-        row.setNumCols(3);
-        StaticTextItem none = new StaticTextItem();
-        none.setShowTitle(false);
-        none.setDefaultValue(emptyMessage);
-        none.setWrap(false);
-        row.setItems(none);
-        return row;
-    }
-
-    private StaticTextItem newTextItemIcon(String imageSrc, String mouseOver) {
-        StaticTextItem iconItem = new StaticTextItem();
-        FormItemIcon img = new FormItemIcon();
-        img.setSrc(imageSrc);
-        img.setWidth(16);
-        img.setHeight(16);
-        if (mouseOver != null) {
-            img.setPrompt(mouseOver);
-        }
-        iconItem.setIcons(img);
-        iconItem.setShowTitle(false);
-        return iconItem;
-    }
-
-    private LinkItem newLinkItem(String title, String destination) {
-        LinkItem link = new LinkItem();
-        link.setLinkTitle(title);
-        link.setTitle(title);
-        link.setValue(destination);
-        link.setTarget("_self");
-        link.setShowTitle(false);
-        return link;
-    }
-
-    private StaticTextItem newTextItem(String contents) {
-        StaticTextItem item = new StaticTextItem();
-        item.setDefaultValue(contents);
-        item.setShowTitle(false);
-        item.setShowPickerIcon(false);
-        item.setWrap(false);
-        return item;
-    }
-
-    //This is a JSNI call out to the third party javascript lib to execute on the data inserted into the DOM.
-    public static native void graphSparkLines()
-    /*-{
-     //find all elements where attribute class contains 'dynamicsparkline' and graph their contents
-     $wnd.jQuery('.dynamicsparkline').sparkline();
-    }-*/;
 }

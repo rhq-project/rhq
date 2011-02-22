@@ -565,7 +565,7 @@ public class ResourceClientProxy {
             } else {
 
                 try {
-                    Method localMethod = getClass().getDeclaredMethod(method.getName(), method
+                    Method localMethod = getClass().getMethod(method.getName(), method
                         .getParameterTypes());
                     return localMethod.invoke(this, args);
                 } catch (NoSuchMethodException nsme) {

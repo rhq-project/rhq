@@ -22,6 +22,9 @@ import java.util.ArrayList;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
+
 public class MeasurementUtility {
 
     private static final DateTimeFormat FORMATTER = DateTimeFormat.getFormat("MMM d, hh:mm a");
@@ -110,6 +113,26 @@ public class MeasurementUtility {
      */
     public static DateTimeFormat getDateTimeYearFormatter() {
         return FORMATTER_YEAR;
+    }
+
+    /**
+     * Formats the passed summary.
+     * 
+     * @param summary MetricDisplaySummary with some values
+     */
+    public static void formatSimpleMetrics(MetricDisplaySummary summary) {
+        // Don't try to format placeholder NaN values.
+        if (!Double.isNaN(summary.getAvgMetric().getValue())) {
+            if (summary.getUnits().length() < 1) {
+                summary.setUnits(MeasurementUnits.NONE.name());
+            }
+            String[] formattedValues = MeasurementConverterClient.formatToSignificantPrecision(summary
+                .getMetricValueDoubles(), MeasurementUnits.valueOf(summary.getUnits()), true);
+            String[] metricKeys = summary.getMetricKeys();
+            for (int i = 0; i < metricKeys.length; i++) {
+                summary.getMetric(metricKeys[i]).setValueFmt(formattedValues[i]);
+            }
+        }
     }
 
 }

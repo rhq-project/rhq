@@ -16,6 +16,7 @@ import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
@@ -53,11 +54,11 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
         ListGridField nameField = new ListGridField(FIELD_NAME, MSG.common_title_name());
-        nameField.setWidth("20%");
+        nameField.setWidth("30%");
         fields.add(nameField);
 
         ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.view_resource_monitor_table_alerts());
-        alertsField.setWidth("20%");
+        alertsField.setWidth("10%");
         fields.add(alertsField);
 
         ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.view_resource_monitor_table_min());
@@ -90,15 +91,15 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
 
     @Override
     public ListGridRecord copyValues(MetricDisplaySummary from) {
-        ListGridRecord record = new ListGridRecord();
+        MeasurementUtility.formatSimpleMetrics(from);
 
+        ListGridRecord record = new ListGridRecord();
         record.setAttribute(FIELD_NAME, from.getLabel());
         record.setAttribute(FIELD_ALERT_COUNT, String.valueOf(from.getAlertCount()));
         record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
         record.setAttribute(FIELD_MAX_VALUE, getMetricStringValue(from.getMaxMetric()));
         record.setAttribute(FIELD_AVG_VALUE, getMetricStringValue(from.getAvgMetric()));
         record.setAttribute(FIELD_LAST_VALUE, getMetricStringValue(from.getLastMetric()));
-
         return record;
     }
 

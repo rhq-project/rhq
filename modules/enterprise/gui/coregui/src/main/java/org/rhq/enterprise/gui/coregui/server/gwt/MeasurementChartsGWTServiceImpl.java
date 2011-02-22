@@ -43,7 +43,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, viewName));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForAutoGroup1");
+            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForAutoGroup1");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -56,7 +56,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, schedIds, begin, end,
                     enabledOnly));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForAutoGroup2");
+            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForAutoGroup2");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -71,7 +71,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, viewName));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForCompatibleGroup1");
+            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup1");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -84,7 +84,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, defIds, begin, end,
                     enabledOnly));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForCompatibleGroup2");
+            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup2");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -99,7 +99,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, viewName));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForResource1");
+            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource1");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -111,7 +111,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
         try {
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin, end));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForResource2");
+            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource2");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

@@ -77,7 +77,7 @@ public class MeasurementUserPreferences {
          * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
          * milliseconds since the epoch) of the time frame.
          **/
-        public List<Long> getBeginEndTimes() {
+        public ArrayList<Long> getBeginEndTimes() {
             if (explicitBeginEnd) {
                 ArrayList<Long> times = new ArrayList<Long>(2);
                 times.add(begin);

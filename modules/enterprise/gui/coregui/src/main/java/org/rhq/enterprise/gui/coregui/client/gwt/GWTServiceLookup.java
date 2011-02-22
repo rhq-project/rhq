@@ -102,6 +102,10 @@ public class GWTServiceLookup {
         return secure(MeasurementChartsGWTServiceAsync.Util.getInstance());
     }
 
+    public static MeasurementScheduleGWTServiceAsync getMeasurementScheduleService() {
+        return secure(MeasurementScheduleGWTServiceAsync.Util.getInstance());
+    }
+
     public static AlertGWTServiceAsync getAlertService() {
         return secure(AlertGWTServiceAsync.Util.getInstance());
     }

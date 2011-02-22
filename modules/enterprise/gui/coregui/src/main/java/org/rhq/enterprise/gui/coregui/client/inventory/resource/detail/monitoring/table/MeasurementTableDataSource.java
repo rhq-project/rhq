@@ -9,13 +9,16 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * A simple data source to read in metric data summaries for a resource.
@@ -108,22 +111,37 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
 
         // see MetricsTableUIBean for the old JSF class to see where this came from
 
-        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-        criteria.addFilterResourceId(this.resourceId);
-        criteria.setPageControl(PageControl.getUnlimitedInstance());
-
-        GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resourceId, null,
-            new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
-
+        GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resourceId,
+            DataType.MEASUREMENT, null, false, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
                 @Override
-                public void onSuccess(ArrayList<MetricDisplaySummary> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
+                public void onSuccess(ArrayList<MeasurementSchedule> result) {
+                    int[] schedIds = new int[result.size()];
+                    int i = 0;
+                    for (MeasurementSchedule measurementSchedule : result) {
+                        schedIds[i++] = measurementSchedule.getId();
+                    }
+
+                    UserPreferences prefs = UserSessionManager.getUserPreferences();
+                    MeasurementUserPreferences mprefs = new MeasurementUserPreferences(prefs);
+                    ArrayList<Long> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
+                    GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resourceId,
+                        schedIds, range.get(0), range.get(1), new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
+                            @Override
+                            public void onSuccess(ArrayList<MetricDisplaySummary> result) {
+                                response.setData(buildRecords(result));
+                                processResponse(request.getRequestId(), response);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
+                            }
+                        });
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
+                    CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
                 }
             });
     }

@@ -116,6 +116,7 @@
     <servlet path="/LdapGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.LdapGWTServiceImpl"/>
     <servlet path="/MeasurementDataGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl"/>
     <servlet path="/MeasurementChartsGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementChartsGWTServiceImpl"/>
+    <servlet path="/MeasurementScheduleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementScheduleGWTServiceImpl"/>
     <servlet path="/OperationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.OperationGWTServiceImpl"/>
     <servlet path="/PluginGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.PluginGWTServiceImpl"/>
     <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>

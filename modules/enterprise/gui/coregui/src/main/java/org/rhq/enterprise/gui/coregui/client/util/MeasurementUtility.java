@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 
@@ -59,8 +58,8 @@ public class MeasurementUtility {
      * @param unit  the unit of time (as defined by <code>UNIT_*</code> constants
      * @return List
      */
-    public static List<Long> calculateTimeFrame(int lastN, int unit) {
-        List<Long> l = new ArrayList<Long>(0);
+    public static ArrayList<Long> calculateTimeFrame(int lastN, int unit) {
+        ArrayList<Long> l = new ArrayList<Long>(0);
         if (unit == UNIT_COLLECTION_POINTS) {
             return null;
         }

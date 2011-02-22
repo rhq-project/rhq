@@ -54,6 +54,9 @@ public interface MeasurementDataGWTService extends RemoteService {
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
         long beginTime, long endTime, int numPoints) throws RuntimeException;
 
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId, int definitionId,
+        long beginTime, long endTime, int numPoints) throws RuntimeException;
+
     PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
         PageControl pageControl) throws RuntimeException;
 

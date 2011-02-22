@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -39,6 +40,9 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -97,17 +101,36 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     public void refresh() {
         this.saveButton.disable();
 
-        if (editor != null) {
-            editor.destroy();
-            removeMember(editor);
-        }
-        editor = new ConfigurationEditor(this.extendLocatorId("Editor"), resource.getId(), resource.getResourceType()
-            .getId());
-        editor.setOverflow(Overflow.AUTO);
-        editor.addPropertyValueChangeListener(this);
-        editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-        addMember(editor);
-        // TODO (ips): If editor != null, use editor.reload() instead.
+        GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
+            new AsyncCallback<ResourceConfigurationUpdate>() {
+                @Override
+                public void onSuccess(final ResourceConfigurationUpdate result) {
+                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+                        EnumSet.of(MetadataType.resourceConfigurationDefinition), new TypeLoadedCallback() {
+                            @Override
+                            public void onTypesLoaded(ResourceType type) {
+                                if (editor != null) {
+                                    editor.destroy();
+                                    removeMember(editor);
+                                }
+
+                                editor = new ConfigurationEditor(extendLocatorId("Editor"), type
+                                    .getResourceConfigurationDefinition(), result.getConfiguration());
+                                editor.setOverflow(Overflow.AUTO);
+                                editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
+                                editor.setReadOnly(!resourcePermission.isConfigureWrite());
+                                addMember(editor);
+                                markForRedraw();
+                                // TODO (ips): If editor != null, use editor.reload() instead.
+                            }
+                        });
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot load resource config", caught);
+                }
+            });
     }
 
     private void save() {

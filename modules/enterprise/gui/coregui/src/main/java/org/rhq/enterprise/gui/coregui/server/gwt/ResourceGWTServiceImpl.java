@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "ROOT_ID                         \n" +
         "id",
 
-        //                    "uuid                            \n" +
+        "uuid", // This is important, because it is what Resource's equals() and hashCode() impls use.
         //                    "resourceKey                     \n" +
         "name",
 

@@ -128,7 +128,7 @@
                 </plugins>
             </build>
         </profile>
-      
+
       <profile>
       <id>cobertura-plugins</id>
       <activation>
@@ -142,22 +142,22 @@
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
+                   <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
@@ -166,7 +166,7 @@
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
+                     <fileset dir="${project.build.directory}/classes">
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
@@ -175,7 +175,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
@@ -188,7 +188,7 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
@@ -206,12 +206,12 @@
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
-     </profile>  
+     </profile>
     </profiles>
 
 

@@ -84,6 +84,12 @@
          <artifactId>test-utils</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.testng</groupId>
+                  <artifactId>testng</artifactId>
+              </exclusion>
+          </exclusions>
       </dependency>
 
       <dependency>
@@ -749,7 +755,7 @@ Build-OS-Version=${os.version}
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
              <executions>

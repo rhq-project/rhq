@@ -23,7 +23,7 @@
 
   <properties>
     <!-- Ports used by unit tests - can be overridden via profiles in settings.xml -->
-    <rhq.comm.test.connectorBindPort>33333</rhq.comm.test.connectorBindPort> 
+    <rhq.comm.test.connectorBindPort>33333</rhq.comm.test.connectorBindPort>
     <rhq.comm.test.connector2BindPort>62621</rhq.comm.test.connector2BindPort>
   </properties>
 
@@ -233,27 +233,27 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
+                   <mkdir dir="target/cobertura" />
                    <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
@@ -262,7 +262,7 @@
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
+                     <fileset dir="${project.build.directory}/classes">
                         <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
@@ -271,7 +271,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
@@ -284,7 +284,7 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
@@ -302,9 +302,9 @@
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
      </profile>

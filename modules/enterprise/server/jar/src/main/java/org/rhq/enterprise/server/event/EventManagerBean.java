@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.event;
 
-import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -197,9 +196,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             if (t instanceof SQLException) {
                 SQLException e = (SQLException) t;
                 Exception e2 = e.getNextException();
-                if (e2!=null)
+                if (e2 != null)
                     log.warn("     : " + e2.getMessage());
-                if (t.getCause()!=null)
+                if (t.getCause() != null)
                     log.warn("     : " + t.getCause().getMessage());
             }
         } finally {
@@ -336,6 +335,23 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         Map<EventSeverity, Integer> results = new HashMap<EventSeverity, Integer>();
         Query q = entityManager.createNamedQuery(Event.QUERY_EVENT_COUNTS_BY_SEVERITY);
         q.setParameter("resourceId", resourceId);
+        q.setParameter("start", startDate);
+        q.setParameter("end", endDate);
+        List<Object[]> rawResults = (List<Object[]>) q.getResultList();
+        for (Object[] rawResult : rawResults) {
+            EventSeverity severity = (EventSeverity) rawResult[0];
+            long count = (Long) rawResult[1];
+            results.put(severity, (int) count);
+        }
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(Subject subject, int groupId, long startDate,
+        long endDate) {
+        Map<EventSeverity, Integer> results = new HashMap<EventSeverity, Integer>();
+        Query q = entityManager.createNamedQuery(Event.QUERY_EVENT_COUNTS_BY_SEVERITY_GROUP);
+        q.setParameter("groupId", groupId);
         q.setParameter("start", startDate);
         q.setParameter("end", endDate);
         List<Object[]> rawResults = (List<Object[]>) q.getResultList();

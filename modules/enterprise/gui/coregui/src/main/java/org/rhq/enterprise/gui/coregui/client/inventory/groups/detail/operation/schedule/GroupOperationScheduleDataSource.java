@@ -26,6 +26,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 
@@ -41,6 +42,10 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
 
     public static abstract class Field extends AbstractOperationScheduleDataSource.Field {
         public static final String HALT_ON_FAILURE = "haltOnFailure";
+        public static final String EXECUTION_ORDER = "executionOrder";
+    }
+
+    public static abstract class RequestProperty extends AbstractOperationScheduleDataSource.RequestProperty {
         public static final String EXECUTION_ORDER = "executionOrder";
     }
 
@@ -60,7 +65,7 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        final Integer scheduleId = request.getCriteria().getAttributeAsInt(AbstractOperationScheduleDataSource.Field.ID);
+        final Integer scheduleId = request.getCriteria().getAttributeAsInt(Field.ID);
         if (scheduleId != null) {
             operationService.getGroupOperationSchedule(scheduleId,  new AsyncCallback<GroupOperationSchedule>() {
                 public void onSuccess(GroupOperationSchedule result) {
@@ -91,8 +96,8 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
 
     @Override
     protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
-        Configuration parameters = (Configuration) request.getAttributeAsObject("parameters");
-        recordToAdd.setAttribute(Field.PARAMETERS, parameters);
+        addRequestPropertiesToRecord(request, recordToAdd);
+
         final GroupOperationSchedule scheduleToAdd = copyValues(recordToAdd);
 
         operationService.scheduleGroupOperation(scheduleToAdd, new AsyncCallback<Integer>() {
@@ -105,6 +110,14 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
                 throw new RuntimeException("Failed to add " + scheduleToAdd, caught);
             }
         });
+    }
+
+    @Override
+    protected void addRequestPropertiesToRecord(DSRequest request, Record record) {
+        super.addRequestPropertiesToRecord(request, record);
+
+        List<Resource> executionOrder = (List<Resource>) request.getAttributeAsObject(RequestProperty.EXECUTION_ORDER);
+        record.setAttribute(Field.EXECUTION_ORDER, executionOrder);
     }
 
     @Override
@@ -126,8 +139,8 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
     public ListGridRecord copyValues(GroupOperationSchedule from) {
         ListGridRecord record = super.copyValues(from);
 
+        record.setAttribute(Field.EXECUTION_ORDER, from.getExecutionOrder());
         record.setAttribute(Field.HALT_ON_FAILURE, from.getHaltOnFailure());
-        // TODO: set executionOrder field
 
         return record;
     }
@@ -136,8 +149,9 @@ public class GroupOperationScheduleDataSource extends AbstractOperationScheduleD
     public GroupOperationSchedule copyValues(Record from) {
         GroupOperationSchedule groupOperationSchedule = super.copyValues(from);
 
+        List<Resource> executionOrder = (List<Resource>) from.getAttributeAsObject(Field.EXECUTION_ORDER);
+        groupOperationSchedule.setExecutionOrder(executionOrder);
         groupOperationSchedule.setHaltOnFailure(from.getAttributeAsBoolean(Field.HALT_ON_FAILURE));
-        // TODO: set executionOrder field
 
         return groupOperationSchedule;
     }

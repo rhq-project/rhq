@@ -21,6 +21,7 @@ package org.rhq.bindings.engine;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Set;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -37,7 +38,7 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
         return language != null && ("JavaScript".equals(language) || "ECMAScript".equals(language));
     }
     
-    public ScriptEngine instantiate(List<String> packages) throws ScriptException {
+    public ScriptEngine instantiate(Set<String> packages) throws ScriptException {
         ScriptEngineManager sem = new ScriptEngineManager();
         ScriptEngine eng = sem.getEngineByName("JavaScript");
         

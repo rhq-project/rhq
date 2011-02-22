@@ -21,6 +21,7 @@ package org.rhq.bindings.engine;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Set;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -35,7 +36,7 @@ public interface ScriptEngineInitializer {
 
     boolean implementsLanguage(String language);
     
-    ScriptEngine instantiate(List<String> packages) throws ScriptException;
+    ScriptEngine instantiate(Set<String> packages) throws ScriptException;
     
     /**
      * This function returns a definition string in the script engine's language

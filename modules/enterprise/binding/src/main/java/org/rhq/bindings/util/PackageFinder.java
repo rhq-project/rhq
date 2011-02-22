@@ -43,8 +43,8 @@ public class PackageFinder {
         this.jarLocations = new ArrayList<File>(jarLocations);
     }
 
-    public List<String> findPackages(String packageRoot) throws IOException {
-        ArrayList<String> found = new ArrayList<String>();        
+    public Set<String> findPackages(String packageRoot) throws IOException {
+        HashSet<String> found = new HashSet<String>();        
         
         List<File> jars = new ArrayList<File>();
 
@@ -58,16 +58,21 @@ public class PackageFinder {
             }
         }
 
-        jars.addAll(loadJARsFromClassPath(packageRoot));
+        jars.addAll(loadResourcesFromClassPath(packageRoot, "jar:file:"));
 
         for (File jar : jars) {
-            findPackages(packageRoot, found, jar);
+            findPackagesInJar(packageRoot, found, jar);
         }
 
+        List<File> dirs = loadResourcesFromClassPath(packageRoot, "file:");
+        for(File d : dirs) {
+            findPackagesInDirectory(packageRoot, found, d);
+        }
+        
         return found;
     }
 
-    private List<File> loadJARsFromClassPath(String pkgRoot) throws IOException {
+    private List<File> loadResourcesFromClassPath(String pkgRoot, String prefix) throws IOException {
         List<File> jarFiles = new ArrayList<File>();
         String pkgPath = pkgRoot.replaceAll("\\.", "/");
         Enumeration<URL> resources = getClass().getClassLoader().getResources(pkgPath);
@@ -75,8 +80,8 @@ public class PackageFinder {
 
         while (resources.hasMoreElements()) {
             resource = resources.nextElement();
-            if (resource.toString().startsWith("jar:file")) {
-                String jarFilePath = getJARFilePath(resource);
+            if (resource.toString().startsWith(prefix)) {
+                String jarFilePath = getFilePath(resource, prefix);
                 jarFiles.add(new File(jarFilePath));
             }
         }
@@ -84,15 +89,17 @@ public class PackageFinder {
         return jarFiles;
     }
 
-    private String getJARFilePath(URL resource) {
-        int startIndex = "jar:file:".length();
+    private String getFilePath(URL resource, String prefix) {
+        int startIndex = prefix.length();
         String string = resource.toString().substring(startIndex);
         int endIndex = string.indexOf("!");
-
+        if (endIndex < 0) {
+            endIndex = string.length();
+        }
         return string.substring(0, endIndex);
     }
 
-    private void findPackages(String packageRoot, List<String> list, File jar) throws IOException {
+    private void findPackagesInJar(String packageRoot, Set<String> list, File jar) throws IOException {
 
         Set<String> paths = new HashSet<String>();
         JarFile jf = null;
@@ -119,6 +126,18 @@ public class PackageFinder {
                 }
             } catch (IOException e) {
                 
+            }
+        }
+    }
+    
+    private void findPackagesInDirectory(String packageRoot, Set<String> list, File dir) throws IOException {
+        File[] subDirs = dir.listFiles();
+        
+        for(File s : subDirs) {
+            if (s.isDirectory()) {
+                String packageName = packageRoot + "." + s.getName();
+                list.add(packageName);
+                findPackagesInDirectory(packageName, list, s);
             }
         }
     }

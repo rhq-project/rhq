@@ -28,6 +28,9 @@ import java.security.Permissions;
 import java.util.Enumeration;
 import java.util.PropertyPermission;
 
+import javax.management.MBeanPermission;
+import javax.management.ObjectName;
+
 /**
  * @author Lukas Krejci
  */
@@ -42,18 +45,27 @@ public class StandardScriptPermissions extends PermissionCollection {
      * already added. 
      */
     public StandardScriptPermissions() {
-        //the JBoss specific perms that must be set
+        //the JBoss specific perms that must be set        
         add(new RuntimePermission("org.jboss.security.SecurityAssociation.getPrincipalInfo"));
         add(new RuntimePermission("org.jboss.security.SecurityAssociation.setPrincipalInfo "));
         add(new RuntimePermission("org.jboss.security.SecurityAssociation.setServer"));
         add(new RuntimePermission("org.jboss.security.SecurityAssociation.setRunAsRole"));
         
+        //MBean perms
+        add(new MBeanPermission("*", "*", ObjectName.WILDCARD, "*"));
+        
         //JVM defined runtime perms
+        add(new RuntimePermission("createClassLoader"));
+        add(new RuntimePermission("getClassLoader"));
+        add(new RuntimePermission("setContextClassLoader"));
         add(new RuntimePermission("getenv.*"));
         add(new RuntimePermission("getProtectionDomain"));
         add(new RuntimePermission("getFileSystemAttributes"));
         add(new RuntimePermission("readFileDescriptor"));
         add(new RuntimePermission("writeFileDescriptor"));
+        add(new RuntimePermission("loadLibrary.*"));
+        add(new RuntimePermission("accessClassInPackage.*"));
+        add(new RuntimePermission("defineClassInPackage.*"));
         add(new RuntimePermission("accessDeclaredMembers"));
         add(new RuntimePermission("queuePrintJob"));
         add(new RuntimePermission("getStackTrace"));

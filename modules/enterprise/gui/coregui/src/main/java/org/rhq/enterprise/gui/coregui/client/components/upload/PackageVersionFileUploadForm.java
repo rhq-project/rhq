@@ -79,9 +79,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
     
     public void setPackageTypeId(int value) {
         packageTypeId = value;
-        if (onDrawCalled()) {
-            getItem("packageTypeId").setValue(value);
-        }
+        onDraw();
     }
     
     public Integer getArchitectureId() {
@@ -90,18 +88,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
     
     public void setArchitectureId(Integer value) {
         archId = value; 
-        FormItem item = getItem("archId");
-        if (item != null) {
-            if (value == null) {
-                removeField("archId");
-            } else {
-                item.setDefaultValue(value);
-            }
-        } else if (value != null && onDrawCalled()) {
-            HiddenItem archIdField = new HiddenItem("archId");
-            archIdField.setDefaultValue(value);
-            addField(archIdField);
-        }
+        onDraw();
     }
     
     public Integer getRepoId() {
@@ -110,18 +97,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
     
     public void setRepoId(Integer value) {
         repoId = value;
-        FormItem item = getItem("repoId");
-        if (item != null) {
-            if (value != null) {
-                removeField("repoId");
-            } else {
-                item.setDefaultValue(value);
-            }
-        } else if (value != null && onDrawCalled()) {
-            HiddenItem repoIdField = new HiddenItem("repoId");
-            repoIdField.setDefaultValue(value);
-            addField(repoIdField);
-        }
+        onDraw();
     }
     
     @Override
@@ -212,30 +188,4 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
 
         super.submitForm();
     }
-
-    private void removeField(String fieldName) {
-        FormItem[] items = getFields();
-        FormItem[] newItems = new FormItem[items.length - 1];
-        int idx = 0;
-        for (FormItem i : items) {
-            if (!fieldName.equals(i.getName())) {
-                newItems[idx] = i;
-            }
-            ++idx;
-        }
-        
-        setFields(newItems);
-        markForRedraw();
-    }
-    
-    private void addField(FormItem item) {
-        FormItem[] items = getFields();
-        FormItem[] newItems = new FormItem[items.length + 1];
-        
-        System.arraycopy(items, 0, newItems, 0, items.length);
-        newItems[items.length] = item;
-
-        setFields(newItems);
-        markForRedraw();
-    }    
 }

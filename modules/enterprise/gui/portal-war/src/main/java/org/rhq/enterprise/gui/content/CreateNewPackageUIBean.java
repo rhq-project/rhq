@@ -246,8 +246,9 @@ public class CreateNewPackageUIBean {
 
                 //TODO: need to get parent id instead right? ref to app server inst itself?
                 Integer newResourceTypeId = resource == null ? null : resource.getResourceType().getId();
-                packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId, version,
-                    architectureId, packageStream, packageUploadDetails, newResourceTypeId);
+                Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
+                packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
+                    version, architectureId, packageStream, packageUploadDetails, newResourceTypeId, iRepoId);
 
             } catch (NoResultException nre) {
                 //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
@@ -259,21 +260,6 @@ public class CreateNewPackageUIBean {
             }
 
             int[] packageVersionList = new int[] { packageVersion.getId() };
-
-            // Add the package to the repo
-            if (usingARepo) {
-                try {
-                    int iRepoId = Integer.parseInt(repoId);
-
-                    RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-                    repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
-                } catch (Exception e) {
-                    String errorMessages = ThrowableUtil.getAllMessages(e);
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
-                        + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
-                    return "failure";
-                }
-            }
 
             // Put the package ID in the session so it can fit into the deploy existing package workflow
             HttpSession session = request.getSession();

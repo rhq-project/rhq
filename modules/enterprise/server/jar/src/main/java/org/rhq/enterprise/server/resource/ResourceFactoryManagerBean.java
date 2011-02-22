@@ -466,8 +466,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
                 packageVersionNumber, architectureId, packageBitStream);
         } else {
-            packageVersion = contentManager.getUploadedPackageVersion(packageName, newPackageType.getId(),
-                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
+            packageVersion = contentManager.getUploadedPackageVersion(user, packageName,
+                newPackageType.getId(), packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId, null);
         }
 
         return doCreatePackageBackedResource(user, parentResource, newResourceType, newResourceName,

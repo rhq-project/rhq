@@ -83,15 +83,9 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             //persisted.
             Map<String, String> metaData = new HashMap<String, String>();
             metaData.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, Long.toString(file.lastModified()));
-            metaData.put(ContentManagerLocal.UPLOAD_FILE_NAME, files.keySet().iterator().next());
-            PackageVersion packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId,
-                version, architectureId, fileStream, metaData, null);
-            
-            if (repoId != null) {
-                //XXX create a new SLSB method that would combine this and the above call in one transaction?
-                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-                repoManager.addPackageVersionsToRepo(subject, repoId, new int[] { packageVersion.getId() });
-            }
+            metaData.put(ContentManagerLocal.UPLOAD_FILE_NAME, packageName);
+            PackageVersion packageVersion = contentManager.getUploadedPackageVersion(subject, packageName,
+                packageTypeId, version, architectureId, fileStream, metaData, null, repoId);
             
             successMsg = "success [packageVersionId=" + packageVersion.getId() + ",packageId=" + packageVersion.getGeneralPackage().getId() + "]";
         } catch (Exception e) {

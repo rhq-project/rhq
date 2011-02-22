@@ -1571,9 +1571,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *  when file has been uploaded via the UI.
      */
     @SuppressWarnings("unchecked")
-    public PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version,
-        int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
-        Integer newResourceTypeId) {
+    public PackageVersion getUploadedPackageVersion(Subject subject, String packageName, int packageTypeId,
+        String version, int architectureId, InputStream packageBitStream,
+        Map<String, String> packageUploadDetails, Integer newResourceTypeId, Integer repoId) {
 
         PackageVersion packageVersion = null;
         PackageType packageType = null;
@@ -1651,6 +1651,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         entityManager.merge(packageVersion);
+        
+        if (repoId != null) {
+            int[] packageVersionIds = new int[] { packageVersion.getId() };
+            repoManager.addPackageVersionsToRepo(subject, repoId, packageVersionIds);
+        }
+        
         entityManager.flush();
 
         return packageVersion;

@@ -113,9 +113,7 @@ public class FileUploadForm extends DynamicCallbackForm {
 
     public void setName(String name) {
         this.name = name;
-        if (onDrawCalled()) {
-            getItem("name").setValue(name);
-        }
+        onDraw();
     }
     
     public String getVersion() {
@@ -124,9 +122,7 @@ public class FileUploadForm extends DynamicCallbackForm {
     
     public void setVersion(String version) {
         this.version = version;
-        if (onDrawCalled()) {
-            getItem("version").setValue(version);
-        }
+        onDraw();
     }
     
     /**
@@ -313,10 +309,6 @@ public class FileUploadForm extends DynamicCallbackForm {
         if (null != submitFailedHandler) {
             this.addFormSubmitFailedHandler(submitFailedHandler);
         }
-    }
-
-    protected boolean onDrawCalled() {
-        return getItem("sessionid") != null;
     }
 
     public List<String> getUploadedFilePaths() {

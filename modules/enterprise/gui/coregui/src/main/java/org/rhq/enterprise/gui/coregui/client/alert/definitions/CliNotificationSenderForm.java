@@ -20,12 +20,9 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -42,12 +39,10 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.form.validator.Validator;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
@@ -61,7 +56,6 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
-import org.rhq.enterprise.gui.coregui.client.components.upload.FileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -127,7 +121,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
     
     private static class PackageVersionFileUploadFormWithVersion extends PackageVersionFileUploadForm {
-        
+    
         /**
          * @param locatorId
          * @param packageTypeId
@@ -153,7 +147,30 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             return items;
         }
     }
+        
+    private static abstract class ForwardingDynamicFormHandler implements DynamicFormHandler {
+        private AsyncCallback<Void> callback;
+        
+        public AsyncCallback<Void> getCallback() {
+            return callback;
+        }
+        
+        public void setCallback(AsyncCallback<Void> callback) {
+            this.callback = callback;
+        }
+    };
     
+    private static abstract class ForwardingSubmitFailedHandler implements FormSubmitFailedHandler {
+        private AsyncCallback<Void> callback;
+        
+        public AsyncCallback<Void> getCallback() {
+            return callback;
+        }
+        
+        public void setCallback(AsyncCallback<Void> callback) {
+            this.callback = callback;
+        }
+    };
     
     private boolean formBuilt;
     
@@ -168,8 +185,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private ButtonItem verifyUserButton;
     private FormItemIcon authSuccessIcon;
     private FormItemIcon authFailureIcon;
-    private HandlerRegistration currentUploadFailureRegistration;
-    private DynamicFormHandler currentUploadSuccessHandler;
+    private ForwardingSubmitFailedHandler uploadFailureHandler;
+    private ForwardingDynamicFormHandler uploadSuccessHandler;
 
     private Config config;
         
@@ -224,8 +241,9 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                         createAnotherUserForm());            
                     userSelector = new RadioGroupWithComponentsItem(
                         extendLocatorId("userSelector"), 
-                        "", userSelectItems, form);
+                        "", userSelectItems, form);                    
                     userSelector.setWidth("100%");
+                    userSelector.setShowTitle(false);
                     
                     repoSection.setItemIds(extendLocatorId("repoSelector"));
                     packageSection.setItemIds(extendLocatorId("packageSelector"));
@@ -380,32 +398,16 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             getConfiguration().put(new PropertySimple(PROP_PACKAGE_ID, config.selectedPackage.getGeneralPackage().getId()));            
             callback.onSuccess(null);
         } else {
-            currentUploadFailureRegistration = uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
-                public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                    uploadForm.removeFormHandler(currentUploadSuccessHandler);
-                    currentUploadFailureRegistration.removeHandler();
+            uploadFailureHandler.setCallback(callback);
+            uploadSuccessHandler.setCallback(new AsyncCallback<Void>() {
+                public void onFailure(Throwable caught) {
                     callback.onFailure(null);
-                }
-            });
-            
-            currentUploadSuccessHandler = new DynamicFormHandler() {
-                public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
-                    if (uploadForm.getPackageId() == 0 || uploadForm.getPackageVersionId() == 0) {
-                        uploadForm.removeFormHandler(this);
-                        currentUploadFailureRegistration.removeHandler();
-                        callback.onFailure(null);
-                        return;
-                    }
-
+                };
+                public void onSuccess(Void result) {
                     getConfiguration().put(new PropertySimple(PROP_PACKAGE_ID, uploadForm.getPackageId()));
-                    
-                    uploadForm.removeFormHandler(this);
-                    currentUploadFailureRegistration.removeHandler();
                     callback.onSuccess(null);
-                }
-            };
-            uploadForm.addFormHandler(currentUploadSuccessHandler);
-            
+                };
+            });
             uploadForm.submitForm();
         }
     }
@@ -543,6 +545,30 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         uploadForm = new PackageVersionFileUploadFormWithVersion(extendLocatorId("uploadForm"), cliScriptPackageType.getId());         
         uploadForm.setTitleOrientation(TitleOrientation.TOP);
         uploadForm.setPackageTypeId(cliScriptPackageType.getId());
+
+        uploadFailureHandler = (new ForwardingSubmitFailedHandler() {
+            public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                if (getCallback() != null) {
+                    getCallback().onFailure(null);
+                }
+            }
+        });
+        
+        uploadSuccessHandler = new ForwardingDynamicFormHandler() {
+            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                if (uploadForm.getPackageId() == 0 || uploadForm.getPackageVersionId() == 0) {
+                    if (getCallback() != null) {
+                        getCallback().onFailure(null);
+                    }
+                    return;
+                }
+
+                if (getCallback() != null) {
+                    getCallback().onSuccess(null);
+                }
+            }
+        };
+        uploadForm.addFormHandler(uploadSuccessHandler);
         
         return uploadForm;
     }
@@ -565,7 +591,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             
             public void onSuccess(Subject result) {
                 config.selectedSubject = result;
-                verifyUserButton.setIcons(authSuccessIcon);   
+                verifyUserButton.setIcons(result == null ? authFailureIcon : authSuccessIcon);   
                 markForRedraw();
                 action.onSuccess(null);
             }

@@ -516,8 +516,9 @@ public class LoginView extends LocatableCanvas {
         loginButton.setDisabled(true);
 
         try {
-            RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do?j_username=" + user
-                + "&j_password=" + password);
+            RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
+            b.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            b.setRequestData("j_username=" + user + "&j_password=" + password);
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
                     int statusCode = response.getStatusCode();

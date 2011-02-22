@@ -74,6 +74,8 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) throws RuntimeException;
 
+    PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(int groupId, int n) throws RuntimeException;
+
     void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException;
 
     void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException;

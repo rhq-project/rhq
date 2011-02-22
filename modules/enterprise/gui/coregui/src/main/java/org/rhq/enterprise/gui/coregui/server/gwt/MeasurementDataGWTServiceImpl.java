@@ -167,6 +167,16 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(int groupId, int n) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                measurementOOBManager.getHighestNOOBsForGroup(getSessionSubject(), groupId, n),
+                "MeasurementDataService.getHighestNOOBsForGroup");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
     public void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException {
         try {
             scheduleManager.enableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);

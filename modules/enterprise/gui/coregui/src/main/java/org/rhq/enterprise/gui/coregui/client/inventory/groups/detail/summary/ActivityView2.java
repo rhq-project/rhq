@@ -44,6 +44,7 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -86,7 +87,7 @@ public class ActivityView2 extends AbstractActivityView {
             //TODO: spinder need to drive these calls off off facet availability
             getRecentOperations();
             getRecentConfigurationUpdates();
-            //            getRecentOobs();
+            getRecentOobs();
             //            getRecentPkgHistory();
             getRecentMetrics();
         }
@@ -346,55 +347,53 @@ public class ActivityView2 extends AbstractActivityView {
             });
     }
 
-    //        /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
-    //         *  oob change details.
-    //         */
-    //        private void getRecentOobs() {
-    //            final int groupId = this.groupComposite.getResourceGroup().getId();
-    //
-    ////            GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForCompatibleGroup(groupId, 5,
-    //
-    //            GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(groupId, 5,
-    //                new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-    //                    @Override
-    //                    public void onFailure(Throwable caught) {
-    //                        Log.debug("Error retrieving recent out of bound metrics for resource [" + groupId + "]:"
-    //                            + caught.getMessage());
-    //                    }
-    //
-    //                    @Override
-    //                    public void onSuccess(PageList<MeasurementOOBComposite> result) {
-    //                        VLayout column = new VLayout();
-    //                        column.setHeight(10);
-    //                        if (!result.isEmpty()) {
-    //                            for (MeasurementOOBComposite oob : result) {
-    //                                LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
-    //                                    .getScheduleName()));
-    //                                row.setNumCols(2);
-    //
-    //                                String title = oob.getScheduleName() + ":";
-    //                                String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
-    //                                    + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
-    //                                LinkItem link = newLinkItem(title, destination);
-    //                                StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(oob.getTimestamp()));
-    //
-    //                                row.setItems(link, time);
-    //                                column.addMember(row);
-    //                            }
-    //                        } else {
-    //                            LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
-    //                                RECENT_OOB_NONE);
-    //                            column.addMember(row);
-    //                        }
-    //                        recentOobContent.setContents("");
-    //                        for (Canvas child : recentOobContent.getChildren()) {
-    //                            child.destroy();
-    //                        }
-    //                        recentOobContent.addChild(column);
-    //                        recentOobContent.markForRedraw();
-    //                    }
-    //                });
-    //        }
+    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
+     *  oob change details.
+     */
+    private void getRecentOobs() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, 5,
+            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (MeasurementOOBComposite oob : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
+                                .getScheduleName()));
+                            row.setNumCols(2);
+
+                            String title = oob.getScheduleName() + ":";
+                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
+                                + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(oob.getTimestamp()));
+
+                            row.setItems(link, time);
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
+                            RECENT_OOB_NONE);
+                        column.addMember(row);
+                    }
+                    recentOobContent.setContents("");
+                    for (Canvas child : recentOobContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentOobContent.addChild(column);
+                    recentOobContent.markForRedraw();
+                }
+            });
+    }
 
     //    /** Fetches recent package history information and updates the DynamicForm instance with details.
     //     */

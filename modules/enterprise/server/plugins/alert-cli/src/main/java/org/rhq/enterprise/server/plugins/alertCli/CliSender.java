@@ -30,8 +30,14 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -54,6 +60,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.client.LocalClient;
+import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -82,6 +89,12 @@ public class CliSender extends AlertSender<CliComponent> {
 
     private static final String VALIDATION_ERROR_MESSAGE = "The provided user failed to authenticate.";
     
+    //no more than 10 concurrently running CLI notifications..
+    //is that enough?
+    private static final int MAX_SCRIPT_ENGINES = 10;
+    private static Queue<ScriptEngine> SCRIPT_ENGINES = new ArrayDeque<ScriptEngine>(MAX_SCRIPT_ENGINES);
+    private static int ENGINES_IN_USE = 0;
+    
     /**
      * Simple strongly typed representation of the alert configuration
      */
@@ -98,13 +111,16 @@ public class CliSender extends AlertSender<CliComponent> {
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
+        ScriptEngine engine = null;
         try {
-            Config config = getConfig();
+            final Config config = getConfig();
+                       
             result.setSummary(createSummary(config, SUMMARY_TEMPLATE));
 
             ByteArrayOutputStream scriptOutputStream = new ByteArrayOutputStream();
+            PrintWriter scriptOut = new PrintWriter(scriptOutputStream);
 
-            ScriptEngine engine = getScriptEngine(alert, scriptOutputStream, config);
+            engine = getScriptEngine(alert, scriptOut, config);
             
             final SandboxedScriptEngine sandbox = new SandboxedScriptEngine(engine, new StandardScriptPermissions());
             
@@ -119,7 +135,10 @@ public class CliSender extends AlertSender<CliComponent> {
             Thread scriptRunner = new Thread(new Runnable() {
                 public void run() {
                     try {
+                        //fake the login
+                        SessionManager.getInstance().put(config.subject, pluginComponent.getScriptTimeout() * 1000);                        
                         sandbox.eval(rdr);
+                        SessionManager.getInstance().invalidate(config.subject.getSessionId());
                     } catch (ScriptException e) {
                         exceptionHolder.throwable = e;
                     }
@@ -140,6 +159,7 @@ public class CliSender extends AlertSender<CliComponent> {
                 throw new Exception("Script failed with an exception.", exceptionHolder.throwable);
             }
             
+            scriptOut.flush();
             String scriptOutput = scriptOutputStream.toString(Charset.defaultCharset().name());
 
             if (scriptOutput.length() == 0) {
@@ -155,6 +175,10 @@ public class CliSender extends AlertSender<CliComponent> {
             result.addFailureMessage(ThrowableUtil.getAllMessages(e));
             return result;
         } finally {
+            if (engine != null) {
+                returnEngine(engine);
+            }
+            
             if (reader != null) {
                 try {
                     reader.close();
@@ -213,18 +237,18 @@ public class CliSender extends AlertSender<CliComponent> {
         return results;
     }
     
-    private static ScriptEngine getScriptEngine(Alert alert, OutputStream scriptOutput, Config config) throws ScriptException,
-        IOException {
+    private static ScriptEngine getScriptEngine(Alert alert, PrintWriter output, Config config) throws ScriptException,
+        IOException, InterruptedException {
         Subject user = config.subject;
 
         LocalClient client = new LocalClient(user);
 
-        PrintWriter output = new PrintWriter(scriptOutput);
         StandardBindings bindings = new StandardBindings(output, client);
         bindings.put("alert", alert);
 
-        return ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Collections.<File> emptyList()),
-            bindings);
+        ScriptEngine engine = takeEngine(bindings);
+        
+        return engine;
     }
 
     private static InputStream getPackageBits(int packageId, int repoId) throws IOException {
@@ -342,6 +366,36 @@ public class CliSender extends AlertSender<CliComponent> {
             return prop.getIntegerValue();
         } catch (Exception e) {
             throw new IllegalArgumentException(convertErrorMessage + e.getMessage(), e);
+        }
+    }
+    
+    private static ScriptEngine takeEngine(StandardBindings bindings) throws InterruptedException, ScriptException,
+        IOException {
+        synchronized (SCRIPT_ENGINES) {
+            if (ENGINES_IN_USE >= MAX_SCRIPT_ENGINES) {
+                SCRIPT_ENGINES.wait();
+            }
+
+            ScriptEngine engine = SCRIPT_ENGINES.poll();
+
+            if (engine == null) {
+                engine = ScriptEngineFactory.getScriptEngine("JavaScript",
+                    new PackageFinder(Collections.<File> emptyList()), bindings);                
+            } else {
+                ScriptEngineFactory.injectStandardBindings(engine, bindings);
+            }
+            
+            ++ENGINES_IN_USE;
+            
+            return engine;
+        }
+    }
+
+    private static void returnEngine(ScriptEngine engine) {
+        synchronized (SCRIPT_ENGINES) {
+            SCRIPT_ENGINES.offer(engine);
+            --ENGINES_IN_USE;
+            SCRIPT_ENGINES.notify();
         }
     }
 }

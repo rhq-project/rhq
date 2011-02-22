@@ -43,7 +43,20 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, viewName));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForAutoGroup");
+            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForAutoGroup1");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, int[] schedIds,
+        long begin, long end, boolean enabledOnly) throws RuntimeException {
+        try {
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
+                .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, schedIds, begin, end,
+                    enabledOnly));
+            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForAutoGroup2");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -58,7 +71,20 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, viewName));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForCompatibleGroup");
+            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForCompatibleGroup1");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, int[] defIds,
+        long begin, long end, boolean enabledOnly) throws RuntimeException {
+        try {
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
+                .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, defIds, begin, end,
+                    enabledOnly));
+            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForCompatibleGroup2");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -73,7 +99,19 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, viewName));
-            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForResource");
+            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForResource1");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] schedIds,
+        long begin, long end) throws RuntimeException {
+        try {
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
+                .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin, end));
+            return SerialUtility.prepare(list, "MeasurementChartsManager.getMetricDisplaySummariesForResource2");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

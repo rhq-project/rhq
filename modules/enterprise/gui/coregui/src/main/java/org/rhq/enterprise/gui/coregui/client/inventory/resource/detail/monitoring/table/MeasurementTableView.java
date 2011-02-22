@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
+import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
@@ -40,5 +41,6 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
+        addExtraWidget(new MeasurementRangeEditor(extendLocatorId("range")), true);
     }
 }

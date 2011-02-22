@@ -31,9 +31,20 @@ public interface MeasurementChartsGWTService extends RemoteService {
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
         throws RuntimeException;
 
-    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, String viewName)
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId,
+        int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws RuntimeException;
+
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int autoGroupParentResourceId,
+        int autoGroupChildResourceTypeId, String viewName) throws RuntimeException;
+
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int autoGroupParentResourceId,
+        int autoGroupChildResourceTypeId, int[] measurementScheduleIds, long begin, long end, boolean enabledOnly)
         throws RuntimeException;
 
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, String viewName)
         throws RuntimeException;
+
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] measurementScheduleIds,
+        long begin, long end) throws RuntimeException;
+
 }

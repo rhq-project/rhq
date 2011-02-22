@@ -31,28 +31,83 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /**
+ * Provides access to the persisted user preferences.
+ * 
+ * If you want to work with measurement related preferences, you might want to use
+ * {@link MeasurementUserPreferences} instead.
+ * 
  * @author Greg Hinkle
  * @author Ian Springer
  */
 public class UserPreferences {
 
-    private static final String PREF_LIST_DELIM = "|";
-    private static final String PREF_LIST_DELIM_REGEX = "\\|";
+    protected static final String PREF_LIST_DELIM = "|";
+    protected static final String PREF_LIST_DELIM_REGEX = "\\|";
 
     private Subject subject;
     private Configuration userConfiguration;
     private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
+
+    private UserPreferenceChangeListener autoPersister = null;
 
     private ArrayList<UserPreferenceChangeListener> changeListeners = new ArrayList<UserPreferenceChangeListener>();
 
     public UserPreferences(Subject subject) {
         this.subject = subject;
         this.userConfiguration = subject.getUserConfiguration();
+    }
+
+    /**
+     * If you pass in true, you are enabling this preferences object to
+     * automatically persist changes as they occur. If you pass in false,
+     * you are disabling this feature. When enabled, {@link #store(AsyncCallback)} is
+     * called every time a preference value is changed or removed.
+     * 
+     * @param enable true or false to turn on or off automatic persistence
+     */
+    public void setAutomaticPersistence(boolean enable) {
+        if (enable) {
+            if (this.autoPersister == null) {
+                this.autoPersister = new UserPreferenceChangeListener() {
+                    @Override
+                    public void onPreferenceChange(UserPreferenceChangeEvent event) {
+                        persist();
+                    }
+
+                    @Override
+                    public void onPreferenceRemove(UserPreferenceChangeEvent event) {
+                        persist();
+                    }
+
+                    private void persist() {
+                        store(new AsyncCallback<Subject>() {
+                            @Override
+                            public void onSuccess(Subject result) {
+                                // don't announce anything, should happen under the covers - just refresh the current page
+                                CoreGUI.refresh();
+                            }
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Cannot store preferences", caught);
+                            }
+                        });
+                    }
+                };
+                addChangeListener(autoPersister);
+            }
+        } else {
+            if (this.autoPersister != null) {
+                this.changeListeners.remove(this.autoPersister);
+                this.autoPersister = null;
+            }
+        }
     }
 
     public Set<Integer> getFavoriteResources() {
@@ -132,6 +187,10 @@ public class UserPreferences {
         return userConfiguration.getSimpleValue(name, null);
     }
 
+    protected String getPreference(String name, String defaultValue) {
+        return userConfiguration.getSimpleValue(name, defaultValue);
+    }
+
     protected void setPreference(String name, Collection<?> value) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;
@@ -162,6 +221,27 @@ public class UserPreferences {
         }
     }
 
+    protected void unsetPreference(String name) {
+        PropertySimple doomedProp = this.userConfiguration.getSimple(name);
+
+        // it's possible property was already removed, and thus this operation becomes a no-op
+        if (doomedProp != null) {
+            String oldValue = doomedProp.getStringValue();
+            this.userConfiguration.remove(name);
+            UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, null, oldValue);
+            for (UserPreferenceChangeListener listener : changeListeners) {
+                listener.onPreferenceRemove(event);
+            }
+        }
+    }
+
+    public void clearConfiguration() {
+        ArrayList<String> names = new ArrayList<String>(this.userConfiguration.getNames()); // need separate list to avoid concurrent mod exception
+        for (String name : names) {
+            unsetPreference(name);
+        }
+    }
+
     public void store(AsyncCallback<Subject> callback) {
         this.subjectService.updateSubject(this.subject, callback);
     }
@@ -175,8 +255,6 @@ public class UserPreferences {
         try {
             pref = getPreference(key);
         } catch (IllegalArgumentException e) {
-
-            //            log.debug("A user preference named '" + key + "' does not exist.");
         }
 
         return (pref != null) ? Arrays.asList(pref.split(PREF_LIST_DELIM_REGEX)) : new ArrayList<String>();
@@ -222,8 +300,6 @@ public class UserPreferences {
         try {
             pref = getPreference(key);
         } catch (IllegalArgumentException e) {
-
-            //            log.debug("A user preference named '" + key + "' does not exist.");
         }
         return (pref != null) ? Integer.valueOf(pref) : Integer.valueOf(0);
     }
@@ -231,5 +307,4 @@ public class UserPreferences {
     public void addChangeListener(UserPreferenceChangeListener listener) {
         changeListeners.add(listener);
     }
-
 }

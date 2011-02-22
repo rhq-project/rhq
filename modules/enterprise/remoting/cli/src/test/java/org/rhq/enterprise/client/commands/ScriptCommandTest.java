@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import org.testng.annotations.Test;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.client.commands.ScriptCommand;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
@@ -61,7 +62,7 @@ public class ScriptCommandTest {
 
     void assertSubjectBoundToScript() {
         ScriptEngine scriptEngine = cmd.getScriptEngine();
-        Object subject = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE).get("subject");
+        Object subject = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("subject");
 
         assertNotNull(subject, "Expected variable 'subject' to be bound to script in global scope");
         assertTrue(
@@ -75,7 +76,7 @@ public class ScriptCommandTest {
         List<String> mgrsNotBound = new ArrayList<String>();
 
         for (RhqManagers mgr : RhqManagers.values()) {
-            if (!scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE).containsKey(mgr.name())) {
+            if (!scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(mgr.name())) {
                 mgrsNotBound.add(mgr.remoteName());
             }
         }
@@ -88,7 +89,7 @@ public class ScriptCommandTest {
 
     void assertPrettyWriterBoundToScript() {
         ScriptEngine scriptEngine = cmd.getScriptEngine();
-        Object writer = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE).get("pretty");
+        Object writer = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("pretty");
 
         assertNotNull(writer, "Expected variable 'pretty' to be bound to script in global scope");
         assertTrue(

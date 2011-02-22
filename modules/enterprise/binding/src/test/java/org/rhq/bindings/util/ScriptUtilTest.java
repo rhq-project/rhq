@@ -1,4 +1,4 @@
-package org.rhq.enterprise.client.utility;
+package org.rhq.bindings.util;
 
 import java.io.File;
 import java.io.FileOutputStream;

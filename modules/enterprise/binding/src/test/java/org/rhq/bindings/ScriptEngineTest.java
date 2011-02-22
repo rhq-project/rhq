@@ -25,9 +25,9 @@ import static org.testng.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.util.Collections;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -73,6 +73,16 @@ public class ScriptEngineTest {
             
         } catch (Exception e) {
             assertSecurityExceptionPresent(e);
+        }
+    }
+    
+    @Test
+    public void testStandardBindings() throws ScriptException, IOException {
+        ScriptEngine scriptEngine = getScriptEngine();
+        
+        for(String var : EMPTY_BINDINGS.keySet()) {
+            boolean hasVar = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(var);
+            assertTrue(hasVar, "The variable '" + var + "' is not present in the script context but should be.");
         }
     }
     

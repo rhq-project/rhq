@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -47,6 +48,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * @author Simeon Pinder
  * @author Greg Hinkle
  */
 public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implements MeasurementDataGWTService {
@@ -89,12 +91,16 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
-    //    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int resourceId, int[] definitionIds,
-    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int resourceId,
-        int definitionId, long beginTime, long endTime, int numPoints) throws RuntimeException {
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId,
+        int[] definitionIds, long beginTime, long endTime, int numPoints) throws RuntimeException {
         try {
-            return SerialUtility.prepare(dataManager.findDataForCompatibleGroup(getSessionSubject(), resourceId,
-                definitionId, beginTime, endTime, numPoints), "MeasurementDataService.findDataForCompatibleGroup");
+            //iterate over each of the definitionIds to retrieve the display data for each.
+            List<List<MeasurementDataNumericHighLowComposite>> results = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+            for (int nextDefinitionId : definitionIds) {
+                results.addAll(dataManager.findDataForCompatibleGroup(getSessionSubject(), groupId, nextDefinitionId,
+                    beginTime, endTime, numPoints));
+            }
+            return SerialUtility.prepare(results, "MeasurementDataService.findDataForCompatibleGroup");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

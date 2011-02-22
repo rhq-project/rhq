@@ -16,12 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.measurement.uibean;
+package org.rhq.core.domain.measurement.ui;
 
 import java.io.Serializable;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public class MetricDisplayValue implements Serializable {
     /**
@@ -29,7 +26,6 @@ public class MetricDisplayValue implements Serializable {
      */
     private static final long serialVersionUID = 1L;
 
-    private static final Log log = LogFactory.getLog(MetricDisplayValue.class);
     private String valueFmt;
     private Double value;
 
@@ -37,6 +33,10 @@ public class MetricDisplayValue implements Serializable {
      * flags whether or not the value meets the criteria for comparison against a user specified threshold
      */
     private Boolean highlighted;
+
+    // need this for gwt
+    public MetricDisplayValue() {
+    }
 
     public MetricDisplayValue(double aValue) {
         this.value = aValue;
@@ -76,7 +76,6 @@ public class MetricDisplayValue implements Serializable {
             return valueFmt;
         }
 
-        log.trace("toString() returning unformatted value");
         return value.toString();
     }
 }

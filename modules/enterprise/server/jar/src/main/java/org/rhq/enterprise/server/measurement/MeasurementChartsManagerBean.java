@@ -47,6 +47,9 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.ui.MetricDisplayConstants;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -56,9 +59,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.PerformanceMonitorInterceptor;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplayValue;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -333,6 +333,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
         MeasurementDefinition definition = schedule.getDefinition();
         summary.setDefinitionId(definition.getId());
+        summary.setMetricName(definition.getName());
         summary.setLabel(definition.getDisplayName());
         summary.setDescription(definition.getDescription());
         summary.setMetricSource(schedule.getResource().getName());
@@ -496,6 +497,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             summary.setDefinitionId(definition.getId());
             summary.setUnits(definition.getUnits().getName());
             summary.setDescription(definition.getDescription());
+            summary.setMetricName(definition.getName());
             summary.setLabel(definition.getDisplayName());
             summary.setDescription(definition.getDescription());
             summary.setMetricSource(definition.getResourceType().getName());
@@ -593,6 +595,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 summary.setParent(resource.getParentResource());
                 summary.setUnits(definition.getUnits().getName());
                 summary.setDescription(definition.getDescription());
+                summary.setMetricName(definition.getName());
                 summary.setLabel(definition.getDisplayName());
                 summary.setMetricSource(definition.getResourceType().getName());
 

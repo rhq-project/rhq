@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.measurement.uibean;
+package org.rhq.core.domain.measurement.ui;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,11 +29,15 @@ import java.util.Map;
  * the monitoring UI.
  */
 public abstract class BaseMetricDisplay extends MeasurementSummary implements java.io.Serializable, Comparable {
+    private static final long serialVersionUID = 1L;
+
     private Long beginTimeFrame;
 
     private Long endTimeFrame;
 
-    private String label;
+    private String label; // the human readable name as it is defined in the definition/plugin descriptor
+
+    private String metricName; // the metric "name" aka the "property" as it is defined in the definition/plugin descriptor
 
     private String units;
 
@@ -211,7 +215,9 @@ public abstract class BaseMetricDisplay extends MeasurementSummary implements ja
     }
 
     /**
-     * Method getLabel. The name of the metric as it is displayed, perhaps the "alias"
+     * The label of the metric as it is displayed, perhaps the "alias".
+     * Note that this is NOT the official name of the metric - the name (or the "property" as it
+     * is called in the metric definition within the plugin descriptor) is obtains via {@link #getMetricName()}. 
      *
      * @return String
      */
@@ -298,6 +304,19 @@ public abstract class BaseMetricDisplay extends MeasurementSummary implements ja
 
     public void setMetricSource(String string) {
         metricSource = string;
+    }
+
+    /**
+     * This is the metric name, or as it is known in the plugin descriptor, the metric "property".
+     * This is the value that is used by the plugin itself to determine what property to probe
+     * to get the measurement. Note that this is specifically not the metric label.
+     */
+    public String getMetricName() {
+        return metricName;
+    }
+
+    public void setMetricName(String name) {
+        metricName = name;
     }
 
     public int getMetricSourceId() {

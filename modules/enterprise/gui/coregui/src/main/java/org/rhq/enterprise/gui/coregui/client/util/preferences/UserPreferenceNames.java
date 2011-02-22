@@ -27,7 +27,7 @@ public abstract class UserPreferenceNames {
     /**
      * Default is true.
      */
-    public static final String OPERATIONS_ = ".dashContent.operations.useLastCompleted";
+    //public static final String OPERATIONS_ = ".dashContent.operations.useLastCompleted";
 
     /**
      * Default is true.

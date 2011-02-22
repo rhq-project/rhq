@@ -593,7 +593,11 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                 config.selectedSubject = result;
                 verifyUserButton.setIcons(result == null ? authFailureIcon : authSuccessIcon);   
                 markForRedraw();
-                action.onSuccess(null);
+                if (result == null) {
+                    action.onFailure(null);
+                } else {
+                    action.onSuccess(null);
+                }
             }
         });
     }

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configur
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -38,7 +39,10 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryDataSource.Field;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -139,6 +143,14 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
             }
         });
 
+        addTableAction(extendLocatorId("Rollback"), MSG.view_configurationHistoryList_rollback(), null,
+            new AbstractTableAction(TableActionEnablement.SINGLE) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    ListGridRecord record = selection[0];
+                    rollback(record.getAttributeAsInt(Field.ID).intValue());
+                }
+            });
+
         super.configureTable();
     }
 
@@ -150,8 +162,23 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
     @Override
     public Canvas getDetailsView(int id) {
         ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView(this.getLocatorId());
-
         return detailView;
+    }
+
+    private void rollback(int configHistoryIdToRollbackTo) {
+        GWTServiceLookup.getConfigurationService().rollbackResourceConfiguration(this.resourceId.intValue(),
+            configHistoryIdToRollbackTo, new AsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_configurationHistoryList_rollback_success(), Severity.Info));
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_configurationHistoryList_rollback_failure(), caught);
+                }
+            });
     }
 
     // -------- Static Utility loaders ------------

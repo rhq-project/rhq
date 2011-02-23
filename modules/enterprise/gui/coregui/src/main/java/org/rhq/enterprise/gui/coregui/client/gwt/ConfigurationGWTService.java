@@ -25,6 +25,11 @@ import org.rhq.core.domain.util.PageList;
  */
 @RemoteServiceRelativePath("ConfigurationGWTService")
 public interface ConfigurationGWTService extends RemoteService {
+
+    void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
+
+    void rollbackResourceConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException;
 
     Configuration getPluginConfiguration(int resourceId) throws RuntimeException;

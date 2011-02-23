@@ -47,6 +47,24 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
+    public void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress)
+        throws RuntimeException {
+        try {
+            configurationManager.purgeResourceConfigurationUpdates(getSessionSubject(), configUpdateIds,
+                purgeInProgress);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void rollbackResourceConfiguration(int resourceId, int configHistoryId) throws RuntimeException {
+        try {
+            configurationManager.rollbackResourceConfiguration(getSessionSubject(), resourceId, configHistoryId);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
     public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException {
         try {
             ResourceConfigurationUpdate update = configurationManager.getLatestResourceConfigurationUpdate(

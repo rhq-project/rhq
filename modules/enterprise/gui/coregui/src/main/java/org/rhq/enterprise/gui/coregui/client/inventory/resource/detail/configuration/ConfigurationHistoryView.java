@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryView extends TableSection {
+public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryDataSource> {
     public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
         .view_configurationHistoryList_title());
 
@@ -136,14 +136,6 @@ public class ConfigurationHistoryView extends TableSection {
                     configs.add(update);
                 }
                 ConfigurationComparisonView.displayComparisonDialog(configs);
-            }
-        });
-
-        addTableAction(extendLocatorId("ShowDetail"), MSG.common_button_showDetails(), null, new AbstractTableAction(
-            TableActionEnablement.SINGLE) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ListGridRecord record = selection[0];
-                showDetails(record);
             }
         });
 

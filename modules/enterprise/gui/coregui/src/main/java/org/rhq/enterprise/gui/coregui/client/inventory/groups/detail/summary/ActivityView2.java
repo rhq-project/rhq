@@ -38,9 +38,11 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -88,7 +90,7 @@ public class ActivityView2 extends AbstractActivityView {
             getRecentOperations();
             getRecentConfigurationUpdates();
             getRecentOobs();
-            //            getRecentPkgHistory();
+            getRecentPkgHistory();
             getRecentMetrics();
         }
     }
@@ -395,63 +397,60 @@ public class ActivityView2 extends AbstractActivityView {
             });
     }
 
-    //    /** Fetches recent package history information and updates the DynamicForm instance with details.
-    //     */
-    //    private void getRecentPkgHistory() {
-    //        //        final int resourceId = this.resourceComposite.getResource().getId();
-    //        final int groupId = this.groupComposite.getResourceGroup().getId();
-    //        InstalledPackageCriteria criteria = new InstalledPackageCriteria();
-    //        //        criteria.addFilterResourceId(resourceId);
-    ////        criteria.addFilterResourceId(groupId);
-    //        criteria.addFilter(groupId);
-    //        PageControl pageControl = new PageControl(0, 5);
-    //        criteria.setPageControl(pageControl);
-    //
-    //        //        GWTServiceLookup.getContentService().getInstalledPackageHistoryForResource(resourceId, 5,
-    //        GWTServiceLookup.getContentService().getInstalledPackageHistoryForResource(resourceId, 5,
-    //            new AsyncCallback<PageList<InstalledPackageHistory>>() {
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving installed package history for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(PageList<InstalledPackageHistory> result) {
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //                    if (!result.isEmpty()) {
-    //                        for (InstalledPackageHistory history : result) {
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-    //                                .extendLocatorId(history.getPackageVersion().getFileName()
-    //                                    + history.getPackageVersion().getVersion()));
-    //                            row.setNumCols(3);
-    //
-    //                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
-    //                            String title = history.getPackageVersion().getFileName() + ":";
-    //                            String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
-    //                                + "&selectedHistoryId=" + history.getId();
-    //                            LinkItem link = newLinkItem(title, destination);
-    //                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(history
-    //                                .getTimestamp()));
-    //
-    //                            row.setItems(iconItem, link, time);
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent
-    //                            .extendLocatorId("None"), RECENT_PKG_HISTORY_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    //cleanup
-    //                    for (Canvas child : recentPkgHistoryContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentPkgHistoryContent.addChild(column);
-    //                    recentPkgHistoryContent.markForRedraw();
-    //                }
-    //            });
-    //    }
+    /** Fetches recent package history information and updates the DynamicForm instance with details.
+     */
+    private void getRecentPkgHistory() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+
+        GWTServiceLookup.getContentService().findInstalledPackageHistoryByCriteria(criteria,
+
+        new AsyncCallback<PageList<InstalledPackageHistory>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
+                    + caught.getMessage());
+            }
+
+            @Override
+            public void onSuccess(PageList<InstalledPackageHistory> result) {
+                VLayout column = new VLayout();
+                column.setHeight(10);
+                if (!result.isEmpty()) {
+                    for (InstalledPackageHistory history : result) {
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                            .extendLocatorId(history.getPackageVersion().getFileName()
+                                + history.getPackageVersion().getVersion()));
+                        row.setNumCols(3);
+
+                        StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                        String title = history.getPackageVersion().getFileName() + ":";
+                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                            + "&selectedHistoryId=" + history.getId();
+                        LinkItem link = newLinkItem(title, destination);
+                        StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(history.getTimestamp()));
+
+                        row.setItems(iconItem, link, time);
+                        column.addMember(row);
+                    }
+                } else {
+                    LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent.extendLocatorId("None"),
+                        RECENT_PKG_HISTORY_NONE);
+                    column.addMember(row);
+                }
+                //cleanup
+                for (Canvas child : recentPkgHistoryContent.getChildren()) {
+                    child.destroy();
+                }
+                recentPkgHistoryContent.addChild(column);
+                recentPkgHistoryContent.markForRedraw();
+            }
+        });
+    }
 
     /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
      * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant

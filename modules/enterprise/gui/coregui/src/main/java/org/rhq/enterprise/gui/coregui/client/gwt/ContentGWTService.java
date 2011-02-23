@@ -30,6 +30,7 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
@@ -43,6 +44,8 @@ public interface ContentGWTService extends RemoteService {
     PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) throws RuntimeException;
 
     PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count);
+
+    PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(InstalledPackageHistoryCriteria criteria);
 
     List<Architecture> getArchitectures() throws RuntimeException;
 

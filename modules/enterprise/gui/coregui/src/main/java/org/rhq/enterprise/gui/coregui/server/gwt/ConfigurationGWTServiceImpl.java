@@ -98,6 +98,17 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
+    public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(int resourceId) throws RuntimeException {
+        try {
+            PluginConfigurationUpdate update = configurationManager.getLatestPluginConfigurationUpdate(
+                getSessionSubject(), resourceId);
+            return SerialUtility.prepare(update, "ConfigurationService.getLatestPluginConfigurationUpdate");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
     public Configuration getPluginConfiguration(int resourceId) throws RuntimeException {
         try {
             Configuration configuration = configurationManager.getPluginConfiguration(getSessionSubject(), resourceId);

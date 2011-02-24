@@ -93,7 +93,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource<?>> extends LocatableHLayout implements RefreshableView {
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -801,11 +801,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler,
         com.google.gwt.event.dom.client.KeyPressHandler {
 
-        private Table table;
+        private Table<?> table;
         private SearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
 
-        public TableFilter(Table table) {
+        public TableFilter(Table<?> table) {
             super();
             setWidth100();
             setPadding(5);

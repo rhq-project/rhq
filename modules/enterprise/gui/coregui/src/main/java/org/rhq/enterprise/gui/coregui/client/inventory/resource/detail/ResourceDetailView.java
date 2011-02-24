@@ -58,8 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceComposit
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.HistoryPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
@@ -147,7 +147,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
             "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
         inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"),
-            HistoryPluginConfigurationView.VIEW_ID, null);
+            PluginConfigurationHistoryView.VIEW_ID, null);
         inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
             .view_tabs_common_groups()), null);
         inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
@@ -281,8 +281,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryConn, canvas, visible, true);
 
         // same test, use above setting for 'visible'
-        canvas = (visible) ? new HistoryPluginConfigurationView(this.inventoryConnHistory.extendLocatorId("View"),
-            this.resourceComposite) : null;
+        canvas = (visible) ? new PluginConfigurationHistoryView(this.inventoryConnHistory.extendLocatorId("View"),
+            this.resourceComposite.getResourcePermission().isInventory(), this.resourceComposite.getResource().getId())
+            : null;
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, canvas, visible, true);
 
         boolean canModifyMembership = globalPermissions.contains(Permission.MANAGE_INVENTORY);
@@ -364,7 +365,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.configurationTab, this.configCurrent, new ResourceConfigurationEditView(this
                 .extendLocatorId("ResourceConfigView"), resourceComposite), true, true);
 
-            updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(this
+            updateSubTab(this.configurationTab, this.configHistory, new ConfigurationHistoryView(this
                 .extendLocatorId("ConfigHistView"), this.resourceComposite.getResourcePermission().isConfigureWrite(),
                 resource.getId()), true, true);
         }

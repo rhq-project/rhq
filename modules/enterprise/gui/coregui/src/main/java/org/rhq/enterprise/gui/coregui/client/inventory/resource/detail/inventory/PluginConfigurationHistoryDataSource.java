@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -24,40 +24,41 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.AbstractConfigurationHistoryDataSource;
 
 /**
- * A data source that loads information about all the configuration changes that happened
+ * A data source that loads information about all the plugin configuration changes that happened
  * for a resource or across all inventory.
  *
- * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ConfigurationHistoryDataSource extends AbstractConfigurationHistoryDataSource<ResourceConfigurationUpdate> {
+public class PluginConfigurationHistoryDataSource extends
+    AbstractConfigurationHistoryDataSource<PluginConfigurationUpdate> {
 
-    public ConfigurationHistoryDataSource() {
+    public PluginConfigurationHistoryDataSource() {
         super();
     }
 
     @Override
     protected String getConfigurationUpdateStatusIcon(ConfigurationUpdateStatus status) {
-        return ImageManager.getResourceConfigurationIcon(status);
+        return ImageManager.getPluginConfigurationIcon(status);
     }
 
     @Override
     protected String getGroupConfigurationUpdateHistoryLink(Integer groupId, Number value) {
-        return LinkManager.getGroupResourceConfigurationUpdateHistoryLink(groupId, value.intValue());
+        return LinkManager.getGroupPluginConfigurationUpdateHistoryLink(groupId, value.intValue());
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
-        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
         criteria.fetchConfiguration(true);
         criteria.fetchResource(true);
         criteria.fetchGroupConfigurationUpdate(true);
@@ -69,8 +70,8 @@ public class ConfigurationHistoryDataSource extends AbstractConfigurationHistory
             criteria.addFilterResourceIds(resourceId);
         }
 
-        getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+        getConfigurationService().findPluginConfigurationUpdatesByCriteria(criteria,
+            new AsyncCallback<PageList<PluginConfigurationUpdate>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.dataSource_configurationHistory_error_fetchFailure(),
                         caught);
@@ -78,7 +79,7 @@ public class ConfigurationHistoryDataSource extends AbstractConfigurationHistory
                     processResponse(request.getRequestId(), response);
                 }
 
-                public void onSuccess(final PageList<ResourceConfigurationUpdate> result) {
+                public void onSuccess(final PageList<PluginConfigurationUpdate> result) {
                     final ListGridRecord[] records = buildRecords(result);
                     if (resourceId == null) {
                         response.setData(records);
@@ -89,10 +90,10 @@ public class ConfigurationHistoryDataSource extends AbstractConfigurationHistory
 
                     // we are obtaining a single resource's history items. Let's find out which is
                     // its latest, current config item so we can mark it as such
-                    getConfigurationService().getLatestResourceConfigurationUpdate(resourceId.intValue(),
-                        new AsyncCallback<ResourceConfigurationUpdate>() {
+                    getConfigurationService().getLatestPluginConfigurationUpdate(resourceId.intValue(),
+                        new AsyncCallback<PluginConfigurationUpdate>() {
                             @Override
-                            public void onSuccess(ResourceConfigurationUpdate latestResult) {
+                            public void onSuccess(PluginConfigurationUpdate latestResult) {
                                 if (latestResult != null) {
                                     for (ListGridRecord record : records) {
                                         boolean latest = record.getAttributeAsInt(Field.ID).intValue() == latestResult

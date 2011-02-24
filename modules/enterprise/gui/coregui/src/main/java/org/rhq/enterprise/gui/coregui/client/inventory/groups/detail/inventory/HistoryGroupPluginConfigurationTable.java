@@ -188,9 +188,8 @@ public class HistoryGroupPluginConfigurationTable extends Table {
             new AbstractTableAction(TableActionEnablement.SINGLE) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager
-                        .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
-                            .getId())
+                    CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
+                        HistoryGroupPluginConfigurationTable.this.group.getId(), null)
                         + "/" + selection[0].getAttribute("id") + "/Settings");
                 }
             });
@@ -199,9 +198,8 @@ public class HistoryGroupPluginConfigurationTable extends Table {
             .view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(TableActionEnablement.SINGLE) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                CoreGUI.goToView(LinkManager
-                    .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
-                        .getId())
+                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
+                    HistoryGroupPluginConfigurationTable.this.group.getId(), null)
                     + "/" + selection[0].getAttribute("id") + "/Members");
             }
         });

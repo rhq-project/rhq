@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -36,26 +36,26 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * @author Greg Hinkle
+ * @author John Mazzitelli
  */
-public class ConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
+public class PluginConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
 
-    public ConfigurationHistoryDetailView(String locatorId) {
+    public PluginConfigurationHistoryDetailView(String locatorId) {
         super(locatorId);
 
         setWidth100();
         setHeight100();
     }
 
-    private void displayHistory(final ResourceConfigurationUpdate update) {
+    private void displayHistory(final PluginConfigurationUpdate update) {
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(update.getResource().getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
 
                 public void onTypesLoaded(ResourceType type) {
-                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
-                    ConfigurationEditor editor = new ConfigurationEditor("ResConfigHist-"
+                    ConfigurationDefinition definition = type.getPluginConfigurationDefinition();
+                    ConfigurationEditor editor = new ConfigurationEditor("PluginConfigHist-"
                         + update.getResource().getName(), definition, update.getConfiguration());
                     editor.setReadOnly(true);
                     addMember(editor);
@@ -69,20 +69,20 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
 
         int updateId = viewPath.getCurrentAsInt();
 
-        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
         criteria.fetchConfiguration(true);
         criteria.fetchResource(true);
         criteria.addFilterId(updateId);
 
-        GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+        GWTServiceLookup.getConfigurationService().findPluginConfigurationUpdatesByCriteria(criteria,
+            new AsyncCallback<PageList<PluginConfigurationUpdate>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_configurationHistoryDetails_error_loadFailure(),
                         caught);
                 }
 
-                public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-                    ResourceConfigurationUpdate update = result.get(0);
+                public void onSuccess(PageList<PluginConfigurationUpdate> result) {
+                    PluginConfigurationUpdate update = result.get(0);
                     displayHistory(update);
                 }
             });

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -24,48 +24,50 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.AbstractConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
- * The main view that lists all resource configuration history items.
+ * The main view that lists all plugin configuration history items.
  * 
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ConfigurationHistoryView extends AbstractConfigurationHistoryView<ConfigurationHistoryDataSource> {
-    public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView", MSG
-        .view_configurationHistoryList_title());
+public class PluginConfigurationHistoryView extends
+    AbstractConfigurationHistoryView<PluginConfigurationHistoryDataSource> {
+    public static final ViewName VIEW_ID = new ViewName("PluginConfigurationHistoryView", MSG
+        .view_tabs_common_connectionSettingsHistory());
 
     /**
-     * Use this constructor to view config histories for all viewable Resources.
+     * Use this constructor to view plugin config histories for all viewable Resources.
      */
-    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm) {
+    public PluginConfigurationHistoryView(String locatorId, boolean hasWritePerm) {
         super(locatorId, VIEW_ID.getTitle(), hasWritePerm);
-        ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        PluginConfigurationHistoryDataSource datasource = new PluginConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
     /**
-     * Use this constructor to view the config history for the Resource with the specified ID.
+     * Use this constructor to view the plugin config history for the Resource with the specified ID.
      *
      * @param resourceId a Resource ID
      */
-    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm, int resourceId) {
+    public PluginConfigurationHistoryView(String locatorId, boolean hasWritePerm, int resourceId) {
         super(locatorId, VIEW_ID.getTitle(), hasWritePerm, resourceId);
-        ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        PluginConfigurationHistoryDataSource datasource = new PluginConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
     @Override
     public Canvas getDetailsView(int id) {
-        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView(this.getLocatorId());
+        PluginConfigurationHistoryDetailView detailView = new PluginConfigurationHistoryDetailView(this.getLocatorId());
         return detailView;
     }
 
     @Override
     protected void rollback(int configHistoryIdToRollbackTo) {
-        GWTServiceLookup.getConfigurationService().rollbackResourceConfiguration(getResourceId().intValue(),
+        GWTServiceLookup.getConfigurationService().rollbackPluginConfiguration(getResourceId().intValue(),
             configHistoryIdToRollbackTo, new AsyncCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
@@ -83,7 +85,7 @@ public class ConfigurationHistoryView extends AbstractConfigurationHistoryView<C
 
     @Override
     protected void delete(int[] doomedIds) {
-        GWTServiceLookup.getConfigurationService().purgeResourceConfigurationUpdates(doomedIds, true,
+        GWTServiceLookup.getConfigurationService().purgePluginConfigurationUpdates(doomedIds, true,
             new AsyncCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {

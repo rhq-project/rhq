@@ -38,9 +38,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
+public class AbstractConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
 
-    public ConfigurationHistoryDetailView(String locatorId) {
+    public AbstractConfigurationHistoryDetailView(String locatorId) {
         super(locatorId);
 
         setWidth100();
@@ -82,6 +82,7 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
                 }
 
                 public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
+
                     ResourceConfigurationUpdate update = result.get(0);
                     displayHistory(update);
                 }

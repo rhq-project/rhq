@@ -34,6 +34,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -60,6 +61,8 @@ public abstract class AbstractResourceConfigurationUpdate extends AbstractConfig
     private int id;
 
     public abstract Resource getResource();
+
+    public abstract AbstractGroupConfigurationUpdate getAbstractGroupConfigurationUpdate();
 
     protected AbstractResourceConfigurationUpdate() {
     }

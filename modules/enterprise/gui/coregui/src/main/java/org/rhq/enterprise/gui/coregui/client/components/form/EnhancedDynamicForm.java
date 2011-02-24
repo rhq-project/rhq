@@ -144,7 +144,11 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         for (FormItem item : itemsList) {
-            item.setValidateOnExit(true);
+            if (item instanceof StaticTextItem) {
+                item.setRequired(false);
+            } else {
+                item.setValidateOnExit(true);
+            }
 
             //item.setWidth("*"); // this causes a JavaScript exception ...  :-(
             item.setWidth(195);

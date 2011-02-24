@@ -122,15 +122,15 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
             }
         });
 
-        addTableAction(extendLocatorId("Rollback"), MSG.view_configurationHistoryList_rollback(), null,
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    if (selection != null && selection.length == 1) {
-                        ListGridRecord record = selection[0];
-                        rollback(record.getAttributeAsInt(Field.ID).intValue());
-                    }
+        addTableAction(extendLocatorId("Rollback"), MSG.view_configurationHistoryList_rollback(), MSG
+            .common_msg_areYouSure(), new AbstractTableAction(TableActionEnablement.SINGLE) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (selection != null && selection.length == 1) {
+                    ListGridRecord record = selection[0];
+                    rollback(record.getAttributeAsInt(Field.ID).intValue());
                 }
-            });
+            }
+        });
 
         super.configureTable();
     }

@@ -49,8 +49,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -63,12 +64,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  *
  * @author John Mazzitelli
  */
-public class HistoryPluginConfigurationTable extends Table<HistoryPluginConfigurationTable.DataSource> {
+public class HistoryPluginConfigurationView extends TableSection<HistoryPluginConfigurationView.DataSource> {
+    public static final ViewName VIEW_ID = new ViewName("ConnectionSettings", MSG
+        .view_tabs_common_connectionSettingsHistory());
+
     private final Resource resource;
     private final ResourcePermission resourcePerms;
 
-    public HistoryPluginConfigurationTable(String locatorId, ResourceComposite composite) {
-        super(locatorId, MSG.view_connectionSettingsHistory_table_title());
+    public HistoryPluginConfigurationView(String locatorId, ResourceComposite composite) {
+        super(locatorId, VIEW_ID.getTitle());
         this.resource = composite.getResource();
         this.resourcePerms = composite.getResourcePermission();
 
@@ -76,18 +80,23 @@ public class HistoryPluginConfigurationTable extends Table<HistoryPluginConfigur
     }
 
     @Override
+    protected String getDetailsLinkColumnName() {
+        return DataSource.ID;
+    }
+
+    @Override
     protected void configureTable() {
         ListGridField fieldId = new ListGridField(DataSource.ID, MSG.common_title_version());
         ListGridField fieldDateCreated = new ListGridField(DataSource.DATE_CREATED, MSG.common_title_dateCreated());
         ListGridField fieldLastUpdated = new ListGridField(DataSource.LAST_UPDATED, MSG.common_title_lastUpdated());
-        ListGridField fieldUser = new ListGridField(DataSource.USER, MSG.common_title_user());
         ListGridField fieldStatus = new ListGridField(DataSource.STATUS, MSG.common_title_status());
+        ListGridField fieldUser = new ListGridField(DataSource.USER, MSG.common_title_user());
 
         fieldId.setWidth("10%");
         fieldDateCreated.setWidth("35%");
         fieldLastUpdated.setWidth("35%");
-        fieldUser.setWidth("*");
         fieldStatus.setWidth("10%");
+        fieldUser.setWidth("*");
 
         fieldStatus.setType(ListGridFieldType.ICON);
         HashMap<String, String> statusIcons = new HashMap<String, String>(4);
@@ -103,7 +112,7 @@ public class HistoryPluginConfigurationTable extends Table<HistoryPluginConfigur
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {
-                final Window winModal = new LocatableWindow(HistoryPluginConfigurationTable.this
+                final Window winModal = new LocatableWindow(HistoryPluginConfigurationView.this
                     .extendLocatorId("statusDetailsWin"));
                 winModal.setTitle(MSG.view_connectionSettingsHistory_table_statusDetails());
                 winModal.setOverflow(Overflow.VISIBLE);
@@ -123,7 +132,7 @@ public class HistoryPluginConfigurationTable extends Table<HistoryPluginConfigur
                     }
                 });
 
-                LocatableHTMLPane htmlPane = new LocatableHTMLPane(HistoryPluginConfigurationTable.this
+                LocatableHTMLPane htmlPane = new LocatableHTMLPane(HistoryPluginConfigurationView.this
                     .extendLocatorId("statusDetailsPane"));
                 htmlPane.setMargin(10);
                 htmlPane.setDefaultWidth(500);
@@ -143,7 +152,7 @@ public class HistoryPluginConfigurationTable extends Table<HistoryPluginConfigur
         });
 
         ListGrid listGrid = getListGrid();
-        listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldUser, fieldStatus);
+        listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
 
         addTableAction(extendLocatorId("deleteAction"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(this.resourcePerms.isInventory() ? TableActionEnablement.ANY
@@ -252,7 +261,7 @@ public class HistoryPluginConfigurationTable extends Table<HistoryPluginConfigur
             ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
             PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
-            criteria.addFilterResourceIds(HistoryPluginConfigurationTable.this.resource.getId());
+            criteria.addFilterResourceIds(HistoryPluginConfigurationView.this.resource.getId());
 
             configurationService.findPluginConfigurationUpdatesByCriteria(criteria,
                 new AsyncCallback<PageList<PluginConfigurationUpdate>>() {

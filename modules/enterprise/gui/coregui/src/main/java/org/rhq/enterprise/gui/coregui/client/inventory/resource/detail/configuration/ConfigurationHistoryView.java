@@ -54,12 +54,14 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
         .view_configurationHistoryList_title());
 
     private Integer resourceId;
+    private boolean hasWritePerm; // can delete history or rollback to a previous config
 
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public ConfigurationHistoryView(String locatorId) {
+    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm) {
         super(locatorId, VIEW_ID.getTitle());
+        this.hasWritePerm = hasWritePerm;
         this.resourceId = null;
         ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
@@ -70,8 +72,9 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
      *
      * @param resourceId a Resource ID
      */
-    public ConfigurationHistoryView(String locatorId, int resourceId) {
+    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm, int resourceId) {
         super(locatorId, VIEW_ID.getTitle(), createCriteria(resourceId));
+        this.hasWritePerm = hasWritePerm;
         this.resourceId = resourceId;
         ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
@@ -90,7 +93,7 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
         getListGrid().sort(Field.ID, SortDirection.DESCENDING);
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(TableActionEnablement.ANY) {
+            new AbstractTableAction(hasWritePerm ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     if (selection != null && selection.length > 0) {
                         int[] doomedIds = new int[selection.length];
@@ -123,7 +126,8 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
         });
 
         addTableAction(extendLocatorId("Rollback"), MSG.view_configurationHistoryList_rollback(), MSG
-            .common_msg_areYouSure(), new AbstractTableAction(TableActionEnablement.SINGLE) {
+            .common_msg_areYouSure(), new AbstractTableAction(hasWritePerm ? TableActionEnablement.SINGLE
+            : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 if (selection != null && selection.length == 1) {
                     ListGridRecord record = selection[0];
@@ -198,8 +202,8 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
 
     // -------- Static Utility loaders ------------
 
-    public static ConfigurationHistoryView getHistoryOf(String locatorId, int resourceId) {
-        return new ConfigurationHistoryView(locatorId, resourceId);
+    public static ConfigurationHistoryView getHistoryOf(String locatorId, boolean hasWritePerm, int resourceId) {
+        return new ConfigurationHistoryView(locatorId, hasWritePerm, resourceId);
     }
 
 }

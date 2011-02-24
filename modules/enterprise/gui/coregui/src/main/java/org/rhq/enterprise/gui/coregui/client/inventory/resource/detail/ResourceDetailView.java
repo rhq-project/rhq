@@ -146,8 +146,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_child_history()), null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
             "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
-        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"), new ViewName(
-            "ConnectionSettingsHistory", MSG.view_tabs_common_connectionSettingsHistory()), null);
+        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"),
+            HistoryPluginConfigurationView.VIEW_ID, null);
         inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
             .view_tabs_common_groups()), null);
         inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
@@ -365,7 +365,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 .extendLocatorId("ResourceConfigView"), resourceComposite), true, true);
 
             updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(this
-                .extendLocatorId("ConfigHistView"), resource.getId()), true, true);
+                .extendLocatorId("ConfigHistView"), this.resourceComposite.getResourcePermission().isConfigureWrite(),
+                resource.getId()), true, true);
         }
     }
 

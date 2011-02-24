@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -552,7 +552,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             // List of Maps is a specially supported case with summary fields as columns in a table
             // Note: This field spans 3 columns.
             PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap) memberDefinition;
-            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyList, oddRow);
+            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyDefinitionList,
+                    propertyList, oddRow);
             fields.add(listOfMapsItem);
         } else if (memberDefinition instanceof PropertyDefinitionSimple) {
             SpacerItem unsetItem = new SpacerItem();
@@ -811,7 +812,9 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private CanvasItem buildListOfMapsField(final String locatorId,
-        final PropertyDefinitionMap memberPropertyDefinitionMap, final PropertyList propertyList, boolean oddRow) {
+                                            final PropertyDefinitionMap memberPropertyDefinitionMap,
+                                            PropertyDefinitionList propertyDefinitionList,
+                                            final PropertyList propertyList, boolean oddRow) {
         Log.debug("Building list-of-maps field for " + propertyList + "...");
 
         final ListGrid summaryTable = new ListGrid();
@@ -872,26 +875,29 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
+        boolean allSubDefsReadOnly = isAllReadOnly(propertyDefinitions);
+
         ListGridField editField = new ListGridField("edit", 20);
         editField.setType(ListGridFieldType.ICON);
-        //        editField.setIcon(Window.getImgURL(ImageManager.getEditIcon()));
-        editField.setCellIcon(Window.getImgURL(ImageManager.getEditIcon()));
+        final boolean mapReadOnly = this.readOnly || allSubDefsReadOnly;
+        String icon = (mapReadOnly) ? ImageManager.getViewIcon() : ImageManager.getEditIcon();
+        editField.setCellIcon(Window.getImgURL(icon));
         editField.setCanEdit(false);
         editField.setCanGroupBy(false);
         editField.setCanSort(false);
         editField.setCanHide(false);
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
-                Log.info("You want to edit: " + recordClickEvent.getRecord());
+                Log.debug("Editing property map: " + recordClickEvent.getRecord());
                 PropertyMap memberPropertyMap = (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                     RHQ_PROPERTY_ATTRIBUTE_NAME);
                 displayMapEditor(extendLocatorId("MapEdit"), summaryTable, recordClickEvent.getRecord(),
-                    memberPropertyDefinitionMap, propertyList, memberPropertyMap);
+                    memberPropertyDefinitionMap, propertyList, memberPropertyMap, mapReadOnly);
             }
         });
         fieldsList.add(editField);
 
-        if (!readOnly) {
+        if (!(readOnly || propertyDefinitionList.isReadOnly())) {
             ListGridField removeField = new ListGridField("remove", 20);
             removeField.setType(ListGridFieldType.ICON);
             //        removeField.setIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
@@ -930,16 +936,17 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-        IButton addRowButton = new IButton();
-        addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
-        addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                displayMapEditor(extendLocatorId("MapEdit"), summaryTable, null, memberPropertyDefinitionMap,
-                    propertyList, null);
-            }
-        });
-
-        toolStrip.addMember(addRowButton);
+        if (!(readOnly || propertyDefinitionList.isReadOnly())) {
+            IButton addRowButton = new IButton();
+            addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
+            addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    displayMapEditor(extendLocatorId("MapEdit"), summaryTable, null, memberPropertyDefinitionMap,
+                        propertyList, null, mapReadOnly);
+                }
+            });
+            toolStrip.addMember(addRowButton);
+        }
 
         summaryTableHolder.setMembers(summaryTable, toolStrip);
 
@@ -948,6 +955,17 @@ public class ConfigurationEditor extends LocatableVLayout {
         canvasItem.setEndRow(true);
 
         return canvasItem;
+    }
+
+    private static boolean isAllReadOnly(List<PropertyDefinition> propertyDefinitions) {
+        boolean allPropsDefsReadOnly = true;
+        for (PropertyDefinition subDef : propertyDefinitions) {
+            if (!subDef.isReadOnly()) {
+                allPropsDefsReadOnly = false;
+                break;
+            }
+        }
+        return allPropsDefsReadOnly;
     }
 
     private ListGridRecord[] buildSummaryRecords(PropertyList propertyList, List<PropertyDefinition> definitions) {
@@ -1428,7 +1446,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void displayMapEditor(String locatorId, final ListGrid summaryTable, final Record existingRecord,
-        PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map) {
+                                  PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map, boolean mapReadOnly) {
 
         final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(definition
             .getPropertyDefinitions().values());
@@ -1454,7 +1472,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         popup.centerInPage();
 
         final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
-        okButton.disable();
+        if (!mapReadOnly) {
+            okButton.disable();
+        }
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (newRow) {

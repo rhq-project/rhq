@@ -44,6 +44,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  * @author Ian Springer
  */
 public abstract class TestConfigurationFactory {
+
     public static ConfigurationDefinition createConfigurationDefinition() {
         ConfigurationDefinition configDef = new ConfigurationDefinition("TestConfig", "a test config");
 
@@ -308,4 +309,5 @@ public abstract class TestConfigurationFactory {
 
     private TestConfigurationFactory() {
     }
+
 }

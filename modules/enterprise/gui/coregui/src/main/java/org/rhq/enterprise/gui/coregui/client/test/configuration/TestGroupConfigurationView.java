@@ -48,7 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class TestGroupConfigurationView
     extends LocatableVLayout implements PropertyValueChangeListener {
-    public static final String VIEW_ID = "TestGroupConfig";
 
     private static final int GROUP_SIZE = 2;
 
@@ -127,16 +126,23 @@ public class TestGroupConfigurationView
             removeMember(editor);
         }
 
-        editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
+        editor = createConfigurationEditor();
+        addMember(editor);
+    }
+
+    protected GroupConfigurationEditor createConfigurationEditor() {
+        GroupConfigurationEditor editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
             this.memberConfigurations);
+        editor.setEditorTitle("Test Group Configuration");
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
-        addMember(editor);
+        return editor;
     }
 
     private void save() {
         CoreGUI.getMessageCenter().notify(
             new Message("Member configurations updated.", "Member configurations updated."));
         reloadConfiguration();
-    }    
+    }
+
 }

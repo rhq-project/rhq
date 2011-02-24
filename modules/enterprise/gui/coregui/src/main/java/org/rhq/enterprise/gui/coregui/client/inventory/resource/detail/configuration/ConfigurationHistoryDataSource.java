@@ -105,7 +105,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
     public ArrayList<ListGridField> getListGridFields(boolean includeResourceFields) {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField idField = new ListGridField(Field.ID, MSG.common_title_id());
+        ListGridField idField = new ListGridField(Field.ID, MSG.common_title_version());
         idField.setShowHover(true);
         idField.setHoverCustomizer(new HoverCustomizer() {
             @Override
@@ -240,7 +240,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
-        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, MSG.common_title_id());
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, MSG.common_title_version());
         idField.setPrimaryKey(true);
         fields.add(idField);
         return fields;

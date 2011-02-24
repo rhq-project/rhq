@@ -808,6 +808,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         public TableFilter(Table table) {
             super();
             setWidth100();
+            setPadding(5);
             this.table = table;
             //this.table.setTableTitle(null);
         }

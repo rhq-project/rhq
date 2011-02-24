@@ -83,6 +83,10 @@ public class LinkManager {
         }
     }
 
+    public static String getResourcePluginConfigurationUpdateHistoryLink(int groupId) {
+        return getResourceLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    }
+
     public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
         return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }

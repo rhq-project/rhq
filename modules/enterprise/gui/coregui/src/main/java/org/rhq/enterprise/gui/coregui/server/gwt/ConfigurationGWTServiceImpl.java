@@ -31,7 +31,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * 
+ * API for resource and plugin configurations for resources and groups.
  */
 public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implements ConfigurationGWTService {
 
@@ -47,6 +47,17 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
+    @Override
+    public void purgePluginConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException {
+        try {
+            this.configurationManager.purgePluginConfigurationUpdates(getSessionSubject(), configUpdateIds,
+                purgeInProgress);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
     public void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress)
         throws RuntimeException {
         try {
@@ -57,6 +68,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public void rollbackResourceConfiguration(int resourceId, int configHistoryId) throws RuntimeException {
         try {
             configurationManager.rollbackResourceConfiguration(getSessionSubject(), resourceId, configHistoryId);
@@ -65,6 +77,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException {
         try {
             ResourceConfigurationUpdate update = configurationManager.getLatestResourceConfigurationUpdate(
@@ -75,6 +88,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public Configuration getPluginConfiguration(int resourceId) throws RuntimeException {
         try {
             Configuration configuration = configurationManager.getPluginConfiguration(getSessionSubject(), resourceId);
@@ -84,6 +98,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) throws RuntimeException {
         try {
             ConfigurationDefinition definition = configurationManager.getPluginConfigurationDefinitionForResourceType(
@@ -94,6 +109,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public Configuration getResourceConfiguration(int resourceId) throws RuntimeException {
         try {
             Configuration configuration = configurationManager
@@ -104,6 +120,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId) throws RuntimeException {
         try {
             ConfigurationDefinition definition = configurationManager
@@ -114,6 +131,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Integer resourceId, Long beginDate,
         Long endDate, boolean suppressOldest, PageControl pc) throws RuntimeException {
         try {
@@ -125,6 +143,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration)
         throws RuntimeException {
         try {
@@ -136,6 +155,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration)
         throws RuntimeException {
         try {
@@ -147,6 +167,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
         ResourceConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
@@ -158,6 +179,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(
         PluginConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
@@ -169,6 +191,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(
         GroupResourceConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
@@ -181,6 +204,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(
         GroupPluginConfigurationUpdateCriteria criteria) throws RuntimeException {
         try {
@@ -192,6 +216,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId)
         throws RuntimeException {
         try {
@@ -212,6 +237,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
         throws RuntimeException {
         try {
@@ -231,6 +257,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(
         int groupUpdateId) throws RuntimeException {
         try {
@@ -250,6 +277,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public void updateResourceConfigurationsForGroup(int groupId,
         List<ResourceConfigurationComposite> resourceConfigurations) throws RuntimeException {
         try {
@@ -261,6 +289,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public void updatePluginConfigurationsForGroup(int groupId,
         List<ResourceConfigurationComposite> pluginConfigurations) throws RuntimeException {
         try {
@@ -272,6 +301,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds)
         throws RuntimeException {
         try {
@@ -282,6 +312,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
     public void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException {
         try {

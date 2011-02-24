@@ -58,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceComposit
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.HistoryPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
@@ -280,7 +281,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryConn, canvas, visible, true);
 
         // same test, use above setting for 'visible'
-        canvas = (visible) ? new Canvas() : null; // TODO: Add real canvas when visible
+        canvas = (visible) ? new HistoryPluginConfigurationView(this.inventoryConnHistory.extendLocatorId("View"),
+            this.resourceComposite) : null;
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, canvas, visible, true);
 
         boolean canModifyMembership = globalPermissions.contains(Permission.MANAGE_INVENTORY);

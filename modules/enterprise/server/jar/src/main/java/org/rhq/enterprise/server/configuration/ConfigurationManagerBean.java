@@ -808,8 +808,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 long duration = request.getDuration();
                 if (duration > timeout) {
 
-                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
-                        + request);
+                    log.info("Group Resource config update request seems to be orphaned - timing it out: " + request);
 
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
@@ -975,6 +974,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         resource.getPluginConfigurationUpdates().remove(doomedRequest);
         entityManager.remove(doomedRequest);
         entityManager.flush();
+
+        return;
+    }
+
+    public void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress) {
+        if ((configurationUpdateIds == null) || (configurationUpdateIds.length == 0)) {
+            return;
+        }
+
+        // TODO [mazz]: ugly - let's make this more efficient, just getting this to work first
+        for (int configurationUpdateId : configurationUpdateIds) {
+            purgePluginConfigurationUpdate(subject, configurationUpdateId, purgeInProgress);
+        }
 
         return;
     }

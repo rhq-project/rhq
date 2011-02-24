@@ -201,7 +201,33 @@ public interface ConfigurationManagerLocal {
 
     ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
+    /**
+     * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the
+     * given ID. Once this returns, the complete audit trail for that update will be gone and you will not be able to
+     * rollback to that configuration.
+     *
+     * <p>Under normal circumstances, you will not want to purge an update that is currently in progress. However, there
+     * may be conditions in which an update request "gets stuck" in the in-progress state, even though you know the
+     * agent will never report the completed request (typically caused by an unusual crash of the agent). In this case,
+     * you should pass <code>true</code> in for the <code>purgeInProgress</code> parameter to tell this method to delete
+     * the request even if it says it is in-progress.
+     *
+     * @param subject                the user who is requesting the purge
+     * @param configurationUpdateId identifies the update record to be deleted
+     * @param purgeInProgress       if <code>true</code>, delete it even if its
+     *                              {@link ConfigurationUpdateStatus#INPROGRESS in progress}
+     */
     public void purgePluginConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress);
+
+    /**
+     * This deletes one or more plugin configuration updates from the resource's plugin config history.
+     *
+     * @param subject                 the user who is requesting the purge
+     * @param configurationUpdateIds identifies the update records to be deleted
+     * @param purgeInProgress        if <code>true</code>, delete those even if
+     *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
+     */
+    void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
 
     /**
      * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the

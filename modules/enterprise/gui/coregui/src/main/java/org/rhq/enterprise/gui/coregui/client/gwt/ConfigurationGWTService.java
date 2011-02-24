@@ -21,10 +21,12 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- *
+ * API for resource and plugin configurations for resources and groups.
  */
 @RemoteServiceRelativePath("ConfigurationGWTService")
 public interface ConfigurationGWTService extends RemoteService {
+
+    void purgePluginConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
 
     void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
 

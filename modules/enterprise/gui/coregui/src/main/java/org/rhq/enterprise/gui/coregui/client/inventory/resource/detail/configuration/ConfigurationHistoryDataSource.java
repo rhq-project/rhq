@@ -71,6 +71,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         public static final String RESOURCE_TYPE_ID = "resourceTypeId";
         public static final String CONFIGURATION = "configuration";
         public static final String GROUP_CONFIG_UPDATE_ID = "groupConfigUpdateId";
+        public static final String GROUP_ID = "groupId"; // will only be non-null if group config update id is non-null
         public static final String DURATION = "duration";
         public static final String ERROR_MESSAGE = "errorMessage";
         public static final String MODIFIED_TIME = "modifiedTime";
@@ -193,7 +194,10 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
                 if (value == null) {
                     return MSG.dataSource_configurationHistory_updateType_individual();
                 }
-                return MSG.dataSource_configurationHistory_updateType_group();
+                Integer groupId = record.getAttributeAsInt(Field.GROUP_ID);
+                return "<a href=\""
+                    + LinkManager.getGroupResourceConfigurationUpdateHistoryLink(groupId, ((Number) value).intValue())
+                    + "\">" + MSG.dataSource_configurationHistory_updateType_group() + "</a>";
             }
         });
         fields.add(updateTypeField);
@@ -330,6 +334,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         }
         if (from.getGroupConfigurationUpdate() != null) {
             record.setAttribute(Field.GROUP_CONFIG_UPDATE_ID, from.getGroupConfigurationUpdate().getId());
+            record.setAttribute(Field.GROUP_ID, from.getGroupConfigurationUpdate().getGroup().getId()); // note group must be eagerly loaded here
         }
         record.setAttribute(Field.OBJECT, from);
         return record;

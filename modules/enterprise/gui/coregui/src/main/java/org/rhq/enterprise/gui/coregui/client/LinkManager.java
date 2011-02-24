@@ -87,6 +87,10 @@ public class LinkManager {
         return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
 
+    public static String getGroupResourceConfigurationUpdateHistoryLink(int groupId, int groupUpdateHistoryId) {
+        return getResourceGroupLink(groupId) + "/Configuration/History/" + groupUpdateHistoryId;
+    }
+
     public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {
         return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
     }

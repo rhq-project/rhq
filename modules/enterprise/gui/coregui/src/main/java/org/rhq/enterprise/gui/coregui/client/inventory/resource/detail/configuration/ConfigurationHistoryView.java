@@ -173,7 +173,7 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_configurationHistoryList_rollback_success(), Severity.Info));
-                    CoreGUI.refresh();
+                    refresh();
                 }
 
                 @Override
@@ -190,7 +190,7 @@ public class ConfigurationHistoryView extends TableSection<ConfigurationHistoryD
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_configurationHistoryList_delete_success(), Severity.Info));
-                    CoreGUI.refresh();
+                    refresh();
                 }
 
                 @Override

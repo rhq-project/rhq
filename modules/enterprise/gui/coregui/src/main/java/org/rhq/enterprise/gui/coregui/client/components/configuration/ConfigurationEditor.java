@@ -161,6 +161,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     private int resourceTypeId;
     private ConfigType configType;
 
+    private String editorTitle = null;
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
@@ -202,6 +203,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    public String getEditorTitle() {
+        return editorTitle;
+    }
+
+    public void setEditorTitle(String title) {
+        this.editorTitle = title;
     }
 
     public void showError(Throwable failure) {
@@ -366,6 +375,14 @@ public class ConfigurationEditor extends LocatableVLayout {
         LocatableToolStrip toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
         toolStrip.setBackgroundImage(null);
         toolStrip.setWidth100();
+        toolStrip.setMembersMargin(3);
+        toolStrip.setPadding(3);
+
+        if (getEditorTitle() != null) {
+            Label titleLabel = new Label(getEditorTitle());
+            titleLabel.setWrap(false);
+            toolStrip.addMember(titleLabel);
+        }
 
         Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
         for (SectionStackSection section : sectionStack.getSections()) {
@@ -390,9 +407,6 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         });
         menu.addItem(hideAllItem);
-
-        // TODO GH: Save button as saveListener() or remove the buttons from this form and have
-        //          the container provide them?
 
         toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
             .view_configEdit_jumpToSection(), menu));

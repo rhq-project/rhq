@@ -207,6 +207,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
         this.resource = resource;
     }
 
+    @Override
     public Resource getResource() {
         return resource;
     }

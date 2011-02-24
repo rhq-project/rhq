@@ -165,6 +165,24 @@ public interface ConfigurationManagerLocal {
         throws ConfigurationUpdateException;
 
     /**
+     * This method is called when a user has requested to change the plugin configuration for an existing resource to
+     * one of its previous values. If the user does not have the proper permissions to change the resource's
+     * plugin configuration, an exception is thrown.
+     *
+     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
+     * sent. Once the agent finishes with the request, it will send the completed request information to
+     * {@link #completePluginConfigurationUpdate}.</p>
+     *
+     * @param  subject          the user who is requesting the update
+     * @param  resourceId      identifies the resource to be updated
+     * @param  configHistoryId the id of the resource's previous configuration to rollback to
+     *
+     * @throws ConfigurationUpdateException if the configHistoryId does not exist
+     */
+    void rollbackPluginConfiguration(Subject subject, int resourceId, int configHistoryId)
+        throws ConfigurationUpdateException;
+
+    /**
      * For internal use only - do not call this method. This is for
      * {@link #updateResourceConfiguration(Subject, int, Configuration)} to call with REQUIRES_NEW transaction scope so
      * it can force the new request to be committed to the DB. Also used by

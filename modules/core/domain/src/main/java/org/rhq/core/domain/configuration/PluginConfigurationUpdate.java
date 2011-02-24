@@ -154,6 +154,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
         this.resource = resource;
     }
 
+    @Override
     public Resource getResource() {
         return resource;
     }

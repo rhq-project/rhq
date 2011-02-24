@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
@@ -48,14 +50,17 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryDataSource.Field;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
@@ -190,6 +195,46 @@ public class HistoryPluginConfigurationView extends TableSection<HistoryPluginCo
                     });
                 }
             });
+
+        addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
+            TableActionEnablement.MULTIPLE) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ArrayList<PluginConfigurationUpdate> configs = new ArrayList<PluginConfigurationUpdate>();
+                for (ListGridRecord record : selection) {
+                    PluginConfigurationUpdate update = (PluginConfigurationUpdate) record
+                        .getAttributeAsObject(DataSource.OBJECT);
+                    configs.add(update);
+                }
+                ConfigurationComparisonView.displayComparisonDialog(configs);
+            }
+        });
+
+        addTableAction(extendLocatorId("Rollback"), MSG.view_connectionSettingsHistory_table_rollback(), MSG
+            .common_msg_areYouSure(), new AbstractTableAction(
+            this.resourcePerms.isInventory() ? TableActionEnablement.SINGLE : TableActionEnablement.NEVER) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (selection != null && selection.length == 1) {
+                    ListGridRecord record = selection[0];
+                    GWTServiceLookup.getConfigurationService().rollbackPluginConfiguration(resource.getId(),
+                        record.getAttributeAsInt(Field.ID).intValue(), new AsyncCallback<Void>() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_connectionSettingsHistory_table_rollback_success(),
+                                        Severity.Info));
+                                refresh();
+                            }
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_connectionSettingsHistory_table_rollback_failure(), caught);
+                            }
+                        });
+                }
+            }
+        });
+
     }
 
     private String getStatusHtmlString(Record record) {
@@ -282,5 +327,11 @@ public class HistoryPluginConfigurationView extends TableSection<HistoryPluginCo
                     }
                 });
         }
+    }
+
+    @Override
+    public Canvas getDetailsView(int id) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

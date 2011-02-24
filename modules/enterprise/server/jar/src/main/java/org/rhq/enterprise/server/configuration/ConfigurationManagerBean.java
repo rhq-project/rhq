@@ -1184,6 +1184,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
+    public void rollbackPluginConfiguration(Subject subject, int resourceId, int configHistoryId)
+        throws ConfigurationUpdateException {
+        PluginConfigurationUpdate configurationUpdateHistory = entityManager.find(PluginConfigurationUpdate.class,
+            configHistoryId);
+        Configuration configuration = configurationUpdateHistory.getConfiguration();
+        if (configuration == null) {
+            throw new ConfigurationUpdateException("No plugin configuration history element exists with id = '"
+                + configHistoryId + "'");
+        }
+
+        updatePluginConfiguration(subject, resourceId, configuration);
+    }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,

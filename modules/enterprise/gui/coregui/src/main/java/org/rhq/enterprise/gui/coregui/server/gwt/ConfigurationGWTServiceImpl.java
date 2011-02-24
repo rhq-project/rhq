@@ -78,6 +78,15 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
+    public void rollbackPluginConfiguration(int resourceId, int configHistoryId) throws RuntimeException {
+        try {
+            configurationManager.rollbackPluginConfiguration(getSessionSubject(), resourceId, configHistoryId);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
     public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException {
         try {
             ResourceConfigurationUpdate update = configurationManager.getLatestResourceConfigurationUpdate(

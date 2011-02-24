@@ -35,9 +35,9 @@ import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -172,7 +172,7 @@ public class ConfigurationComparisonView extends VLayout {
         parent.setChildren(children.toArray(new TreeNode[children.size()]));
     }
 
-    public static void displayComparisonDialog(final ArrayList<ResourceConfigurationUpdate> configs) {
+    public static void displayComparisonDialog(final ArrayList<? extends AbstractResourceConfigurationUpdate> configs) {
         int resourceId = configs.get(0).getResource().getResourceType().getId();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceId,
             EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
@@ -184,7 +184,7 @@ public class ConfigurationComparisonView extends VLayout {
 
                     ArrayList<Configuration> configurations = new ArrayList<Configuration>();
                     ArrayList<String> titles = new ArrayList<String>();
-                    for (ResourceConfigurationUpdate update : configs) {
+                    for (AbstractResourceConfigurationUpdate update : configs) {
                         configurations.add(update.getConfiguration());
                         titles.add(String.valueOf(update.getId()));
                     }

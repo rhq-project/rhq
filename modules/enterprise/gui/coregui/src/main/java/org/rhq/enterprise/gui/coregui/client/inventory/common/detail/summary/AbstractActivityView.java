@@ -54,6 +54,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
     protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
     protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
     protected LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
+    protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(extendLocatorId("RecentBundleDeploy"));
 
     //retrieve localized text
     protected String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
@@ -70,6 +71,8 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
     protected String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
     protected String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
     protected String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
+    protected String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
+    protected String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
 
     private ResourceGroupComposite groupComposite = null;
 
@@ -92,11 +95,13 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         HTMLFlow divider3 = new HTMLFlow("<hr/>");
         HTMLFlow divider4 = new HTMLFlow("<hr/>");
         HTMLFlow divider5 = new HTMLFlow("<hr/>");
+        HTMLFlow divider6 = new HTMLFlow("<hr/>");
         divider1.setWidth("50%");
         divider2.setWidth("50%");
         divider3.setWidth("50%");
         divider4.setWidth("50%");
         divider5.setWidth("50%");
+        divider6.setWidth("50%");
 
         //leftPane
         leftPane.setWidth("50%");
@@ -165,6 +170,14 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
             rightPane.addMember(recentPkgHistoryTitle);
             rightPane.addMember(recentPkgHistoryContent);
             recentPkgHistoryContent.setHeight(20);
+        }
+
+        HLayout recentBundleDeployTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_BUNDLE_DEPLOY);
+        if (((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+            rightPane.addMember(divider6);
+            rightPane.addMember(recentBundleDeployTitle);
+            rightPane.addMember(recentBundleDeployContent);
+            recentBundleDeployTitle.setHeight(20);
         }
 
         addMember(leftPane);

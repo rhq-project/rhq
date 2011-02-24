@@ -37,9 +37,11 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.GroupBundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
@@ -86,12 +88,13 @@ public class ActivityView2 extends AbstractActivityView {
         getRecentEventUpdates();
         if ((groupComposite != null)
             && (groupComposite.getResourceGroup().getGroupCategory().equals(GroupCategory.COMPATIBLE))) {//CompatibleGroup
-            //TODO: spinder need to drive these calls off off facet availability
+            //TODO: spinder should we drive these calls off of facet availability?
             getRecentOperations();
             getRecentConfigurationUpdates();
             getRecentOobs();
             getRecentPkgHistory();
             getRecentMetrics();
+            getRecentBundleDeployments();
         }
     }
 
@@ -590,5 +593,64 @@ public class ActivityView2 extends AbstractActivityView {
         }
         recentMeasurementsContent.addChild(column);
         recentMeasurementsContent.markForRedraw();
+    }
+
+    /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
+     */
+    private void getRecentBundleDeployments() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+        criteria.fetchDestination(true);
+        criteria.fetchBundleVersion(true);
+
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<BundleDeployment> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (BundleDeployment deployment : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
+                                .extendLocatorId(deployment.getBundleVersion().getName()
+                                    + deployment.getBundleVersion().getVersion()));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                            String title = deployment.getBundleVersion().getName() + "["
+                                + deployment.getBundleVersion().getVersion() + "]:";
+                            String destination = ReportDecorator.GWT_BUNDLE_URL
+                                + deployment.getBundleVersion().getBundle().getId() + "/destinations/"
+                                + deployment.getDestination().getId();
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter
+                                .format(deployment.getCtime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentBundleDeployContent
+                            .extendLocatorId("None"), RECENT_BUNDLE_DEPLOY_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentBundleDeployContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentBundleDeployContent.addChild(column);
+                    recentBundleDeployContent.markForRedraw();
+                }
+            });
     }
 }

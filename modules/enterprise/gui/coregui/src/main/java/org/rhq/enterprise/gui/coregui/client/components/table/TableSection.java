@@ -108,13 +108,13 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         }
     }
 
-    /* 
-     * The default implementation wraps the @{link getDetailsLinkColumnCellFormatter()} column with the
-     * @{link getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
+    /**
+     * The default implementation wraps the {@link getDetailsLinkColumnCellFormatter()} column with the
+     * {@link getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
      * view, given the 'id'. Also, establishes a double click handler for the row which invokes
-     * @{link showDetails()}</br>
+     * {@link showDetails()}</br>
      * </br>
-     * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields. 
+     * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields.
      * 
      * @see org.rhq.enterprise.gui.coregui.client.components.table.Table#configureTable()
      */

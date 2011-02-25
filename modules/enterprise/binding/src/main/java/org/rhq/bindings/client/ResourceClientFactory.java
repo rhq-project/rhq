@@ -1,14 +1,30 @@
 package org.rhq.bindings.client;
 
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.jws.WebParam;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javassist.CannotCompileException;
 import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
 import javassist.CtNewMethod;
+import javassist.NotFoundException;
 import javassist.bytecode.ParameterAnnotationsAttribute;
+import javassist.bytecode.annotation.Annotation;
+import javassist.bytecode.annotation.StringMemberValue;
 import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.ProxyFactory;
 
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
@@ -20,17 +36,19 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
  */
 public class ResourceClientFactory {
 
-    private org.rhq.bindings.client.RhqFacade rhqFacade;
+    private static final Log LOG = LogFactory.getLog(ResourceClientFactory.class);
+    
+    private RhqFacade rhqFacade;
     private PrintWriter outputWriter;
     
-    public ResourceClientFactory(org.rhq.bindings.client.RhqFacade remoteClient, PrintWriter outputWriter) {
+    public ResourceClientFactory(RhqFacade remoteClient, PrintWriter outputWriter) {
         this.rhqFacade = remoteClient;
         this.outputWriter = outputWriter;
     }
 
-    private static java.util.concurrent.atomic.AtomicInteger classIndex = new java.util.concurrent.atomic.AtomicInteger();
+    private static AtomicInteger classIndex = new AtomicInteger();
 
-    public org.rhq.bindings.client.RhqFacade getRemoteClient() {
+    public RhqFacade getRemoteClient() {
         return rhqFacade;
     }
     
@@ -38,60 +56,60 @@ public class ResourceClientFactory {
         return outputWriter;
     }
     
-    public org.rhq.bindings.client.ResourceClientProxy getResource(int resourceId) {
+    public ResourceClientProxy getResource(int resourceId) {
 
-        org.rhq.bindings.client.ResourceClientProxy proxy = new org.rhq.bindings.client.ResourceClientProxy(this, resourceId);
-        java.lang.Class<?> customInterface = null;
+        ResourceClientProxy proxy = new ResourceClientProxy(this, resourceId);
+        Class<?> customInterface = null;
         try {
             // define the dynamic class
-            javassist.ClassPool pool = ClassPool.getDefault();
-            javassist.CtClass customClass = pool.makeInterface(org.rhq.bindings.client.ResourceClientProxy.class.getName() + "__Custom__"
+            ClassPool pool = ClassPool.getDefault();
+            CtClass customClass = pool.makeInterface(ResourceClientProxy.class.getName() + "__Custom__"
                     + classIndex.getAndIncrement());
 
-            for (java.lang.String key : proxy.allProperties.keySet()) {
-                java.lang.Object prop = proxy.allProperties.get(key);
+            for (String key : proxy.allProperties.keySet()) {
+                Object prop = proxy.allProperties.get(key);
 
-                if (prop instanceof org.rhq.bindings.client.ResourceClientProxy.Measurement) {
-                    org.rhq.bindings.client.ResourceClientProxy.Measurement m = (org.rhq.bindings.client.ResourceClientProxy.Measurement) prop;
-                    java.lang.String name = org.rhq.bindings.client.ResourceClientProxy.getterName(key);
+                if (prop instanceof ResourceClientProxy.Measurement) {
+                    ResourceClientProxy.Measurement m = (ResourceClientProxy.Measurement) prop;
+                    String name = ResourceClientProxy.getterName(key);
 
                     try {
-                        org.rhq.bindings.client.ResourceClientProxy.class.getMethod(name);
-                    } catch (java.lang.NoSuchMethodException nsme) {
-                        javassist.CtMethod method = CtNewMethod.abstractMethod(pool.get(org.rhq.bindings.client.ResourceClientProxy.Measurement.class.getName()),
-                                org.rhq.bindings.client.ResourceClientProxy.getterName(key), new javassist.CtClass[0], new javassist.CtClass[0], customClass);
+                        ResourceClientProxy.class.getMethod(name);
+                    } catch (NoSuchMethodException nsme) {
+                        CtMethod method = CtNewMethod.abstractMethod(pool.get(ResourceClientProxy.Measurement.class.getName()),
+                                ResourceClientProxy.getterName(key), new CtClass[0], new CtClass[0], customClass);
                         customClass.addMethod(method);
                     }
-                } else if (prop instanceof org.rhq.bindings.client.ResourceClientProxy.Operation) {
-                    org.rhq.bindings.client.ResourceClientProxy.Operation o = (org.rhq.bindings.client.ResourceClientProxy.Operation) prop;
+                } else if (prop instanceof ResourceClientProxy.Operation) {
+                    ResourceClientProxy.Operation o = (ResourceClientProxy.Operation) prop;
 
-                    java.util.LinkedHashMap<java.lang.String, javassist.CtClass> types = ConfigurationClassBuilder.translateParameters(o
+                    LinkedHashMap<String, CtClass> types = ConfigurationClassBuilder.translateParameters(o
                             .getDefinition().getParametersConfigurationDefinition());
 
-                    javassist.CtClass[] params = new javassist.CtClass[types.size()];
+                    CtClass[] params = new CtClass[types.size()];
                     int x = 0;
-                    for (java.lang.String param : types.keySet()) {
+                    for (String param : types.keySet()) {
                         params[x++] = types.get(param);
                     }
 
-                    javassist.CtMethod method = CtNewMethod.abstractMethod(ConfigurationClassBuilder.translateConfiguration(o
-                            .getDefinition().getResultsConfigurationDefinition()), org.rhq.bindings.client.ResourceClientProxy.simpleName(key), params,
+                    CtMethod method = CtNewMethod.abstractMethod(ConfigurationClassBuilder.translateConfiguration(o
+                            .getDefinition().getResultsConfigurationDefinition()), ResourceClientProxy.simpleName(key), params,
                             new javassist.CtClass[0], customClass);
 
                     // Setup @WebParam annotations so the signatures have the config prop names
-                    javassist.bytecode.annotation.Annotation[][] newAnnotations = new javassist.bytecode.annotation.Annotation[params.length][1];
+                    Annotation[][] newAnnotations = new Annotation[params.length][1];
                     int i = 0;
-                    for (java.lang.String paramName : types.keySet()) {
-                        newAnnotations[i] = new javassist.bytecode.annotation.Annotation[1];
+                    for (String paramName : types.keySet()) {
+                        newAnnotations[i] = new Annotation[1];
 
-                        newAnnotations[i][0] = new javassist.bytecode.annotation.Annotation(javax.jws.WebParam.class.getName(), method.getMethodInfo()
+                        newAnnotations[i][0] = new Annotation(WebParam.class.getName(), method.getMethodInfo()
                                 .getConstPool());
-                        newAnnotations[i][0].addMemberValue("name", new javassist.bytecode.annotation.StringMemberValue(paramName, method
+                        newAnnotations[i][0].addMemberValue("name", new StringMemberValue(paramName, method
                                 .getMethodInfo().getConstPool()));
                         i++;
                     }
 
-                    javassist.bytecode.ParameterAnnotationsAttribute newAnnotationsAttribute = new javassist.bytecode.ParameterAnnotationsAttribute(
+                    ParameterAnnotationsAttribute newAnnotationsAttribute = new ParameterAnnotationsAttribute(
                             method.getMethodInfo().getConstPool(), ParameterAnnotationsAttribute.visibleTag);
                     newAnnotationsAttribute.setAnnotations(newAnnotations);
                     method.getMethodInfo().addAttribute(newAnnotationsAttribute);
@@ -101,17 +119,17 @@ public class ResourceClientFactory {
             }
 
             customInterface = customClass.toClass();
-        } catch (javassist.NotFoundException e) {
-            e.printStackTrace();
-        } catch (javassist.CannotCompileException e) {
-            e.printStackTrace();
-        } catch (java.lang.Exception e) {
-            e.printStackTrace();
+        } catch (NotFoundException e) {
+            LOG.error("Could not create custom interface for resource with id " + resourceId, e);
+        } catch (CannotCompileException e) {
+            LOG.error("Could not create custom interface for resource with id " + resourceId, e);
+        } catch (Exception e) {
+            LOG.error("Could not create custom interface for resource with id " + resourceId, e);
         }
 
         if (customInterface != null) {
 
-            java.util.List<java.lang.Class<?>> interfaces = new java.util.ArrayList<java.lang.Class<?>>();
+            List<Class<?>> interfaces = new ArrayList<Class<?>>();
             interfaces.add(customInterface);
             if (proxy.resourceConfigurationDefinition != null) {
                 interfaces.add(getResourceConfigurableInterface());
@@ -126,21 +144,21 @@ public class ResourceClientFactory {
 
             interfaces.addAll(getAdditionalInterfaces(proxy));
             
-            javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
-            proxyFactory.setInterfaces(interfaces.toArray(new java.lang.Class[interfaces.size()]));
-            proxyFactory.setSuperclass(org.rhq.bindings.client.ResourceClientProxy.class);
-            org.rhq.bindings.client.ResourceClientProxy proxied = null;
+            ProxyFactory proxyFactory = new ProxyFactory();
+            proxyFactory.setInterfaces(interfaces.toArray(new Class[interfaces.size()]));
+            proxyFactory.setSuperclass(ResourceClientProxy.class);
+            ResourceClientProxy proxied = null;
             try {
-                proxied = (org.rhq.bindings.client.ResourceClientProxy) proxyFactory.create(new java.lang.Class[]{}, new java.lang.Object[]{},
+                proxied = (ResourceClientProxy) proxyFactory.create(new Class[]{}, new Object[]{},
                         instantiateMethodHandler(proxy, interfaces, rhqFacade));
-            } catch (java.lang.InstantiationException e) {
-                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-            } catch (java.lang.IllegalAccessException e) {
-                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-            } catch (java.lang.NoSuchMethodException e) {
-                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            } catch (InstantiationException e) {
+                LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+            } catch (IllegalAccessException e) {
+                LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+            } catch (NoSuchMethodException e) {
+                LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+            } catch (InvocationTargetException e) {
+                LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
             }
             return proxied;
         }
@@ -149,22 +167,22 @@ public class ResourceClientFactory {
     }
     
     protected Class<?> getResourceConfigurableInterface() {
-        return org.rhq.bindings.client.ResourceClientProxy.ResourceConfigurable.class;
+        return ResourceClientProxy.ResourceConfigurable.class;
     }
     
     protected Class<?> getPluginConfigurableInterface() {
-        return org.rhq.bindings.client.ResourceClientProxy.PluginConfigurable.class;
+        return ResourceClientProxy.PluginConfigurable.class;
     }
     
     protected Class<?> getContentBackedInterface() {
-        return org.rhq.bindings.client.ResourceClientProxy.ContentBackedResource.class;
+        return ResourceClientProxy.ContentBackedResource.class;
     }
     
     protected Set<Class<?>> getAdditionalInterfaces(ResourceClientProxy proxy) {
         return Collections.emptySet();
     }
     
-    protected MethodHandler instantiateMethodHandler(ResourceClientProxy proxy, List<Class<?>> interfaces, org.rhq.bindings.client.RhqFacade remoteClient) {
-        return new org.rhq.bindings.client.ResourceClientProxy.ClientProxyMethodHandler(proxy, remoteClient);
+    protected MethodHandler instantiateMethodHandler(ResourceClientProxy proxy, List<Class<?>> interfaces, RhqFacade remoteClient) {
+        return new ResourceClientProxy.ClientProxyMethodHandler(proxy, remoteClient);
     }
 }

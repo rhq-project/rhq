@@ -51,6 +51,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class TestRemoteServiceStatisticsView extends Table {
 
+    public static void showInWindow() {
+        new StatisticsWindow("StatisticsWindow").show();
+    }
+
     public static final String TABLE_TITLE = "Remote Service Statistics";
 
     // these are used both as the name of the fields, titles of the headers and the columns of the CSV output
@@ -286,7 +290,7 @@ public class TestRemoteServiceStatisticsView extends Table {
         }
     }
 
-    class StatisticsWindow extends LocatableWindow {
+    static class StatisticsWindow extends LocatableWindow {
         private Timer blinkTimer;
 
         public StatisticsWindow(String locatorId) {

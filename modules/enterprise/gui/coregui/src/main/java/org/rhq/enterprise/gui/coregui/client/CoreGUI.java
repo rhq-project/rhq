@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
+import org.rhq.enterprise.gui.coregui.client.test.i18n.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -132,6 +133,15 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 }
             });
         }
+
+        KeyIdentifier statisticsWindowKey = new KeyIdentifier();
+        statisticsWindowKey.setCtrlKey(true);
+        statisticsWindowKey.setKeyName("S");
+        Page.registerKey(statisticsWindowKey, new KeyCallback() {
+            public void execute(String keyName) {
+                TestRemoteServiceStatisticsView.showInWindow();
+            }
+        });
 
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {

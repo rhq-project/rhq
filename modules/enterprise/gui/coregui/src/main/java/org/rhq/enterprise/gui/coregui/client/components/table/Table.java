@@ -93,7 +93,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table<DS extends RPCDataSource<?>> extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";

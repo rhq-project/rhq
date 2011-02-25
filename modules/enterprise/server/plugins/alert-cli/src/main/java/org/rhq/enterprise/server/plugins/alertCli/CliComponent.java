@@ -22,8 +22,10 @@ package org.rhq.enterprise.server.plugins.alertCli;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -35,15 +37,20 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.Criteria.Restriction;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.DisambiguationReportRenderer;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -51,6 +58,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
  * The plugin component for controlling the CLI alerts.
@@ -73,7 +81,8 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private static final String PROP_ALERT_DEFINITION_NAME = "alertDefinitionName";
     private static final String PROP_RESOURCE_PATH = "resourcePath";
     private static final String PROP_RESOURCE_ID = "resourceId";
-    private static final String PROP_MISCONFIGURED_ALERT_DEFS = "misconfiguredAlertDefs";
+    private static final String PROP_MISSING_USERS = "missingUsers";
+    private static final String PROP_MISSING_SCRIPTS = "missingScripts";
     private static final String PROP_ALERT_DEFINITION = "alertDefinition";
     private static final String PROP_ALERT_DEFINITION_ID = "alertDefinitionId";
     private static final String PROP_USER_NAME = "userName";
@@ -87,7 +96,7 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private SubjectManagerLocal subjectManager;
     
     public void initialize(ServerPluginContext context) throws Exception {
-        pluginName = context.getPluginEnvironment().getPluginDescriptor().getName();
+        pluginName = ((AlertPluginDescriptorType)context.getPluginEnvironment().getPluginDescriptor()).getShortName();
         
         subjectManager = LookupUtil.getSubjectManager();
         ContentManagerLocal cm = LookupUtil.getContentManager();
@@ -147,34 +156,33 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     }
     
     private void checkAlertsValidity(ControlResults results, Configuration parameters) {
-        List<AlertNotification> invalidNotifs = getAllCliNotificationsWithInvalidUser();
+        List<AlertNotification> allCliNotifications = getAllCliNotifications(null);
+               
+        Configuration resConfig = results.getComplexResults();
         
-        for(AlertNotification cliNotification : invalidNotifs) {
-            AlertDefinition def = cliNotification.getAlertDefinition();
-            
-            Configuration resConfig = results.getComplexResults();
-            
-            PropertyList misconfigured = resConfig.getList(PROP_MISCONFIGURED_ALERT_DEFS);
-            if (misconfigured == null) {
-                misconfigured = new PropertyList(PROP_MISCONFIGURED_ALERT_DEFS);
-                resConfig.put(misconfigured);
-            }
-            
-            PropertyMap alertDefinitionMap = new PropertyMap(PROP_ALERT_DEFINITION);
-            
-            alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_ID, def.getId()));
-            alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_NAME, def.getName()));
-            alertDefinitionMap.put(new PropertySimple(PROP_RESOURCE_ID, def.getResource().getId()));
-            
-            misconfigured.add(alertDefinitionMap);
-        }
+        PropertyList missingUsersList = new PropertyList(PROP_MISSING_USERS);
+        resConfig.put(missingUsersList);
+        
+        List<AlertNotification> invalidNotifs = getCliNotificationsWithInvalidUser(allCliNotifications);
+        convertNotificationsToInvalidAlertDefResults(missingUsersList, invalidNotifs);
+
+        PropertyList missingScriptsList = new PropertyList(PROP_MISSING_SCRIPTS);
+        resConfig.put(missingScriptsList);
+        
+        invalidNotifs = getCliNotificationsWithInvalidPackage(allCliNotifications);
+        convertNotificationsToInvalidAlertDefResults(missingScriptsList, invalidNotifs);
         
         //ok, now we have to obtain the resource paths. doing it out of the above loop reduces the number
         //of server roundtrips
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        PropertyList misconfigured = results.getComplexResults().getList(PROP_MISCONFIGURED_ALERT_DEFS);
-        if (misconfigured != null) {
-            List<DisambiguationReport<Property>> disambiguated = resourceManager.disambiguate(misconfigured.getList(), 
+        
+        List<Property> allMissing = new ArrayList<Property>();
+        allMissing.addAll(missingUsersList.getList());
+        allMissing.addAll(missingScriptsList.getList());
+        
+        if (allMissing.size() > 0) {
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            
+            List<DisambiguationReport<Property>> disambiguated = resourceManager.disambiguate(allMissing, 
                 new IntExtractor<Property>() {
                     public int extract(Property object) {
                         PropertyMap map = (PropertyMap) object;
@@ -200,7 +208,7 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
         PropertySimple userNameProp = parameters.getSimple(PROP_USER_NAME);
         PropertySimple alertDefIdsProp = parameters.getSimple(PROP_ALERT_DEF_IDS);
         
-        if (userNameProp == null) {
+        if (userNameProp == null || userNameProp.getStringValue() == null || userNameProp.getStringValue().trim().length() == 0) {
             throw new IllegalArgumentException("User name not specified.");
         }
         
@@ -214,16 +222,15 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
         
         //now get the list of the alert notifications to update
         List<AlertNotification> notifsToReAssign = null;
-        if (alertDefIdsProp == null || alertDefIdsProp.getStringValue().trim().length() == 0) {
-            notifsToReAssign = getAllCliNotificationsWithInvalidUser();
+        if (alertDefIdsProp == null || alertDefIdsProp.getStringValue() == null || alertDefIdsProp.getStringValue().trim().length() == 0) {
+            notifsToReAssign = getCliNotificationsWithInvalidUser(getAllCliNotifications(null));
         } else {
             List<Integer> alertDefIds = asIdList(alertDefIdsProp.getStringValue().split("\\s*,\\s*"));
             List<AlertDefinition> defs = getAlertDefinitionsWithCliNotifications(alertDefIds);
             
             notifsToReAssign = new ArrayList<AlertNotification>();
             for(AlertDefinition def : defs) {
-                AlertNotification cliNotif = getCliNotification(def.getAlertNotifications());
-                if (cliNotif != null) {
+                for(AlertNotification cliNotif : getCliNotifications(def.getAlertNotifications())) {
                     notifsToReAssign.add(cliNotif);
                 }
             }
@@ -236,17 +243,18 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
         notificationManager.massReconfigure(notifIds, updates);
     }
     
-    private AlertNotification getCliNotification(List<AlertNotification> notifications) {
+    private List<AlertNotification> getCliNotifications(List<AlertNotification> notifications) {
+        ArrayList<AlertNotification> ret = new ArrayList<AlertNotification>();
         for(AlertNotification n : notifications) {
             if (pluginName.equals(n.getSenderName())) {
-                return n;
+                ret.add(n);
             }
         }
         
-        return null;
+        return ret;
     }
     
-    private List<AlertDefinition> getAlertDefinitionsWithCliNotifications(Collection<Integer> ids) {
+    private List<AlertDefinition> getAlertDefinitionsWithCliNotifications(Collection<Integer> alertDefIds) {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         AlertDefinitionManagerLocal manager = LookupUtil.getAlertDefinitionManager();
 
@@ -256,29 +264,33 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
         criteria.addFilterNotificationNames(pluginName);
         criteria.setPageControl(PageControl.getUnlimitedInstance());
         criteria.fetchAlertNotifications(true);
-        if (ids != null) {
-            criteria.addFilterIds(ids.toArray(new Integer[ids.size()]));
+        if (alertDefIds != null) {
+            criteria.addFilterIds(alertDefIds.toArray(new Integer[alertDefIds.size()]));
         }
         
         return manager.findAlertDefinitionsByCriteria(overlord, criteria);
     }
     
-    private List<AlertNotification> getAllCliNotificationsWithInvalidUser() {
+    private List<AlertNotification> getAllCliNotifications(Collection<Integer> alertDefIds) {
         List<AlertNotification> ret = new ArrayList<AlertNotification>();
         
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        
-        List<AlertDefinition> defs = getAlertDefinitionsWithCliNotifications(null);
+        List<AlertDefinition> defs = getAlertDefinitionsWithCliNotifications(alertDefIds);
         
         for(AlertDefinition def : defs) {
             List<AlertNotification> notifications = def.getAlertNotifications();
             
-            AlertNotification cliNotification = getCliNotification(notifications);
-            
-            if (cliNotification == null) {
-                //we always should find this but a little bit of paranoia never hurt anyone
-                continue;
-            }
+            ret.addAll(getCliNotifications(notifications));
+        }
+        
+        return ret;
+    }
+    
+    private List<AlertNotification> getCliNotificationsWithInvalidUser(List<AlertNotification> allNotifications) {
+        List<AlertNotification> ret = new ArrayList<AlertNotification>();
+        
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        
+        for(AlertNotification cliNotification : allNotifications) {
             
             Subject checkSubject = null;
             
@@ -295,6 +307,59 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
         }
         
         return ret;
+    }
+    
+    private List<AlertNotification> getCliNotificationsWithInvalidPackage(List<AlertNotification> allNotifications) {
+        List<AlertNotification> ret = new ArrayList<AlertNotification>();
+        
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        
+        Subject overlord = subjectManager.getOverlord();        
+        
+        PackageVersionCriteria crit = new PackageVersionCriteria();
+        crit.setRestriction(Restriction.COUNT_ONLY);
+        
+        for(AlertNotification cliNotification : allNotifications) {
+            
+            int count = 0;
+            
+            String packageId = cliNotification.getConfiguration().getSimpleValue(CliSender.PROP_PACKAGE_ID, null);
+            if (packageId != null) {
+                crit.addFilterPackageId(Integer.valueOf(packageId));
+                
+                PageList<PackageVersion> res = contentManager.findPackageVersionsByCriteria(overlord, crit);
+                count = res.getTotalSize();
+            }            
+            
+            if (count == 0) {
+                ret.add(cliNotification);
+            }
+        }
+        
+        return ret;
+    }
+    
+    private void convertNotificationsToInvalidAlertDefResults(PropertyList results, List<AlertNotification> invalidNotifications) {
+        Set<AlertDefinition> processedDefs = new HashSet<AlertDefinition>();
+        
+        for(AlertNotification cliNotification : invalidNotifications) {
+            AlertDefinition def = cliNotification.getAlertDefinition();
+            
+            if (!processedDefs.add(def)) {
+                //skip this definition - it has more than one incorrect notifs and we already
+                //included it in the output.
+                continue;
+            }
+                        
+            PropertyMap alertDefinitionMap = new PropertyMap(PROP_ALERT_DEFINITION);
+            
+            alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_ID, def.getId()));
+            alertDefinitionMap.put(new PropertySimple(PROP_ALERT_DEFINITION_NAME, def.getName()));
+            alertDefinitionMap.put(new PropertySimple(PROP_RESOURCE_ID, def.getResource().getId()));
+            
+            results.add(alertDefinitionMap);
+        }
     }
     
     private List<Integer> asIdList(String... ids) {

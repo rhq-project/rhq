@@ -15,14 +15,18 @@
     </serverplugin:help>
 
     <serverplugin:plugin-component class="CliComponent">
-        <serverplugin:control name="checkAlertsValidity">
+        <serverplugin:control name="checkAlertsValidity" description="Alert scripts run authenticated as a user specified in their definitions. If a user is deleted, the alert definition will contain invalid reference to that user and needs to be update manually. Also the script can be deleted from a repo, or the repo itself can be deleted, at which point there is not script to run. This operation returns a list of such misconfigured alert definitions.">            
             <serverplugin:results>
-                <c:list-property name="misconfiguredAlertDefs" displayName="Misconfigured Alert Definitions">
-                    <c:description>
-                        Alert scripts run authenticated as a user specified in their definitions. If a user is deleted, 
-                        the alert definition will contain invalid reference to that user and needs to be update manually. 
-                        This operation returns a list of such misconfigured alert definitions.
-                    </c:description>
+                <c:list-property name="missingUsers" displayName="Alerts with notifications referencing non-existent user.">
+                    <c:map-property name="alertDefinition">
+                        <c:simple-property name="alertDefinitionId" />
+                        <c:simple-property name="alertDefinitionName" />
+                        <c:simple-property name="resourceId" />
+                        <c:simple-property name="resourcePath" />
+                    </c:map-property>
+                </c:list-property>
+                
+                <c:list-property name="missingScripts" displayName="Alerts with notifications referencing non-existent scripts.">
                     <c:map-property name="alertDefinition">
                         <c:simple-property name="alertDefinitionId" />
                         <c:simple-property name="alertDefinitionName" />

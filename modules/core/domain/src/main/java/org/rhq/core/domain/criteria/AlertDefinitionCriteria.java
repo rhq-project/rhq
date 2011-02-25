@@ -69,8 +69,10 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
-        filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
-        filterOverrides.put("notificationSenderNames", "alertNotifications.senderName IN ( ? )");
+        filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");        
+        filterOverrides.put("notificationSenderNames", "id IN (" +
+                                "SELECT notif.alertDefinition.id FROM AlertNotification notif " +
+                                "WHERE notif.senderName IN ( ? ))");
         filterOverrides.put("filterIds", "id IN ( ? )");
     }
 

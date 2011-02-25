@@ -72,6 +72,11 @@ public class ActivityView extends AbstractActivityView {
     public ActivityView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId, null);
         this.resourceComposite = resourceComposite;
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
         loadData();
     }
 

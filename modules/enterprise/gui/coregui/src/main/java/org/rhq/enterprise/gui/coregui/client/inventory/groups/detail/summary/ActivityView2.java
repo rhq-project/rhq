@@ -77,6 +77,11 @@ public class ActivityView2 extends AbstractActivityView {
     public ActivityView2(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId, groupComposite);
         this.groupComposite = groupComposite;
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
         loadData();
     }
 

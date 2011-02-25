@@ -18,8 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.test.i18n;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.SortSpecifier;
@@ -46,6 +51,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class TestRemoteServiceStatisticsView extends Table {
 
+    public static final String TABLE_TITLE = "Remote Service Statistics";
+
     // these are used both as the name of the fields, titles of the headers and the columns of the CSV output
     private static final String FIELD_SERVICENAME = "serviceName";
     private static final String FIELD_METHODNAME = "methodName";
@@ -58,13 +65,23 @@ public class TestRemoteServiceStatisticsView extends Table {
     private static final SortSpecifier[] defaultSorts = new SortSpecifier[] { new SortSpecifier("average",
         SortDirection.DESCENDING) };
 
-    // if this is true, this view is hosted by a standalone Window
-    private boolean inWindow = false;
+    // if this is not null, this view is hosted by this standalone Window
+    private StatisticsWindow window = null;
+    private Timer timer = null;
+    private boolean refreshOnPageChange = false;
 
     public TestRemoteServiceStatisticsView(String locatorId) {
-        super(locatorId, "Remote Service Statistics", null, defaultSorts, null, false);
+        super(locatorId, TABLE_TITLE, null, defaultSorts, null, false);
+
+        timer = new Timer() {
+            @Override
+            public void run() {
+                refresh();
+            }
+        };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void configureTable() {
         ListGridField serviceName = new ListGridField(FIELD_SERVICENAME, "Service Name");
@@ -101,14 +118,6 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
 
-        addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                refresh();
-            }
-        });
-
         addTableAction(extendLocatorId("export"), "Export To CSV",
             new AbstractTableAction(TableActionEnablement.ALWAYS) {
                 @Override
@@ -140,7 +149,62 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
 
-        if (!inWindow) {
+        if (window != null) {
+            LinkedHashMap<String, Integer> timerValues = new LinkedHashMap<String, Integer>();
+            timerValues.put("Now", Integer.valueOf("-2"));
+            timerValues.put(MSG.common_val_never(), Integer.valueOf("-1"));
+            timerValues.put("On Page Change", Integer.valueOf("0"));
+            timerValues.put("1", Integer.valueOf("1"));
+            timerValues.put("5", Integer.valueOf("5"));
+            timerValues.put("10", Integer.valueOf("10"));
+            timerValues.put("30", Integer.valueOf("30"));
+            timerValues.put("60", Integer.valueOf("60"));
+            History.addValueChangeHandler(new ValueChangeHandler<String>() {
+                @Override
+                public void onValueChange(ValueChangeEvent<String> event) {
+                    if (refreshOnPageChange) {
+                        refresh();
+                    }
+                }
+            });
+
+            addTableAction(extendLocatorId("refreshTimer"), "Refresh", null, timerValues, new AbstractTableAction(
+                TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+
+                    Integer timeout = (Integer) actionValue;
+
+                    // if being asked to refresh now, just refresh but don't touch our schedules
+                    if (timeout == null || timeout.intValue() == -2) {
+                        refresh();
+                        return;
+                    }
+
+                    // cancel everything - will reinstate if user elected to do one of these
+                    timer.cancel();
+                    refreshOnPageChange = false;
+
+                    if (timeout.intValue() == -1) {
+                        setTableTitle(TABLE_TITLE);
+                    } else if (timeout.intValue() == 0) {
+                        refreshOnPageChange = true;
+                        setTableTitle(TABLE_TITLE + " (refresh on page change)");
+                    } else {
+                        timer.scheduleRepeating(timeout.intValue() * 1000);
+                        setTableTitle(TABLE_TITLE + " (refresh every " + timeout + "s)");
+                    }
+                }
+            });
+        } else { // not in the standalone window
+            addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
+                TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    refresh();
+                }
+            });
+
             addTableAction(extendLocatorId("showInWin"), "Show In Window", new AbstractTableAction(
                 TableActionEnablement.ALWAYS) {
                 @Override
@@ -166,6 +230,9 @@ public class TestRemoteServiceStatisticsView extends Table {
     public void refresh() {
         super.refresh();
         getListGrid().setRecords(transform(RemoteServiceStatistics.getAll()));
+        if (window != null) {
+            window.blink();
+        }
     }
 
     private ListGridRecord[] transform(List<Summary> stats) {
@@ -220,9 +287,11 @@ public class TestRemoteServiceStatisticsView extends Table {
     }
 
     class StatisticsWindow extends LocatableWindow {
+        private Timer blinkTimer;
+
         public StatisticsWindow(String locatorId) {
             super(locatorId);
-            setTitle("Remote Service Statistics");
+            setTitle(TABLE_TITLE);
             setShowMinimizeButton(true);
             setShowMaximizeButton(true);
             setShowCloseButton(true);
@@ -242,8 +311,28 @@ public class TestRemoteServiceStatisticsView extends Table {
 
             TestRemoteServiceStatisticsView view;
             view = new TestRemoteServiceStatisticsView(extendLocatorId("StatsViewInWin"));
-            view.inWindow = true;
+            view.window = this;
             addItem(view);
+
+            final String origColor = getBodyColor();
+            blinkTimer = new Timer() {
+                @Override
+                public void run() {
+                    setBodyColor(origColor);
+                    setTitle(TABLE_TITLE);
+                }
+            };
+        }
+
+        public void blink() {
+            // window.flash() isn't working so do it ourselves
+            if (getMinimized()) {
+                setTitle(TABLE_TITLE + " *");
+            } else {
+                setBodyColor(getHiliteBodyColor());
+            }
+            redraw();
+            blinkTimer.schedule(250);
         }
     }
 }

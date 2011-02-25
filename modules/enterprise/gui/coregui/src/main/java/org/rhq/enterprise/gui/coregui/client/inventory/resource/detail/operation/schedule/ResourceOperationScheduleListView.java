@@ -25,7 +25,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
 
 /**
- * A table that displays all of the operation schedules for a particular Resource.
+ * The details view of the Resource Operations>Schedules subtab.
  *
  * @author Ian Springer
  */

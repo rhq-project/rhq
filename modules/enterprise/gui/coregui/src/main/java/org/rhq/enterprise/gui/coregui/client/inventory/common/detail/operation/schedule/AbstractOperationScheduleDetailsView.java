@@ -88,7 +88,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
     public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
                                                 ResourceType resourceType, int scheduleId) {
-        super(locatorId, dataSource, scheduleId, "Scheduled Operation", null);
+        super(locatorId, dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         for (OperationDefinition operationDefinition : operationDefinitions) {
@@ -144,11 +144,13 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             }
         });
 
-        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION, "Description");
+        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION,
+                MSG.view_operationScheduleDetails_field_description());
         this.operationDescriptionItem.setShowTitle(false);
         items.add(this.operationDescriptionItem);
 
-        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS, "Parameters");
+        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS,
+                MSG.view_operationScheduleDetails_field_parameters());
         this.operationParametersItem.setColSpan(2);
         items.add(this.operationParametersItem);
 
@@ -180,22 +182,24 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         supportedUnits.add(TimeUnit.SECONDS);
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
-        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, "Timeout",
+        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
+                MSG.view_operationScheduleDetails_field_timeout(),
                 supportedUnits, false, isReadOnly(), this.notesForm);
-        timeoutItem.setContextualHelp("a time duration - if specified, if the duration elapses before a scheduled operation execution has completed, the RHQ Server will timeout the operation and consider it to have failed; note, it is usually not possible to abort the underlying managed resource operation if it was already initiated");
+        timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout());
         notesFields.add(timeoutItem);
 
         if (!isNewRecord()) {
             StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
-                    "Next Fire Time");
+                    MSG.dataSource_operationSchedule_field_nextFireTime());
             notesFields.add(nextFireTimeItem);
         }
 
-        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, "Notes");
+        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION,
+                MSG.dataSource_operationSchedule_field_description());
         notesItem.setWidth(450);
         notesItem.setHeight(60);
         notesItem.setShowTitle(true);
-        FormUtility.addContextualHelp(notesItem, "an optional description of this scheduled operation (e.g. \"nightly maintenance app server restart\")");
+        FormUtility.addContextualHelp(notesItem, MSG.view_operationScheduleDetails_fieldHelp_description());
         notesFields.add(notesItem);
 
         this.notesForm.setFields(notesFields.toArray(new FormItem[notesFields.size()]));
@@ -306,7 +310,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         String operationName = getSelectedOperationName();
         String value;
         if (operationName == null) {
-            value = "<i>Select an operation to see its description.</i>";
+            value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_description() + "</i>";
         } else {
             value = this.operationNameToDescriptionMap.get(operationName);
         }
@@ -317,18 +321,18 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         String operationName = getSelectedOperationName();
         String value;
         if (operationName == null) {
-            value = "<i>Select an operation to see its parameters.</i>";
+            value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_parameters() + "</i>";
         } else {
             ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap.get(operationName);
             if (parametersDefinition == null || parametersDefinition.getPropertyDefinitions().isEmpty()) {
-                value = "<i>" + MSG.view_operationCreateWizard_parametersStep_noParameters() + "</i>";
+                value = "<i>" + MSG.view_operationScheduleDetails_noParameters() + "</i>";
 
                 for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
                     child.destroy();
                 }
                 this.operationParametersConfigurationHolder.hide();
             } else {
-                value = isNewRecord() ? "<i>Enter parameters below...</i>" : "";
+                value = isNewRecord() ? "<i>" + MSG.view_operationScheduleDetails_enterParametersBelow() + "</i>" : "";
 
                 for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
                     child.destroy();

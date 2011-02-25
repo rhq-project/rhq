@@ -92,13 +92,14 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, "Schedule ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID,
+                MSG.dataSource_operationSchedule_field_id());
         idField.setPrimaryKey(true);
         idField.setCanEdit(false);
         fields.add(idField);               
 
-        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation", null, 100,
-                true);
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME,
+                MSG.dataSource_operationSchedule_field_operationName(), null, 100, true);
         Set<OperationDefinition> operationDefinitions = this.resourceType.getOperationDefinitions();
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         for (OperationDefinition operationDefinition : operationDefinitions) {
@@ -107,23 +108,26 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         operationNameField.setValueMap(valueMap);
         fields.add(operationNameField);
 
-        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null,
-                100, true);
+        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME,
+                MSG.dataSource_operationSchedule_field_operationDisplayName(), null, 100, true);
         fields.add(operationDisplayNameField);
 
-        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY, "Owner");
+        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY,
+                MSG.dataSource_operationSchedule_field_subject());
         subjectField.setCanEdit(false);
         fields.add(subjectField);
 
-        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, "Notes", null, 100, false);
+        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION,
+                MSG.dataSource_operationSchedule_field_description(), null, 100, false);
         fields.add(descriptionField);
 
         DataSourceDateTimeField nextFireTimeField = new DataSourceDateTimeField(Field.NEXT_FIRE_TIME,
-                "Next Scheduled Execution");
+                MSG.dataSource_operationSchedule_field_nextFireTime());
         nextFireTimeField.setCanEdit(false);
         fields.add(nextFireTimeField);
 
-        DataSourceIntegerField timeoutField = createIntegerField(Field.TIMEOUT, "Timeout (in seconds)", 30, null, false);
+        DataSourceIntegerField timeoutField = createIntegerField(Field.TIMEOUT,
+                MSG.dataSource_operationSchedule_field_timeout(), 30, null, false);
         fields.add(timeoutField);
 
         return fields;

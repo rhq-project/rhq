@@ -88,7 +88,8 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             });
 
         // TODO: i18n
-        addTableAction(extendLocatorId("ForceDelete"), "Force Delete", getDeleteConfirmMessage(), new TableAction() {
+        addTableAction(extendLocatorId("ForceDelete"), MSG.view_operationHistoryList_button_forceDelete(),
+                getDeleteConfirmMessage(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 int count = selection.length;
                 return (count >= 1 && hasControlPermission());
@@ -131,8 +132,6 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     protected ListGridField createStartedTimeField() {
         ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME);
-        //startedTimeField.setType(ListGridFieldType.DATE);
-        //startedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
         startedTimeField.setCellFormatter(new CellFormatter() {
@@ -141,7 +140,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                     Date date = (Date) value;
                     return DateTimeFormat.getMediumDateTimeFormat().format(date);
                 } else {
-                    return "<i>not yet started</i>";
+                    return "<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>";
                 }
             }
         });
@@ -159,20 +158,21 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
-                case SUCCESS: {
-                    return MSG.common_status_success();
+                    case SUCCESS: {
+                        return MSG.common_status_success();
+                    }
+                    case FAILURE: {
+                        return MSG.common_status_failed();
+                    }
+                    case INPROGRESS: {
+                        return MSG.common_status_inprogress();
+                    }
+                    case CANCELED: {
+                        return MSG.common_status_canceled();
+                    }
                 }
-                case FAILURE: {
-                    return MSG.common_status_failed();
-                }
-                case INPROGRESS: {
-                    return MSG.common_status_inprogress();
-                }
-                case CANCELED: {
-                    return MSG.common_status_canceled();
-                }
-                }
-                return "unknown"; // should never get here
+                // should never get here
+                return MSG.common_status_unknown();
             }
         });
         statusField.setCellFormatter(new CellFormatter() {

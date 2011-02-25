@@ -24,6 +24,8 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
 
 /**
+ * The list view of the Group Operations>Schedules subtab.
+ *
  * @author Ian Springer
  */
 public class GroupOperationScheduleListView extends AbstractOperationScheduleListView {

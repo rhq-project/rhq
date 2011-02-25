@@ -65,7 +65,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
-    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("Remote Service Statistics");
+    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("RemoteServiceStatistics");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -124,11 +124,12 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem readOnlyConfigEditorItem = new NavigationItem(PAGE_READONLY_CONFIG_EDITOR, null, new ViewFactory() {
-            public Canvas createView() {
-                return new TestReadOnlyConfigurationView(extendLocatorId(PAGE_READONLY_CONFIG_EDITOR.getName()));
-            }
-        });
+        NavigationItem readOnlyConfigEditorItem = new NavigationItem(PAGE_READONLY_CONFIG_EDITOR, null,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new TestReadOnlyConfigurationView(extendLocatorId(PAGE_READONLY_CONFIG_EDITOR.getName()));
+                }
+            });
 
         NavigationItem groupConfigEditorItem = new NavigationItem(PAGE_GROUP_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
@@ -136,14 +137,16 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem readOnlyGroupConfigEditorItem = new NavigationItem(PAGE_READONLY_GROUP_CONFIG_EDITOR, null, new ViewFactory() {
-            public Canvas createView() {
-                return new TestReadOnlyGroupConfigurationView(extendLocatorId(PAGE_READONLY_GROUP_CONFIG_EDITOR.getName()));
-            }
-        });
+        NavigationItem readOnlyGroupConfigEditorItem = new NavigationItem(PAGE_READONLY_GROUP_CONFIG_EDITOR, null,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new TestReadOnlyGroupConfigurationView(extendLocatorId(PAGE_READONLY_GROUP_CONFIG_EDITOR
+                        .getName()));
+                }
+            });
 
         return new NavigationSection(CONFIGURATION_SECTION_VIEW_ID, configEditorItem, readOnlyConfigEditorItem,
-                groupConfigEditorItem, readOnlyGroupConfigEditorItem);
+            groupConfigEditorItem, readOnlyGroupConfigEditorItem);
     }
 
     private NavigationSection buildMiscSection() {

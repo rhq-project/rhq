@@ -29,10 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javassist.util.proxy.MethodHandler;
 
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
+import org.rhq.bindings.util.ResourceTypeFingerprint;
 import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.bindings.util.ShortOutput;
 import org.rhq.core.domain.configuration.Configuration;
@@ -74,6 +78,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  */
 public class ResourceClientProxy {
 
+    private static final Log LOG = LogFactory.getLog(ResourceClientProxy.class);
+    
     private ResourceClientFactory proxyFactory;
     private RhqFacade remoteClient;
     private int resourceId;
@@ -81,6 +87,8 @@ public class ResourceClientProxy {
 
     Map<String, Object> allProperties = new HashMap<String, Object>();
 
+    ResourceTypeFingerprint fingerprint;
+    
     // Metadata
     private List<MeasurementDefinition> measurementDefinitions;
     private Map<String, Measurement> measurementMap = new HashMap<String, Measurement>();
@@ -197,6 +205,14 @@ public class ResourceClientProxy {
         initOperations();
         initConfigDefs();
         initContent();
+
+        List<PackageType> packageTypes = new ArrayList<PackageType>();
+        for(ContentType ct : contentTypes.values()) {
+            packageTypes.add(ct.getPackageType());
+        }
+        
+        fingerprint = new ResourceTypeFingerprint(resource.getResourceType(), measurementDefinitions,
+            operationDefinitions, packageTypes, pluginConfigurationDefinition, resourceConfigurationDefinition);        
     }
 
     private void initConfigDefs() {
@@ -267,7 +283,7 @@ public class ResourceClientProxy {
                 contentTypes.put(packageType.getName(), new ContentType(packageType));
             }
         } catch (ResourceTypeNotFoundException e) {
-            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            LOG.error("Could not find resource type while creating content mappings of the resource proxy for resource with id " + resourceId, e);
         }
 
     }

@@ -58,6 +58,7 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
                     ConfigurationEditor editor = new ConfigurationEditor("ResConfigHist-"
                         + update.getResource().getName(), definition, update.getConfiguration());
                     editor.setReadOnly(true);
+                    editor.setEditorTitle(MSG.common_title_version() + " - " + update.getId());
                     addMember(editor);
                     markForRedraw();
                 }

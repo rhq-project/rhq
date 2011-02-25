@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -173,14 +174,23 @@ public class ConfigurationComparisonView extends VLayout {
     }
 
     public static void displayComparisonDialog(final ArrayList<? extends AbstractResourceConfigurationUpdate> configs) {
-        int resourceId = configs.get(0).getResource().getResourceType().getId();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceId,
-            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+        AbstractResourceConfigurationUpdate theFirstUpdateItem = configs.get(0);
+        int resourceId = theFirstUpdateItem.getResource().getResourceType().getId();
+        final boolean isResourceConfig = theFirstUpdateItem instanceof ResourceConfigurationUpdate;
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            resourceId,
+            isResourceConfig ? EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition)
+                : EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
 
                 public void onTypesLoaded(ResourceType type) {
 
-                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+                    ConfigurationDefinition definition;
+                    if (isResourceConfig) {
+                        definition = type.getResourceConfigurationDefinition();
+                    } else {
+                        definition = type.getPluginConfigurationDefinition();
+                    }
 
                     ArrayList<Configuration> configurations = new ArrayList<Configuration>();
                     ArrayList<String> titles = new ArrayList<String>();

@@ -29,7 +29,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
@@ -123,9 +122,9 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
         addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
             TableActionEnablement.MULTIPLE) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
+                ArrayList<AbstractResourceConfigurationUpdate> configs = new ArrayList<AbstractResourceConfigurationUpdate>();
                 for (ListGridRecord record : selection) {
-                    ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record
+                    AbstractResourceConfigurationUpdate update = (AbstractResourceConfigurationUpdate) record
                         .getAttributeAsObject(AbstractConfigurationHistoryDataSource.Field.OBJECT);
                     configs.add(update);
                 }

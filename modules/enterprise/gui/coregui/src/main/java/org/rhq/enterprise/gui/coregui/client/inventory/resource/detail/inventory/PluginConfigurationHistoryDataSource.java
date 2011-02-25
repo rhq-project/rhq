@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -107,6 +108,7 @@ public class PluginConfigurationHistoryDataSource extends
                             @Override
                             public void onFailure(Throwable caught) {
                                 // should we show an error message? this just means we can't show any item as the "current" one
+                                Log.error("cannot get latest plugin config", caught);
                                 finish();
                             }
 

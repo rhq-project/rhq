@@ -50,7 +50,7 @@ public class PluginConfigurationHistoryDetailView extends LocatableVLayout imple
     private void displayHistory(final PluginConfigurationUpdate update) {
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(update.getResource().getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
 
                 public void onTypesLoaded(ResourceType type) {
@@ -58,6 +58,7 @@ public class PluginConfigurationHistoryDetailView extends LocatableVLayout imple
                     ConfigurationEditor editor = new ConfigurationEditor("PluginConfigHist-"
                         + update.getResource().getName(), definition, update.getConfiguration());
                     editor.setReadOnly(true);
+                    editor.setEditorTitle(MSG.common_title_version() + " - " + update.getId());
                     addMember(editor);
                     markForRedraw();
                 }

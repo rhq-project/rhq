@@ -26,7 +26,6 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -59,6 +58,9 @@ public class TestRemoteServiceStatisticsView extends Table {
     private static final SortSpecifier[] defaultSorts = new SortSpecifier[] { new SortSpecifier("average",
         SortDirection.DESCENDING) };
 
+    // if this is true, this view is hosted by a standalone Window
+    private boolean inWindow = false;
+
     public TestRemoteServiceStatisticsView(String locatorId) {
         super(locatorId, "Remote Service Statistics", null, defaultSorts, null, false);
     }
@@ -68,15 +70,24 @@ public class TestRemoteServiceStatisticsView extends Table {
         ListGridField serviceName = new ListGridField(FIELD_SERVICENAME, "Service Name");
         ListGridField methodName = new ListGridField(FIELD_METHODNAME, "Method Name");
         ListGridField count = new ListGridField(FIELD_COUNT, "Count");
-        count.setAlign(Alignment.CENTER);
         ListGridField slowest = new ListGridField(FIELD_SLOWEST, "Slowest (ms)");
-        slowest.setAlign(Alignment.RIGHT);
         ListGridField average = new ListGridField(FIELD_AVERAGE, "Average (ms)");
-        average.setAlign(Alignment.RIGHT);
         ListGridField fastest = new ListGridField(FIELD_FASTEST, "Fastest (ms)");
-        fastest.setAlign(Alignment.RIGHT);
         ListGridField stddev = new ListGridField(FIELD_STDDEV, "Std Dev");
+
+        count.setAlign(Alignment.CENTER);
+        slowest.setAlign(Alignment.RIGHT);
+        average.setAlign(Alignment.RIGHT);
+        fastest.setAlign(Alignment.RIGHT);
         stddev.setAlign(Alignment.RIGHT);
+
+        serviceName.setWidth("20%");
+        methodName.setWidth("*");
+        count.setWidth("8%");
+        slowest.setWidth("13%");
+        average.setWidth("13%");
+        fastest.setWidth("13%");
+        stddev.setWidth("8%");
 
         getListGrid().setFields(serviceName, methodName, count, slowest, average, fastest, stddev);
         refresh();
@@ -128,6 +139,17 @@ public class TestRemoteServiceStatisticsView extends Table {
                         .show();
                 }
             });
+
+        if (!inWindow) {
+            addTableAction(extendLocatorId("showInWin"), "Show In Window", new AbstractTableAction(
+                TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    new StatisticsWindow(extendLocatorId("statsWin")).show();
+                }
+            });
+        }
+
     }
 
     @Override
@@ -172,17 +194,14 @@ public class TestRemoteServiceStatisticsView extends Table {
 
             LocatableHTMLPane htmlPane = new LocatableHTMLPane(extendLocatorId("winDetailsPane"));
             htmlPane.setMargin(10);
-            htmlPane.setDefaultWidth(500);
+            htmlPane.setDefaultWidth(600);
             htmlPane.setDefaultHeight(400);
             htmlPane.setContents(message);
 
-            setupWindow(title, htmlPane);
-        }
-
-        private void setupWindow(String title, Canvas item) {
             setTitle(title);
             setShowMinimizeButton(false);
             setShowMaximizeButton(true);
+            setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);
             setAutoSize(true);
@@ -196,7 +215,35 @@ public class TestRemoteServiceStatisticsView extends Table {
                     markForDestroy();
                 }
             });
-            addItem(item);
+            addItem(htmlPane);
+        }
+    }
+
+    class StatisticsWindow extends LocatableWindow {
+        public StatisticsWindow(String locatorId) {
+            super(locatorId);
+            setTitle("Remote Service Statistics");
+            setShowMinimizeButton(true);
+            setShowMaximizeButton(true);
+            setShowCloseButton(true);
+            setIsModal(false);
+            setShowModalMask(false);
+            setWidth(700);
+            setHeight(300);
+            setShowResizer(true);
+            setCanDragResize(true);
+            centerInPage();
+            addCloseClickHandler(new CloseClickHandler() {
+                @Override
+                public void onCloseClick(CloseClientEvent event) {
+                    markForDestroy();
+                }
+            });
+
+            TestRemoteServiceStatisticsView view;
+            view = new TestRemoteServiceStatisticsView(extendLocatorId("StatsViewInWin"));
+            view.inWindow = true;
+            addItem(view);
         }
     }
 }

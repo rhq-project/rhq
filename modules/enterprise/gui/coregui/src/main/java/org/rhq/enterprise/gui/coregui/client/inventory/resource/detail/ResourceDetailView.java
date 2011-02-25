@@ -324,7 +324,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()), true, true);
 
         updateSubTab(this.monitoringTab, this.monitorSched, new SchedulesView(monitoringTab
-            .extendLocatorId("SchedulesView"), resource.getId()), hasMetricsOfType(this.resourceComposite, null), true);
+            .extendLocatorId("SchedulesView"), this.resourceComposite), hasMetricsOfType(this.resourceComposite, null),
+                true);
 
         visible = facets.contains(ResourceTypeFacet.CALL_TIME);
         canvas = (visible) ? new FullHTMLPane(this.monitorCallTime.extendLocatorId("View"),

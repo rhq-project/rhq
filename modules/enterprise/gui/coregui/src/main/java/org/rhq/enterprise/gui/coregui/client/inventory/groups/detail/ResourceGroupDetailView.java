@@ -278,7 +278,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.monitoringTab, this.monitorTraits, canvas, visible, true);
 
             visible = hasMetricsOfType(this.groupComposite, null);
-            canvas = (visible) ? new SchedulesView(this.monitorSched.extendLocatorId("View"), groupId) : null;
+            canvas = (visible) ? new SchedulesView(this.monitorSched.extendLocatorId("View"), this.groupComposite) : null;
             updateSubTab(this.monitoringTab, this.monitorSched, canvas, visible, true);
 
             visible = facets.contains(ResourceTypeFacet.CALL_TIME);

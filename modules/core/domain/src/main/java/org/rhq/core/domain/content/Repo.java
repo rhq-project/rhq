@@ -126,7 +126,9 @@ import org.rhq.core.domain.resource.Resource;
         
     @NamedQuery(name = Repo.QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID, query = "SELECT COUNT(r) FROM Repo r" //
         + " WHERE r.id = :repoId"
-        + "    AND r.owner.id = :subjectId")
+        + "    AND r.owner.id = :subjectId"),
+    @NamedQuery(name = Repo.QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT, query = "" +
+        "UPDATE Repo r SET r.owner = null WHERE r.owner.id = :ownerId")
     })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
@@ -152,6 +154,7 @@ public class Repo implements Serializable {
     public static final String QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE = "Repo.findCandidatesWithOnlyContentSource";
     public static final String QUERY_CHECK_REPO_VISIBLE_BY_SUBJECT_ID = "Repo.findVisibleReposBySubjectId";
     public static final String QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID = "Repo.isRepoOwnedBySubjectId";
+    public static final String QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT = "Repo.removeOwnerFromReposOwnerBySubject";
     
     private static final long serialVersionUID = 1L;
 

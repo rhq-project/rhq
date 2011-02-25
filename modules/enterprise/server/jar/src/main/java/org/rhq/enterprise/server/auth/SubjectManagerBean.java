@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
@@ -103,6 +104,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @IgnoreDependency
     private RoleManagerLocal roleManager;
 
+    @EJB
+    @IgnoreDependency
+    private RepoManagerLocal repoManager;
+    
     private SessionManager sessionManager = SessionManager.getInstance();
 
     /**
@@ -754,6 +759,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
+        repoManager.removeOwnershipOfSubject(doomedSubject.getId());
+        
         entityManager.remove(doomedSubject);
 
         return;

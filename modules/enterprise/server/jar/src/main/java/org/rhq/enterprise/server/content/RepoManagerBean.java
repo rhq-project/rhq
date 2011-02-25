@@ -694,6 +694,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
+    public void removeOwnershipOfSubject(int subjectId) {
+        Query q = entityManager.createNamedQuery(Repo.QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT);
+        q.setParameter("ownerId", subjectId);
+        
+        q.executeUpdate();
+    }
+    
     @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException {
         validateRepoGroup(repoGroup);

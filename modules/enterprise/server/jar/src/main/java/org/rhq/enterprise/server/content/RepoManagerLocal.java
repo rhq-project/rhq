@@ -210,6 +210,17 @@ public interface RepoManagerLocal {
      */
     void importCandidateRepo(Subject subject, List<Integer> repoIds) throws RepoException;
 
+    /**
+     * When a user gets deleted, all of his/her repos remain intact but become
+     * unassigned to any user. This way no links to packages are broken upon user deletion
+     * and repository manager can then decide what to do with the leftover repos.
+     * <p> 
+     * This method therefore sets the owner of all repos owned by provided subject to null.
+     * 
+     * @param subjectId
+     */
+    void removeOwnershipOfSubject(int subjectId);
+    
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

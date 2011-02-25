@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -73,6 +74,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
     protected String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
     protected String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
     protected String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
+    protected String SEE_MORE = MSG.common_msg_see_more();
 
     private ResourceGroupComposite groupComposite = null;
 
@@ -109,6 +111,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         leftPane.setMembersMargin(5);
         leftPane.setAutoHeight();
 
+        Resource resource = null;
         ResourceGroup group = null;
         if (groupComposite != null) {
             group = groupComposite.getResourceGroup();
@@ -173,7 +176,9 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         }
 
         HLayout recentBundleDeployTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_BUNDLE_DEPLOY);
-        if (((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        //        if (resource.type==Platform) || (Group(Mixed/Compat) of Platforms)
+        //        if ((group == null)&&())||((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {
+        if (((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {
             rightPane.addMember(divider6);
             rightPane.addMember(recentBundleDeployTitle);
             rightPane.addMember(recentBundleDeployContent);
@@ -300,6 +305,21 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         item.setShowPickerIcon(false);
         item.setWrap(false);
         return item;
+    }
+
+    /** Generates a "See more.." link item, using the locatable dynamic form passed in and appends to the VLayout passed in.
+     *
+     * @param form
+     * @param linkDestination
+     * @param column
+     */
+    protected void addSeeMoreLink(LocatableDynamicForm form, String linkDestination, VLayout column) {
+        if ((form != null) && (column != null)) {
+            form.setNumCols(1);
+            LinkItem link = newLinkItem(SEE_MORE, linkDestination);
+            form.setItems(link);
+            column.addMember(form);
+        }
     }
 
 }

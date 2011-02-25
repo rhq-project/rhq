@@ -57,7 +57,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
@@ -132,14 +131,17 @@ public class ActivityView2 extends AbstractActivityView {
 
                         StaticTextItem iconItem = newTextItemIcon(ImageManager.getAlertIcon(alert.getAlertDefinition()
                             .getPriority()), alert.getAlertDefinition().getPriority().getDisplayName());
-                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ", LinkManager
-                            .getResourceGroupLink(groupId)
-                            + "/Alerts/History/" + alert.getId());
+                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ",
+                            ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/" + alert.getId());
                         StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(alert.getCtime()));
                         row.setItems(iconItem, link, time);
 
                         column.addMember(row);
                     }
+                    //link to more details
+                    LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                        .valueOf(rowNum++)));
+                    addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/", column);
                 } else {
                     LocatableDynamicForm row = createEmptyDisplayRow(recentAlertsContent.extendLocatorId("None"),
                         RECENT_ALERTS_NONE);
@@ -206,6 +208,10 @@ public class ActivityView2 extends AbstractActivityView {
 
                             column.addMember(row);
                         }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                            .extendLocatorId(String.valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
                             .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
@@ -271,6 +277,10 @@ public class ActivityView2 extends AbstractActivityView {
                             row.setItems(iconItem, link, time);
                             column.addMember(row);
                         }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                            .extendLocatorId(String.valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Configuration/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
                             .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
@@ -337,6 +347,10 @@ public class ActivityView2 extends AbstractActivityView {
 
                             column.addMember(row);
                         }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
+                            .valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Events/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
                             RECENT_EVENTS_NONE);
@@ -385,6 +399,7 @@ public class ActivityView2 extends AbstractActivityView {
                             row.setItems(link, time);
                             column.addMember(row);
                         }
+                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
                             RECENT_OOB_NONE);
@@ -440,6 +455,11 @@ public class ActivityView2 extends AbstractActivityView {
                         row.setItems(iconItem, link, time);
                         column.addMember(row);
                     }
+                    //                    //insert see more link
+                    //                    LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                    //                        .extendLocatorId("PkgHistoryContentSeeMore"));
+                    //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
+                    //                    addSeeMoreLink(row, destination, column);
                 } else {
                     LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent.extendLocatorId("None"),
                         RECENT_PKG_HISTORY_NONE);
@@ -576,6 +596,11 @@ public class ActivityView2 extends AbstractActivityView {
                             LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
                                 .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
                             column.addMember(row);
+                        } else {
+                            //insert see more link
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                            addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Monitoring/Graphs/", column);
                         }
                         //call out to 3rd party javascript lib
                         BrowserUtility.graphSparkLines();
@@ -639,6 +664,10 @@ public class ActivityView2 extends AbstractActivityView {
                             row.setItems(iconItem, link, time);
                             column.addMember(row);
                         }
+                        //insert see more link
+                        //TODO: spinder(add this later) no current view for seeing all bundle deployments
+                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentBundleDeployContent
                             .extendLocatorId("None"), RECENT_BUNDLE_DEPLOY_NONE);

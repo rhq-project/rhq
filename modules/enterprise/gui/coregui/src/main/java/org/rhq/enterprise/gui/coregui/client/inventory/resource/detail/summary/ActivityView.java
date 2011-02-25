@@ -51,13 +51,13 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
-import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -121,6 +121,10 @@ public class ActivityView extends AbstractActivityView {
 
                         column.addMember(row);
                     }
+                    //link to more details
+                    LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                        .valueOf(rowNum++)));
+                    addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Alerts/History/", column);
                 } else {
                     LocatableDynamicForm row = createEmptyDisplayRow(recentAlertsContent.extendLocatorId("None"),
                         RECENT_ALERTS_NONE);
@@ -173,15 +177,20 @@ public class ActivityView extends AbstractActivityView {
                             StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
                                 .getOriginal().getOperationStatus()), report.getOriginal().getOperationStatus()
                                 .getDisplayName());
-                            LinkItem link = newLinkItem(report.getOriginal().getOperationName() + ": ",
-                                ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Operations/History/"
-                                    + report.getOriginal().getOperationHistoryId());
+                            LinkItem link = newLinkItem(report.getOriginal().getOperationName() + ": ", LinkManager
+                                .getResourceLink(resourceId)
+                                + "/Operations/History/" + report.getOriginal().getOperationHistoryId());
                             StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
                                 .getOperationStartTime()));
                             row.setItems(iconItem, link, time);
 
                             column.addMember(row);
                         }
+                        //link to more details
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                            .extendLocatorId(String.valueOf(rowNum++)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Operations/History/",
+                            column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
                             .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
@@ -234,7 +243,7 @@ public class ActivityView extends AbstractActivityView {
                             if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
                                 linkTitle = MSG.common_msg_changeAutoDetected();
                             }
-                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_RESOURCE_URL + resourceId
+                            LinkItem link = newLinkItem(linkTitle, LinkManager.getResourceLink(resourceId)
                                 + "/Configuration/History/" + update.getId());
                             StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
                                 .getCreatedTime()));
@@ -242,6 +251,11 @@ public class ActivityView extends AbstractActivityView {
                             row.setItems(iconItem, link, time);
                             column.addMember(row);
                         }
+                        //link to more details
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                            .extendLocatorId(String.valueOf(rowNum++)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Configuration/History/",
+                            column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
                             .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
@@ -308,6 +322,9 @@ public class ActivityView extends AbstractActivityView {
 
                             column.addMember(row);
                         }
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
+                            .valueOf(rowNum++)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Events/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
                             RECENT_EVENTS_NONE);
@@ -409,6 +426,11 @@ public class ActivityView extends AbstractActivityView {
                             row.setItems(iconItem, link, time);
                             column.addMember(row);
                         }
+                        //                        //insert see more link
+                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                        //                            .extendLocatorId("RecentPkgHistorySeeMore"));
+                        //                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId;
+                        //                        addSeeMoreLink(row, destination, column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent
                             .extendLocatorId("None"), RECENT_PKG_HISTORY_NONE);
@@ -543,6 +565,12 @@ public class ActivityView extends AbstractActivityView {
                             LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
                                 .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
                             column.addMember(row);
+                        } else {
+                            //insert see more link
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                            addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId + "/Monitoring/Graphs/",
+                                column);
                         }
                         //call out to 3rd party javascript lib
                         BrowserUtility.graphSparkLines();
@@ -560,22 +588,5 @@ public class ActivityView extends AbstractActivityView {
         }
         recentMeasurementsContent.addChild(column);
         recentMeasurementsContent.markForRedraw();
-    }
-
-    /** Takes last double value returned and the relevant MeasurementDefinition and formats
-     *  the results for display in the UI.  'Formatting' refers to relevant rounding,
-     *  number format for significant digits depending upon the measurement definition
-     *  details.
-     *
-     * @param lastValue
-     * @param md MeasurementDefinition
-     * @return formatted String representation of the last value retrieved.
-     */
-    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
-        String convertedValue = "";
-        String[] convertedValues = GwtMonitorUtils.formatSimpleMetrics(new double[] { lastValue }, md);
-        convertedValue = convertedValues[0];
-
-        return convertedValue;
     }
 }

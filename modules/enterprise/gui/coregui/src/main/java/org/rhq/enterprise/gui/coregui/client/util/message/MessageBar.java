@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  * The message will be displayed for 30 seconds and then will be automatically cleared.
  *
  * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
     private static final String LOCATOR_ID = "MessageBar";
@@ -59,7 +60,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         label.setAlign(Alignment.CENTER);
         label.setWidth("600px");
-        label.setHeight("25px");
+        label.setHeight("30px");
 
         setLabelEmpty();
         addMember(label);
@@ -120,6 +121,9 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         String styleName = (contents != null) ? message.getSeverity().getStyle() : null;
         label.setStyleName(styleName);
+
+        // TODO: perhaps just set the text to green/orange/red along with the proper icon and not have the defined
+        // color block...
 
         // TODO: Create some custom edge images in green, yellow, red, etc. so we can add nice rounded corners to the
         //       label.

@@ -54,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -86,16 +85,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static ErrorHandler errorHandler = new ErrorHandler();
 
-    private static MessageBar messageBar;
-
     private static MessageCenter messageCenter;
 
     private static String currentPath;
 
     //    @SuppressWarnings("unused")
     //    private static Canvas content;
-
-    private RootCanvas rootCanvas;
 
     private static ViewPath currentViewPath;
 
@@ -108,6 +103,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     // ask for a refresh even when changing viewPaths, which can be useful when we want to say, refresh a LHS tree
     // while also changing the main content. Typically we refresh only when the path is not changed.
     private static boolean pendingRefresh = false;
+
+    private RootCanvas rootCanvas;
+    private MenuBarView menuBarView;
+    private Footer footer;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -162,10 +161,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public void buildCoreUI() {
         // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
-            MenuBarView menuBarView = new MenuBarView("TopMenu");
+            menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
-
-            messageBar = new MessageBar();
+            footer = new Footer();
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
             canvas.setWidth100();
@@ -173,12 +171,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
             rootCanvas = new RootCanvas();
             rootCanvas.setOverflow(Overflow.HIDDEN);
-            rootCanvas.addMember(menuBarView);
 
-            rootCanvas.addMember(messageBar);
-            //rootCanvas.addMember(breadCrumbTrailPane);
+            rootCanvas.addMember(menuBarView);
+            rootCanvas.addMember(footer);
             rootCanvas.addMember(canvas);
-            rootCanvas.addMember(new Footer());
+
             rootCanvas.draw();
 
             History.addValueChangeHandler(this);
@@ -360,6 +357,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         public void renderView(final ViewPath viewPath) {
             Window.setTitle(getViewPathTitle(viewPath));
 
+            // when navigating, clear any message, the user is probably no longer interested
+            coreGUI.footer.getMessageBar().clearMessage(true);
+
             // keep our CoreGUI session alive by refreshing the session timer each time the user performs navigation
             UserSessionManager.refresh();
 
@@ -405,25 +405,31 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                     contentCanvas.markForRedraw();
                 }
 
-                if (this.currentCanvas instanceof BookmarkableView) {
-                    if (this.currentCanvas instanceof InitializableView) {
-                        final InitializableView initializableView = (InitializableView) this.currentCanvas;
-                        new Timer() {
-                            final long startTime = System.currentTimeMillis();
+                if (this.currentCanvas instanceof InitializableView) {
+                    final InitializableView initializableView = (InitializableView) this.currentCanvas;
+                    new Timer() {
+                        final long startTime = System.currentTimeMillis();
 
-                            public void run() {
-                                if (initializableView.isInitialized()) {
-                                    ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+                        public void run() {
+                            if (initializableView.isInitialized()) {
+                                if (RootCanvas.this.currentCanvas instanceof BookmarkableView) {
+                                    ((BookmarkableView) RootCanvas.this.currentCanvas).renderView(viewPath.next());
                                 } else {
-                                    long elapsedMillis = System.currentTimeMillis() - startTime;
-                                    if (elapsedMillis < 10000) {
-                                        schedule(100); // Reschedule the timer.
-                                    }
+                                    RootCanvas.this.currentCanvas.markForRedraw();
+                                }
+                            } else {
+                                long elapsedMillis = System.currentTimeMillis() - startTime;
+                                if (elapsedMillis < 10000) {
+                                    schedule(100); // Reschedule the timer.
                                 }
                             }
-                        }.run(); // fire the timer immediately
+                        }
+                    }.run(); // fire the timer immediately
+                } else {
+                    if (this.currentCanvas instanceof BookmarkableView) {
+                        ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
                     } else {
-                        ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+                        this.currentCanvas.markForRedraw();
                     }
                 }
             }

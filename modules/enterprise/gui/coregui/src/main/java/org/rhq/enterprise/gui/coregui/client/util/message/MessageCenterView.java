@@ -21,14 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AnimationEffect;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.AnimationCallback;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -36,8 +30,6 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -45,24 +37,23 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  */
-public class MessageCenterView extends LocatableHLayout implements MessageCenter.MessageListener {
+public class MessageCenterView extends LocatableVLayout implements MessageCenter.MessageListener {
 
     public static final String LOCATOR_ID = "MessageCenter";
 
     public MessageCenterView(String locatorId) {
         super(locatorId, 5);
         setHeight100();
-        //setAlign(Alignment.RIGHT);
-        setAlign(VerticalAlignment.CENTER);
-        setOverflow(Overflow.HIDDEN);
+        setAlign(Alignment.CENTER);
+        setAutoWidth();
     }
 
     @Override
@@ -74,10 +65,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), MSG
             .view_messageCenter_messageTitle(), recentEventsMenu);
-        recentEventsButton.setTop(5);
-        recentEventsButton.setShowMenuBelow(false);
         recentEventsButton.setAutoFit(true);
-        recentEventsButton.setValign(VerticalAlignment.CENTER);
 
         recentEventsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -103,14 +91,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
             }
         });
 
-        VLayout vl = new VLayout();
-        vl.setAutoWidth();
-        vl.setAlign(Alignment.LEFT);
-        vl.setAlign(VerticalAlignment.CENTER);
-        vl.addMember(recentEventsButton);
-
-        addMember(new LayoutSpacer());
-        addMember(vl);
+        addMember(recentEventsButton);
     }
 
     private void showDetails(Message message) {
@@ -161,39 +142,6 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     public void onMessage(final Message message) {
         if (!message.isTransient()) {
             logMessage(message);
-
-            final Label label = new Label(message.conciseMessage);
-            label.setMargin(5);
-            label.setAutoFit(true);
-            label.setHeight(25);
-            label.setWrap(false);
-
-            String iconSrc = getSeverityIcon(message.severity);
-
-            label.setIcon(iconSrc);
-
-            label.setTooltip(message.detailedMessage);
-
-            label.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    showDetails(message);
-                }
-            });
-
-            addMember(label, 1);
-            redraw();
-
-            Timer hideTimer = new Timer() {
-                @Override
-                public void run() {
-                    label.animateHide(AnimationEffect.FADE, new AnimationCallback() {
-                        public void execute(boolean b) {
-                            label.destroy();
-                        }
-                    });
-                }
-            };
-            hideTimer.schedule(10000);
         }
     }
 

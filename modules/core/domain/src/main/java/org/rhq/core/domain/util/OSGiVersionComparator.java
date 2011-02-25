@@ -37,58 +37,32 @@ public class OSGiVersionComparator implements Comparator<String> {
     }
 
     public int compare(String string1, String string2) {
-        Version ver1 = new Version(string1);
-        Version ver2 = new Version(string2);
+        OSGiVersion ver1 = new OSGiVersion(string1);
+        OSGiVersion ver2 = new OSGiVersion(string2);
 
-        int result = ver1.major - ver2.major;
+        int result = ver1.getMajor() - ver2.getMajor();
         if (result == 0) {
-            result = ver1.minor - ver2.minor;
+            result = ver1.getMinor() - ver2.getMinor();
             if (result == 0) {
-                result = ver1.micro - ver2.micro;
+                result = ver1.getMicro() - ver2.getMicro();
                 if (result == 0) {
-                    result = ver1.qualifier.compareTo(ver2.qualifier);
+                    if (ver1.getQualifier() != null) {
+                        if (ver2.getQualifier() == null) {
+                            result = 1;
+                        } else {
+                            ver1.getQualifier().compareTo(ver2.getQualifier());
+                        }
+                    } else {
+                        if (ver2.getQualifier() == null) {
+                            result = 0;
+                        } else {
+                            result = -1;
+                        }
+                    }
                 }
             }
         }
 
         return result;
-    }
-
-    private class Version {
-        int major;
-        int minor;
-        int micro;
-        String qualifier = "";
-
-        Version(String version) {
-            String[] parts = version.split("\\.");
-
-            try {
-                switch (parts.length) {
-                case 4: {
-                    qualifier = parts[3];
-                }
-
-                case 3: {
-                    micro = Integer.parseInt(parts[2]);
-                }
-
-                case 2: {
-                    minor = Integer.parseInt(parts[1]);
-                }
-
-                case 1: {
-                    major = Integer.parseInt(parts[0]);
-                    break;
-                }
-
-                default: {
-                    throw new IllegalArgumentException("Malformed version string [" + version + "]");
-                }
-                }
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Malformed version string [" + version + "]");
-            }
-        }
     }
 }

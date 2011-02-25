@@ -28,6 +28,10 @@ import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
+import com.smartgwt.client.widgets.form.events.ItemChangeEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangeHandler;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -35,6 +39,7 @@ import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.UploadItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -49,6 +54,7 @@ import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.OSGiVersion;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -569,6 +575,40 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             }
         };
         uploadForm.addFormHandler(uploadSuccessHandler);
+        
+        uploadForm.addItemChangeHandler(new ItemChangeHandler() {            
+            public void onItemChange(ItemChangeEvent event) {
+                if (event.getItem() instanceof UploadItem) {
+                    String fileName = event.getNewValue().toString();
+                    
+                    if (config.allPackages != null) {
+                        for(PackageAndLatestVersionComposite plv : config.allPackages) {
+                            if (plv.getGeneralPackage().getName().equals(fileName)) {
+                                try {
+                                    OSGiVersion v = new OSGiVersion(plv.getLatestPackageVersion().getVersion());
+                                    if (v.getMicroIfDefined() != null) {
+                                        v.setMicro(v.getMicro() + 1);
+                                    } else if (v.getMinorIfDefined() != null) {
+                                        v.setMinor(v.getMinor() + 1);
+                                    } else {
+                                        v.setMajor(v.getMajor() + 1);
+                                    }
+                                    
+                                    uploadForm.getField("editableVersion").setValue(v.toString());
+                                    return;
+                                } catch (IllegalArgumentException e) {
+                                    //ok, can't suggest anything
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        //no existing package exists with the same name as the file being uploaded
+                        uploadForm.getField("editableVersion").setValue("1.0");
+                    }
+                }
+            }
+        });
         
         return uploadForm;
     }

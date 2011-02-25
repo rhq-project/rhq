@@ -80,15 +80,24 @@ public class ScriptEngineFactory {
         
         ScriptEngine engine = initializer.instantiate(packageFinder.findPackages("org.rhq.core.domain"));
 
-        injectStandardBindings(engine, bindings);
+        injectStandardBindings(engine, bindings, true);
         
         return engine;
     }
     
-    public static void injectStandardBindings(ScriptEngine engine, StandardBindings bindings) {
+    /**
+     * Injects the values provided in the bindings into the {@link ScriptContext#ENGINE_SCOPE engine scope}
+     * of the provided script engine.
+     * 
+     * @param engine the engine
+     * @param bindings the bindings
+     * @param deleteExistingBindings true if the existing bindings should be replaced by the provided ones, false
+     * if the provided bindings should be added to the existing ones (possibly overwriting bindings with the same name).
+     */
+    public static void injectStandardBindings(ScriptEngine engine, StandardBindings bindings, boolean deleteExistingBindings) {
         bindings.preInject(engine);
         
-        Bindings engineBindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        Bindings engineBindings = deleteExistingBindings ? engine.createBindings() : engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
         for(Map.Entry<String, Object> entry : bindings.entrySet()) {
             engineBindings.put(entry.getKey(), entry.getValue());

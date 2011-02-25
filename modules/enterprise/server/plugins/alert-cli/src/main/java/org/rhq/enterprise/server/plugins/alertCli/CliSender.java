@@ -25,19 +25,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -54,7 +49,6 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -64,7 +58,6 @@ import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderValidationResults;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -256,6 +249,10 @@ public class CliSender extends AlertSender<CliComponent> {
         RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
         final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(), packageId, repoId, null);
 
+        if (versionToUse == null) {
+            throw new IllegalArgumentException("The package with id " + packageId + " either doesn't exist at all or doesn't have any version. Can't execute a CLI script without a script to run.");
+        }
+        
         PipedInputStream ret = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(ret);
 
@@ -308,11 +305,16 @@ public class CliSender extends AlertSender<CliComponent> {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
             PackageVersion versionToUse = rm.getLatestPackageVersion(overlord, config.packageId, config.repoId);
-
-            ret = ret.replace("$packageName", versionToUse.getDisplayName());
-            ret = ret.replace("$packageVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
-                : versionToUse.getDisplayVersion());
-
+            
+            if (versionToUse != null) {
+                ret = ret.replace("$packageName", versionToUse.getDisplayName());
+                ret = ret.replace("$packageVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
+                    : versionToUse.getDisplayVersion());
+            } else {
+                ret = ret.replace("$packageName", "unknown script with package id " + config.packageId);
+                ret = ret.replace("$packageVersion", "no version");
+            }
+            
             RepoCriteria criteria = new RepoCriteria();
             criteria.addFilterId(config.repoId);
             
@@ -382,7 +384,7 @@ public class CliSender extends AlertSender<CliComponent> {
                 engine = ScriptEngineFactory.getScriptEngine("JavaScript",
                     new PackageFinder(Collections.<File> emptyList()), bindings);                
             } else {
-                ScriptEngineFactory.injectStandardBindings(engine, bindings);
+                ScriptEngineFactory.injectStandardBindings(engine, bindings, true);
             }
             
             ++ENGINES_IN_USE;

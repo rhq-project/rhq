@@ -20,7 +20,6 @@
 package org.rhq.bindings.engine;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Set;
 
 import javax.script.ScriptEngine;
@@ -34,13 +33,14 @@ import javax.script.ScriptException;
  */
 public class JsEngineInitializer implements ScriptEngineInitializer {
 
+    private ScriptEngineManager engineManager = new ScriptEngineManager();
+    
     public boolean implementsLanguage(String language) {
         return language != null && ("JavaScript".equals(language) || "ECMAScript".equals(language));
     }
     
     public ScriptEngine instantiate(Set<String> packages) throws ScriptException {
-        ScriptEngineManager sem = new ScriptEngineManager();
-        ScriptEngine eng = sem.getEngineByName("JavaScript");
+        ScriptEngine eng = engineManager.getEngineByName("JavaScript");
         
         for(String pkg : packages) {
             eng.eval("importPackage(" + pkg + ")");

@@ -73,6 +73,8 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
     private ConfigurationEditor editor;
     private IButton saveButton;
 
+    private boolean refreshing = false;
+
     public CurrentGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
 
@@ -112,6 +114,11 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
 
     @Override
     public void refresh() {
+        if (this.refreshing) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshing = true;
         this.saveButton.disable();
         if (editor != null) {
             editor.destroy();
@@ -132,6 +139,7 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
             addMember(this.editor);
+            this.refreshing = false;
         }
     }
 

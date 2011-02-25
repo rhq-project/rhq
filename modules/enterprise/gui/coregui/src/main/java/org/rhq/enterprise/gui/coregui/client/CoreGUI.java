@@ -367,12 +367,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);
             } else {
-                if (!viewPath.isRefresh()) {
-                    messageBar.clearMessage(true);
-                }
-
-                if (
-                    pendingMessage != null) {
+                if (pendingMessage != null) {
                     getMessageCenter().notify(pendingMessage);
                     pendingMessage = null;
                 }

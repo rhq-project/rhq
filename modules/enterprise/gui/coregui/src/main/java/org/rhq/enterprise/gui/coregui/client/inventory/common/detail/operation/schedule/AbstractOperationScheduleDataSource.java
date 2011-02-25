@@ -99,18 +99,17 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
 
         DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, "Operation", null, 100,
                 true);
-        fields.add(operationNameField);
-
-        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null,
-                100, true);
-        fields.add(operationDisplayNameField);
-
         Set<OperationDefinition> operationDefinitions = this.resourceType.getOperationDefinitions();
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         for (OperationDefinition operationDefinition : operationDefinitions) {
             valueMap.put(operationDefinition.getName(), operationDefinition.getDisplayName());
         }
-        operationNameField.setValueMap(valueMap);        
+        operationNameField.setValueMap(valueMap);
+        fields.add(operationNameField);
+
+        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, "Operation", null,
+                100, true);
+        fields.add(operationDisplayNameField);
 
         DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY, "Owner");
         subjectField.setCanEdit(false);

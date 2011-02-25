@@ -74,6 +74,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
     protected static final int FIRST_COLUMN_WIDTH = 140;
 
+    private Map<Integer, String> operationIdToNameMap = new HashMap<Integer, String>();
     private Map<String, String> operationNameToDescriptionMap = new HashMap<String, String>();
     private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap =
         new HashMap<String, ConfigurationDefinition>();
@@ -83,6 +84,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     private JobTriggerEditor triggerEditor;
     private Configuration parameters;
     private EnhancedDynamicForm notesForm;
+    private Integer operationDefinitionId;
 
     public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
                                                 ResourceType resourceType, int scheduleId) {
@@ -90,6 +92,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         for (OperationDefinition operationDefinition : operationDefinitions) {
+            this.operationIdToNameMap.put(operationDefinition.getId(), operationDefinition.getName());
             this.operationNameToDescriptionMap.put(operationDefinition.getName(), operationDefinition.getDescription());
             this.operationNameToParametersDefinitionMap.put(operationDefinition.getName(),
                 operationDefinition.getParametersConfigurationDefinition());
@@ -101,6 +104,11 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     @Override
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
+
+        if (!viewPath.isEnd()) {
+            this.operationDefinitionId = viewPath.getCurrentAsInt();
+            viewPath.next();
+        }
 
         // Existing schedules are not editable. This may change in the future.
         boolean isReadOnly = (!hasControlPermission() || (getRecordId() != 0));
@@ -205,10 +213,17 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     @Override
     protected Record createNewRecord() {
         Record record = super.createNewRecord();
+
+        if (this.operationDefinitionId != null) {
+            String operationName = this.operationIdToNameMap.get(this.operationDefinitionId);
+            record.setAttribute(AbstractOperationScheduleDataSource.Field.OPERATION_NAME, operationName);
+        }
+
         Subject sessionSubject = UserSessionManager.getSessionSubject();
         AbstractOperationScheduleDataSource.SubjectRecord subjectRecord =
                 new AbstractOperationScheduleDataSource.SubjectRecord(sessionSubject);
         record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, subjectRecord);
+
         return record;
     }
 

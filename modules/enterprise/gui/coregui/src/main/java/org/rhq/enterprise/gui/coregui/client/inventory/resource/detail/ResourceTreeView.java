@@ -77,7 +77,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
@@ -413,7 +412,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        enabled = (resourcePermission.isControl() && null == resourceType.getOperationDefinitions() && !resourceType
+        enabled = (resourcePermission.isControl() && (resourceType.getOperationDefinitions() != null) && !resourceType
             .getOperationDefinitions().isEmpty());
         operations.setEnabled(enabled);
         if (enabled) {
@@ -422,7 +421,8 @@ public class ResourceTreeView extends LocatableVLayout {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        new OperationCreateWizard(resource, operationDefinition).startOperationWizard();
+                        CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), ResourceDetailView.Tab.OPERATIONS,
+                                ResourceDetailView.OperationsSubTab.SCHEDULES) + "/0/" + operationDefinition.getId());
                     }
                 });
                 opSubMenu.addItem(operationItem);

@@ -80,6 +80,16 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     private static final String BASE_VIEW_PATH = "Resource";
 
+    public static class Tab {
+        public static final String OPERATIONS = "Operations";
+        // TODO: other tabs
+    }
+
+    public static class OperationsSubTab {
+        public static final String SCHEDULES = "Schedules";
+        public static final String HISTORY = "History";
+    }
+
     private Integer resourceId;
 
     private ResourceComposite resourceComposite;
@@ -189,13 +199,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
-
-        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
+        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.OPERATIONS), new ViewName(Tab.OPERATIONS, MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
-        this.operationsSchedules = new SubTab(operationsTab.extendLocatorId("Schedules"), new ViewName("Schedules", MSG
-            .view_tabs_common_schedules()), null);
-        this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
-            .view_tabs_common_history()), null);
+        this.operationsSchedules = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.SCHEDULES),
+                new ViewName(OperationsSubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
+        this.operationsHistory = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.HISTORY),
+                new ViewName(OperationsSubTab.HISTORY, MSG.view_tabs_common_history()), null);
         operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
         tabs.add(operationsTab);
 

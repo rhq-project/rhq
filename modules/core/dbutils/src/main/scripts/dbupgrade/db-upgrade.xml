@@ -3296,6 +3296,50 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.103">
+                <!-- add FK for owning Subject -->
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DASHBOARD foreign key relation to RHQ_SUBJECT for resource dashboards">
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DB_SUBJECT_ID_FK
+                        FOREIGN KEY (SUBJECT_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- Support resource specific dashboards -->
+                <schema-addColumn table="RHQ_DASHBOARD" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DASHBOARD foreign key relation to RHQ_RESOURCE for resource dashboards">
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DB_RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- Support group specific dashboards -->
+                <schema-addColumn table="RHQ_DASHBOARD" column="GROUP_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DASHBOARD foreign key relation to RHQ_RESOURCE_GROUP for group dashboards">
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DB_RG_ID_FK
+                        FOREIGN KEY (GROUP_ID)
+                        REFERENCES RHQ_RESOURCE_GROUP (ID)
+                    </statement>
+                </schema-directSQL>
+                
+                <!-- Add category for distinguishing what kind of dashboard this is -->
+                <schema-addColumn table="RHQ_DASHBOARD" column="CATEGORY" columnType="VARCHAR2" precision="20"/>
+                <schema-directSQL>
+                    <statement desc="Set dashboard category for existing dashboards to INVENTORY">
+                        UPDATE RHQ_DASHBOARD
+                        SET CATEGORY = 'INVENTORY'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="CATEGORY" nullable="FALSE" />                
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

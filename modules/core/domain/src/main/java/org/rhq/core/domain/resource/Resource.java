@@ -68,6 +68,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceRepo;
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -1058,6 +1059,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "autoGroupParentResource", fetch = FetchType.LAZY)
     private List<ResourceGroup> autoGroupBackingGroups = null;
 
+    // When a group is removed any owned dashboards are removed automatically
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<Dashboard> dashboards = null;
+
     public Resource() {
 
     }
@@ -1662,6 +1667,14 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void setAutoGroupBackingGroups(List<ResourceGroup> autoGroupBackingGroups) {
         this.autoGroupBackingGroups = autoGroupBackingGroups;
+    }
+
+    protected Set<Dashboard> getDashboards() {
+        return dashboards;
+    }
+
+    protected void setDashboards(Set<Dashboard> dashboards) {
+        this.dashboards = dashboards;
     }
 
     public int compareTo(Resource that) {

@@ -469,7 +469,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         if ("AutoCluster".equals(viewPath.getCurrent().getPath())) {
             super.renderView(viewPath.next());
         } else {
-            // we are traversing to to the Members subtab. Assume this is happening after a save 
+            // if we are traversing to the Members subtab assume this is happening after a save, 
             // which means the group type and membership may have changed - get it so we refresh everything.
             if ((null != this.groupId) && this.inventoryTab.getName().equals(currentTabName)
                 && this.inventoryMembers.getName().equals(currentSubTabName)) {

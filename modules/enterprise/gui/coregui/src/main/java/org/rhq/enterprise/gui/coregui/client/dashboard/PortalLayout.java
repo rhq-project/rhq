@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.Arrays;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.EventHandler;
 import com.smartgwt.client.widgets.Canvas;
@@ -30,28 +32,43 @@ import com.smartgwt.client.widgets.events.DropHandler;
 
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public class PortalLayout extends LocatableHLayout {
 
     private DashboardView dashboardView;
 
-    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns) {
+    /**
+     * @param locatorId
+     * @param dashboardView
+     * @param numColumns
+     * @param columnWidths Currently only the first column width is set, others are ignored and share the remaining space
+     * evenly. If null column 0 defaults to 30%.
+     */
+    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns, String[] columnWidths) {
         super(locatorId);
 
-        this.dashboardView = dashboardView;
+        CoreGUI.getMessageCenter().notify(
+            new Message("------->> PortalLayout(numColumns=" + numColumns + ",columnWidths="
+                + Arrays.toString(columnWidths) + ")")); // TODO
 
+        this.dashboardView = dashboardView;
+        setMargin(5);
         setMembersMargin(6);
         for (int i = 0; i < numColumns; i++) {
             final PortalColumn column = new PortalColumn();
-            if (i == 0) {
+            if (null != columnWidths && i < columnWidths.length) {
+                column.setWidth(columnWidths[i]);
+            } else if (i == 0) {
                 column.setWidth("30%");
             }
-            addMember(column);
 
             final int columnNumber = i;
             column.addDropHandler(new DropHandler() {
@@ -85,13 +102,13 @@ public class PortalLayout extends LocatableHLayout {
                     }
 
                     // drop means the portlet location has changed. The selenium testing locators include positioning
-                    // info. So, in this case we have to take the hit and completely redraw the dash.
+                    // info. So, in this case we have to take the hit and completely rebuild the dash.
                     AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null
                         : new AsyncCallback<Dashboard>() {
 
                             @Override
                             public void onFailure(Throwable caught) {
-                                redraw();
+                                rebuild();
                             }
 
                             @Override
@@ -103,7 +120,7 @@ public class PortalLayout extends LocatableHLayout {
                                 target.removeFromParent();
                                 target.destroy();
 
-                                redraw();
+                                rebuild();
                             }
                         };
                     save(callback);
@@ -111,6 +128,9 @@ public class PortalLayout extends LocatableHLayout {
                     com.allen_sauer.gwt.log.client.Log.info("Rearranged column indexes");
                 }
             });
+
+            CoreGUI.getMessageCenter().notify(new Message("------->> PortalLayout() adding column " + i)); // TODO
+            addMember(column);
         }
     }
 
@@ -130,8 +150,8 @@ public class PortalLayout extends LocatableHLayout {
         this.dashboardView.save(callback);
     }
 
-    public void redraw() {
-        this.dashboardView.redraw();
+    public void rebuild() {
+        this.dashboardView.rebuild();
     }
 
     public void resize() {

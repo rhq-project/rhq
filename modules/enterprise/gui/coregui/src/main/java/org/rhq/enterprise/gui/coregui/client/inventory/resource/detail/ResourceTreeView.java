@@ -51,6 +51,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
@@ -522,60 +523,67 @@ public class ResourceTreeView extends LocatableVLayout {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
 
-        GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(), caught);
-            }
+        DashboardCriteria criteria = new DashboardCriteria();
+        GWTServiceLookup.getDashboardService().findDashboardsByCriteria(criteria,
+            new AsyncCallback<PageList<Dashboard>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(),
+                        caught);
+                }
 
-            public void onSuccess(List<Dashboard> result) {
+                public void onSuccess(PageList<Dashboard> result) {
 
-                for (final MeasurementDefinition def : type.getMetricDefinitions()) {
+                    for (final MeasurementDefinition def : type.getMetricDefinitions()) {
 
-                    MenuItem defItem = new MenuItem(def.getDisplayName());
-                    measurementsSubMenu.addItem(defItem);
-                    Menu defSubItem = new Menu();
-                    defItem.setSubmenu(defSubItem);
+                        MenuItem defItem = new MenuItem(def.getDisplayName());
+                        measurementsSubMenu.addItem(defItem);
+                        Menu defSubItem = new Menu();
+                        defItem.setSubmenu(defSubItem);
 
-                    for (final Dashboard d : result) {
-                        MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
-                            .getName()));
-                        defSubItem.addItem(addToDBItem);
+                        for (final Dashboard d : result) {
+                            MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
+                                .getName()));
+                            defSubItem.addItem(addToDBItem);
 
-                        addToDBItem.addClickHandler(new ClickHandler() {
-                            public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
-                                    GraphPortlet.KEY, 250);
-                                p.getConfiguration().put(
-                                    new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
-                                p.getConfiguration().put(
-                                    new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
+                            addToDBItem.addClickHandler(new ClickHandler() {
+                                public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                    DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
+                                        GraphPortlet.KEY, 250);
+                                    p.getConfiguration().put(
+                                        new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                    p.getConfiguration().put(
+                                        new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
-                                d.addPortlet(p);
+                                    d.addPortlet(p);
 
-                                GWTServiceLookup.getDashboardService().storeDashboard(d,
-                                    new AsyncCallback<Dashboard>() {
-                                        public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(), caught);
-                                        }
+                                    GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                        new AsyncCallback<Dashboard>() {
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError(
+                                                    MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                    caught);
+                                            }
 
-                                        public void onSuccess(Dashboard result) {
-                                            CoreGUI.getMessageCenter().notify(
-                                                new Message(MSG
-                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                        .getName()), Message.Severity.Info));
-                                        }
-                                    });
+                                            public void onSuccess(Dashboard result) {
+                                                CoreGUI
+                                                    .getMessageCenter()
+                                                    .notify(
+                                                        new Message(
+                                                            MSG
+                                                                .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                    .getName()), Message.Severity.Info));
+                                            }
+                                        });
 
-                            }
-                        });
+                                }
+                            });
+
+                        }
 
                     }
 
                 }
-
-            }
-        });
+            });
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
     }

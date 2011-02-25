@@ -35,6 +35,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -54,9 +56,12 @@ import org.hibernate.annotations.Cascade;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 @Entity
 @SequenceGenerator(name = "RHQ_DASHBOARD_ID_SEQ", sequenceName = "RHQ_DASHBOARD_ID_SEQ")
@@ -70,11 +75,16 @@ public class Dashboard implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_ID_SEQ")
     @Id
-    private int id;
+    private int id = 0;
 
     @Column(name = "NAME", nullable = false)
     private String name;
 
+    @Column(name = "CATEGORY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DashboardCategory category;
+
+    // currently unused
     @Column(name = "SHARED", nullable = false)
     private boolean shared = false;
 
@@ -85,6 +95,14 @@ public class Dashboard implements Serializable {
     @JoinColumn(name = "SUBJECT_ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private Subject owner;
+
+    @JoinColumn(name = "RESOURCE_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Resource resource;
+
+    @JoinColumn(name = "GROUP_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ResourceGroup group;
 
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
     @Cascade( { org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
@@ -128,6 +146,30 @@ public class Dashboard implements Serializable {
         this.owner = owner;
     }
 
+    public DashboardCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(DashboardCategory category) {
+        this.category = category;
+    }
+
+    protected Resource getResource() {
+        return resource;
+    }
+
+    protected void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
+    public ResourceGroup getGroup() {
+        return group;
+    }
+
+    public void setGroup(ResourceGroup group) {
+        this.group = group;
+    }
+
     public int getColumns() {
         return configuration.getSimple(CFG_COLUMNS).getIntegerValue();
     }
@@ -141,7 +183,15 @@ public class Dashboard implements Serializable {
     }
 
     public void setColumnWidths(String... columnWidths) {
-        configuration.put(new PropertySimple(CFG_WIDTHS, columnWidths));
+        if (null == columnWidths || columnWidths.length == 0) {
+            return;
+        }
+
+        String widths = columnWidths[0];
+        for (int i = 1; i < columnWidths.length; ++i) {
+            widths += ("," + columnWidths[i]);
+        }
+        configuration.put(new PropertySimple(CFG_WIDTHS, widths));
     }
 
     public Configuration getConfiguration() {
@@ -158,7 +208,7 @@ public class Dashboard implements Serializable {
 
     public List<DashboardPortlet> getPortlets(int column) {
 
-        List<DashboardPortlet> columnPortlets = new ArrayList<DashboardPortlet>();
+        ArrayList<DashboardPortlet> columnPortlets = new ArrayList<DashboardPortlet>();
         for (DashboardPortlet p : this.portlets) {
             if (p.getColumn() == column) {
                 columnPortlets.add(p);

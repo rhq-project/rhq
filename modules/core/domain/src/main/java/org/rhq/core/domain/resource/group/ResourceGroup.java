@@ -59,6 +59,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -472,6 +473,10 @@ public class ResourceGroup extends Group {
     @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
+    // When a group is removed any owned dashboards are removed automatically
+    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<Dashboard> dashboards = null;
+
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
     }
@@ -717,6 +722,14 @@ public class ResourceGroup extends Group {
         } else {
             return false;
         }
+    }
+
+    protected Set<Dashboard> getDashboards() {
+        return dashboards;
+    }
+
+    protected void setDashboards(Set<Dashboard> dashboards) {
+        this.dashboards = dashboards;
     }
 
     @PrePersist

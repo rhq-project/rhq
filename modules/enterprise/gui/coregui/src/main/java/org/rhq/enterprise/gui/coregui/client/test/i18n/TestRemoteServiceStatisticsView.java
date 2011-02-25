@@ -22,11 +22,14 @@ import java.util.List;
 
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
 
@@ -60,6 +63,39 @@ public class TestRemoteServiceStatisticsView extends Table {
         stddev.setAlign(Alignment.RIGHT);
 
         getListGrid().setFields(serviceName, methodName, count, slowest, average, fastest, stddev);
+        refresh();
+
+        addTableAction(extendLocatorId("delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+            new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    RemoteServiceStatistics.clearAll();
+                    refresh();
+                }
+            });
+
+        addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                refresh();
+            }
+        });
+    }
+
+    @Override
+    protected SelectionStyle getDefaultSelectionStyle() {
+        return SelectionStyle.NONE;
+    }
+
+    @Override
+    public boolean isShowFooterRefresh() {
+        return false;
+    }
+
+    @Override
+    public void refresh() {
+        super.refresh();
         getListGrid().setRecords(transform(RemoteServiceStatistics.getAll()));
     }
 

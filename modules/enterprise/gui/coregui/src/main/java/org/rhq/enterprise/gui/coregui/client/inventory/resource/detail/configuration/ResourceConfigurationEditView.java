@@ -62,6 +62,8 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     private ConfigurationEditor editor;
     private IButton saveButton;
 
+    private boolean refreshing = false;
+
     public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
 
@@ -99,6 +101,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
 
     @Override
     public void refresh() {
+        if (this.refreshing) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshing = true;
         this.saveButton.disable();
 
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
@@ -121,6 +128,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                                 editor.setReadOnly(!resourcePermission.isConfigureWrite());
                                 addMember(editor);
                                 markForRedraw();
+                                refreshing = false;
                                 // TODO (ips): If editor != null, use editor.reload() instead.
                             }
                         });
@@ -128,6 +136,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
 
                 @Override
                 public void onFailure(Throwable caught) {
+                    refreshing = false;
                     CoreGUI.getErrorHandler().handleError("Cannot load resource config", caught);
                 }
             });

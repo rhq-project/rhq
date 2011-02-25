@@ -165,6 +165,7 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
         this.configurationService.findPluginConfigurationsForGroup(group.getId(),
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
+                    refreshing = false;
                     CoreGUI.getErrorHandler().handleError(
                         MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
                 }

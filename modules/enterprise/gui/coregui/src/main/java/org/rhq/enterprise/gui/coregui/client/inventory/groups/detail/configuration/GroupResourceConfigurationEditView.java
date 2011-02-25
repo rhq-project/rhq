@@ -162,6 +162,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         this.configurationService.findResourceConfigurationsForGroup(group.getId(),
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
+                    refreshing = false;
                     CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()),
                         caught);
                 }

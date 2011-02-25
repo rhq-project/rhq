@@ -357,11 +357,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         public void renderView(final ViewPath viewPath) {
             Window.setTitle(getViewPathTitle(viewPath));
 
-            // when navigating, clear any message, the user is probably no longer interested
-            coreGUI.footer.getMessageBar().clearMessage(true);
-
             // keep our CoreGUI session alive by refreshing the session timer each time the user performs navigation
             UserSessionManager.refresh();
+
+            // clear any message when navigating to a new view (not refreshing), the user is probably no longer interested
+            if (!viewPath.isRefresh()) {
+                coreGUI.footer.getMessageBar().clearMessage(true);
+            }
 
             if (viewPath.isEnd()) {
                 // default view

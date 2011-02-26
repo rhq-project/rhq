@@ -71,13 +71,13 @@ public class TestRemoteServiceStatisticsView extends Table {
 
     // if this is not null, this view is hosted by this standalone Window
     private StatisticsWindow window = null;
-    private Timer timer = null;
+    private Timer refreshTimer = null;
     private boolean refreshOnPageChange = false;
 
     public TestRemoteServiceStatisticsView(String locatorId) {
         super(locatorId, TABLE_TITLE, null, defaultSorts, null, false);
 
-        timer = new Timer() {
+        refreshTimer = new Timer() {
             @Override
             public void run() {
                 refresh();
@@ -186,7 +186,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                     }
 
                     // cancel everything - will reinstate if user elected to do one of these
-                    timer.cancel();
+                    refreshTimer.cancel();
                     refreshOnPageChange = false;
 
                     if (timeout.intValue() == -1) {
@@ -195,7 +195,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                         refreshOnPageChange = true;
                         setTableTitle(TABLE_TITLE + " (refresh on page change)");
                     } else {
-                        timer.scheduleRepeating(timeout.intValue() * 1000);
+                        refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
                         setTableTitle(TABLE_TITLE + " (refresh every " + timeout + "s)");
                     }
                 }
@@ -273,6 +273,7 @@ public class TestRemoteServiceStatisticsView extends Table {
             setShowMinimizeButton(false);
             setShowMaximizeButton(true);
             setShowCloseButton(true);
+            setDismissOnEscape(false); // force close button to be pressed to ensure our close handler is called
             setIsModal(true);
             setShowModalMask(true);
             setAutoSize(true);
@@ -283,6 +284,8 @@ public class TestRemoteServiceStatisticsView extends Table {
             addCloseClickHandler(new CloseClickHandler() {
                 @Override
                 public void onCloseClick(CloseClientEvent event) {
+                    refreshTimer.cancel();
+                    refreshOnPageChange = false;
                     markForDestroy();
                 }
             });

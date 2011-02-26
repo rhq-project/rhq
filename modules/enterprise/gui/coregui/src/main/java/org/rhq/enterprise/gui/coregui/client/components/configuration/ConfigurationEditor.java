@@ -170,6 +170,19 @@ public class ConfigurationEditor extends LocatableVLayout {
         plugin, resource
     }; // Need this extra semicolon for the qdox parser
 
+    /**
+     * This is the kind of handler that is called when this editor has loaded
+     * the configuration and configuration definition. If the load failed,
+     * the methods will still be called, but will be passed null.
+     */
+    public static interface LoadHandler {
+        void loadedConfiguration(Configuration config);
+
+        void loadedConfigurationDefinition(ConfigurationDefinition configDef);
+    }
+
+    private LoadHandler loadHandler = null;
+
     public ConfigurationEditor(String locatorId) {
         super(locatorId);
     }
@@ -193,8 +206,16 @@ public class ConfigurationEditor extends LocatableVLayout {
         this.configurationDefinition = configurationDefinition;
     }
 
+    public void setLoadHandler(LoadHandler handler) {
+        this.loadHandler = handler;
+    }
+
     public Configuration getConfiguration() {
         return configuration;
+    }
+
+    public ConfigurationDefinition getConfigurationDefinition() {
+        return configurationDefinition;
     }
 
     public boolean isReadOnly() {
@@ -248,12 +269,18 @@ public class ConfigurationEditor extends LocatableVLayout {
                 configurationService.getResourceConfiguration(resourceId, new AsyncCallback<Configuration>() {
                     public void onFailure(Throwable caught) {
                         showError(caught);
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(null);
+                        }
                     }
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
                         Log.info("Config retrieved in: " + (System.currentTimeMillis() - start));
                         reload();
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(configuration);
+                        }
                     }
                 });
 
@@ -269,6 +296,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                                 showError(MSG.view_configEdit_error_1());
                             }
                             reload();
+                            if (loadHandler != null) {
+                                loadHandler.loadedConfigurationDefinition(configurationDefinition);
+                            }
                         }
                     });
 
@@ -276,11 +306,17 @@ public class ConfigurationEditor extends LocatableVLayout {
                 configurationService.getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
                     public void onFailure(Throwable caught) {
                         showError(caught);
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(null);
+                        }
                     }
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
                         reload();
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(configuration);
+                        }
                     }
                 });
 
@@ -294,6 +330,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                                 showError(MSG.view_configEdit_error_2());
                             }
                             reload();
+                            if (loadHandler != null) {
+                                loadHandler.loadedConfigurationDefinition(configurationDefinition);
+                            }
                         }
                     });
             }
@@ -553,7 +592,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             // Note: This field spans 3 columns.
             PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap) memberDefinition;
             CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyDefinitionList,
-                    propertyList, oddRow);
+                propertyList, oddRow);
             fields.add(listOfMapsItem);
         } else if (memberDefinition instanceof PropertyDefinitionSimple) {
             SpacerItem unsetItem = new SpacerItem();
@@ -812,9 +851,8 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private CanvasItem buildListOfMapsField(final String locatorId,
-                                            final PropertyDefinitionMap memberPropertyDefinitionMap,
-                                            PropertyDefinitionList propertyDefinitionList,
-                                            final PropertyList propertyList, boolean oddRow) {
+        final PropertyDefinitionMap memberPropertyDefinitionMap, PropertyDefinitionList propertyDefinitionList,
+        final PropertyList propertyList, boolean oddRow) {
         Log.debug("Building list-of-maps field for " + propertyList + "...");
 
         final ListGrid summaryTable = new ListGrid();
@@ -1446,7 +1484,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void displayMapEditor(String locatorId, final ListGrid summaryTable, final Record existingRecord,
-                                  PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map, boolean mapReadOnly) {
+        PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map, boolean mapReadOnly) {
 
         final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(definition
             .getPropertyDefinitions().values());

@@ -54,6 +54,8 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
     private StaticTextItem lastAvailReportValue;
     private StaticTextItem endpointValue;
 
+    private boolean loading = false; // will be true if loadData is currently waiting for responses
+
     public ResourceResourceAgentView(String locatorId, int resourceId) {
         super(locatorId);
 
@@ -124,9 +126,15 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
     }
 
     private void loadData() {
+        if (loading) {
+            return; // we are already loading and waiting for data, no need to re-issue the same queries
+        }
+        loading = true;
+
         GWTServiceLookup.getAgentService().getAgentForResource(this.resourceId, new AsyncCallback<Agent>() {
             @Override
             public void onFailure(Throwable caught) {
+                loading = false;
                 //Permissions failure, generate message to that effect
                 for (Canvas child : form.getChildren()) {
                     child.destroy();
@@ -147,6 +155,7 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
                 GWTServiceLookup.getAgentService().pingAgentForResource(resourceId, new AsyncCallback<Boolean>() {
                     @Override
                     public void onFailure(Throwable caught) {
+                        loading = false;
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_inventory_summary_agent_error2() + " " + resourceId + ".", caught);
                         agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(null));
@@ -155,6 +164,7 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
 
                     @Override
                     public void onSuccess(Boolean isUp) {
+                        loading = false;
                         //update icon with correct status
                         agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(isUp));
                         form.markForRedraw();

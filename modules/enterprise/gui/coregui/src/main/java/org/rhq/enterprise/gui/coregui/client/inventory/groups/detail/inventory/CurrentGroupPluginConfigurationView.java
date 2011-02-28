@@ -52,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -166,8 +167,14 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
                     refreshing = false;
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_group_pluginConfig_members_fetchFailureConnInProgress(), caught,
+                                Severity.Info));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    }
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

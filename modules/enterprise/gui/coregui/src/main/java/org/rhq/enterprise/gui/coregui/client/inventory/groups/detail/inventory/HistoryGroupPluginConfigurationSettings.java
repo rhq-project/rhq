@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -117,8 +118,14 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
         GWTServiceLookup.getConfigurationService().findPluginConfigurationsForGroupUpdate(groupUpdateId,
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_group_pluginConfig_members_fetchFailureConnInProgress(), caught,
+                                Severity.Info));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    }
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

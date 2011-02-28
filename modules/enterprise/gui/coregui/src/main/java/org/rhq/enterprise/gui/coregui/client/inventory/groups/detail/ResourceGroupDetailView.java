@@ -55,7 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.CurrentGroupPluginConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.GroupPluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.MembersView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
@@ -337,7 +337,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new CurrentGroupPluginConfigurationView(inventoryConn.extendLocatorId("View"),
+                    return new GroupPluginConfigurationEditView(inventoryConn.extendLocatorId("View"),
                         groupComposite);
                 }
             });

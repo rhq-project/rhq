@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class CurrentGroupPluginConfigurationView extends LocatableVLayout implements PropertyValueChangeListener,
+public class GroupPluginConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
     RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
@@ -76,7 +76,7 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
 
     private boolean refreshing = false;
 
-    public CurrentGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
+    public GroupPluginConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
 
         this.group = groupComposite.getResourceGroup();

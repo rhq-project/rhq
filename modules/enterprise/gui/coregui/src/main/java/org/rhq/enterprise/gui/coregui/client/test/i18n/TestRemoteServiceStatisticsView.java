@@ -284,8 +284,6 @@ public class TestRemoteServiceStatisticsView extends Table {
             addCloseClickHandler(new CloseClickHandler() {
                 @Override
                 public void onCloseClick(CloseClientEvent event) {
-                    refreshTimer.cancel();
-                    refreshOnPageChange = false;
                     markForDestroy();
                 }
             });
@@ -298,6 +296,11 @@ public class TestRemoteServiceStatisticsView extends Table {
 
         public StatisticsWindow(String locatorId) {
             super(locatorId);
+
+            final TestRemoteServiceStatisticsView view;
+            view = new TestRemoteServiceStatisticsView(extendLocatorId("StatsViewInWin"));
+            view.window = this;
+
             setTitle(TABLE_TITLE);
             setShowMinimizeButton(true);
             setShowMaximizeButton(true);
@@ -312,13 +315,13 @@ public class TestRemoteServiceStatisticsView extends Table {
             addCloseClickHandler(new CloseClickHandler() {
                 @Override
                 public void onCloseClick(CloseClientEvent event) {
+                    view.refreshTimer.cancel();
+                    view.refreshOnPageChange = false;
+                    view.markForDestroy();
                     markForDestroy();
                 }
             });
 
-            TestRemoteServiceStatisticsView view;
-            view = new TestRemoteServiceStatisticsView(extendLocatorId("StatsViewInWin"));
-            view.window = this;
             addItem(view);
 
             final String origColor = getBodyColor();

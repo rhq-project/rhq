@@ -110,6 +110,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldStatus.setWidth("10%");
 
             fieldResource.setType(ListGridFieldType.LINK);
+            fieldResource.setTarget("_self");
 
             fieldStatus.setType(ListGridFieldType.ICON);
             HashMap<String, String> statusIcons = new HashMap<String, String>(4);

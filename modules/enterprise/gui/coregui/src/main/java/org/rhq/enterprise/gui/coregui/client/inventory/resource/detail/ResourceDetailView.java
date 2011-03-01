@@ -83,11 +83,17 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     public static class Tab {
         public static final String OPERATIONS = "Operations";
+        public static final String CONFIGURATION = "Configuration";
         // TODO: other tabs
     }
 
     public static class OperationsSubTab {
         public static final String SCHEDULES = "Schedules";
+        public static final String HISTORY = "History";
+    }
+
+    public static class ConfigurationSubTab {
+        public static final String CURRENT = "Current";
         public static final String HISTORY = "History";
     }
 
@@ -209,11 +215,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
         tabs.add(operationsTab);
 
-        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
+        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.CONFIGURATION), new ViewName(Tab.CONFIGURATION,
             MSG.view_tabs_common_configuration()), "/images/icons/Configure_grey_16.png");
-        this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), new ViewName("Current", MSG
+        this.configCurrent = new SubTab(configurationTab.extendLocatorId(ConfigurationSubTab.CURRENT),
+                new ViewName(ConfigurationSubTab.CURRENT, MSG
             .view_tabs_common_current()), null);
-        this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), new ViewName("History", MSG
+        this.configHistory = new SubTab(configurationTab.extendLocatorId(ConfigurationSubTab.HISTORY),
+                new ViewName(ConfigurationSubTab.HISTORY, MSG
             .view_tabs_common_history()), null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);

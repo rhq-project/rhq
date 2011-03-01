@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary;
 
+import java.util.Set;
+
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -26,12 +30,17 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
@@ -77,11 +86,17 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
     protected String SEE_MORE = MSG.common_msg_see_more();
 
     private ResourceGroupComposite groupComposite = null;
+    private ResourceComposite resourceComposite = null;
+    private HLayout recentBundleDeployTitle;
 
-    public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite) {
+    public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite,
+        ResourceComposite resourceComposite) {
         super(locatorId);
         if (groupComposite != null) {
             this.groupComposite = groupComposite;
+        }
+        if (resourceComposite != null) {
+            this.resourceComposite = resourceComposite;
         }
         initializeUi();
     }
@@ -97,13 +112,13 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         HTMLFlow divider3 = new HTMLFlow("<hr/>");
         HTMLFlow divider4 = new HTMLFlow("<hr/>");
         HTMLFlow divider5 = new HTMLFlow("<hr/>");
-        HTMLFlow divider6 = new HTMLFlow("<hr/>");
+        //        HTMLFlow divider6 = new HTMLFlow("<hr/>");
         divider1.setWidth("50%");
         divider2.setWidth("50%");
         divider3.setWidth("50%");
         divider4.setWidth("50%");
         divider5.setWidth("50%");
-        divider6.setWidth("50%");
+        //        divider6.setWidth("50%");
 
         //leftPane
         leftPane.setWidth("50%");
@@ -116,10 +131,13 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         if (groupComposite != null) {
             group = groupComposite.getResourceGroup();
         }
+        if (resourceComposite != null) {
+            resource = resourceComposite.getResource();
+        }
 
         //recentMetrics.xhtml
         HLayout recentMetricsTitle = new TitleWithIcon("subsystems/monitor/Monitor_24.png", RECENT_MEASUREMENTS);
-        if ((group == null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(recentMetricsTitle);
             leftPane.addMember(recentMeasurementsContent);
             recentMeasurementsContent.setHeight(20);
@@ -133,7 +151,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         //recentOOBs.xhtml
         HLayout recentOobsTitle = new TitleWithIcon("subsystems/monitor/Monitor_failed_24.png", RECENT_OOB);
 
-        if ((group == null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(divider2);
             leftPane.addMember(recentOobsTitle);
             leftPane.addMember(recentOobContent);
@@ -147,7 +165,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         //recentConfigUpdates.xhtml
         HLayout recentConfigUpdatesTitle = new TitleWithIcon("subsystems/configure/Configure_24.png",
             RECENT_CONFIGURATIONS);
-        if ((group == null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             rightPane.addMember(recentConfigUpdatesTitle);
             rightPane.addMember(recentConfigurationContent);
             recentConfigurationContent.setHeight(20);
@@ -155,7 +173,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         }
         //recentOperations.xhtml
         HLayout recentOperationsTitle = new TitleWithIcon("subsystems/control/Operation_24.png", RECENT_OPERATIONS);
-        if ((group == null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             rightPane.addMember(recentOperationsTitle);
             rightPane.addMember(recentOperationsContent);
             recentOperationsContent.setHeight(20);
@@ -167,31 +185,83 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         rightPane.addMember(recentEventsContent);
         recentEventsContent.setHeight(20);
         //recentPackageHistory.xhtml
-        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_PKG_HISTORY);
-        if ((group == null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Package_24.png", RECENT_PKG_HISTORY);
+        recentPkgHistoryContent.setHeight(20);
+        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             rightPane.addMember(divider5);
             rightPane.addMember(recentPkgHistoryTitle);
             rightPane.addMember(recentPkgHistoryContent);
-            recentPkgHistoryContent.setHeight(20);
         }
 
-        HLayout recentBundleDeployTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_BUNDLE_DEPLOY);
-        //        if (resource.type==Platform) || (Group(Mixed/Compat) of Platforms)
-        //        if ((group == null)&&())||((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {
-        if (((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {
-            rightPane.addMember(divider6);
-            rightPane.addMember(recentBundleDeployTitle);
-            rightPane.addMember(recentBundleDeployContent);
-            recentBundleDeployTitle.setHeight(20);
-        }
+        //recent bundle deployments
+        recentBundleDeployTitle = new TitleWithIcon("subsystems/content/Content_24.png", RECENT_BUNDLE_DEPLOY);
+        recentBundleDeployTitle.setHeight(20);
+        deployBundleViewIfApplicable(resource, group);
 
         addMember(leftPane);
         addMember(rightPane);
+
+    }
+
+    private void deployBundleViewIfApplicable(Resource resource, ResourceGroup group) {
+        if (displayBundlesForResource(resource)) {
+            enableBundleArea();
+        } else {//necessarily need to check group membership for platforms
+            if (group != null) {
+                //displays bundles region if group is compatible and contains platform resources
+                displayBundleDeploymentsForPlatformGroups(group);
+            }
+        }
+
+    }
+
+    protected boolean displayBundlesForResource(Resource resource) {
+        boolean display = false;
+        if ((resource != null) && (resource.getResourceType().getCategory().equals(ResourceCategory.PLATFORM))) {
+            display = true;
+        }
+        return display;
+    }
+
+    protected void displayBundleDeploymentsForPlatformGroups(final ResourceGroup group) {
+        if (group != null) {
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.addFilterId(group.getId());
+            criteria.fetchExplicitResources(true);
+            GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceGroup>>() {
+                    @Override
+                    public void onSuccess(PageList<ResourceGroup> results) {
+                        if (!results.isEmpty()) {
+                            ResourceGroup gp = results.get(0);
+                            Set<Resource> explicitMembers = gp.getExplicitResources();
+                            Resource[] currentResources = new Resource[explicitMembers.size()];
+                            explicitMembers.toArray(currentResources);
+                            if (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)) {
+                                if (currentResources[0].getResourceType().getCategory().equals(
+                                    ResourceCategory.PLATFORM)) {
+                                    enableBundleArea();
+                                    getRecentBundleDeployments();
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Log.debug("Error retrieving information for group [" + group.getId() + "]:"
+                            + caught.getMessage());
+                    }
+                });
+
+        }
     }
 
     /** Implement to define calls to asynchronous calls out to UI display data.
      */
     protected abstract void loadData();
+
+    protected abstract void getRecentBundleDeployments();
 
     @Override
     protected void onDraw() {
@@ -213,6 +283,16 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         markForRedraw();
         //call out to 3rd party javascript lib
         BrowserUtility.graphSparkLines();
+    }
+
+    private void enableBundleArea() {
+        HTMLFlow divider6 = new HTMLFlow("<hr/>");
+        divider6.setWidth("50%");
+
+        rightPane.addMember(divider6);
+        rightPane.addMember(recentBundleDeployTitle);
+        rightPane.addMember(recentBundleDeployContent);
+        rightPane.markForRedraw();
     }
 
     /**Creates the section top titles with icon for regions of Activity page.

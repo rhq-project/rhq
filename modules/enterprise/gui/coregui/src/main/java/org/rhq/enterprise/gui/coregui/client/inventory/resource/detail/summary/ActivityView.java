@@ -36,15 +36,18 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.ResourceBundleDeploymentCriteria;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -70,7 +73,7 @@ public class ActivityView extends AbstractActivityView {
     private ResourceComposite resourceComposite;
 
     public ActivityView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, null);
+        super(locatorId, null, resourceComposite);
         this.resourceComposite = resourceComposite;
     }
 
@@ -90,6 +93,17 @@ public class ActivityView extends AbstractActivityView {
         getRecentOobs();
         getRecentPkgHistory();
         getRecentMetrics();
+
+        //conditionally display Bundle Deployments region.
+        Resource resource = null;
+        //        ResourceGroup group = null;
+        if (resourceComposite != null) {
+            resource = resourceComposite.getResource();
+        }
+        //        if (deployBundleViewIfApplicable(resource, group)) {
+        if ((resource != null) && (displayBundlesForResource(resource))) {
+            getRecentBundleDeployments();
+        }
     }
 
     /** Fetches alerts and updates the DynamicForm instance with the latest
@@ -116,7 +130,6 @@ public class ActivityView extends AbstractActivityView {
                         LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
                             .valueOf(rowNum++)));
                         row.setNumCols(3);
-
                         StaticTextItem iconItem = newTextItemIcon(ImageManager.getAlertIcon(alert.getAlertDefinition()
                             .getPriority()), alert.getAlertDefinition().getPriority().getDisplayName());
                         LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ",
@@ -420,7 +433,7 @@ public class ActivityView extends AbstractActivityView {
                                     + history.getPackageVersion().getVersion()));
                             row.setNumCols(3);
 
-                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Package_16.png", null);
                             String title = history.getPackageVersion().getFileName() + ":";
                             String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
                                 + "&selectedHistoryId=" + history.getId();
@@ -593,5 +606,70 @@ public class ActivityView extends AbstractActivityView {
         }
         recentMeasurementsContent.addChild(column);
         recentMeasurementsContent.markForRedraw();
+    }
+
+    /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
+     */
+    protected void getRecentBundleDeployments() {
+        final int resourceId = this.resourceComposite.getResource().getId();
+        ResourceBundleDeploymentCriteria criteria = new ResourceBundleDeploymentCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceIds(resourceId);
+        criteria.addSortStatus(PageOrdering.DESC);
+        criteria.fetchDestination(true);
+        criteria.fetchBundleVersion(true);
+        criteria.fetchResourceDeployments(true);
+
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving installed bundle deployments for resource [" + resourceId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<BundleDeployment> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (BundleDeployment deployment : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
+                                .extendLocatorId(deployment.getBundleVersion().getName()
+                                    + deployment.getBundleVersion().getVersion()));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                            String title = deployment.getBundleVersion().getName() + "["
+                                + deployment.getBundleVersion().getVersion() + "]:";
+
+                            String destination = ReportDecorator.GWT_BUNDLE_URL
+                                + deployment.getBundleVersion().getBundle().getId() + "/destinations/"
+                                + deployment.getDestination().getId();
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter
+                                .format(deployment.getCtime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
+                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentBundleDeployContent
+                            .extendLocatorId("None"), RECENT_BUNDLE_DEPLOY_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentBundleDeployContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentBundleDeployContent.addChild(column);
+                    recentBundleDeployContent.markForRedraw();
+                }
+            });
     }
 }

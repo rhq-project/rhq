@@ -52,6 +52,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -75,7 +76,7 @@ public class ActivityView2 extends AbstractActivityView {
     private ResourceGroupComposite groupComposite;
 
     public ActivityView2(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, groupComposite);
+        super(locatorId, groupComposite, null);
         this.groupComposite = groupComposite;
     }
 
@@ -98,7 +99,14 @@ public class ActivityView2 extends AbstractActivityView {
             getRecentOobs();
             getRecentPkgHistory();
             getRecentMetrics();
-            getRecentBundleDeployments();
+        }
+        //conditionally display Bundle deployments for groups of platforms only
+        ResourceGroup group = null;
+        if (groupComposite != null) {
+            group = groupComposite.getResourceGroup();
+        }
+        if (group != null) {
+            displayBundleDeploymentsForPlatformGroups(group);
         }
     }
 
@@ -450,7 +458,7 @@ public class ActivityView2 extends AbstractActivityView {
                                 + history.getPackageVersion().getVersion()));
                         row.setNumCols(3);
 
-                        StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                        StaticTextItem iconItem = newTextItemIcon("subsystems/content/Package_16.png", null);
                         String title = history.getPackageVersion().getFileName() + ":";
                         String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
                             + "&selectedHistoryId=" + history.getId();
@@ -627,7 +635,7 @@ public class ActivityView2 extends AbstractActivityView {
 
     /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
      */
-    private void getRecentBundleDeployments() {
+    protected void getRecentBundleDeployments() {
         final int groupId = this.groupComposite.getResourceGroup().getId();
         GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
         PageControl pageControl = new PageControl(0, 5);
@@ -670,7 +678,7 @@ public class ActivityView2 extends AbstractActivityView {
                             column.addMember(row);
                         }
                         //insert see more link
-                        //TODO: spinder(add this later) no current view for seeing all bundle deployments
+                        //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
                         //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
                         //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
                     } else {

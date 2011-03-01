@@ -39,6 +39,7 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -99,6 +100,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     private ResourceComposite resourceComposite = null;
     private HLayout recentBundleDeployTitle;
     private ToolStrip footer;
+    private boolean firstRightPanePortletLoaded = false;
 
     public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite,
         ResourceComposite resourceComposite) {
@@ -138,8 +140,13 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
         Resource resource = null;
         ResourceGroup group = null;
-        if (groupComposite != null) {
+        GroupCategory groupCategory = null;
+        Set<ResourceTypeFacet> facets = null;
+        if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
             group = groupComposite.getResourceGroup();
+            group = groupComposite.getResourceGroup();
+            groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+            facets = groupComposite.getResourceFacets().getFacets();
         }
         if (resourceComposite != null) {
             resource = resourceComposite.getResource();
@@ -147,7 +154,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
         //recentMetrics.xhtml
         HLayout recentMetricsTitle = new TitleWithIcon("subsystems/monitor/Monitor_24.png", RECENT_MEASUREMENTS);
-        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(recentMetricsTitle);
             leftPane.addMember(recentMeasurementsContent);
             recentMeasurementsContent.setHeight(20);
@@ -160,45 +167,57 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         recentAlertsContent.setHeight(20);
         //recentOOBs.xhtml
         HLayout recentOobsTitle = new TitleWithIcon("subsystems/monitor/Monitor_failed_24.png", RECENT_OOB);
-
-        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        recentOobContent.setHeight(20);
+        if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(divider2);
             leftPane.addMember(recentOobsTitle);
             leftPane.addMember(recentOobContent);
-            recentOobContent.setHeight(20);
         }
         //rightPane
         rightPane.setWidth("50%");
         rightPane.setPadding(5);
         rightPane.setMembersMargin(5);
         rightPane.setAutoHeight();
+        firstRightPanePortletLoaded = false;
         //recentConfigUpdates.xhtml
         HLayout recentConfigUpdatesTitle = new TitleWithIcon("subsystems/configure/Configure_24.png",
             RECENT_CONFIGURATIONS);
-        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        recentConfigurationContent.setHeight(20);
+        if ((resource != null) || (displayGroupConfigurationUpdates(groupCategory, facets))) {//resource
             rightPane.addMember(recentConfigUpdatesTitle);
             rightPane.addMember(recentConfigurationContent);
-            recentConfigurationContent.setHeight(20);
-            rightPane.addMember(divider3);
+            firstRightPanePortletLoaded = true;
         }
+
         //recentOperations.xhtml
         HLayout recentOperationsTitle = new TitleWithIcon("subsystems/control/Operation_24.png", RECENT_OPERATIONS);
-        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+        recentOperationsContent.setHeight(20);
+        if ((resource != null) || (displayGroupOperations(groupCategory, facets))) {//resource
+            if (firstRightPanePortletLoaded) {
+                rightPane.addMember(divider3);
+            }
             rightPane.addMember(recentOperationsTitle);
             rightPane.addMember(recentOperationsContent);
-            recentOperationsContent.setHeight(20);
-            rightPane.addMember(divider4);
+            firstRightPanePortletLoaded = true;
         }
         //recentEventCounts.xhtml
         HLayout recentEventsTitle = new TitleWithIcon("subsystems/event/Events_24.png", RECENT_EVENTS);
-        rightPane.addMember(recentEventsTitle);
-        rightPane.addMember(recentEventsContent);
         recentEventsContent.setHeight(20);
+        if ((resource != null) || displayGroupEvents(groupCategory, facets)) {//resource
+            if (firstRightPanePortletLoaded) {
+                rightPane.addMember(divider4);
+            }
+            rightPane.addMember(recentEventsTitle);
+            rightPane.addMember(recentEventsContent);
+            firstRightPanePortletLoaded = true;
+        }
         //recentPackageHistory.xhtml
         HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Package_24.png", RECENT_PKG_HISTORY);
         recentPkgHistoryContent.setHeight(20);
-        if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
-            rightPane.addMember(divider5);
+        if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
+            if (firstRightPanePortletLoaded) {
+                rightPane.addMember(divider5);
+            }
             rightPane.addMember(recentPkgHistoryTitle);
             rightPane.addMember(recentPkgHistoryContent);
         }
@@ -315,7 +334,9 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         HTMLFlow divider6 = new HTMLFlow("<hr/>");
         divider6.setWidth("50%");
 
-        rightPane.addMember(divider6);
+        if (firstRightPanePortletLoaded) {
+            rightPane.addMember(divider6);
+        }
         rightPane.addMember(recentBundleDeployTitle);
         rightPane.addMember(recentBundleDeployContent);
         rightPane.markForRedraw();
@@ -428,4 +449,25 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
     }
 
+    protected boolean displayGroupConfigurationUpdates(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+        if ((groupCategory == null) || facets == null) {
+            return false;
+        }
+        return (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION));
+    }
+
+    protected boolean displayGroupOperations(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+        if ((groupCategory == null) || facets == null) {
+            return false;
+        }
+        return ((groupCategory == GroupCategory.COMPATIBLE) && facets.contains(ResourceTypeFacet.OPERATION));
+    }
+
+    protected boolean displayGroupEvents(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+        if ((groupCategory == null) || facets == null) {
+            return false;
+        }
+        return ((groupCategory == GroupCategory.MIXED) || (groupCategory == GroupCategory.COMPATIBLE && facets
+            .contains(ResourceTypeFacet.EVENT)));
+    }
 }

@@ -50,6 +50,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -89,23 +90,36 @@ public class ActivityView2 extends AbstractActivityView {
     /**Initiates data request.
      */
     protected void loadData() {
-        getRecentAlerts();
-        getRecentEventUpdates();
-        if ((groupComposite != null)
-            && (groupComposite.getResourceGroup().getGroupCategory().equals(GroupCategory.COMPATIBLE))) {//CompatibleGroup
-            //TODO: spinder should we drive these calls off of facet availability?
-            getRecentOperations();
-            getRecentConfigurationUpdates();
-            getRecentOobs();
-            getRecentPkgHistory();
-            getRecentMetrics();
-        }
-        //conditionally display Bundle deployments for groups of platforms only
         ResourceGroup group = null;
-        if (groupComposite != null) {
+        GroupCategory groupCategory = null;
+        Set<ResourceTypeFacet> facets = null;
+        if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
             group = groupComposite.getResourceGroup();
-        }
-        if (group != null) {
+            groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+            //Load Facets to conditionally display relevant tabs
+            facets = groupComposite.getResourceFacets().getFacets();
+
+            getRecentAlerts();
+            //events
+            if (displayGroupEvents(groupCategory, facets)) {
+                getRecentEventUpdates();
+            }
+            //operations
+            if (displayGroupOperations(groupCategory, facets)) {
+                getRecentOperations();
+            }
+            //Config updates
+            if (displayGroupConfigurationUpdates(groupCategory, facets)) {
+                getRecentConfigurationUpdates();
+            }
+            //recentMetrics,oobs,pkghistory
+            if (groupCategory == GroupCategory.COMPATIBLE) {
+                getRecentOobs();
+                getRecentPkgHistory();
+                getRecentMetrics();
+            }
+
+            //conditionally display Bundle deployments for groups of platforms only
             displayBundleDeploymentsForPlatformGroups(group);
         }
     }

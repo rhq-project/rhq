@@ -96,11 +96,9 @@ public class ActivityView extends AbstractActivityView {
 
         //conditionally display Bundle Deployments region.
         Resource resource = null;
-        //        ResourceGroup group = null;
         if (resourceComposite != null) {
             resource = resourceComposite.getResource();
         }
-        //        if (deployBundleViewIfApplicable(resource, group)) {
         if ((resource != null) && (displayBundlesForResource(resource))) {
             getRecentBundleDeployments();
         }

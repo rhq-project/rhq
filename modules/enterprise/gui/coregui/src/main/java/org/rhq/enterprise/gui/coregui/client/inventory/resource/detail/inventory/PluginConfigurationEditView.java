@@ -112,6 +112,8 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
             editor.destroy();
             removeMember(editor);
         }
+        // TODO (ips): Load the config and config def ourselves, so we can remove that logic from the ConfigurationEditor,
+        //       whose only purpose should be to render a config.
         editor = new ConfigurationEditor(extendLocatorId("Editor"), resource.getId(), resource.getResourceType()
             .getId(), ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);

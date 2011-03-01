@@ -23,12 +23,17 @@ import java.util.Set;
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -46,12 +51,17 @@ import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Simeon Pinder
  */
-public abstract class AbstractActivityView extends LocatableHLayout implements RefreshableView {
+public abstract class AbstractActivityView extends LocatableVLayout implements RefreshableView {
+
+    //contains the activity display region
+    private LocatableHLayout columnSection = new LocatableHLayout("ActivityRegion");
 
     //Locatable ui references
     protected VLayout leftPane = new VLayout();
@@ -88,6 +98,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
     private ResourceGroupComposite groupComposite = null;
     private ResourceComposite resourceComposite = null;
     private HLayout recentBundleDeployTitle;
+    private ToolStrip footer;
 
     public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite,
         ResourceComposite resourceComposite) {
@@ -98,6 +109,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         if (resourceComposite != null) {
             this.resourceComposite = resourceComposite;
         }
+        addMember(columnSection);
         initializeUi();
     }
 
@@ -112,13 +124,11 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         HTMLFlow divider3 = new HTMLFlow("<hr/>");
         HTMLFlow divider4 = new HTMLFlow("<hr/>");
         HTMLFlow divider5 = new HTMLFlow("<hr/>");
-        //        HTMLFlow divider6 = new HTMLFlow("<hr/>");
         divider1.setWidth("50%");
         divider2.setWidth("50%");
         divider3.setWidth("50%");
         divider4.setWidth("50%");
         divider5.setWidth("50%");
-        //        divider6.setWidth("50%");
 
         //leftPane
         leftPane.setWidth("50%");
@@ -198,8 +208,24 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         recentBundleDeployTitle.setHeight(20);
         deployBundleViewIfApplicable(resource, group);
 
-        addMember(leftPane);
-        addMember(rightPane);
+        columnSection.addMember(leftPane);
+        columnSection.addMember(rightPane);
+
+        //Add footer region
+        this.footer = new ToolStrip();
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
+        footer.addMember(new LayoutSpacer());
+        IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+        refreshButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                loadData();
+                refresh();
+            }
+        });
+        footer.addMember(refreshButton);
+        addMember(footer);
 
     }
 

@@ -129,7 +129,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                                 addMember(editor);
                                 markForRedraw();
                                 refreshing = false;
-                                // TODO (ips): If editor != null, use editor.reload() instead.
                             }
                         });
                 }

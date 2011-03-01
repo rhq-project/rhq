@@ -253,7 +253,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
         // TODO, add real portlets
         // set leftmost column and letthe rest be equally divided
-        dashboard.setColumnWidths("40%");
+        dashboard.setColumnWidths("40%", "*");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         // Left Column

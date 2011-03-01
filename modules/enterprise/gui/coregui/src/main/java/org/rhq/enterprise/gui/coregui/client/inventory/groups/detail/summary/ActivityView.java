@@ -18,204 +18,695 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.util.BooleanCallback;
-import com.smartgwt.client.util.SC;
+import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DashboardCriteria;
-import org.rhq.core.domain.dashboard.Dashboard;
-import org.rhq.core.domain.dashboard.DashboardCategory;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.GroupBundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.InitializableView;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
-import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
-import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
- * The content pane for the group Summary>Dashboard subtab.
+ * The content pane for the group Summary>Activity subtab.
  *
- * @author Jay Shaughnessy
+ * @author Simeon Pinder
  */
-
-public class ActivityView extends LocatableVLayout implements DashboardContainer, InitializableView {
-
-    private static final String DASHBOARD_NAME_PREFIX = "GroupDashboard_";
+public class ActivityView extends AbstractActivityView {
 
     private ResourceGroupComposite groupComposite;
 
-    private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
-
-    private DashboardView dashboardView;
-
-    private LocatableToolStrip footer;
-    private IButton editButton;
-    private IButton resetButton;
-
-    // Capture the user's global permissions for use by any dashboard or portlet that may need it for rendering.
-    private Set<Permission> globalPermissions;
-
-    private boolean editMode = false;
-
-    private boolean isInitialized = false;
-
     public ActivityView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+        super(locatorId, groupComposite, null);
         this.groupComposite = groupComposite;
     }
 
     @Override
     protected void onInit() {
-        if (!isInitialized()) {
-            super.onInit();
+        super.onInit();
+        loadData();
+    }
 
-            // first async call to get global permissions
-            new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+    /**Initiates data request.
+     */
+    protected void loadData() {
+        ResourceGroup group = null;
+        GroupCategory groupCategory = null;
+        Set<ResourceTypeFacet> facets = null;
+        if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
+            group = groupComposite.getResourceGroup();
+            groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+            //Load Facets to conditionally display relevant tabs
+            facets = groupComposite.getResourceFacets().getFacets();
 
-                public void onPermissionsLoaded(Set<Permission> permissions) {
-                    globalPermissions = permissions;
+            getRecentAlerts();
+            //events
+            if (displayGroupEvents(groupCategory, facets)) {
+                getRecentEventUpdates();
+            }
+            //operations
+            if (displayGroupOperations(groupCategory, facets)) {
+                getRecentOperations();
+            }
+            //Config updates
+            if (displayGroupConfigurationUpdates(groupCategory, facets)) {
+                getRecentConfigurationUpdates();
+            }
+            //recentMetrics,oobs,pkghistory
+            if (groupCategory == GroupCategory.COMPATIBLE) {
+                getRecentOobs();
+                getRecentPkgHistory();
+                getRecentMetrics();
+            }
 
-                    // now make async call to look for customized dash for this user and entity
-                    DashboardCriteria criteria = new DashboardCriteria();
-                    criteria.addFilterCategory(DashboardCategory.GROUP);
-                    criteria.addFilterGroupId(groupComposite.getResourceGroup().getId());
-                    dashboardService.findDashboardsByCriteria(criteria, new AsyncCallback<PageList<Dashboard>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
-                        }
-
-                        public void onSuccess(final PageList<Dashboard> result) {
-                            Dashboard dashboard = result.isEmpty() ? getDefaultDashboard() : result.get(0);
-                            setDashboard(dashboard);
-
-                            isInitialized = true;
-
-                            // draw() may be done since onInit finishes asynchronously, if so redraw 
-                            if (isDrawn()) {
-                                markForRedraw();
-                            }
-                        }
-                    });
-                }
-            });
+            //conditionally display Bundle deployments for groups of platforms only
+            displayBundleDeploymentsForPlatformGroups(group);
         }
     }
 
-    private void setDashboard(Dashboard dashboard) {
-        Canvas[] members = getMembers();
-        removeMembers(members);
+    /** Fetches alerts and updates the DynamicForm instance with the latest
+     *  alert information.
+     */
+    private void getRecentAlerts() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        Integer[] filterGroupAlertDefinitionIds;
+        Set<AlertDefinition> alertDefinitions = this.groupComposite.getResourceGroup().getAlertDefinitions();
+        filterGroupAlertDefinitionIds = new Integer[alertDefinitions.size()];
+        int i = 0;
+        for (AlertDefinition def : alertDefinitions) {
+            filterGroupAlertDefinitionIds[i++] = def.getId();
+        }
+        //fetches last five alerts for this resource
+        AlertCriteria criteria = new AlertCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterGroupAlertDefinitionIds(filterGroupAlertDefinitionIds);
+        GWTServiceLookup.getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+            @Override
+            public void onSuccess(PageList<Alert> result) {
+                VLayout column = new VLayout();
+                column.setHeight(10);
+                if (!result.isEmpty()) {
+                    int rowNum = 0;
+                    for (Alert alert : result) {
+                        // alert history records do not have a usable locatorId, we'll use rownum, which is unique and
+                        // may be repeatable.
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                            .valueOf(rowNum++)));
+                        row.setNumCols(3);
 
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard);
-        addMember(dashboardView);
+                        StaticTextItem iconItem = newTextItemIcon(ImageManager.getAlertIcon(alert.getAlertDefinition()
+                            .getPriority()), alert.getAlertDefinition().getPriority().getDisplayName());
+                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ",
+                            ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/" + alert.getId());
+                        StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(alert.getCtime()));
+                        row.setItems(iconItem, link, time);
 
-        footer = new LocatableToolStrip(extendLocatorId("Footer"));
-        footer.setPadding(5);
-        footer.setWidth100();
-        footer.setMembersMargin(15);
+                        column.addMember(row);
+                    }
+                    //link to more details
+                    LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                        .valueOf(rowNum++)));
+                    addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/", column);
+                } else {
+                    LocatableDynamicForm row = createEmptyDisplayRow(recentAlertsContent.extendLocatorId("None"),
+                        RECENT_ALERTS_NONE);
+                    column.addMember(row);
+                }
+                for (Canvas child : recentAlertsContent.getChildren()) {
+                    child.destroy();
+                }
+                recentAlertsContent.addChild(column);
+                recentAlertsContent.markForRedraw();
+            }
 
-        editButton = new LocatableIButton(footer.extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
-            .common_title_edit_mode());
-        editButton.setAutoFit(true);
-        editButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                editMode = !editMode;
-                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
-                dashboardView.setEditMode(editMode);
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving recent alerts for group [" + groupId + "]:" + caught.getMessage());
             }
         });
+    }
 
-        resetButton = new LocatableIButton(footer.extendLocatorId("Reset"), MSG.common_button_reset());
-        resetButton.setAutoFit(true);
-        resetButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                String message = MSG.view_summaryDashboard_resetConfirm();
+    /** Fetches operations and updates the DynamicForm instance with the latest
+     *  operation information.
+     */
+    private void getRecentOperations() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        //fetches five most recent operations.
+        PageControl pageControl = new PageControl(0, 5);
 
-                SC.ask(message, new BooleanCallback() {
-                    public void execute(Boolean confirmed) {
-                        if (confirmed) {
-                            dashboardView.delete();
-                            setDashboard(getDefaultDashboard());
-                            markForRedraw();
+        GroupOperationHistoryCriteria criteria = new GroupOperationHistoryCriteria();
+        List<Integer> filterResourceGroupIds = new ArrayList<Integer>();
+        filterResourceGroupIds.add(groupId);
+        criteria.addFilterResourceGroupIds(filterResourceGroupIds);
+        criteria.setPageControl(pageControl);
+        criteria.addSortStatus(PageOrdering.DESC);
+
+        GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteriaDisambiguated(criteria,
+            new AsyncCallback<List<DisambiguationReport<GroupOperationHistory>>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent operations for group [" + groupId + "]:" + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(List<DisambiguationReport<GroupOperationHistory>> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        int rowNum = 0;
+                        for (DisambiguationReport<GroupOperationHistory> report : result) {
+                            // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
+                                .getOriginal().getStatus()), report.getOriginal().getStatus().getDisplayName());
+                            LinkItem link = newLinkItem(report.getOriginal().getOperationDefinition().getDisplayName()
+                                + ": ", ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/"
+                                + report.getOriginal().getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
+                                .getStartedTime()));
+                            row.setItems(iconItem, link, time);
+
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                            .extendLocatorId(String.valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
+                            .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
+                        column.addMember(row);
+                    }
+                    for (Canvas child : recentOperationsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentOperationsContent.addChild(column);
+                    recentOperationsContent.markForRedraw();
+                }
+            });
+    }
+
+    /** Fetches configuration updates and updates the DynamicForm instance with the latest
+     *  config change information.
+     */
+    private void getRecentConfigurationUpdates() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        PageControl lastFive = new PageControl(0, 5);
+        GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
+        criteria.setPageControl(lastFive);
+        criteria.addSortStatus(PageOrdering.DESC);
+        List<Integer> filterResourceGroupIds = new ArrayList<Integer>();
+        filterResourceGroupIds.add(groupId);
+        criteria.addFilterResourceGroupIds(filterResourceGroupIds);
+
+        GWTServiceLookup.getConfigurationService().findGroupResourceConfigurationUpdatesByCriteria(criteria,
+            new AsyncCallback<PageList<GroupResourceConfigurationUpdate>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent configuration updates for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<GroupResourceConfigurationUpdate> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        int rowNum = 0;
+                        for (GroupResourceConfigurationUpdate update : result) {
+                            // config update history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getResourceConfigurationIcon(update
+                                .getStatus()), null);
+                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
+                                + update.getSubjectName() + ":";
+                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
+                                linkTitle = MSG.common_msg_changeAutoDetected();
+                            }
+                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_GROUP_URL + groupId
+                                + "/Configuration/History/" + update.getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
+                                .getCreatedTime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                            .extendLocatorId(String.valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Configuration/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
+                            .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentConfigurationContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentConfigurationContent.addChild(column);
+                    recentConfigurationContent.markForRedraw();
+
+                }
+            });
+    }
+
+    /** Fetches recent events and updates the DynamicForm instance with the latest
+     *  event information over last 24hrs.
+     */
+    private void getRecentEventUpdates() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        long now = System.currentTimeMillis();
+        long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
+        GWTServiceLookup.getEventService().getEventCountsBySeverityForGroup(groupId, nowMinus24Hours, now,
+            new AsyncCallback<Map<EventSeverity, Integer>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log
+                        .debug("Error retrieving recent event counts for group [" + groupId + "]:"
+                            + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(Map<EventSeverity, Integer> eventCounts) {
+                    //Now populated Tuples
+                    List<GwtTuple<EventSeverity, Integer>> results = new ArrayList<GwtTuple<EventSeverity, Integer>>();
+                    for (EventSeverity severity : eventCounts.keySet()) {
+                        int count = eventCounts.get(severity);
+                        if (count > 0) {
+                            results.add(new GwtTuple<EventSeverity, Integer>(severity, count));
                         }
                     }
-                });
+                    //build display
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+
+                    if (!results.isEmpty()) {
+                        int rowNum = 0;
+                        for (GwtTuple<EventSeverity, Integer> tuple : results) {
+                            // event history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(2);
+                            row.setWidth(10);//pack.
+
+                            //icon
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getEventSeverityIcon(tuple
+                                .getLefty()), tuple.getLefty().name());
+                            //count
+                            StaticTextItem count = newTextItem(String.valueOf(tuple.righty));
+                            row.setItems(iconItem, count);
+
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
+                            .valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Events/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
+                            RECENT_EVENTS_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentEventsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentEventsContent.addChild(column);
+                    recentEventsContent.markForRedraw();
+                }
+            });
+    }
+
+    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
+     *  oob change details.
+     */
+    private void getRecentOobs() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, 5,
+            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (MeasurementOOBComposite oob : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
+                                .getScheduleName()));
+                            row.setNumCols(2);
+
+                            String title = oob.getScheduleName() + ":";
+                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
+                                + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(oob.getTimestamp()));
+
+                            row.setItems(link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
+                            RECENT_OOB_NONE);
+                        column.addMember(row);
+                    }
+                    recentOobContent.setContents("");
+                    for (Canvas child : recentOobContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentOobContent.addChild(column);
+                    recentOobContent.markForRedraw();
+                }
+            });
+    }
+
+    /** Fetches recent package history information and updates the DynamicForm instance with details.
+     */
+    private void getRecentPkgHistory() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+
+        GWTServiceLookup.getContentService().findInstalledPackageHistoryByCriteria(criteria,
+
+        new AsyncCallback<PageList<InstalledPackageHistory>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
+                    + caught.getMessage());
+            }
+
+            @Override
+            public void onSuccess(PageList<InstalledPackageHistory> result) {
+                VLayout column = new VLayout();
+                column.setHeight(10);
+                if (!result.isEmpty()) {
+                    for (InstalledPackageHistory history : result) {
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                            .extendLocatorId(history.getPackageVersion().getFileName()
+                                + history.getPackageVersion().getVersion()));
+                        row.setNumCols(3);
+
+                        StaticTextItem iconItem = newTextItemIcon("subsystems/content/Package_16.png", null);
+                        String title = history.getPackageVersion().getFileName() + ":";
+                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                            + "&selectedHistoryId=" + history.getId();
+                        LinkItem link = newLinkItem(title, destination);
+                        StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(history.getTimestamp()));
+
+                        row.setItems(iconItem, link, time);
+                        column.addMember(row);
+                    }
+                    //                    //insert see more link
+                    //                    LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                    //                        .extendLocatorId("PkgHistoryContentSeeMore"));
+                    //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
+                    //                    addSeeMoreLink(row, destination, column);
+                } else {
+                    LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent.extendLocatorId("None"),
+                        RECENT_PKG_HISTORY_NONE);
+                    column.addMember(row);
+                }
+                //cleanup
+                for (Canvas child : recentPkgHistoryContent.getChildren()) {
+                    child.destroy();
+                }
+                recentPkgHistoryContent.addChild(column);
+                recentPkgHistoryContent.markForRedraw();
             }
         });
-
-        footer.addMember(editButton);
-        footer.addMember(resetButton);
-
-        addMember(footer);
     }
 
-    protected Dashboard getDefaultDashboard() {
-        Subject sessionSubject = UserSessionManager.getSessionSubject();
-        ResourceGroup group = groupComposite.getResourceGroup();
-
-        Dashboard dashboard = new Dashboard();
-
-        dashboard.setName(DASHBOARD_NAME_PREFIX + sessionSubject.getId() + "_" + group.getId());
-        dashboard.setCategory(DashboardCategory.GROUP);
-        dashboard.setGroup(group);
-        dashboard.setColumns(2);
-
-        // TODO, add real portlets
-        // set leftmost column and let the rest be equally divided
-        dashboard.setColumnWidths("40%");
-        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
-
-        // Left Column
-        DashboardPortlet dummyLeft = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        dummyLeft.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(dummyLeft, 0, 0);
-
-        // right Column
-        DashboardPortlet dummyRight = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        dummyRight.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(dummyRight, 1, 0);
-
-        return dashboard;
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return isInitialized;
-    }
-
-    public Set<Permission> getGlobalPermissions() {
-        return globalPermissions;
-    }
-
-    /**
-     * name update not supported because the name is derived from the entity id.
-     * @return
+    /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
+     * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant
+     * digits.
      */
-    public boolean supportsDashboardNameEdit() {
-        return false;
+    private void getRecentMetrics() {
+
+        //display container
+        final VLayout column = new VLayout();
+        column.setHeight(10);//pack
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        //retrieve all relevant measurement definition ids.
+        Set<MeasurementDefinition> definitions = this.groupComposite.getResourceGroup().getResourceType()
+            .getMetricDefinitions();
+
+        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
+        for (MeasurementDefinition definition : definitions) {
+            measurementDefMap.put(definition.getDisplayName(), definition);
+        }
+        //bundle definition ids for asynch call.
+        int[] definitionArrayIds = new int[definitions.size()];
+        final String[] displayOrder = new String[definitions.size()];
+        measurementDefMap.keySet().toArray(displayOrder);
+        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+        Arrays.sort(displayOrder);
+
+        //organize definitionArrayIds for ordered request on server.
+        int index = 0;
+        for (String definitionToDisplay : displayOrder) {
+            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
+        }
+
+        //make the asynchronous call for all the measurement data
+        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(groupId, definitionArrayIds,
+            System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
+            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent metrics charting data for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
+                    if (!results.isEmpty()) {
+                        boolean someChartedData = false;
+                        //iterate over the retrieved charting data
+                        for (int index = 0; index < displayOrder.length; index++) {
+                            //retrieve the correct measurement definition
+                            MeasurementDefinition md = measurementDefMap.get(displayOrder[index]);
+
+                            //load the data results for the given metric definition
+                            List<MeasurementDataNumericHighLowComposite> data = results.get(index);
+
+                            //locate last and minimum values.
+                            double lastValue = -1;
+                            double minValue = Double.MAX_VALUE;//
+                            for (MeasurementDataNumericHighLowComposite d : data) {
+                                if ((!Double.isNaN(d.getValue()))
+                                    && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                    if (d.getValue() < minValue) {
+                                        minValue = d.getValue();
+                                    }
+                                    lastValue = d.getValue();
+                                }
+                            }
+
+                            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
+                            String commaDelimitedList = "";
+
+                            for (MeasurementDataNumericHighLowComposite d : data) {
+                                if ((!Double.isNaN(d.getValue()))
+                                    && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                    commaDelimitedList += d.getValue() + ",";
+                                }
+                            }
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId(md.getName()));
+                            row.setNumCols(3);
+                            HTMLFlow graph = new HTMLFlow();
+                            //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
+                            //                            + commaDelimitedList + "</span>";
+                            String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' "
+                                + "values='" + commaDelimitedList + "'>...</span>";
+                            graph.setContents(contents);
+                            graph.setContentsType(ContentsType.PAGE);
+                            //diable scrollbars on span
+                            graph.setScrollbarSize(0);
+
+                            CanvasItem graphContainer = new CanvasItem();
+                            graphContainer.setShowTitle(false);
+                            graphContainer.setHeight(16);
+                            graphContainer.setWidth(60);
+                            graphContainer.setCanvas(graph);
+
+                            //Link/title element
+                            //TODO: spinder, change link whenever portal.war/graphing is removed.
+                            String title = md.getDisplayName() + ":";
+                            //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
+                            //                                + resourceId + "&m=" + md.getId();
+                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
+                                + groupId + "&m=" + md.getId();
+                            LinkItem link = newLinkItem(title, destination);
+
+                            //Value
+                            String convertedValue = lastValue + " " + md.getUnits();
+                            convertedValue = convertLastValueForDisplay(lastValue, md);
+                            StaticTextItem value = newTextItem(convertedValue);
+
+                            row.setItems(graphContainer, link, value);
+                            //if graph content returned
+                            if ((md.getName().trim().indexOf("Trait.") == -1) && (lastValue != -1)) {
+                                column.addMember(row);
+                                someChartedData = true;
+                            }
+                        }
+                        if (!someChartedData) {// when there are results but no chartable entries.
+                            LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
+                                .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
+                            column.addMember(row);
+                        } else {
+                            //insert see more link
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                            addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Monitoring/Graphs/", column);
+                        }
+                        //call out to 3rd party javascript lib
+                        BrowserUtility.graphSparkLines();
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
+                            .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
+                        column.addMember(row);
+                    }
+                }
+            });
+
+        //cleanup
+        for (Canvas child : recentMeasurementsContent.getChildren()) {
+            child.destroy();
+        }
+        recentMeasurementsContent.addChild(column);
+        recentMeasurementsContent.markForRedraw();
     }
 
-    public void updateDashboardNames() {
-        return;
-    }
+    /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
+     */
+    protected void getRecentBundleDeployments() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+        criteria.fetchDestination(true);
+        criteria.fetchBundleVersion(true);
 
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<BundleDeployment> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (BundleDeployment deployment : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
+                                .extendLocatorId(deployment.getBundleVersion().getName()
+                                    + deployment.getBundleVersion().getVersion()));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                            String title = deployment.getBundleVersion().getName() + "["
+                                + deployment.getBundleVersion().getVersion() + "]:";
+                            String destination = ReportDecorator.GWT_BUNDLE_URL
+                                + deployment.getBundleVersion().getBundle().getId() + "/destinations/"
+                                + deployment.getDestination().getId();
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter
+                                .format(deployment.getCtime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
+                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentBundleDeployContent
+                            .extendLocatorId("None"), RECENT_BUNDLE_DEPLOY_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentBundleDeployContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentBundleDeployContent.addChild(column);
+                    recentBundleDeployContent.markForRedraw();
+                }
+            });
+    }
 }

@@ -48,8 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -89,17 +87,12 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     @Override
     protected void onInit() {
         if (!isInitialized()) {
-            CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.oninit()", Severity.Info)); // TODO
-
             super.onInit();
 
             // first async call to get global permissions
             new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
                 public void onPermissionsLoaded(Set<Permission> permissions) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("------->> ActivityView.oninit( gotGlobalPerms )", Severity.Info)); // TODO
-
                     globalPermissions = permissions;
 
                     // now make async call to look for customized dash for this user and entity
@@ -112,9 +105,6 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
                         }
 
                         public void onSuccess(final PageList<Dashboard> result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("------->> ActivityView.oninit( gotCriteriaResult )", Severity.Info)); // TODO
-
                             Dashboard dashboard = result.isEmpty() ? getDefaultDashboard() : result.get(0);
                             setDashboard(dashboard);
 
@@ -131,65 +121,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         }
     }
 
-    @Override
-    public void draw() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.draw()", Severity.Info)); // TODO
-        super.draw();
-    }
-
-    @Override
-    public void redraw() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.redraw()", Severity.Info)); // TODO
-        super.redraw();
-    }
-
-    @Override
-    protected void onDraw() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.onDraw()", Severity.Info)); // TODO
-        super.onDraw();
-
-        /*        
-         * If we really had something to do here we'd want to wait until the async initialization was really over.
-         *   
-                new Timer() {
-                    final long startTime = System.currentTimeMillis();
-
-                    public void run() {
-                        if (isInitialized) {
-                            CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.onDraw( 1 )", Severity.Info)); // TODO
-
-                            ActivityView.super.onDraw();
-                            if (!dashboardView.isDrawn()) {
-                                dashboardView.draw();
-                            }
-                            if (!dashboardView.isVisible()) {
-                                dashboardView.show();
-                            }
-                            markForRedraw();
-                            dashboardView.markForRedraw();
-
-                        } else {
-                            long elapsedMillis = System.currentTimeMillis() - startTime;
-                            if (elapsedMillis < 10000) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message("------->> ActivityView.onDraw( 2 )", Severity.Info)); // TODO                                        
-                                schedule(100); // Reschedule the timer.
-                            } else {
-                                // give up and just do the draw()
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message("------->> ActivityView.onDraw( 3 )", Severity.Info)); // TODO
-                                ActivityView.super.onDraw();
-
-                            }
-                        }
-                    }
-                }.run(); // fire the timer immediately
-        */
-    }
-
     private void setDashboard(Dashboard dashboard) {
-        CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.setDashboard()", Severity.Info)); // TODO
-
         Canvas[] members = getMembers();
         removeMembers(members);
 
@@ -237,14 +169,10 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     }
 
     protected Dashboard getDefaultDashboard() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> ActivityView.getDefaultDashboard", Severity.Info)); // TODO        
-
         Subject sessionSubject = UserSessionManager.getSessionSubject();
         ResourceGroup group = groupComposite.getResourceGroup();
 
         Dashboard dashboard = new Dashboard();
-
-        //dashboard.getConfiguration().setProperties(new ArrayList<Property>()); // replace the LinkedHashMap...
 
         dashboard.setName(DASHBOARD_NAME_PREFIX + sessionSubject.getId() + "_" + group.getId());
         dashboard.setCategory(DashboardCategory.GROUP);
@@ -252,8 +180,8 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         dashboard.setColumns(2);
 
         // TODO, add real portlets
-        // set leftmost column and letthe rest be equally divided
-        dashboard.setColumnWidths("40%", "*");
+        // set leftmost column and let the rest be equally divided
+        dashboard.setColumnWidths("40%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         // Left Column

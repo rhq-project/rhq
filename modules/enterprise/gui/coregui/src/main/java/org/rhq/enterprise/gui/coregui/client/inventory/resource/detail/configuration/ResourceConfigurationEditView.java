@@ -35,11 +35,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
@@ -151,10 +153,14 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                 }
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_configurationDetails_messageConcise(), MSG
-                            .view_configurationDetails_messageDetailed(resource.getName()), Message.Severity.Info));
-                    refresh();
+                    String version = String.valueOf(result.getId());
+                    Message message = new Message(MSG.view_configurationDetails_messageConcise(version), MSG
+                            .view_configurationDetails_messageDetailed(version, resource.getName()),
+                            Message.Severity.Info);
+                    String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
+                            ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                    String configHistoryView = configHistoryUrl.substring(1);
+                    CoreGUI.goToView(configHistoryView, message);
                 }
             });
     }

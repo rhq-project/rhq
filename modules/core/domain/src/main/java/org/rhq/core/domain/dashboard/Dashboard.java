@@ -171,7 +171,7 @@ public class Dashboard implements Serializable {
     }
 
     public int getColumns() {
-        return configuration.getSimple(CFG_COLUMNS).getIntegerValue();
+        return Integer.valueOf(configuration.getSimpleValue(CFG_COLUMNS, "1"));
     }
 
     public void setColumns(int columns) {
@@ -179,7 +179,7 @@ public class Dashboard implements Serializable {
     }
 
     public String[] getColumnWidths() {
-        return configuration.getSimple(CFG_WIDTHS).getStringValue().split(",");
+        return configuration.getSimpleValue(CFG_WIDTHS, "").split(",");
     }
 
     public void setColumnWidths(String... columnWidths) {
@@ -187,11 +187,17 @@ public class Dashboard implements Serializable {
             return;
         }
 
-        String widths = columnWidths[0];
+        // note - this impl is a little verbose but it avoids a smartgwt javascript problem with
+        // varargs handling. Not sure how bad the problem is but it definitely occured with SmartGwt 2.4
+        // when a single String was pssed as the varArg list.  Be wary of directly using varargs array
+        // element 0...
+        StringBuilder sb = new StringBuilder();
+        sb.append(columnWidths[0]);
         for (int i = 1; i < columnWidths.length; ++i) {
-            widths += ("," + columnWidths[i]);
+            sb.append(",");
+            sb.append(columnWidths[i]);
         }
-        configuration.put(new PropertySimple(CFG_WIDTHS, widths));
+        configuration.put(new PropertySimple(CFG_WIDTHS, sb));
     }
 
     public Configuration getConfiguration() {

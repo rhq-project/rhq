@@ -56,7 +56,6 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.ColorButtonItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
@@ -108,8 +107,6 @@ public class DashboardView extends LocatableVLayout {
     @Override
     protected void onInit() {
         if (!isInitialized) {
-            CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.oninit()", Severity.Info)); // TODO
-
             super.onInit();
 
             this.setWidth100();
@@ -123,8 +120,6 @@ public class DashboardView extends LocatableVLayout {
     }
 
     public void rebuild() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.rebuild()", Severity.Info)); // TODO
-
         // destroy all of the portlets and recreate from scratch
         portalLayout.removeFromParent();
         portalLayout.destroy();
@@ -133,48 +128,26 @@ public class DashboardView extends LocatableVLayout {
         buildPortlets();
     }
 
-    public void redraw() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.redraw()", Severity.Info)); // TODO
-        super.redraw();
-    }
-
-    @Override
-    public void draw() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.draw()", Severity.Info)); // TODO
-        super.draw();
-    }
-
     @Override
     protected void onDraw() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.onDraw()", Severity.Info)); // TODO
         super.onDraw();
 
         setEditMode(editMode);
     }
 
     public void buildPortlets() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildPortlets(1)", Severity.Info)); // TODO
-
         this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildPortlets(2)", Severity.Info)); // TODO
         portalLayout = new PortalLayout(extendLocatorId("PortalLayout"), this, storedDashboard.getColumns(),
             storedDashboard.getColumnWidths());
 
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildPortlets(3)", Severity.Info)); // TODO
         portalLayout.setOverflow(Overflow.AUTO);
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildPortlets(4)", Severity.Info)); // TODO
-
         loadPortletWindows();
 
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildPortlets(5)", Severity.Info)); // TODO
-
         addMember(portalLayout);
-
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildPortlets(6)", Severity.Info)); // TODO        
     }
 
     protected boolean canEditName() {
@@ -182,8 +155,6 @@ public class DashboardView extends LocatableVLayout {
     }
 
     private DynamicForm buildEditForm() {
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildEditForm(1)", Severity.Info)); // TODO        
-
         editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
         editForm.setMargin(5);
         editForm.setAutoWidth();
@@ -192,8 +163,6 @@ public class DashboardView extends LocatableVLayout {
         TextItem nameItem = null;
 
         if (dashboardContainer.supportsDashboardNameEdit()) {
-            CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildEditForm(2)", Severity.Info)); // TODO
-
             nameItem = new TextItem("name", MSG.common_title_dashboard_name());
             nameItem.setValue(storedDashboard.getName());
             nameItem.setWrapTitle(false);
@@ -374,22 +343,15 @@ public class DashboardView extends LocatableVLayout {
         }
         updateRefreshMenu();
         this.refreshMenuButton.markForRedraw();
-        //this.markForRedraw();
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.buildEditForm(2)", Severity.Info)); // TODO
 
         return editForm;
     }
 
     private void loadPortletWindows() {
 
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.loadPortletWindows(1)", Severity.Info)); // TODO
-
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
-
-                CoreGUI.getMessageCenter().notify(
-                    new Message("------->> DashboardView.loadPortletWindows(" + locatorId + ")", Severity.Info)); // TODO
 
                 PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet);
                 portletWindow.setTitle(storedPortlet.getName());
@@ -400,8 +362,6 @@ public class DashboardView extends LocatableVLayout {
                 portalLayout.addPortletWindow(portletWindow, i);
             }
         }
-
-        CoreGUI.getMessageCenter().notify(new Message("------->> DashboardView.loadPortletWindows(2)", Severity.Info)); // TODO        
     }
 
     /**
@@ -503,7 +463,31 @@ public class DashboardView extends LocatableVLayout {
         save((AsyncCallback<Dashboard>) null);
     }
 
+    public String[] updatePortalColumnWidths() {
+        int numColumns = storedDashboard.getColumns();
+        int totalPixelWidth = 0;
+        int[] columnPixelWidths = new int[numColumns];
+        for (int i = 0; i < numColumns; ++i) {
+            PortalColumn col = portalLayout.getPortalColumn(i);
+            totalPixelWidth += col.getWidth();
+            columnPixelWidths[i] = col.getWidth();
+        }
+        String[] columnWidths = new String[numColumns];
+        columnWidths[numColumns - 1] = "*";
+        for (int i = 0; i < numColumns - 1; ++i) {
+            columnWidths[i] = String.valueOf(((int) columnPixelWidths[i] * 100 / totalPixelWidth)) + "%";
+        }
+
+        storedDashboard.setColumnWidths(columnWidths);
+
+        return columnWidths;
+    }
+
     public void save(final AsyncCallback<Dashboard> callback) {
+        // a variety of edits (dragResize, add/remove column, etc) can cause column width changes. Update them
+        // prior to every save.
+        updatePortalColumnWidths();
+
         // since we reset storedDashboard after the async update completes, block modification of the dashboard
         // during that interval.
         DashboardView.this.disable();
@@ -648,7 +632,7 @@ public class DashboardView extends LocatableVLayout {
         }
         this.editForm.markForRedraw();
         this.portalLayout.show();
-        this.portalLayout.markForRedraw(); // TODO
+        this.portalLayout.markForRedraw();
     }
 
     public class UpdatePortletRefreshCallback implements AsyncCallback<Subject> {

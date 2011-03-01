@@ -91,6 +91,7 @@ public class PortletWindow extends LocatableWindow {
     };
 
     private ClickHandler refreshHandler = new ClickHandler() {
+        @SuppressWarnings("unchecked")
         public void onClick(ClickEvent clickEvent) {
             if (PortletWindow.this.view instanceof Table) {
                 ((Table) PortletWindow.this.view).refresh();
@@ -137,7 +138,7 @@ public class PortletWindow extends LocatableWindow {
         setCanDrop(true);
 
         setCanDragResize(true);
-        //        setResizeFrom("B");
+        setResizeFrom("T", "B");
 
         setShowShadow(false);
 
@@ -166,7 +167,6 @@ public class PortletWindow extends LocatableWindow {
 
         setSettingsClickHandler(settingsHandler);
         setHelpClickHandler(helpHandler);
-
     }
 
     @Override

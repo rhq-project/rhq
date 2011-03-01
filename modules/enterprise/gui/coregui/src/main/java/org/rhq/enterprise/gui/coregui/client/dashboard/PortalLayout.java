@@ -27,13 +27,15 @@ import java.util.Arrays;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.EventHandler;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.DragResizeStartEvent;
+import com.smartgwt.client.widgets.events.DragResizeStartHandler;
 import com.smartgwt.client.widgets.events.DropEvent;
 import com.smartgwt.client.widgets.events.DropHandler;
+import com.smartgwt.client.widgets.events.ResizedEvent;
+import com.smartgwt.client.widgets.events.ResizedHandler;
 
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -44,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class PortalLayout extends LocatableHLayout {
 
     private DashboardView dashboardView;
+    private Integer dragResizeColumnCount;
 
     /**
      * @param locatorId
@@ -55,19 +58,24 @@ public class PortalLayout extends LocatableHLayout {
     public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns, String[] columnWidths) {
         super(locatorId);
 
-        CoreGUI.getMessageCenter().notify(
-            new Message("------->> PortalLayout(numColumns=" + numColumns + ",columnWidths="
-                + Arrays.toString(columnWidths) + ")")); // TODO
+        if (numColumns < 1) {
+            throw new IllegalArgumentException("Invalid number of columns [" + numColumns + "]");
+        }
+        if ((null != columnWidths && columnWidths.length > numColumns)) {
+            throw new IllegalArgumentException("Invalid column widths (more widths than columns) "
+                + Arrays.toString(columnWidths));
+        }
 
         this.dashboardView = dashboardView;
-        setMargin(5);
-        setMembersMargin(6);
+        setMargin(4);
+        setMembersMargin(4);
+
         for (int i = 0; i < numColumns; i++) {
             final PortalColumn column = new PortalColumn();
             if (null != columnWidths && i < columnWidths.length) {
                 column.setWidth(columnWidths[i]);
-            } else if (i == 0) {
-                column.setWidth("30%");
+            } else {
+                column.setWidth("*");
             }
 
             final int columnNumber = i;
@@ -129,7 +137,47 @@ public class PortalLayout extends LocatableHLayout {
                 }
             });
 
-            CoreGUI.getMessageCenter().notify(new Message("------->> PortalLayout() adding column " + i)); // TODO
+            column.addDragResizeStartHandler(new DragResizeStartHandler() {
+
+                @Override
+                public void onDragResizeStart(DragResizeStartEvent event) {
+
+                    // When a drag resize starts activate a counter keeping track of the number of columns that
+                    // have been resized.  A resize of one column will force a resize of all columns. After the
+                    // last column resize completes, persist the new column widths to the database.
+                    dragResizeColumnCount = 0;
+                }
+            });
+
+            // This handler is called when the resizing is complete (the DragResizeStopHandler is called
+            // immediately on stop but before all resizing is complete.)
+            column.addResizedHandler(new ResizedHandler() {
+
+                @Override
+                public void onResized(ResizedEvent event) {
+
+                    // ignore resizing not related to drag resize (presumable initial draw)
+                    if (null == dragResizeColumnCount) {
+                        return;
+                    }
+
+                    ++dragResizeColumnCount;
+                    Canvas[] members = getMembers();
+
+                    // ignore resizing prior to all columns being resized as a result of the drag operation
+                    if (dragResizeColumnCount != members.length) {
+                        return;
+                    }
+
+                    // one drag operation results in a save for each column, as they all get resized
+                    // now that they are all resized, save the column widths (save updates these automatically)
+                    save();
+
+                    // reset the flag
+                    dragResizeColumnCount = null;
+                }
+            });
+
             addMember(column);
         }
     }
@@ -144,6 +192,10 @@ public class PortalLayout extends LocatableHLayout {
         portalColumn.addMember(portletWindow);
 
         return portalColumn;
+    }
+
+    public void save() {
+        this.dashboardView.save();
     }
 
     public void save(AsyncCallback<Dashboard> callback) {
@@ -163,7 +215,6 @@ public class PortalLayout extends LocatableHLayout {
                     PortletWindow portlet = (PortletWindow) p;
 
                     portlet.setWidth(column.getWidth());
-
                 }
             }
         }

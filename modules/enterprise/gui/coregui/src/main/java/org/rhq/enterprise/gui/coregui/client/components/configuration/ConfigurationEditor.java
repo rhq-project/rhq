@@ -1400,19 +1400,25 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
-        boolean isInvalidRequiredProperty = false;
+        if (this.readOnly) {
+            return true;
+        }
+        String errorMessage = property.getErrorMessage();
+        if ((errorMessage != null) && (!errorMessage.trim().equals(""))) {
+            // special case 1: property has a plugin-set error message - allow user to edit it even if it's a read-only prop,
+            // otherwise the user will have no way to give the property a new value and thereby get things to a valid state
+            return false;
+        }
         if (property instanceof PropertySimple) {
             PropertySimple propertySimple = (PropertySimple) property;
-            String errorMessage = propertySimple.getErrorMessage();
-            if ((null == propertySimple.getStringValue()) || "".equals(propertySimple.getStringValue())
-                || ((null != errorMessage) && (!"".equals(errorMessage.trim())))) {
-                // Required properties with no value, or an invalid value (assumed if we see an error message) should
-                // never be set to read-only, otherwise the user will have no way to give the property a new value and
-                // thereby get things to a valid state.
-                isInvalidRequiredProperty = true;
+            if (propertyDefinition.isRequired() &&
+                    (propertySimple.getStringValue() == null) || propertySimple.getStringValue().equals("")) {
+                // special case 2: required simple prop with no value - allow user to edit it even if it's a read-only prop,
+                // otherwise the user will have no way to give the property a new value and thereby get things to a valid state
+                return false;
             }
         }
-        return !isInvalidRequiredProperty && (propertyDefinition.isReadOnly() || this.readOnly);
+        return (propertyDefinition.isReadOnly());
     }
 
     protected List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {

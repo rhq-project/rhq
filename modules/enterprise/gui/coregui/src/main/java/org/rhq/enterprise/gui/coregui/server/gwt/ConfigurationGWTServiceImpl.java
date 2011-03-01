@@ -278,11 +278,31 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroupUpdate(
+        int groupUpdateId) throws RuntimeException {
+        try {
+            Map<Integer, Configuration> configurations = this.configurationManager
+                .getResourceConfigurationMapForGroupUpdate(getSessionSubject(), groupUpdateId);
+            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
+
+            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
+            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
+                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
+
+            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+                "ConfigurationService.findResourceConfigurationsForGroupUpdate");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    @Override
     public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(
         int groupUpdateId) throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = this.configurationManager
-                .getPluginConfigurationMapForGroupUpdate(groupUpdateId);
+                .getPluginConfigurationMapForGroupUpdate(getSessionSubject(), groupUpdateId);
             List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
             // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.

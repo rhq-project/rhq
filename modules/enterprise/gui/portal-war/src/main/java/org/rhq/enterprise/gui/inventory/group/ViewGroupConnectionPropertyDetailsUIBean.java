@@ -22,14 +22,14 @@ import java.util.Map;
 
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -39,7 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewGroupConnectionPropertyDetailsUIBean";
-    public static final String VIEW_ID = "/rhq/group/inventory/view-plugin-configuration-update-details.xhtml";    
+    public static final String VIEW_ID = "/rhq/group/inventory/view-plugin-configuration-update-details.xhtml";
 
     private ResourceGroup resourceGroup;
     private Map<Integer, Configuration> pluginConfigurations;
@@ -63,8 +63,8 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
             ResourceGroup group = EnterpriseFacesContextUtility.getResourceGroup();
             int groupPluginConfigurationUpdateId = getPluginResourceConfigurationUpdateId();
 
-            this.pluginConfigurations = this.configurationManager
-                .getPluginConfigurationMapForGroupUpdate(groupPluginConfigurationUpdateId);
+            this.pluginConfigurations = this.configurationManager.getPluginConfigurationMapForGroupUpdate(subject,
+                groupPluginConfigurationUpdateId);
             this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(subject, group,
                 this.pluginConfigurations);
         }

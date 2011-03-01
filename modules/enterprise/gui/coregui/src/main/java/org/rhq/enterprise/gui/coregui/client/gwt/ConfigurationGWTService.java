@@ -73,6 +73,9 @@ public interface ConfigurationGWTService extends RemoteService {
     List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
         throws RuntimeException;
 
+    List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroupUpdate(
+        int groupUpdateId) throws RuntimeException;
+
     List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(int groupUpdateId)
         throws RuntimeException;
 
@@ -87,6 +90,4 @@ public interface ConfigurationGWTService extends RemoteService {
 
     void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException;
-
-    //RawConfiguration dummy(RawConfiguration config) throws RuntimeException;
 }

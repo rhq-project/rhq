@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -35,8 +35,8 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
-import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -57,12 +57,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
+public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
 
-    public HistoryGroupPluginConfigurationMembers(String locatorId, ResourceGroupComposite groupComposite, int updateId) {
+    public HistoryGroupResourceConfigurationMembers(String locatorId, ResourceGroupComposite groupComposite,
+        int updateId) {
         super(locatorId);
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
@@ -70,7 +71,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId(), null);
+        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(this.group.getId(), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -86,7 +87,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
     private class MembersTable extends Table<MembersTable.DataSource> {
         public MembersTable(String locatorId) {
-            super(locatorId, MSG.view_group_pluginConfig_members_title());
+            super(locatorId, MSG.view_group_resConfig_members_title());
             setDataSource(new DataSource());
         }
 
@@ -112,18 +113,18 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldStatus.setType(ListGridFieldType.ICON);
             HashMap<String, String> statusIcons = new HashMap<String, String>(4);
             statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
-                .getPluginConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+                .getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
             statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
-                .getPluginConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+                .getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
             statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
-                .getPluginConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+                .getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
             statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
-                .getPluginConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+                .getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
             fieldStatus.setValueIcons(statusIcons);
             fieldStatus.addRecordClickHandler(new RecordClickHandler() {
                 @Override
                 public void onRecordClick(RecordClickEvent event) {
-                    new ErrorMessageWindow("statusDetailsWin", MSG.view_group_pluginConfig_members_statusDetails(),
+                    new ErrorMessageWindow("statusDetailsWin", MSG.view_group_resConfig_members_statusDetails(),
                         "<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>").show();
                 }
             });
@@ -135,7 +136,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                     if (html.length() > 80) {
                         // this was probably an error stack trace, snip it so the tooltip isn't too big
                         html = "<pre>" + html.substring(0, 80) + "...</pre><p>"
-                            + MSG.view_group_pluginConfig_table_clickStatusIcon() + "</p>";
+                            + MSG.view_group_resConfig_table_clickStatusIcon() + "</p>";
                     }
                     return html;
                 }
@@ -152,21 +153,21 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                 .getAttributeAsObject(DataSource.Field.OBJECT);
             switch (obj.getStatus()) {
             case SUCCESS: {
-                html = MSG.view_group_pluginConfig_members_statusSuccess();
+                html = MSG.view_group_resConfig_members_statusSuccess();
                 break;
             }
             case INPROGRESS: {
-                html = MSG.view_group_pluginConfig_members_statusInprogress();
+                html = MSG.view_group_resConfig_members_statusInprogress();
                 break;
             }
             case NOCHANGE: {
-                html = MSG.view_group_pluginConfig_members_statusNochange();
+                html = MSG.view_group_resConfig_members_statusNochange();
                 break;
             }
             case FAILURE: {
                 html = obj.getErrorMessage();
                 if (html == null) {
-                    html = MSG.view_group_pluginConfig_members_statusFailure();
+                    html = MSG.view_group_resConfig_members_statusFailure();
                 }
                 break;
             }
@@ -174,7 +175,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             return html;
         }
 
-        private class DataSource extends RPCDataSource<PluginConfigurationUpdate> {
+        private class DataSource extends RPCDataSource<ResourceConfigurationUpdate> {
 
             public class Field {
                 public static final String ID = "id";
@@ -188,12 +189,12 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             }
 
             @Override
-            public PluginConfigurationUpdate copyValues(Record from) {
-                return (PluginConfigurationUpdate) from.getAttributeAsObject(Field.OBJECT);
+            public ResourceConfigurationUpdate copyValues(Record from) {
+                return (ResourceConfigurationUpdate) from.getAttributeAsObject(Field.OBJECT);
             }
 
             @Override
-            public ListGridRecord copyValues(PluginConfigurationUpdate from) {
+            public ListGridRecord copyValues(ResourceConfigurationUpdate from) {
                 ListGridRecord record = new ListGridRecord();
 
                 record.setAttribute(Field.ID, from.getId());
@@ -213,16 +214,17 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             protected void executeFetch(final DSRequest request, final DSResponse response) {
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
-                PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
-                criteria.addFilterGroupConfigurationUpdateId(HistoryGroupPluginConfigurationMembers.this.groupUpdateId);
+                ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+                criteria
+                    .addFilterGroupConfigurationUpdateId(HistoryGroupResourceConfigurationMembers.this.groupUpdateId);
                 // TODO need to disambiguate resources
                 criteria.fetchResource(true);
 
-                configurationService.findPluginConfigurationUpdatesByCriteria(criteria,
-                    new AsyncCallback<PageList<PluginConfigurationUpdate>>() {
+                configurationService.findResourceConfigurationUpdatesByCriteria(criteria,
+                    new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
 
                         @Override
-                        public void onSuccess(PageList<PluginConfigurationUpdate> result) {
+                        public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
                             response.setData(buildRecords(result));
                             response.setTotalRows(result.getTotalSize());
                             processResponse(request.getRequestId(), response);
@@ -231,8 +233,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                         @Override
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
-                                MSG.view_group_pluginConfig_members_fetchFailure(String
-                                    .valueOf(HistoryGroupPluginConfigurationMembers.this.groupUpdateId)), caught);
+                                MSG.view_group_resConfig_members_fetchFailure(String
+                                    .valueOf(HistoryGroupResourceConfigurationMembers.this.groupUpdateId)), caught);
                             response.setStatus(DSResponse.STATUS_FAILURE);
                             processResponse(request.getRequestId(), response);
                         }

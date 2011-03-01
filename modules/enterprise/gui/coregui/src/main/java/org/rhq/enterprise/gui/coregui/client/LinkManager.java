@@ -98,7 +98,7 @@ public class LinkManager {
 
     public static String getGroupResourceConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
         if (groupUpdateHistoryId != null) {
-            return getResourceGroupLink(groupId) + "/Configuration/History/" + groupUpdateHistoryId;
+            return getResourceGroupLink(groupId) + "/Configuration/History/" + groupUpdateHistoryId + "/Members";
         } else {
             return getResourceGroupLink(groupId) + "/Configuration/History";
         }

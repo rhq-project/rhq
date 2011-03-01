@@ -55,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.GroupPluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.MembersView;
@@ -337,8 +338,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new GroupPluginConfigurationEditView(inventoryConn.extendLocatorId("View"),
-                        groupComposite);
+                    return new GroupPluginConfigurationEditView(inventoryConn.extendLocatorId("View"), groupComposite);
                 }
             });
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, facets
@@ -397,8 +397,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .contains(ResourceTypeFacet.CONFIGURATION));
         Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
         if (updateTab(this.configurationTab, visible, visible && groupPermissions.contains(Permission.CONFIGURE_READ))) {
-            //updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
-            //    "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
             updateSubTab(this.configurationTab, this.configCurrent, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
@@ -408,8 +406,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(configHistory.extendLocatorId("View"),
-                        "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId);
+                    return new HistoryGroupResourceConfigurationView(inventoryConnHistory.extendLocatorId("View"),
+                        groupComposite);
                 }
             });
         }

@@ -415,7 +415,8 @@ public interface ConfigurationManagerLocal {
     Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception;
 
-    Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId);
+    Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupPluginConfigurationUpdateId);
 
     /**
      * The purpose of this method is really to clean up requests when we detect

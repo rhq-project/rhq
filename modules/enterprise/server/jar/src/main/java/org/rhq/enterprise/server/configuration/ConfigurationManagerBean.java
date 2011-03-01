@@ -1801,9 +1801,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             groupIdParameter);
     }
 
-    // TODO: THIS NEEDS AUTHZ CHECK!
     @SuppressWarnings("unchecked")
-    public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId) {
+    public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupPluginConfigurationUpdateId) {
+        // this method will perform the CONFIGURE_READ security check for us, no need to keep reference to result
+        getGroupPluginConfigurationUpdate(subject, groupPluginConfigurationUpdateId);
+
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",
             groupPluginConfigurationUpdateId);
         return executeGetConfigurationMapQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100,

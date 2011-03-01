@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,8 +37,8 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
-import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -56,16 +56,16 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * Table showing group plugin configuration history.
+ * Table showing group resource configuration history.
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPluginConfigurationTable.DataSource> {
+public class HistoryGroupResourceConfigurationTable extends Table<HistoryGroupResourceConfigurationTable.DataSource> {
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
 
-    public HistoryGroupPluginConfigurationTable(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_group_pluginConfig_table_title());
+    public HistoryGroupResourceConfigurationTable(String locatorId, ResourceGroupComposite groupComposite) {
+        super(locatorId, MSG.view_group_resConfig_table_title());
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
 
@@ -89,13 +89,13 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         fieldStatus.setType(ListGridFieldType.ICON);
         HashMap<String, String> statusIcons = new HashMap<String, String>(4);
         statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
         statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
         statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
         statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
         fieldStatus.setValueIcons(statusIcons);
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
@@ -127,18 +127,18 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
                     }
 
                     ConfigurationGWTServiceAsync service = GWTServiceLookup.getConfigurationService();
-                    Integer groupId = HistoryGroupPluginConfigurationTable.this.group.getId();
+                    Integer groupId = HistoryGroupResourceConfigurationTable.this.group.getId();
                     Integer[] updateIds = new Integer[selection.length];
                     int i = 0;
                     for (ListGridRecord record : selection) {
                         updateIds[i++] = record.getAttributeAsInt(DataSource.Field.ID);
                     }
 
-                    service.deleteGroupPluginConfigurationUpdate(groupId, updateIds, new AsyncCallback<Void>() {
+                    service.deleteGroupResourceConfigurationUpdate(groupId, updateIds, new AsyncCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
                             refresh();
-                            Message message = new Message(MSG.view_group_pluginConfig_table_deleteSuccessful(String
+                            Message message = new Message(MSG.view_group_resConfig_table_deleteSuccessful(String
                                 .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
                                 Message.Option.Transient, Message.Option.Sticky));
                             CoreGUI.getMessageCenter().notify(message);
@@ -146,32 +146,32 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_deleteFailure(),
+                            CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_table_deleteFailure(),
                                 caught);
                         }
                     });
                 }
             });
 
-        addTableAction(extendLocatorId("viewSettingsAction"), MSG.view_group_pluginConfig_table_viewSettings(),
+        addTableAction(extendLocatorId("viewSettingsAction"), MSG.view_group_resConfig_table_viewSettings(),
             new AbstractTableAction(TableActionEnablement.SINGLE) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
-                        HistoryGroupPluginConfigurationTable.this.group.getId(), null)
+                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+                        HistoryGroupResourceConfigurationTable.this.group.getId(), null)
                         + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Settings");
                 }
             });
 
-        addTableAction(extendLocatorId("viewMemberHistoryAction"), MSG
-            .view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(TableActionEnablement.SINGLE) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
-                    HistoryGroupPluginConfigurationTable.this.group.getId(), null)
-                    + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Members");
-            }
-        });
+        addTableAction(extendLocatorId("viewMemberHistoryAction"), MSG.view_group_resConfig_table_viewMemberHistory(),
+            new AbstractTableAction(TableActionEnablement.SINGLE) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+                        HistoryGroupResourceConfigurationTable.this.group.getId(), null)
+                        + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Members");
+                }
+            });
 
     }
 
@@ -181,32 +181,32 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
             .getAttributeAsObject(DataSource.Field.OBJECT);
         switch (obj.getStatus()) {
         case SUCCESS: {
-            html = MSG.view_group_pluginConfig_table_statusSuccess();
+            html = MSG.view_group_resConfig_table_statusSuccess();
             break;
         }
         case INPROGRESS: {
-            html = "<p>" + MSG.view_group_pluginConfig_table_statusInprogress() + "</p><p>"
-                + MSG.view_group_pluginConfig_table_msg1() + "</p>";
+            html = "<p>" + MSG.view_group_resConfig_table_statusInprogress() + "</p><p>"
+                + MSG.view_group_resConfig_table_msg1() + "</p>";
             break;
         }
         case NOCHANGE: {
-            html = MSG.view_group_pluginConfig_table_statusNochange();
+            html = MSG.view_group_resConfig_table_statusNochange();
             break;
         }
         case FAILURE: {
             html = obj.getErrorMessage();
             if (html == null) {
-                html = "<p>" + MSG.view_group_pluginConfig_table_statusFailure() + "</p><p>"
-                    + MSG.view_group_pluginConfig_table_msg1() + "</p>";
+                html = "<p>" + MSG.view_group_resConfig_table_statusFailure() + "</p><p>"
+                    + MSG.view_group_resConfig_table_msg1() + "</p>";
             } else {
                 if (html.length() > 80) {
                     // this was probably an error stack trace, snip it so the tooltip isn't too big
                     html = "<pre>" + html.substring(0, 80) + "...</pre><p>"
-                        + MSG.view_group_pluginConfig_table_clickStatusIcon() + "</p>";
+                        + MSG.view_group_resConfig_table_clickStatusIcon() + "</p>";
                 } else {
                     html = "<pre>" + html + "</pre>";
                 }
-                html = html + "<p>" + MSG.view_group_pluginConfig_table_msg1() + "</p>";
+                html = html + "<p>" + MSG.view_group_resConfig_table_msg1() + "</p>";
             }
             break;
         }
@@ -214,7 +214,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         return html;
     }
 
-    class DataSource extends RPCDataSource<GroupPluginConfigurationUpdate> {
+    class DataSource extends RPCDataSource<GroupResourceConfigurationUpdate> {
 
         public class Field {
             public static final String ID = "id";
@@ -226,12 +226,12 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         }
 
         @Override
-        public GroupPluginConfigurationUpdate copyValues(Record from) {
-            return (GroupPluginConfigurationUpdate) from.getAttributeAsObject(DataSource.Field.OBJECT);
+        public GroupResourceConfigurationUpdate copyValues(Record from) {
+            return (GroupResourceConfigurationUpdate) from.getAttributeAsObject(DataSource.Field.OBJECT);
         }
 
         @Override
-        public ListGridRecord copyValues(GroupPluginConfigurationUpdate from) {
+        public ListGridRecord copyValues(GroupResourceConfigurationUpdate from) {
             ListGridRecord record = new ListGridRecord();
 
             record.setAttribute(Field.ID, from.getId());
@@ -249,16 +249,16 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         protected void executeFetch(final DSRequest request, final DSResponse response) {
             ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
-            GroupPluginConfigurationUpdateCriteria criteria = new GroupPluginConfigurationUpdateCriteria();
+            GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
             ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-            groupList.add(HistoryGroupPluginConfigurationTable.this.group.getId());
+            groupList.add(HistoryGroupResourceConfigurationTable.this.group.getId());
             criteria.addFilterResourceGroupIds(groupList);
 
-            configurationService.findGroupPluginConfigurationUpdatesByCriteria(criteria,
-                new AsyncCallback<PageList<GroupPluginConfigurationUpdate>>() {
+            configurationService.findGroupResourceConfigurationUpdatesByCriteria(criteria,
+                new AsyncCallback<PageList<GroupResourceConfigurationUpdate>>() {
 
                     @Override
-                    public void onSuccess(PageList<GroupPluginConfigurationUpdate> result) {
+                    public void onSuccess(PageList<GroupResourceConfigurationUpdate> result) {
                         response.setData(buildRecords(result));
                         response.setTotalRows(result.getTotalSize());
                         processResponse(request.getRequestId(), response);
@@ -266,7 +266,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_failFetch(), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_table_failFetch(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
                         processResponse(request.getRequestId(), response);
                     }

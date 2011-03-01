@@ -165,6 +165,8 @@ public class ConfigurationEditor extends LocatableVLayout {
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
+    private boolean loaded;
+    private boolean reloadable;
 
     public static enum ConfigType {
         plugin, resource
@@ -183,25 +185,26 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private LoadHandler loadHandler = null;
 
-    public ConfigurationEditor(String locatorId) {
-        super(locatorId);
-    }
-
-    public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId) {
-        this(locatorId, resourceId, resourceTypeId, ConfigType.resource);
-    }
-
     public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId, ConfigType configType) {
         super(locatorId);
         this.resourceId = resourceId;
         this.resourceTypeId = resourceTypeId;
         this.configType = configType;
         setOverflow(Overflow.AUTO);
+        this.reloadable = true;
     }
 
     public ConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
         Configuration configuration) {
         super(locatorId);
+
+        if (configuration == null) {
+            throw new IllegalArgumentException("Null configuration.");
+        }
+        if (configurationDefinition == null) {
+            throw new IllegalArgumentException("Null configurationDefinition.");
+        }
+
         this.configuration = configuration;
         this.configurationDefinition = configurationDefinition;
     }
@@ -342,6 +345,10 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public void reload() {
+        if (this.loaded && !this.reloadable) {
+            return;
+        }
+
         if (configurationDefinition == null || configuration == null) {
             // Wait for both to load.
             return;
@@ -356,7 +363,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             Log.info("Building structured configuration editor...");
-            LocatableVLayout structuredConfigLayout = buildStructuredPane();
+            LocatableVLayout structuredConfigLayout = null;
+            try {
+                structuredConfigLayout = buildStructuredPane();
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                throw e;
+            }
             addMember(structuredConfigLayout);
         } else {
             Label label = new Label("Structured configuration is not supported.");
@@ -364,6 +377,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         this.markForRedraw();
+        this.loaded = true;
     }
 
     public void reset() {
@@ -1412,7 +1426,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (property instanceof PropertySimple) {
             PropertySimple propertySimple = (PropertySimple) property;
             if (propertyDefinition.isRequired() &&
-                    (propertySimple.getStringValue() == null) || propertySimple.getStringValue().equals("")) {
+                    (propertySimple.getStringValue() == null) || "".equals(propertySimple.getStringValue())) {
                 // special case 2: required simple prop with no value - allow user to edit it even if it's a read-only prop,
                 // otherwise the user will have no way to give the property a new value and thereby get things to a valid state
                 return false;

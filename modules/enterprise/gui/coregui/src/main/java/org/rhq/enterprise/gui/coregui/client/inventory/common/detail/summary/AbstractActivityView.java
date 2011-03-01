@@ -112,13 +112,13 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         HTMLFlow divider3 = new HTMLFlow("<hr/>");
         HTMLFlow divider4 = new HTMLFlow("<hr/>");
         HTMLFlow divider5 = new HTMLFlow("<hr/>");
-        HTMLFlow divider6 = new HTMLFlow("<hr/>");
+        //        HTMLFlow divider6 = new HTMLFlow("<hr/>");
         divider1.setWidth("50%");
         divider2.setWidth("50%");
         divider3.setWidth("50%");
         divider4.setWidth("50%");
         divider5.setWidth("50%");
-        divider6.setWidth("50%");
+        //        divider6.setWidth("50%");
 
         //leftPane
         leftPane.setWidth("50%");
@@ -185,7 +185,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         rightPane.addMember(recentEventsContent);
         recentEventsContent.setHeight(20);
         //recentPackageHistory.xhtml
-        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/inventory/Inventory_24.png", RECENT_PKG_HISTORY);
+        HLayout recentPkgHistoryTitle = new TitleWithIcon("subsystems/content/Package_24.png", RECENT_PKG_HISTORY);
         recentPkgHistoryContent.setHeight(20);
         if ((resource != null) || ((group != null) && (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             rightPane.addMember(divider5);
@@ -200,6 +200,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
 
         addMember(leftPane);
         addMember(rightPane);
+
     }
 
     private void deployBundleViewIfApplicable(Resource resource, ResourceGroup group) {
@@ -291,6 +292,7 @@ public abstract class AbstractActivityView extends LocatableHLayout implements R
         rightPane.addMember(divider6);
         rightPane.addMember(recentBundleDeployTitle);
         rightPane.addMember(recentBundleDeployContent);
+        rightPane.markForRedraw();
     }
 
     /**Creates the section top titles with icon for regions of Activity page.

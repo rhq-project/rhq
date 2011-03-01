@@ -458,7 +458,7 @@ public class ActivityView2 extends AbstractActivityView {
                                 + history.getPackageVersion().getVersion()));
                         row.setNumCols(3);
 
-                        StaticTextItem iconItem = newTextItemIcon("subsystems/inventory/Inventory_grey_16.png", null);
+                        StaticTextItem iconItem = newTextItemIcon("subsystems/content/Package_16.png", null);
                         String title = history.getPackageVersion().getFileName() + ":";
                         String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
                             + "&selectedHistoryId=" + history.getId();

@@ -142,6 +142,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         ResourceGroup group = null;
         GroupCategory groupCategory = null;
         Set<ResourceTypeFacet> facets = null;
+        Set<ResourceTypeFacet> resourceFacets = null;
         if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
             group = groupComposite.getResourceGroup();
             group = groupComposite.getResourceGroup();
@@ -150,6 +151,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
         if (resourceComposite != null) {
             resource = resourceComposite.getResource();
+            resourceFacets = this.resourceComposite.getResourceFacets().getFacets();
         }
 
         //recentMetrics.xhtml
@@ -183,7 +185,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         HLayout recentConfigUpdatesTitle = new TitleWithIcon("subsystems/configure/Configure_24.png",
             RECENT_CONFIGURATIONS);
         recentConfigurationContent.setHeight(20);
-        if ((resource != null) || (displayGroupConfigurationUpdates(groupCategory, facets))) {//resource
+        if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.CONFIGURATION)))
+            || (displayGroupConfigurationUpdates(groupCategory, facets))) {//resource
             rightPane.addMember(recentConfigUpdatesTitle);
             rightPane.addMember(recentConfigurationContent);
             firstRightPanePortletLoaded = true;
@@ -192,7 +195,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         //recentOperations.xhtml
         HLayout recentOperationsTitle = new TitleWithIcon("subsystems/control/Operation_24.png", RECENT_OPERATIONS);
         recentOperationsContent.setHeight(20);
-        if ((resource != null) || (displayGroupOperations(groupCategory, facets))) {//resource
+        if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.OPERATION)))
+            || (displayGroupOperations(groupCategory, facets))) {//resource
             if (firstRightPanePortletLoaded) {
                 rightPane.addMember(divider3);
             }
@@ -203,7 +207,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         //recentEventCounts.xhtml
         HLayout recentEventsTitle = new TitleWithIcon("subsystems/event/Events_24.png", RECENT_EVENTS);
         recentEventsContent.setHeight(20);
-        if ((resource != null) || displayGroupEvents(groupCategory, facets)) {//resource
+        if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.EVENT)))
+            || displayGroupEvents(groupCategory, facets)) {//resource
             if (firstRightPanePortletLoaded) {
                 rightPane.addMember(divider4);
             }

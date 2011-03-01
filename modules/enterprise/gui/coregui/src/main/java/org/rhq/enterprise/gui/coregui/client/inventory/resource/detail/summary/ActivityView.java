@@ -48,6 +48,8 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -86,21 +88,39 @@ public class ActivityView extends AbstractActivityView {
     /**Initiates data request.
      */
     protected void loadData() {
-        getRecentAlerts();
-        getRecentOperations();
-        getRecentConfigurationUpdates();
-        getRecentEventUpdates();
-        getRecentOobs();
-        getRecentPkgHistory();
-        getRecentMetrics();
 
-        //conditionally display Bundle Deployments region.
+        ResourceType type = null;
         Resource resource = null;
-        if (resourceComposite != null) {
+        Set<ResourceTypeFacet> facets = null;
+
+        if ((resourceComposite != null) && (resourceComposite.getResource() != null)) {
             resource = resourceComposite.getResource();
-        }
-        if ((resource != null) && (displayBundlesForResource(resource))) {
-            getRecentBundleDeployments();
+            type = this.resourceComposite.getResource().getResourceType();
+            facets = this.resourceComposite.getResourceFacets().getFacets();
+
+            //alerts
+            getRecentAlerts();
+            //operations
+            if (facets.contains(ResourceTypeFacet.OPERATION)) {
+                getRecentOperations();
+            }
+            //config updates
+            if (facets.contains(ResourceTypeFacet.CONFIGURATION)) {
+                getRecentConfigurationUpdates();
+            }
+            //events
+            if (facets.contains(ResourceTypeFacet.EVENT)) {
+                getRecentEventUpdates();
+            }
+            //measurements
+            getRecentOobs();
+            getRecentPkgHistory();
+            getRecentMetrics();
+
+            //conditionally display Bundle Deployments region.
+            if (displayBundlesForResource(resource)) {
+                getRecentBundleDeployments();
+            }
         }
     }
 

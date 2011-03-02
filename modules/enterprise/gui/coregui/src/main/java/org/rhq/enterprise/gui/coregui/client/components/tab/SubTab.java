@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
@@ -34,6 +35,7 @@ public class SubTab implements Locatable {
     private String locatorId;
     private ViewName viewName;
     private Canvas canvas;
+    private ViewFactory viewFactory;
     private LocatableButton button;
 
     public SubTab(String locatorId, ViewName viewName, Canvas canvas) {
@@ -43,16 +45,35 @@ public class SubTab implements Locatable {
         this.button = null;
     }
 
+    public SubTab(String locatorId, ViewName viewName, Canvas initialCanvas, ViewFactory viewFactory) {
+        this.locatorId = locatorId;
+        this.viewName = viewName;
+        this.canvas = initialCanvas;
+        this.viewFactory = viewFactory;
+        this.button = null;
+    }
+
     public String getLocatorId() {
         return locatorId;
     }
 
     public Canvas getCanvas() {
+        if (null == canvas && null != viewFactory) {
+            canvas = viewFactory.createView();
+        }
         return canvas;
     }
 
     public void setCanvas(Canvas canvas) {
         this.canvas = canvas;
+    }
+
+    public ViewFactory getViewFactory() {
+        return viewFactory;
+    }
+
+    public void setViewFactory(ViewFactory viewFactory) {
+        this.viewFactory = viewFactory;
     }
 
     public LocatableButton getButton() {

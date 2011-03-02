@@ -19,34 +19,50 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.GroupBundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -61,23 +77,50 @@ public class ActivityView2 extends AbstractActivityView {
     private ResourceGroupComposite groupComposite;
 
     public ActivityView2(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, groupComposite);
+        super(locatorId, groupComposite, null);
         this.groupComposite = groupComposite;
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
         loadData();
     }
 
     /**Initiates data request.
      */
     protected void loadData() {
-        getRecentAlerts();
-        getRecentEventUpdates();
-        if ((groupComposite != null)
-            && (groupComposite.getResourceGroup().getGroupCategory().equals(GroupCategory.COMPATIBLE))) {//CompatibleGroup
-            getRecentOperations();
-            //        getRecentConfigurationUpdates();
-            //        getRecentOobs();
-            //        getRecentPkgHistory();
-            //        getRecentMetrics();
+        ResourceGroup group = null;
+        GroupCategory groupCategory = null;
+        Set<ResourceTypeFacet> facets = null;
+        if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
+            group = groupComposite.getResourceGroup();
+            groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+            //Load Facets to conditionally display relevant tabs
+            facets = groupComposite.getResourceFacets().getFacets();
+
+            getRecentAlerts();
+            //events
+            if (displayGroupEvents(groupCategory, facets)) {
+                getRecentEventUpdates();
+            }
+            //operations
+            if (displayGroupOperations(groupCategory, facets)) {
+                getRecentOperations();
+            }
+            //Config updates
+            if (displayGroupConfigurationUpdates(groupCategory, facets)) {
+                getRecentConfigurationUpdates();
+            }
+            //recentMetrics,oobs,pkghistory
+            if (groupCategory == GroupCategory.COMPATIBLE) {
+                getRecentOobs();
+                getRecentPkgHistory();
+                getRecentMetrics();
+            }
+
+            //conditionally display Bundle deployments for groups of platforms only
+            displayBundleDeploymentsForPlatformGroups(group);
         }
     }
 
@@ -115,14 +158,17 @@ public class ActivityView2 extends AbstractActivityView {
 
                         StaticTextItem iconItem = newTextItemIcon(ImageManager.getAlertIcon(alert.getAlertDefinition()
                             .getPriority()), alert.getAlertDefinition().getPriority().getDisplayName());
-                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ", LinkManager
-                            .getResourceGroupLink(groupId)
-                            + "/Alerts/History/" + alert.getId());
+                        LinkItem link = newLinkItem(alert.getAlertDefinition().getName() + ": ",
+                            ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/" + alert.getId());
                         StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(alert.getCtime()));
                         row.setItems(iconItem, link, time);
 
                         column.addMember(row);
                     }
+                    //link to more details
+                    LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                        .valueOf(rowNum++)));
+                    addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/", column);
                 } else {
                     LocatableDynamicForm row = createEmptyDisplayRow(recentAlertsContent.extendLocatorId("None"),
                         RECENT_ALERTS_NONE);
@@ -189,6 +235,10 @@ public class ActivityView2 extends AbstractActivityView {
 
                             column.addMember(row);
                         }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
+                            .extendLocatorId(String.valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentOperationsContent
                             .extendLocatorId("None"), RECENT_OPERATIONS_NONE);
@@ -203,67 +253,77 @@ public class ActivityView2 extends AbstractActivityView {
             });
     }
 
-    //    /** Fetches configuration updates and updates the DynamicForm instance with the latest
-    //     *  config change information.
-    //     */
-    //    private void getRecentConfigurationUpdates() {
-    //        final int resourceId = this.resourceComposite.getResource().getId();
-    //
-    //        PageControl lastFive = new PageControl(0, 5);
-    //        lastFive.initDefaultOrderingField("cu.createdTime", PageOrdering.DESC);
-    //
-    //        GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdates(resourceId, null, null, true,
-    //            lastFive, new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
-    //
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving recent configuration updates for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //                    if (!result.isEmpty()) {
-    //                        int rowNum = 0;
-    //                        for (ResourceConfigurationUpdate update : result) {
-    //                            // config update history records do not have a usable locatorId, we'll use rownum, which is unique and
-    //                            // may be repeatable.
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
-    //                                .extendLocatorId(String.valueOf(rowNum)));
-    //                            row.setNumCols(3);
-    //
-    //                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getResourceConfigurationIcon(update
-    //                                .getStatus()), null);
-    //                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
-    //                                + update.getSubjectName() + ":";
-    //                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
-    //                                linkTitle = MSG.common_msg_changeAutoDetected();
-    //                            }
-    //                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_RESOURCE_URL + resourceId
-    //                                + "/Configuration/History/" + update.getId());
-    //                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
-    //                                .getCreatedTime()));
-    //
-    //                            row.setItems(iconItem, link, time);
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
-    //                            .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    //cleanup
-    //                    for (Canvas child : recentConfigurationContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentConfigurationContent.addChild(column);
-    //                    recentConfigurationContent.markForRedraw();
-    //                }
-    //            });
-    //    }
-    //
+    /** Fetches configuration updates and updates the DynamicForm instance with the latest
+     *  config change information.
+     */
+    private void getRecentConfigurationUpdates() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        PageControl lastFive = new PageControl(0, 5);
+        GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
+        criteria.setPageControl(lastFive);
+        criteria.addSortStatus(PageOrdering.DESC);
+        List<Integer> filterResourceGroupIds = new ArrayList<Integer>();
+        filterResourceGroupIds.add(groupId);
+        criteria.addFilterResourceGroupIds(filterResourceGroupIds);
+
+        GWTServiceLookup.getConfigurationService().findGroupResourceConfigurationUpdatesByCriteria(criteria,
+            new AsyncCallback<PageList<GroupResourceConfigurationUpdate>>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent configuration updates for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<GroupResourceConfigurationUpdate> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        int rowNum = 0;
+                        for (GroupResourceConfigurationUpdate update : result) {
+                            // config update history records do not have a usable locatorId, we'll use rownum, which is unique and
+                            // may be repeatable.
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                                .extendLocatorId(String.valueOf(rowNum)));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon(ImageManager.getResourceConfigurationIcon(update
+                                .getStatus()), null);
+                            String linkTitle = MSG.view_resource_inventory_activity_changed_by() + " "
+                                + update.getSubjectName() + ":";
+                            if ((update.getSubjectName() == null) || (update.getSubjectName().trim().isEmpty())) {
+                                linkTitle = MSG.common_msg_changeAutoDetected();
+                            }
+                            LinkItem link = newLinkItem(linkTitle, ReportDecorator.GWT_GROUP_URL + groupId
+                                + "/Configuration/History/" + update.getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(update
+                                .getCreatedTime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentConfigurationContent
+                            .extendLocatorId(String.valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Configuration/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentConfigurationContent
+                            .extendLocatorId("None"), RECENT_CONFIGURATIONS_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentConfigurationContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentConfigurationContent.addChild(column);
+                    recentConfigurationContent.markForRedraw();
+
+                }
+            });
+    }
+
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */
@@ -314,6 +374,10 @@ public class ActivityView2 extends AbstractActivityView {
 
                             column.addMember(row);
                         }
+                        //insert see more link
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
+                            .valueOf(rowNum)));
+                        addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Events/History/", column);
                     } else {
                         LocatableDynamicForm row = createEmptyDisplayRow(recentEventsContent.extendLocatorId("None"),
                             RECENT_EVENTS_NONE);
@@ -329,255 +393,320 @@ public class ActivityView2 extends AbstractActivityView {
             });
     }
 
-    //    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
-    //     *  oob change details.
-    //     */
-    //    private void getRecentOobs() {
-    //        final int resourceId = this.resourceComposite.getResource().getId();
-    //        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId, 5,
-    //            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving recent out of bound metrics for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(PageList<MeasurementOOBComposite> result) {
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //                    if (!result.isEmpty()) {
-    //                        for (MeasurementOOBComposite oob : result) {
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
-    //                                .getScheduleName()));
-    //                            row.setNumCols(2);
-    //
-    //                            String title = oob.getScheduleName() + ":";
-    //                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
-    //                                + "&id=" + resourceId + "&mode=chartSingleMetricSingleResource";
-    //                            LinkItem link = newLinkItem(title, destination);
-    //                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(oob.getTimestamp()));
-    //
-    //                            row.setItems(link, time);
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
-    //                            RECENT_OOB_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    recentOobContent.setContents("");
-    //                    for (Canvas child : recentOobContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentOobContent.addChild(column);
-    //                    recentOobContent.markForRedraw();
-    //                }
-    //            });
-    //    }
-    //
-    //    /** Fetches recent package history information and updates the DynamicForm instance with details.
-    //     */
-    //    private void getRecentPkgHistory() {
-    ////        final int resourceId = this.resourceComposite.getResource().getId();
-    //        final int groupId = this.groupComposite.getResourceGroup().getId();
-    //        InstalledPackageCriteria criteria = new InstalledPackageCriteria();
-    ////        criteria.addFilterResourceId(resourceId);
-    //        criteria.addFilterResourceId(groupId);
-    //        PageControl pageControl = new PageControl(0, 5);
-    //        criteria.setPageControl(pageControl);
-    //
-    ////        GWTServiceLookup.getContentService().getInstalledPackageHistoryForResource(resourceId, 5,
-    //        GWTServiceLookup.getContentService().getInstalledPackageHistoryForResource(resourceId, 5,
-    //            new AsyncCallback<PageList<InstalledPackageHistory>>() {
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    Log.debug("Error retrieving installed package history for resource [" + resourceId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(PageList<InstalledPackageHistory> result) {
-    //                    VLayout column = new VLayout();
-    //                    column.setHeight(10);
-    //                    if (!result.isEmpty()) {
-    //                        for (InstalledPackageHistory history : result) {
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-    //                                .extendLocatorId(history.getPackageVersion().getFileName()
-    //                                    + history.getPackageVersion().getVersion()));
-    //                            row.setNumCols(3);
-    //
-    //                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
-    //                            String title = history.getPackageVersion().getFileName() + ":";
-    //                            String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
-    //                                + "&selectedHistoryId=" + history.getId();
-    //                            LinkItem link = newLinkItem(title, destination);
-    //                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(history
-    //                                .getTimestamp()));
-    //
-    //                            row.setItems(iconItem, link, time);
-    //                            column.addMember(row);
-    //                        }
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent
-    //                            .extendLocatorId("None"), RECENT_PKG_HISTORY_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                    //cleanup
-    //                    for (Canvas child : recentPkgHistoryContent.getChildren()) {
-    //                        child.destroy();
-    //                    }
-    //                    recentPkgHistoryContent.addChild(column);
-    //                    recentPkgHistoryContent.markForRedraw();
-    //                }
-    //            });
-    //    }
+    /** Fetches OOB measurements and updates the DynamicForm instance with the latest 5
+     *  oob change details.
+     */
+    private void getRecentOobs() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
 
-    //    /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
-    //     * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant
-    //     * digits.
-    //     */
-    //    private void getRecentMetrics() {
-    //        //display container
-    //        final VLayout column = new VLayout();
-    //        column.setHeight(10);//pack
-    //        //        final int resourceId = this.resourceComposite.getResource().getId();
-    //        final int groupId = this.groupComposite.getResourceGroup().getId();
-    //
-    //        //        MeasurementDefinitionCriteria mdc = new MeasurementDefinitionCriteria();
-    //        //        mdc.
-    //
-    //        //retrieve all relevant measurement definition ids.
-    //        //        Set<MeasurementDefinition> definitions = this.resourceComposite.getResource().getResourceType()
-    //        Set<MeasurementDefinition> definitions = this.groupComposite.getResourceGroup().getResourceType()
-    //            .getMetricDefinitions();
-    //
-    //        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-    //        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-    //        for (MeasurementDefinition definition : definitions) {
-    //            measurementDefMap.put(definition.getDisplayName(), definition);
-    //        }
-    //
-    //        //bundle definition ids for asynch call.
-    //        int[] definitionArrayIds = new int[definitions.size()];
-    //        final String[] displayOrder = new String[definitions.size()];
-    //        measurementDefMap.keySet().toArray(displayOrder);
-    //        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
-    //        Arrays.sort(displayOrder);
-    //
-    //        //organize definitionArrayIds for ordered request on server.
-    //        int index = 0;
-    //        for (String definitionToDisplay : displayOrder) {
-    //            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
-    //        }
-    //        //make the asynchronous call for all the measurement data
-    //        //        GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitionArrayIds,
-    //        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(groupId, definitionArrayIds[0],
-    //            System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
-    //            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-    //                @Override
-    //                public void onFailure(Throwable caught) {
-    //                    //                    Log.debug("Error retrieving recent metrics charting data for group [" + resourceId + "]:"
-    //                    Log.debug("Error retrieving recent metrics charting data for group [" + groupId + "]:"
-    //                        + caught.getMessage());
-    //                }
-    //
-    //                @Override
-    //                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
-    //                    if (!results.isEmpty()) {
-    //                        boolean someChartedData = false;
-    //                        //iterate over the retrieved charting data
-    //                        for (int index = 0; index < displayOrder.length; index++) {
-    //
-    //                            //retrieve the correct measurement definition
-    //                            MeasurementDefinition md = measurementDefMap.get(displayOrder[index]);
-    //
-    //                            //load the data results for the given metric definition
-    //                            List<MeasurementDataNumericHighLowComposite> data = results.get(index);
-    //
-    //                            //locate last and minimum values.
-    //                            double lastValue = -1;
-    //                            double minValue = Double.MAX_VALUE;//
-    //                            for (MeasurementDataNumericHighLowComposite d : data) {
-    //                                if ((!Double.isNaN(d.getValue()))
-    //                                    && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
-    //                                    if (d.getValue() < minValue) {
-    //                                        minValue = d.getValue();
-    //                                    }
-    //                                    lastValue = d.getValue();
-    //                                }
-    //                            }
-    //
-    //                            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
-    //                            String commaDelimitedList = "";
-    //
-    //                            for (MeasurementDataNumericHighLowComposite d : data) {
-    //                                if ((!Double.isNaN(d.getValue()))
-    //                                    && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
-    //                                    commaDelimitedList += d.getValue() + ",";
-    //                                }
-    //                            }
-    //                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
-    //                                .extendLocatorId(md.getName()));
-    //                            row.setNumCols(3);
-    //                            HTMLFlow graph = new HTMLFlow();
-    //                            //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
-    //                            //                            + commaDelimitedList + "</span>";
-    //                            String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' "
-    //                                + "values='" + commaDelimitedList + "'>...</span>";
-    //                            graph.setContents(contents);
-    //                            graph.setContentsType(ContentsType.PAGE);
-    //                            //diable scrollbars on span
-    //                            graph.setScrollbarSize(0);
-    //
-    //                            CanvasItem graphContainer = new CanvasItem();
-    //                            graphContainer.setShowTitle(false);
-    //                            graphContainer.setHeight(16);
-    //                            graphContainer.setWidth(60);
-    //                            graphContainer.setCanvas(graph);
-    //
-    //                            //Link/title element
-    //                            //TODO: spinder, change link whenever portal.war/graphing is removed.
-    //                            String title = md.getDisplayName() + ":";
-    //                            //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-    //                            //                                + resourceId + "&m=" + md.getId();
-    //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
-    //                                + groupId + "&m=" + md.getId();
-    //                            LinkItem link = newLinkItem(title, destination);
-    //
-    //                            //Value
-    //                            String convertedValue = lastValue + " " + md.getUnits();
-    //                            convertedValue = convertLastValueForDisplay(lastValue, md);
-    //                            StaticTextItem value = newTextItem(convertedValue);
-    //
-    //                            row.setItems(graphContainer, link, value);
-    //                            //if graph content returned
-    //                            if ((md.getName().trim().indexOf("Trait.") == -1) && (lastValue != -1)) {
-    //                                column.addMember(row);
-    //                                someChartedData = true;
-    //                            }
-    //                        }
-    //                        if (!someChartedData) {// when there are results but no chartable entries.
-    //                            LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
-    //                                .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
-    //                            column.addMember(row);
-    //                        }
-    //                        //call out to 3rd party javascript lib
-    //                        BrowserUtility.graphSparkLines();
-    //                    } else {
-    //                        LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
-    //                            .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
-    //                        column.addMember(row);
-    //                    }
-    //                }
-    //            });
-    //
-    //        //cleanup
-    //        for (Canvas child : recentMeasurementsContent.getChildren()) {
-    //            child.destroy();
-    //        }
-    //        recentMeasurementsContent.addChild(column);
-    //        recentMeasurementsContent.markForRedraw();
-    //    }
+        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, 5,
+            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
 
+                @Override
+                public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (MeasurementOOBComposite oob : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
+                                .getScheduleName()));
+                            row.setNumCols(2);
+
+                            String title = oob.getScheduleName() + ":";
+                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
+                                + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(oob.getTimestamp()));
+
+                            row.setItems(link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentOobContent.extendLocatorId("None"),
+                            RECENT_OOB_NONE);
+                        column.addMember(row);
+                    }
+                    recentOobContent.setContents("");
+                    for (Canvas child : recentOobContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentOobContent.addChild(column);
+                    recentOobContent.markForRedraw();
+                }
+            });
+    }
+
+    /** Fetches recent package history information and updates the DynamicForm instance with details.
+     */
+    private void getRecentPkgHistory() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+
+        GWTServiceLookup.getContentService().findInstalledPackageHistoryByCriteria(criteria,
+
+        new AsyncCallback<PageList<InstalledPackageHistory>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
+                    + caught.getMessage());
+            }
+
+            @Override
+            public void onSuccess(PageList<InstalledPackageHistory> result) {
+                VLayout column = new VLayout();
+                column.setHeight(10);
+                if (!result.isEmpty()) {
+                    for (InstalledPackageHistory history : result) {
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                            .extendLocatorId(history.getPackageVersion().getFileName()
+                                + history.getPackageVersion().getVersion()));
+                        row.setNumCols(3);
+
+                        StaticTextItem iconItem = newTextItemIcon("subsystems/content/Package_16.png", null);
+                        String title = history.getPackageVersion().getFileName() + ":";
+                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                            + "&selectedHistoryId=" + history.getId();
+                        LinkItem link = newLinkItem(title, destination);
+                        StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(history.getTimestamp()));
+
+                        row.setItems(iconItem, link, time);
+                        column.addMember(row);
+                    }
+                    //                    //insert see more link
+                    //                    LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                    //                        .extendLocatorId("PkgHistoryContentSeeMore"));
+                    //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
+                    //                    addSeeMoreLink(row, destination, column);
+                } else {
+                    LocatableDynamicForm row = createEmptyDisplayRow(recentPkgHistoryContent.extendLocatorId("None"),
+                        RECENT_PKG_HISTORY_NONE);
+                    column.addMember(row);
+                }
+                //cleanup
+                for (Canvas child : recentPkgHistoryContent.getChildren()) {
+                    child.destroy();
+                }
+                recentPkgHistoryContent.addChild(column);
+                recentPkgHistoryContent.markForRedraw();
+            }
+        });
+    }
+
+    /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
+     * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant
+     * digits.
+     */
+    private void getRecentMetrics() {
+
+        //display container
+        final VLayout column = new VLayout();
+        column.setHeight(10);//pack
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+
+        //retrieve all relevant measurement definition ids.
+        Set<MeasurementDefinition> definitions = this.groupComposite.getResourceGroup().getResourceType()
+            .getMetricDefinitions();
+
+        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
+        for (MeasurementDefinition definition : definitions) {
+            measurementDefMap.put(definition.getDisplayName(), definition);
+        }
+        //bundle definition ids for asynch call.
+        int[] definitionArrayIds = new int[definitions.size()];
+        final String[] displayOrder = new String[definitions.size()];
+        measurementDefMap.keySet().toArray(displayOrder);
+        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+        Arrays.sort(displayOrder);
+
+        //organize definitionArrayIds for ordered request on server.
+        int index = 0;
+        for (String definitionToDisplay : displayOrder) {
+            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
+        }
+
+        //make the asynchronous call for all the measurement data
+        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(groupId, definitionArrayIds,
+            System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
+            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent metrics charting data for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
+                    if (!results.isEmpty()) {
+                        boolean someChartedData = false;
+                        //iterate over the retrieved charting data
+                        for (int index = 0; index < displayOrder.length; index++) {
+                            //retrieve the correct measurement definition
+                            MeasurementDefinition md = measurementDefMap.get(displayOrder[index]);
+
+                            //load the data results for the given metric definition
+                            List<MeasurementDataNumericHighLowComposite> data = results.get(index);
+
+                            //locate last and minimum values.
+                            double lastValue = -1;
+                            double minValue = Double.MAX_VALUE;//
+                            for (MeasurementDataNumericHighLowComposite d : data) {
+                                if ((!Double.isNaN(d.getValue()))
+                                    && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                    if (d.getValue() < minValue) {
+                                        minValue = d.getValue();
+                                    }
+                                    lastValue = d.getValue();
+                                }
+                            }
+
+                            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
+                            String commaDelimitedList = "";
+
+                            for (MeasurementDataNumericHighLowComposite d : data) {
+                                if ((!Double.isNaN(d.getValue()))
+                                    && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                    commaDelimitedList += d.getValue() + ",";
+                                }
+                            }
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId(md.getName()));
+                            row.setNumCols(3);
+                            HTMLFlow graph = new HTMLFlow();
+                            //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
+                            //                            + commaDelimitedList + "</span>";
+                            String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' "
+                                + "values='" + commaDelimitedList + "'>...</span>";
+                            graph.setContents(contents);
+                            graph.setContentsType(ContentsType.PAGE);
+                            //diable scrollbars on span
+                            graph.setScrollbarSize(0);
+
+                            CanvasItem graphContainer = new CanvasItem();
+                            graphContainer.setShowTitle(false);
+                            graphContainer.setHeight(16);
+                            graphContainer.setWidth(60);
+                            graphContainer.setCanvas(graph);
+
+                            //Link/title element
+                            //TODO: spinder, change link whenever portal.war/graphing is removed.
+                            String title = md.getDisplayName() + ":";
+                            //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
+                            //                                + resourceId + "&m=" + md.getId();
+                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
+                                + groupId + "&m=" + md.getId();
+                            LinkItem link = newLinkItem(title, destination);
+
+                            //Value
+                            String convertedValue = lastValue + " " + md.getUnits();
+                            convertedValue = convertLastValueForDisplay(lastValue, md);
+                            StaticTextItem value = newTextItem(convertedValue);
+
+                            row.setItems(graphContainer, link, value);
+                            //if graph content returned
+                            if ((md.getName().trim().indexOf("Trait.") == -1) && (lastValue != -1)) {
+                                column.addMember(row);
+                                someChartedData = true;
+                            }
+                        }
+                        if (!someChartedData) {// when there are results but no chartable entries.
+                            LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
+                                .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
+                            column.addMember(row);
+                        } else {
+                            //insert see more link
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentMeasurementsContent
+                                .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                            addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId + "/Monitoring/Graphs/", column);
+                        }
+                        //call out to 3rd party javascript lib
+                        BrowserUtility.graphSparkLines();
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentMeasurementsContent
+                            .extendLocatorId("None"), RECENT_MEASUREMENTS_NONE);
+                        column.addMember(row);
+                    }
+                }
+            });
+
+        //cleanup
+        for (Canvas child : recentMeasurementsContent.getChildren()) {
+            child.destroy();
+        }
+        recentMeasurementsContent.addChild(column);
+        recentMeasurementsContent.markForRedraw();
+    }
+
+    /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
+     */
+    protected void getRecentBundleDeployments() {
+        final int groupId = this.groupComposite.getResourceGroup().getId();
+        GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
+        PageControl pageControl = new PageControl(0, 5);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+        criteria.fetchDestination(true);
+        criteria.fetchBundleVersion(true);
+
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
+                        + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(PageList<BundleDeployment> result) {
+                    VLayout column = new VLayout();
+                    column.setHeight(10);
+                    if (!result.isEmpty()) {
+                        for (BundleDeployment deployment : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
+                                .extendLocatorId(deployment.getBundleVersion().getName()
+                                    + deployment.getBundleVersion().getVersion()));
+                            row.setNumCols(3);
+
+                            StaticTextItem iconItem = newTextItemIcon("subsystems/content/Content_16.png", null);
+                            String title = deployment.getBundleVersion().getName() + "["
+                                + deployment.getBundleVersion().getVersion() + "]:";
+                            String destination = ReportDecorator.GWT_BUNDLE_URL
+                                + deployment.getBundleVersion().getBundle().getId() + "/destinations/"
+                                + deployment.getDestination().getId();
+                            LinkItem link = newLinkItem(title, destination);
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter
+                                .format(deployment.getCtime()));
+
+                            row.setItems(iconItem, link, time);
+                            column.addMember(row);
+                        }
+                        //insert see more link
+                        //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
+                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
+                    } else {
+                        LocatableDynamicForm row = createEmptyDisplayRow(recentBundleDeployContent
+                            .extendLocatorId("None"), RECENT_BUNDLE_DEPLOY_NONE);
+                        column.addMember(row);
+                    }
+                    //cleanup
+                    for (Canvas child : recentBundleDeployContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentBundleDeployContent.addChild(column);
+                    recentBundleDeployContent.markForRedraw();
+                }
+            });
+    }
 }

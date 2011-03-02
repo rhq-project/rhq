@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,11 +35,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
@@ -60,7 +62,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
+    private ToolStrip buttonbar;
     private IButton saveButton;
+
+    private boolean refreshing = false;
+
 
     public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
@@ -73,11 +79,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     protected void onDraw() {
         super.onDraw();
 
-        ToolStrip toolStrip = new ToolStrip();
-        toolStrip.setWidth100();
-        toolStrip.setExtraSpace(10);
-        toolStrip.setMembersMargin(5);
-        toolStrip.setLayoutMargin(5);
+        this.buttonbar = new ToolStrip();
+        buttonbar.setWidth100();
+        buttonbar.setExtraSpace(10);
+        buttonbar.setMembersMargin(5);
+        buttonbar.setLayoutMargin(5);
 
         this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
@@ -85,9 +91,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                 save();
             }
         });
-        toolStrip.addMember(saveButton);
+        buttonbar.addMember(saveButton);
+        // The button bar will remain hidden until the configuration has been successfully loaded.
+        buttonbar.setVisible(false);
+        addMember(buttonbar);
 
-        addMember(toolStrip);
         refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
@@ -99,7 +107,12 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
 
     @Override
     public void refresh() {
-        this.saveButton.disable();
+        if (this.refreshing) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshing = true;
+        this.buttonbar.setVisible(false);
 
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
             new AsyncCallback<ResourceConfigurationUpdate>() {
@@ -120,15 +133,19 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                                 editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
                                 editor.setReadOnly(!resourcePermission.isConfigureWrite());
                                 addMember(editor);
+
+                                saveButton.disable();
+                                buttonbar.setVisible(true);
                                 markForRedraw();
-                                // TODO (ips): If editor != null, use editor.reload() instead.
+                                refreshing = false;
                             }
                         });
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot load resource config", caught);
+                    refreshing = false;
+                    CoreGUI.getErrorHandler().handleError("Failed to load configuration.", caught);
                 }
             });
     }
@@ -143,10 +160,14 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                 }
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_configurationDetails_messageConcise(), MSG
-                            .view_configurationDetails_messageDetailed(resource.getName()), Message.Severity.Info));
-                    refresh();
+                    String version = String.valueOf(result.getId());
+                    Message message = new Message(MSG.view_configurationDetails_messageConcise(version), MSG
+                            .view_configurationDetails_messageDetailed(version, resource.getName()),
+                            Message.Severity.Info);
+                    String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
+                            ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                    String configHistoryView = configHistoryUrl.substring(1);
+                    CoreGUI.goToView(configHistoryView, message);
                 }
             });
     }

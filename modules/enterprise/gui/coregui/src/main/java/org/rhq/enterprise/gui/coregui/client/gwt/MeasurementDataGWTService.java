@@ -54,7 +54,7 @@ public interface MeasurementDataGWTService extends RemoteService {
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
         long beginTime, long endTime, int numPoints) throws RuntimeException;
 
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId, int definitionId,
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId, int[] definitionIds,
         long beginTime, long endTime, int numPoints) throws RuntimeException;
 
     PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
@@ -73,6 +73,8 @@ public interface MeasurementDataGWTService extends RemoteService {
         String parentNameFilter, PageControl pc) throws RuntimeException;
 
     PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) throws RuntimeException;
+
+    PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(int groupId, int n) throws RuntimeException;
 
     void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) throws RuntimeException;
 

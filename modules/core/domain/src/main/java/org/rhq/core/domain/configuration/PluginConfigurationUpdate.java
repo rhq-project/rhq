@@ -34,6 +34,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
@@ -154,12 +155,18 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
         this.resource = resource;
     }
 
+    @Override
     public Resource getResource() {
         return resource;
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    @Override
+    public AbstractGroupConfigurationUpdate getAbstractGroupConfigurationUpdate() {
+        return getGroupConfigurationUpdate();
     }
 
     public GroupPluginConfigurationUpdate getGroupConfigurationUpdate() {

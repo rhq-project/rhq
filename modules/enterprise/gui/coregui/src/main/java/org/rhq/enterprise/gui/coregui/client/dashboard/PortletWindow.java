@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public class PortletWindow extends LocatableWindow {
 
@@ -90,6 +91,7 @@ public class PortletWindow extends LocatableWindow {
     };
 
     private ClickHandler refreshHandler = new ClickHandler() {
+        @SuppressWarnings("unchecked")
         public void onClick(ClickEvent clickEvent) {
             if (PortletWindow.this.view instanceof Table) {
                 ((Table) PortletWindow.this.view).refresh();
@@ -121,21 +123,22 @@ public class PortletWindow extends LocatableWindow {
             extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
             extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
 
-        // show either a shadow, or translucency, when dragging a portlet
-        // (could do both at the same time, but these are not visually compatible effects)
-        // setShowDragShadow(true);
-        setDragOpacity(30);
-
         // enable predefined component animation
         setAnimateMinimize(true);
 
         // Window is draggable with "outline" appearance by default.
         // "target" is the solid appearance.
+        setCanDrag(true);
         setDragAppearance(DragAppearance.TARGET);
+        // show either a shadow, or translucency, when dragging a portlet
+        // (could do both at the same time, but these are not visually compatible effects)
+        // setShowDragShadow(true);
+        setDragOpacity(30);
+        // can be dropped on a column        
         setCanDrop(true);
 
         setCanDragResize(true);
-        //        setResizeFrom("B");
+        setResizeFrom("T", "B");
 
         setShowShadow(false);
 
@@ -164,7 +167,6 @@ public class PortletWindow extends LocatableWindow {
 
         setSettingsClickHandler(settingsHandler);
         setHelpClickHandler(helpHandler);
-
     }
 
     @Override

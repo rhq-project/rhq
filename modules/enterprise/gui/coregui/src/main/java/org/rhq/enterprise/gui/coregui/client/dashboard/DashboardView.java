@@ -55,7 +55,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.ColorButtonItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
@@ -64,11 +63,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  * @author Simeon Pinder
  */
 public class DashboardView extends LocatableVLayout {
-    private DashboardsView dashboardsView;
+    private DashboardContainer dashboardContainer;
     private Dashboard storedDashboard;
 
     boolean editMode = false;
@@ -77,15 +77,15 @@ public class DashboardView extends LocatableVLayout {
     LocatableDynamicForm editForm;
     IMenuButton addPortlet;
 
-    Set<PortletWindow> portletWindows = new HashSet<PortletWindow>();
+    HashSet<PortletWindow> portletWindows = new HashSet<PortletWindow>();
     private static String STOP = MSG.view_dashboards_portlets_refresh_none();
     private static String REFRESH1 = MSG.view_dashboards_portlets_refresh_one_min();
     private static String REFRESH5 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(5));
     private static String REFRESH10 = MSG.view_dashboards_portlets_refresh_multiple_min(String.valueOf(10));
     private static Integer STOP_VALUE = 0;
-    private static Integer REFRESH1_VALUE = 1 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
-    private static Integer REFRESH5_VALUE = 5 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
-    private static Integer REFRESH10_VALUE = 10 * Long.valueOf(MeasurementUtility.MINUTES).intValue();
+    private static Integer REFRESH1_VALUE = 1 * 60000;
+    private static Integer REFRESH5_VALUE = 5 * 60000;
+    private static Integer REFRESH10_VALUE = 10 * 60000;
 
     private HashMap<Integer, String> refreshMenuMappings;
     private MenuItem[] refreshMenuItems;
@@ -97,26 +97,29 @@ public class DashboardView extends LocatableVLayout {
     // the view is set to a Tab's pane.
     private boolean isInitialized = false;
 
-    public DashboardView(String locatorId, DashboardsView dashboardsView, Dashboard storedDashboard) {
+    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard) {
         super(locatorId);
 
-        this.dashboardsView = dashboardsView;
+        this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
-        setOverflow(Overflow.AUTO);
-        setPadding(5);
     }
 
     @Override
     protected void onInit() {
-
         if (!isInitialized) {
             super.onInit();
-            addMember(buildEditForm());
+
+            this.setWidth100();
+            this.setHeight100();
+
+            this.addMember(buildEditForm());
+            buildPortlets();
+
             isInitialized = true;
         }
     }
 
-    public void redraw() {
+    public void rebuild() {
         // destroy all of the portlets and recreate from scratch
         portalLayout.removeFromParent();
         portalLayout.destroy();
@@ -128,16 +131,17 @@ public class DashboardView extends LocatableVLayout {
     @Override
     protected void onDraw() {
         super.onDraw();
-        buildPortlets();
+
+        setEditMode(editMode);
     }
 
     public void buildPortlets() {
-        setWidth100();
-        setHeight100();
+        this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
+        portalLayout = new PortalLayout(extendLocatorId("PortalLayout"), this, storedDashboard.getColumns(),
+            storedDashboard.getColumnWidths());
 
-        portalLayout = new PortalLayout(extendLocatorId("PortalLayout"), this, storedDashboard.getColumns());
+        portalLayout.setOverflow(Overflow.AUTO);
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
@@ -146,32 +150,41 @@ public class DashboardView extends LocatableVLayout {
         addMember(portalLayout);
     }
 
+    protected boolean canEditName() {
+        return true;
+    }
+
     private DynamicForm buildEditForm() {
         editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
+        editForm.setMargin(5);
         editForm.setAutoWidth();
-        editForm.setNumCols(12);
+        editForm.setNumCols(canEditName() ? 12 : 10);
 
-        TextItem nameItem = new TextItem("name", MSG.common_title_dashboard_name());
-        nameItem.setValue(storedDashboard.getName());
-        nameItem.setWrapTitle(false);
-        nameItem.addBlurHandler(new BlurHandler() {
-            public void onBlur(BlurEvent blurEvent) {
-                String val = (String) blurEvent.getItem().getValue();
-                val = (null == val) ? "" : val.trim();
-                if (!("".equals(val) || val.equals(storedDashboard.getName()))) {
-                    storedDashboard.setName(val);
-                    save();
-                    dashboardsView.updateNames();
+        TextItem nameItem = null;
+
+        if (dashboardContainer.supportsDashboardNameEdit()) {
+            nameItem = new TextItem("name", MSG.common_title_dashboard_name());
+            nameItem.setValue(storedDashboard.getName());
+            nameItem.setWrapTitle(false);
+            nameItem.addBlurHandler(new BlurHandler() {
+                public void onBlur(BlurEvent blurEvent) {
+                    String val = (String) blurEvent.getItem().getValue();
+                    val = (null == val) ? "" : val.trim();
+                    if (!("".equals(val) || val.equals(storedDashboard.getName()))) {
+                        storedDashboard.setName(val);
+                        save();
+                        dashboardContainer.updateDashboardNames();
+                    }
                 }
-            }
-        });
+            });
+        }
 
         final StaticTextItem numColItem = new StaticTextItem();
         numColItem.setTitle(MSG.common_title_columns());
         numColItem.setValue(storedDashboard.getColumns());
 
         ButtonItem addColumn = new ButtonItem("addColumn", MSG.common_title_add_column());
-        //        addColumn.setIcon("silk/application_side_expand.png");
+
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
         addColumn.setEndRow(false);
@@ -323,10 +336,13 @@ public class DashboardView extends LocatableVLayout {
         refreshCanvas.setStartRow(false);
         refreshCanvas.setEndRow(false);
 
-        editForm.setItems(nameItem, addCanvas, numColItem, addColumn, removeColumn, picker, refreshCanvas);
+        if (null != nameItem) {
+            editForm.setItems(nameItem, addCanvas, numColItem, addColumn, removeColumn, picker, refreshCanvas);
+        } else {
+            editForm.setItems(addCanvas, numColItem, addColumn, removeColumn, picker, refreshCanvas);
+        }
         updateRefreshMenu();
         this.refreshMenuButton.markForRedraw();
-        markForRedraw();
 
         return editForm;
     }
@@ -336,13 +352,13 @@ public class DashboardView extends LocatableVLayout {
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
-                final PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet);
-                portletWindows.add(portletWindow);
-                portletWindow.setTitle(storedPortlet.getName());
 
+                PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet);
+                portletWindow.setTitle(storedPortlet.getName());
                 portletWindow.setHeight(storedPortlet.getHeight());
                 portletWindow.setVisible(true);
 
+                portletWindows.add(portletWindow);
                 portalLayout.addPortletWindow(portletWindow, i);
             }
         }
@@ -374,7 +390,7 @@ public class DashboardView extends LocatableVLayout {
         return portalLayout.extendLocatorId(locatorId.toString());
     }
 
-    private void addPortlet(String portletKey, String portletName) {
+    protected void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
         storedDashboard.addPortlet(storedPortlet);
 
@@ -420,17 +436,17 @@ public class DashboardView extends LocatableVLayout {
         storedDashboard.removePortlet(portlet);
 
         // portlet remove means the portlet locations may have changed. The selenium testing locators include
-        // positioning info. So, in this case we have to take the hit and completely redraw the dash.
+        // positioning info. So, in this case we have to take the hit and completely refresh the dash.
         AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null : new AsyncCallback<Dashboard>() {
 
             @Override
             public void onFailure(Throwable caught) {
-                redraw();
+                rebuild();
             }
 
             @Override
             public void onSuccess(Dashboard result) {
-                redraw();
+                rebuild();
             }
         };
         save(callback);
@@ -447,7 +463,31 @@ public class DashboardView extends LocatableVLayout {
         save((AsyncCallback<Dashboard>) null);
     }
 
+    public String[] updatePortalColumnWidths() {
+        int numColumns = storedDashboard.getColumns();
+        int totalPixelWidth = 0;
+        int[] columnPixelWidths = new int[numColumns];
+        for (int i = 0; i < numColumns; ++i) {
+            PortalColumn col = portalLayout.getPortalColumn(i);
+            totalPixelWidth += col.getWidth();
+            columnPixelWidths[i] = col.getWidth();
+        }
+        String[] columnWidths = new String[numColumns];
+        columnWidths[numColumns - 1] = "*";
+        for (int i = 0; i < numColumns - 1; ++i) {
+            columnWidths[i] = String.valueOf(((int) columnPixelWidths[i] * 100 / totalPixelWidth)) + "%";
+        }
+
+        storedDashboard.setColumnWidths(columnWidths);
+
+        return columnWidths;
+    }
+
     public void save(final AsyncCallback<Dashboard> callback) {
+        // a variety of edits (dragResize, add/remove column, etc) can cause column width changes. Update them
+        // prior to every save.
+        updatePortalColumnWidths();
+
         // since we reset storedDashboard after the async update completes, block modification of the dashboard
         // during that interval.
         DashboardView.this.disable();
@@ -489,15 +529,16 @@ public class DashboardView extends LocatableVLayout {
                 }
             }
             for (PortletWindow portletWindow : portletWindows) {
-                for (DashboardPortlet portlet : result.getPortlets()) {
-                    if (equalsDashboardPortlet(portletWindow.getStoredPortlet(), portlet)) {
-                        portletWindow.setStoredPortlet(portlet);
+                for (DashboardPortlet updatedPortlet : result.getPortlets()) {
+                    if (equalsDashboardPortlet(portletWindow.getStoredPortlet(), updatedPortlet)) {
+                        portletWindow.setStoredPortlet(updatedPortlet);
 
-                        //restarting portlet auto-refresh with newest settings
+                        // restarting portlet auto-refresh with newest settings
                         Portlet view = portletWindow.getView();
                         if (view instanceof AutoRefreshPortlet) {
                             ((AutoRefreshPortlet) view).startRefreshCycle();
                         }
+                        break;
                     }
                 }
             }
@@ -507,35 +548,46 @@ public class DashboardView extends LocatableVLayout {
     /**
      * This is an enhanced equals for portlets that allows equality for unpersisted portlets. At times (like addPortlet)
      * a portlet may have been associated with its window prior to being persisted. In this case we can consider
-     * it equal if it is associated with the same dashboard and has the same positioning. Note that key-name pairing
+     * it equal if it is associated with the same dashboard(1) and has the same positioning. Note that key-name pairing
      * can not be used for equality as a dashboard is allowed to have the same portlet multiple times, with a default
      * name.  But they can not hold the same position. 
+     * <pre>
+     *   (1) Even the dashboard comparison has been made flexible. To allow for lazy persist of the dashboard (to
+     *       allow for the default group or resource dashboard to not be persisted) we allow the dash comparison
+     *       to be done by name if an entity id is 0.  This should be safe as dashboard names are set prior to
+     *       persist, and should be unique for the session user. 
      * 
-     * @param portlet1
-     * @param portlet2
+     * @param storedPortlet
+     * @param updatedPortlet
      * @return
      */
-    private boolean equalsDashboardPortlet(DashboardPortlet portlet1, DashboardPortlet portlet2) {
+    private boolean equalsDashboardPortlet(DashboardPortlet storedPortlet, DashboardPortlet updatedPortlet) {
 
-        if (portlet1.equals(portlet2)) {
+        if (storedPortlet.equals(updatedPortlet)) {
             return true;
         }
 
-        // make sure at least one portlet is not persisted
-        if (portlet1.getId() > 0 && portlet2.getId() > 0) {
+        // make sure at least one portlet is not persisted for pseudo-equality
+        if (storedPortlet.getId() > 0 && updatedPortlet.getId() > 0) {
             return false;
         }
 
-        // must match dash and position for psuedo-equality
-        if (portlet1.getDashboard().getId() != portlet2.getDashboard().getId()) {
+        // must match position for pseudo-equality
+        if (storedPortlet.getColumn() != updatedPortlet.getColumn()) {
             return false;
         }
 
-        if (portlet1.getColumn() != portlet2.getColumn()) {
+        if (storedPortlet.getIndex() != updatedPortlet.getIndex()) {
             return false;
         }
 
-        if (portlet1.getIndex() != portlet2.getIndex()) {
+        // must match dash (ids if persisted, otherwise name) for pseudo-equality
+        boolean unpersistedDash = (storedPortlet.getDashboard().getId() == 0 || updatedPortlet.getDashboard().getId() == 0);
+        boolean dashMatchId = (!unpersistedDash && (storedPortlet.getDashboard().getId() == updatedPortlet
+            .getDashboard().getId()));
+        boolean dashMatchName = (unpersistedDash && storedPortlet.getDashboard().getName().equals(
+            updatedPortlet.getDashboard().getName()));
+        if (!(dashMatchId || dashMatchName)) {
             return false;
         }
 
@@ -568,7 +620,7 @@ public class DashboardView extends LocatableVLayout {
     }
 
     public Set<Permission> getGlobalPermissions() {
-        return dashboardsView.getGlobalPermissions();
+        return dashboardContainer.getGlobalPermissions();
     }
 
     public void setEditMode(boolean editMode) {
@@ -578,7 +630,9 @@ public class DashboardView extends LocatableVLayout {
         } else {
             this.editForm.hide();
         }
-        markForRedraw();
+        this.editForm.markForRedraw();
+        this.portalLayout.show();
+        this.portalLayout.markForRedraw();
     }
 
     public class UpdatePortletRefreshCallback implements AsyncCallback<Subject> {
@@ -614,7 +668,8 @@ public class DashboardView extends LocatableVLayout {
                 retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
             }
             String currentSelection = refreshMenuMappings.get(retrievedRefreshInterval);
-            if (currentSelection != null) {//iterate over menu items and update icon details
+            if (currentSelection != null) {
+                //iterate over menu items and update icon details
                 for (int i = 0; i < refreshMenuItems.length; i++) {
                     MenuItem menu = refreshMenuItems[i];
                     if (currentSelection.equals(menu.getTitle())) {
@@ -631,5 +686,9 @@ public class DashboardView extends LocatableVLayout {
         if (this.refreshMenuButton != null) {
             this.refreshMenuButton.markForRedraw();
         }
+    }
+
+    public Dashboard getStoredDashboard() {
+        return storedDashboard;
     }
 }

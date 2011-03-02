@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -161,21 +161,29 @@ public class ConfigurationEditor extends LocatableVLayout {
     private int resourceTypeId;
     private ConfigType configType;
 
+    private String editorTitle = null;
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
+    private boolean loaded;
+    private boolean reloadable;
 
     public static enum ConfigType {
         plugin, resource
     }; // Need this extra semicolon for the qdox parser
 
-    public ConfigurationEditor(String locatorId) {
-        super(locatorId);
+    /**
+     * This is the kind of handler that is called when this editor has loaded
+     * the configuration and configuration definition. If the load failed,
+     * the methods will still be called, but will be passed null.
+     */
+    public static interface LoadHandler {
+        void loadedConfiguration(Configuration config);
+
+        void loadedConfigurationDefinition(ConfigurationDefinition configDef);
     }
 
-    public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId) {
-        this(locatorId, resourceId, resourceTypeId, ConfigType.resource);
-    }
+    private LoadHandler loadHandler = null;
 
     public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId, ConfigType configType) {
         super(locatorId);
@@ -183,17 +191,34 @@ public class ConfigurationEditor extends LocatableVLayout {
         this.resourceTypeId = resourceTypeId;
         this.configType = configType;
         setOverflow(Overflow.AUTO);
+        this.reloadable = true;
     }
 
     public ConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
         Configuration configuration) {
         super(locatorId);
+
+        if (configuration == null) {
+            throw new IllegalArgumentException("Null configuration.");
+        }
+        if (configurationDefinition == null) {
+            throw new IllegalArgumentException("Null configurationDefinition.");
+        }
+
         this.configuration = configuration;
         this.configurationDefinition = configurationDefinition;
     }
 
+    public void setLoadHandler(LoadHandler handler) {
+        this.loadHandler = handler;
+    }
+
     public Configuration getConfiguration() {
         return configuration;
+    }
+
+    public ConfigurationDefinition getConfigurationDefinition() {
+        return configurationDefinition;
     }
 
     public boolean isReadOnly() {
@@ -202,6 +227,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    public String getEditorTitle() {
+        return editorTitle;
+    }
+
+    public void setEditorTitle(String title) {
+        this.editorTitle = title;
     }
 
     public void showError(Throwable failure) {
@@ -239,12 +272,18 @@ public class ConfigurationEditor extends LocatableVLayout {
                 configurationService.getResourceConfiguration(resourceId, new AsyncCallback<Configuration>() {
                     public void onFailure(Throwable caught) {
                         showError(caught);
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(null);
+                        }
                     }
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
                         Log.info("Config retrieved in: " + (System.currentTimeMillis() - start));
                         reload();
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(configuration);
+                        }
                     }
                 });
 
@@ -260,6 +299,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                                 showError(MSG.view_configEdit_error_1());
                             }
                             reload();
+                            if (loadHandler != null) {
+                                loadHandler.loadedConfigurationDefinition(configurationDefinition);
+                            }
                         }
                     });
 
@@ -267,11 +309,17 @@ public class ConfigurationEditor extends LocatableVLayout {
                 configurationService.getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
                     public void onFailure(Throwable caught) {
                         showError(caught);
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(null);
+                        }
                     }
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
                         reload();
+                        if (loadHandler != null) {
+                            loadHandler.loadedConfiguration(configuration);
+                        }
                     }
                 });
 
@@ -285,6 +333,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                                 showError(MSG.view_configEdit_error_2());
                             }
                             reload();
+                            if (loadHandler != null) {
+                                loadHandler.loadedConfigurationDefinition(configurationDefinition);
+                            }
                         }
                     });
             }
@@ -294,6 +345,10 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public void reload() {
+        if (this.loaded && !this.reloadable) {
+            return;
+        }
+
         if (configurationDefinition == null || configuration == null) {
             // Wait for both to load.
             return;
@@ -308,7 +363,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             Log.info("Building structured configuration editor...");
-            LocatableVLayout structuredConfigLayout = buildStructuredPane();
+            LocatableVLayout structuredConfigLayout = null;
+            try {
+                structuredConfigLayout = buildStructuredPane();
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                throw e;
+            }
             addMember(structuredConfigLayout);
         } else {
             Label label = new Label("Structured configuration is not supported.");
@@ -316,6 +377,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         this.markForRedraw();
+        this.loaded = true;
     }
 
     public void reset() {
@@ -366,6 +428,14 @@ public class ConfigurationEditor extends LocatableVLayout {
         LocatableToolStrip toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
         toolStrip.setBackgroundImage(null);
         toolStrip.setWidth100();
+        toolStrip.setMembersMargin(3);
+        toolStrip.setPadding(3);
+
+        if (getEditorTitle() != null) {
+            Label titleLabel = new Label(getEditorTitle());
+            titleLabel.setWrap(false);
+            toolStrip.addMember(titleLabel);
+        }
 
         Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
         for (SectionStackSection section : sectionStack.getSections()) {
@@ -390,9 +460,6 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         });
         menu.addItem(hideAllItem);
-
-        // TODO GH: Save button as saveListener() or remove the buttons from this form and have
-        //          the container provide them?
 
         toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
             .view_configEdit_jumpToSection(), menu));
@@ -538,7 +605,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             // List of Maps is a specially supported case with summary fields as columns in a table
             // Note: This field spans 3 columns.
             PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap) memberDefinition;
-            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyList, oddRow);
+            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyDefinitionList,
+                propertyList, oddRow);
             fields.add(listOfMapsItem);
         } else if (memberDefinition instanceof PropertyDefinitionSimple) {
             SpacerItem unsetItem = new SpacerItem();
@@ -797,7 +865,8 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private CanvasItem buildListOfMapsField(final String locatorId,
-        final PropertyDefinitionMap memberPropertyDefinitionMap, final PropertyList propertyList, boolean oddRow) {
+        final PropertyDefinitionMap memberPropertyDefinitionMap, PropertyDefinitionList propertyDefinitionList,
+        final PropertyList propertyList, boolean oddRow) {
         Log.debug("Building list-of-maps field for " + propertyList + "...");
 
         final ListGrid summaryTable = new ListGrid();
@@ -858,26 +927,29 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
+        boolean allSubDefsReadOnly = isAllReadOnly(propertyDefinitions);
+
         ListGridField editField = new ListGridField("edit", 20);
         editField.setType(ListGridFieldType.ICON);
-        //        editField.setIcon(Window.getImgURL(ImageManager.getEditIcon()));
-        editField.setCellIcon(Window.getImgURL(ImageManager.getEditIcon()));
+        final boolean mapReadOnly = this.readOnly || allSubDefsReadOnly;
+        String icon = (mapReadOnly) ? ImageManager.getViewIcon() : ImageManager.getEditIcon();
+        editField.setCellIcon(Window.getImgURL(icon));
         editField.setCanEdit(false);
         editField.setCanGroupBy(false);
         editField.setCanSort(false);
         editField.setCanHide(false);
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
-                Log.info("You want to edit: " + recordClickEvent.getRecord());
+                Log.debug("Editing property map: " + recordClickEvent.getRecord());
                 PropertyMap memberPropertyMap = (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                     RHQ_PROPERTY_ATTRIBUTE_NAME);
                 displayMapEditor(extendLocatorId("MapEdit"), summaryTable, recordClickEvent.getRecord(),
-                    memberPropertyDefinitionMap, propertyList, memberPropertyMap);
+                    memberPropertyDefinitionMap, propertyList, memberPropertyMap, mapReadOnly);
             }
         });
         fieldsList.add(editField);
 
-        if (!readOnly) {
+        if (!(readOnly || propertyDefinitionList.isReadOnly())) {
             ListGridField removeField = new ListGridField("remove", 20);
             removeField.setType(ListGridFieldType.ICON);
             //        removeField.setIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
@@ -916,16 +988,17 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-        IButton addRowButton = new IButton();
-        addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
-        addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                displayMapEditor(extendLocatorId("MapEdit"), summaryTable, null, memberPropertyDefinitionMap,
-                    propertyList, null);
-            }
-        });
-
-        toolStrip.addMember(addRowButton);
+        if (!(readOnly || propertyDefinitionList.isReadOnly())) {
+            IButton addRowButton = new IButton();
+            addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
+            addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    displayMapEditor(extendLocatorId("MapEdit"), summaryTable, null, memberPropertyDefinitionMap,
+                        propertyList, null, mapReadOnly);
+                }
+            });
+            toolStrip.addMember(addRowButton);
+        }
 
         summaryTableHolder.setMembers(summaryTable, toolStrip);
 
@@ -934,6 +1007,17 @@ public class ConfigurationEditor extends LocatableVLayout {
         canvasItem.setEndRow(true);
 
         return canvasItem;
+    }
+
+    private static boolean isAllReadOnly(List<PropertyDefinition> propertyDefinitions) {
+        boolean allPropsDefsReadOnly = true;
+        for (PropertyDefinition subDef : propertyDefinitions) {
+            if (!subDef.isReadOnly()) {
+                allPropsDefsReadOnly = false;
+                break;
+            }
+        }
+        return allPropsDefsReadOnly;
     }
 
     private ListGridRecord[] buildSummaryRecords(PropertyList propertyList, List<PropertyDefinition> definitions) {
@@ -1330,19 +1414,25 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
-        boolean isInvalidRequiredProperty = false;
+        if (this.readOnly) {
+            return true;
+        }
+        String errorMessage = property.getErrorMessage();
+        if ((errorMessage != null) && (!errorMessage.trim().equals(""))) {
+            // special case 1: property has a plugin-set error message - allow user to edit it even if it's a read-only prop,
+            // otherwise the user will have no way to give the property a new value and thereby get things to a valid state
+            return false;
+        }
         if (property instanceof PropertySimple) {
             PropertySimple propertySimple = (PropertySimple) property;
-            String errorMessage = propertySimple.getErrorMessage();
-            if ((null == propertySimple.getStringValue()) || "".equals(propertySimple.getStringValue())
-                || ((null != errorMessage) && (!"".equals(errorMessage.trim())))) {
-                // Required properties with no value, or an invalid value (assumed if we see an error message) should
-                // never be set to read-only, otherwise the user will have no way to give the property a new value and
-                // thereby get things to a valid state.
-                isInvalidRequiredProperty = true;
+            if (propertyDefinition.isRequired() &&
+                    (propertySimple.getStringValue() == null) || "".equals(propertySimple.getStringValue())) {
+                // special case 2: required simple prop with no value - allow user to edit it even if it's a read-only prop,
+                // otherwise the user will have no way to give the property a new value and thereby get things to a valid state
+                return false;
             }
         }
-        return !isInvalidRequiredProperty && (propertyDefinition.isReadOnly() || this.readOnly);
+        return (propertyDefinition.isReadOnly());
     }
 
     protected List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
@@ -1414,7 +1504,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void displayMapEditor(String locatorId, final ListGrid summaryTable, final Record existingRecord,
-        PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map) {
+        PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map, boolean mapReadOnly) {
 
         final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(definition
             .getPropertyDefinitions().values());
@@ -1440,7 +1530,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         popup.centerInPage();
 
         final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
-        okButton.disable();
+        if (!mapReadOnly) {
+            okButton.disable();
+        }
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (newRow) {

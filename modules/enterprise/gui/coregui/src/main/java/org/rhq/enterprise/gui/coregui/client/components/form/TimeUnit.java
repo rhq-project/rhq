@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
 /**
  * A unit of time.
  *
  * @author Ian Springer
  */
 public enum TimeUnit {
+
     MILLISECONDS,
     SECONDS,
     MINUTES,
@@ -31,5 +35,41 @@ public enum TimeUnit {
     DAYS,
     WEEKS,
     MONTHS,
-    YEARS
+    YEARS;
+
+    private static final Messages MSG = CoreGUI.getMessages();
+
+    public String getDisplayName() {
+        String displayName;
+        switch (this) {
+            case MILLISECONDS:
+                displayName = MSG.common_unit_milliseconds();
+                break;
+            case SECONDS:
+                displayName = MSG.common_unit_seconds();
+                break;
+            case MINUTES:
+                displayName = MSG.common_unit_minutes();
+                break;
+            case HOURS:
+                displayName = MSG.common_unit_hours();
+                break;
+            case DAYS:
+                displayName = MSG.common_unit_days();
+                break;
+            case WEEKS:
+                displayName = MSG.common_unit_weeks();
+                break;
+            case MONTHS:
+                displayName = MSG.common_unit_months();
+                break;
+            case YEARS:
+                displayName = MSG.common_unit_years();
+                break;
+            default:
+                throw new IllegalStateException("Unsupported time unit: " + this);
+        }
+        return displayName;
+    }
+
 }

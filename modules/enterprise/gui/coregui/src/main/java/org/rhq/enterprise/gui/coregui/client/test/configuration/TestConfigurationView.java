@@ -44,7 +44,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class TestConfigurationView
     extends LocatableVLayout implements PropertyValueChangeListener {
-    public static final String VIEW_ID = "TestConfig";
 
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
@@ -119,15 +118,22 @@ public class TestConfigurationView
             removeMember(editor);
         }
 
-        editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition, this.configuration);
+        editor = createConfigurationEditor();
+        addMember(editor);
+    }
+
+    protected ConfigurationEditor createConfigurationEditor() {
+        ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition, this.configuration);
+        editor.setEditorTitle("Test Configuration");
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
-        addMember(editor);
+        return editor;
     }
 
     private void save() {
         CoreGUI.getMessageCenter().notify(
             new Message("Configuration updated.", "Test configuration updated."));
         reloadConfiguration();
-    }    
+    }
+
 }

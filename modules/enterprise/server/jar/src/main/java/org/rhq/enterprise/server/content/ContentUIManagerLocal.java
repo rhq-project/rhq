@@ -35,6 +35,7 @@ import org.rhq.core.domain.content.composite.AdvisoryDetailsComposite;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -246,6 +247,16 @@ public interface ContentUIManagerLocal {
      * @return pagable list of package change items; will not be <code>null</code> 
      */
     PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, PageControl pc);
+
+    /**
+     * Returns a pagable list of all package events that have taken place on the given resource.
+     *
+     * @param resourceId must refer to a valid resource in the database
+     * @param pc pagination controller
+     * @return pagable list of package change items; will not be <code>null</code>
+     */
+    PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(Subject subject,
+        InstalledPackageHistoryCriteria criteria);
 
     /**
      * Retrieves Advisory Details by its ID. One and only one must exist for the ID;

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     private SubjectRoleSelector roleSelector;
 
-    private boolean hasManageSecurityPermission;
+    private boolean loggedInUserHasManageSecurityPermission;
 
     public UserEditView(String locatorId, int subjectId) {
         super(locatorId, new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
@@ -72,10 +72,10 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             @Override
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null) {
-                    UserEditView.this.hasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
+                    UserEditView.this.loggedInUserHasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
                     Subject sessionSubject = UserSessionManager.getSessionSubject();
                     boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-                    boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
+                    boolean isReadOnly = (!UserEditView.this.loggedInUserHasManageSecurityPermission && !isEditingSelf);
                     init(isReadOnly);
                 }
             }
@@ -95,23 +95,17 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     protected void editRecord(Record record) {
         super.editRecord(record);
 
-        // Don't allow the rhqadmin account to be disabled.
-        if (getRecordId() == SUBJECT_ID_RHQADMIN) {
-            FormItem activeField = getForm().getField(UsersDataSource.Field.FACTIVE);
-            activeField.disable();
-        }
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        boolean userBeingEditedIsLoggedInUser = (getRecordId() == sessionSubject.getId());
 
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
         // other users' assigned roles.
-        Subject whoami = UserSessionManager.getSessionSubject();
-        String username = record.getAttribute(UsersDataSource.Field.NAME);
-        if (this.hasManageSecurityPermission || whoami.getName().equals(username)) {
+        if (this.loggedInUserHasManageSecurityPermission || userBeingEditedIsLoggedInUser) {
             Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
             ListGridRecord[] roleListGridRecords = toListGridRecordArray(roleRecords);
+            boolean rolesAreReadOnly = areRolesReadOnly(record);
 
-            boolean isReadOnly = areRolesReadOnly(record);
-
-            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
+            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, rolesAreReadOnly);
             this.roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
                     UserEditView.this.onItemChanged();
@@ -130,7 +124,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     private boolean areRolesReadOnly(Record record) {
         boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!this.hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
+        return (!this.loggedInUserHasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
     }
 
     @Override
@@ -152,11 +146,13 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         boolean isLdap = Boolean.valueOf(form.getValueAsString(UsersDataSource.Field.LDAP));
 
         // Only display the password fields for non-LDAP users (i.e. users that have an associated RHQ Principal).
-        if (!isLdap) {
+        if (!this.isReadOnly() && !isLdap) {
             PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
+            passwordItem.setShowTitle(true);
             items.add(passwordItem);
 
             final PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
+            verifyPasswordItem.setShowTitle(true);
             final boolean[] initialPasswordChange = { true };
             passwordItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -166,17 +162,19 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
                     }
                 }
             });
-
             items.add(verifyPasswordItem);
         }
 
         TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
+        firstNameItem.setShowTitle(true);
         items.add(firstNameItem);
 
         TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
+        lastNameItem.setShowTitle(true);
         items.add(lastNameItem);
 
         TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
+        emailAddressItem.setShowTitle(true);
         items.add(emailAddressItem);
 
         TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
@@ -185,8 +183,15 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
         items.add(departmentItem);
 
-        RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
-        activeItem.setVertical(false);
+        boolean userBeingEditedIsRhqadmin = (getRecordId() == SUBJECT_ID_RHQADMIN);
+        FormItem activeItem;
+        if (!this.loggedInUserHasManageSecurityPermission || userBeingEditedIsRhqadmin) {
+            activeItem = new StaticTextItem(UsersDataSource.Field.FACTIVE);
+        } else {
+            RadioGroupItem activeRadioGroupItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
+            activeRadioGroupItem.setVertical(false);
+            activeItem = activeRadioGroupItem;
+        }
         items.add(activeItem);
 
         return items;

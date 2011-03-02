@@ -18,44 +18,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.smartgwt.client.data.Criteria;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryDataSource.Field;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
+ * The main view that lists all resource configuration history items.
+ * 
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
-public class ConfigurationHistoryView extends TableSection {
-    public static final ViewName VIEW_ID = new ViewName("RecentConfigurationChanges", MSG
+public class ConfigurationHistoryView extends AbstractConfigurationHistoryView<ConfigurationHistoryDataSource> {
+    public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView", MSG
         .view_configurationHistoryList_title());
-
-    private Integer resourceId;
 
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public ConfigurationHistoryView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle());
-        final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm) {
+        super(locatorId, VIEW_ID.getTitle(), hasWritePerm);
+        ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
@@ -64,108 +51,51 @@ public class ConfigurationHistoryView extends TableSection {
      *
      * @param resourceId a Resource ID
      */
-    public ConfigurationHistoryView(String locatorId, int resourceId) {
-        super(locatorId, VIEW_ID.getTitle(), createCriteria(resourceId));
-        this.resourceId = resourceId;
+    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm, int resourceId) {
+        super(locatorId, VIEW_ID.getTitle(), hasWritePerm, resourceId);
         ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
-    }
-
-    private static Criteria createCriteria(int resourceId) {
-        Criteria criteria = new Criteria();
-        criteria.addCriteria(ConfigurationHistoryDataSource.CriteriaField.RESOURCE_ID, resourceId);
-        return criteria;
-    }
-
-    @Override
-    protected void configureTable() {
-        List<ListGridField> fields = new ArrayList<ListGridField>();
-
-        ListGridField idField = new ListGridField(ConfigurationHistoryDataSource.Field.ID, 60);
-        fields.add(idField);
-
-        ListGridField createdTimeField = new ListGridField(ConfigurationHistoryDataSource.Field.CREATED_TIME, 200);
-        fields.add(createdTimeField);
-
-        if (this.resourceId == null) {
-            ListGridField resourceField = new ListGridField(ConfigurationHistoryDataSource.Field.RESOURCE);
-            resourceField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    if (listGridRecord == null) {
-                        return "unknown";
-                    }
-                    Resource res = (Resource) listGridRecord
-                        .getAttributeAsObject(ConfigurationHistoryDataSource.Field.RESOURCE);
-                    String url = LinkManager.getResourceLink(res.getId());
-                    return SeleniumUtility.getLocatableHref(url, res.getName(), null);
-                }
-            });
-            fields.add(resourceField);
-        }
-
-        ListGridField statusField = new ListGridField(ConfigurationHistoryDataSource.Field.STATUS, 100);
-        statusField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                ConfigurationUpdateStatus status = ConfigurationUpdateStatus.valueOf((String) o);
-                return Canvas.imgHTML(ImageManager.getResourceConfigurationIcon(status), 16, 16);
-            }
-        });
-        fields.add(statusField);
-
-        ListGridField subjectField = new ListGridField(ConfigurationHistoryDataSource.Field.SUBJECT, 150);
-        fields.add(subjectField);
-
-        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
-
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_deleteConfirm(MSG
-            .common_msg_deleteConfirm(MSG.view_configurationHistoryList_itemNamePlural())), new AbstractTableAction(
-            TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                // TODO: Implement this method.
-                CoreGUI.getErrorHandler().handleError(MSG.common_msg_notYetImplemented());
-            }
-        });
-
-        addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
-            TableActionEnablement.MULTIPLE) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
-                for (ListGridRecord record : selection) {
-                    ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record
-                        .getAttributeAsObject(ConfigurationHistoryDataSource.Field.OBJECT);
-                    configs.add(update);
-                }
-                ConfigurationComparisonView.displayComparisonDialog(configs);
-            }
-        });
-
-        addTableAction(extendLocatorId("ShowDetail"), MSG.common_button_showDetails(), null, new AbstractTableAction(
-            TableActionEnablement.SINGLE) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ListGridRecord record = selection[0];
-                showDetails(record);
-            }
-        });
-
-        super.configureTable();
-    }
-
-    @Override
-    protected String getDetailsLinkColumnName() {
-        return Field.CREATED_TIME;
     }
 
     @Override
     public Canvas getDetailsView(int id) {
         ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView(this.getLocatorId());
-
         return detailView;
     }
 
-    // -------- Static Utility loaders ------------
+    @Override
+    protected void rollback(int configHistoryIdToRollbackTo) {
+        GWTServiceLookup.getConfigurationService().rollbackResourceConfiguration(getResourceId().intValue(),
+            configHistoryIdToRollbackTo, new AsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_configurationHistoryList_rollback_success(), Severity.Info));
+                    refresh();
+                }
 
-    public static ConfigurationHistoryView getHistoryOf(String locatorId, int resourceId) {
-        return new ConfigurationHistoryView(locatorId, resourceId);
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_configurationHistoryList_rollback_failure(), caught);
+                }
+            });
     }
 
+    @Override
+    protected void delete(int[] doomedIds) {
+        GWTServiceLookup.getConfigurationService().purgeResourceConfigurationUpdates(doomedIds, true,
+            new AsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_configurationHistoryList_delete_success(), Severity.Info));
+                    refresh();
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_configurationHistoryList_delete_failure(), caught);
+                }
+            });
+    }
 }

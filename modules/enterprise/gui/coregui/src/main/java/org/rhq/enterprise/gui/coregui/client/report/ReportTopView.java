@@ -113,7 +113,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentConfigurationChangesItem = new NavigationItem(ConfigurationHistoryView.VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()));
+                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 

@@ -8,6 +8,6 @@
 <body>
    <p>&nbsp;</p>
    <h1 align="center">The Server Is Installed!</h1>
-   <p align="center"><a href="/Login.do">Click here to get started!</a></p>
+   <p align="center"><a href="/">Click here to get started!</a></p>
 </body>
 </html>

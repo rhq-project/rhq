@@ -22,29 +22,22 @@
  */
 package org.rhq.enterprise.server.dashboard;
 
-import java.util.List;
-import java.util.Set;
-
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.util.PageList;
 
 /**
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 @Remote
 public interface DashboardManagerRemote {
 
-
-    public List<Dashboard> findDashboardsForSubject(Subject subject);
-
-    public List<Dashboard> findSharedDashboards(Subject subject);
+    public PageList<Dashboard> findDashboardsByCriteria(Subject subject, DashboardCriteria criteria);
 
     public Dashboard storeDashboard(Subject subject, Dashboard dashboard);
 
     public void removeDashboard(Subject subject, int dashboardId);
-
-    
-
 }

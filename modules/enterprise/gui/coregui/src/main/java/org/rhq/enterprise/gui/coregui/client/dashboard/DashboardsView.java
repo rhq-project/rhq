@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,8 +46,11 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.dashboard.DashboardCategory;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -72,9 +76,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class DashboardsView extends LocatableVLayout implements BookmarkableView, InitializableView {
+public class DashboardsView extends LocatableVLayout implements DashboardContainer, BookmarkableView, InitializableView {
 
     public static final ViewName VIEW_ID = new ViewName("Dashboards", MSG.view_dashboards_title());
 
@@ -100,7 +105,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
     // Capture the user's global permissions for use by any dashboard or portlet that may need it for rendering.
-    private Set<Permission> globalPermissions;
+    private HashSet<Permission> globalPermissions;
 
     private boolean initialized = false;
 
@@ -116,17 +121,18 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     protected void onInit() {
         super.onInit();
 
-        dashboardService.findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
+        DashboardCriteria criteria = new DashboardCriteria();
+        dashboardService.findDashboardsByCriteria(criteria, new AsyncCallback<PageList<Dashboard>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
             }
 
-            public void onSuccess(final List<Dashboard> result) {
+            public void onSuccess(final PageList<Dashboard> result) {
                 // now, a second async call to load global perms
                 new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
                     public void onPermissionsLoaded(Set<Permission> permissions) {
-                        globalPermissions = permissions;
+                        globalPermissions = new HashSet<Permission>(permissions);
 
                         if (result.isEmpty()) {
                             // if the user has no dashboards persist a default dashboard for him to work with. In
@@ -292,8 +298,10 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         Dashboard dashboard = new Dashboard();
         dashboard.setName(MSG.common_title_default());
+        dashboard.setCategory(DashboardCategory.INVENTORY);
         dashboard.setColumns(2);
-        dashboard.setColumnWidths("32%", "68%");
+        // only leftmost column width is currently settable, the rest are equally divided        
+        dashboard.setColumnWidths("32%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         // Left Column
@@ -355,10 +363,11 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         }
 
         Dashboard dashboard = new Dashboard();
+        dashboard.setCategory(DashboardCategory.INVENTORY);
         dashboard.setName(availableDashboardName);
-
         dashboard.setColumns(2);
-        dashboard.setColumnWidths("30%", "70%");
+        // only leftmost column width is currently settable, the rest are equally divided
+        dashboard.setColumnWidths("32%");
 
         dashboardService.storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
             public void onFailure(Throwable caught) {
@@ -383,13 +392,6 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                 tabSet.selectTab(tab);
             }
         });
-    }
-
-    public void updateNames() {
-        for (Tab t : tabSet.getTabs()) {
-            DashboardView view = (DashboardView) t.getPane();
-            t.setTitle(view.getDashboard().getName());
-        }
     }
 
     public void renderView(ViewPath viewPath) {
@@ -428,8 +430,19 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         return initialized;
     }
 
-    public Set<Permission> getGlobalPermissions() {
+    public HashSet<Permission> getGlobalPermissions() {
         return globalPermissions;
+    }
+
+    public boolean supportsDashboardNameEdit() {
+        return true;
+    }
+
+    public void updateDashboardNames() {
+        for (Tab t : tabSet.getTabs()) {
+            DashboardView view = (DashboardView) t.getPane();
+            t.setTitle(view.getDashboard().getName());
+        }
     }
 
 }

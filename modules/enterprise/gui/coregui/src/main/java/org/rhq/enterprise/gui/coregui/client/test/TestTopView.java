@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
@@ -44,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
  * @author Ian Springer
  */
 public class TestTopView extends AbstractSectionedLeftNavigationView {
+
     public static final ViewName VIEW_ID = new ViewName("Test");
 
     // view IDs for Inventory section
@@ -55,12 +58,14 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     // view IDs for Configuration section
     private static final ViewName CONFIGURATION_SECTION_VIEW_ID = new ViewName("Configuration");
     private static final ViewName PAGE_CONFIG_EDITOR = new ViewName("ConfigEditor");
+    private static final ViewName PAGE_READONLY_CONFIG_EDITOR = new ViewName("ReadOnlyConfigEditor");
     private static final ViewName PAGE_GROUP_CONFIG_EDITOR = new ViewName("GroupConfigEditor");
+    private static final ViewName PAGE_READONLY_GROUP_CONFIG_EDITOR = new ViewName("ReadOnlyGroupConfigEditor");
 
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
-    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("Remote Service Statistics");
+    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("RemoteServiceStatistics");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -119,13 +124,29 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
+        NavigationItem readOnlyConfigEditorItem = new NavigationItem(PAGE_READONLY_CONFIG_EDITOR, null,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new TestReadOnlyConfigurationView(extendLocatorId(PAGE_READONLY_CONFIG_EDITOR.getName()));
+                }
+            });
+
         NavigationItem groupConfigEditorItem = new NavigationItem(PAGE_GROUP_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
                 return new TestGroupConfigurationView(extendLocatorId(PAGE_GROUP_CONFIG_EDITOR.getName()));
             }
         });
 
-        return new NavigationSection(CONFIGURATION_SECTION_VIEW_ID, configEditorItem, groupConfigEditorItem);
+        NavigationItem readOnlyGroupConfigEditorItem = new NavigationItem(PAGE_READONLY_GROUP_CONFIG_EDITOR, null,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new TestReadOnlyGroupConfigurationView(extendLocatorId(PAGE_READONLY_GROUP_CONFIG_EDITOR
+                        .getName()));
+                }
+            });
+
+        return new NavigationSection(CONFIGURATION_SECTION_VIEW_ID, configEditorItem, readOnlyConfigEditorItem,
+            groupConfigEditorItem, readOnlyGroupConfigEditorItem);
     }
 
     private NavigationSection buildMiscSection() {
@@ -145,4 +166,5 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
 
         return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, remoteServiceStatisticsItem);
     }
+
 }

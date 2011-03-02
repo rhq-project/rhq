@@ -22,24 +22,25 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 
 /**
  * A bar for displaying a message at the top of a page - the equivalent of the JSF h:messages component.
  * The message will be displayed for 30 seconds and then will be automatically cleared.
  *
  * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
     private static final String LOCATOR_ID = "MessageBar";
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
 
-    private Label label = new Label();
+    private LocatableLabel label = new LocatableLabel(extendLocatorId("Label"));
     private Message stickyMessage;
 
     private static final String NON_BREAKING_SPACE = "&nbsp;";
@@ -59,12 +60,12 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         label.setAlign(Alignment.CENTER);
         label.setWidth("600px");
-        label.setHeight("25px");
+        label.setHeight("30px");
 
         setLabelEmpty();
         addMember(label);
 
-        // sometimes its annoying to have the error message hang around for too long
+        // sometimes it's annoying to have the error message hang around for too long;
         // let the user click the message so it goes away on demand
         addDoubleClickHandler(new DoubleClickHandler() {
             @Override
@@ -98,7 +99,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         }
     }
 
-    private void clearMessage(boolean clearSticky) {
+    public void clearMessage(boolean clearSticky) {
         setLabelEmpty();
         markForRedraw();
 
@@ -121,7 +122,10 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         String styleName = (contents != null) ? message.getSeverity().getStyle() : null;
         label.setStyleName(styleName);
 
-        // TODO: Create some custom edge images in greed, yellow, red, etc. so we can add nice rounded corners to the
+        // TODO: perhaps just set the text to green/orange/red along with the proper icon and not have the defined
+        // color block...
+
+        // TODO: Create some custom edge images in green, yellow, red, etc. so we can add nice rounded corners to the
         //       label.
         //label.setShowEdges(true);
 

@@ -27,7 +27,6 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
@@ -53,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class CurrentGroupPluginConfigurationView extends LocatableVLayout implements PropertyValueChangeListener,
+public class GroupPluginConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
     RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
@@ -74,7 +74,9 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
     private ConfigurationEditor editor;
     private IButton saveButton;
 
-    public CurrentGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
+    private boolean refreshing = false;
+
+    public GroupPluginConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
 
         this.group = groupComposite.getResourceGroup();
@@ -113,6 +115,11 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
 
     @Override
     public void refresh() {
+        if (this.refreshing) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshing = true;
         this.saveButton.disable();
         if (editor != null) {
             editor.destroy();
@@ -126,15 +133,14 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
-            Label title = new Label(MSG.view_group_pluginConfig_edit_currentGroupProperties());
-            addMember(title);
-
             this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
                 this.memberConfigurations);
+            this.editor.setEditorTitle(MSG.view_group_pluginConfig_edit_currentGroupProperties());
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
-            this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());            
+            this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
             addMember(this.editor);
+            this.refreshing = false;
         }
     }
 
@@ -160,8 +166,15 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
         this.configurationService.findPluginConfigurationsForGroup(group.getId(),
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    refreshing = false;
+                    if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_group_pluginConfig_members_fetchFailureConnInProgress(), caught,
+                                Severity.Info));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    }
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

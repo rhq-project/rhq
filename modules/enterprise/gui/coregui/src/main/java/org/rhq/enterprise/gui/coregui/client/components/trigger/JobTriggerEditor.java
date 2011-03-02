@@ -183,10 +183,10 @@ public class JobTriggerEditor extends LocatableVLayout {
         this.modeForm.setNumCols(3);
         this.modeForm.setColWidths("140", "220", "*");
 
-        RadioGroupItem modeItem = new RadioGroupItem(FIELD_MODE, "Schedule using");
+        RadioGroupItem modeItem = new RadioGroupItem(FIELD_MODE, MSG.widget_jobTriggerEditor_field_mode());
         LinkedHashMap<String, String> modeValueMap = new LinkedHashMap<String, String>();
-        modeValueMap.put("calendar", "Calendar");
-        modeValueMap.put("cron", "Cron Expression");
+        modeValueMap.put("calendar", MSG.widget_jobTriggerEditor_value_calendar());
+        modeValueMap.put("cron", MSG.widget_jobTriggerEditor_value_cronExpression());
         modeItem.setValueMap(modeValueMap);
         modeItem.setVertical(false);
         modeItem.setShowTitle(true);
@@ -203,10 +203,10 @@ public class JobTriggerEditor extends LocatableVLayout {
         calendarTypeItem.setWidth(440);
         calendarTypeItem.setShowTitle(false);
         LinkedHashMap<String, String> calendarTypeValueMap = new LinkedHashMap<String, String>();
-        calendarTypeValueMap.put("now", "Now");
-        calendarTypeValueMap.put("nowAndRepeat", "Now &amp; Repeat");
-        calendarTypeValueMap.put("later", "Later");
-        calendarTypeValueMap.put("laterAndRepeat", "Later &amp; Repeat");
+        calendarTypeValueMap.put("now", MSG.widget_jobTriggerEditor_value_now());
+        calendarTypeValueMap.put("nowAndRepeat", MSG.widget_jobTriggerEditor_value_nowAndRepeat());
+        calendarTypeValueMap.put("later", MSG.widget_jobTriggerEditor_value_later());
+        calendarTypeValueMap.put("laterAndRepeat", MSG.widget_jobTriggerEditor_value_laterAndRepeat());
         calendarTypeItem.setValueMap(calendarTypeValueMap);
         calendarTypeItem.setVertical(false);
 
@@ -220,7 +220,8 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         this.cronForm = new LocatableDynamicForm(this.cronModeLayout.extendLocatorId("Form"));
 
-        TextItem cronExpressionItem = new TextItem(FIELD_CRON_EXPRESSION, "Cron Expression");
+        TextItem cronExpressionItem = new TextItem(FIELD_CRON_EXPRESSION,
+                MSG.widget_jobTriggerEditor_field_cronExpression());
         cronExpressionItem.setRequired(true);
         cronExpressionItem.setWidth(340);
 
@@ -239,7 +240,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         });
         cronHelpTabSet.setTabBarControls(closeIcon);
 
-        Tab formatTab = new Tab("Format");
+        Tab formatTab = new Tab(MSG.widget_jobTriggerEditor_tab_format());
         HTMLFlow formatPane = new HTMLFlow();
         formatPane.setWidth100();
         formatPane.setContents("<p>A cron expression is a string comprised of 6 or 7 fields separated by white space. Fields can contain any of the\n" +
@@ -405,7 +406,7 @@ public class JobTriggerEditor extends LocatableVLayout {
                 "</ul>");
         formatTab.setPane(formatPane);
 
-        Tab examplesTab = new Tab("Examples");
+        Tab examplesTab = new Tab(MSG.widget_jobTriggerEditor_tab_examples());
         HTMLFlow examplesPane = new HTMLFlow();
         examplesPane.setWidth100();
         examplesPane.setContents("<table cellpadding=\"3\" cellspacing=\"1\">\n" +
@@ -566,7 +567,7 @@ public class JobTriggerEditor extends LocatableVLayout {
             this.isRecurring = true;
 
             FormItem repeatIntervalItem = repeatForm.getItem(FIELD_REPEAT_INTERVAL);
-            repeatIntervalItem.setTitle("Run now and every");
+            repeatIntervalItem.setTitle(MSG.widget_jobTriggerEditor_field_repeatInterval_now());
             repeatIntervalItem.redraw();
         } else if (calendarType.equals("later")) {
             this.isStartLater = true;
@@ -577,7 +578,7 @@ public class JobTriggerEditor extends LocatableVLayout {
             this.isRecurring = true;
 
             FormItem repeatIntervalItem = repeatForm.getItem(FIELD_REPEAT_INTERVAL);
-            repeatIntervalItem.setTitle("Repeat every");
+            repeatIntervalItem.setTitle(MSG.widget_jobTriggerEditor_field_repeatInterval_later());
             repeatIntervalItem.redraw();
         }
         laterForm.setVisibility(this.isStartLater ? Visibility.VISIBLE : Visibility.HIDDEN);
@@ -610,18 +611,19 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.WEEKS);
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
-        DurationItem repeatIntervalItem = new DurationItem(FIELD_REPEAT_INTERVAL, "Run now and every",
+        DurationItem repeatIntervalItem = new DurationItem(FIELD_REPEAT_INTERVAL,
+                MSG.widget_jobTriggerEditor_field_repeatInterval_now(),
                 supportedUnits, false, this.isReadOnly, repeatForm);
         repeatIntervalItem.setRequired(true);
-        repeatIntervalItem.setContextualHelp("how often the operation should be executed");
+        repeatIntervalItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_repeatInterval());
 
         RadioGroupItem recurrenceTypeItem = new RadioGroupItem(FIELD_RECURRENCE_TYPE);
         recurrenceTypeItem.setRequired(true);
         recurrenceTypeItem.setShowTitle(false);
         LinkedHashMap<String, String> recurrenceTypeValueMap = new LinkedHashMap<String, String>();
-        recurrenceTypeValueMap.put("for", "For");
-        recurrenceTypeValueMap.put("until", "Until");
-        recurrenceTypeValueMap.put("indefinitely", "Indefinitely");
+        recurrenceTypeValueMap.put("for", MSG.widget_jobTriggerEditor_value_for());
+        recurrenceTypeValueMap.put("until", MSG.widget_jobTriggerEditor_value_until());
+        recurrenceTypeValueMap.put("indefinitely", MSG.widget_jobTriggerEditor_value_indefinitely());
         recurrenceTypeItem.setValueMap(recurrenceTypeValueMap);
 
         supportedUnits = new TreeSet<TimeUnit>();
@@ -636,7 +638,7 @@ public class JobTriggerEditor extends LocatableVLayout {
                 supportedUnits, true, this.isReadOnly, repeatForm);
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
-        repeatDurationItem.setContextualHelp("keep running this operation this many times or until this amount of time has elapsed");
+        repeatDurationItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_repeatDuration());
 
         final DateTimeItem endTimeItem = createDateTimeItem(FIELD_END_TIME);
         endTimeItem.setShowTitle(false);
@@ -689,10 +691,10 @@ public class JobTriggerEditor extends LocatableVLayout {
         laterForm.setNumCols(4);
         laterForm.setColWidths(140, 130, 130);
 
-        RadioGroupItem startTypeItem = new RadioGroupItem(FIELD_START_TYPE, "Run");
+        RadioGroupItem startTypeItem = new RadioGroupItem(FIELD_START_TYPE, MSG.widget_jobTriggerEditor_field_startType());
         LinkedHashMap<String, String> startTypeValueMap = new LinkedHashMap<String, String>();
-        startTypeValueMap.put("on", "on");
-        startTypeValueMap.put("in", "in");
+        startTypeValueMap.put("on", MSG.widget_jobTriggerEditor_value_on());
+        startTypeValueMap.put("in", MSG.widget_jobTriggerEditor_value_in());
         startTypeItem.setValueMap(startTypeValueMap);
         startTypeItem.setShowTitle(true);
 
@@ -710,7 +712,7 @@ public class JobTriggerEditor extends LocatableVLayout {
                 supportedUnits, false, this.isReadOnly, laterForm);
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
-        startDelayItem.setContextualHelp("start executing the operation after this amount of time has elapsed");
+        startDelayItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_startDelay());
 
         SpacerItem spacerItem = new SpacerItem();
 
@@ -848,14 +850,16 @@ public class JobTriggerEditor extends LocatableVLayout {
             isValid = isValid && this.laterForm.validate();
             if (startTime != null) {
                 if (startTime.before(currentTime)) {
-                    Message message = new Message("Start time must be in the future.", Message.Severity.Error,
+                    Message message = new Message(MSG.widget_jobTriggerEditor_message_startTimeMustBeInFuture(),
+                            Message.Severity.Error,
                             EnumSet.of(Message.Option.Transient));
                     CoreGUI.getMessageCenter().notify(message);
                     isValid = false;
                 }
                 if (this.isRecurring && endTime != null) {
                     if (endTime.before(startTime)) {
-                        Message message = new Message("End time must be after start time.", Message.Severity.Error,
+                        Message message = new Message(MSG.widget_jobTriggerEditor_message_endTimeMustBeAfterStartTime(),
+                                Message.Severity.Error,
                                 EnumSet.of(Message.Option.Transient));
                         CoreGUI.getMessageCenter().notify(message);
                         isValid = false;
@@ -867,7 +871,8 @@ public class JobTriggerEditor extends LocatableVLayout {
             isValid = isValid && this.repeatForm.validate();
             if (endTime != null) {
                 if (endTime.before(currentTime)) {
-                    Message message = new Message("End time must be in the future.", Message.Severity.Error,
+                    Message message = new Message(MSG.widget_jobTriggerEditor_message_endTimeMustBeAfterStartTime(),
+                            Message.Severity.Error,
                             EnumSet.of(Message.Option.Transient));
                     CoreGUI.getMessageCenter().notify(message);
                     isValid = false;

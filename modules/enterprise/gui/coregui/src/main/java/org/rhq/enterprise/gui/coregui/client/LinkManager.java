@@ -83,8 +83,25 @@ public class LinkManager {
         }
     }
 
-    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
-        return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    public static String getResourcePluginConfigurationUpdateHistoryLink(int groupId) {
+        return getResourceLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    }
+
+    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
+        if (groupUpdateHistoryId != null) {
+            return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory/" + groupUpdateHistoryId
+                + "/Members";
+        } else {
+            return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+        }
+    }
+
+    public static String getGroupResourceConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
+        if (groupUpdateHistoryId != null) {
+            return getResourceGroupLink(groupId) + "/Configuration/History/" + groupUpdateHistoryId + "/Members";
+        } else {
+            return getResourceGroupLink(groupId) + "/Configuration/History";
+        }
     }
 
     public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {

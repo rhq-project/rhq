@@ -8,7 +8,10 @@
     <table name="RHQ_DASHBOARD">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" type="VARCHAR2" size="200" required="true"/>
-        <column name="SUBJECT_ID" type="INTEGER" required="true"/>
+        <column name="SUBJECT_ID" type="INTEGER" required="true" references="RHQ_SUBJECT"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>        
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                
         <column name="SHARED" type="BOOLEAN" required="true"/>
         <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
     </table>

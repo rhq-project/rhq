@@ -24,6 +24,7 @@ public class ReportDecorator {
     //TODO: pull value from more bookmarking/history definition 
     public final static String GWT_RESOURCE_URL = "#Resource/";
     public final static String GWT_GROUP_URL = "#ResourceGroup/";
+    public final static String GWT_BUNDLE_URL = "#Bundles/Bundle/";
     public static final String DEFAULT_SEPARATOR = " > ";
 
     /**

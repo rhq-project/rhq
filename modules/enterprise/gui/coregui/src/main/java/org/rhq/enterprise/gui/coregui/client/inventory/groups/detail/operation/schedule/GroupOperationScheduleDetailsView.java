@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * The details view of the Group Operations>Schedules subtab.
+ *
  * @author Ian Springer
  */
 public class GroupOperationScheduleDetailsView extends AbstractOperationScheduleDetailsView {
@@ -64,7 +66,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
             resourceDatasource.fetchData(criteria, new DSCallback() {
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
                     if (response.getStatus() != DSResponse.STATUS_SUCCESS) {
-                        throw new RuntimeException("Failed to load group member Resources.");
+                        throw new RuntimeException(MSG.view_group_operationScheduleDetails_failedToLoadMembers());
                     }
                     Record[] data = response.getData();
                     memberResourceRecords = new ListGridRecord[data.length];
@@ -92,15 +94,17 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         this.executionModeForm.setNumCols(2);
         this.executionModeForm.setColWidths(FIRST_COLUMN_WIDTH, "*");
 
-        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE, "Execute");
+        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE,
+                MSG.view_group_operationScheduleDetails_field_execute());
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
-        valueMap.put(EXECUTION_ORDER_PARALLEL, "in parallel");
-        valueMap.put(EXECUTION_ORDER_SEQUENTIAL, "in the order specified below (drag and drop member Resources to change order)");
+        valueMap.put(EXECUTION_ORDER_PARALLEL, MSG.view_group_operationScheduleDetails_value_parallel());
+        valueMap.put(EXECUTION_ORDER_SEQUENTIAL, MSG.view_group_operationScheduleDetails_value_sequential());
         executionModeItem.setValueMap(valueMap);
         executionModeItem.setDefaultValue(EXECUTION_ORDER_PARALLEL);
         executionModeItem.setShowTitle(true);
 
-        final CheckboxItem haltOnFailureItem = new CheckboxItem("haltOnFailure", "Halt on Failure?");
+        final CheckboxItem haltOnFailureItem = new CheckboxItem(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE,
+                MSG.view_group_operationScheduleDetails_field_haltOnFailure());
         haltOnFailureItem.setDefaultValue(false);
         haltOnFailureItem.setVisible(false);
         haltOnFailureItem.setLabelAsTitle(true);
@@ -119,7 +123,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         this.memberExecutionOrderer = new ReorderableList(extendLocatorId("MemberExecutionOrderer"),
                 this.memberResourceRecords, null, memberIcon);
         this.memberExecutionOrderer.setVisible(false);
-        this.memberExecutionOrderer.setNameFieldTitle("Member Resource");
+        this.memberExecutionOrderer.setNameFieldTitle(MSG.view_group_operationScheduleDetails_memberResource());
         hLayout.addMember(this.memberExecutionOrderer);
         contentPane.addMember(hLayout);
 
@@ -148,7 +152,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
             ListGridRecord[] resourceRecords = resourceDatasource.buildRecords(executionOrder);
             this.memberExecutionOrderer.setRecords(resourceRecords);
             this.memberExecutionOrderer.show();
-            FormItem haltOnFailureItem = executionModeForm.getField("haltOnFailure");
+            FormItem haltOnFailureItem = executionModeForm.getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
             haltOnFailureItem.show();
         } else {
             this.executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_PARALLEL);

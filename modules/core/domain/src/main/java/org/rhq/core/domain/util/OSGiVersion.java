@@ -36,6 +36,22 @@ public class OSGiVersion {
         
     }
     
+    public static boolean isValid(String version) {
+        try {
+            new OSGiVersion(version);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Creates new OSGiVersion instance from the version string.
+     * 
+     * @param version
+     * 
+     * @throws IllegalArgumentException if the version string isn't a well-formed OSGi version string.
+     */
     public OSGiVersion(String version) {
         String[] parts = version.split("\\.");
 

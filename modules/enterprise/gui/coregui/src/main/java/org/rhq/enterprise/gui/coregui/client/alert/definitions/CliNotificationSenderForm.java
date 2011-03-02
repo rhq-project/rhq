@@ -30,8 +30,6 @@ import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.form.events.ItemChangeEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangeHandler;
-import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
-import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -48,9 +46,10 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersionFormatDescription;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
@@ -78,7 +77,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private static final String PROP_USER_ID = "userId";
     private static final String PROP_USER_NAME = "userName";
     private static final String PROP_USER_PASSWORD = "userPassword";
-    private static final String PACKAGE_TYPE_NAME = "__SERVER_SIDE_CLI_SCRIPT";
+    private static final String PACKAGE_TYPE_NAME = "org.rhq.enterprise.server.plugins.packagetypeCli.SERVER_SIDE_CLI_SCRIPT";
 
     private static class Config {
         List<Repo> allRepos;
@@ -185,12 +184,12 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private SelectItem existingPackageSelector;
     private RadioGroupWithComponentsItem userSelector;
     private PackageVersionFileUploadFormWithVersion uploadForm;
-    private PackageType cliScriptPackageType;
+    private PackageTypeAndVersionFormatComposite cliScriptPackageType;
     private TextItem anotherUserName;
     private TextItem anotherUserPassword;
     private ButtonItem verifyUserButton;
-    private FormItemIcon authSuccessIcon;
-    private FormItemIcon authFailureIcon;
+    private FormItemIcon successIcon;
+    private FormItemIcon failureIcon;
     private ForwardingSubmitFailedHandler uploadFailureHandler;
     private ForwardingDynamicFormHandler uploadSuccessHandler;
 
@@ -205,13 +204,13 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         super.onInit();
         
         if (!formBuilt) {                 
-            loadPackageType(new AsyncCallback<PackageType>() {
+            loadPackageType(new AsyncCallback<PackageTypeAndVersionFormatComposite>() {
                 public void onFailure(Throwable t) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_cliScript_editor_loadFailed(),
                         t);
                 }
                 
-                public void onSuccess(PackageType result) {
+                public void onSuccess(PackageTypeAndVersionFormatComposite result) {
                     cliScriptPackageType = result;
 
                     LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
@@ -346,7 +345,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     
                     PackageCriteria pc = new PackageCriteria();
                     pc.addFilterRepoId(repoId);
-                    pc.addFilterPackageTypeId(cliScriptPackageType.getId());
+                    pc.addFilterPackageTypeId(cliScriptPackageType.getPackageType().getId());
                     
                     packageSelector.setDisabled(false);
                     existingPackageSelector.setDisabled(true);
@@ -404,6 +403,20 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             getConfiguration().put(new PropertySimple(PROP_PACKAGE_ID, config.selectedPackage.getGeneralPackage().getId()));            
             callback.onSuccess(null);
         } else {
+            if (cliScriptPackageType.getVersionFormat() != null) {
+                String versionRegex = cliScriptPackageType.getVersionFormat().getFullFormatRegex();
+                if (versionRegex != null) {
+                    if (!matches(uploadForm.getField("version").getValue().toString(), versionRegex)) {
+                        uploadForm.getItem("editableVersion").setIcons(failureIcon);
+                        callback.onFailure(null);
+                        return;
+                    } else {
+                        uploadForm.getItem("editableVersion").setIcons(successIcon);
+                    }
+                } else {
+                    uploadForm.getItem("editableVersion").setIcons();
+                }
+            }
             uploadFailureHandler.setCallback(callback);
             uploadSuccessHandler.setCallback(new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
@@ -449,7 +462,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         if (repoId != null && repoId.trim().length() > 0) {
             PackageCriteria pc = new PackageCriteria();
             pc.addFilterRepoId(Integer.parseInt(repoId));
-            pc.addFilterPackageTypeId(cliScriptPackageType.getId());
+            pc.addFilterPackageTypeId(cliScriptPackageType.getPackageType().getId());
             GWTServiceLookup.getContentService().findPackagesWithLatestVersion(pc, new AsyncCallback<PageList<PackageAndLatestVersionComposite>>() {
                 public void onSuccess(PageList<PackageAndLatestVersionComposite> result) {
                     config.allPackages = result;
@@ -505,15 +518,15 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         anotherUserPassword = new PasswordItem("password", MSG.dataSource_users_field_password());
         verifyUserButton = new ButtonItem("verify", MSG.view_alert_definition_notification_cliScript_editor_verifyAuthentication());
         
-        authSuccessIcon = new FormItemIcon();
-        authSuccessIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
-        authSuccessIcon.setWidth(16);
-        authSuccessIcon.setHeight(16);
+        successIcon = new FormItemIcon();
+        successIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
+        successIcon.setWidth(16);
+        successIcon.setHeight(16);
 
-        authFailureIcon = new FormItemIcon();
-        authFailureIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
-        authFailureIcon.setWidth(16);
-        authFailureIcon.setHeight(16);
+        failureIcon = new FormItemIcon();
+        failureIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.FALSE));
+        failureIcon.setWidth(16);
+        failureIcon.setHeight(16);
         
         form.setFields(anotherUserName, anotherUserPassword, verifyUserButton);
         
@@ -548,9 +561,9 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
     
     private DynamicForm createUploadNewScriptForm() {
-        uploadForm = new PackageVersionFileUploadFormWithVersion(extendLocatorId("uploadForm"), cliScriptPackageType.getId());         
+        uploadForm = new PackageVersionFileUploadFormWithVersion(extendLocatorId("uploadForm"), cliScriptPackageType.getPackageType().getId());         
         uploadForm.setTitleOrientation(TitleOrientation.TOP);
-        uploadForm.setPackageTypeId(cliScriptPackageType.getId());
+        uploadForm.setPackageTypeId(cliScriptPackageType.getPackageType().getId());
 
         uploadFailureHandler = (new ForwardingSubmitFailedHandler() {
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
@@ -579,13 +592,34 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         uploadForm.addItemChangeHandler(new ItemChangeHandler() {            
             public void onItemChange(ItemChangeEvent event) {
                 if (event.getItem() instanceof UploadItem) {
+                    if (event.getNewValue() == null) {
+                        uploadForm.getField("editableVersion").setValue("");
+                        return;
+                    }
+                    
                     String fileName = event.getNewValue().toString();
                     
                     if (config.allPackages != null) {
                         for(PackageAndLatestVersionComposite plv : config.allPackages) {
                             if (plv.getGeneralPackage().getName().equals(fileName)) {
                                 try {
-                                    OSGiVersion v = new OSGiVersion(plv.getLatestPackageVersion().getVersion());
+                                    String version = plv.getLatestPackageVersion().getVersion();
+                                    
+                                    PackageVersionFormatDescription format = cliScriptPackageType.getVersionFormat();
+                                    if (format == null) {
+                                        return;
+                                    }
+                                    
+                                    if (format.getOsgiVersionExtractionRegex() == null) {
+                                        return;
+                                    }
+                                    
+                                    String regex = format.getOsgiVersionExtractionRegex();
+                                    int group = format.getOsgiVersionGroupIndex();
+                                    String oldOsgiVersion = getOsgiVersion(version, regex, group);
+                                        
+                                    
+                                    OSGiVersion v = new OSGiVersion(oldOsgiVersion);
                                     if (v.getMicroIfDefined() != null) {
                                         v.setMicro(v.getMicro() + 1);
                                     } else if (v.getMinorIfDefined() != null) {
@@ -593,10 +627,13 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                                     } else {
                                         v.setMajor(v.getMajor() + 1);
                                     }
+                                                                        
+                                    String newVersion = version.replace(oldOsgiVersion, v.toString());
                                     
-                                    uploadForm.getField("editableVersion").setValue(v.toString());
+                                    uploadForm.getField("editableVersion").setValue(newVersion);
+                                    uploadForm.getField("version").setValue(newVersion);
                                     return;
-                                } catch (IllegalArgumentException e) {
+                                } catch (Exception e) {
                                     //ok, can't suggest anything
                                     return;
                                 }
@@ -604,8 +641,17 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                         }
                         
                         //no existing package exists with the same name as the file being uploaded
-                        uploadForm.getField("editableVersion").setValue("1.0");
-                    }
+                        
+                        String defaultVersion = "";
+                        if (cliScriptPackageType.getVersionFormat() != null && cliScriptPackageType.getVersionFormat().getOsgiVersionExtractionRegex() != null) {
+                            //check if the package format understands plain OSGi versioning
+                            if (matches("1.0", cliScriptPackageType.getVersionFormat().getFullFormatRegex())) {
+                                defaultVersion = "1.0";
+                            }
+                        }
+                        uploadForm.getField("editableVersion").setValue(defaultVersion);
+                        uploadForm.getField("version").setValue(defaultVersion);
+                   }
                 }
             }
         });
@@ -613,7 +659,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         return uploadForm;
     }
     
-    private void loadPackageType(AsyncCallback<PackageType> handler) {
+    private void loadPackageType(AsyncCallback<PackageTypeAndVersionFormatComposite> handler) {
         GWTServiceLookup.getContentService().findPackageType(null, PACKAGE_TYPE_NAME, handler);
     }
     
@@ -624,14 +670,14 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         GWTServiceLookup.getSubjectService().checkAuthentication(username, password, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
                 config.selectedSubject = null;
-                verifyUserButton.setIcons(authFailureIcon);
+                verifyUserButton.setIcons(failureIcon);
                 markForRedraw();
                 action.onFailure(caught);
             }
             
             public void onSuccess(Subject result) {
                 config.selectedSubject = result;
-                verifyUserButton.setIcons(result == null ? authFailureIcon : authSuccessIcon);   
+                verifyUserButton.setIcons(result == null ? failureIcon : successIcon);   
                 markForRedraw();
                 if (result == null) {
                     action.onFailure(null);
@@ -641,4 +687,17 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             }
         });
     }
+    
+    private static native String getOsgiVersion(String version, String osgiRegex, int groupIdx) /*-{
+        var re = new RegExp(osgiRegex);
+        var groupRef = '$' + groupIdx;
+        version = version.replace(re, groupRef);
+        
+        return version;
+    }-*/;    
+    
+    private static native boolean matches(String string, String regex) /*-{
+        var re = new RegExp(regex);
+        return re.test(string);
+    }-*/;
 }       

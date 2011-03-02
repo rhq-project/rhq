@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -56,6 +57,6 @@ public interface ContentGWTService extends RemoteService {
 
     PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException;
     
-    PackageType findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException;
+    PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException;
     
 }

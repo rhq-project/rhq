@@ -29,7 +29,9 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.PackageVersionFormatDescription;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
@@ -119,9 +121,9 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
     }
     
     @Override
-    public PackageType findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException {
+    public PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException {
         try {
-            return SerialUtility.prepare(contentManager.findPackageType(getSessionSubject(), resourceTypeId, packageTypeName),
+            return SerialUtility.prepare(contentManager.findPackageTypeWithVersionFormat(getSessionSubject(), resourceTypeId, packageTypeName),
                 "ContentService.findPackageType");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));

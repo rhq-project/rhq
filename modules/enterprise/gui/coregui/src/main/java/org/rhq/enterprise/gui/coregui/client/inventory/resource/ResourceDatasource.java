@@ -87,8 +87,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceImageField iconField = new DataSourceImageField("icon", "");
-        iconField.setImageURLPrefix("types/");
+        DataSourceImageField iconField = new DataSourceImageField("icon", " ");
+        iconField.setWidth(25);
         fields.add(iconField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
@@ -204,8 +204,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
-        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
-            + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
+        record.setAttribute("icon", ImageManager.getResourceIcon(from.getResourceType().getCategory(), from
+            .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
             .getCurrentAvailability().getAvailabilityType()));
 

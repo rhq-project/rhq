@@ -55,7 +55,7 @@ public class PlatformMetricDataSource extends ResourceDatasource {
         fields.add(memoryField);
 
         DataSourceTextField swapField = new DataSourceTextField("swap", MSG.dataSource_platforms_field_swap());
-        // todo swap
+        fields.add(swapField);
 
         return fields;
     }

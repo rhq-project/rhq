@@ -54,7 +54,7 @@ public class CliPackageTypeBehavior extends AbstractPackageTypeBehavior<ServerPl
     private static final String OSGI_EXTRACT_REGEX = "^([^:]+:)?(\\d+(\\.\\d+(\\.\\d+(\\..*)?)?)?)$";
     private static final int OSGI_EXTRACT_VERSION_GROUP = 2;
     
-    private static final String PACKAGETYPE_NAME = "__SERVER_SIDE_CLI_SCRIPT";
+    private static final String PACKAGETYPE_NAME = "org.rhq.enterprise.server.plugins.packagetypeCli.SERVER_SIDE_CLI_SCRIPT";
 
     private static final Comparator<PackageVersion> VERSION_COMPARATOR = new Comparator<PackageVersion>() {
         private final OSGiVersionComparator OSGI_COMPARATOR = new OSGiVersionComparator();

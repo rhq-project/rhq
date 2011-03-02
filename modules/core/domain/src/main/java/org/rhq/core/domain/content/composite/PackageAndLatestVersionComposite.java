@@ -21,6 +21,9 @@ package org.rhq.core.domain.content.composite;
 
 import java.io.Serializable;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 
@@ -30,6 +33,7 @@ import org.rhq.core.domain.content.PackageVersion;
  *
  * @author Lukas Krejci
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class PackageAndLatestVersionComposite implements Serializable {
 
     

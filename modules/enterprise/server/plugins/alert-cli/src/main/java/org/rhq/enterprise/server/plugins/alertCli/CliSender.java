@@ -247,7 +247,7 @@ public class CliSender extends AlertSender<CliComponent> {
     private static InputStream getPackageBits(int packageId, int repoId) throws IOException {
         final ContentSourceManagerLocal csm = LookupUtil.getContentSourceManager();
         RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
-        final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(), packageId, repoId, null);
+        final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(), packageId, repoId);
 
         if (versionToUse == null) {
             throw new IllegalArgumentException("The package with id " + packageId + " either doesn't exist at all or doesn't have any version. Can't execute a CLI script without a script to run.");

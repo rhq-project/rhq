@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 
 public class TestContentProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource {
@@ -251,10 +253,6 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         return bis;
     }
 
-    public Comparator<PackageVersion> getPackageVersionComparator() {
-        return null;
-    }
-    
     public void synchronizeDistribution(String repoName, DistributionSyncReport report,
         Collection<DistributionDetails> existingDistros) throws SyncException, InterruptedException {
 

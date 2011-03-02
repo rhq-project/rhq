@@ -77,7 +77,10 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.PackageVersionFormatDescription;
+import org.rhq.core.domain.content.ValidatablePackageDetailsKey;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -102,6 +105,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.content.PackageDetailsValidationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -1142,6 +1147,26 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
     
+    public PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject,
+        Integer resourceTypeId, String packageTypeName) {
+        
+        PackageType type = findPackageType(subject, resourceTypeId, packageTypeName);
+        
+        PackageVersionFormatDescription format = null;
+        
+        try {
+            PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeName);
+            if (behavior != null) {
+                format = behavior.getPackageVersionFormat(packageTypeName);
+            }
+        } catch (Exception e) {
+            //well, this shouldn't happen but is not crucial in this case
+            log.info("Failed to obtain the behavior of package type '" + packageTypeName + "'.", e);
+        }
+        
+        return new PackageTypeAndVersionFormatComposite(type, format);
+    }
+    
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {
         if (!authorizationManager.isOverlord(subject)) {
@@ -1219,14 +1244,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to create package versions");
         }
 
-        return createPackageVersion(packageName, packageTypeId, version, (null == architectureId) ? getNoArchitecture()
-            .getId() : architectureId, new ByteArrayInputStream(packageBytes));
+        return createPackageVersion(subject, packageName, packageTypeId, version, (null == architectureId) ? getNoArchitecture()
+                .getId() : architectureId, new ByteArrayInputStream(packageBytes));
     }
 
-    @SuppressWarnings("unchecked")
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public PackageVersion createPackageVersion(String packageName, int packageTypeId, String version,
-        int architectureId, InputStream packageBitStream) {
+    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId,
+        String version, int architectureId, InputStream packageBitStream) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
         packageVersionQuery.setParameter("name", packageName);
@@ -1240,6 +1264,29 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             return (PackageVersion) existingVersionList.get(0);
         }
 
+        Architecture architecture = entityManager.find(Architecture.class, architectureId);
+        PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
+
+        //check the validity of the provided data
+        try {
+            PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeId);
+            ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version, packageType.getName(), architecture.getName());
+            behavior.validateDetails(key, subject);
+            
+            packageName = key.getName();
+            version = key.getVersion();
+            if (!architecture.getName().equals(key.getArchitectureName())) {
+                Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
+                q.setParameter("name", key.getArchitectureName());
+                architecture = (Architecture) q.getSingleResult();
+            }
+        } catch (PackageDetailsValidationException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to get the package type plugin container. This is a bug.", e);
+            throw new IllegalStateException("Failed to get the package type plugin container.", e);
+        }
+        
         // If the package doesn't exist, create that here
         Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
         packageQuery.setParameter("name", packageName);
@@ -1250,7 +1297,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         List existingPackageList = packageQuery.getResultList();
 
         if (existingPackageList.size() == 0) {
-            PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
             existingPackage = new Package(packageName, packageType);
             existingPackage = persistOrMergePackageSafely(existingPackage);
         } else {
@@ -1258,8 +1304,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         // Create a package version and add it to the package
-        Architecture architecture = entityManager.find(Architecture.class, architectureId);
-
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
         
@@ -1610,6 +1654,33 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } else {
             packageType = entityManager.find(PackageType.class, packageTypeId);
         }
+
+        try {
+            PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeId);
+            
+            if (behavior != null) {
+                String packageTypeName = packageType.getName();
+                String archName = architecture.getName();
+                ValidatablePackageDetailsKey key = new ValidatablePackageDetailsKey(packageName, version, packageTypeName, archName);
+                behavior.validateDetails(key, subject);
+                
+                //update the details from the validation results
+                packageName = key.getName();
+                version = key.getVersion();
+                
+                if (!architecture.getName().equals(key.getArchitectureName())) {
+                    Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
+                    q.setParameter("name", key.getArchitectureName());
+                    architecture = (Architecture) q.getSingleResult();
+                }
+            }
+        } catch (PackageDetailsValidationException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to get the package type plugin container. This is a bug.", e);
+            throw new IllegalStateException("Failed to get the package type plugin container.", e);
+        }
+        
 
         Package existingPackage = null;
 

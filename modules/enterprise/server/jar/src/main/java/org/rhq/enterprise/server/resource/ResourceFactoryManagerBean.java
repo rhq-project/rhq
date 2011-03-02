@@ -463,8 +463,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         // Create/locate package and package version
         PackageVersion packageVersion = null;
         if (packageUploadDetails == null) {
-            packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
-                packageVersionNumber, architectureId, packageBitStream);
+            packageVersion = contentManager.createPackageVersion(user, packageName,
+                newPackageType.getId(), packageVersionNumber, architectureId, packageBitStream);
         } else {
             packageVersion = contentManager.getUploadedPackageVersion(user, packageName,
                 newPackageType.getId(), packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId, null);

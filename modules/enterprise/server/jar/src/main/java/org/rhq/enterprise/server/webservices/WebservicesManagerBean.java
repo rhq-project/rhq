@@ -68,6 +68,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -515,6 +516,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
         return contentManager.findPackageType(subject, resourceTypeId, packageTypeName);
+    }
+    
+    public PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject,
+        Integer resourceTypeId, String packageTypeName) {
+        return contentManager.findPackageTypeWithVersionFormat(subject, resourceTypeId, packageTypeName);
     }
     
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {

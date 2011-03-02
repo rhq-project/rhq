@@ -135,9 +135,8 @@ public interface RepoManagerRemote {
      * Returns the latest package version of the supplied package.
      * The latest version is determined using a comparator which is found using the following rules:
      * <ol>
-     * <li>Find the first content provider defining the package connected to given repo 
-     *     that defines a non-null version comparator
-     * <li>If no content provider provides explicit comparator, use {@link PackageVersion#DEFAULT_COMPARATOR}
+     * <li>determine the comparator using the package type behavior if one is setup for the package type
+     * <li>If no package behavior exists, use {@link PackageVersion#DEFAULT_COMPARATOR}
      * </ol>
      * 
      * @param subject the authenticated user

@@ -87,6 +87,7 @@
     <module>ant-bundle</module>
     <module>validate-all-serverplugins</module>
     <module>groovy-script</module>
+    <module>packagetype-cli</module>
   </modules>
 
 </project>

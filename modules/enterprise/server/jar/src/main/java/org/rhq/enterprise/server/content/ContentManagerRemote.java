@@ -33,6 +33,7 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -157,6 +158,20 @@ public interface ContentManagerRemote {
         @WebParam(name = "packageTypeName") String packageTypeName
         );
     
+    /**
+     * Similar to {@link #findPackageType(Subject, Integer, String)} but
+     * returns the package type along with the version format specification.
+     * 
+     * @param subject
+     * @param resourceTypeId
+     * @param packageTypeName
+     * @return
+     */
+    @WebMethod
+    PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name ="resourceTypeId") Integer resourceTypeId,
+        @WebParam(name = "packageTypeName") String packageTypeName);
     /**
      * @param subject
      * @param criteria {@link InstalledPackageCriteria}

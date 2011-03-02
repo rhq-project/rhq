@@ -321,6 +321,18 @@
                             <artifactId>alert-subject</artifactId>
                             <version>${project.version}</version>
                         </artifactItem>
+                        
+                        <artifactItem>
+                          <groupId>org.rhq</groupId>
+                          <artifactId>alert-cli</artifactId>
+                          <version>${project.version}</version>
+                        </artifactItem>
+                        
+                        <artifactItem>
+                          <groupId>org.rhq</groupId>
+                          <artifactId>packagetype-cli</artifactId>
+                          <version>${project.version}</version>
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>

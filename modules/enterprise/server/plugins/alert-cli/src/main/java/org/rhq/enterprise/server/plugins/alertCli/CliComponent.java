@@ -35,7 +35,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -50,7 +49,6 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -67,14 +65,8 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPlu
  */
 public class CliComponent implements ServerPluginComponent, ControlFacet {
 
-    //TODO the package type definition could be defined somewhere accessible
-    //server-wide if we decide to use it in more places than just this alert sender
-    
-    public static final String PACKAGE_TYPE_NAME = "__SERVER_SIDE_CLI_SCRIPT";
-    public static final String PACKAGE_TYPE_DESCRIPTION = 
-        "A CLI script running on the server-side.";
-    public static final String PACKAGE_TYPE_DISPLAY_NAME = "Server-side CLI Script";
-    
+    public static final String PACKAGE_TYPE_NAME = "org.rhq.enterprise.server.plugins.packagetypeCli.SERVER_SIDE_CLI_SCRIPT";
+   
     private static final String CONTROL_CHECK_ALERTS_VALIDITY = "checkAlertsValidity";
     private static final String CONTROL_REASSIGN_ALERTS = "reassignAlerts";
     
@@ -93,36 +85,21 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
     private PackageType packageType;
     private int scriptTimeout;
     
-    private SubjectManagerLocal subjectManager;
-    
     public void initialize(ServerPluginContext context) throws Exception {
         pluginName = ((AlertPluginDescriptorType)context.getPluginEnvironment().getPluginDescriptor()).getShortName();
-        
-        subjectManager = LookupUtil.getSubjectManager();
-        ContentManagerLocal cm = LookupUtil.getContentManager();
-        
-        packageType = cm.findPackageType(subjectManager.getOverlord(), null, PACKAGE_TYPE_NAME);
-        
-        if (packageType == null) {
-            packageType = new PackageType(PACKAGE_TYPE_NAME, null);
-            packageType.setCategory(PackageCategory.EXECUTABLE_SCRIPT);
-            packageType.setDescription(PACKAGE_TYPE_DESCRIPTION);
-            packageType.setDisplayName(PACKAGE_TYPE_DISPLAY_NAME);
-            packageType.setSupportsArchitecture(false);
-            packageType.setCreationData(false);
-            packageType.setDeploymentConfigurationDefinition(null);
-            packageType.setDiscoveryInterval(-1);
-            packageType.setPackageExtraPropertiesDefinition(null);
-            
-            packageType = cm.persistServersidePackageType(packageType);
-        }
-        
+                
         String timeoutValue = context.getPluginConfiguration() == null ? "60" : context.getPluginConfiguration().getSimpleValue(PROP_SCRIPT_TIMEOUT, "60");
         
         scriptTimeout = Integer.parseInt(timeoutValue);
     }
 
     public PackageType getScriptPackageType() {
+        if (packageType == null) {
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            ContentManagerLocal cm = LookupUtil.getContentManager();
+            
+            packageType = cm.findPackageType(subjectManager.getOverlord(), null, PACKAGE_TYPE_NAME);
+        }
         return packageType;
     }
     

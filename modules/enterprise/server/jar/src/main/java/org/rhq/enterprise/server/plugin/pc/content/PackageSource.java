@@ -24,9 +24,6 @@ package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.Comparator;
-
-import org.rhq.core.domain.content.PackageVersion;
 
 /**
  * Indicates a content source has the capability to provide packages into the server. Package synchronization will
@@ -34,7 +31,6 @@ import org.rhq.core.domain.content.PackageVersion;
  * passed into the plugin through {@link ContentProvider#initialize(org.rhq.core.domain.configuration.Configuration)}
  *
  * @author Jason Dobies
- * @author Lukas Krejci
  */
 public interface PackageSource {
 
@@ -63,16 +59,4 @@ public interface PackageSource {
      * @throws Exception if failed to obtain the stream to the remote package data
      */
     InputStream getInputStream(String location) throws Exception;
-
-    /**
-     * This comparator will be used to determine the latest version of a package.
-     * It should sort the package versions from the "oldest" to the "youngest", i.e. when comparing
-     * <br/>
-     * <code>comparator.compare(older, younger)</code>
-     * <br/>
-     * the comparator should return a value &lt; 0.
-     * 
-     * @return a comparator to use when sorting the package versions or null if {@link PackageVersion#DEFAULT_COMPARATOR} should be used. 
-     */
-    Comparator<PackageVersion> getPackageVersionComparator();    
 }

@@ -335,8 +335,9 @@ public class PackageVersion implements Serializable {
             }
             
             //hmm... there's actually nothing we can sort these two by..
-            //pronounce them equal
-            return 0;
+            //let's compare them by id - the one inserted sooner will have a lower id
+                        
+            return Integer.valueOf(p1.getId()).compareTo(p2.getId());
         }
     };
     

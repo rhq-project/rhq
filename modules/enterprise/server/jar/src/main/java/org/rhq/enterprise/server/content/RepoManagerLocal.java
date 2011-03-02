@@ -120,14 +120,6 @@ public interface RepoManagerLocal {
     PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId);
     
     /**
-     * This is an enhanced version of the remoted method that is able to override the default
-     * package version comparator.
-     * 
-     * @see RepoManagerRemote#getLatestPackageVersion(Subject, int, int) 
-     */
-    PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId, Comparator<PackageVersion> versionComparator);
-
-    /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
      *
      * There is a weight to the status since this returns the most 'relevant' status:

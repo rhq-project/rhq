@@ -704,8 +704,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             q.setParameter("name", architecture.getName());
             architecture = (Architecture) q.getSingleResult();
         }
-        PackageVersion packageVersion = contentManager.createPackageVersion(name, packageType.getId(), version,
-            architecture.getId(), fileStream);
+        PackageVersion packageVersion = contentManager.createPackageVersion(subject, name, packageType.getId(),
+            version, architecture.getId(), fileStream);
 
         // set the PackageVersion's filename to the bundleFile name, it's left null by default
         packageVersion.setFileName(name);

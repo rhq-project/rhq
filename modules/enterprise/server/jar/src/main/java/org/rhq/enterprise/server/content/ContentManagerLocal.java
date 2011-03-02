@@ -38,6 +38,7 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
@@ -226,7 +227,8 @@ public interface ContentManagerLocal {
      * Creates a new package version in the system. If the parent package (identified by the packageName parameter) does
      * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
      * created and the existing package version instance will be returned.
-     *
+     * 
+     * @param subject         the user requesting the package creation
      * @param  packageName    parent package name; uniquely identifies the package under which this version goes
      * @param  packageTypeId  identifies the type of package in case the general package needs to be created
      * @param  version        identifies the version to be create
@@ -235,11 +237,11 @@ public interface ContentManagerLocal {
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
      */
-    PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
-        InputStream packageBitStream);
+    PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
+        int architectureId, InputStream packageBitStream);
 
     /**
-     * This method is similar to the {@link #createPackageVersion(String, int, String, int, InputStream)} but fails if
+     * This method is similar to the {@link #createPackageVersion(Subject, String, int, String, int, InputStream)} but fails if
      * the package version with the provided details already exists which is a desired behaviour for the GUI originating
      * requests.
      * @param subject the current user
@@ -382,6 +384,11 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findPackageType(Subject, Integer, String)}
      */
     PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
+    
+    /**
+     * @see {@link ContentManagerRemote#findPackageTypeWithVersionFormat(Subject, Integer, String)}
+     */
+    PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject, Integer resourceTypeId, String packageTypeName);
     
     /**
      * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}

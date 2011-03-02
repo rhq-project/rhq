@@ -21,14 +21,12 @@ package org.rhq.enterprise.server.plugins.yum;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
@@ -178,13 +176,6 @@ public class RepoProvider implements ContentProvider, PackageSource {
         reader.validate();
     }
 
-    /**
-     * @return null so that the {@link PackageVersion#DEFAULT_COMPARATOR} is used because it is well suited for YUM packages.
-     */
-    public Comparator<PackageVersion> getPackageVersionComparator() {
-        return null;
-    }
-    
     /**
      * Trim white space and trailing (/) characters.
      *

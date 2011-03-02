@@ -154,11 +154,11 @@ public class Dashboard implements Serializable {
         this.category = category;
     }
 
-    protected Resource getResource() {
+    public Resource getResource() {
         return resource;
     }
 
-    protected void setResource(Resource resource) {
+    public void setResource(Resource resource) {
         this.resource = resource;
     }
 

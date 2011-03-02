@@ -139,7 +139,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         protected List<FormItem> getOnDrawItems() {
             List<FormItem> items = super.getOnDrawItems();
             
-            TextItem version = new TextItem("editableVersion", "Version"); //TODO i18n
+            TextItem version = new TextItem("editableVersion", MSG.view_alert_definition_notification_cliScript_editor_newScriptVersion());
             version.setColSpan(getNumCols());
             version.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -225,7 +225,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     SectionItem userSection = new SectionItem("userSection");
                     userSection.setDefaultValue(MSG.view_alert_definition_notification_cliScript_editor_whichUser());
                     
-                    repoSelector = new SelectItem(extendLocatorId("repoSelector"), "Select the repository to look for the script in"); //TODO i18n
+                    repoSelector = new SelectItem(extendLocatorId("repoSelector"), MSG.view_alert_definition_notification_cliScript_editor_selectRepo());
                     repoSelector.setDefaultToFirstOption(true);
                     repoSelector.setWrapTitle(false);
                     repoSelector.setWidth(400);            
@@ -594,6 +594,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                 if (event.getItem() instanceof UploadItem) {
                     if (event.getNewValue() == null) {
                         uploadForm.getField("editableVersion").setValue("");
+                        uploadForm.getField("version").setValue("");
                         return;
                     }
                     

@@ -35,7 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
@@ -148,13 +147,12 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildInventorySection() {
-        NavigationItem inventorySummaryItem = new NavigationItem(new ViewName("InventorySummary", MSG
-            .common_title_inventorySummary()), "subsystems/inventory/Inventory_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId("InventorySummary"),
-                    "/rhq/admin/report/resourceInstallReport-body.xhtml");
-            }
-        });
+        NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
+            "subsystems/inventory/Inventory_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
+                }
+            });
 
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
             .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {

@@ -68,7 +68,6 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         fields.add(idDataField);
 
         DataSourceImageField iconField = new DataSourceImageField("icon", "");
-        iconField.setImageURLPrefix("types/");
         fields.add(iconField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
@@ -159,8 +158,8 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute(TYPE.propertyName(), res.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), res.getResourceType().getPlugin());
         record.setAttribute(CATEGORY.propertyName(), res.getResourceType().getCategory().name());
-        record.setAttribute("icon", res.getResourceType().getCategory().getDisplayName() + "_"
-            + (res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
+        record.setAttribute("icon", ImageManager.getResourceIcon(res.getResourceType().getCategory(), res
+            .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
 

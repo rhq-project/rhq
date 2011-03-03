@@ -177,6 +177,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
+        criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;

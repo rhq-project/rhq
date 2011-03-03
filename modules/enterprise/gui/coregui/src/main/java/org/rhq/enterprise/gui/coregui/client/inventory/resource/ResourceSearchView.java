@@ -122,7 +122,6 @@ public class ResourceSearchView extends Table {
     protected void configureTable() {
         ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 26);
         iconField.setType(ListGridFieldType.IMAGE);
-        iconField.setImageURLPrefix("types/");
         iconField.setShowDefaultContextMenu(false);
         iconField.setCanSort(false);
         iconField.setTitle("&nbsp;");

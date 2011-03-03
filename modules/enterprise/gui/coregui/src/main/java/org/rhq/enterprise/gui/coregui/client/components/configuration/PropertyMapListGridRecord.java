@@ -9,7 +9,9 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import java.util.List;
 
 /**
+ * A ListGridRecord representation of an RHQ PropertyMap.
  *
+ * @author Ian Springer
  */
 public class PropertyMapListGridRecord extends ListGridRecord {
 

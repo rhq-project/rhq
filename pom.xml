@@ -6,7 +6,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>3.0.1.GA</version>
+    <version>3.0.0.GA</version>
     <packaging>pom</packaging>
 
     <name>RHQ</name>

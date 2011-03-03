@@ -85,6 +85,8 @@
         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
         <column name="UUID" type="CHAR" size="36" required="true"/>
         <column name="NAME" type="VARCHAR2" size="500"/>
+        <!--  ancestry holds the full parental ancestry, used for disambiguation -->
+        <column name="ANCESTRY" type="VARCHAR2" required="false" size="4000"/>         
         <column name="RESOURCE_KEY" type="VARCHAR2" required="true" size="500"/>
         <column name="AGENT_ID" required="false" type="INTEGER" references="RHQ_AGENT(id)"/>
         <column name="INVENTORY_STATUS" type="VARCHAR2" size="20"/>

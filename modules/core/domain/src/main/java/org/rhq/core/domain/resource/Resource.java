@@ -885,6 +885,9 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String ANCESTRY_ENTRY_DELIM = "_:_"; // delimiter separating entry fields
+    public static final String ANCESTRY_DELIM = "_::_"; // delimiter seperating ancestry entries
+
     public static final Resource ROOT = null;
     public static final int ROOT_ID = -1;
 
@@ -904,6 +907,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Column(name = "NAME", nullable = false)
     @Summary(index = 1)
     private String name;
+
+    @Column(name = "ANCESTRY", nullable = false)
+    @Summary(index = 5)
+    private String ancestry;
 
     @Column(name = "INVENTORY_STATUS")
     @Enumerated(EnumType.STRING)
@@ -1130,6 +1137,50 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.name = name;
     }
 
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    /**
+     * In general this method should not be called by application code. At least not for any Resource that will be
+     * persisted or merged.  The ancestry string is maintained internally. {@link #updateAncestryForResource()}.
+     * 
+     * @param ancestry
+     */
+    public void setAncestry(String ancestry) {
+        this.ancestry = ancestry;
+    }
+
+    /**
+     * Using the current settings for resource field set the encoded ancestry string. This method
+     * is called automatically from {@link #setParentResource(Resource)} because the parent defines the ancestry.
+     * If the parent is not an attached entity the update will be skipped, as a valid id and resource type are required.
+     * It can also be called at any time the ancestry has changed, for example, if a resource name has been updated.
+     *  
+     * @return the built ancestry string
+     */
+    public String updateAncestryForResource() {
+
+        if (this.parentResource == null || // 
+            this.parentResource.getId() <= 0 || //
+            this.parentResource.getResourceType() == null) {
+            return null;
+        }
+
+        StringBuilder ancestry = new StringBuilder();
+        ancestry.append(this.parentResource.resourceType.getId());
+        ancestry.append(ANCESTRY_ENTRY_DELIM);
+        ancestry.append(this.parentResource.id);
+        ancestry.append(ANCESTRY_ENTRY_DELIM);
+        ancestry.append(this.parentResource.name);
+        if (Resource.ROOT != parentResource) {
+            ancestry.append(ANCESTRY_DELIM);
+            ancestry.append(parentResource.getAncestry());
+        }
+
+        return ancestry.toString();
+    }
+
     public String getResourceKey() {
         return resourceKey;
     }
@@ -1297,6 +1348,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void setParentResource(@Nullable Resource parentResource) {
         this.parentResource = parentResource;
+        updateAncestryForResource();
     }
 
     public Configuration getResourceConfiguration() {
@@ -1731,10 +1783,6 @@ public class Resource implements Comparable<Resource>, Serializable {
             buffer.append(", version=").append(this.version);
         buffer.append("]");
         return buffer.toString();
-    }
-
-    public void afterUnmarshal(Object u, Object parent) {
-        this.parentResource = (Resource) parent;
     }
 
     // this should only ever be called once, during initial persistence

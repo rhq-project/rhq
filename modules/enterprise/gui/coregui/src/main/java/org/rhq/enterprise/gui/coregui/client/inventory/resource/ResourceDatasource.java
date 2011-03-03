@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -48,11 +49,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -94,6 +97,10 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
+
+        DataSourceTextField lineageDataField = new DataSourceTextField(ANCESTRY.propertyName(), ANCESTRY.title(), 200);
+        lineageDataField.setCanEdit(false);
+        fields.add(lineageDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
@@ -147,6 +154,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // now that we have the types, we can replace encoded lineage strings with display strings
+                //processLineage(result, types);
+
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
                     Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
@@ -154,6 +164,24 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                     if (type != null) {
                         record.setAttribute(TYPE.propertyName(), type.getName());
                     }
+
+                    String ancestry = record.getAttributeAsString(ANCESTRY.propertyName());
+                    if (null == ancestry) {
+                        continue;
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+                    for (int i = 0; i < ancestryEntries.length; ++i) {
+                        sb.append((i > 0) ? " > " : "");
+                        String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                        //int typeId = Integer.valueOf(resourceTokens[0]);
+                        int resourceId = Integer.valueOf(entryTokens[1]);
+                        String url = LinkManager.getResourceLink(resourceId);
+                        String suffix = record.getAttributeAsInt("id") + "_" + entryTokens[1];
+                        sb.append(SeleniumUtility.getLocatableHref(url, entryTokens[2], suffix));
+                    }
+                    record.setAttribute(ANCESTRY.propertyName(), sb.toString());
+
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -202,6 +230,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute("id", from.getId());
         record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(ANCESTRY.propertyName(), from.getAncestry());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());

@@ -67,25 +67,26 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
-    private static String[] importantFields = { "serialVersionUID",
-    //                    "ROOT                            \n" +
+    private static String[] importantFields = { //
+    "serialVersionUID", //
+        //                    "ROOT                            \n" +
         //                    "ROOT_ID                         \n" +
-        "id",
-
+        "id", //
         "uuid", // This is important, because it is what Resource's equals() and hashCode() impls use.
         //                    "resourceKey                     \n" +
-        "name",
-
+        "name", //
+        "ancestry", //
         //                    "connected                       \n" +
         //                    "version                         \n" +
-        "description",
-
+        "description", //
         //                    "ctime                           \n" +
         //                    "mtime                           \n" +
         //                    "itime                           \n" +
         //                    "modifiedBy                      \n" +
         //                    "location                        \n" +
-        "resourceType", "childResources", "parentResource",
+        "resourceType", //
+        "childResources", //
+        "parentResource", //
         //                    "resourceConfiguration           \n" +
         //                    "pluginConfiguration             \n" +
         //                    "agent                           \n" +
@@ -93,7 +94,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "resourceConfigurationUpdates    \n" +
         //                    "pluginConfigurationUpdates      \n" +
         //                    "implicitGroups                  \n" +
-        "explicitGroups",
+        "explicitGroups", //
         //                    "contentServiceRequests          \n" +
         //                    "createChildResourceRequests     \n" +
         //                    "deleteResourceRequests          \n" +
@@ -101,9 +102,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "installedPackages               \n" +
         //                    "installedPackageHistory         \n" +
         //                    "resourceRepos                   \n" +
-        "schedules",
+        "schedules", //
         //                    "availability                    \n" +
-        "currentAvailability",
+        "currentAvailability", //
         //                    "resourceErrors                  \n" +
         //                    "eventSources                    \n" +
         //                    "productVersion                  "}

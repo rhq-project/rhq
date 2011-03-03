@@ -225,7 +225,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
          * { throw new ResourceAlreadyExistsException("Resource with key '" + resource.getName() + "' already
          * exists");}*/
 
-        persistedResource.setName(resource.getName());
+        // On name change make sure we update the ancestry as the name is part of the ancestry string
+        if (!persistedResource.getName().equals(resource.getName())) {
+            persistedResource.setName(resource.getName());
+            updateAncestry(persistedResource, persistedResource.getChildResources());
+        }
         persistedResource.setLocation(resource.getLocation());
         persistedResource.setDescription(resource.getDescription());
 
@@ -2362,6 +2366,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         DisambiguationUpdateStrategy updateStrategy) {
         return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager
             .getDuplicateTypeNames());
+    }
+
+    public void updateAncestry(Subject subject, int parentResourceId) {
+        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
+        if (null == parentResource) {
+            throw new ResourceNotFoundException(parentResourceId);
+        }
+
+        Set<Resource> children = parentResource.getChildResources();
+
+        updateAncestry(parentResource, children);
+    }
+
+    private void updateAncestry(Resource parentResource, Set<Resource> children) {
+        parentResource.updateAncestryForResource();
+
+        for (Resource child : children) {
+            updateAncestry(child, child.getChildResources());
+        }
     }
 
     @SuppressWarnings("unchecked")

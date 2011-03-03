@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
@@ -151,6 +152,8 @@ public class ResourceSearchView extends Table {
             }
         });
 
+        ListGridField ancestryField = new ListGridField(ANCESTRY.propertyName(), ANCESTRY.title());
+
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
 
         ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
@@ -183,8 +186,8 @@ public class ResourceSearchView extends Table {
         availabilityField.setType(ListGridFieldType.IMAGE);
         availabilityField.setAlign(Alignment.CENTER);
 
-        setListGridFields(iconField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
-            availabilityField);
+        setListGridFields(iconField, nameField, ancestryField, descriptionField, typeNameField, pluginNameField,
+            categoryField, availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
             .view_inventory_resources_uninventoryConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {

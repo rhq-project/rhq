@@ -424,6 +424,21 @@ public interface ResourceManagerLocal {
 
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 
+    /**
+     * Update the ancestry for the specified parent resource and its child lineage.
+     * <pre>
+     * The ancestry is recursively defined as:
+     * 
+     *     resourceAncestry=parentResourceResourceTypeId_:_parentResourceId_:_parentResourceName_::_parentResourceAncestry
+     *     
+     *     * note that platform resources have no parent and therefore have a null ancestry
+     * 
+     * </pre>
+     * @param subject
+     * @param resourceId
+     */
+    public void updateAncestry(Subject subject, int parentResourceId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

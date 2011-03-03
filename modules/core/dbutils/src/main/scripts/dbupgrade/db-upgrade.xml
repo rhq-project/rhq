@@ -3377,6 +3377,13 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.106">
+                <!-- add pre-computed disambiguated name for Resource -->
+                <schema-addColumn table="RHQ_RESOURCE" column="ANCESTRY" columnType="VARCHAR2" precision="4000" />
+                <schema-javaTask className="ResourceAncestryUpgradeTask" />                
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

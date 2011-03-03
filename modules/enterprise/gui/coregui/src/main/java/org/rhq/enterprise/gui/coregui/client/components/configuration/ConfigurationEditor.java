@@ -33,8 +33,8 @@ import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.Overflow;
@@ -163,8 +163,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
-    private boolean loaded;
-    private boolean reloadable;
 
     public static enum ConfigType {
         plugin, resource
@@ -183,18 +181,23 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private LoadHandler loadHandler = null;
 
-    public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId, ConfigType configType) {
+    private ConfigurationEditor(String locatorId) {
         super(locatorId);
+
+        setOverflow(Overflow.AUTO);
+    }
+
+    public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId, ConfigType configType) {
+        this(locatorId);
+
         this.resourceId = resourceId;
         this.resourceTypeId = resourceTypeId;
         this.configType = configType;
-        setOverflow(Overflow.AUTO);
-        this.reloadable = true;
     }
 
     public ConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
         Configuration configuration) {
-        super(locatorId);
+        this(locatorId);
 
         if (configuration == null) {
             throw new IllegalArgumentException("Null configuration.");
@@ -343,16 +346,18 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public void reload() {
-        if (this.loaded && !this.reloadable) {
+        /*if (this.loaded && !this.reloadable) {
             return;
-        }
+        }*/
 
-        if (configurationDefinition == null || configuration == null) {
+        if (this.configurationDefinition == null || this.configuration == null) {
             // Wait for both to load.
             return;
         }
 
-        originalConfiguration = configuration.deepCopy();
+        if (this.originalConfiguration == null) {
+            this.originalConfiguration = configuration.deepCopy();
+        }
 
         for (Canvas childCanvas : getChildren()) {
             childCanvas.destroy();
@@ -375,7 +380,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         this.markForRedraw();
-        this.loaded = true;
     }
 
     public void reset() {
@@ -384,7 +388,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected LocatableVLayout buildStructuredPane() {
-
         LocatableVLayout layout = new LocatableVLayout(extendLocatorId("Structured"));
         List<PropertyGroupDefinition> groupDefinitions = configurationDefinition.getGroupDefinitions();
 
@@ -491,7 +494,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return section;
     }
 
-    protected DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
+    protected LocatableDynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
         AbstractPropertyMap propertyMap) {
 
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
@@ -693,59 +696,31 @@ public class ConfigurationEditor extends LocatableVLayout {
             PropertyDefinitionMap propertyDefinitionMapClone = new PropertyDefinitionMap(propertyDefinitionMap
                 .getName(), propertyDefinitionMap.getDescription(), propertyDefinitionMap.isRequired());
             propertyDefinitionMapClone.setConfigurationDefinition(propertyDefinitionMap.getConfigurationDefinition());
+            propertyDefinitionMapClone.setReadOnly(propertyDefinitionMap.isReadOnly());
             addMemberPropertyDefinitionsToDynamicPropertyMap(propertyDefinitionMapClone, propertyMap);
             propertyDefinitionMap = propertyDefinitionMapClone;
         }
-        VLayout layout = new VLayout();
+        LocatableVLayout layout = new LocatableVLayout(parentLocatorId + "_Layout");
 
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
-        Canvas valuesCanvas = buildPropertiesForm(parentLocatorId, propertyDefinitionMapFinal.getPropertyDefinitions()
-            .values(), propertyMap);
+        LocatableDynamicForm valuesCanvas = buildPropertiesForm(layout.getLocatorId(),
+                propertyDefinitionMapFinal.getPropertyDefinitions().values(), propertyMap);
         layout.addMember(valuesCanvas);
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
             // Map is not read-only - add footer with New and Delete buttons to allow user to add or remove members.
-            ToolStrip buttonBar = new ToolStrip();
+            LocatableToolStrip buttonBar = new LocatableToolStrip(layout.extendLocatorId("ButtonBar"));
             buttonBar.setPadding(5);
             buttonBar.setWidth100();
             buttonBar.setMembersMargin(15);
             layout.addMember(buttonBar);
 
-            /*final IButton deleteButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "Delete");
-            deleteButton.setDisabled(true);
-            deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    final ListGridRecord[] selectedRecords = propertyGrid.getSelection();
-                    String noun = (selectedRecords.length == 1) ? "property" : "properties";
-                    String message = "Are you sure you want to delete the selected" + noun + "?";
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                for (ListGridRecord selectedRecord : selectedRecords) {
-                                    propertyGrid.removeData(selectedRecord);
-                                    String propertyName = selectedRecord.getAttribute("Name");
-                                    propertyMap.getMap().remove(propertyName);
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-            footer.addMember(deleteButton);
-
-            propertyGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                        public void onSelectionChanged(SelectionEvent selectionEvent) {
-                            int count = propertyGrid.getSelection().length;
-                            deleteButton.setDisabled(count < 1);
-                        }
-                    });*/
-
-            final IButton newButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), MSG
+            final IButton newButton = new LocatableIButton(buttonBar.extendLocatorId("New"), MSG
                 .common_button_new());
+            newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     SC.askforValue(MSG.view_configEdit_enterPropName(), new ValueCallback() {
-                        @Override
                         public void execute(String propertyName) {
                             if (propertyMap.get(propertyName) != null) {
                                 CoreGUI.getMessageCenter().notify(
@@ -768,9 +743,17 @@ public class ConfigurationEditor extends LocatableVLayout {
             });
             buttonBar.addMember(newButton);
 
-            DynamicForm deleteForm = new DynamicForm();
+            HLayout spacer = new HLayout();
+            spacer.setWidth(12);
+            buttonBar.addMember(spacer);
+
+            LocatableHLayout deleteControlsLayout = new LocatableHLayout(buttonBar.extendLocatorId("DeleteControls"));
+            deleteControlsLayout.setMargin(3);
+            deleteControlsLayout.setMembersMargin(3);
+            LocatableDynamicForm deleteForm = new LocatableDynamicForm(deleteControlsLayout.extendLocatorId("Form"));
             deleteForm.setNumCols(3);
-            buttonBar.addMember(deleteForm);
+            deleteControlsLayout.addMember(deleteForm);
+            buttonBar.addMember(deleteControlsLayout);
 
             final SelectItem selectItem = new SelectItem();
             selectItem.setValueMap(propertyDefinitionMap.getPropertyDefinitions().keySet().toArray(
@@ -779,12 +762,11 @@ public class ConfigurationEditor extends LocatableVLayout {
             selectItem.setMultipleAppearance(MultipleAppearance.GRID);
             selectItem.setTitle(MSG.common_button_delete());
 
-            final ButtonItem okButtonItem = new ButtonItem();
-            okButtonItem.setTitle(MSG.common_button_ok());
-            okButtonItem.setDisabled(true);
-            okButtonItem.setEndRow(true);
-            okButtonItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
-                public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+            final LocatableIButton okButton = new LocatableIButton(buttonBar.extendLocatorId("OK"));
+            okButton.setTitle(MSG.common_button_ok());
+            okButton.setDisabled(true);
+            okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
                     SC.confirm(MSG.view_configEdit_confirm_1(), new BooleanCallback() {
                         @Override
                         public void execute(Boolean confirmed) {
@@ -808,6 +790,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     });
                 }
             });
+            deleteControlsLayout.addMember(okButton);
 
             selectItem.addChangedHandler(new ChangedHandler() {
                 @Override
@@ -816,12 +799,12 @@ public class ConfigurationEditor extends LocatableVLayout {
                     if (value != null) {
                         String stringValue = value.toString();
                         String[] memberPropertyNames = stringValue.split(",");
-                        okButtonItem.setDisabled(memberPropertyNames.length == 0);
+                        okButton.setDisabled(memberPropertyNames.length == 0);
                     }
                 }
             });
 
-            deleteForm.setFields(selectItem, okButtonItem);
+            deleteForm.setFields(selectItem);
         }
 
         CanvasItem canvasItem = buildComplexPropertyField(layout);
@@ -841,7 +824,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         parentMap.getMap().remove(propertySimple.getName());
     }
 
-    private boolean isDynamic(PropertyDefinitionMap propertyDefinitionMap) {
+    private static boolean isDynamic(PropertyDefinitionMap propertyDefinitionMap) {
         Map<String, PropertyDefinition> memberPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
         return memberPropertyDefinitions == null || memberPropertyDefinitions.isEmpty();
     }
@@ -876,6 +859,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.setBodyOverflow(Overflow.VISIBLE);
         summaryTable.setOverflow(Overflow.VISIBLE);
         summaryTable.setWidth100();
+        summaryTable.setAutoFitFieldWidths(true);
+        summaryTable.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        summaryTable.setRecordEnabledProperty(null);
 
         List<ListGridField> fieldsList = new ArrayList<ListGridField>();
         final List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(memberPropertyDefinitionMap
@@ -923,8 +909,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (!(readOnly || propertyDefinitionList.isReadOnly())) {
             ListGridField removeField = new ListGridField("remove", 20);
             removeField.setType(ListGridFieldType.ICON);
-            //        removeField.setIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
-            removeField.setCellIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
+            removeField.setCellIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
             removeField.setCanEdit(false);
             removeField.setCanFilter(true);
             removeField.setFilterEditorType(new SpacerItem());
@@ -1505,7 +1490,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 if (newRow) {
                     try {
                         list.add(workingMap);
-                        int index = list.getList().size();
+                        int index = list.getList().size() - 1;
                         PropertyMapListGridRecord record = new PropertyMapListGridRecord(workingMap, index,
                                 memberDefinitions);
                         summaryTable.addData(record);

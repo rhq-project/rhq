@@ -36,7 +36,7 @@ public class ImageManager {
     }
 
     /**
-     * Returns a generic edit icon.
+     * Returns a generic view icon.
      */
     public static String getViewIcon() {
         return "[SKIN]/actions/view.png";
@@ -47,6 +47,13 @@ public class ImageManager {
      */
     public static String getEditIcon() {
         return "[SKIN]/actions/edit.png";
+    }
+
+    /**
+     * Returns a generic remove icon.
+     */
+    public static String getRemoveIcon() {
+        return "[SKIN]/actions/remove.png";
     }
 
     /**

@@ -226,7 +226,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                     extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
                         ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
                     PAGE_COMPATIBLE_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.COMPATIBLE));
-                view.setInitialSearchBarSearchText("category=platform | category=server | category=service");
+                view.setInitialSearchBarSearchText("groupCategory=compatible");
                 return view;
             }
         });
@@ -237,7 +237,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()),
                     new Criteria(ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
                     PAGE_MIXED_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.MIXED));
-                //view.setInitialSearchBarSearchText("");
+                view.setInitialSearchBarSearchText("groupCategory=mixed");
                 return view;
             }
         });
@@ -248,7 +248,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()),
                     new Criteria("downMemberCount", "1"), PAGE_PROBLEM_GROUPS.getTitle(), ImageManager
                         .getGroupLargeIcon(GroupCategory.MIXED, 0.0d));
-                //view.setInitialSearchBarSearchText("");
+                //view.setInitialSearchBarSearchText("availability=down"); I don't think this matches exactly what the criteria returns
                 view.setShowNewButton(false);
                 return view;
             }

@@ -241,9 +241,9 @@ public interface ContentManagerLocal {
         int architectureId, InputStream packageBitStream);
 
     /**
-     * This method is similar to the {@link #createPackageVersion(Subject, String, int, String, int, InputStream)} but fails if
-     * the package version with the provided details already exists which is a desired behaviour for the GUI originating
-     * requests.
+     * This method is essentially the same as {@link #createPackageVersion(Subject, String, int, String, int, InputStream)}
+     * but will update the package bits if a package version with the provided identification already exists.
+     * 
      * @param subject the current user
      * @param packageName the name of the package (the general package will be created if none exists)
      * @param packageTypeId the id of the package type. This is ignored if the <code>newResourceTypeId</code> is not null
@@ -251,14 +251,11 @@ public interface ContentManagerLocal {
      * @param architectureId the architecture of the package version
      * @param packageBitStream the input stream with the package bits
      * @param packageUploadDetails additional details about the package. See the constants defined in this interface
-     * @param newResourceTypeId the resource type id the package version should be bound to. This is to support the usecase
-     * where a package version is being created as the backing content of a resource.
      * @param repoId an optional id of the repo to insert the package version in
-     * 
      * @return the newly create package version
      */
     PackageVersion getUploadedPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails, Integer newResourceTypeId, Integer repoId);
+        int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails, Integer repoId);
 
     /**
      * Very simple method that persists the given package version within its own transaction.

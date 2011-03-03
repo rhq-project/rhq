@@ -85,7 +85,7 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             metaData.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, Long.toString(file.lastModified()));
             metaData.put(ContentManagerLocal.UPLOAD_FILE_NAME, packageName);
             PackageVersion packageVersion = contentManager.getUploadedPackageVersion(subject, packageName,
-                packageTypeId, version, architectureId, fileStream, metaData, null, repoId);
+                packageTypeId, version, architectureId, fileStream, metaData, repoId);
             
             successMsg = "success [packageVersionId=" + packageVersion.getId() + ",packageId=" + packageVersion.getGeneralPackage().getId() + "]";
         } catch (Exception e) {

@@ -240,15 +240,12 @@ public class CreateNewPackageUIBean {
                     packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, new MessageDigestGenerator(
                         MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
                 } catch (IOException e1) {
-                    log.warn("Error calculating file digest(s) : " + e1.getMessage());
-                    e1.printStackTrace();
+                    log.warn("Error calculating file digest(s)", e1);
                 }
 
-                //TODO: need to get parent id instead right? ref to app server inst itself?
-                Integer newResourceTypeId = resource == null ? null : resource.getResourceType().getId();
                 Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
                 packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
-                    version, architectureId, packageStream, packageUploadDetails, newResourceTypeId, iRepoId);
+                    version, architectureId, packageStream, packageUploadDetails, iRepoId);
 
             } catch (NoResultException nre) {
                 //eat the exception.  Some of the queries return no results if no package yet exists which is fine.

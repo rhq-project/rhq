@@ -1617,10 +1617,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @SuppressWarnings("unchecked")
     public PackageVersion getUploadedPackageVersion(Subject subject, String packageName, int packageTypeId,
         String version, int architectureId, InputStream packageBitStream,
-        Map<String, String> packageUploadDetails, Integer newResourceTypeId, Integer repoId) {
+        Map<String, String> packageUploadDetails, Integer repoId) {
 
         PackageVersion packageVersion = null;
-        PackageType packageType = null;
         
         //default version to 1.0 if is null, not provided for any reason.
         if ((version == null) || (version.trim().length() == 0)) {
@@ -1628,31 +1627,33 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
+        PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
 
         // See if package version already exists for the resource package        
-        if (newResourceTypeId != null) {
-            Query packageVersionQuery = null;
+        Query packageVersionQuery = null;
 
+        if (packageType.getResourceType() != null) {
             packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
-            packageVersionQuery.setParameter("resourceTypeId", newResourceTypeId);
+            packageVersionQuery.setParameter("resourceTypeId", packageType.getResourceType().getId());
             
-            packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
-            packageVersionQuery.setParameter("packageName", packageName);
-            
-            packageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
-            packageVersionQuery.setParameter("packageTypeName", packageType.getName());
-
-            packageVersionQuery.setParameter("architectureName", architecture.getName());
-            packageVersionQuery.setParameter("version", version);
-
-            // Result of the query should be either 0 or 1
-            List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
-
-            if (existingPackageVersionList.size() > 0) {
-                packageVersion = existingPackageVersionList.get(0);
-            }
         } else {
-            packageType = entityManager.find(PackageType.class, packageTypeId);
+            packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+            packageVersionQuery.setParameter("resourceType", null);
+        }
+
+        packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
+        packageVersionQuery.setParameter("packageName", packageName);
+        
+        packageVersionQuery.setParameter("packageTypeName", packageType.getName());
+
+        packageVersionQuery.setParameter("architectureName", architecture.getName());
+        packageVersionQuery.setParameter("version", version);
+
+        // Result of the query should be either 0 or 1
+        List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
+
+        if (existingPackageVersionList.size() > 0) {
+            packageVersion = existingPackageVersionList.get(0);
         }
 
         try {

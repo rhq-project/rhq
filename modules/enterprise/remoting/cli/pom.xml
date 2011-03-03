@@ -33,7 +33,13 @@
          <artifactId>rhq-remoting-client-api</artifactId>
          <version>${project.version}</version>
       </dependency>
-
+      
+      <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-script-bindings</artifactId>
+            <version>${project.version}</version>
+      </dependency>
+      
       <dependency>
           <groupId>${groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>

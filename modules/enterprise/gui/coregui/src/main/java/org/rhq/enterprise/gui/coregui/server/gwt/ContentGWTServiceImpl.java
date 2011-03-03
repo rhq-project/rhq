@@ -26,8 +26,13 @@ import java.util.List;
 
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -39,6 +44,7 @@ import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * @author Simeon Pinder
  * @author Greg Hinkle
  */
 public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements ContentGWTService {
@@ -68,6 +74,35 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         }
     }
 
+    public PageList<Package> findPackagesByCriteria(PackageCriteria criteria) {
+        try {
+            return SerialUtility.prepare(contentManager.findPackagesByCriteria(getSessionSubject(), criteria),
+                "ContentService.findPackagesByCriteria");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(
+        InstalledPackageHistoryCriteria criteria) throws RuntimeException {
+        try {
+            PageList<InstalledPackageHistory> results = SerialUtility.prepare(contentUiManager
+                .findInstalledPackageHistoryByCriteria(getSessionSubject(), criteria),
+                "ContentService.findInstalledPackageHistoryByCriteria");
+            return results;
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+    
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria) {
+        try {
+            return SerialUtility.prepare(contentManager.findPackagesWithLatestVersion(getSessionSubject(), criteria),
+                "ContentService.findPackagesByCriteria");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
     public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
         throws RuntimeException {
         try {
@@ -92,6 +127,16 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         try {
             return SerialUtility.prepare(contentManager.getResourceCreationPackageType(resourceTypeId),
                 "ContentService.getResourceCreationPackageType");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+    
+    @Override
+    public PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(contentManager.findPackageTypeWithVersionFormat(getSessionSubject(), resourceTypeId, packageTypeName),
+                "ContentService.findPackageType");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

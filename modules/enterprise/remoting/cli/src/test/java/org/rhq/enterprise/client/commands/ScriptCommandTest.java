@@ -12,8 +12,7 @@ import java.util.ArrayList;
 import org.testng.annotations.Test;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.client.TabularWriter;
-import org.rhq.enterprise.client.utility.ScriptUtil;
+import org.rhq.enterprise.client.commands.ScriptCommand;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
@@ -24,6 +23,9 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
+import org.rhq.bindings.client.RhqManagers;
+import org.rhq.bindings.output.TabularWriter;
+import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.core.domain.auth.Subject;
 
 import javax.script.ScriptEngine;
@@ -60,7 +62,7 @@ public class ScriptCommandTest {
 
     void assertSubjectBoundToScript() {
         ScriptEngine scriptEngine = cmd.getScriptEngine();
-        Object subject = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE).get("subject");
+        Object subject = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("subject");
 
         assertNotNull(subject, "Expected variable 'subject' to be bound to script in global scope");
         assertTrue(
@@ -73,8 +75,8 @@ public class ScriptCommandTest {
         ScriptEngine scriptEngine = cmd.getScriptEngine();
         List<String> mgrsNotBound = new ArrayList<String>();
 
-        for (RemoteClient.Manager mgr : RemoteClient.Manager.values()) {
-            if (!scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE).containsKey(mgr.name())) {
+        for (RhqManagers mgr : RhqManagers.values()) {
+            if (!scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(mgr.name())) {
                 mgrsNotBound.add(mgr.remoteName());
             }
         }
@@ -87,7 +89,7 @@ public class ScriptCommandTest {
 
     void assertPrettyWriterBoundToScript() {
         ScriptEngine scriptEngine = cmd.getScriptEngine();
-        Object writer = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE).get("pretty");
+        Object writer = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).get("pretty");
 
         assertNotNull(writer, "Expected variable 'pretty' to be bound to script in global scope");
         assertTrue(
@@ -121,52 +123,52 @@ public class ScriptCommandTest {
         }
 
         @Override
-        public AlertManagerRemote getAlertManagerRemote() {
+        public AlertManagerRemote getAlertManager() {
             return null;
         }
 
         @Override
-        public AlertDefinitionManagerRemote getAlertDefinitionManagerRemote() {
+        public AlertDefinitionManagerRemote getAlertDefinitionManager() {
             return null;
         }
 
         @Override
-        public ConfigurationManagerRemote getConfigurationManagerRemote() {
+        public ConfigurationManagerRemote getConfigurationManager() {
             return null;
         }
 
         @Override
-        public RepoManagerRemote getRepoManagerRemote() {
+        public RepoManagerRemote getRepoManager() {
             return null;
         }
 
         @Override
-        public ContentManagerRemote getContentManagerRemote() {
+        public ContentManagerRemote getContentManager() {
             return null;
         }
 
         @Override
-        public OperationManagerRemote getOperationManagerRemote() {
+        public OperationManagerRemote getOperationManager() {
             return null;
         }
 
         @Override
-        public RoleManagerRemote getRoleManagerRemote() {
+        public RoleManagerRemote getRoleManager() {
             return null;
         }
 
         @Override
-        public ResourceManagerRemote getResourceManagerRemote() {
+        public ResourceManagerRemote getResourceManager() {
             return null;
         }
 
         @Override
-        public ResourceGroupManagerRemote getResourceGroupManagerRemote() {
+        public ResourceGroupManagerRemote getResourceGroupManager() {
             return null;
         }
 
         @Override
-        public SubjectManagerRemote getSubjectManagerRemote() {
+        public SubjectManagerRemote getSubjectManager() {
             return null;
         }
     }

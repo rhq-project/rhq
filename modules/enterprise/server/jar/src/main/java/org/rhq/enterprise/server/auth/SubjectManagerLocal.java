@@ -188,6 +188,15 @@ public interface SubjectManagerLocal {
      */
     Subject updateSubject(Subject subject, Subject subjectToModify, String newPassword);
 
+    /**
+     * Checks whether a user would successfully login with the provided credentials.
+     * 
+     * @param username the username
+     * @param password the password
+     * @return the subject if the credentials are correct, null otherwise
+     */
+    Subject checkAuthentication(String username, String password);
+    
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

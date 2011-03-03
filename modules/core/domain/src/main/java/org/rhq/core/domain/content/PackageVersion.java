@@ -23,6 +23,7 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,6 +47,7 @@ import org.hibernate.annotations.NamedQuery;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProductVersion;
+import org.rhq.core.domain.util.OSGiVersionComparator;
 
 /**
  * Represents a specific version of a {@link Package}. This does <i>not</i> represent an installed package found
@@ -67,11 +69,16 @@ import org.rhq.core.domain.resource.ProductVersion;
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY, query = "SELECT pv FROM PackageVersion AS pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :packageName "
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId "
         + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY, query = "SELECT pv FROM PackageVersion AS pv "
+        + " WHERE pv.generalPackage.name = :packageName "
+        + "   AND pv.generalPackage.packageType.name = :packageTypeName "
+        + "   AND pv.generalPackage.packageType.resourceType = :resourceType "
+        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),        
     @NamedQuery(name = PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID, query = "SELECT pv.id "
         + "  FROM PackageVersion AS pv " + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
         + " WHERE pv.generalPackage.name = :packageName "
@@ -150,7 +157,11 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.repoPackageVersions IS EMPTY " //
         + "   AND pv.installedPackages IS EMPTY " //
         + "   AND pv.installedPackageHistory IS EMPTY "),
-
+    @NamedQuery(name = PackageVersion.DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
+        + " WHERE pv.id IN ( :packageVersionIds )" //
+        + "   AND pv.repoPackageVersions IS EMPTY " //
+        + "   AND pv.installedPackages IS EMPTY " //
+        + "   AND pv.installedPackageHistory IS EMPTY "),
     // the bulk delete that removes the PVPV mapping from orphaned package versions
     @NamedQuery(name = PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE ProductVersionPackageVersion pvpv "
         + " WHERE pvpv.packageVersion.id NOT IN (SELECT pvcs.packageVersion.id "
@@ -238,8 +249,18 @@ import org.rhq.core.domain.resource.ProductVersion;
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGE_BY_FILENAME, query = "SELECT p FROM Package p "
         + "WHERE p.id IN (SELECT pv.generalPackage.id FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME, query = "SELECT pv FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)")
-
+    @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME, query = "SELECT pv FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_AND_REPO_ID, query = "SELECT pv"
+        + " FROM PackageVersion pv"
+        + " JOIN pv.repoPackageVersions rpv"
+        + " WHERE pv.generalPackage.id = :packageId"
+        + "     AND rpv.repo.id = :repoId"),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_DELETEABLE_IDS_IN_REPO, query = "SELECT pv.id FROM PackageVersion pv" 
+        + " WHERE (pv.id, 1) IN"
+        + "   (SELECT pv2.id, (SELECT COUNT(rpv) FROM RepoPackageVersion rpv WHERE rpv.packageVersion.id = pv2.id)"
+        + "    FROM PackageVersion pv2"
+        + "    WHERE pv2.id IN ( :packageVersionIds )"
+        + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId))")
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
@@ -252,12 +273,14 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
     public static final String QUERY_FIND_BY_PACKAGE_SHA = "PackageVersion.findByPackageSha";
     public static final String QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE = "PackageVersion.findByPackageShaResType";
+    public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE = "PackageVersion.findByPackageDetailsKeyWithNonNullResourceType";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_SHA = "PackageVersion.findByPackageDetailsSha";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
     public static final String QUERY_FIND_BY_REPO_ID = "PackageVersion.findByRepoId";
     public static final String QUERY_FIND_BY_REPO_ID_FILTERED = "PackageVersion.findByRepoIdFiltered";
     public static final String QUERY_FIND_BY_PACKAGE_ID = "PackageVersion.findByPackageId";
+    public static final String QUERY_FIND_BY_PACKAGE_AND_REPO_ID = "PackageVersion.findByPackageAndRepoId";
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE = "PackageVersion.findByRepoIdWithPackage";
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByRepoIdWithPackageFiltered";
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";
@@ -265,6 +288,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";
     public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
     public static final String DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteSingleIfNoContentSourcesOrRepos";
+    public static final String DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteMultipleIfNoContentSourcesOrRepos";
     public static final String DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deletePVPVIfNoContentSourcesOrRepos";
     public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedExtraProps";
     public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedFiles";
@@ -275,6 +299,53 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
     public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
+    public static final String QUERY_FIND_DELETEABLE_IDS_IN_REPO = "PackageVersion.findDeleteableVersionIds";
+    
+    /**
+     * This is a default {@link Comparator} implementation for package versions.
+     * If the package versions being compared both have non-null {@link PackageVersion#getVersion() versions}
+     * an {@link OSGiVersionComparator} is used to compare them. If it fails or if one of the versions
+     * is null the package versions are compared by {@link PackageVersion#getFileCreatedDate() file created date}.
+     * If the creation date is not specified for one of the package versions, they proclaimed equal.
+     * <p>
+     * Note that this comparator is *INCONSISTENT* with <code>equals()</code> and therefore care should be taken
+     * when using it with sets and maps (read this {@link Comparator documentation}).
+     *
+     * @author Lukas Krejci
+     */
+    public static class DefaultPackageVersionComparator implements Comparator<PackageVersion>, Serializable {
+        private static final long serialVersionUID = 1L;
+
+        public int compare(PackageVersion p1, PackageVersion p2) {
+            String v1 = p1.getVersion();
+            String v2 = p2.getVersion();
+            
+            OSGiVersionComparator c = new OSGiVersionComparator();
+            
+            if (v1 != null && v2 != null) {
+                try {
+                    return c.compare(v1, v2);
+                } catch (IllegalArgumentException e) {
+                    //well, this can happen.. not all packages have OSGi type versions.
+                }
+            }
+                       
+            if (p1.getFileCreatedDate() != null && p2.getFileCreatedDate() != null) {
+                return p1.getFileCreatedDate().compareTo(p2.getFileCreatedDate());
+            }
+            
+            //hmm... there's actually nothing we can sort these two by..
+            //let's compare them by id - the one inserted sooner will have a lower id
+                        
+            return Integer.valueOf(p1.getId()).compareTo(p2.getId());
+        }
+    };
+    
+    /**
+     * @see DefaultPackageVersionComparator
+     */
+    public static final DefaultPackageVersionComparator DEFAULT_COMPARATOR = new DefaultPackageVersionComparator();
+    
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)

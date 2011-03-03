@@ -1,0 +1,893 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:h="http://java.sun.com/jsf/html"
+  xmlns:f="http://java.sun.com/jsf/core"
+  xmlns:ui="http://java.sun.com/jsf/facelets"
+  xmlns:c="http://java.sun.com/jstl/core"
+  xmlns:onc="http://jboss.org/on/component"
+  xmlns:onf="http://jboss.org/on/function"
+  xmlns:s="http://jboss.com/products/seam/taglib"
+  xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+  xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+  <ui:define name="content">
+
+    <h:form id="repoDetailsForm">
+      <input type="hidden" name="id" value="${param.id}" />
+      <input type="hidden" name="mode" value="${param.mode}" />
+
+      <rich:panel>
+        <f:facet name="header">Basic Details</f:facet>
+        <table>
+          <tr>
+            <td align="right"><b>Name:</b></td>
+            <td align="left"><h:inputText
+              rendered="${mode eq 'edit'}"
+              value="#{RepoDetailsUIBean.repo.name}" /> <h:outputText
+              rendered="${mode ne 'edit'}"
+              value="#{RepoDetailsUIBean.repo.name}" /></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Description:</b></td>
+            <td align="left"><h:inputTextarea
+              rendered="${mode eq 'edit'}" rows="3" cols="20"
+              value="#{RepoDetailsUIBean.repo.description}" /> <h:outputText
+              rendered="${mode ne 'edit'}"
+              value="#{RepoDetailsUIBean.repo.description}" /></td>
+          </tr>  
+          <tr>
+            <td align="right"><b>Private:</b></td>
+            <td align="left"><h:selectBooleanCheckbox 
+                rendered="${mode eq 'edit'}" value="#{CreateRepoUIBean.repo.private}"/>
+                <h:outputText rendered="${mode ne 'edit'}" value="#{RepoDetailsUIBean.repo.private}" />
+            </td>
+          </tr>
+          <tr>
+            <td align="right"><b>Owner:</b></td>
+            <td align="left">
+                <h:selectOneMenu rendered="${mode eq 'edit' and RepoDetailsUIBean.repositoryManager}"
+                    value="#{RepoDetailsUIBean.repo.owner.name}">
+                    <f:selectItems value="#{RepoDetailsUIBean.availableOwners}"/>
+                </h:selectOneMenu>
+                <h:outputText rendered="${mode ne 'edit' or not RepoDetailsUIBean.repositoryManager}" value="#{RepoDetailsUIBean.repo.owner.name}"/>
+            </td>
+          </tr>        
+          <tr>
+            <td align="right"><b>Sync Schedule:</b></td>
+            <td align="left"><h:inputText
+              rendered="${RepoDetailsUIBean.repositoryManager and mode eq 'edit'}"
+              value="#{RepoDetailsUIBean.repo.syncSchedule}" /> <h:outputText
+              rendered="${mode ne 'edit' or not RepoDetailsUIBean.repositoryManager}"
+              value="#{RepoDetailsUIBean.repo.syncSchedule}" /></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Creation Date:</b></td>
+            <td align="left"><h:outputText
+              value="#{RepoDetailsUIBean.repo.creationDate}">
+              <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                timeZone="#{ServerInfoUIBean.timeZone}" />
+            </h:outputText></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Last Modified Date:</b></td>
+            <td align="left"><h:outputText
+              value="#{RepoDetailsUIBean.repo.lastModifiedDate}">
+              <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                timeZone="#{ServerInfoUIBean.timeZone}" />
+            </h:outputText></td>
+          </tr>
+        
+          <!-- ******* START AJAX REFRESH/POLLING BLOCK ****** -->
+          <a4j:region>
+          <a4j:poll id="statusPoll" interval="1005"
+            reRender="syncPercent,syncStatus" />
+          <tr>
+            <td align="right"><b>Synchronization Status:</b></td>
+            <td align="left"><c:choose>
+              <c:when
+                test="#{RepoDetailsUIBean.percentComplete != '100'}">
+                  <h:outputText id="syncStatus"
+                    value="#{RepoDetailsUIBean.syncStatus}" />
+              </c:when>
+              <c:otherwise>
+                <h:outputText id="syncStatus"
+                  value="#{RepoDetailsUIBean.syncStatus}" />
+              </c:otherwise>
+            </c:choose></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Raw Percentage:</b></td>
+            <td align="left">
+                  <h:outputText id="syncPercent"
+                    value="#{RepoDetailsUIBean.percentComplete}" />
+            </td>
+          </tr>
+          <tr>
+            <td align="right"><b>Synchronization Progress:</b></td>
+            <td align="left">
+              <c:choose>
+                <c:when
+                  test="#{RepoDetailsUIBean.currentlySyncing}">
+                  <rich:progressBar id="syncProgress"
+                    value="#{RepoDetailsUIBean.percentComplete}"
+                    label="#{RepoDetailsUIBean.percentComplete} %"
+                    interval="999" minValue="-1" maxValue="99">
+                    <f:facet name="complete">
+                      <h:outputText value="Synchronizing Complete" />
+                    </f:facet>
+                  </rich:progressBar>
+                </c:when>
+                <c:otherwise>
+                    Not Synching
+                </c:otherwise>
+              </c:choose>
+            </td>
+          </tr>
+          <!-- 
+          <tr>
+            <td align="right"><b>Synchronization Progress:</b></td>
+            <td align="left">
+              <rich:progressBar id="syncProgress"
+                value="#{RepoDetailsUIBean.percentComplete}"
+                label="#{RepoDetailsUIBean.percentComplete} %"
+                interval="999" minValue="-1" maxValue="99">
+                <f:facet name="complete">
+                  <h:outputText value="Synchronizing Complete" />
+                </f:facet>
+                <f:facet name="initial">
+                  <h:outputText value="Not Synching" />
+                </f:facet>
+              </rich:progressBar>
+            </td>
+          </tr>
+           -->
+          <tr>
+            <td align="right"><b>Synchronization Results:</b></td>
+            <td align="left"><h:outputLink
+              rendered="#{RepoDetailsUIBean.syncResults.results ne null}"
+              value="#" id="resultsLink">
+              <h:outputText value="Click here to view..." />
+              <rich:componentControl for="resultsModalPanel"
+                attachTo="resultsLink" operation="show" event="onclick" />
+            </h:outputLink> <h:outputText rendered="#{syncitem.results eq null}"
+              value="" /> <rich:modalPanel id="resultsModalPanel"
+              width="640" height="300" style="overflow: auto;">
+              <f:facet name="header">
+                <h:panelGroup>
+                  <h:outputText value="Results" />
+                </h:panelGroup>
+              </f:facet>
+              <f:facet name="controls">
+                <h:panelGroup>
+                  <h:graphicImage value="/images/close.png"
+                    style="cursor:pointer"
+                    id="resultsModelPanelHideLink" />
+                  <rich:componentControl for="resultsModalPanel"
+                    attachTo="resultsModelPanelHideLink"
+                    operation="hide" event="onclick" />
+                </h:panelGroup>
+              </f:facet>
+                  <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
+            </rich:modalPanel></td>
+          </tr>
+          </a4j:region>
+          <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
+        </table>
+      </rich:panel>
+
+      <h:panelGrid columns="3" styleClass="buttons-table"
+        columnClasses="button-cell">
+        <h:commandButton rendered="${mode ne 'edit' and RepoDetailsUIBean.editable}" value="EDIT"
+          action="#{RepoDetailsUIBean.edit}" alt="Edit"
+          styleClass="buttonmed" id="editButton" />
+        <h:commandButton rendered="${mode ne 'edit' and not RepoDetailsUIBean.currentlySyncing and RepoDetailsUIBean.repositoryManager}"
+          value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
+          alt="Synchronize" styleClass="buttonmed" id="syncButton" />
+        <h:commandButton rendered="#{RepoDetailsUIBean.repositoryManager and RepoDetailsUIBean.currentlySyncing}"
+          value="CANCEL SYNCH" action="#{RepoDetailsUIBean.cancelSync}"
+          alt="Cancel Synch" styleClass="buttonmed" id="cancelSyncButton" />
+        <h:commandButton rendered="${mode eq 'edit'}" value="SAVE"
+          action="#{RepoDetailsUIBean.save}" alt="Save"
+          styleClass="buttonmed" id="saveButton" />
+        <h:commandButton rendered="${mode eq 'edit'}" value="CANCEL"
+          action="#{RepoDetailsUIBean.cancel}" alt="Cancel"
+          styleClass="buttonmed" id="cancelButton" />
+      </h:panelGrid>
+
+    </h:form>
+
+    <!-- CONTENT SOURCE LIST -->
+
+    <h:form id="repoContentProvidersListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
+      <input type="hidden" name="id" value="${param.id}" />
+      <input type="hidden" name="mode" value="${param.mode}" />
+
+      <rich:panel>
+        <f:facet name="header">
+          <h:outputText
+            value="Content Sources Associated with This Repository" />
+        </f:facet>
+
+        <h:panelGrid columns="1" width="100%">
+
+          <ui:param name="repoContentProvidersDataModel"
+            value="#{RepoContentSourcesUIBean.dataModel}" />
+          <rich:dataTable id="repoContentProvidersDataTable"
+            rows="#{PageControl.RepoContentSourcesList.pageSize}"
+            value="#{repoContentProvidersDataModel}"
+            var="contentprovideritem" width="100%"
+            columnsWidth="1%, 20%, 15%, 15%, 9%, 9%"
+            headerClass="tableRowHeader" footerClass="on-pager-footer"
+            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+            <f:facet name="PageControlView">
+              <onc:paginationControl id="RepoContentSourcesList" />
+            </f:facet>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:allSelect target="selectedRepoContentProviders" />
+              </f:facet>
+
+              <onc:select name="selectedRepoContentProviders"
+                value="#{contentprovideritem.id}" />
+            </rich:column>
+
+            <rich:column rendered="#{param.debug}">
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.id">
+                  <h:outputText styleClass="headerText" value="ID" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputText value="#{contentprovideritem.id}" />
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.name">
+                  <h:outputText styleClass="headerText" value="Name" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputLink value="contentProvider.xhtml">
+                <f:param name="mode" value="view" />
+                <f:param name="id" value="#{contentprovideritem.id}" />
+                <h:outputText value="#{contentprovideritem.name}" />
+              </h:outputLink>
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.creationDate">
+                  <h:outputText styleClass="headerText"
+                    value="Date Created" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputText value="#{contentprovideritem.creationDate}">
+                <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                  timeZone="#{ServerInfoUIBean.timeZone}" />
+              </h:outputText>
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.lastModifiedDate">
+                  <h:outputText styleClass="headerText"
+                    value="Date Modified" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputText
+                value="#{contentprovideritem.lastModifiedDate}">
+                <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                  timeZone="#{ServerInfoUIBean.timeZone}" />
+              </h:outputText>
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.lazyLoad">
+                  <h:outputText styleClass="headerText"
+                    value="Lazy Load?" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputText value="#{contentprovideritem.lazyLoad}" />
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.downloadMode">
+                  <h:outputText styleClass="headerText"
+                    value="Download Mode" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputText value="#{contentprovideritem.downloadMode}" />
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="cs.description">
+                  <h:outputText styleClass="headerText"
+                    value="Description" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+              <h:outputText value="#{contentprovideritem.description}" />
+            </rich:column>
+
+            <f:facet name="footer">
+              <rich:columnGroup>
+                <!-- colspan 8:7 for the debug 'id' column -->
+                <rich:column colspan="#{param.debug ? 8 : 7}"
+                  width="100%">
+
+                  <!-- The ability to associate/disassociate repos with content sources is not needed for JON. -->
+                  <h:commandButton
+                    action="#{RepoContentSourcesUIBean.associateWithContentProviders}"
+                    value="ASSOCIATE..."
+                    styleClass="on-pager-button buttonsmall" />
+                  <onc:selectCommandButton
+                    action="#{RepoContentSourcesUIBean.disassociateWithContentProviders}"
+                    value="DISASSOCIATE SELECTED"
+                    target="selectedRepoContentProviders"
+                    styleClass="on-pager-button buttonsmall" />
+
+                  <ui:param name="paginationDataTableName"
+                    value="repoContentProvidersDataTable" />
+                  <ui:param name="paginationDataModel"
+                    value="#{repoContentProvidersDataModel}" />
+                  <ui:param name="paginationPageControl"
+                    value="#{PageControl.RepoContentSourcesList}" />
+                  <ui:include src="../resource/include/pagination.xhtml" />
+                </rich:column>
+              </rich:columnGroup>
+            </f:facet>
+
+          </rich:dataTable>
+
+        </h:panelGrid>
+
+      </rich:panel>
+    </h:form>
+
+    <!-- SUBSCRIBER RESOURCE LIST -->
+
+    <h:form id="repoResourcesListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
+      <input type="hidden" name="id" value="${param.id}" />
+      <input type="hidden" name="mode" value="${param.mode}" />
+
+      <rich:panel>
+        <f:facet name="header">
+          <h:outputText value="Resources Subscribed To This Repository" />
+        </f:facet>
+
+        <h:panelGrid columns="1" width="100%">
+
+          <ui:param name="repoResourcesDataModel"
+            value="#{RepoResourcesUIBean.dataModel}" />
+          <rich:dataTable id="repoResourcesDataTable"
+            rows="#{PageControl.RepoResourcesList.pageSize}"
+            value="#{repoResourcesDataModel}" var="resourceitem"
+            width="100%" columnsWidth="1%, 20%, 15%, 15%"
+            headerClass="tableRowHeader" footerClass="on-pager-footer"
+            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+            <f:facet name="PageControlView">
+              <onc:paginationControl id="RepoResourcesList" />
+            </f:facet>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:allSelect target="selectedRepoResources" />
+              </f:facet>
+ 
+              <onc:select name="selectedRepoResources"
+                value="#{resourceitem.original.id}" />
+           </rich:column>
+
+            <rich:column rendered="#{param.debug}">
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="rc.resource.id">
+                  <h:outputText styleClass="headerText" value="ID" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+ 
+              <h:outputText value="#{resourceitem.original.id}" />
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="rc.resource.name">
+                  <h:outputText styleClass="headerText" value="Resource" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+
+              <onc:disambiguatedResourceName resourceName="#{resourceitem.original.name}"
+                 resourceId="#{resourceitem.original.id}" disambiguationReport="#{resourceitem}" />
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText value="Location" />
+                </f:facet>
+                <onc:disambiguatedResourceLineage parents="#{resourceitem.parents}"/>
+            </rich:column>
+            
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="rc.resource.version">
+                  <h:outputText styleClass="headerText" value="Version" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+ 
+              <h:outputText value="#{resourceitem.original.version}" />
+            </rich:column>
+
+            <rich:column>
+              <f:facet name="header">
+                <onc:sortableColumnHeader sort="rc.resource.description">
+                  <h:outputText styleClass="headerText"
+                    value="Description" />
+                </onc:sortableColumnHeader>
+              </f:facet>
+ 
+              <h:outputText value="#{resourceitem.original.description}" />
+            </rich:column>
+
+            <f:facet name="footer">
+              <rich:columnGroup>
+                <!-- colspan 6:5 for the debug 'id' column -->
+                <rich:column colspan="#{param.debug ? 7 : 6}"
+                  width="100%">
+                  <h:commandButton
+                    action="#{RepoResourcesUIBean.subscribeResources}"
+                    value="SUBSCRIBE..."
+                    styleClass="on-pager-button buttonsmall" />
+                  <onc:selectCommandButton
+                    action="#{RepoResourcesUIBean.deleteSelectedRepoResources}"
+                    value="UNSUBSCRIBE SELECTED"
+                    target="selectedRepoResources"
+                    styleClass="on-pager-button buttonsmall" />
+
+                  <ui:param name="paginationDataTableName"
+                    value="repoResourcesDataTable" />
+                  <ui:param name="paginationDataModel"
+                    value="#{repoResourcesDataModel}" />
+                  <ui:param name="paginationPageControl"
+                    value="#{PageControl.RepoResourcesList}" />
+                  <ui:include src="../resource/include/pagination.xhtml" />
+                </rich:column>
+              </rich:columnGroup>
+            </f:facet>
+
+          </rich:dataTable>
+
+        </h:panelGrid>
+
+      </rich:panel>
+    </h:form>
+
+
+
+    <!-- PACKAGE LIST -->
+
+    <h:form id="repoPackageVersionsListForm">
+      <a4j:region id="packageList">
+        <input type="hidden" name="id" value="${param.id}" />
+        <input type="hidden" name="mode" value="${param.mode}" />
+
+        <rich:panel>
+          <f:facet name="header">
+            <h:outputText
+              value="Packages" />
+          </f:facet>
+
+          <h:panelGrid columns="1" width="100%">
+
+            <h:panelGroup layout="block" style="margin-bottom: 6px;">
+
+              <b>Filter By: </b>
+              <h:inputText id="packageFilter"
+                value="#{RepoPackageVersionsUIBean.packageFilter}">
+                <a4j:support event="onchange"
+                  reRender="repoPackageVersionsDataTable, repoPackageVersionsDataTableScroller" />
+              </h:inputText>
+              <a4j:commandButton value="GO"
+                reRender="repoPackageVersionsDataTable, repoPackageVersionsDataTableScroller"
+                styleClass="buttonmed">
+                <s:defaultAction />
+              </a4j:commandButton>
+
+              <a4j:status>
+                <f:facet name="start">
+                        <h:graphicImage
+                    value="/images/status_bar.gif" />
+                </f:facet>
+              </a4j:status>
+
+            </h:panelGroup>
+
+            <ui:param name="repoPackageVersionsDataModel"
+              value="#{RepoPackageVersionsUIBean.dataModel}" />
+            <rich:dataTable id="repoPackageVersionsDataTable"
+              rows="#{PageControl.RepoPackageVersionsList.pageSize}"
+              value="#{repoPackageVersionsDataModel}" var="package"
+              width="100%" columnsWidth="5%,20%, 10%, 5%, 60%"
+              headerClass="tableRowHeader" footerClass="on-pager-footer"
+              onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+              onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+              <f:facet name="PageControlView">
+                <onc:paginationControl id="RepoPackageVersionsList" />
+              </f:facet>
+
+              <rich:column>
+                <f:facet name="header">
+                  <onc:allSelect target="selectedPackages" />
+                </f:facet>
+
+                <onc:select name="selectedPackages" value="#{package.id}" />
+              </rich:column>
+
+              <rich:column rendered="#{param.debug}">
+                <f:facet name="header">
+                  <onc:sortableColumnHeader sort="pv.id">
+                    <h:outputText styleClass="headerText" value="ID" />
+                  </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{package.id}" />
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <onc:sortableColumnHeader sort="pv.displayName">
+                    <h:outputText styleClass="headerText" value="Name" />
+                  </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputLink value="packageVersion-plain.xhtml">
+                  <f:param name="id" value="#{package.id}" />
+                  <h:outputText value="#{package.displayName}" />
+                </h:outputLink>
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <onc:sortableColumnHeader sort="pv.version">
+                    <h:outputText styleClass="headerText"
+                      value="Version" />
+                  </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{package.displayVersion}" />
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <onc:sortableColumnHeader sort="pv.architecture.name">
+                    <h:outputText styleClass="headerText" value="Arch" />
+                  </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{package.architecture.name}" />
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <onc:sortableColumnHeader sort="pv.shortDescription">
+                    <h:outputText styleClass="headerText"
+                      value="Description" />
+                  </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:panelGroup layout="block">
+                  <h:outputText value="#{package.shortDescription}" escape="false" />
+                </h:panelGroup>
+              </rich:column>
+
+              <f:facet name="footer">
+                <rich:columnGroup>
+                  <!-- colspan 5:4 for the debug 'id' column -->
+                  <rich:column colspan="#{param.debug ? 6 : 5}"
+                    width="100%">
+
+                    <ui:param name="confirmInstallMessage"
+                      value="#{msg['repo.view.deployPackageConfirm']}" />
+                    <ui:remove>
+                      <!-- NOTE: The onclick JavaScript block below should not return true under any circumstance. It is does so,
+                                    the JSF-RI-generated JavaScript will never get executed, and the browser will proceed to
+                                    redirect to "#", which will do nothing but refresh the current page. -->
+                    </ui:remove>
+                    <onc:selectCommandButton
+                      action="#{RepoPackageVersionsUIBean.installSelectedPackages}"
+                      value="INSTALL PACKAGES" target="selectedPackages"
+                      onclick="if (!confirm('#{confirmInstallMessage}')) return false"
+                      styleClass="on-pager-button buttonsmall"
+                      rendered="#{RepoDetailsUIBean.inventoryManager}" />
+                    <onc:selectCommandButton
+                      action="#{RepoPackageVersionsUIBean.deleteSelectedPackages}"
+                      value="DELETE PACKAGES" target="selectedPackages"
+                      onclick="if (!confirm('Are you sure to delete the selected packages?\n\nOnly packages that don\'t come from content sources and that aren\'t and never have been installed to some resource will actually be deleted.')) return false"
+                      styleClass="on-pager-button buttonsmall"
+                      rendered="#{not RepoDetailsUIBean.hasContentSources}" />
+                      
+                    <ui:param name="paginationDataTableName"
+                      value="repoPackageVersionsDataTable" />
+                    <ui:param name="paginationDataModel"
+                      value="#{repoPackageVersionsDataModel}" />
+                    <ui:param name="paginationPageControl"
+                      value="#{PageControl.RepoPackageVersionsList}" />
+                    <ui:include
+                      src="../resource/include/pagination.xhtml" />
+                  </rich:column>
+                </rich:columnGroup>
+              </f:facet>
+
+            </rich:dataTable>
+            
+          </h:panelGrid>
+
+        </rich:panel>
+      </a4j:region>  
+     </h:form>
+     
+     <h:form rendered="#{not RepoDetailsUIBean.hasContentSources and RepoDetailsUIBean.editable}">  
+           <rich:panel >
+                <f:facet name="header">
+                    <h:outputText value="Upload New Package"/>
+                </f:facet>
+           
+            <h:panelGrid columns="2">
+
+                <h:panelGroup style="float:right">
+                    <b>File <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear:both">
+                  <input type="button"
+                         class="buttonmed"
+                         value="UPLOAD FILE..."
+                         onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+                  <rich:spacer width="5" />
+                  <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
+                                value="File Uploaded: #{UploadNewPackageUIBean.fileItem.fileName}"/>
+                </h:panelGroup>
+                
+                <ui:remove><!-- row 1 --></ui:remove>
+                <h:panelGroup style="float: right">
+                   <b>Type <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedPackageTypeId}">
+                      <f:selectItems value="#{CreateNewPackageUIBean.packageTypes}"/>
+                   </h:selectOneMenu>
+                </h:panelGroup>
+
+                <ui:remove><!-- row 2 --></ui:remove>
+                <h:panelGroup style="float: right">
+                   <b>Name <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:inputText id="packageName" value="#{CreateNewPackageUIBean.packageName}" required="true"/>
+                   <h:message for="packageName" styleClass="ValidationErrorText"/>
+                </h:panelGroup>
+
+               <ui:remove><!-- row 3 --></ui:remove>
+               <h:panelGroup style="float: right">
+                  <b>Version <span class="required-marker-text">*</span></b>
+               </h:panelGroup>
+               <h:panelGroup style="clear: both">
+                  <h:inputText id="initialVersion" value="#{CreateNewPackageUIBean.version}" required="true"/>
+                  <h:message for="initialVersion" styleClass="ValidationErrorText"/>
+               </h:panelGroup>
+
+               <ui:remove><!-- row 4 --></ui:remove>
+               <h:panelGroup style="float: right">
+                  <b>Architecture <span class="required-marker-text">*</span></b>
+               </h:panelGroup>
+               <h:panelGroup style="clear: both">
+                 <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedArchitectureId}">
+                    <f:selectItems value="#{CreateNewPackageUIBean.architectures}" />
+                 </h:selectOneMenu>
+               </h:panelGroup>
+
+            </h:panelGrid>
+             
+            <input type="hidden" name="repoOption" value="dummy-non-null-value-to-trick-the-ui-bean-to-do-our-thing"/>   
+            <input type="hidden" name="id" value="${param.id}" />
+            <input type="hidden" name="mode" value="${param.mode}" />
+            <h:commandButton action="#{CreateNewPackageUIBean.createPackage}" value="CREATE PACKAGE" styleClass="buttonmed"/>
+         </rich:panel>
+    </h:form>
+
+    <h:form id="repoDistributionListForm" rendered="#{RepoDetailsUIBean.repositoryManager and RepoDistributionUIBean.dataModel.rowCount gt 0}">
+      <a4j:region id="distributionList">
+        <input type="hidden" name="id" value="${param.id}" />
+        <input type="hidden" name="mode" value="${param.mode}" />
+
+        <rich:panel>
+          <f:facet name="header">
+            <h:outputText
+              value="Distribution Trees" />
+          </f:facet>
+
+          <h:panelGrid columns="1" width="100%">
+
+
+            <ui:param name="repoDistributionDataModel"
+              value="#{RepoDistributionUIBean.dataModel}" />
+            <rich:dataTable id="repoDistributionDataTable"
+              rows="#{PageControl.RepoDistributionList.pageSize}"
+              value="#{repoDistributionDataModel}" var="dist"
+              width="100%" columnsWidth="20%,30%,50%"
+              headerClass="tableRowHeader" footerClass="on-pager-footer"
+              onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+              onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+              <f:facet name="PageControlView">
+                <onc:paginationControl id="RepoDistributionList" />
+              </f:facet>
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText"
+                    value="Distribution Label" />
+                </f:facet>
+                <h:outputText value="#{dist.label}" />
+
+              </rich:column>
+
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText"
+                    value="Distribution Type" />
+                </f:facet>
+                <h:outputText value="#{dist.distributionType}" />
+
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText"
+                    value="Base Path" />
+                </f:facet>
+                <h:outputText value="#{dist.basePath}" />
+
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText"
+                    value="Last Modified" />
+                </f:facet>
+                <h:outputText value="#{dist.lastModifiedDate}">
+                    <f:converter converterId="UserDateTimeConverter" />
+                </h:outputText> 
+                
+              </rich:column>
+
+
+              <f:facet name="footer">
+                <rich:columnGroup>
+                  <!-- colspan 5:4 for the debug 'id' column -->
+                  <rich:column colspan="#{param.debug ? 6 : 5}"
+                    width="100%">
+
+                    <ui:param name="paginationDataTableName"
+                      value="repoDistributionDataTable" />
+                    <ui:param name="paginationDataModel"
+                      value="#{repoDistributionDataModel}" />
+                    <ui:param name="paginationPageControl"
+                      value="#{PageControl.RepoDistributionList}" />
+                    <ui:include
+                      src="../resource/include/pagination.xhtml" />
+                  </rich:column>
+                </rich:columnGroup>
+              </f:facet>
+
+            </rich:dataTable>
+
+          </h:panelGrid>
+
+        </rich:panel>
+      </a4j:region>
+    </h:form>
+
+    <h:form id="repoAdvisoryListForm" rendered="#{RepoDetailsUIBean.repositoryManager and RepoAdvisoryUIBean.dataModel.rowCount gt 0}">
+      <a4j:region id="advisoryList">
+        <input type="hidden" name="id" value="${param.id}" />
+        <input type="hidden" name="mode" value="${param.mode}" />
+
+        <rich:panel>
+          <f:facet name="header">
+            <h:outputText value="Advisories" />
+          </f:facet>
+
+          <h:panelGrid columns="1" width="100%">
+
+
+            <ui:param name="repoAdvisoryDataModel"
+              value="#{RepoAdvisoryUIBean.dataModel}" />
+            <rich:dataTable id="repoAdvisoryDataTable"
+              rows="#{PageControl.RepoAdvisoryList.pageSize}"
+              value="#{repoAdvisoryDataModel}" var="adv" width="100%"
+              columnsWidth="20%,20%,60%" headerClass="tableRowHeader"
+              footerClass="on-pager-footer"
+              onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+              onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+              <f:facet name="PageControlView">
+                <onc:paginationControl id="RepoAdvisoryList" />
+              </f:facet>
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText"
+                    value="Advisory Label" />
+                </f:facet>
+                <!--<h:outputText value="#{adv.advisory}"/>-->
+
+                <h:outputLink value="advisoryInfo.xhtml">
+                  <f:param name="id" value="#{adv.id}" />
+                  <h:outputText value="#{adv.advisory}" />
+                </h:outputLink>
+              </rich:column>
+
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Type" />
+                </f:facet>
+                <h:outputText value="#{adv.advisoryType}" />
+
+              </rich:column>
+
+              <rich:column>
+                <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Synopsis" />
+                </f:facet>
+                <h:outputText value="#{adv.synopsis}" />
+
+              </rich:column>
+
+              <f:facet name="footer">
+                <rich:columnGroup>
+                  <!-- colspan 5:4 for the debug 'id' column -->
+                  <rich:column colspan="#{param.debug ? 6 : 5}"
+                    width="100%">
+
+                    <ui:param name="paginationDataTableName"
+                      value="repoAdvisoryDataTable" />
+                    <ui:param name="paginationDataModel"
+                      value="#{repoAdvisoryDataModel}" />
+                    <ui:param name="paginationPageControl"
+                      value="#{PageControl.RepoAdvisoryList}" />
+                    <ui:include
+                      src="../resource/include/pagination.xhtml" />
+                  </rich:column>
+                </rich:columnGroup>
+              </f:facet>
+
+            </rich:dataTable>
+
+          </h:panelGrid>
+
+        </rich:panel>
+      </a4j:region>
+    </h:form>
+
+  </ui:define>
+</ui:composition>
+
+</html>

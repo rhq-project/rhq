@@ -456,10 +456,10 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     @Override
-    protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple) {
+    protected boolean fireEventOnPropertyValueChange(PropertyDefinitionSimple propertyDefinitionSimple,
+                                                     PropertySimple propertySimple) {
         return isAggregateProperty(propertySimple)
-            && super.updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple);
+            && super.fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple);
     }
 
     @Override

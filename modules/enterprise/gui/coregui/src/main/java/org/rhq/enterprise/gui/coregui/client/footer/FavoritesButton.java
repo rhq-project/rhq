@@ -56,14 +56,17 @@ public class FavoritesButton extends LocatableIMenuButton {
 
         // this is the main menu - the "favorites" button shown in the UI the user initially clicks 
         final Menu favoritesMenu = new Menu();
+        favoritesMenu.setSubmenuDirection("left");
         setMenu(favoritesMenu);
-        setShowMenuBelow(false);
         setAutoFit(true);
 
         // these are the child menus directly under the main favorites button 
         final Menu favoriteResourcesMenu = new Menu();
         final Menu favoriteGroupsMenu = new Menu();
         final Menu recentlyViewedMenu = new Menu();
+        favoriteResourcesMenu.setSubmenuDirection("left");
+        favoriteGroupsMenu.setSubmenuDirection("left");
+        recentlyViewedMenu.setSubmenuDirection("left");
         MenuItem favoriteResourcesMenuItem = new MenuItem(MSG.favorites_resources(), "Favorite_Resource_16.png");
         favoriteResourcesMenuItem.setSubmenu(favoriteResourcesMenu);
         favoriteResourcesMenu.setEmptyMessage(MSG.common_val_none());

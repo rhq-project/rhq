@@ -38,6 +38,13 @@ public class ImageManager {
     /**
      * Returns a generic edit icon.
      */
+    public static String getViewIcon() {
+        return "[SKIN]/actions/view.png";
+    }
+
+    /**
+     * Returns a generic edit icon.
+     */
     public static String getEditIcon() {
         return "[SKIN]/actions/edit.png";
     }

@@ -25,7 +25,6 @@ import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
@@ -44,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -68,7 +68,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId());
+        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId(), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -87,12 +87,9 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
-            Label title = new Label(MSG.view_group_pluginConfig_view_groupProperties() + " - "
-                + this.groupUpdateId);
-            addMember(title);
-            
             this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
                 this.memberConfigurations);
+            this.editor.setEditorTitle(MSG.view_group_pluginConfig_view_groupProperties() + " - " + this.groupUpdateId);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.setReadOnly(true);
             addMember(this.editor);
@@ -121,8 +118,14 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
         GWTServiceLookup.getConfigurationService().findPluginConfigurationsForGroupUpdate(groupUpdateId,
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_group_pluginConfig_members_fetchFailureConnInProgress(), caught,
+                                Severity.Info));
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_group_pluginConfig_members_fetchFailureConn(group.toString()), caught);
+                    }
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {

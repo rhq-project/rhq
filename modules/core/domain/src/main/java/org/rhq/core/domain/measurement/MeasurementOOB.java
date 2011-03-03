@@ -114,7 +114,21 @@ import javax.persistence.Table;
         + "      AND sched.definition = def " //
         + "      AND sched.resource = res " //
         + "      AND bal.schedule = sched " //
-        + "      AND :resourceId = res.id ") })
+        + "      AND :resourceId = res.id "), //
+    @NamedQuery(name = MeasurementOOB.GET_HIGHEST_FACTORS_FOR_GROUP, query = "" //
+        + "   SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite" //
+        + "        ( res.name, res.id, def.displayName, sched.id, o.timestamp, def.id, o.oobFactor, " //
+        + "          bal.baselineMin , bal.baselineMax, def.units ) " //
+        + "     FROM MeasurementOOB o, MeasurementSchedule sched " //
+        + "LEFT JOIN sched.definition def " //
+        + "LEFT JOIN sched.resource res " //
+        + "LEFT JOIN sched.baseline bal " //
+        + "LEFT JOIN sched.resource.explicitGroups ig " //
+        + "    WHERE o.id = sched.id " //
+        + "      AND sched.definition = def " //
+        + "      AND sched.resource = res " //
+        + "      AND bal.schedule = sched " //
+        + "      AND :groupId = ig.id ") })
 @Entity
 @Table(name = "RHQ_MEASUREMENT_OOB")
 public class MeasurementOOB {
@@ -125,6 +139,7 @@ public class MeasurementOOB {
     public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
     public static final String COUNT_FOR_DATE = "CountOOBForDate";
     public static final String GET_HIGHEST_FACTORS_FOR_RESOURCE = "GetHighestOOBFactorForResource";
+    public static final String GET_HIGHEST_FACTORS_FOR_GROUP = "GetHighestOOBFactorForGroup";
     public static final String DELETE_FOR_GROUP_AND_DEFINITION = "DeleteOOBForGroupAndDefinition";
     public static final String DELETE_FOR_SCHEDULE = "DeleteOOBForSchedule";
 

@@ -554,7 +554,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     }
 
     @Override
-    public boolean validate() {
+    public void validate(AsyncCallback<Void> callback) {
         try {
             if (dynamicForm.validate(false)) {
                 // let's make sure the args can be validated successfully.
@@ -562,7 +562,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 ConfigurationEditor configEditor = getConfigurationEditor();
                 if (configEditor != null) {
                     if (!configEditor.validate()) {
-                        return false;
+                        callback.onFailure(null);
+                        return;
                     }
                     // nothing else to store - our config editor directly edited our extraConfig already
                 } else {
@@ -609,13 +610,13 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.OPERATION_ID
                     .getPropertyName(), operationId));
 
-                return true;
+                callback.onSuccess(null);
             } else {
-                return false;
+                callback.onFailure(null);
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_editor_saveFailed(), e);
-            return false;
+            callback.onFailure(null);
         }
     }
 

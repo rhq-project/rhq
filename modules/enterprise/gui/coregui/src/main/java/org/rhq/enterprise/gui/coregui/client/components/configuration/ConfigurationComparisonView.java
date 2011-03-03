@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -172,19 +173,28 @@ public class ConfigurationComparisonView extends VLayout {
         parent.setChildren(children.toArray(new TreeNode[children.size()]));
     }
 
-    public static void displayComparisonDialog(final ArrayList<ResourceConfigurationUpdate> configs) {
-        int resourceId = configs.get(0).getResource().getResourceType().getId();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceId,
-            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+    public static void displayComparisonDialog(final ArrayList<? extends AbstractResourceConfigurationUpdate> configs) {
+        AbstractResourceConfigurationUpdate theFirstUpdateItem = configs.get(0);
+        int resourceId = theFirstUpdateItem.getResource().getResourceType().getId();
+        final boolean isResourceConfig = theFirstUpdateItem instanceof ResourceConfigurationUpdate;
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            resourceId,
+            isResourceConfig ? EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition)
+                : EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
 
                 public void onTypesLoaded(ResourceType type) {
 
-                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+                    ConfigurationDefinition definition;
+                    if (isResourceConfig) {
+                        definition = type.getResourceConfigurationDefinition();
+                    } else {
+                        definition = type.getPluginConfigurationDefinition();
+                    }
 
                     ArrayList<Configuration> configurations = new ArrayList<Configuration>();
                     ArrayList<String> titles = new ArrayList<String>();
-                    for (ResourceConfigurationUpdate update : configs) {
+                    for (AbstractResourceConfigurationUpdate update : configs) {
                         configurations.add(update.getConfiguration());
                         titles.add(String.valueOf(update.getId()));
                     }

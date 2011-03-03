@@ -33,6 +33,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +119,7 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -158,7 +161,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private RepoManagerLocal repoManager;
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void purgeOrphanedPackageVersions(Subject subject) {
         // get all orphaned package versions that have extra props, we need to delete the configs
         // separately. We do this using em.remove so we can get hibernate to perform the cascading for us.
@@ -214,7 +217,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         log.info("User [" + subject + "] purged [" + count + "] orphaned package versions");
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void deleteContentSource(Subject subject, int contentSourceId) {
         log.debug("User [" + subject + "] is deleting content source [" + contentSourceId + "]");
 
@@ -276,7 +279,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSource> getAllContentSources(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
@@ -291,7 +294,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
@@ -321,7 +324,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return type;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource getContentSource(Subject subject, int contentSourceId) {
         Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG);
         q.setParameter("id", contentSourceId);
@@ -336,7 +339,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return contentSource;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource getContentSourceByNameAndType(Subject subject, String name, String typeName) {
         Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
         q.setParameter("name", name);
@@ -353,7 +356,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
@@ -371,6 +374,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<Repo>(results, (int) count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<Repo> getCandidateRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
@@ -390,7 +394,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSourceSyncResults> getContentSourceSyncResults(Subject subject, int contentSourceId,
         PageControl pc) {
         pc.initDefaultOrderingField("cssr.startTime", PageOrdering.DESC);
@@ -409,7 +413,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<ContentSourceSyncResults>(results, (int) count, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void mergeRepoImportResults(List<RepoDetails> repos) {
 
         Subject overlord = subjectManager.getOverlord();
@@ -437,7 +441,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void deleteContentSourceSyncResults(Subject subject, int[] ids) {
         if (ids != null) {
             for (int id : ids) {
@@ -449,7 +453,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource createContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
 
@@ -482,7 +486,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return contentSource; // now has the ID set
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
         validateContentSource(contentSource);
@@ -491,7 +495,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return contentSource;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public ContentSource updateContentSource(Subject subject, ContentSource contentSource, boolean syncNow)
         throws ContentSourceException {
 
@@ -576,7 +580,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void synchronizeAndLoadContentSource(Subject subject, int contentSourceId) {
         try {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
@@ -593,7 +597,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<PackageVersionContentSource> getPackageVersionsFromContentSource(Subject subject,
         int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
@@ -609,7 +613,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject,
         int contentSourceId, int repoId) {
 
@@ -623,7 +627,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return results;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public long getPackageVersionCountFromContentSource(Subject subject, int contentSourceId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_COUNT);
@@ -649,7 +653,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     // The methods below probably should not be exposed to remote clients
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject,
         int[] contentSourceIds, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
@@ -674,7 +678,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSourceInRepo(Subject subject,
         int contentSourceId, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
@@ -716,7 +720,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<PackageVersionContentSource>(uniquePVs, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(45 * 60)
     public void downloadDistributionBits(Subject subject, ContentSource contentSource) {
@@ -793,7 +797,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @TransactionTimeout(90 * 60)
     public PackageBits downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) {
@@ -1568,34 +1572,42 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentProviderPackageDetailsKey key = newDetails.getContentProviderPackageDetailsKey();
 
             // find the new package's associated resource type (should already exist)
-            ResourceType rt = new ResourceType();
-            rt.setName(key.getResourceTypeName());
-            rt.setPlugin(key.getResourceTypePluginName());
+            ResourceType rt = null;
+            if (key.getResourceTypeName() != null && key.getResourceTypePluginName() != null) {
+                rt = new ResourceType();
+                rt.setName(key.getResourceTypeName());
+                rt.setPlugin(key.getResourceTypePluginName());
 
-            if (!knownResourceTypes.containsKey(rt)) {
-                q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
-                q.setParameter("name", rt.getName());
-                q.setParameter("plugin", rt.getPlugin());
+                if (!knownResourceTypes.containsKey(rt)) {
+                    q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
+                    q.setParameter("name", rt.getName());
+                    q.setParameter("plugin", rt.getPlugin());
 
-                try {
-                    rt = (ResourceType) q.getSingleResult();
-                    knownResourceTypes.put(rt, rt); // cache it so we don't have to keep querying the DB
-                    knownProductVersions.put(rt, new HashMap<String, ProductVersion>());
-                } catch (NoResultException nre) {
-                    log.warn("Content source adapter found a package for an unknown resource type ["
-                        + key.getResourceTypeName() + "|" + key.getResourceTypePluginName() + "] Skipping it.");
-                    continue; // skip this one but move on to the next
-                }
-            } else {
-                rt = knownResourceTypes.get(rt);
+                    try {
+                        rt = (ResourceType) q.getSingleResult();
+                        knownResourceTypes.put(rt, rt); // cache it so we don't have to keep querying the DB
+                        knownProductVersions.put(rt, new HashMap<String, ProductVersion>());
+                    } catch (NoResultException nre) {
+                        log.warn("Content source adapter found a package for an unknown resource type ["
+                            + key.getResourceTypeName() + "|" + key.getResourceTypePluginName() + "] Skipping it.");
+                        continue; // skip this one but move on to the next
+                    }
+                } else {
+                    rt = knownResourceTypes.get(rt);
+                }                
             }
 
             // find the new package's type (package types should already exist, agent plugin descriptors define them)
             PackageType pt = new PackageType(key.getPackageTypeName(), rt);
 
             if (!knownPackageTypes.containsKey(pt)) {
-                q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
-                q.setParameter("typeId", rt.getId());
+                if (rt != null) {
+                    q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME);
+                    q.setParameter("typeId", rt.getId());
+                } else {
+                    q = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE);
+                }
+                
                 q.setParameter("name", pt.getName());
 
                 try {
@@ -1616,7 +1628,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE);
             q.setParameter("name", newDetails.getName());
             q.setParameter("packageTypeName", newDetails.getPackageTypeName());
-            q.setParameter("resourceTypeId", rt.getId());
+            q.setParameter("resourceTypeId", rt != null ? rt.getId() : null);
             Package pkg;
             try {
                 pkg = (Package) q.getSingleResult();
@@ -1671,7 +1683,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             q.setParameter("packageName", newDetails.getName());
             q.setParameter("packageTypeName", pt.getName());
-            q.setParameter("resourceTypeId", rt.getId());
+            q.setParameter("resourceType", rt);
             q.setParameter("architectureName", arch.getName());
             q.setParameter("version", newDetails.getVersion());
 
@@ -1705,7 +1717,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // For each resource version that is supported, make sure we have an entry for that in product version
             Set<String> resourceVersions = newDetails.getResourceVersions();
-            if (resourceVersions != null) {
+
+            // the check for null resource type shouldn't be necessary here because
+            // the package shouldn't declare any resource versions if it doesn't declare a resource type.
+            // Nevertheless, let's make that check just to prevent disasters caused by "malicious" content
+            // providers.                        
+            if (resourceVersions != null && rt != null) {
                 Map<String, ProductVersion> cachedProductVersions = knownProductVersions.get(rt); // we are guaranteed that this returns non-null
                 for (String version : resourceVersions) {
                     ProductVersion productVersion = cachedProductVersions.get(version);
@@ -1717,6 +1734,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     ProductVersionPackageVersion mapping = new ProductVersionPackageVersion(productVersion, pv);
                     entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
                 }
+            } else if (resourceVersions != null) {
+                log.info("Misbehaving content provider detected. It declares resource versions " + resourceVersions
+                    + " but no resource type in package " + newDetails + ".");
             }
 
             // now create the mapping between the package version and content source
@@ -1951,7 +1971,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         ResourceType childResourceType = (ResourceType) query.getSingleResult();
 
-        query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_WITH_NON_NULL_RESOURCE_TYPE);
         query.setParameter("packageName", packageDetailsKey.getName());
         query.setParameter("packageTypeName", packageDetailsKey.getPackageTypeName());
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());
@@ -1999,7 +2019,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         int resourceId = 0; //set to dummy value
 
-        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        log.debug("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
         return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, 0, -1, packageVersion
             .getId());
     }
@@ -2016,7 +2036,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         int resourceId = 0; //set to dummy value
 
-        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        log.debug("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
         return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, startByte, endByte,
             packageVersion.getId());
     }

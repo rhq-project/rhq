@@ -51,11 +51,11 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
             if (parent != null) {
                 form = new PackageVersionFileUploadForm(parent.extendLocatorId("ResFactPackageStep"), wizard
                     .getNewResourcePackageType().getId(), wizard.getChildType().getName(), wizard
-                    .getNewResourceVersion(), wizard.getNewResourceArchitectureId(), true, null);
+                    .getNewResourceVersion(), wizard.getNewResourceArchitectureId(), null, true, true, null);
             } else {
                 form = new PackageVersionFileUploadForm("ResFactPackageStep", wizard.getNewResourcePackageType()
                     .getId(), wizard.getChildType().getName(), wizard.getNewResourceVersion(), wizard
-                    .getNewResourceArchitectureId(), true, null);
+                    .getNewResourceArchitectureId(), null, true, true, null);
             }
             form.setPadding(20);
             form.addFormHandler(new DynamicFormHandler() {

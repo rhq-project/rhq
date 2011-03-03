@@ -99,8 +99,8 @@ public class MutableDisambiguationReport<T> {
                 realParents.add(p.getResource());
             }
         }
-        return new DisambiguationReport<T>(original, realParents, resource.resourceType.getResourceType(),
-                resource.name, resource.id);
+        
+        return new DisambiguationReport<T>(original, realParents, resource.getResource());
     } 
     
     @Override

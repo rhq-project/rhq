@@ -808,8 +808,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 long duration = request.getDuration();
                 if (duration > timeout) {
 
-                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
-                        + request);
+                    log.info("Group Resource config update request seems to be orphaned - timing it out: " + request);
 
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
@@ -975,6 +974,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         resource.getPluginConfigurationUpdates().remove(doomedRequest);
         entityManager.remove(doomedRequest);
         entityManager.flush();
+
+        return;
+    }
+
+    public void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress) {
+        if ((configurationUpdateIds == null) || (configurationUpdateIds.length == 0)) {
+            return;
+        }
+
+        // TODO [mazz]: ugly - let's make this more efficient, just getting this to work first
+        for (int configurationUpdateId : configurationUpdateIds) {
+            purgePluginConfigurationUpdate(subject, configurationUpdateId, purgeInProgress);
+        }
 
         return;
     }
@@ -1170,6 +1182,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         } else {
             updateResourceConfiguration(subject, resourceId, configuration);
         }
+    }
+
+    public void rollbackPluginConfiguration(Subject subject, int resourceId, int configHistoryId)
+        throws ConfigurationUpdateException {
+        PluginConfigurationUpdate configurationUpdateHistory = entityManager.find(PluginConfigurationUpdate.class,
+            configHistoryId);
+        Configuration configuration = configurationUpdateHistory.getConfiguration();
+        if (configuration == null) {
+            throw new ConfigurationUpdateException("No plugin configuration history element exists with id = '"
+                + configHistoryId + "'");
+        }
+
+        updatePluginConfiguration(subject, resourceId, configuration);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1776,9 +1801,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             groupIdParameter);
     }
 
-    // TODO: THIS NEEDS AUTHZ CHECK!
     @SuppressWarnings("unchecked")
-    public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId) {
+    public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupPluginConfigurationUpdateId) {
+        // this method will perform the CONFIGURE_READ security check for us, no need to keep reference to result
+        getGroupPluginConfigurationUpdate(subject, groupPluginConfigurationUpdateId);
+
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",
             groupPluginConfigurationUpdateId);
         return executeGetConfigurationMapQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100,

@@ -76,11 +76,16 @@ public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm
     }
 
     @Override
-    public boolean validate() {
+    public void validate(AsyncCallback<Void> callback) {
         if (configEditor != null) {
-            return configEditor.validate();
+            if (configEditor.validate()) {
+                callback.onSuccess(null);
+            } else {
+                callback.onFailure(null);
+            }
+        } else {
+            callback.onSuccess(null);
         }
-        return true;
     }
 
 }

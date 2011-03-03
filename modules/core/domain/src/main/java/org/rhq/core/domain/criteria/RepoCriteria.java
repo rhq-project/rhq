@@ -45,7 +45,9 @@ public class RepoCriteria extends Criteria {
     private List<Integer> filterResourceIds; // needs overrides
     private Boolean filterCandidate;
     private List<Integer> filterContentSourceIds; // needs overrides
-
+    private Integer filterOwnerId;
+    private Boolean filterIsPrivate;
+    
     private boolean fetchResourceRepos;
     private boolean fetchRepoContentSources;
     private boolean fetchRepoPackageVersions;
@@ -61,6 +63,7 @@ public class RepoCriteria extends Criteria {
             + "          FROM Repo innerRepo " //
             + "          JOIN innerRepo.repoContentSources rcs " //
             + "         WHERE rcs.contentSource.id IN ( ? ))");
+        filterOverrides.put("ownerId", "owner.id = ?");
     }
 
     @Override
@@ -92,6 +95,14 @@ public class RepoCriteria extends Criteria {
         this.filterContentSourceIds = Arrays.asList(filterContentSourceIds);
     }
 
+    public void addFilterOwnerId(Integer ownerId) {
+        this.filterOwnerId = ownerId;
+    }
+    
+    public void addFilterIsPrivate(Boolean isPrivate) {
+        this.filterIsPrivate = isPrivate;        
+    }
+    
     public void fetchResourceRepos(boolean fetchResourceRepos) {
         this.fetchResourceRepos = fetchResourceRepos;
     }

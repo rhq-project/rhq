@@ -54,7 +54,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -278,7 +277,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         metricNameFilter = QueryUtility.formatSearchParameter(metricNameFilter);
         resourceNameFilter = QueryUtility.formatSearchParameter(resourceNameFilter);
-        parentNameFilter = QueryUtility.formatSearchParameter(parentNameFilter);        
+        parentNameFilter = QueryUtility.formatSearchParameter(parentNameFilter);
 
         query.setParameter("metricName", metricNameFilter);
         queryCount.setParameter("metricName", metricNameFilter);
@@ -287,7 +286,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         query.setParameter("parentName", parentNameFilter);
         queryCount.setParameter("parentName", parentNameFilter);
         query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
-        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
 
         if (!isAdmin) {
             query.setParameter("subjectId", subject.getId());
@@ -345,6 +344,58 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, queryName);
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
+
+        List<MeasurementOOBComposite> results = query.getResultList();
+
+        if (!results.isEmpty()) {
+            // we have the n OOBs, so lets fetch the MeasurementData for those
+            List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
+            Map<MeasurementDataPK, MeasurementOOBComposite> map = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
+            for (MeasurementOOBComposite comp : results) {
+                int schedule = comp.getScheduleId();
+                MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), schedule);
+                pks.add(key);
+                map.put(key, comp);
+            }
+            // compute and add the outlier data
+            List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+            for (MeasurementDataNumeric1H data : datas) {
+                MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
+                MeasurementOOBComposite comp = map.get(pk);
+                comp.setData(data);
+                comp.calculateOutlier();
+            }
+        }
+        // return the result
+        long totalCount = (Long) countQuery.getSingleResult();
+        PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
+
+        return result;
+    }
+
+    /**
+     * Returns the highest n OOBs for the passed group id
+     * @param subject caller
+     * @param groupId the group we are interested in
+     * @param n max number of entries wanted
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(Subject subject, int groupId, int n) {
+
+        if (!authMangager.canViewResource(subject, groupId)) {
+            return new PageList<MeasurementOOBComposite>();
+        }
+
+        PageControl pc = new PageControl(0, n);
+        pc.addDefaultOrderingField("sched.id");
+        pc.addDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
+
+        String queryName = MeasurementOOB.GET_HIGHEST_FACTORS_FOR_GROUP;
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, queryName);
+        query.setParameter("groupId", groupId);
+        countQuery.setParameter("groupId", groupId);
 
         List<MeasurementOOBComposite> results = query.getResultList();
 

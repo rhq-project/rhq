@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Jay Shaughnessy
@@ -44,6 +45,7 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
     private Integer filterDestinationId; // needs override
     private String filterDestinationName; // needs override
     private BundleDeploymentStatus filterStatus;
+    private PageOrdering sortStatus;
     private String filterSubjectName;
 
     private boolean fetchBundleVersion;
@@ -122,6 +124,11 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
 
     public void fetchResourceDeployments(boolean fetchResourceDeployments) {
         this.fetchResourceDeployments = fetchResourceDeployments;
+    }
+
+    public void addSortStatus(PageOrdering sortStatus) {
+        addSortField("sort");
+        this.sortStatus = sortStatus;
     }
 
 }

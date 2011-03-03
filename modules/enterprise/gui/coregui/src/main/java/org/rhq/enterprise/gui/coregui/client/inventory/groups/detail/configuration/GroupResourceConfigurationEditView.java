@@ -72,6 +72,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     private ConfigurationEditor editor;
     private IButton saveButton;
 
+    private boolean refreshing = false;
+
     public GroupResourceConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
 
@@ -110,6 +112,11 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
     @Override
     public void refresh() {
+        if (this.refreshing) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshing = true;
         this.saveButton.disable();
         if (editor != null) {
             editor.destroy();
@@ -129,6 +136,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
             addMember(this.editor);
+            this.refreshing = false; // when we get here, we know we are done the refresh
         }
     }
 
@@ -154,6 +162,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         this.configurationService.findResourceConfigurationsForGroup(group.getId(),
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
+                    refreshing = false;
                     CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()),
                         caught);
                 }

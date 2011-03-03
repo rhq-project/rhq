@@ -48,7 +48,7 @@ public class TitleBar extends LocatableToolStrip {
         super(parent.extendLocatorId("TitleBar"));
 
         setWidth100();
-        setHeight(37);
+        setHeight(30);
 
         LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
         vLayout.setAlign(VerticalAlignment.CENTER);
@@ -62,7 +62,7 @@ public class TitleBar extends LocatableToolStrip {
         this.label.setIcon(icon);
         this.label.setIconWidth(24);
         this.label.setIconHeight(24);
-        this.label.setAutoHeight();        
+        this.label.setAutoHeight();
         hLayout.addMember(this.label);
 
         setVisible(false);
@@ -98,8 +98,8 @@ public class TitleBar extends LocatableToolStrip {
             contents = "<span class='HeaderLabel'>" + title + "</span>";
             windowTitle = "RHQ: " + title;
         }
-        this.label.setContents(contents);        
+        this.label.setContents(contents);
         Window.setTitle(windowTitle);
     }
-    
+
 }

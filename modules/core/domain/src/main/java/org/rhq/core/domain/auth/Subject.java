@@ -50,6 +50,8 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
@@ -305,9 +307,16 @@ public class Subject implements Serializable {
     @ManyToMany
     private java.util.Set<Role> ldapRoles;
 
-    // When a subject is removed any owned groups should also be removed
+    // When a subject is removed any owned groups are removed manually, no cascade delete for groups
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
     private List<ResourceGroup> ownedGroups = null;
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Set<Repo> ownedRepos;
+    
+    // When a subject is removed any owned dashboards are removed automatically
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<Dashboard> ownedDashboards = null;
 
     @Transient
     private Integer sessionId = null;
@@ -501,6 +510,22 @@ public class Subject implements Serializable {
 
     public void setOwnedGroups(List<ResourceGroup> ownedGroups) {
         this.ownedGroups = ownedGroups;
+    }
+
+    protected Set<Repo> getOwnedrepos(){
+        return ownedRepos;
+    }
+    
+    protected void setOwnedRepos(Set<Repo> repos) {
+        ownedRepos = repos;
+    }
+    
+    protected List<Dashboard> getOwnedDashboards() {
+        return ownedDashboards;
+    }
+
+    protected void setOwnedDashboards(List<Dashboard> ownedDashboards) {
+        this.ownedDashboards = ownedDashboards;
     }
 
     @Override

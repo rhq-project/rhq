@@ -21,10 +21,11 @@ package org.rhq.enterprise.gui.coregui.client;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -34,24 +35,27 @@ import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class Footer extends LocatableToolStrip {
+public class Footer extends LocatableHLayout {
     private static final String LOCATOR_ID = "CoreFooter";
+
+    private MessageBar messageBar;
 
     public Footer() {
         super(LOCATOR_ID);
         setHeight(30);
-        setAlign(VerticalAlignment.CENTER);
+        setAlign(Alignment.LEFT);
         setWidth100();
-        setMembersMargin(10);
-        setLayoutRightMargin(5);
+        setMembersMargin(5);
+        setBackgroundColor("#F1F2F3");
     }
 
     @Override
@@ -61,16 +65,25 @@ public class Footer extends LocatableToolStrip {
         final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
+        messageBar = new MessageBar();
 
-        addMember(messageCenter);
-
-        addMember(new ToolStripSeparator());
+        // leave space for the RPC Activity Spinner 
+        addMember(createHSpacer(16));
 
         addMember(alertsMessage);
 
-        addMember(new ToolStripSeparator());
+        addMember(messageBar);
 
-        addMember(favoritesButton);
+        VLayout favoritesLayout = new VLayout();
+        favoritesLayout.setHeight100();
+        favoritesLayout.setAutoWidth();
+        favoritesLayout.setAlign(Alignment.CENTER);
+        favoritesLayout.addMember(favoritesButton);
+        addMember(favoritesLayout);
+
+        addMember(messageCenter);
+
+        addMember(createHSpacer(0));
 
         alertsMessage.schedule(60000);
     }
@@ -115,7 +128,7 @@ public class Footer extends LocatableToolStrip {
     public static class AlertsMessage extends RefreshableLabel {
         public AlertsMessage(String locatorId) {
             super(locatorId);
-            setHeight(30);
+            setHeight100();
             setPadding(5);
 
             setIcon("subsystems/alert/Alert_LOW_16.png");
@@ -152,6 +165,16 @@ public class Footer extends LocatableToolStrip {
                     }
                 });
         }
+    }
+
+    public MessageBar getMessageBar() {
+        return messageBar;
+    }
+
+    private HLayout createHSpacer(int width) {
+        HLayout spacer = new HLayout();
+        spacer.setWidth(width);
+        return spacer;
     }
 
 }

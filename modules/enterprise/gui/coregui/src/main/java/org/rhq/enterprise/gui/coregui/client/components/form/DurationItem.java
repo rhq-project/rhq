@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -47,6 +49,8 @@ import java.util.TreeSet;
  * @author Ian Springer
  */
 public class DurationItem extends CanvasItem {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private static final String FIELD_VALUE = "value";
     private static final String FIELD_UNITS = "units";
@@ -105,14 +109,13 @@ public class DurationItem extends CanvasItem {
             ComboBoxItem unitsItem = new ComboBoxItem(FIELD_UNITS);
             unitsItem.setShowTitle(false);
 
-            // TODO: i18n valueMap values
             LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
             if (this.supportedUnitTypes.contains(UnitType.ITERATIONS)) {
-                valueMap.put("times", "times");
+                valueMap.put("times", MSG.common_unit_times());
             }
             if (this.supportedUnitTypes.contains(UnitType.TIME)) {
                 for (TimeUnit unit : supportedUnits) {
-                    valueMap.put(unit.name().toLowerCase(), unit.name().toLowerCase());
+                    valueMap.put(unit.name().toLowerCase(), unit.getDisplayName());
                 }
             }
             unitsItem.setValueMap(valueMap);
@@ -139,17 +142,17 @@ public class DurationItem extends CanvasItem {
 
     public void setValue(Integer value, UnitType unitType) {
         if (!this.supportedUnitTypes.contains(unitType)) {
-            throw new IllegalArgumentException("Unit type [" + unitType + "] is not supported by this DurationItem.");
+            throw new IllegalArgumentException(MSG.widget_durationItem_unitTypeNotSupported(unitType.name()));
         }
         this.unitType = unitType;
 
         String unitString = null;
         switch (unitType) {
             case TIME:
-                unitString = this.valueUnit.name().toLowerCase();
+                unitString = this.valueUnit.getDisplayName();
                 break;
             case ITERATIONS:
-                unitString = "times";
+                unitString = MSG.common_unit_times();
         }
 
         if (this.isReadOnly) {
@@ -190,7 +193,7 @@ public class DurationItem extends CanvasItem {
             } else {
                 this.unitType = UnitType.TIME;
                 if (unit.compareTo(this.valueUnit) < 0) {
-                    throw new IllegalStateException("Input unit is less than target unit.");
+                    throw new IllegalStateException(MSG.widget_durationItem_inputUnitLessThanTargetUnit());
                 }
                 switch (unit) {
                     case MILLISECONDS:
@@ -402,7 +405,7 @@ public class DurationItem extends CanvasItem {
         String string;
         if (value != null) {
             TimeUnit timeUnit = getInputTimeUnit();
-            String unitString = (timeUnit != null) ? timeUnit.name().toLowerCase() : "times";
+            String unitString = (timeUnit != null) ? timeUnit.name().toLowerCase() : MSG.common_unit_times();
             string = value + " " + unitString;
         } else {
             string = "";

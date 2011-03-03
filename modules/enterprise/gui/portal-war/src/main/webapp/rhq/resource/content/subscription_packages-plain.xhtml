@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+   <ui:param name="pageTitle" value="View Repo Subscriptions for Resource '#{ResourceUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Content.Subscriptions"/>
+
+   <ui:define name="content">
+      
+      <!-- CURRENT REPOS -->
+      <h:form id="currentPackageVersionsForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+                  
+         <rich:panel styleClass="BlockContent">
+            <f:facet name="header"><h:outputText value="Currently Subscribed Resource Packages"/></f:facet>
+
+            <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
+            <rich:dataTable id="resourcePackageVersionsDataTable" 
+                            rows="#{PageControl.ResourcePackageVersionsList.pageSize}"
+                            value="#{resourcePackageVersionsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="17%, 11%, 9%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourcePackageVersionsList" />
+               </f:facet>
+      
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.fileName">
+                        <h:outputText styleClass="headerText" value="File Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.fileName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.displayVersion">
+                        <h:outputText styleClass="headerText" value="Version" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.packageType.name">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageTypeName}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="#{param.debug ? 4 : 3}" width="100%">
+
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{resourcePackageVersionsDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.ResourcePackageVersionsList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>         
+
+      </rich:panel>
+      </h:form>
+
+      <p align="center">
+         <h:outputLink value="/rhq/resource/content/subscription.xhtml">
+            <f:param name="id" value="${param.id}"/>
+            <h:outputText value="Switch To Repo Mode" />
+         </h:outputLink>
+      </p>
+
+   </ui:define>
+</ui:composition>
+
+</html>

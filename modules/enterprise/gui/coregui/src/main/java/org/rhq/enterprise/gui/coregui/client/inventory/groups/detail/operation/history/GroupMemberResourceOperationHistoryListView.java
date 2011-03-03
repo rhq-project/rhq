@@ -32,7 +32,7 @@ public class GroupMemberResourceOperationHistoryListView
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID, MSG.common_title_id());
+        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID);
         idField.setWidth(38);
         fields.add(idField);
 

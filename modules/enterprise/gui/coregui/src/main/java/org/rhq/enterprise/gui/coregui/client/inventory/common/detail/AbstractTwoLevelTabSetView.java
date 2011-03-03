@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -115,12 +116,19 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         return (visible && enabled);
     }
 
-    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled) {
+    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, boolean visible, boolean enabled,
+        ViewFactory viewFactory) {
+        updateSubTab(tab, subTab, null, visible, enabled, viewFactory);
+    }
+
+    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled,
+        ViewFactory viewFactory) {
         tab.setVisible(subTab, visible);
         if (visible) {
             tab.setSubTabEnabled(subTab, enabled);
             if (enabled) {
                 subTab.setCanvas(canvas);
+                subTab.setViewFactory(viewFactory);
             }
         }
     }

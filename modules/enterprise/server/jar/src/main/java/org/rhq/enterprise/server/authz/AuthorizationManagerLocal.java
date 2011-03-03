@@ -220,4 +220,26 @@ public interface AuthorizationManagerLocal {
      * @return <code>true</code> if the given subject is considered the overlord subject
      */
     boolean isOverlord(Subject subject);
+    
+    /**
+     * Returns true if given subject is able to view given repo.
+     * The subject is able to view a repo if it is public or if the subject is the owner of the repo 
+     * or if the subject is a member of a role with {@link Permission#MANAGE_REPOSITORIES}.
+     *  
+     * @param subject
+     * @param repoId
+     * @return true if subject is able to view the repo, false otherwise
+     */
+    boolean canViewRepo(Subject subject, int repoId);
+    
+    /**
+     * Returns true if given subject is able to update given repo.
+     * The subject is able to update a repo if it is owned by the subject 
+     * or if the subject is a member of a role with {@link Permission#MANAGE_REPOSITORIES}.
+     *  
+     * @param subject
+     * @param repoId
+     * @return true if subject is able to update the repo, false otherwise
+     */
+    boolean canUpdateRepo(Subject subject, int repoId);
 }

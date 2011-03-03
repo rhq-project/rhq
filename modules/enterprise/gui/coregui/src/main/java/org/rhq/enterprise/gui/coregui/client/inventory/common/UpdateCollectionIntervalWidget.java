@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -109,6 +109,11 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
                 refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
             }
         });
+
+        if (!schedulesView.hasManageMeasurementsPermission()) {
+            intervalItem.setDisabled(true);
+            unitsItem.setDisabled(true);
+        }
 
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 
 /**
@@ -142,7 +143,7 @@ public class PermissionsEditor extends LocatableVStack {
     }
 
     private ListGrid createGlobalPermissionsGrid() {
-        ListGrid grid = createPermissionsGrid();
+        ListGrid grid = createPermissionsGrid("GlobalPermissions");
 
         // TODO: Add table title.
 
@@ -176,13 +177,18 @@ public class PermissionsEditor extends LocatableVStack {
             MSG.view_adminRoles_permissions_permDesc_manageBundles());
         records.add(record);
 
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
+            "subsystems/content/Content", Permission.MANAGE_REPOSITORIES,
+            MSG.view_adminRoles_permissions_permDesc_manageRepositories());
+        records.add(record);
+        
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
 
         return grid;
     }
 
     private ListGrid createResourcePermissionsGrid() {
-        ListGrid grid = createPermissionsGrid();
+        ListGrid grid = createPermissionsGrid("ResourcePermissions");
         // TODO: Add table title.
 
         ListGridField iconField = createIconField();
@@ -290,8 +296,8 @@ public class PermissionsEditor extends LocatableVStack {
         return iconField;
     }
 
-    private ListGrid createPermissionsGrid() {
-        ListGrid grid = new ListGrid();
+    private LocatableListGrid createPermissionsGrid(String id) {
+        LocatableListGrid grid = new LocatableListGrid(extendLocatorId(id));
 
         grid.setAutoFitData(Autofit.BOTH);
         grid.setWrapCells(true);

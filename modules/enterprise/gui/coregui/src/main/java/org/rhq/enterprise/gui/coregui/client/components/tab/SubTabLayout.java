@@ -319,6 +319,9 @@ public class SubTabLayout extends LocatableVLayout {
                         canvas.setOverflow(Overflow.SCROLL);
                     }
                     addMember(canvas);
+                    if (!canvas.isVisible()) {
+                        canvas.show();
+                    }
                 }
                 markForRedraw();
                 this.currentlyDisplayed = currentSubTab;

@@ -64,13 +64,30 @@
               value="#{RepoDetailsUIBean.repo.description}" /> <h:outputText
               rendered="${mode ne 'edit'}"
               value="#{RepoDetailsUIBean.repo.description}" /></td>
+          </tr>  
+          <tr>
+            <td align="right"><b>Private:</b></td>
+            <td align="left"><h:selectBooleanCheckbox 
+                rendered="${mode eq 'edit'}" value="#{CreateRepoUIBean.repo.private}"/>
+                <h:outputText rendered="${mode ne 'edit'}" value="#{RepoDetailsUIBean.repo.private}" />
+            </td>
           </tr>
+          <tr>
+            <td align="right"><b>Owner:</b></td>
+            <td align="left">
+                <h:selectOneMenu rendered="${mode eq 'edit' and RepoDetailsUIBean.repositoryManager}"
+                    value="#{RepoDetailsUIBean.repo.owner.name}">
+                    <f:selectItems value="#{RepoDetailsUIBean.availableOwners}"/>
+                </h:selectOneMenu>
+                <h:outputText rendered="${mode ne 'edit' or not RepoDetailsUIBean.repositoryManager}" value="#{RepoDetailsUIBean.repo.owner.name}"/>
+            </td>
+          </tr>        
           <tr>
             <td align="right"><b>Sync Schedule:</b></td>
             <td align="left"><h:inputText
-              rendered="${mode eq 'edit'}"
+              rendered="${RepoDetailsUIBean.repositoryManager and mode eq 'edit'}"
               value="#{RepoDetailsUIBean.repo.syncSchedule}" /> <h:outputText
-              rendered="${mode ne 'edit'}"
+              rendered="${mode ne 'edit' or not RepoDetailsUIBean.repositoryManager}"
               value="#{RepoDetailsUIBean.repo.syncSchedule}" /></td>
           </tr>
           <tr>
@@ -190,13 +207,13 @@
 
       <h:panelGrid columns="3" styleClass="buttons-table"
         columnClasses="button-cell">
-        <h:commandButton rendered="${mode ne 'edit'}" value="EDIT"
+        <h:commandButton rendered="${mode ne 'edit' and RepoDetailsUIBean.editable}" value="EDIT"
           action="#{RepoDetailsUIBean.edit}" alt="Edit"
           styleClass="buttonmed" id="editButton" />
-        <h:commandButton rendered="${mode ne 'edit' and not RepoDetailsUIBean.currentlySyncing}"
+        <h:commandButton rendered="${mode ne 'edit' and not RepoDetailsUIBean.currentlySyncing and RepoDetailsUIBean.repositoryManager}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
-        <h:commandButton rendered="#{RepoDetailsUIBean.currentlySyncing}"
+        <h:commandButton rendered="#{RepoDetailsUIBean.repositoryManager and RepoDetailsUIBean.currentlySyncing}"
           value="CANCEL SYNCH" action="#{RepoDetailsUIBean.cancelSync}"
           alt="Cancel Synch" styleClass="buttonmed" id="cancelSyncButton" />
         <h:commandButton rendered="${mode eq 'edit'}" value="SAVE"
@@ -211,7 +228,7 @@
 
     <!-- CONTENT SOURCE LIST -->
 
-    <h:form id="repoContentProvidersListForm">
+    <h:form id="repoContentProvidersListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
       <input type="hidden" name="id" value="${param.id}" />
       <input type="hidden" name="mode" value="${param.mode}" />
 
@@ -364,7 +381,7 @@
 
     <!-- SUBSCRIBER RESOURCE LIST -->
 
-    <h:form id="repoResourcesListForm">
+    <h:form id="repoResourcesListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
       <input type="hidden" name="id" value="${param.id}" />
       <input type="hidden" name="mode" value="${param.mode}" />
 
@@ -617,8 +634,15 @@
                       action="#{RepoPackageVersionsUIBean.installSelectedPackages}"
                       value="INSTALL PACKAGES" target="selectedPackages"
                       onclick="if (!confirm('#{confirmInstallMessage}')) return false"
-                      styleClass="on-pager-button buttonsmall" />
-
+                      styleClass="on-pager-button buttonsmall"
+                      rendered="#{RepoDetailsUIBean.inventoryManager}" />
+                    <onc:selectCommandButton
+                      action="#{RepoPackageVersionsUIBean.deleteSelectedPackages}"
+                      value="DELETE PACKAGES" target="selectedPackages"
+                      onclick="if (!confirm('Are you sure to delete the selected packages?\n\nOnly packages that don\'t come from content sources and that aren\'t and never have been installed to some resource will actually be deleted.')) return false"
+                      styleClass="on-pager-button buttonsmall"
+                      rendered="#{not RepoDetailsUIBean.hasContentSources}" />
+                      
                     <ui:param name="paginationDataTableName"
                       value="repoPackageVersionsDataTable" />
                     <ui:param name="paginationDataModel"
@@ -632,14 +656,82 @@
               </f:facet>
 
             </rich:dataTable>
-
+            
           </h:panelGrid>
 
         </rich:panel>
-      </a4j:region>
+      </a4j:region>  
+     </h:form>
+     
+     <h:form rendered="#{not RepoDetailsUIBean.hasContentSources and RepoDetailsUIBean.editable}">  
+           <rich:panel >
+                <f:facet name="header">
+                    <h:outputText value="Upload New Package"/>
+                </f:facet>
+           
+            <h:panelGrid columns="2">
+
+                <h:panelGroup style="float:right">
+                    <b>File <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear:both">
+                  <input type="button"
+                         class="buttonmed"
+                         value="UPLOAD FILE..."
+                         onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+                  <rich:spacer width="5" />
+                  <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
+                                value="File Uploaded: #{UploadNewPackageUIBean.fileItem.fileName}"/>
+                </h:panelGroup>
+                
+                <ui:remove><!-- row 1 --></ui:remove>
+                <h:panelGroup style="float: right">
+                   <b>Type <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedPackageTypeId}">
+                      <f:selectItems value="#{CreateNewPackageUIBean.packageTypes}"/>
+                   </h:selectOneMenu>
+                </h:panelGroup>
+
+                <ui:remove><!-- row 2 --></ui:remove>
+                <h:panelGroup style="float: right">
+                   <b>Name <span class="required-marker-text">*</span></b>
+                </h:panelGroup>
+                <h:panelGroup style="clear: both">
+                   <h:inputText id="packageName" value="#{CreateNewPackageUIBean.packageName}" required="true"/>
+                   <h:message for="packageName" styleClass="ValidationErrorText"/>
+                </h:panelGroup>
+
+               <ui:remove><!-- row 3 --></ui:remove>
+               <h:panelGroup style="float: right">
+                  <b>Version <span class="required-marker-text">*</span></b>
+               </h:panelGroup>
+               <h:panelGroup style="clear: both">
+                  <h:inputText id="initialVersion" value="#{CreateNewPackageUIBean.version}" required="true"/>
+                  <h:message for="initialVersion" styleClass="ValidationErrorText"/>
+               </h:panelGroup>
+
+               <ui:remove><!-- row 4 --></ui:remove>
+               <h:panelGroup style="float: right">
+                  <b>Architecture <span class="required-marker-text">*</span></b>
+               </h:panelGroup>
+               <h:panelGroup style="clear: both">
+                 <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedArchitectureId}">
+                    <f:selectItems value="#{CreateNewPackageUIBean.architectures}" />
+                 </h:selectOneMenu>
+               </h:panelGroup>
+
+            </h:panelGrid>
+             
+            <input type="hidden" name="repoOption" value="dummy-non-null-value-to-trick-the-ui-bean-to-do-our-thing"/>   
+            <input type="hidden" name="id" value="${param.id}" />
+            <input type="hidden" name="mode" value="${param.mode}" />
+            <h:commandButton action="#{CreateNewPackageUIBean.createPackage}" value="CREATE PACKAGE" styleClass="buttonmed"/>
+         </rich:panel>
     </h:form>
 
-    <h:form id="repoDistributionListForm" rendered="#{RepoDistributionUIBean.dataModel.rowCount gt 0}">
+    <h:form id="repoDistributionListForm" rendered="#{RepoDetailsUIBean.repositoryManager and RepoDistributionUIBean.dataModel.rowCount gt 0}">
       <a4j:region id="distributionList">
         <input type="hidden" name="id" value="${param.id}" />
         <input type="hidden" name="mode" value="${param.mode}" />
@@ -734,7 +826,7 @@
       </a4j:region>
     </h:form>
 
-    <h:form id="repoAdvisoryListForm" rendered="#{RepoAdvisoryUIBean.dataModel.rowCount gt 0}">
+    <h:form id="repoAdvisoryListForm" rendered="#{RepoDetailsUIBean.repositoryManager and RepoAdvisoryUIBean.dataModel.rowCount gt 0}">
       <a4j:region id="advisoryList">
         <input type="hidden" name="id" value="${param.id}" />
         <input type="hidden" name="mode" value="${param.mode}" />

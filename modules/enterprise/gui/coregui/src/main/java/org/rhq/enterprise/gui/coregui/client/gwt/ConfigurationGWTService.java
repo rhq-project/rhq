@@ -21,11 +21,22 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- *
+ * API for resource and plugin configurations for resources and groups.
  */
 @RemoteServiceRelativePath("ConfigurationGWTService")
 public interface ConfigurationGWTService extends RemoteService {
+
+    void purgePluginConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
+
+    void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
+
+    void rollbackPluginConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
+    void rollbackResourceConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException;
+
+    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(int resourceId) throws RuntimeException;
 
     Configuration getPluginConfiguration(int resourceId) throws RuntimeException;
 
@@ -62,6 +73,9 @@ public interface ConfigurationGWTService extends RemoteService {
     List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
         throws RuntimeException;
 
+    List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroupUpdate(
+        int groupUpdateId) throws RuntimeException;
+
     List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(int groupUpdateId)
         throws RuntimeException;
 
@@ -76,6 +90,4 @@ public interface ConfigurationGWTService extends RemoteService {
 
     void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException;
-
-    //RawConfiguration dummy(RawConfiguration config) throws RuntimeException;
 }

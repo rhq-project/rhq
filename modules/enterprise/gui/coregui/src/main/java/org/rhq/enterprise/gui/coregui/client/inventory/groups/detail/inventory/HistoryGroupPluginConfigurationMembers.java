@@ -26,10 +26,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -46,6 +42,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
@@ -53,12 +50,10 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
- * Shows a table of individual resource members that belonged to the group when the group plugin configuration was updated.
+ * Shows a table of individual resource members that belonged to the group when the group configuration was updated.
  *
  * @author John Mazzitelli
  */
@@ -75,7 +70,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId());
+        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId(), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -89,7 +84,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
         super.onDraw();
     }
 
-    private class MembersTable extends Table {
+    private class MembersTable extends Table<MembersTable.DataSource> {
         public MembersTable(String locatorId) {
             super(locatorId, MSG.view_group_pluginConfig_members_title());
             setDataSource(new DataSource());
@@ -97,19 +92,22 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
         @Override
         protected void configureTable() {
-            ListGridField fieldResource = new ListGridField("resourceLink", MSG.common_title_resource());
-            ListGridField fieldDateCreated = new ListGridField("dateCreated", MSG.common_title_dateCreated());
-            ListGridField fieldLastUpdated = new ListGridField("lastUpdated", MSG.common_title_lastUpdated());
-            ListGridField fieldUser = new ListGridField("user", MSG.common_title_user());
-            ListGridField fieldStatus = new ListGridField("status", MSG.common_title_status());
+            ListGridField fieldResource = new ListGridField(DataSource.Field.RESOURCELINK, MSG.common_title_resource());
+            ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED, MSG
+                .common_title_dateCreated());
+            ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG
+                .common_title_lastUpdated());
+            ListGridField fieldStatus = new ListGridField(DataSource.Field.STATUS, MSG.common_title_status());
+            ListGridField fieldUser = new ListGridField(DataSource.Field.USER, MSG.common_title_user());
 
             fieldResource.setWidth("*");
             fieldDateCreated.setWidth("15%");
             fieldLastUpdated.setWidth("15%");
-            fieldUser.setWidth("10%");
             fieldStatus.setWidth("10%");
+            fieldUser.setWidth("10%");
 
             fieldResource.setType(ListGridFieldType.LINK);
+            fieldResource.setTarget("_self");
 
             fieldStatus.setType(ListGridFieldType.ICON);
             HashMap<String, String> statusIcons = new HashMap<String, String>(4);
@@ -125,34 +123,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldStatus.addRecordClickHandler(new RecordClickHandler() {
                 @Override
                 public void onRecordClick(RecordClickEvent event) {
-                    final Window winModal = new LocatableWindow(HistoryGroupPluginConfigurationMembers.this
-                        .extendLocatorId("statusDetailsWin"));
-                    winModal.setTitle(MSG.view_group_pluginConfig_members_statusDetails());
-                    winModal.setOverflow(Overflow.VISIBLE);
-                    winModal.setShowMinimizeButton(false);
-                    winModal.setShowMaximizeButton(true);
-                    winModal.setIsModal(true);
-                    winModal.setShowModalMask(true);
-                    winModal.setAutoSize(true);
-                    winModal.setAutoCenter(true);
-                    winModal.setShowResizer(true);
-                    winModal.setCanDragResize(true);
-                    winModal.centerInPage();
-                    winModal.addCloseClickHandler(new CloseClickHandler() {
-                        @Override
-                        public void onCloseClick(CloseClientEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
-
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(HistoryGroupPluginConfigurationMembers.this
-                        .extendLocatorId("statusDetailsPane"));
-                    htmlPane.setMargin(10);
-                    htmlPane.setDefaultWidth(500);
-                    htmlPane.setDefaultHeight(400);
-                    htmlPane.setContents("<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>");
-                    winModal.addItem(htmlPane);
-                    winModal.show();
+                    new ErrorMessageWindow("statusDetailsWin", MSG.view_group_pluginConfig_members_statusDetails(),
+                        "<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>").show();
                 }
             });
             fieldStatus.setShowHover(true);
@@ -170,15 +142,14 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             });
 
             ListGrid listGrid = getListGrid();
-            listGrid.setFields(fieldResource, fieldDateCreated, fieldLastUpdated, fieldUser, fieldStatus);
-
-            listGrid.setLinkTextProperty("resourceName");
-
+            listGrid.setFields(fieldResource, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
+            listGrid.setLinkTextProperty(DataSource.Field.RESOURCENAME);
         }
 
         private String getStatusHtmlString(Record record) {
             String html = null;
-            AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record.getAttributeAsObject("object");
+            AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record
+                .getAttributeAsObject(DataSource.Field.OBJECT);
             switch (obj.getStatus()) {
             case SUCCESS: {
                 html = MSG.view_group_pluginConfig_members_statusSuccess();
@@ -205,24 +176,35 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
         private class DataSource extends RPCDataSource<PluginConfigurationUpdate> {
 
+            public class Field {
+                public static final String ID = "id";
+                public static final String RESOURCELINK = "resourceLink";
+                public static final String RESOURCENAME = "resourceName";
+                public static final String DATECREATED = "dateCreated";
+                public static final String LASTUPDATED = "lastUpdated";
+                public static final String STATUS = "status";
+                public static final String USER = "user";
+                public static final String OBJECT = "object";
+            }
+
             @Override
             public PluginConfigurationUpdate copyValues(Record from) {
-                return (PluginConfigurationUpdate) from.getAttributeAsObject("object");
+                return (PluginConfigurationUpdate) from.getAttributeAsObject(Field.OBJECT);
             }
 
             @Override
             public ListGridRecord copyValues(PluginConfigurationUpdate from) {
                 ListGridRecord record = new ListGridRecord();
 
-                record.setAttribute("id", from.getId());
-                record.setAttribute("resourceLink", LinkManager.getResourceLink(from.getResource().getId()));
-                record.setAttribute("resourceName", from.getResource().getName());
-                record.setAttribute("dateCreated", new Date(from.getCreatedTime()));
-                record.setAttribute("lastUpdated", new Date(from.getModifiedTime()));
-                record.setAttribute("user", from.getSubjectName());
-                record.setAttribute("status", from.getStatus().name());
+                record.setAttribute(Field.ID, from.getId());
+                record.setAttribute(Field.RESOURCELINK, LinkManager.getResourceLink(from.getResource().getId()));
+                record.setAttribute(Field.RESOURCENAME, from.getResource().getName());
+                record.setAttribute(Field.DATECREATED, new Date(from.getCreatedTime()));
+                record.setAttribute(Field.LASTUPDATED, new Date(from.getModifiedTime()));
+                record.setAttribute(Field.USER, from.getSubjectName());
+                record.setAttribute(Field.STATUS, from.getStatus().name());
 
-                record.setAttribute("object", from);
+                record.setAttribute(Field.OBJECT, from);
 
                 return record;
             }

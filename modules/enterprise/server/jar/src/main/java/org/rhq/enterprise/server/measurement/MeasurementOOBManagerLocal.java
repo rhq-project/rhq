@@ -90,4 +90,13 @@ public interface MeasurementOOBManagerLocal {
      * @return
      */
     PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, int resourceId, int n);
+
+    /**
+     * Returns the highest n OOBs for the passed group id within the last 72h
+     * @param subject caller
+     * @param groupId the resource we are interested in
+     * @param n max number of entries wanted
+     * @return
+     */
+    PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(Subject subject, int groupId, int n);
 }

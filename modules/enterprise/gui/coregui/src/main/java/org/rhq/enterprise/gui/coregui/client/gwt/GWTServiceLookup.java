@@ -98,6 +98,18 @@ public class GWTServiceLookup {
         return secure(MeasurementDataGWTServiceAsync.Util.getInstance());
     }
 
+    public static MeasurementDataGWTServiceAsync getMeasurementDataService(int timeout) {
+        return secure(MeasurementDataGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
+    public static MeasurementChartsGWTServiceAsync getMeasurementChartsService() {
+        return secure(MeasurementChartsGWTServiceAsync.Util.getInstance());
+    }
+
+    public static MeasurementScheduleGWTServiceAsync getMeasurementScheduleService() {
+        return secure(MeasurementScheduleGWTServiceAsync.Util.getInstance());
+    }
+
     public static AlertGWTServiceAsync getAlertService() {
         return secure(AlertGWTServiceAsync.Util.getInstance());
     }

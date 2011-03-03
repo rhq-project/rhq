@@ -34,6 +34,9 @@ import javax.persistence.InheritanceType;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
+import org.rhq.core.domain.resource.Resource;
+
 /**
  * Provides a {@link Configuration configuration} that constitutes a configuration update request. This allows you to
  * maintain a history of a configuration update request - when it was made, who made it and if it was successful or not.
@@ -57,6 +60,10 @@ public abstract class AbstractResourceConfigurationUpdate extends AbstractConfig
     @Id
     private int id;
 
+    public abstract Resource getResource();
+
+    public abstract AbstractGroupConfigurationUpdate getAbstractGroupConfigurationUpdate();
+
     protected AbstractResourceConfigurationUpdate() {
     }
 
@@ -70,7 +77,7 @@ public abstract class AbstractResourceConfigurationUpdate extends AbstractConfig
     protected AbstractResourceConfigurationUpdate(Configuration config, String subjectName) {
         super(subjectName);
         //this.configuration = config.deepCopy(false);
-        this.configuration = config.deepCopyWithoutProxies(); 
+        this.configuration = config.deepCopyWithoutProxies();
     }
 
     public int getId() {

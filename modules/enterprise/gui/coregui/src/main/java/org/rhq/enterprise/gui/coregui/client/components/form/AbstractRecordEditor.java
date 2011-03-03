@@ -105,12 +105,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         viewPath.next();
 
         String parentViewPath = viewPath.getParentViewPath();
-        if (!viewPath.isEnd()) {
-            CoreGUI.getErrorHandler().handleError(MSG.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
-            CoreGUI.goToView(parentViewPath);
-        } else {
-            this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
-        }
+        this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
     }
 
     /**

@@ -50,10 +50,8 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
         ListGridField subjectField = new ListGridField(AbstractOperationScheduleDataSource.Field.SUBJECT, 110);
         subjectField.setCellFormatter(new SubjectRecordCellFormatter());
 
-        //ListGridField jobTriggerField = new ListGridField(OperationScheduleDataSource.Field.JOB_TRIGGER, 300);
-
         ListGridField nextFireTimeField = new ListGridField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
-            "Next Scheduled Execution", 190);
+                190);
 
         ListGridField descriptionField = new ListGridField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
 

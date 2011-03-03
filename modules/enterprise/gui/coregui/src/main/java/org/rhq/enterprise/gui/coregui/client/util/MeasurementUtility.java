@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 public class MeasurementUtility {
 
@@ -59,8 +61,8 @@ public class MeasurementUtility {
      * @param unit  the unit of time (as defined by <code>UNIT_*</code> constants
      * @return List
      */
-    public static List<Long> calculateTimeFrame(int lastN, int unit) {
-        List<Long> l = new ArrayList<Long>(0);
+    public static ArrayList<Long> calculateTimeFrame(int lastN, int unit) {
+        ArrayList<Long> l = new ArrayList<Long>(0);
         if (unit == UNIT_COLLECTION_POINTS) {
             return null;
         }
@@ -111,6 +113,26 @@ public class MeasurementUtility {
      */
     public static DateTimeFormat getDateTimeYearFormatter() {
         return FORMATTER_YEAR;
+    }
+
+    /**
+     * Formats the passed summary.
+     * 
+     * @param summary MetricDisplaySummary with some values
+     */
+    public static void formatSimpleMetrics(MetricDisplaySummary summary) {
+        // Don't try to format placeholder NaN values.
+        if (!Double.isNaN(summary.getAvgMetric().getValue())) {
+            if (summary.getUnits().length() < 1) {
+                summary.setUnits(MeasurementUnits.NONE.name());
+            }
+            String[] formattedValues = MeasurementConverterClient.formatToSignificantPrecision(summary
+                .getMetricValueDoubles(), MeasurementUnits.valueOf(summary.getUnits()), true);
+            String[] metricKeys = summary.getMetricKeys();
+            for (int i = 0; i < metricKeys.length; i++) {
+                summary.getMetric(metricKeys[i]).setValueFmt(formattedValues[i]);
+            }
+        }
     }
 
 }

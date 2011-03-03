@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+<ui:param name="pageTitle" value="Audit Trail for Resource '#{ResourceUIBean.name}'"/>
+<ui:param name="selectedTabName" value="Content.History"/>
+
+<ui:define name="content">
+
+<!-- Content Requests Table -->
+
+<h:form id="contentRequestsForm">
+<input type="hidden" name="id" value="${param.id}"/>
+
+<rich:panel>
+   <f:facet name="header"><h:outputText value="Package Details"/></f:facet>
+
+   <table class="revision-data-table" width="100%">
+      <tr class="revision-data-table-even-row">
+         <td><b>Package Name</b></td>
+         <td>
+            <h:outputText value="#{AuditTrailItemUIBean.history.packageVersion.displayName}"
+                          rendered="#{!empty AuditTrailItemUIBean.history.packageVersion.displayName}"/>
+            <h:outputText value="#{AuditTrailItemUIBean.history.packageVersion.generalPackage.name}"
+                          rendered="#{empty AuditTrailItemUIBean.history.packageVersion.displayName}"/>
+
+         </td>
+      </tr>
+      <tr class="revision-data-table-odd-row">
+         <td><b>Version</b></td>
+         <td>
+            <h:outputText value="#{AuditTrailItemUIBean.history.packageVersion.displayVersion}"
+                          rendered="#{!empty AuditTrailItemUIBean.history.packageVersion.displayVersion}"/>
+            <h:outputText value="#{AuditTrailItemUIBean.history.packageVersion.version}"
+                          rendered="#{empty AuditTrailItemUIBean.history.packageVersion.displayVersion}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-even-row">
+         <td><b>Architecture</b></td>
+         <td>
+            <h:outputText value="#{AuditTrailItemUIBean.history.packageVersion.architecture.name}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-odd-row">
+         <td><b>Result</b></td>
+         <td>
+            <h:outputText value="#{AuditTrailItemUIBean.history.status.displayName}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-even-row">
+         <td valign="top"><b>Error Message</b></td>
+         <td><pre><h:outputText value="#{AuditTrailItemUIBean.history.errorMessage}" rendered="#{!empty AuditTrailItemUIBean.history.errorMessage}"/></pre></td>
+      </tr>
+   </table>
+</rich:panel>
+
+<p align="center">
+   <h:outputLink value="../content/history.xhtml">
+      <f:param name="id" value="${param.id}"/>
+      <h:outputText value="Return to Package History"/>
+   </h:outputLink>
+</p>
+
+</h:form>
+
+
+</ui:define>
+</ui:composition>
+
+</html>

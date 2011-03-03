@@ -158,10 +158,18 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 if (validate(false)) {
                     AbstractNotificationSenderForm senderForm = (AbstractNotificationSenderForm) senderCanvasItem
                         .getCanvas();
-                    if (senderForm.validate()) {
-                        saveNewNotification();
-                        closeFunction.run();
-                    }
+                    senderForm.validate(new AsyncCallback<Void>() {
+                        public void onSuccess(Void o) {
+                            saveNewNotification();
+                            closeFunction.run();
+                        }
+                        
+                        public void onFailure(Throwable t) {
+                            //do nothing
+                            //the sender form is supposed to warn the user about what is wrong
+                            //with the supplied values.
+                        }
+                    });
                 }
             }
         });
@@ -220,7 +228,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     }
 
     private AbstractNotificationSenderForm createNotificationSenderForm(String sender) {
-        String newLocatorId = extendLocatorId(sender);
+        String newLocatorId = extendLocatorId(SeleniumUtility.getSafeId(sender));
         AbstractNotificationSenderForm newCanvas;
 
         // NOTE: today there is no way for an alert server plugin developer
@@ -246,6 +254,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 rt = res.getResourceType();
             }
             newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt, res);
+        } else if ("CLI Script".equals(sender)) {
+            newCanvas = new CliNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else {
             // catch all - all other senders are assumed to just have simple configuration definition
             // that can be used by our configuration editor UI component to ask for config values.

@@ -141,8 +141,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     public Role createRole(Subject whoami, Role newRole) {
         // TODO (ips): Do we want to enforce uniqueness of the Role name?
 
-        if (newRole.getFsystem()) {
-            throw new IllegalArgumentException("Unable to create role [" + newRole.getName()
+        Boolean isSystemRole = newRole.getFsystem();
+        if (isSystemRole) {
+            throw new IllegalArgumentException("Unable to create system role [" + newRole.getName()
                 + "] - new system roles cannot be created.");
         }
         processDependentPermissions(newRole);
@@ -163,9 +164,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
         addSubjectsToRole(whoami, newRole.getId(), subjectIds);
 
-        for (ResourceGroup resourceGroup : newRole.getResourceGroups()) {
-            entityManager.merge(resourceGroup);
-        }
         int[] resourceGroupIds = new int[newRole.getResourceGroups().size()];
         i = 0;
         for (ResourceGroup resourceGroup : newRole.getResourceGroups()) {
@@ -566,9 +564,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
             for (Integer groupId : groupIds) {
                 ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
-                if (role == null) {
+                if (group == null) {
                     throw new IllegalArgumentException("Tried to add resourceGroup[" + groupId + "] to role[" + roleId
-                        + "], but resourceGroup was not found");
+                        + "], but resourceGroup was not found.");
                 }
                 role.addResourceGroup(group);
             }

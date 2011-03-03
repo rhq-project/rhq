@@ -79,29 +79,30 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
     }
 
     @Override
-    // TODO: i18n
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, "ID");
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, MSG.common_title_id());
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME, "Operation");
+        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME,
+                MSG.dataSource_operationHistory_field_operationName());
         fields.add(nameField);
 
         DataSourceTextField statusField = new DataSourceTextField(Field.STATUS, MSG.common_title_status());
         fields.add(statusField);
 
         DataSourceDateTimeField createdTimeField = new DataSourceDateTimeField(Field.CREATED_TIME,
-                "Created Time");
+                MSG.dataSource_operationHistory_field_createdTime());
         fields.add(createdTimeField);
 
         DataSourceDateTimeField startedTimeField = new DataSourceDateTimeField(Field.STARTED_TIME,
-                MSG.dataSource_operationHistory_startedTime());
+                MSG.dataSource_operationHistory_field_startedTime());
         fields.add(startedTimeField);
 
-        DataSourceTextField subjectField = new DataSourceTextField(Field.SUBJECT, "Requester");
+        DataSourceTextField subjectField = new DataSourceTextField(Field.SUBJECT,
+                MSG.dataSource_operationHistory_field_subject());
         fields.add(subjectField);
 
         return fields;
@@ -131,7 +132,5 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
 
         return record;
     }
-
-
 
 }

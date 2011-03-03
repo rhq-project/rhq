@@ -22,11 +22,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.Arrays;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.EventHandler;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.DragResizeStartEvent;
+import com.smartgwt.client.widgets.events.DragResizeStartHandler;
 import com.smartgwt.client.widgets.events.DropEvent;
 import com.smartgwt.client.widgets.events.DropHandler;
+import com.smartgwt.client.widgets.events.ResizedEvent;
+import com.smartgwt.client.widgets.events.ResizedHandler;
 
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -35,23 +41,42 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public class PortalLayout extends LocatableHLayout {
 
     private DashboardView dashboardView;
+    private Integer dragResizeColumnCount;
 
-    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns) {
+    /**
+     * @param locatorId
+     * @param dashboardView
+     * @param numColumns
+     * @param columnWidths Currently only the first column width is set, others are ignored and share the remaining space
+     * evenly. If null column 0 defaults to 30%.
+     */
+    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns, String[] columnWidths) {
         super(locatorId);
 
-        this.dashboardView = dashboardView;
+        if (numColumns < 1) {
+            throw new IllegalArgumentException("Invalid number of columns [" + numColumns + "]");
+        }
+        if ((null != columnWidths && columnWidths.length > numColumns)) {
+            throw new IllegalArgumentException("Invalid column widths (more widths than columns) "
+                + Arrays.toString(columnWidths));
+        }
 
-        setMembersMargin(6);
+        this.dashboardView = dashboardView;
+        setMargin(4);
+        setMembersMargin(4);
+
         for (int i = 0; i < numColumns; i++) {
             final PortalColumn column = new PortalColumn();
-            if (i == 0) {
-                column.setWidth("30%");
+            if (null != columnWidths && i < columnWidths.length) {
+                column.setWidth(columnWidths[i]);
+            } else {
+                column.setWidth("*");
             }
-            addMember(column);
 
             final int columnNumber = i;
             column.addDropHandler(new DropHandler() {
@@ -85,13 +110,13 @@ public class PortalLayout extends LocatableHLayout {
                     }
 
                     // drop means the portlet location has changed. The selenium testing locators include positioning
-                    // info. So, in this case we have to take the hit and completely redraw the dash.
+                    // info. So, in this case we have to take the hit and completely rebuild the dash.
                     AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null
                         : new AsyncCallback<Dashboard>() {
 
                             @Override
                             public void onFailure(Throwable caught) {
-                                redraw();
+                                rebuild();
                             }
 
                             @Override
@@ -103,7 +128,7 @@ public class PortalLayout extends LocatableHLayout {
                                 target.removeFromParent();
                                 target.destroy();
 
-                                redraw();
+                                rebuild();
                             }
                         };
                     save(callback);
@@ -111,6 +136,49 @@ public class PortalLayout extends LocatableHLayout {
                     com.allen_sauer.gwt.log.client.Log.info("Rearranged column indexes");
                 }
             });
+
+            column.addDragResizeStartHandler(new DragResizeStartHandler() {
+
+                @Override
+                public void onDragResizeStart(DragResizeStartEvent event) {
+
+                    // When a drag resize starts activate a counter keeping track of the number of columns that
+                    // have been resized.  A resize of one column will force a resize of all columns. After the
+                    // last column resize completes, persist the new column widths to the database.
+                    dragResizeColumnCount = 0;
+                }
+            });
+
+            // This handler is called when the resizing is complete (the DragResizeStopHandler is called
+            // immediately on stop but before all resizing is complete.)
+            column.addResizedHandler(new ResizedHandler() {
+
+                @Override
+                public void onResized(ResizedEvent event) {
+
+                    // ignore resizing not related to drag resize (presumable initial draw)
+                    if (null == dragResizeColumnCount) {
+                        return;
+                    }
+
+                    ++dragResizeColumnCount;
+                    Canvas[] members = getMembers();
+
+                    // ignore resizing prior to all columns being resized as a result of the drag operation
+                    if (dragResizeColumnCount != members.length) {
+                        return;
+                    }
+
+                    // one drag operation results in a save for each column, as they all get resized
+                    // now that they are all resized, save the column widths (save updates these automatically)
+                    save();
+
+                    // reset the flag
+                    dragResizeColumnCount = null;
+                }
+            });
+
+            addMember(column);
         }
     }
 
@@ -126,12 +194,16 @@ public class PortalLayout extends LocatableHLayout {
         return portalColumn;
     }
 
+    public void save() {
+        this.dashboardView.save();
+    }
+
     public void save(AsyncCallback<Dashboard> callback) {
         this.dashboardView.save(callback);
     }
 
-    public void redraw() {
-        this.dashboardView.redraw();
+    public void rebuild() {
+        this.dashboardView.rebuild();
     }
 
     public void resize() {
@@ -143,7 +215,6 @@ public class PortalLayout extends LocatableHLayout {
                     PortletWindow portlet = (PortletWindow) p;
 
                     portlet.setWidth(column.getWidth());
-
                 }
             }
         }

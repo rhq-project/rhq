@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -40,13 +42,20 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderValidationResults;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
@@ -296,15 +305,48 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return notification;
     }
 
+    public boolean finalizeNotifications(Subject subject, List<AlertNotification> notifications) {
+        boolean hasErrors = false;
+        
+        AlertSenderPluginManager pluginManager = alertManager.getAlertPluginManager();
+        
+        for(AlertNotification notification : notifications) {
+            AlertSender<?> sender = pluginManager.getAlertSenderForNotification(notification);
+            
+            AlertSenderValidationResults validation = sender.validateAndFinalizeConfiguration(subject);
+            
+            notification.setConfiguration(validation.getAlertParameters());
+            notification.setExtraConfiguration(validation.getExtraParameters());
+            
+            hasErrors = hasErrors || hasErrors(validation.getAlertParameters()) || 
+                hasErrors(validation.getExtraParameters());
+        }   
+        
+        return !hasErrors;
+    }
+    
     public int cleanseAlertNotificationBySubject(int subjectId) {
-        return cleanseParmaeterValueForAlertSender("System Users", "subjectId", String.valueOf(subjectId));
+        return cleanseParameterValueForAlertSender("System Users", "subjectId", String.valueOf(subjectId));
     }
 
     public int cleanseAlertNotificationByRole(int roleId) {
-        return cleanseParmaeterValueForAlertSender("System Roles", "roleId", String.valueOf(roleId));
+        return cleanseParameterValueForAlertSender("System Roles", "roleId", String.valueOf(roleId));
     }
 
-    private int cleanseParmaeterValueForAlertSender(String senderName, String propertyName, String valueToCleanse) {
+    public void massReconfigure(List<Integer> alertNotificationIds, Map<String, String> newConfigurationValues) {
+        Query query = entityManager.createNamedQuery(AlertNotification.QUERY_UPDATE_PARAMETER_FOR_NOTIFICATIONS);
+        
+        query.setParameter("alertNotificationIds", alertNotificationIds);
+        
+        for(Map.Entry<String, String> entry : newConfigurationValues.entrySet()) {
+            query.setParameter("propertyName", entry.getKey());
+            query.setParameter("propertyValue", entry.getValue());
+            
+            query.executeUpdate();
+        }
+    }
+    
+    private int cleanseParameterValueForAlertSender(String senderName, String propertyName, String valueToCleanse) {
         Query query = entityManager.createNamedQuery(AlertNotification.QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER);
         query.setParameter("senderName", senderName);
         query.setParameter("propertyName", propertyName);
@@ -313,4 +355,45 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return affectedRows;
     }
 
+    private boolean hasErrors(AbstractPropertyMap configuration) {
+        if (configuration instanceof PropertyMap) {
+            if (((PropertyMap)configuration).getErrorMessage() != null) {
+                return true;
+            }
+        }
+        
+        for(Map.Entry<String, Property> entry : configuration.getMap().entrySet()) {
+            if (hasErrors(entry.getValue())) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    private boolean hasErrors(PropertyList list) {
+        if (list.getErrorMessage() != null) {
+            return true;
+        }
+        
+        for(Property p : list.getList()) {
+            if (hasErrors(p)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    private boolean hasErrors(Property property) {
+        if (property instanceof PropertySimple) {
+            return property.getErrorMessage() != null;
+        } else if (property instanceof PropertyList) {
+            return hasErrors((PropertyList) property);
+        } else if (property instanceof PropertyMap) {
+            return hasErrors((AbstractPropertyMap)property);
+        } else {
+            return false;
+        }
+    }    
 }

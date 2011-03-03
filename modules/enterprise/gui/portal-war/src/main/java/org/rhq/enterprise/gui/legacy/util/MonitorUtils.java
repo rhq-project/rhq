@@ -32,9 +32,9 @@ import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementValueAndUnits;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 public class MonitorUtils {
 

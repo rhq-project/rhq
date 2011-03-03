@@ -27,10 +27,9 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementSchedule measurement
@@ -39,14 +38,18 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
  * @author Ian Springer
  */
 public abstract class AbstractMeasurementScheduleListView extends Table {
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
-        MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING) };
+
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
+        new SortSpecifier(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
+    };
 
     public AbstractMeasurementScheduleListView(String locatorId, String title,
         AbstractMeasurementScheduleCompositeDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
         super(locatorId, title, criteria, SORT_SPECIFIERS, excludedFieldNames);
         setDataSource(dataSource);
     }
+
+    public abstract boolean hasManageMeasurementsPermission();
 
     @Override
     public AbstractMeasurementScheduleCompositeDataSource getDataSource() {
@@ -68,20 +71,25 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         intervalField.setWidth("25%");
 
         // Add action buttons and widgets.
-        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), null, new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return ((selection.length >= 1) && hasManageMeasurementsPermission());
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), null, new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return ((selection.length >= 1) && hasManageMeasurementsPermission());
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
         addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this), true);
-
     }
 
     protected class CollectionEnabledCellFormatter extends BooleanCellFormatter {
@@ -93,6 +101,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
     }
 
     protected class CollectionIntervalCellFormatter implements CellFormatter {
+
         public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
             if (value == null) {
                 return MSG.view_inventory_mixed();
@@ -139,4 +148,5 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         }
 
     }
+
 }

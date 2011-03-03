@@ -18,16 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -132,17 +135,17 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
 
             ListGrid platformsList = new CustomResourceTypeListGrid(extendLocatorId("platformsList"));
-            SectionStackSection platforms = new SectionStackSection("Platforms");
+            SectionStackSection platforms = new SectionStackSection(MSG.view_adminTemplates_platforms());
             platforms.setExpanded(true);
             platforms.addItem(platformsList);
 
             ListGrid platformServicesList = new CustomResourceTypeListGrid(extendLocatorId("platformServicesList"));
-            SectionStackSection platformServices = new SectionStackSection("Platform Services");
+            SectionStackSection platformServices = new SectionStackSection(MSG.view_adminTemplates_platformServices());
             platformServices.setExpanded(true);
             platformServices.addItem(platformServicesList);
 
             TreeGrid serversTreeGrid = new CustomResourceTypeTreeGrid(extendLocatorId("serversTree"));
-            SectionStackSection servers = new SectionStackSection("Servers");
+            SectionStackSection servers = new SectionStackSection(MSG.view_adminTemplates_servers());
             servers.setExpanded(true);
             servers.addItem(serversTreeGrid);
 
@@ -245,39 +248,43 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             setWrapCells(true);
             setFixedRecordHeights(false);
             setShowRollOverCanvas(true);
-            setEmptyMessage("Loading...");
+            setEmptyMessage(MSG.common_msg_loading());
             setSelectionType(SelectionStyle.NONE);
 
-            final ListGridField name = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, "Name");
-            final ListGridField plugin = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, "Plugin");
-            final ListGridField category = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, "Category");
+            final ListGridField name = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
+                .common_title_name());
+            final ListGridField plugin = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
+                .common_title_plugin());
+            final ListGridField category = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
+                .common_title_category());
             final ListGridField enabledAlertTemplates = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, "Enabled Alert Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, MSG
+                    .view_adminTemplates_enabledAlertTemplates());
             final ListGridField disabledAlertTemplates = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, "Disabled Alert Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, MSG
+                    .view_adminTemplates_disabledAlertTemplates());
             final ListGridField enabledMetricTemplates = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, "Enabled Metric Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, MSG
+                    .view_adminTemplates_enabledMetricTemplates());
             final ListGridField disabledMetricTemplates = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, "Disabled Metric Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, MSG
+                    .view_adminTemplates_disabledMetricTemplates());
 
             plugin.setHidden(true);
             category.setHidden(true);
 
-            name.setWidth("40%");
+            name.setWidth("*");
             plugin.setWidth("10%");
-            category.setWidth("10%");
+            category.setWidth("5%");
             enabledAlertTemplates.setWidth("10%");
             disabledAlertTemplates.setWidth("10%");
             enabledMetricTemplates.setWidth("10%");
             disabledMetricTemplates.setWidth("10%");
 
-            enabledAlertTemplates.setPrompt("Number of alert templates that are enabled on this resource type");
-            disabledAlertTemplates
-                .setPrompt("Number of alert templates that are created but disabled on this resource type");
-            enabledMetricTemplates
-                .setPrompt("Number of metric schedules that are enabled by default on this resource type");
-            disabledMetricTemplates
-                .setPrompt("Number of metric schedules that are disabled by default on this resource type");
+            enabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
+            disabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
+            enabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
+            disabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
 
             setFields(name, plugin, category, enabledAlertTemplates, disabledAlertTemplates, enabledMetricTemplates,
                 disabledMetricTemplates);
@@ -298,7 +305,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
                 metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
-                metricTemplateImg.setPrompt("Edit Metric Template");
+                metricTemplateImg.setPrompt(MSG.view_adminTemplates_editMetricTemplate());
                 metricTemplateImg.setHeight(16);
                 metricTemplateImg.setWidth(16);
                 metricTemplateImg.addClickHandler(new ClickHandler() {
@@ -312,7 +319,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
                 alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
-                alertTemplateImg.setPrompt("Edit Alert Template");
+                alertTemplateImg.setPrompt(MSG.view_adminTemplates_editAlertTemplate());
                 alertTemplateImg.setHeight(16);
                 alertTemplateImg.setWidth(16);
                 alertTemplateImg.addClickHandler(new ClickHandler() {
@@ -343,37 +350,67 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             setWrapCells(true);
             setFixedRecordHeights(false);
             setShowRollOverCanvas(true);
-            setEmptyMessage("Loading...");
+            setEmptyMessage(MSG.common_msg_loading());
             setSelectionType(SelectionStyle.NONE);
             setAnimateFolders(false);
 
-            final TreeGridField name = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, "Name");
-            final TreeGridField plugin = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, "Plugin");
-            final TreeGridField category = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, "Category");
+            final TreeGridField name = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
+                .common_title_name());
+            final TreeGridField plugin = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
+                .common_title_plugin());
+            final TreeGridField category = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
+                .common_title_category());
             final TreeGridField enabledAlertTemplates = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, "Enabled Alert Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, MSG
+                    .view_adminTemplates_enabledAlertTemplates());
             final TreeGridField disabledAlertTemplates = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, "Disabled Alert Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, MSG
+                    .view_adminTemplates_disabledAlertTemplates());
             final TreeGridField enabledMetricTemplates = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, "Enabled Metric Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, MSG
+                    .view_adminTemplates_enabledMetricTemplates());
             final TreeGridField disabledMetricTemplates = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, "Disabled Metric Templates");
+                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, MSG
+                    .view_adminTemplates_disabledMetricTemplates());
 
-            name.setWidth("40%");
+            category.setType(ListGridFieldType.ICON);
+            category.setShowValueIconOnly(true);
+            HashMap<String, String> categoryIcons = new HashMap<String, String>(3);
+            categoryIcons
+                .put(ResourceCategory.PLATFORM.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM));
+            categoryIcons.put(ResourceCategory.SERVER.name(), ImageManager.getResourceIcon(ResourceCategory.SERVER));
+            categoryIcons.put(ResourceCategory.SERVICE.name(), ImageManager.getResourceIcon(ResourceCategory.SERVICE));
+            category.setValueIcons(categoryIcons);
+            category.setShowHover(true);
+            category.setHoverCustomizer(new HoverCustomizer() {
+                @Override
+                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String cat = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
+                    if (ResourceCategory.PLATFORM.name().equals(cat)) {
+                        return MSG.common_title_platform();
+                    } else if (ResourceCategory.SERVER.name().equals(cat)) {
+                        return MSG.common_title_server();
+                    } else if (ResourceCategory.SERVICE.name().equals(cat)) {
+                        return MSG.common_title_service();
+                    }
+                    return "";
+                }
+            });
+
+            category.setHidden(true);
+
+            name.setWidth("*");
             plugin.setWidth("10%");
-            category.setWidth("10%");
+            category.setWidth("5%");
             enabledAlertTemplates.setWidth("10%");
             disabledAlertTemplates.setWidth("10%");
             enabledMetricTemplates.setWidth("10%");
             disabledMetricTemplates.setWidth("10%");
 
-            enabledAlertTemplates.setPrompt("Number of alert templates that are enabled on this resource type");
-            disabledAlertTemplates
-                .setPrompt("Number of alert templates that are created but disabled on this resource type");
-            enabledMetricTemplates
-                .setPrompt("Number of metric schedules that are enabled by default on this resource type");
-            disabledMetricTemplates
-                .setPrompt("Number of metric schedules that are disabled by default on this resource type");
+            enabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
+            disabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
+            enabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
+            disabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
 
             setFields(name, plugin, category, enabledAlertTemplates, disabledAlertTemplates, enabledMetricTemplates,
                 disabledMetricTemplates);
@@ -394,7 +431,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
                 metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
-                metricTemplateImg.setPrompt("Edit Metric Template");
+                metricTemplateImg.setPrompt(MSG.view_adminTemplates_editMetricTemplate());
                 metricTemplateImg.setHeight(16);
                 metricTemplateImg.setWidth(16);
                 metricTemplateImg.addClickHandler(new ClickHandler() {
@@ -408,7 +445,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
                 alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
-                alertTemplateImg.setPrompt("Edit Alert Template");
+                alertTemplateImg.setPrompt(MSG.view_adminTemplates_editAlertTemplate());
                 alertTemplateImg.setHeight(16);
                 alertTemplateImg.setWidth(16);
                 alertTemplateImg.addClickHandler(new ClickHandler() {

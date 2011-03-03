@@ -3348,6 +3348,16 @@
             <schemaSpec version="2.105">
                 <schema-addColumn table="RHQ_REPO" column="OWNER_ID" columnType="INTEGER" />
                 <schema-addColumn table="RHQ_REPO" column="IS_PRIVATE" columnType="BOOLEAN" />
+            	<schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Set is_private flag for existing repos to false">
+                        UPDATE RHQ_REPO
+                        SET IS_PRIVATE = false
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Set is_private flag for existing repos to false">
+                        UPDATE RHQ_REPO
+                        SET IS_PRIVATE = 0
+                    </statement>
+            	</schema-directSQL>
                 <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE" default="TRUE"/>
                 <schema-directSQL>
                     <statement desc="Creating OWNER_ID foreign key relation on RHQ_REPO">

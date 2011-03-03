@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+   <ui:param name="pageTitle" value="Confirm Deploy Package"/>
+   <ui:param name="selectedTabName" value="Content.New"/>
+   <ui:define name="content">
+
+      <h:form>
+
+         <input type="hidden" name="id" value="${param.id}"/>
+
+         <ui:remove><!-- Package selected for installation steps and they were returned from the plugin. --></ui:remove>
+         <rich:panel rendered="#{!empty InstallationStepsUIBean.packageVersion and !empty InstallationStepsUIBean.deploySteps}">
+
+            <f:facet name="header"><h:outputText value="Installation Steps"/></f:facet>
+
+            <p><b><h:outputText value="Package: #{InstallationStepsUIBean.packageVersion.generalPackage.name} #{InstallationStepsUIBean.packageVersion.displayVersion}"/></b></p>
+
+            <p>The following steps were provided by the plugin. They describe the steps that will take place during
+            the deployment of this package. Please review the steps before deciding whether or not to continue
+            with the deployment.</p>
+
+            <h:dataTable value="#{InstallationStepsUIBean.deploySteps}"
+                         var="item"
+                         styleClass="instructions-data-table"
+                         headerClass="instructions-data-table-header"
+                         columnClasses="instructions-data-table-number-col, instructions-data-table-description-col"
+                         rowClasses="instructions-data-table-even-row, instructions-data-table-odd-row"
+                         cellpadding="3"
+                         cellspacing="0"
+                         width="100%">
+
+               <h:column>
+                  <f:facet name="header">Step Number</f:facet>
+                  <h:outputText value="#{InstallationStepsUIBean.stepsData.rowIndex + 1}"/>
+              </h:column>
+
+               <h:column>
+                  <f:facet name="header">Description</f:facet>
+                  <h:outputText value="#{item.description}"/>
+                </h:column>
+
+            </h:dataTable>
+
+         </rich:panel>
+
+         <ui:remove><!-- Package selected but no installation steps were returned. --></ui:remove>
+         <rich:panel rendered="#{!empty InstallationStepsUIBean.packageVersion and empty InstallationStepsUIBean.deploySteps}">
+
+            <f:facet name="header"><h:outputText value="Installation Steps"/></f:facet>
+
+            <p><b><h:outputText value="Package: #{InstallationStepsUIBean.packageVersion.generalPackage.name} #{InstallationStepsUIBean.packageVersion.displayVersion}"/></b></p>
+
+            <p>No installation steps were provided by the plugin for this package.</p>
+         </rich:panel>
+
+         <ui:remove><!-- Table of packages that are to be deployed in this request. --></ui:remove>
+         <rich:panel>
+            <f:facet name="header"><h:outputText value="Review Packages"/></f:facet>
+            <p>The following packages will be deployed. For each package, the plugin may be able to generate a
+            list of what steps will be performed in the deployment. Click the 'view' button on the desired package
+            to request the instructions from the agent. Note that this will make a live call to the agent
+            and thus may take some time.</p>
+
+            <ui:param name="packagesToDeployDataModel" value="#{DeployPackagesUIBean.dataModel}"/>
+            <rich:dataTable id="packagesToDeployDataTable"
+                            rows="#{PageControl.PackagesToDeployList.pageSize}"
+                            value="#{packagesToDeployDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="20%, 15%, 15%, 10%, 32%, 8%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="PackagesToDeployList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.name">
+                        <h:outputText styleClass="headerText" value="Package Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.displayVersion">
+                        <h:outputText styleClass="headerText" value="Version" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.packageType.displayName">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageTypeName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.architecture">
+                        <h:outputText styleClass="headerText" value="Architecture" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.architectureName}"/>
+               </rich:column>
+                                        
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.shortDescription}" escape="false"/>
+               </rich:column>
+
+               <rich:column style="text-align: center;">
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Instructions"/>
+                  </f:facet>
+
+                  <h:commandLink style="margin-top: 10px;" value="VIEW"
+                                 action="#{InstallationStepsUIBean.loadSteps}">
+                     <f:param name="selectedPackageId" value="#{item.packageVersion.id}"/>
+                  </h:commandLink>
+
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="packagesToDeployDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{packagesToDeployDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.PackagesToDeployList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+
+         <rich:panel>
+            <f:facet name="header"><h:outputText value="Packages Deployment Notes"/></f:facet>
+            <p>Notes specified below will be displayed when tracking the status of this request in order to help
+               further identify the purpose of this request. They are not sent to the plugin for use during the
+               installation. </p>
+
+            <h:inputTextarea value="#{DeployPackagesUIBean.notes}" rows="5" cols="80"/>
+
+         </rich:panel>
+
+         <rich:panel>
+             <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+                <h:commandButton style="margin-top: 10px;" value="CANCEL"
+                                 action="cancel" styleClass="buttonmed"/>
+
+                <h:commandButton style="margin-top: 10px;" value="CONTINUE"
+                                 action="#{DeployPackagesUIBean.deployPackages}" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.content}"/>
+             </h:panelGrid>
+         </rich:panel>
+
+      </h:form>
+
+   </ui:define>
+</ui:composition>
+
+</html>

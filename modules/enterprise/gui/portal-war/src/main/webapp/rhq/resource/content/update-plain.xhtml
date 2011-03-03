@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+   <ui:param name="pageTitle" value="Update Existing Package"/>
+   <ui:param name="selectedTabName" value="Content.Update"/>
+   <ui:define name="content">
+
+      <h:form id="currentPackageVersionsForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+
+         <rich:panel styleClass="BlockContent">
+            <f:facet name="header"><h:outputText value="Packages Eligible for Update"/></f:facet>
+
+            <p>The following packages were found from the repositories currently subscribed to by this resource. In order
+            to enable more existing packages for deployment, use the subscriptions sub-tab to subscribe this resource
+            to more repositories.</p>
+
+             <a4j:keepAlive beanName="ResourceUpdatePackageVersionsUIBean"/>
+
+            <ui:param name="resourceUpdatePackageVersionsDataModel" value="#{ResourceUpdatePackageVersionsUIBean.dataModel}"/>
+            <rich:dataTable id="resourceUpdatePackageVersionsDataTable"
+                            rows="#{PageControl.ResourceUpdatePackageVersionsList.pageSize}"
+                            value="#{resourceUpdatePackageVersionsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 54%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourceUpdatePackageVersionsList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedPackages" />
+                  </f:facet>
+
+                  <onc:select name="selectedPackages" value="#{item.packageVersion.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.name">
+                        <h:outputText styleClass="headerText" value="Package Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="../../content/packageVersion.xhtml">
+                     <f:param name="id" value="#{item.packageVersion.id}"/>
+                     <h:outputText value="#{item.packageName}"/>
+                  </h:outputLink>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.displayVersion">
+                        <h:outputText styleClass="headerText" value="Version" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.packageType.displayName">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageTypeName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.architecture">
+                        <h:outputText styleClass="headerText" value="Architecture" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.architectureName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.shortDescription}" escape="false"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{CreateNewPackageUIBean.deployExisting}"
+                                                 value="DEPLOY SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${ResourceUIBean.permissions.content}"/>
+
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="resourceUpdatePackageVersionsDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{resourceUpdatePackageVersionsDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.ResourceUpdatePackageVersionsList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+
+         </rich:panel>
+
+         <rich:panel styleClass="BlockContent"
+                    rendered="${ResourceUIBean.permissions.content}">
+            <f:facet name="header"><h:outputText value="Upload New Package"/></f:facet>
+
+            <p>The following option will begin the workflow to upload a new package into the system. Once
+            the package information has been specified and the file uploaded, the workflow to deploy the newly
+            created package to this resource will resume.</p>
+
+         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+         <h:commandButton action="uploadNew"
+          	           value="UPLOAD NEW PACKAGE" styleClass="buttonmed"/>
+         </h:panelGrid>
+          
+         <br/>
+      </rich:panel>
+
+ 
+     </h:form>
+
+
+   </ui:define>
+</ui:composition>
+
+</html>

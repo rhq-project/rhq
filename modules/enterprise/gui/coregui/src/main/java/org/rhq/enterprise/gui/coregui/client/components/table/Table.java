@@ -122,6 +122,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private String[] excludedFieldNames;
     private boolean autoFetchData;
     private boolean flexRowDisplay = true;
+    private boolean hideSearchBar = false;
 
     private DS dataSource;
 
@@ -177,6 +178,20 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.autoFetchData = autoFetchData;
     }
 
+    /**
+     * If this returns true, then even if a {@link #getSearchSubsystem() search subsystem}
+     * is defined by the table class, the search bar will not be shown.
+     * 
+     * @return true if the search bar is to be hidden (default is false)
+     */
+    public boolean getHideSearchBar() {
+        return this.hideSearchBar;
+    }
+
+    public void setHideSearchBar(boolean flag) {
+        this.hideSearchBar = flag;
+    }
+
     public void setFlexRowDisplay(boolean flexRowDisplay) {
         this.flexRowDisplay = flexRowDisplay;
     }
@@ -190,12 +205,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         /*
          * table filters and search bar are currently mutually exclusive
          */
+
         if (getSearchSubsystem() == null) {
             configureTableFilters();
         } else {
-            final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
-                getSearchSubsystem());
-            setFilterFormItems(searchFilter);
+            if (!this.hideSearchBar) {
+                final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
+                    getSearchSubsystem());
+                setFilterFormItems(searchFilter);
+            }
         }
 
         listGrid = new LocatableListGrid(getLocatorId());

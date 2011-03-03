@@ -11,6 +11,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -90,6 +91,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     private void showResourceList(Criteria criteria) {
         hideResourceList();
         resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria);
+        resourceList.setHideSearchBar(true); // we don't want to enable search - the contents of this table are very specific
         addMember(resourceList);
         markForRedraw();
     }
@@ -124,6 +126,18 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             fieldVersion.setWidth("*");
             fieldCount.setWidth("10%");
 
+            fieldTypeName.setCellFormatter(new CellFormatter() {
+                @Override
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String url = getResourceTypeTableUrl(record);
+                    if (url == null) {
+                        return value.toString();
+                    }
+
+                    return "<a href=\"" + url + "\">" + value.toString() + "</a>";
+                }
+            });
+
             fieldCategory.setType(ListGridFieldType.ICON);
             fieldCategory.setShowValueIconOnly(true);
             HashMap<String, String> categoryIcons = new HashMap<String, String>(3);
@@ -153,19 +167,28 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid lg = (ListGrid) event.getSource();
                     ListGridRecord selected = lg.getSelectedRecord();
-                    if (selected != null) {
-                        int resourceTypeId = selected.getAttributeAsInt(DataSource.Field.TYPEID);
-                        String version = selected.getAttribute(DataSource.Field.VERSION);
-                        if (version == null) {
-                            CoreGUI.goToView("#Reports/Inventory/InventorySummary/" + resourceTypeId);
-                        } else {
-                            CoreGUI.goToView("#Reports/Inventory/InventorySummary/" + resourceTypeId + "/" + version);
-                        }
+                    String url = getResourceTypeTableUrl(selected);
+                    if (url != null) {
+                        CoreGUI.goToView(url);
                     }
                 }
             });
 
             setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount);
+        }
+
+        private String getResourceTypeTableUrl(ListGridRecord selected) {
+            String url = null;
+            if (selected != null) {
+                int resourceTypeId = selected.getAttributeAsInt(DataSource.Field.TYPEID);
+                String version = selected.getAttribute(DataSource.Field.VERSION);
+                if (version == null) {
+                    url = "#Reports/Inventory/InventorySummary/" + resourceTypeId;
+                } else {
+                    url = "#Reports/Inventory/InventorySummary/" + resourceTypeId + "/" + version;
+                }
+            }
+            return url;
         }
 
         class DataSource extends RPCDataSource<ResourceInstallCount> {

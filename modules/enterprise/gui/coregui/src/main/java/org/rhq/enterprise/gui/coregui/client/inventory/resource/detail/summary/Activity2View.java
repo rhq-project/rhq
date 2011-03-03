@@ -1,22 +1,4 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
 import java.util.Set;
 
@@ -35,8 +17,8 @@ import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardCategory;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -53,16 +35,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * The content pane for the group Summary>Dashboard subtab.
+ * The content pane for the resource Summary>Dashboard subtab.
  *
  * @author Jay Shaughnessy
  */
 
-public class ActivityView2 extends LocatableVLayout implements DashboardContainer, InitializableView {
+public class Activity2View extends LocatableVLayout implements DashboardContainer, InitializableView {
 
-    private static final String DASHBOARD_NAME_PREFIX = "GroupDashboard_";
+    private static final String DASHBOARD_NAME_PREFIX = "ResourceDashboard_";
 
-    private ResourceGroupComposite groupComposite;
+    private ResourceComposite resourceComposite;
 
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
@@ -79,9 +61,9 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
 
     private boolean isInitialized = false;
 
-    public ActivityView2(String locatorId, ResourceGroupComposite groupComposite) {
+    public Activity2View(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
-        this.groupComposite = groupComposite;
+        this.resourceComposite = resourceComposite;
     }
 
     @Override
@@ -97,8 +79,8 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
 
                     // now make async call to look for customized dash for this user and entity
                     DashboardCriteria criteria = new DashboardCriteria();
-                    criteria.addFilterCategory(DashboardCategory.GROUP);
-                    criteria.addFilterGroupId(groupComposite.getResourceGroup().getId());
+                    criteria.addFilterCategory(DashboardCategory.RESOURCE);
+                    criteria.addFilterResourceId(resourceComposite.getResource().getId());
                     dashboardService.findDashboardsByCriteria(criteria, new AsyncCallback<PageList<Dashboard>>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
@@ -110,7 +92,7 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
 
                             isInitialized = true;
 
-                            // draw() may be done since onInit finishes asynchronously, if so redraw
+                            // draw() may be done since onInit finishes asynchronously, if so redraw 
                             if (isDrawn()) {
                                 markForRedraw();
                             }
@@ -170,13 +152,13 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
 
     protected Dashboard getDefaultDashboard() {
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        ResourceGroup group = groupComposite.getResourceGroup();
+        Resource resource = resourceComposite.getResource();
 
         Dashboard dashboard = new Dashboard();
 
-        dashboard.setName(DASHBOARD_NAME_PREFIX + sessionSubject.getId() + "_" + group.getId());
-        dashboard.setCategory(DashboardCategory.GROUP);
-        dashboard.setGroup(group);
+        dashboard.setName(DASHBOARD_NAME_PREFIX + sessionSubject.getId() + "_" + resource.getId());
+        dashboard.setCategory(DashboardCategory.RESOURCE);
+        dashboard.setResource(resource);
         dashboard.setColumns(2);
 
         // TODO, add real portlets

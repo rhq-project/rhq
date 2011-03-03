@@ -729,18 +729,20 @@ import org.rhq.core.domain.util.Summary;
         + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL"),
 
     @NamedQuery(name = Resource.QUERY_RESOURCE_REPORT, query = ""
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount(  "
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r))\n "
-        + "FROM Resource r\n "
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id\n "
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name"),
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( " //
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r)) " //
+        + "FROM Resource r " //
+        + "WHERE r.inventoryStatus = 'COMMITTED' " //
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id " //
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name "),
 
-    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = ""
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( "
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version)\n "
-        + "FROM Resource r\n "
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version\n "
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version")
+    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( " //
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version) " //
+        + "FROM Resource r " //
+        + "WHERE r.inventoryStatus = 'COMMITTED' " //
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version " //
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version ")
 
 })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")

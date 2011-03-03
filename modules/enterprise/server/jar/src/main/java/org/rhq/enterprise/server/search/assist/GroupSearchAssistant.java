@@ -25,6 +25,7 @@ import java.util.List;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 
 /**
@@ -37,8 +38,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
 
     static {
         parameterizedContexts = Collections.emptyList();
-        simpleContexts = Collections.unmodifiableList(Arrays.asList("availability", "category", "type", "plugin",
-            "name"));
+        simpleContexts = Collections.unmodifiableList(Arrays.asList("availability", "groupCategory", "category",
+            "type", "plugin", "name"));
     }
 
     public GroupSearchAssistant(Subject subject, String tab) {
@@ -74,6 +75,9 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
         filter = stripQuotes(filter);
         if (context.equals("availability")) {
             return filter(AvailabilityType.class, filter);
+
+        } else if (context.equals("groupCategory")) {
+            return filter(GroupCategory.class, filter);
 
         } else if (context.equals("category")) {
             return filter(ResourceCategory.class, filter);

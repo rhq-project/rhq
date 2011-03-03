@@ -123,6 +123,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean autoFetchData;
     private boolean flexRowDisplay = true;
     private boolean hideSearchBar = false;
+    private String initialSearchBarSearchText = null;
 
     private DS dataSource;
 
@@ -192,6 +193,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.hideSearchBar = flag;
     }
 
+    public String getInitialSearchBarSearchText() {
+        return this.initialSearchBarSearchText;
+    }
+
+    public void setInitialSearchBarSearchText(String text) {
+        this.initialSearchBarSearchText = text;
+    }
+
     public void setFlexRowDisplay(boolean flexRowDisplay) {
         this.flexRowDisplay = flexRowDisplay;
     }
@@ -211,7 +220,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         } else {
             if (!this.hideSearchBar) {
                 final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
-                    getSearchSubsystem());
+                    getSearchSubsystem(), getInitialSearchBarSearchText());
                 setFilterFormItems(searchFilter);
             }
         }
@@ -545,9 +554,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public void refresh() {
+        // if this table has a filter form (table filters OR search bar)
+        // we need to refresh it as per the filtering. If there are no filters,
+        // just do a allow for a default refresh by simply invalidating the cache
         if (null != this.listGrid) {
-            this.listGrid.invalidateCache();
-            this.listGrid.markForRedraw();
+            if (this.filterForm != null && this.filterForm.hasContent()) {
+                refresh(this.filterForm.getValuesAsCriteria());
+            } else {
+                this.listGrid.invalidateCache();
+                this.listGrid.markForRedraw();
+            }
         }
     }
 

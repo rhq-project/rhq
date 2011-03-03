@@ -124,6 +124,10 @@ public class FlexSearchBar extends AbstractSearchBar {
     }
 
     public FlexSearchBar(SearchSubsystem searchSubsystem) {
+        this(searchSubsystem, null);
+    }
+
+    public FlexSearchBar(SearchSubsystem searchSubsystem, String initialSearchText) {
         Log.info("Loading SearchBar...");
 
         this.searchSubsystem = searchSubsystem;
@@ -161,11 +165,12 @@ public class FlexSearchBar extends AbstractSearchBar {
         setupArrowImage();
         setupSavedSearches();
 
-        if (defaultSearchText != null) {
-            this.autoCompletePatternField.setText(defaultSearchText);
-        } else if (defaultSavedSearchPatternId != null) {
+        setDefaultSearchText(initialSearchText);
+        if (getDefaultSearchText() != null) {
+            this.autoCompletePatternField.setText(getDefaultSearchText());
+        } else if (getDefaultSavedSearchPatternId() != null) {
             try {
-                Integer savedSearchId = Integer.valueOf(defaultSavedSearchPatternId);
+                Integer savedSearchId = Integer.valueOf(getDefaultSavedSearchPatternId());
                 activateSavedSearch(savedSearchId);
             } catch (Exception e) {
                 this.autoCompletePatternField.setText(MSG.view_searchBar_error_selectSavedSearch());

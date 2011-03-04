@@ -49,13 +49,11 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -64,9 +62,13 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public static final String FILTER_GROUP_ID = "groupId";
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    // a decoded resource ancestry for display, with   
+    public static final String ATTR_ANCESTRY_RESOURCES = ANCESTRY.name() + "Resources";
+    public static final String ATTR_ANCESTRY_TYPES = ANCESTRY.name() + "Types";
 
     private static ResourceDatasource INSTANCE;
+
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public static ResourceDatasource getInstance() {
         if (INSTANCE == null) {
@@ -85,6 +87,10 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
+        return addResourceDatasourceFields(fields);
+    }
+
+    public static List<DataSourceField> addResourceDatasourceFields(List<DataSourceField> fields) {
         DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
@@ -98,9 +104,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
-        DataSourceTextField lineageDataField = new DataSourceTextField(ANCESTRY.propertyName(), ANCESTRY.title(), 200);
-        lineageDataField.setCanEdit(false);
-        fields.add(lineageDataField);
+        DataSourceTextField ancestryDataField = new DataSourceTextField(ANCESTRY.propertyName(), ANCESTRY.title(), 200);
+        ancestryDataField.setCanEdit(false);
+        fields.add(ancestryDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
@@ -150,38 +156,36 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             }
         }
 
+        // In addition to the types of the result resources, get the types of their ancestry
+        // NOTE: this may be too labor intensive in general, but since this is a singleton I coudln't
+        //       make it easily optional.
+        typesSet.addAll(AncestryUtil.getResourceTypeIds(result));
+
         ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                // now that we have the types, we can replace encoded lineage strings with display strings
-                //processLineage(result, types);
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
+                    // replace type id with type name
                     Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
                     ResourceType type = types.get(typeId);
                     if (type != null) {
                         record.setAttribute(TYPE.propertyName(), type.getName());
                     }
 
+                    // decode ancestry
                     String ancestry = record.getAttributeAsString(ANCESTRY.propertyName());
                     if (null == ancestry) {
                         continue;
                     }
-                    StringBuilder sb = new StringBuilder();
-                    String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
-                    for (int i = 0; i < ancestryEntries.length; ++i) {
-                        sb.append((i > 0) ? " > " : "");
-                        String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
-                        //int typeId = Integer.valueOf(resourceTokens[0]);
-                        int resourceId = Integer.valueOf(entryTokens[1]);
-                        String url = LinkManager.getResourceLink(resourceId);
-                        String suffix = record.getAttributeAsInt("id") + "_" + entryTokens[1];
-                        sb.append(SeleniumUtility.getLocatableHref(url, entryTokens[2], suffix));
-                    }
-                    record.setAttribute(ANCESTRY.propertyName(), sb.toString());
-
+                    int resourceId = record.getAttributeAsInt("id");
+                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
+                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
+                    // decoded strings as different attributes. 
+                    record.setAttribute(ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
+                    record.setAttribute(ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set

@@ -228,7 +228,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // On name change make sure we update the ancestry as the name is part of the ancestry string
         if (!persistedResource.getName().equals(resource.getName())) {
             persistedResource.setName(resource.getName());
-            updateAncestry(persistedResource, persistedResource.getChildResources());
+            updateAncestry(persistedResource);
         }
         persistedResource.setLocation(resource.getLocation());
         persistedResource.setDescription(resource.getDescription());
@@ -2368,22 +2368,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             .getDuplicateTypeNames());
     }
 
-    public void updateAncestry(Subject subject, int parentResourceId) {
-        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
-        if (null == parentResource) {
-            throw new ResourceNotFoundException(parentResourceId);
+    public void updateAncestry(Subject subject, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new ResourceNotFoundException(resourceId);
         }
 
-        Set<Resource> children = parentResource.getChildResources();
-
-        updateAncestry(parentResource, children);
+        updateAncestry(resource);
     }
 
-    private void updateAncestry(Resource parentResource, Set<Resource> children) {
-        parentResource.updateAncestryForResource();
+    private void updateAncestry(Resource resource) {
+        resource.updateAncestryForResource();
 
-        for (Resource child : children) {
-            updateAncestry(child, child.getChildResources());
+        for (Resource child : resource.getChildResources()) {
+            child.setParentResource(resource);
+            updateAncestry(child);
         }
     }
 

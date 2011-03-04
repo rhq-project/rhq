@@ -31,6 +31,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -140,11 +142,6 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return criteria;
     }
 
-    @Override
-    protected String getItemTitle() {
-        return "resource";
-    }
-
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
     //  String search = (String) availableFilterForm.getValue("search");
     //  String type = availableFilterForm.getValueAsString("type");
@@ -170,6 +167,27 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     //
     //  return latestCriteria;
     //}
+
+    @Override
+    protected String getItemTitle() {
+        return "resource";
+    }
+
+    @Override
+    protected HoverCustomizer getNameHoverCustomizer() {
+        return new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return "<p style='width:400px'>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+            }
+        };
+    }
+
+    @Override
+    protected boolean supportsNameHoverCustomizer() {
+        return true;
+    }
 
     private class SelectedResourceDataSource extends ResourceDatasource {
 

@@ -908,7 +908,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Summary(index = 1)
     private String name;
 
-    @Column(name = "ANCESTRY", nullable = false)
+    @Column(name = "ANCESTRY", nullable = true)
     @Summary(index = 5)
     private String ancestry;
 
@@ -1154,31 +1154,37 @@ public class Resource implements Comparable<Resource>, Serializable {
     /**
      * Using the current settings for resource field set the encoded ancestry string. This method
      * is called automatically from {@link #setParentResource(Resource)} because the parent defines the ancestry.
-     * If the parent is not an attached entity the update will be skipped, as a valid id and resource type are required.
-     * It can also be called at any time the ancestry has changed, for example, if a resource name has been updated.
+     * The parent should be an attached entity to ensure access to all necessary information. If the parent is
+     * not a persisted entity, or if it lacks the required information, the update will be skipped.<br/><br.>
+     * It can also be called at any time the ancestry has changed, for example, if a resource name has
+     * been updated.
      *  
      * @return the built ancestry string
      */
     public String updateAncestryForResource() {
 
-        if (this.parentResource == null || // 
-            this.parentResource.getId() <= 0 || //
-            this.parentResource.getResourceType() == null) {
+        Resource parentResource = this.getParentResource();
+
+        if (parentResource == null || // 
+            parentResource.getId() <= 0 || //
+            parentResource.getResourceType() == null) {
             return null;
         }
 
         StringBuilder ancestry = new StringBuilder();
-        ancestry.append(this.parentResource.resourceType.getId());
+        ancestry.append(parentResource.getResourceType().getId());
         ancestry.append(ANCESTRY_ENTRY_DELIM);
-        ancestry.append(this.parentResource.id);
+        ancestry.append(parentResource.getId());
         ancestry.append(ANCESTRY_ENTRY_DELIM);
-        ancestry.append(this.parentResource.name);
-        if (Resource.ROOT != parentResource) {
+        ancestry.append(parentResource.getName());
+        String parentAncestry = parentResource.getAncestry();
+        if (null != parentAncestry) {
             ancestry.append(ANCESTRY_DELIM);
-            ancestry.append(parentResource.getAncestry());
+            ancestry.append(parentAncestry);
         }
 
-        return ancestry.toString();
+        this.setAncestry(ancestry.toString());
+        return this.getAncestry();
     }
 
     public String getResourceKey() {

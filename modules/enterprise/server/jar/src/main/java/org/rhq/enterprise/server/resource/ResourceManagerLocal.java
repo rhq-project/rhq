@@ -425,7 +425,7 @@ public interface ResourceManagerLocal {
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 
     /**
-     * Update the ancestry for the specified parent resource and its child lineage.
+     * Update the ancestry for the specified resource and its child lineage.
      * <pre>
      * The ancestry is recursively defined as:
      * 
@@ -437,7 +437,7 @@ public interface ResourceManagerLocal {
      * @param subject
      * @param resourceId
      */
-    public void updateAncestry(Subject subject, int parentResourceId);
+    public void updateAncestry(Subject subject, int resourceId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

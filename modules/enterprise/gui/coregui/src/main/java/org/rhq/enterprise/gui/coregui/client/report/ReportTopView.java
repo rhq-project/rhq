@@ -150,7 +150,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 public Canvas createView() {
                     return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
             .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {

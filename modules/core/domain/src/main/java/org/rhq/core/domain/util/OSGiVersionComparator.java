@@ -50,7 +50,7 @@ public class OSGiVersionComparator implements Comparator<String> {
                         if (ver2.getQualifier() == null) {
                             result = 1;
                         } else {
-                            ver1.getQualifier().compareTo(ver2.getQualifier());
+                            result = ver1.getQualifier().compareTo(ver2.getQualifier());
                         }
                     } else {
                         if (ver2.getQualifier() == null) {

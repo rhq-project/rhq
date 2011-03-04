@@ -239,7 +239,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_failFetch(), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_reports_inventorySummary_failFetch(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
                         processResponse(request.getRequestId(), response);
                     }

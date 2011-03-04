@@ -60,6 +60,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private boolean fetchGroupAlertDefinition;
     private boolean fetchConditions;
     private boolean fetchAlertNotifications;
+    private boolean fetchResource;
     private boolean fetchResourceType;
 
     private PageOrdering sortName;
@@ -147,6 +148,10 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public void fetchAlertNotifications(boolean fetchAlertNotifications) {
         this.fetchAlertNotifications = fetchAlertNotifications;
+    }
+
+    public void fetchResource(boolean fetchResource) {
+        this.fetchResource = fetchResource;
     }
 
     public void fetchResourceType(boolean fetchResourceType) {

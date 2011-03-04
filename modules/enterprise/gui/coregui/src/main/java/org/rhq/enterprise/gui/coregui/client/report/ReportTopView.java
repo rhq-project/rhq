@@ -32,7 +32,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
@@ -137,8 +136,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
             .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
-                // TODO this isn't really want we want - we need to impl a true view with all alert definitions in a table
-                return new ResourceTypeTreeView(extendLocatorId(ResourceTypeTreeView.VIEW_ID.getName()));
+                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
             }
         });
 

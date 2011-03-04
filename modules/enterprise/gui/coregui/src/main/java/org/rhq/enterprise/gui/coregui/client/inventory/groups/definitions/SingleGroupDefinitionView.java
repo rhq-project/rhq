@@ -35,6 +35,7 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.IButton;
@@ -234,12 +235,11 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             });
     }
 
-    class DynaGroupChildrenView extends Table {
+    class DynaGroupChildrenView extends Table<ResourceGroupsDataSource> {
         public DynaGroupChildrenView(String locatorId, int groupDefinitionId) {
             super(locatorId, MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String
                 .valueOf(groupDefinition.getId())));
             setDataSource(ResourceGroupsDataSource.getInstance());
-            setMinHeight(250);
         }
 
         @Override
@@ -251,7 +251,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             idField.setWidth("50");
 
             ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-            nameField.setWidth("300");
+            nameField.setWidth("*");
             nameField.setCellFormatter(new CellFormatter() {
                 @Override
                 public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -262,7 +262,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             });
 
             ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-            descriptionField.setWidth("100");
+            descriptionField.setWidth("300");
 
             ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
             typeNameField.setWidth("100");
@@ -271,7 +271,9 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             pluginNameField.setWidth("100");
 
             ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-            categoryField.setWidth("100");
+            categoryField.setWidth("30");
+            categoryField.setAlign(Alignment.CENTER);
+            categoryField.setTitle("&nbsp;");
             categoryField.setType(ListGridFieldType.ICON);
             HashMap<String, String> categoryImages = new HashMap<String, String>(2);
             categoryImages.put(GroupCategory.COMPATIBLE.name(), ImageManager.getGroupIcon(GroupCategory.COMPATIBLE));
@@ -292,7 +294,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 }
             });
 
-            setListGridFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField);
+            setListGridFields(idField, categoryField, nameField, descriptionField, typeNameField, pluginNameField);
             setListGridDoubleClickHandler(new DoubleClickHandler() {
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {

@@ -479,7 +479,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     + group.getDisplayName()
                     + "</div>"
                     + (group.getDescription() != null ? ("<div style='padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
-                        + " -" + group.getDescription() + "</div>")
+                        + " - " + group.getDescription() + "</div>")
                         : ""));
             section.setExpanded(!group.isDefaultHidden());
         }

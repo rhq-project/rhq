@@ -78,7 +78,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
-    
+
     @EJB
     @IgnoreDependency
     private AlertManagerLocal alertManager;
@@ -89,7 +89,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @EJB
     @IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
-    
+
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
         if (alertDefinition.getResourceType() != null) { // an alert template
             return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
@@ -600,7 +600,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private void checkAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
         // if someone enters a really long description, we need to truncate it - the column is only 250 chars
-        if (alertDefinition.getDescription().length() > 250) {
+        if (alertDefinition.getDescription()!=null && alertDefinition.getDescription().length() > 250) {
             alertDefinition.setDescription(alertDefinition.getDescription().substring(0, 250));
         }
 
@@ -623,8 +623,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                         + "' is a trending metric, and thus will never have baselines calculated for it.");
                 }
             }
-        }    
-        
+        }
+
         if (!alertNotificationManager.finalizeNotifications(subject, alertDefinition.getAlertNotifications())) {
             throw new InvalidAlertDefinitionException("Some of the notifications failed to validate.");
         }

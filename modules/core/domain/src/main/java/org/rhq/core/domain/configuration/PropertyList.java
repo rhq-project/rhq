@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -61,7 +62,10 @@ public class PropertyList extends Property {
     // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
     @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
-    //@IndexColumn(name = "list_index")  TODO GH: This seems broken
+    // Order by primary key which will also put the list elements in chronological order.
+    // Note, if we decide at some point to add support in the GUI for reordering list elements, we'll
+    // need to add a new ORDER column and order by that.
+    @OrderBy
     private List<Property> list = new ArrayList<Property>();
 
     @Transient

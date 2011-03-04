@@ -316,7 +316,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
 
             String resourceAndPlugin = configuration.getSimpleValue("resourceType", null);
 
-            String resourceType = resourceAndPlugin.substring( (resourceAndPlugin.indexOf('-') + 1) );
+            String resourceType = resourceAndPlugin.substring((resourceAndPlugin.indexOf('-') + 1));
             String pluginType = resourceAndPlugin.substring(0, resourceAndPlugin.indexOf('-'));
 
             supportedPackageType.resourceTypeName = resourceType;

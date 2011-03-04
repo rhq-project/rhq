@@ -177,6 +177,11 @@ public class PermissionsEditor extends LocatableVStack {
             MSG.view_adminRoles_permissions_permDesc_manageBundles());
         records.add(record);
 
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
+            "subsystems/content/Content", Permission.MANAGE_REPOSITORIES,
+            MSG.view_adminRoles_permissions_permDesc_manageRepositories());
+        records.add(record);
+        
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
 
         return grid;

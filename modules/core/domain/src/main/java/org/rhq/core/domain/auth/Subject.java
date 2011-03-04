@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -310,6 +311,9 @@ public class Subject implements Serializable {
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
     private List<ResourceGroup> ownedGroups = null;
 
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Set<Repo> ownedRepos;
+    
     // When a subject is removed any owned dashboards are removed automatically
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<Dashboard> ownedDashboards = null;
@@ -508,6 +512,14 @@ public class Subject implements Serializable {
         this.ownedGroups = ownedGroups;
     }
 
+    protected Set<Repo> getOwnedrepos(){
+        return ownedRepos;
+    }
+    
+    protected void setOwnedRepos(Set<Repo> repos) {
+        ownedRepos = repos;
+    }
+    
     protected List<Dashboard> getOwnedDashboards() {
         return ownedDashboards;
     }

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.util.Comparator;
 import java.util.List;
 
 import javax.ejb.Remote;
@@ -131,6 +132,25 @@ public interface RepoManagerRemote {
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
     /**
+     * Returns the latest package version of the supplied package.
+     * The latest version is determined using a comparator which is found using the following rules:
+     * <ol>
+     * <li>determine the comparator using the package type behavior if one is setup for the package type
+     * <li>If no package behavior exists, use {@link PackageVersion#DEFAULT_COMPARATOR}
+     * </ol>
+     * 
+     * @param subject the authenticated user
+     * @param packageId the id of the package to find the latest version for.
+     * @param repoId the repo where to take the package versions of the package from
+     * @return
+     */
+    @WebMethod
+    PackageVersion getLatestPackageVersion(
+        @WebParam(name = "subject") Subject subject, 
+        @WebParam(name = "packageId") int packageId, 
+        @WebParam(name = "repoId") int repoId);
+    
+    /**
      * Update an existing {@link Repo} object's basic fields, like name, description, etc. Note that the given <code>
      * repo</code>'s relationships will be ignored and not merged with the existing repo (e.g. is subscribed
      * resources will not be changed, regardless of what the given repo's subscribed resources set it).
@@ -163,6 +183,24 @@ public interface RepoManagerRemote {
         @WebParam(name = "filter") String filter, //
         @WebParam(name = "pageControl") PageControl pc);
 
+    /**
+     * Deletes package versions from a repo if they are not referenced by 
+     * a content source.
+     * <p>
+     * The package versions themselves are not deleted until some content source or repository
+     * is deleted at which point orphans detection is performed.
+     *  
+     * @param subject
+     * @param repoId
+     * @param packageVersionIds
+     * @return true if all the package versions were successfully deleted, false if some references exist.
+     */
+    @WebMethod
+    boolean deletePackageVersionsFromRepo(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "repoId") int repoId,
+        @WebParam(name = "packageVersionIds") int[] packageVersionId);
+    
     /**
      * Gets all resources that are subscribed to the given repo.
      *

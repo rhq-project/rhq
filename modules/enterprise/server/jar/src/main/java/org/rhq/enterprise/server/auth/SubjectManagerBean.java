@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
@@ -103,6 +104,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @IgnoreDependency
     private RoleManagerLocal roleManager;
 
+    @EJB
+    @IgnoreDependency
+    private RepoManagerLocal repoManager;
+    
     private SessionManager sessionManager = SessionManager.getInstance();
 
     /**
@@ -181,7 +186,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return entityManager.merge(subjectToModify);
     }
 
-    @Override
     public Subject createSubject(Subject whoami, Subject subjectToCreate, String password) throws SubjectException,
         EntityExistsException {
         if (getSubjectByName(subjectToCreate.getName()) != null) {
@@ -364,18 +368,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         // get the configuration properties and use the JAAS modules to perform the login
         Properties config = systemManager.getSystemConfiguration(getOverlord());
 
-        try {
-            UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
-            LoginContext loginContext;
-            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
-
-            loginContext.login();
-            loginContext.getSubject().getPrincipals().iterator().next();
-            loginContext.logout();
-        } catch (javax.security.auth.login.LoginException e) {
-            throw new LoginException(e.getMessage());
-        }
-
+        _checkAuthentication(username, password);
+        
         // User is authenticated!
 
         Subject subject = getSubjectByName(username);
@@ -426,6 +420,29 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return subject;
     }
 
+    public Subject checkAuthentication(String username, String password) {
+        try {
+            _checkAuthentication(username, password);
+            return getSubjectByName(username);            
+        } catch (LoginException e) {
+            return null;
+        }
+    }
+    
+    private void _checkAuthentication(String username, String password) throws LoginException {
+        try {
+            UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
+            LoginContext loginContext;
+            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
+
+            loginContext.login();
+            loginContext.getSubject().getPrincipals().iterator().next();
+            loginContext.logout();
+        } catch (javax.security.auth.login.LoginException e) {
+            throw new LoginException(e.getMessage());
+        }
+    }
+    
     /**This method is applied to Subject instances that may require LDAP auth/authz processing.
      * Called from both SLSB and SubjectGWTServiceImpl and:
      * -if Subject passed in has Principal(not LDAP account) then we immediately return Subject as no processing needed.
@@ -742,6 +759,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
+        repoManager.removeOwnershipOfSubject(doomedSubject.getId());
+        
         entityManager.remove(doomedSubject);
 
         return;

@@ -25,6 +25,7 @@ package org.rhq.enterprise.server.webservices;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -62,9 +63,12 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -82,6 +86,7 @@ import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -509,6 +514,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return contentManager.findPackageTypes(subject, resourceTypeName, pluginName);
     }
 
+    public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
+        return contentManager.findPackageType(subject, resourceTypeId, packageTypeName);
+    }
+    
+    public PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject,
+        Integer resourceTypeId, String packageTypeName) {
+        return contentManager.findPackageTypeWithVersionFormat(subject, resourceTypeId, packageTypeName);
+    }
+    
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         return contentManager.getBackingPackageForResource(subject, resourceId);
     }
@@ -517,6 +531,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return contentManager.getPackageBytes(subject, resourceId, installedPackageId);
     }
 
+    public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return contentManager.findPackagesByCriteria(subject, criteria); 
+    }
+    
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
+        PackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return contentManager.findPackagesWithLatestVersion(subject, criteria); 
+    }
+        
     //CONTENTMANAGER: END ----------------------------------
 
     //    //DATAACCESSMANAGER: BEGIN ----------------------------------
@@ -779,6 +804,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId) {
+        return repoManager.getLatestPackageVersion(subject, packageId, repoId);
+    }
+    
+    public boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        return repoManager.deletePackageVersionsFromRepo(subject, repoId, packageVersionIds);
+    }
+    
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
         return repoManager.findSubscribedResources(subject, repoId, pc);
     }

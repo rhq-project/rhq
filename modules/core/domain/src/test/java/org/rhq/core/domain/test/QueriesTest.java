@@ -79,7 +79,7 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE, new Object[] { "repoId", 1 });
         add(MeasurementOOB.COUNT_FOR_DATE, new Object[] { "timestamp", 1L });
 
-        add(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
+        add(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN, new Object[] { "resourceId", 1 });
 
         add(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID, new Object[] { "id", 1 });
         add(CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1, "startTime", null,

@@ -1,0 +1,10 @@
+// We need the SecurityManager installed to enable sandboxing of CLI scripts
+// but we don't define any other security measures on the RHQ server itself.
+//
+// Granting all permissions allows us to run the RHQ server as if no security
+// manager was in place (which is assumed by default by JBoss AS) but be able
+// to use it when we need it for our own purposes.
+
+grant {
+    permission java.security.AllPermission;
+};

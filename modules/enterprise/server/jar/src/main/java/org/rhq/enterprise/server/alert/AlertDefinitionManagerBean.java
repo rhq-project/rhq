@@ -78,12 +78,17 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
+
     @EJB
     @IgnoreDependency
     private AlertManagerLocal alertManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
+
+    @EJB
+    @IgnoreDependency
+    private AlertNotificationManagerLocal alertNotificationManager;
 
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
         if (alertDefinition.getResourceType() != null) { // an alert template
@@ -194,7 +199,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
-        checkAlertDefinition(alertDefinition, resourceId);
+        checkAlertDefinition(subject, alertDefinition, resourceId);
 
         // if this is an alert definition, set up the link to a resource
         if (resourceId != null) {
@@ -479,7 +484,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * is not currently deleted
          */
         boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
-        checkAlertDefinition(alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId() : null);
+        checkAlertDefinition(subject, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId() : null);
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
@@ -592,10 +597,10 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    private void checkAlertDefinition(AlertDefinition alertDefinition, Integer resourceId)
+    private void checkAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
         // if someone enters a really long description, we need to truncate it - the column is only 250 chars
-        if (alertDefinition.getDescription().length() > 250) {
+        if (alertDefinition.getDescription()!=null && alertDefinition.getDescription().length() > 250) {
             alertDefinition.setDescription(alertDefinition.getDescription().substring(0, 250));
         }
 
@@ -620,7 +625,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
         }
 
-        return;
+        if (!alertNotificationManager.finalizeNotifications(subject, alertDefinition.getAlertNotifications())) {
+            throw new InvalidAlertDefinitionException("Some of the notifications failed to validate.");
+        }
     }
 
     private void notifyAlertConditionCacheManager(Subject subject, String methodName, AlertDefinition alertDefinition,
@@ -714,7 +721,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return queryRunner.execute();
     }
 
-    @Override
     public String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications) {
         if (notifications == null || notifications.length == 0) {
             return new String[0];

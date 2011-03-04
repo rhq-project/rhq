@@ -138,4 +138,12 @@ public interface SubjectGWTService extends RemoteService {
      * @return <code>true</code> if the user exists and has a {@link Principal}, <code>false</code> otherwise
      */
     boolean isUserWithPrincipal(String username) throws RuntimeException;
+    
+    /**
+     * Checks if the provided credentials are correct.
+     * @param username
+     * @param password
+     * @return
+     */
+    Subject checkAuthentication(String username, String password);
 }

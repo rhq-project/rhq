@@ -41,7 +41,9 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-@Test
+//make sure we run this after the plugins.metadata tests are done so that
+//the db contents don't interfere
+@Test(dependsOnGroups = "plugins.metadata") 
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors

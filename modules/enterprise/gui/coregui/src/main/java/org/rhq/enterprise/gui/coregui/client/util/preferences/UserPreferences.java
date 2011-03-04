@@ -191,6 +191,23 @@ public class UserPreferences {
         return userConfiguration.getSimpleValue(name, defaultValue);
     }
 
+    /**
+     * Similar to {@link #getPreference(String, String)} except if the preference
+     * exists, but its value is an empty string, this method returns the defaultValue.
+     * In other words, an empty preference value is just as if it was null.
+     * 
+     * @param name name of preference
+     * @param defaultValue the value returned if the preference value was null or an empty string
+     * @return the preference value
+     */
+    protected String getPreferenceEmptyStringIsDefault(String name, String defaultValue) {
+        String value = userConfiguration.getSimpleValue(name, null);
+        if (value == null || value.trim().length() == 0) {
+            value = defaultValue;
+        }
+        return value;
+    }
+    
     protected void setPreference(String name, Collection<?> value) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;

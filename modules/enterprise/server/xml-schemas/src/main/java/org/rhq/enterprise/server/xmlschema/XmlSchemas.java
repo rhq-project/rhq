@@ -62,6 +62,10 @@ public interface XmlSchemas {
     public static final String XSD_SERVERPLUGIN_BUNDLE = "rhq-serverplugin-bundle.xsd";
     public static final String PKG_SERVERPLUGIN_BUNDLE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle";
 
+    // the server plugin descriptor for the package type plugin type
+    public static final String XSD_SERVERPLUGIN_PACKAGETYPE = "rhq-serverplugin-packagetype.xsd";
+    public static final String PKG_SERVERPLUGIN_PACKAGETYPE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.packagetype";
+
     // the configuration schema that can be reused in any other server-side schema to define normal configuration properties
     public static final String XSD_CONFIGURATION = "rhq-configuration.xsd";
     public static final String PKG_CONFIGURATION = DescriptorPackages.CONFIGURATION;

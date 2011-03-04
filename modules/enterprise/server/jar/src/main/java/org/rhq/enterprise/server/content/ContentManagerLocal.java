@@ -37,11 +37,14 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -55,6 +58,29 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 public interface ContentManagerLocal {
 
     // Use case logic  --------------------------------------------
+
+    /**
+     * This is currently ignored as the file size is computed
+     * upon persist.
+     */
+    public static final String UPLOAD_FILE_SIZE = "fileSize";
+    
+    public static final String UPLOAD_FILE_INSTALL_DATE = "fileInstallDate";
+    
+    /**
+     * This doesn't seem to serve any purpose.
+     */
+    public static final String UPLOAD_OWNER = "owner";
+    
+    public static final String UPLOAD_FILE_NAME = "fileName";
+    
+    public static final String UPLOAD_MD5 = "md5";
+    
+    /**
+     * This is currently ignored as the SHA is computed upon
+     * persist.
+     */
+    public static final String UPLOAD_SHA256 = "sha256";
 
     /**
      * Deploys a package on the specified resource. Each installed package entry should be populated with the <code>
@@ -201,7 +227,8 @@ public interface ContentManagerLocal {
      * Creates a new package version in the system. If the parent package (identified by the packageName parameter) does
      * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
      * created and the existing package version instance will be returned.
-     *
+     * 
+     * @param subject         the user requesting the package creation
      * @param  packageName    parent package name; uniquely identifies the package under which this version goes
      * @param  packageTypeId  identifies the type of package in case the general package needs to be created
      * @param  version        identifies the version to be create
@@ -210,11 +237,25 @@ public interface ContentManagerLocal {
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
      */
-    PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
-        InputStream packageBitStream);
+    PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
+        int architectureId, InputStream packageBitStream);
 
-    PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
-        InputStream packageBitStream, Map<String, String> packageUploadDetails, int newResourceTypeId);
+    /**
+     * This method is essentially the same as {@link #createPackageVersion(Subject, String, int, String, int, InputStream)}
+     * but will update the package bits if a package version with the provided identification already exists.
+     * 
+     * @param subject the current user
+     * @param packageName the name of the package (the general package will be created if none exists)
+     * @param packageTypeId the id of the package type. This is ignored if the <code>newResourceTypeId</code> is not null
+     * @param version the version of the package version being created
+     * @param architectureId the architecture of the package version
+     * @param packageBitStream the input stream with the package bits
+     * @param packageUploadDetails additional details about the package. See the constants defined in this interface
+     * @param repoId an optional id of the repo to insert the package version in
+     * @return the newly create package version
+     */
+    PackageVersion getUploadedPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
+        int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails, Integer repoId);
 
     /**
      * Very simple method that persists the given package version within its own transaction.
@@ -297,6 +338,7 @@ public interface ContentManagerLocal {
      */
     PackageType getResourceCreationPackageType(int resourceTypeId);
 
+   
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -336,6 +378,16 @@ public interface ContentManagerLocal {
         throws ResourceTypeNotFoundException;
 
     /**
+     * @see {@link ContentManagerRemote#findPackageType(Subject, Integer, String)}
+     */
+    PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
+    
+    /**
+     * @see {@link ContentManagerRemote#findPackageTypeWithVersionFormat(Subject, Integer, String)}
+     */
+    PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject, Integer resourceTypeId, String packageTypeName);
+    
+    /**
      * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}
      */
     PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria);
@@ -344,6 +396,16 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
      */
     PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
+
+    /**
+     * @see ContentManagerRemote#findPackagesByCriteria(Subject, PackageCriteria) 
+     */
+    PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria);
+
+    /**
+     * @see ContentManagerRemote#findPackagesWithLatestVersion(Subject, PackageCriteria) 
+     */
+    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject, PackageCriteria criteria);
 
     /**
      * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)
@@ -355,6 +417,20 @@ public interface ContentManagerLocal {
      */
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
 
+    /**
+     * This method is used to persist new package types that are defined on the server-side
+     * by some kind of plugin.
+     * <p>
+     * Server-side package types are used to identify data stored in the content subsystem
+     * which don't have any agent-side counter-part. Such package types are required to have
+     * the {@link PackageType#getResourceType() resource type} set to null.
+     * 
+     * @param packageType the package type to persist
+     * @return the persisted package type
+     * @throws IllegalArgumentException if the supplied package type has non-null resource type
+     */
+    PackageType persistServersidePackageType(PackageType packageType);
+    
     void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams);
 
     void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails);

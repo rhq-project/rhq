@@ -95,6 +95,18 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return packageType;
     }
 
+    public List<PackageType> getPackageTypes() {
+        OrderingField orderingField = new OrderingField("pt.displayName", PageOrdering.ASC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PackageType.QUERY_FIND_ALL, orderingField);
+
+        @SuppressWarnings("unchecked")
+        List<PackageType> packageList = (List<PackageType>) query.getResultList();
+        
+        return packageList;
+    }
+    
     @SuppressWarnings("unchecked")
     public List<PackageType> getPackageTypes(int resourceTypeId) {
         OrderingField orderingField = new OrderingField("pt.displayName", PageOrdering.ASC);

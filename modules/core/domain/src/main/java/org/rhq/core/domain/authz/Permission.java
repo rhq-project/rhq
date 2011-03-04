@@ -120,8 +120,14 @@ public enum Permission {
      * can C/U/D events
      * (in the future, will also C/U/D event definitions)
      */
-    MANAGE_EVENTS(Target.RESOURCE) // 14
+    MANAGE_EVENTS(Target.RESOURCE), // 14
 
+    /**
+     * Can C/U/D repositories and content sources
+     */
+    // NOTE: This is a GLOBAL permission but defined here to maintain the ordinal indexes
+    MANAGE_REPOSITORIES(Target.GLOBAL) // 15
+    
     ;
 
     /**

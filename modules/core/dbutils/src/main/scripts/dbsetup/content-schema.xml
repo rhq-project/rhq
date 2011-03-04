@@ -80,7 +80,9 @@
         <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
         <column name="IS_CANDIDATE" type="BOOLEAN" required="true"/>
         <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
-
+        <column name="OWNER_ID" type="INTEGER" required="false" references="RHQ_SUBJECT" />
+        <column name="IS_PRIVATE" type="BOOLEAN" required="true" />
+        
         <index name="RHQ_REPO_IDX" unique="true">
             <field ref="NAME"/>
         </index>
@@ -112,7 +114,7 @@
         <column name="IS_CREATION_DATA" type="BOOLEAN" required="true"/>
         <column name="SUPPORTS_ARCHITECTURE" type="BOOLEAN" required="true"/>
 
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
         <column name="DEPLOYMENT_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
         <column name="PACKAGE_EXTRA_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
 

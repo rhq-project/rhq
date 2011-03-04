@@ -98,12 +98,13 @@ public class MeasurementUserPreferences {
         MetricRangePreferences prefs = new MetricRangePreferences();
 
         prefs.explicitBeginEnd = Boolean.valueOf(
-            userPrefs.getPreference(PREF_METRIC_RANGE_BEGIN_END_FLAG, DEFAULT_VALUE_RANGE_RO)).booleanValue();
+            userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_BEGIN_END_FLAG, DEFAULT_VALUE_RANGE_RO))
+            .booleanValue();
         if (prefs.explicitBeginEnd == false) {
-            prefs.lastN = Integer.valueOf(userPrefs.getPreference(PREF_METRIC_RANGE_LASTN, DEFAULT_VALUE_RANGE_LASTN
-                .toString()));
-            prefs.unit = Integer.valueOf(userPrefs.getPreference(PREF_METRIC_RANGE_UNIT, DEFAULT_VALUE_RANGE_UNIT
-                .toString()));
+            prefs.lastN = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_LASTN,
+                DEFAULT_VALUE_RANGE_LASTN.toString()));
+            prefs.unit = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_UNIT,
+                DEFAULT_VALUE_RANGE_UNIT.toString()));
 
             List<Long> range = MeasurementUtility.calculateTimeFrame(prefs.lastN, prefs.unit);
             prefs.begin = range.get(0);
@@ -111,7 +112,7 @@ public class MeasurementUserPreferences {
         } else {
             try {
                 String rangeString = userPrefs.getPreference(PREF_METRIC_RANGE);
-                if (rangeString != null) {
+                if (rangeString != null && rangeString.trim().length() > 0) {
                     if (rangeString.contains(",")) { // legacy support: old prefs used to use commas
                         rangeString = rangeString.replace(",", UserPreferences.PREF_LIST_DELIM);
                         //userPrefs.setPreference(PREF_METRIC_RANGE, rangeString); // TODO set only if we don't support JSF anymore

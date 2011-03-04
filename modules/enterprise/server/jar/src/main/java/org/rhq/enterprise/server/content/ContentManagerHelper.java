@@ -18,21 +18,28 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.util.Comparator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSyncResults;
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.PackageVersionFormatDescription;
+import org.rhq.core.domain.content.ValidatablePackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.PackageDetailsValidationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
+import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -41,6 +48,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentManagerHelper {
     private EntityManager entityManager;
 
+    private static class DefaultPackageTypeBehavior implements PackageTypeBehavior {
+        public Comparator<PackageVersion> getPackageVersionComparator(String packageTypeName) {
+            return PackageVersion.DEFAULT_COMPARATOR;
+        }    
+
+        public void validateDetails(ValidatablePackageDetailsKey key, Subject origin)
+            throws PackageDetailsValidationException {
+        }
+        
+        public PackageVersionFormatDescription getPackageVersionFormat(String packageTypeName) {
+            return null;
+        }
+    }
+    private static final PackageTypeBehavior DEFAULT_PACKAGE_TYPE_BEHAVIOR = new DefaultPackageTypeBehavior();
+    
     public ContentManagerHelper(EntityManager managerIn) {
         this.entityManager = managerIn;
     }
@@ -69,6 +91,30 @@ public class ContentManagerHelper {
         return pc;
     }
 
+    public static PackageTypeServerPluginContainer getPackageTypePluginContainer() throws Exception {
+        PackageTypeServerPluginContainer pc = null;
+
+        try {
+            ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
+            if (!mbean.isMasterPluginContainerStarted()) {
+                throw new IllegalStateException("The master plugin container is not started!");
+            }
+
+            MasterServerPluginContainer master = mbean.getMasterPluginContainer();
+            pc = master.getPluginContainerByClass(PackageTypeServerPluginContainer.class);
+        } catch (IllegalStateException ise) {
+            throw ise;
+        } catch (Exception e) {
+            throw new Exception("Cannot obtain the package type plugin container", e);
+        }
+
+        if (pc == null) {
+            throw new Exception("Package type plugin container is null!");
+        }
+
+        return pc;
+    }
+    
     public static ResourcePackageDetails installedPackageToDetails(InstalledPackage installedPackage) {
         PackageVersion packageVersion = installedPackage.getPackageVersion();
         ResourcePackageDetails details = packageVersionToDetails(packageVersion);
@@ -147,4 +193,15 @@ public class ContentManagerHelper {
 
         return persistedResults;
     }
+    
+    public static PackageTypeBehavior getPackageTypeBehavior(int packageTypeId) throws Exception {
+        PackageTypeBehavior ret = getPackageTypePluginContainer().getPluginManager().getBehavior(packageTypeId);
+        return ret == null ? DEFAULT_PACKAGE_TYPE_BEHAVIOR : ret;
+    }
+    
+    public static PackageTypeBehavior getPackageTypeBehavior(String packageTypeName) throws Exception {        
+        PackageTypeBehavior ret = getPackageTypePluginContainer().getPluginManager().getBehavior(packageTypeName);
+        return ret == null ? DEFAULT_PACKAGE_TYPE_BEHAVIOR : ret;
+    }
+    
 }

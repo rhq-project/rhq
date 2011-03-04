@@ -84,7 +84,7 @@
     <jaxb-impl.version>2.1.9</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
-    <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
+    <ojdbc5.version>11.2.0.2.0</ojdbc5.version>
     <ems.version>1.2.15.1</ems.version>
     <postgresql.version>9.0-801.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>

@@ -43,6 +43,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private List<Integer> filterIds;
     private String filterName;
     private String filterDescription;
     private AlertPriority filterPriority;
@@ -55,7 +56,8 @@ public class AlertDefinitionCriteria extends Criteria {
     private Boolean filterDeleted = false; // find enabled definitions by default
     private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
     private NonBindingOverrideFilter filterResourceTypeOnly; // requires overrides - finds only alert templates
-
+    private List<String> filterNotificationSenderNames;
+    
     private boolean fetchAlerts;
     private boolean fetchGroupAlertDefinition;
     private boolean fetchConditions;
@@ -66,7 +68,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortName;
     private PageOrdering sortPriority;
 
-    public AlertDefinitionCriteria() {
+    public AlertDefinitionCriteria() {        
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
@@ -74,6 +76,10 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
         filterOverrides.put("resourceOnly", "resource IS NOT NULL");
         filterOverrides.put("resourceTypeOnly", "resourceType IS NOT NULL");
+        filterOverrides.put("notificationSenderNames", "id IN (" +
+                                "SELECT notif.alertDefinition.id FROM AlertNotification notif " +
+                                "WHERE notif.senderName IN ( ? ))");
+        filterOverrides.put("filterIds", "id IN ( ? )");
     }
 
     @Override
@@ -85,6 +91,10 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterId = filterId;
     }
 
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = Arrays.asList(filterIds);
+    }
+    
     public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
@@ -134,6 +144,11 @@ public class AlertDefinitionCriteria extends Criteria {
             : NonBindingOverrideFilter.OFF);
     }
 
+    public void addFilterNotificationNames(String... notificationNames) {
+        fetchAlertNotifications(true);
+        this.filterNotificationSenderNames = Arrays.asList(notificationNames);
+    }
+    
     public void fetchAlerts(boolean fetchAlerts) {
         this.fetchAlerts = fetchAlerts;
     }

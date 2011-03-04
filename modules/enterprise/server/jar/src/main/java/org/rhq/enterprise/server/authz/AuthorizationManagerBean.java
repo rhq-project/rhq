@@ -32,6 +32,7 @@ import javax.persistence.Query;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Permission.Target;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 
@@ -302,4 +303,28 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (subject.getId() == SUBJECT_ID_OVERLORD);
     }
 
+    public boolean canUpdateRepo(Subject subject, int repoId) {
+        if (hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            return true;
+        }
+        Query q = entityManager.createNamedQuery(Repo.QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID);
+        q.setParameter("repoId", repoId);
+        q.setParameter("subjectId", subject.getId());
+        
+        Long num = (Long) q.getSingleResult();
+        return num > 0;
+    }
+    
+    public boolean canViewRepo(Subject subject, int repoId) {
+        if (hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            return true;
+        }
+
+        Query q = entityManager.createNamedQuery(Repo.QUERY_CHECK_REPO_VISIBLE_BY_SUBJECT_ID);
+        q.setParameter("repoId", repoId);
+        q.setParameter("subjectId", subject.getId());
+        
+        Long num = (Long) q.getSingleResult();
+        return num > 0;
+    }
 }

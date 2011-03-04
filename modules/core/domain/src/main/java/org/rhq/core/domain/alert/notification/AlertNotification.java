@@ -74,8 +74,18 @@ import org.rhq.core.domain.configuration.Property;
         + "      AND notifParam.name = :propertyName" //
         + "      AND locate(:paramValue,notifParam.stringValue) <> 0" //
         + ")"
-
-    ) })
+    ),
+    @NamedQuery(name = AlertNotification.QUERY_UPDATE_PARAMETER_FOR_NOTIFICATIONS, query = "" //
+        + " UPDATE Property property" //
+        + "     SET stringValue = :propertyValue" //
+        + " WHERE id IN ( " 
+        + "     SELECT notifParam.id" //
+        + "         FROM AlertNotification notif" //
+        + "         JOIN notif.configuration.properties notifParam" //
+        + "     WHERE notif.id IN ( :alertNotificationIds )" //
+        + "         AND notifParam.name = :propertyName" //
+        + ")"
+    )})
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
@@ -87,7 +97,8 @@ public class AlertNotification implements Serializable {
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
     public static final String QUERY_DELETE_BY_ROLE_ID = "AlertNotification.deleteByRoleId";
     public static final String QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER = "AlertNotification.cleanseParameterValueForAlertSender";
-
+    public static final String QUERY_UPDATE_PARAMETER_FOR_NOTIFICATIONS = "AlertNotification.updateParameterForNotifications";
+    
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
     @Id

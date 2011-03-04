@@ -180,9 +180,9 @@ PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
 # TODO: We may eventually want to reenable tests for production releases.
 #if [ "$MODE" = "test" ]; then
-#   MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+#   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
 #fi
-MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi

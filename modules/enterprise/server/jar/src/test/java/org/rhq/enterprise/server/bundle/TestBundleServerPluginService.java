@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -88,6 +89,9 @@ public class TestBundleServerPluginService extends ServerPluginService implement
             bundlePC = new TestBundleServerPluginContainer(this);
             pcs.add(bundlePC);
             pcs.add(new TestContentServerPluginContainer(this));
+            
+            //needed internally by the server, so let's provide the standard impl.
+            pcs.add(new PackageTypeServerPluginContainer(this));
             return pcs;
         }
 

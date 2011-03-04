@@ -55,9 +55,11 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.StandardServerPluginService;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -92,12 +94,18 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         prepareScheduler();
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.resourceFactoryService = mockAgentService;
+        
+        //the server plugins are in play when package types are involved
+        StandardServerPluginService serverPluginService = new StandardServerPluginService();        
+        prepareCustomServerPluginService(serverPluginService);
+        serverPluginService.startMasterPluginContainer();
     }
 
     @AfterClass
     public void teardownAfterClass() throws Exception {
         unprepareForTestAgents();
         unprepareScheduler();
+        unprepareServerPluginService();
     }
 
     @BeforeMethod

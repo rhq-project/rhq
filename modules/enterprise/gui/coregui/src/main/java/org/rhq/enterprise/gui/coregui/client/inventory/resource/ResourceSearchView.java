@@ -36,6 +36,7 @@ import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -120,11 +121,27 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 26);
+        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 25);
         iconField.setType(ListGridFieldType.IMAGE);
         iconField.setShowDefaultContextMenu(false);
         iconField.setCanSort(false);
         iconField.setTitle("&nbsp;");
+        iconField.setShowHover(true);
+        iconField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String resCat = record.getAttribute(CATEGORY.propertyName());
+                switch (ResourceCategory.valueOf(resCat)) {
+                case PLATFORM:
+                    return MSG.common_title_platform();
+                case SERVER:
+                    return MSG.common_title_server();
+                case SERVICE:
+                    return MSG.common_title_service();
+                }
+                return null;
+            }
+        });
 
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
@@ -160,6 +177,7 @@ public class ResourceSearchView extends Table {
                 return displayName;
             }
         });
+        categoryField.setHidden(true); // the icon field already shows us this, no need to show it in another column
 
         ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
         availabilityField.setType(ListGridFieldType.IMAGE);
@@ -199,25 +217,6 @@ public class ResourceSearchView extends Table {
                 }
             }
         });
-
-        /*searchBox.addKeyPressHandler(new KeyPressHandler() {
-            public void onKeyPress(KeyPressEvent event) {
-                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
-                    datasource.setQuery((String) searchBox.getValue());
-
-                    Criteria c = getListGrid().getCriteria();
-                    if (c == null) {
-                        c = new Criteria();
-                    }
-
-                    c.addCriteria("name", (String) searchBox.getValue());
-
-                    long start = System.currentTimeMillis();
-                    getListGrid().fetchData(c);
-                    com.allen_sauer.gwt.log.client.Log.info("Loaded in: " + (System.currentTimeMillis() - start));
-                }
-            }
-        });*/
     }
 
     public int getMatches() {

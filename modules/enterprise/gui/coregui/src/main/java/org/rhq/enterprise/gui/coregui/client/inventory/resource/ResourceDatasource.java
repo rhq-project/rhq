@@ -107,6 +107,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         fields.add(pluginNameDataField);
 
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
+        categoryDataField.setHidden(true); // our icon will show this, no need to make this visible by default
         fields.add(categoryDataField);
 
         DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY

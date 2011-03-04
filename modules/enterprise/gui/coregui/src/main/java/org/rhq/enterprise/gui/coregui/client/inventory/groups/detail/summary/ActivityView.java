@@ -36,7 +36,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -129,19 +128,12 @@ public class ActivityView extends AbstractActivityView {
      */
     private void getRecentAlerts() {
         final int groupId = this.groupComposite.getResourceGroup().getId();
-        Integer[] filterGroupAlertDefinitionIds;
-        Set<AlertDefinition> alertDefinitions = this.groupComposite.getResourceGroup().getAlertDefinitions();
-        filterGroupAlertDefinitionIds = new Integer[alertDefinitions.size()];
-        int i = 0;
-        for (AlertDefinition def : alertDefinitions) {
-            filterGroupAlertDefinitionIds[i++] = def.getId();
-        }
         //fetches last five alerts for this resource
         AlertCriteria criteria = new AlertCriteria();
         PageControl pageControl = new PageControl(0, 5);
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
         criteria.setPageControl(pageControl);
-        criteria.addFilterGroupAlertDefinitionIds(filterGroupAlertDefinitionIds);
+        criteria.addFilterResourceGroupIds(groupId);
         GWTServiceLookup.getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             @Override
             public void onSuccess(PageList<Alert> result) {

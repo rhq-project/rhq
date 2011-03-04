@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ import java.util.List;
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVLayout
+public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVStack
         implements BookmarkableView {
 
     private T operationHistory;
@@ -91,8 +92,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         this.operationHistory = operationHistory;
 
-        // Information Form
-
+        // History Basic Details
         form = new DynamicForm();
         form.setWidth100();
         form.setWrapItemTitles(false);
@@ -100,8 +100,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         form.setFields(items.toArray(new FormItem[items.size()]));
         addMember(form);
 
-        // params/results
-
+        // Parameters (if applicable)
         if (operationHistory.getParameters() != null) {
             LocatableVLayout parametersSection = new LocatableVLayout(extendLocatorId("ParametersSection"));
 
@@ -127,14 +126,11 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             addMember(parametersSection);
         }
 
+        // Results (if applicable)
         Canvas resultsSection = buildResultsSection(operationHistory);
         if (resultsSection != null) {
             addMember(resultsSection);
         }
-
-        VLayout verticalSpacer = new VLayout();
-        verticalSpacer.setHeight100();
-        addMember(verticalSpacer);
     }
 
     protected List<FormItem> createFields(final T operationHistory) {

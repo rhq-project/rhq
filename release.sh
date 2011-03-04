@@ -197,11 +197,11 @@ if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
 fi
 
 # TODO: We may eventually want to reenable publishing of enterprise artifacts.
-if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
-   MAVEN_RELEASE_PERFORM_GOAL="deploy"
-else   
+#if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
+#   MAVEN_RELEASE_PERFORM_GOAL="deploy"
+#else   
    MAVEN_RELEASE_PERFORM_GOAL="install"
-fi
+#fi
 
 
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
@@ -454,16 +454,16 @@ echo "Tagging succeeded!"
 
 # Checkout the tag and build it. If in production mode, publish the Maven artifacts.
 
-echo "Checking out release tag $RELEASE_TAG..."
-git checkout "$RELEASE_TAG"
-[ "$?" -ne 0 ] && abort "Checkout of release tag ($RELEASE_TAG) failed. Please see above git output for details, fix any issues, then try again."
-git clean -dxf
-[ "$?" -ne 0 ] && abort "Failed to cleanup unversioned files. Please see above git output for details, fix any issues, then try again."
-echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Release build succeeded!"
+#echo "Checking out release tag $RELEASE_TAG..."
+#git checkout "$RELEASE_TAG"
+#[ "$?" -ne 0 ] && abort "Checkout of release tag ($RELEASE_TAG) failed. Please see above git output for details, fix any issues, then try again."
+#git clean -dxf
+#[ "$?" -ne 0 ] && abort "Failed to cleanup unversioned files. Please see above git output for details, fix any issues, then try again."
+#echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+#mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+#[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+#echo
+#echo "Release build succeeded!"
 
 
 echo

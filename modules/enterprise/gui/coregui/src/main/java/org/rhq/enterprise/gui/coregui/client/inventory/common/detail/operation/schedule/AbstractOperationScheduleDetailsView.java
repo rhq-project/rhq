@@ -32,6 +32,8 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -175,6 +177,12 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(), isNewRecord());
         this.notesForm.setColWidths(FIRST_COLUMN_WIDTH, "50%", "140", "50%");
+
+        this.notesForm.addItemChangedHandler(new ItemChangedHandler() {
+            public void onItemChanged(ItemChangedEvent event) {
+                AbstractOperationScheduleDetailsView.this.onItemChanged();
+            }
+        });
 
         List<FormItem> notesFields = new ArrayList<FormItem>();
 

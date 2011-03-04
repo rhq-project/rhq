@@ -631,7 +631,7 @@
         </configuration>
       </plugin>
 
-      <!-- Ensure all code compiles and runs on Java 5 or later. -->
+      <!-- Ensure all code compiles and runs on Java 6 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -1126,6 +1126,43 @@
               </plugin>
             </plugins>
           </build>
+      </profile>
+
+      <!-- This profile should be enabled when a release is being published. 
+           It will ensure that sources and javadoc jars are built and published
+           for each source module. -->
+      <profile>
+         <id>release</id>
+
+         <build>
+            <plugins>
+
+                <plugin>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <executions>
+                    <execution>
+                      <id>attach-sources</id>
+                      <goals>
+                        <goal>jar</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                </plugin>
+
+                <plugin>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <executions>
+                    <execution>
+                      <id>attach-javadocs</id>
+                      <goals>
+                        <goal>jar</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                </plugin>
+
+            </plugins>
+         </build>
       </profile>
 
   </profiles>

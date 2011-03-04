@@ -355,7 +355,9 @@ if [ ! -d "$WORKING_DIR" ]; then
    git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
    [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
-   git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
+   if [ "$RELEASE_BRANCH" != "master" ]; then
+       git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
+   fi
    [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
 fi
 

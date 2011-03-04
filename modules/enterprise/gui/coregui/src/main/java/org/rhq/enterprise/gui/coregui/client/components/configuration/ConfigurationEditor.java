@@ -183,8 +183,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private ConfigurationEditor(String locatorId) {
         super(locatorId);
-
-        setOverflow(Overflow.AUTO);
     }
 
     public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId, ConfigType configType) {

@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -83,12 +82,10 @@
                                 <configuration>
                                     <tasks>
                                         <mkdir dir="${rhq.deploymentDir}" />
-                                        <property name="deployment.file"
-                                            location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating
                                             ${deployment.file}...</echo>
-                                        <jar destfile="${deployment.file}"
-                                            basedir="${project.build.outputDirectory}" />
+                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
                                     </tasks>
                                 </configuration>
                                 <goals>
@@ -101,8 +98,7 @@
                                 <phase>clean</phase>
                                 <configuration>
                                     <tasks>
-                                        <property name="deployment.file"
-                                            location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Deleting
                                             ${deployment.file}...</echo>
                                         <delete file="${deployment.file}" />
@@ -148,28 +144,20 @@
                                         <mkdir dir="target/cobertura/backup" />
                                         <!-- backup all classes so that we 
                                             can instrument the original classes -->
-                                        <copy toDir="target/cobertura/backup"
-                                            verbose="true" overwrite="true">
+                                        <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                                             <fileset dir="target/classes">
                                                 <include name="**/*.class" />
                                             </fileset>
                                         </copy>
                                         <!-- create a properties file and 
                                             save there location of cobertura data file -->
-                                        <touch
-                                            file="target/classes/cobertura.properties" />
-                                        <echo
-                                            file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                                        <taskdef
-                                            classpathref="maven.plugin.classpath"
-                                            resource="tasks.properties" />
+                                        <touch file="target/classes/cobertura.properties" />
+                                        <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                                        <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                                         <!-- instrument all classes in target/classes 
                                             directory -->
-                                        <cobertura-instrument
-                                            datafile="${project.build.directory}/cobertura/cobertura.ser"
-                                            todir="${project.build.directory}/classes">
-                                            <fileset
-                                                dir="${project.build.directory}/classes">
+                                        <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
+                                            <fileset dir="${project.build.directory}/classes">
                                                 <include name="**/*.class" />
                                             </fileset>
                                         </cobertura-instrument>
@@ -184,39 +172,29 @@
                                 <phase>post-integration-test</phase>
                                 <configuration>
                                     <tasks>
-                                        <taskdef
-                                            classpathref="maven.plugin.classpath"
-                                            resource="tasks.properties" />
+                                        <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                                         <!-- prepare directory structure 
                                             for cobertura -->
                                         <mkdir dir="target/cobertura" />
                                         <mkdir dir="target/site/cobertura" />
                                         <!-- restore classes from backup 
                                             folder to classes folder -->
-                                        <copy toDir="target/classes"
-                                            verbose="true" overwrite="true">
-                                            <fileset
-                                                dir="target/cobertura/backup">
+                                        <copy toDir="target/classes" verbose="true" overwrite="true">
+                                            <fileset dir="target/cobertura/backup">
                                                 <include name="**/*.class" />
                                             </fileset>
                                         </copy>
                                         <!-- delete backup folder -->
-                                        <delete
-                                            dir="target/cobertura/backup" />
+                                        <delete dir="target/cobertura/backup" />
                                         <!-- create a code coverage report -->
-                                        <cobertura-report
-                                            format="html"
-                                            datafile="${project.build.directory}/cobertura/cobertura.ser"
-                                            destdir="${project.build.directory}/site/cobertura">
-                                            <fileset
-                                                dir="${basedir}/src/main/java">
+                                        <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                                            <fileset dir="${basedir}/src/main/java">
                                                 <include name="**/*.java" />
                                             </fileset>
                                         </cobertura-report>
                                         <!-- delete cobertura.properties 
                                             file -->
-                                        <delete
-                                            file="target/classes/cobertura.properties" />
+                                        <delete file="target/classes/cobertura.properties" />
                                     </tasks>
                                 </configuration>
                                 <goals>

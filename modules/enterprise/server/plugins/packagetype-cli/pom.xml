@@ -3,13 +3,13 @@
     <parent>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>4.0.0.Beta1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
     <artifactId>packagetype-cli</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.0.0.Beta1</version>
 
     <name>RHQ Enterprise Server CLI Package Type Plugin</name>
 
@@ -101,20 +101,15 @@
                                 <phase>package</phase>
                                 <configuration>
                                     <tasks>
-                                        <property name="deployment.file"
-                                            location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                                         <echo>*** Updating META-INF dir
                                             in ${deployment.file}...</echo>
-                                        <unjar
-                                            src="${project.build.directory}/${project.build.finalName}.jar"
-                                            dest="${project.build.outputDirectory}">
+                                        <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                             <patternset>
                                                 <include name="META-INF/**" />
                                             </patternset>
                                         </unjar>
-                                        <jar destfile="${deployment.file}"
-                                            manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
-                                            update="true">
+                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                                         </jar>
                                     </tasks>
                                 </configuration>

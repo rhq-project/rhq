@@ -86,7 +86,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res, COUNT(DISTINCT alert.id), res.id, res.name, res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -98,7 +98,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res, COUNT(DISTINCT alert.id), res.id, res.name, res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -1183,7 +1183,11 @@ public class Resource implements Comparable<Resource>, Serializable {
             ancestry.append(parentAncestry);
         }
 
-        this.setAncestry(ancestry.toString());
+        // protect against the *very* unlikely case that this value is too big for the db 
+        if (ancestry.length() < 4000) {
+            this.setAncestry(ancestry.toString());
+        }
+
         return this.getAncestry();
     }
 

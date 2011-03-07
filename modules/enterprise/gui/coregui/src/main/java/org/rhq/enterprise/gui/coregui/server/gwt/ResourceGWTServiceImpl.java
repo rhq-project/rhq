@@ -37,7 +37,6 @@ import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -53,7 +52,6 @@ import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -145,7 +143,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
                 criteria);
             List<Resource> resources = new ArrayList<Resource>(result.size());
-
+            for (ResourceComposite composite : result) {
+                resources.add(composite.getResource());
+            }
             if (resources.size() > 1) {
                 ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
             }
@@ -159,20 +159,20 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
      *  Criteria passed in not currently used.
      */
-    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems)
-        throws RuntimeException {
+    public PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException {
         try {
-            List<ProblemResourceComposite> located = new ArrayList<ProblemResourceComposite>();
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
-            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            PageList<ProblemResourceComposite> result = problemManager.findProblemResources(getSessionSubject(), ctime,
+                new PageControl(0, maxItems));
+            List<Resource> resources = new ArrayList<Resource>(result.size());
+            for (ProblemResourceComposite composite : result) {
+                resources.add(composite.getResource());
+            }
+            if (resources.size() > 1) {
+                ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
+            }
 
-            //retrieve list of discovered problem resources. Grab all, live scrolling data
-            located = problemManager.findProblemResources(getSessionSubject(), ctime, new PageControl(0, maxItems));
-
-            //translate the returned problem resources to disambiguated links
-            List<DisambiguationReport<ProblemResourceComposite>> translated = resourceManager.disambiguate(located,
-                RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
-            return translated;
+            return SerialUtility.prepare(result, "ResourceService.findProblemResources");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

@@ -45,6 +45,9 @@ public abstract class AncestryUtil {
 
         for (Resource resource : resources) {
             String ancestry = resource.getAncestry();
+            if (null == ancestry) {
+                continue;
+            }
             String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
             for (int i = 0; i < ancestryEntries.length; ++i) {
                 String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
@@ -99,6 +102,34 @@ public abstract class AncestryUtil {
         }
 
         return result;
+    }
+
+    /**
+     * Get a resource name that combines type and resource information. This is useful for when we want to
+     * use a single column for dispay of the resource "name". The name is wrapped in a navigable link.
+     * 
+     * @param resource The resource
+     *
+     * @return the long name for the resource
+     */
+    public static String getResourceLongName(Resource resource) {
+        StringBuilder sb = new StringBuilder();
+        ResourceType type = resource.getResourceType();
+        if (type != null) {
+            if (type.getPlugin() != null) {
+                sb.append(type.getPlugin());
+                sb.append(" ");
+            }
+
+            sb.append(type.getName());
+            sb.append(" ");
+        }
+
+        String url = LinkManager.getResourceLink(resource.getId());
+        String suffix = String.valueOf(resource.getId());
+        sb.append(SeleniumUtility.getLocatableHref(url, resource.getName(), suffix));
+
+        return sb.toString();
     }
 
 }

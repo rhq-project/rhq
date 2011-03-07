@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.ArrayList;
 
+import com.allen_sauer.gwt.log.client.Log;
+
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -29,6 +31,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Joseph Marques
  */
 public class ErrorHandler {
+
+    private static final String NL = "<br/>"; // \n if not going to use html
+    private static final String INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;"; // \t if not going to use html
 
     protected static final Messages MSG = CoreGUI.getMessages();
 
@@ -41,24 +46,33 @@ public class ErrorHandler {
         CoreGUI.getMessageCenter().notify(errorMessage);
 
         if (t != null) {
-            System.err.println(message);
-            t.printStackTrace();
+            Log.warn(message, t);
         }
     }
 
     public static String getAllMessages(Throwable t) {
-        StringBuffer results = new StringBuffer();
+        return getAllMessages(t, false);
+    }
+
+    public static String getAllMessages(Throwable t, boolean includeStackTrace) {
+        StringBuilder results = new StringBuilder();
 
         if (t != null) {
             String[] msgs = getAllMessagesArray(t);
             results.append(msgs[0]);
 
-            String indent = "   ";
+            String indent = INDENT;
             for (int i = 1; i < msgs.length; i++) {
-                results.append("\n").append(indent);
+                results.append(NL).append(indent);
                 results.append(msgs[i]);
-                indent = indent + "   ";
+                indent = indent + INDENT;
             }
+
+            if (includeStackTrace) {
+                results.append(NL).append(MSG.view_messageCenter_stackTraceFollows()).append(NL);
+                getStackTrace(t, results);
+            }
+
         } else {
             results.append(">> " + MSG.util_errorHandler_nullException() + " <<");
         }
@@ -80,6 +94,38 @@ public class ErrorHandler {
         }
 
         return list.toArray(new String[list.size()]);
+    }
+
+    public static String getStackTrace(Throwable t, StringBuilder s) {
+        if (s == null) {
+            s = new StringBuilder();
+        }
+
+        s.append(t.getMessage()).append(NL);
+
+        for (Object line : t.getStackTrace()) {
+            s.append(INDENT).append("at ").append(line).append(NL);
+        }
+
+        Throwable cause = t.getCause();
+        if (cause != null && cause != t) {
+            getStackTraceAsCause(t, s, cause);
+        }
+
+        return s.toString();
+    }
+
+    private static void getStackTraceAsCause(Throwable t, StringBuilder s, Throwable cause) {
+        s.append("Caused by: " + cause.getMessage()).append(NL);
+
+        for (Object line : cause.getStackTrace()) {
+            s.append(INDENT).append("at ").append(line).append(NL);
+        }
+
+        Throwable nextCause = cause.getCause();
+        if (nextCause != null && nextCause != cause) {
+            getStackTraceAsCause(t, s, nextCause);
+        }
     }
 
 }

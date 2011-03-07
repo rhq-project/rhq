@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/packagetype-cli/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-cli/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/client-api/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/binding/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/irc/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hadoop/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>

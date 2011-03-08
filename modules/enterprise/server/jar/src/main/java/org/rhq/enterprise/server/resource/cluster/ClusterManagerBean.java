@@ -201,43 +201,75 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             }
         }
 
-        ClusterFlyweight key = new ClusterFlyweight(groupId);
+        ClusterFlyweight topTreeNode = new ClusterFlyweight(groupId);
 
-        buildTree(groupId, key, explicitResources, dataMap);
+        // dataMap contains one key for every *parent resource* that is a parent to a group resource.
+        // this could include platform resources if group members are top level servers.
+        buildTree(groupId, topTreeNode, explicitResources, dataMap);
 
-        return key;
+        return topTreeNode;
     }
 
+    /**
+     * Recursively builds tree nodes (where tree nodes are of type ClusterFlyweight).
+     * The <code>parent</code> object will be modified - it is the tree that is being built.
+     * The parent node reprents a single cluster node, where a cluster node is an aggregation
+     * of N identical resources that belong to the group (where "identical" means the same
+     * resource type and resource key).
+     * 
+     * @param groupId identifies the group whose tree is being built
+     * @param parent the top "parent cluster node" of the tree - will get its children assigned to it via this method
+     * @param parentIds the resource IDs for all identical parent resources that make up the one "parent cluster node"
+     * @param data keyed on resource ID whose list is that of the resource's children. A few of these data
+     *             won't necessarily be placed in the "parent" top node because these may not be part of the tree, but
+     *             may be parents themselves of the top most resources (for example, if I have a group of JBossAS
+     *             Server resources, some of these data will be the platform resources since they are parents to the
+     *             JBossAS Server resources - those platforms will not be represented in the "parent" top tree node).
+     *             Every parent resource, regardless of where they are in the cluster hierarchy, is represented by a key
+     *             in this data map.
+     */
     private void buildTree(int groupId, ClusterFlyweight parent, Set<Integer> parentIds,
         Map<Integer, List<ClusterTreeQueryResults>> data) {
 
+        // this is the children cluster nodes for the parent cluster node we are building
+        // notice the key to this map is a ClusterKeyFlyweight, which is a resourceType/resourceKey tuple
+        Map<ClusterKeyFlyweight, ClusterFlyweight> children = new HashMap<ClusterKeyFlyweight, ClusterFlyweight>();
+
+        // has the same as children above except its values aren't child nodes, but just the child nodes' resource IDs
+        Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
+
+        // loop through each identical parent resource to aggregate their children into a single cluster node
         for (Integer parentId : parentIds) {
 
-            Map<ClusterKeyFlyweight, ClusterFlyweight> children = new HashMap<ClusterKeyFlyweight, ClusterFlyweight>();
-            Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
-
-            if (data.get(parentId) != null) {
-                for (ClusterTreeQueryResults child : data.get(parentId)) {
-                    ClusterKeyFlyweight n = new ClusterKeyFlyweight(child.resourceTypeId, child.resourceKey);
-                    ClusterFlyweight flyweight = children.get(n);
-                    Set<Integer> memberList = members.get(n);
-                    if (flyweight == null) {
-                        flyweight = new ClusterFlyweight(n);
-                        children.put(n, flyweight);
+            List<ClusterTreeQueryResults> directChildren = data.get(parentId);
+            if (directChildren != null) {
+                for (ClusterTreeQueryResults child : directChildren) {
+                    ClusterKeyFlyweight childNodeKey = new ClusterKeyFlyweight(child.resourceTypeId, child.resourceKey);
+                    ClusterFlyweight childNode = children.get(childNodeKey);
+                    Set<Integer> memberList;
+                    if (childNode == null) {
+                        childNode = new ClusterFlyweight(childNodeKey);
+                        children.put(childNodeKey, childNode);
                         memberList = new HashSet<Integer>();
-                        members.put(n, memberList);
+                        members.put(childNodeKey, memberList);
+                    } else {
+                        memberList = members.get(childNodeKey);
                     }
-                    flyweight.addResource(child.resourceName);
+                    childNode.addResource(child.resourceName);
                     memberList.add(child.resourceId);
                 }
             }
-
-            parent.setChildren(new ArrayList<ClusterFlyweight>(children.values()));
-
-            for (ClusterFlyweight child : children.values()) {
-                buildTree(groupId, child, members.get(child.getClusterKey()), data);
-            }
         }
+
+        // now that we have aggregated all the children for the individual yet identical parent resources, assign those
+        // aggregated child nodes to the parent cluster node
+        parent.setChildren(new ArrayList<ClusterFlyweight>(children.values()));
+
+        for (ClusterFlyweight child : children.values()) {
+            buildTree(groupId, child, members.get(child.getClusterKey()), data);
+        }
+
+        return;
     }
 
     private class ClusterTreeQueryResults {

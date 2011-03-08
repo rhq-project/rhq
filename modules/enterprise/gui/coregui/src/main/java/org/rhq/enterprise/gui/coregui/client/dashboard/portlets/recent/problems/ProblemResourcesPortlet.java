@@ -20,10 +20,17 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
  */
 
 //import java.text.SimpleDateFormat;
+import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.ALERTS;
+import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.ANCESTRY;
+import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.RESOURCE;
+
 import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -31,7 +38,11 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -46,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -105,12 +117,33 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     protected void configureTable() {
         ListGrid listGrid = getListGrid();
         if (listGrid != null) {
-            //extend height for displaying disambiguated resources
-            listGrid.setCellHeight(50);
-            //wrap to display disambiguation
-            listGrid.setWrapCells(true);
             addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this), false);
         }
+
+        ListGridField resourceField = new ListGridField(RESOURCE.propertyName(), RESOURCE.title());
+
+        ListGridField ancestryField = new ListGridField(ANCESTRY.propertyName(), ANCESTRY.title());
+        ancestryField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+            }
+        });
+        ancestryField.setShowHover(true);
+        ancestryField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return "<p style='width:400px'>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+            }
+        });
+
+        ListGridField alertsField = new ListGridField(ALERTS.propertyName(), ALERTS.title(), 70);
+
+        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
+        availabilityField.setType(ListGridFieldType.IMAGE);
+        availabilityField.setAlign(Alignment.CENTER);
+
+        setListGridFields(resourceField, ancestryField, alertsField, availabilityField);
 
     }
 

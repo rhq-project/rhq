@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -46,6 +47,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -151,6 +153,21 @@ public class ResourceSearchView extends Table {
             }
         });
 
+        ListGridField ancestryField = new ListGridField(ANCESTRY.propertyName(), ANCESTRY.title());
+        ancestryField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+            }
+        });
+        ancestryField.setShowHover(true);
+        ancestryField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return "<p style='width:400px'>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+            }
+        });
+
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
 
         ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
@@ -158,33 +175,15 @@ public class ResourceSearchView extends Table {
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
 
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
-        categoryField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String categoryName = (String) value;
-                ResourceCategory category = ResourceCategory.valueOf(categoryName);
-                String displayName = "";
-                switch (category) {
-                case PLATFORM:
-                    displayName = MSG.common_title_platform();
-                    break;
-                case SERVER:
-                    displayName = MSG.common_title_server();
-                    break;
-                case SERVICE:
-                    displayName = MSG.common_title_service();
-                    break;
-                }
-                return displayName;
-            }
-        });
+        categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
         categoryField.setHidden(true); // the icon field already shows us this, no need to show it in another column
 
         ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
         availabilityField.setType(ListGridFieldType.IMAGE);
         availabilityField.setAlign(Alignment.CENTER);
 
-        setListGridFields(iconField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
-            availabilityField);
+        setListGridFields(iconField, nameField, ancestryField, descriptionField, typeNameField, pluginNameField,
+            categoryField, availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
             .view_inventory_resources_uninventoryConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {

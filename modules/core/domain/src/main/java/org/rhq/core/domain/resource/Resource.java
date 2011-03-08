@@ -86,7 +86,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -94,11 +94,11 @@ import org.rhq.core.domain.util.Summary;
         + "   WHERE res.inventoryStatus = 'COMMITTED' "
         + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "
-        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
+        + "GROUP BY res.id, res.resourceType.id, res.name, res.ancestry, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -107,7 +107,7 @@ import org.rhq.core.domain.util.Summary;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "
-        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
+        + "GROUP BY res.id, res.resourceType.id, res.name, res.ancestry, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN, query = "" //
         + "  SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res "
@@ -885,6 +885,9 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String ANCESTRY_ENTRY_DELIM = "_:_"; // delimiter separating entry fields
+    public static final String ANCESTRY_DELIM = "_::_"; // delimiter seperating ancestry entries
+
     public static final Resource ROOT = null;
     public static final int ROOT_ID = -1;
 
@@ -904,6 +907,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Column(name = "NAME", nullable = false)
     @Summary(index = 1)
     private String name;
+
+    @Column(name = "ANCESTRY", nullable = true)
+    @Summary(index = 5)
+    private String ancestry;
 
     @Column(name = "INVENTORY_STATUS")
     @Enumerated(EnumType.STRING)
@@ -1130,6 +1137,60 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.name = name;
     }
 
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    /**
+     * In general this method should not be called by application code. At least not for any Resource that will be
+     * persisted or merged.  The ancestry string is maintained internally. {@link #updateAncestryForResource()}.
+     * 
+     * @param ancestry
+     */
+    public void setAncestry(String ancestry) {
+        this.ancestry = ancestry;
+    }
+
+    /**
+     * Using the current settings for resource field set the encoded ancestry string. This method
+     * is called automatically from {@link #setParentResource(Resource)} because the parent defines the ancestry.
+     * The parent should be an attached entity to ensure access to all necessary information. If the parent is
+     * not a persisted entity, or if it lacks the required information, the update will be skipped.<br/><br.>
+     * It can also be called at any time the ancestry has changed, for example, if a resource name has
+     * been updated.
+     *  
+     * @return the built ancestry string
+     */
+    public String updateAncestryForResource() {
+
+        Resource parentResource = this.getParentResource();
+
+        if (parentResource == null || // 
+            parentResource.getId() <= 0 || //
+            parentResource.getResourceType() == null) {
+            return null;
+        }
+
+        StringBuilder ancestry = new StringBuilder();
+        ancestry.append(parentResource.getResourceType().getId());
+        ancestry.append(ANCESTRY_ENTRY_DELIM);
+        ancestry.append(parentResource.getId());
+        ancestry.append(ANCESTRY_ENTRY_DELIM);
+        ancestry.append(parentResource.getName());
+        String parentAncestry = parentResource.getAncestry();
+        if (null != parentAncestry) {
+            ancestry.append(ANCESTRY_DELIM);
+            ancestry.append(parentAncestry);
+        }
+
+        // protect against the *very* unlikely case that this value is too big for the db 
+        if (ancestry.length() < 4000) {
+            this.setAncestry(ancestry.toString());
+        }
+
+        return this.getAncestry();
+    }
+
     public String getResourceKey() {
         return resourceKey;
     }
@@ -1297,6 +1358,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void setParentResource(@Nullable Resource parentResource) {
         this.parentResource = parentResource;
+        updateAncestryForResource();
     }
 
     public Configuration getResourceConfiguration() {
@@ -1731,10 +1793,6 @@ public class Resource implements Comparable<Resource>, Serializable {
             buffer.append(", version=").append(this.version);
         buffer.append("]");
         return buffer.toString();
-    }
-
-    public void afterUnmarshal(Object u, Object parent) {
-        this.parentResource = (Resource) parent;
     }
 
     // this should only ever be called once, during initial persistence

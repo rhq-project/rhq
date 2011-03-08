@@ -138,8 +138,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             long startTime = System.currentTimeMillis();
             updateType(resourceType);
             long endTime = System.currentTimeMillis();
-            log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime) +
-                    " ms");
+            log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime)
+                + " ms");
 
             legitimateChildren.addAll(resourceType.getChildResourceTypes());
         }
@@ -294,7 +294,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         entityManager.flush();
-        existingType = entityManager.find(existingType.getClass(), existingType.getId());        
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());
 
         // Remove all compatible groups that are of the type.
         List<ResourceGroup> compatGroups = existingType.getResourceGroups();
@@ -391,8 +391,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         long startTime = System.currentTimeMillis();
         pluginConfigMetadataMgr.updatePluginConfigurationDefinition(existingType, resourceType);
         long endTime = System.currentTimeMillis();
-        log.debug("Updated plugin configuration definition for ResourceType[" + toConciseString(existingType) +
-                "] in " + (endTime - startTime) + " ms");
+        log.debug("Updated plugin configuration definition for ResourceType[" + toConciseString(existingType) + "] in "
+            + (endTime - startTime) + " ms");
 
         resourceConfigMetadataMgr.updateResourceConfigurationDefinition(existingType, resourceType);
 
@@ -564,6 +564,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     resource.getParentResource().removeChildResource(resource);
                 }
                 newParent.addChildResource(resource);
+                // Assigning a new parent changes the ancestry for the resource and its children. Since the
+                // children are not handled in this method, update their ancestry now.
+                resourceManager.updateAncestry(subjectManager.getOverlord(), resource.getId());
             } else {
                 log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
                     + " to a new valid parent with one of the following types: " + newParentTypes);
@@ -597,7 +600,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         result.add(cat);
         return result;
     }
-
 
     /**
      * Update the set of process scans for a given resource type

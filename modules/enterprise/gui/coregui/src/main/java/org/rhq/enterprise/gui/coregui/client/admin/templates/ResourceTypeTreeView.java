@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,19 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -54,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
@@ -251,43 +249,46 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             setEmptyMessage(MSG.common_msg_loading());
             setSelectionType(SelectionStyle.NONE);
 
-            final ListGridField name = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
+            final ListGridField nameField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
                 .common_title_name());
-            final ListGridField plugin = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
+            nameField.setShowValueIconOnly(false);
+
+            final ListGridField pluginField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
                 .common_title_plugin());
-            final ListGridField category = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
+            final ListGridField categoryField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
                 .common_title_category());
-            final ListGridField enabledAlertTemplates = new ListGridField(
+            categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
+            final ListGridField enabledAlertTemplatesField = new ListGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, MSG
                     .view_adminTemplates_enabledAlertTemplates());
-            final ListGridField disabledAlertTemplates = new ListGridField(
+            final ListGridField disabledAlertTemplatesField = new ListGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, MSG
                     .view_adminTemplates_disabledAlertTemplates());
-            final ListGridField enabledMetricTemplates = new ListGridField(
+            final ListGridField enabledMetricTemplatesField = new ListGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, MSG
                     .view_adminTemplates_enabledMetricTemplates());
-            final ListGridField disabledMetricTemplates = new ListGridField(
+            final ListGridField disabledMetricTemplatesField = new ListGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, MSG
                     .view_adminTemplates_disabledMetricTemplates());
 
-            plugin.setHidden(true);
-            category.setHidden(true);
+            pluginField.setHidden(true);
+            categoryField.setHidden(true);
 
-            name.setWidth("*");
-            plugin.setWidth("10%");
-            category.setWidth("5%");
-            enabledAlertTemplates.setWidth("10%");
-            disabledAlertTemplates.setWidth("10%");
-            enabledMetricTemplates.setWidth("10%");
-            disabledMetricTemplates.setWidth("10%");
+            nameField.setWidth("*");
+            pluginField.setWidth("10%");
+            categoryField.setWidth("5%");
+            enabledAlertTemplatesField.setWidth("10%");
+            disabledAlertTemplatesField.setWidth("10%");
+            enabledMetricTemplatesField.setWidth("10%");
+            disabledMetricTemplatesField.setWidth("10%");
 
-            enabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
-            disabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
-            enabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
-            disabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
+            enabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
+            disabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
+            enabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
+            disabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
 
-            setFields(name, plugin, category, enabledAlertTemplates, disabledAlertTemplates, enabledMetricTemplates,
-                disabledMetricTemplates);
+            setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField, enabledMetricTemplatesField,
+                disabledMetricTemplatesField);
         }
 
         @Override
@@ -335,6 +336,16 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             return rollOverCanvas;
         }
 
+        @Override
+        public String getValueIcon(ListGridField field, Object value, ListGridRecord record) {
+            if (field.getName().equals(ResourceTypeTreeNodeBuilder.ATTRIB_NAME)) {
+                String categoryName = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
+                return ImageManager.getResourceIcon(ResourceCategory.valueOf(categoryName));
+            } else {
+                return super.getValueIcon(field, value, record);
+            }
+        }
+
         private int getRollOverId() {
             return Integer.parseInt(rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
         }
@@ -354,66 +365,43 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             setSelectionType(SelectionStyle.NONE);
             setAnimateFolders(false);
 
-            final TreeGridField name = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
+            final TreeGridField nameField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
                 .common_title_name());
-            final TreeGridField plugin = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
+            final TreeGridField pluginField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
                 .common_title_plugin());
-            final TreeGridField category = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
+            final TreeGridField categoryField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
                 .common_title_category());
-            final TreeGridField enabledAlertTemplates = new TreeGridField(
+            categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
+            final TreeGridField enabledAlertTemplatesField = new TreeGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, MSG
                     .view_adminTemplates_enabledAlertTemplates());
-            final TreeGridField disabledAlertTemplates = new TreeGridField(
+            final TreeGridField disabledAlertTemplatesField = new TreeGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, MSG
                     .view_adminTemplates_disabledAlertTemplates());
-            final TreeGridField enabledMetricTemplates = new TreeGridField(
+            final TreeGridField enabledMetricTemplatesField = new TreeGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, MSG
                     .view_adminTemplates_enabledMetricTemplates());
-            final TreeGridField disabledMetricTemplates = new TreeGridField(
+            final TreeGridField disabledMetricTemplatesField = new TreeGridField(
                 ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, MSG
                     .view_adminTemplates_disabledMetricTemplates());
 
-            category.setType(ListGridFieldType.ICON);
-            category.setShowValueIconOnly(true);
-            HashMap<String, String> categoryIcons = new HashMap<String, String>(3);
-            categoryIcons
-                .put(ResourceCategory.PLATFORM.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM));
-            categoryIcons.put(ResourceCategory.SERVER.name(), ImageManager.getResourceIcon(ResourceCategory.SERVER));
-            categoryIcons.put(ResourceCategory.SERVICE.name(), ImageManager.getResourceIcon(ResourceCategory.SERVICE));
-            category.setValueIcons(categoryIcons);
-            category.setShowHover(true);
-            category.setHoverCustomizer(new HoverCustomizer() {
-                @Override
-                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    String cat = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
-                    if (ResourceCategory.PLATFORM.name().equals(cat)) {
-                        return MSG.common_title_platform();
-                    } else if (ResourceCategory.SERVER.name().equals(cat)) {
-                        return MSG.common_title_server();
-                    } else if (ResourceCategory.SERVICE.name().equals(cat)) {
-                        return MSG.common_title_service();
-                    }
-                    return "";
-                }
-            });
+            categoryField.setHidden(true);
 
-            category.setHidden(true);
+            nameField.setWidth("*");
+            pluginField.setWidth("10%");
+            categoryField.setWidth("5%");
+            enabledAlertTemplatesField.setWidth("10%");
+            disabledAlertTemplatesField.setWidth("10%");
+            enabledMetricTemplatesField.setWidth("10%");
+            disabledMetricTemplatesField.setWidth("10%");
 
-            name.setWidth("*");
-            plugin.setWidth("10%");
-            category.setWidth("5%");
-            enabledAlertTemplates.setWidth("10%");
-            disabledAlertTemplates.setWidth("10%");
-            enabledMetricTemplates.setWidth("10%");
-            disabledMetricTemplates.setWidth("10%");
+            enabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
+            disabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
+            enabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
+            disabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
 
-            enabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
-            disabledAlertTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
-            enabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
-            disabledMetricTemplates.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
-
-            setFields(name, plugin, category, enabledAlertTemplates, disabledAlertTemplates, enabledMetricTemplates,
-                disabledMetricTemplates);
+            setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField,
+                    enabledMetricTemplatesField, disabledMetricTemplatesField);
         }
 
         @Override

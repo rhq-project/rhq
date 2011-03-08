@@ -81,4 +81,19 @@ public class ThrowableUtilTest {
             .equals("java.lang.Throwable:sql exception wrapper -> java.sql.SQLException:one[SQLException=one -> two(error-code=0,sql-state=null) -> three(error-code=0,sql-state=null)]") : "Msg doesn't match: "
             + msg;
     }
+    
+    public void testMaxSize() {
+        String len10 = "1010101010";
+        String len20 = "20202020202020202020";
+        String len30 = "303030303030303030303030303030";
+        
+        Exception e = new Exception(len10, new Exception(len20, new Exception(len30)));
+        
+        assert ThrowableUtil.getAllMessages(e, false, 10).equals(len30);
+        assert ThrowableUtil.getAllMessages(e, false, 35).equals(" ... " + len30);
+        assert ThrowableUtil.getAllMessages(e, false, 45).equals(len10 + " ... " + len30);
+        assert ThrowableUtil.getAllMessages(e, false, 65).equals(len10 + " ... " + len30);
+        assert ThrowableUtil.getAllMessages(e, false, 67).equals(len10 + " ... " + len30);
+        assert ThrowableUtil.getAllMessages(e, false, 68).equals(len10 + " -> " + len20 + " -> "+ len30);
+    }
 }

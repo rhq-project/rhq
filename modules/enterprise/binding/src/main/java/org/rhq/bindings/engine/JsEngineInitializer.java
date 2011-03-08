@@ -33,6 +33,8 @@ import javax.script.ScriptException;
  */
 public class JsEngineInitializer implements ScriptEngineInitializer {
 
+    private static final String WRAPPED_EXCEPTION_PREFIX = "Wrapped ";
+
     private ScriptEngineManager engineManager = new ScriptEngineManager();
     
     public boolean implementsLanguage(String language) {
@@ -69,5 +71,25 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
             + boundObjectName + "." + functionFragment + "; }";
         
         return functionDefinition;
+    }
+    
+    public String extractUserFriendlyErrorMessage(ScriptException e) {
+        String errorMessage = e.getMessage();
+        
+        int wrappedIdx = errorMessage.lastIndexOf(WRAPPED_EXCEPTION_PREFIX);
+        
+        if (wrappedIdx < 0) {
+            return errorMessage;
+        }
+        
+        errorMessage = errorMessage.substring(wrappedIdx + WRAPPED_EXCEPTION_PREFIX.length());        
+        
+        int sourceInfoStartIdx = errorMessage.indexOf(" (<Unknown source>#");
+        
+        if (sourceInfoStartIdx >= 0) {
+            errorMessage = errorMessage.substring(0, sourceInfoStartIdx);
+        }
+        
+        return errorMessage;
     }
 }

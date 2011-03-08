@@ -20,7 +20,6 @@
 package org.rhq.bindings.engine;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Set;
 
 import javax.script.ScriptEngine;
@@ -57,4 +56,20 @@ public interface ScriptEngineInitializer {
      * @return a string with method definition in the scripting language
      */
     String generateIndirectionMethod(String boundObjectName, Method method);
+    
+    /**
+     * At least the Rhino script engine for java script generates exceptions
+     * whose error messages contain just "too much" information to be easily
+     * decipherable by the end users.
+     * <p>
+     * This method extracts messages from the exception such that they are
+     * presentable to the end user.
+     * <p>
+     * The returned string should only contain the error message. The filename, line
+     * and column information should be stripped from it if at all possible.
+     * 
+     * @param e
+     * @return
+     */
+    String extractUserFriendlyErrorMessage(ScriptException e);
 }

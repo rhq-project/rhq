@@ -95,7 +95,7 @@ public class SandboxedScriptEngine implements ScriptEngine {
                 }
             }, accessControlContext);
         } catch (PrivilegedActionException e) {
-            throw new ScriptException(e);
+            throw transfer(e);
         }        
     }
 
@@ -107,7 +107,7 @@ public class SandboxedScriptEngine implements ScriptEngine {
                 }
             }, accessControlContext);
         } catch (PrivilegedActionException e) {
-            throw new ScriptException(e);
+            throw transfer(e);
         }        
     }
 
@@ -119,7 +119,7 @@ public class SandboxedScriptEngine implements ScriptEngine {
                 }
             }, accessControlContext);
         } catch (PrivilegedActionException e) {
-            throw new ScriptException(e);
+            throw transfer(e);
         }        
     }
 
@@ -131,7 +131,7 @@ public class SandboxedScriptEngine implements ScriptEngine {
                 }
             }, accessControlContext);
         } catch (PrivilegedActionException e) {
-            throw new ScriptException(e);
+            throw transfer(e);
         }        
     }
 
@@ -143,7 +143,7 @@ public class SandboxedScriptEngine implements ScriptEngine {
                 }
             }, accessControlContext);
         } catch (PrivilegedActionException e) {
-            throw new ScriptException(e);
+            throw transfer(e);
         }        
     }
 
@@ -155,7 +155,7 @@ public class SandboxedScriptEngine implements ScriptEngine {
                 }
             }, accessControlContext);
         } catch (PrivilegedActionException e) {
-            throw new ScriptException(e);
+            throw transfer(e);
         }        
     }
 
@@ -189,5 +189,13 @@ public class SandboxedScriptEngine implements ScriptEngine {
 
     public ScriptEngineFactory getFactory() {
         return engine.getFactory();
+    }
+    
+    private static ScriptException transfer(PrivilegedActionException e) {
+        if (e.getCause() instanceof ScriptException) {
+            return (ScriptException) e.getCause();
+        } else {
+            return new ScriptException(e);
+        }
     }
 }

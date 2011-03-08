@@ -142,11 +142,11 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
                 criteria);
-            List<Resource> resources = new ArrayList<Resource>(result.size());
-            for (ResourceComposite composite : result) {
-                resources.add(composite.getResource());
-            }
-            if (resources.size() > 1) {
+            if (result.size() > 1) {
+                List<Resource> resources = new ArrayList<Resource>(result.size());
+                for (ResourceComposite composite : result) {
+                    resources.add(composite.getResource());
+                }
                 ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
             }
 
@@ -164,13 +164,6 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
             PageList<ProblemResourceComposite> result = problemManager.findProblemResources(getSessionSubject(), ctime,
                 new PageControl(0, maxItems));
-            List<Resource> resources = new ArrayList<Resource>(result.size());
-            for (ProblemResourceComposite composite : result) {
-                resources.add(composite.getResource());
-            }
-            if (resources.size() > 1) {
-                ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
-            }
 
             return SerialUtility.prepare(result, "ResourceService.findProblemResources");
         } catch (Throwable t) {

@@ -86,7 +86,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res, COUNT(DISTINCT alert.id), res.id, res.name, res.currentAvailability.availabilityType"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -94,11 +94,11 @@ import org.rhq.core.domain.util.Summary;
         + "   WHERE res.inventoryStatus = 'COMMITTED' "
         + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "
-        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
+        + "GROUP BY res.id, res.resourceType.id, res.name, res.ancestry, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res, COUNT(DISTINCT alert.id), res.id, res.name, res.currentAvailability.availabilityType"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -107,7 +107,7 @@ import org.rhq.core.domain.util.Summary;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "
-        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
+        + "GROUP BY res.id, res.resourceType.id, res.name, res.ancestry, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN, query = "" //
         + "  SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res "

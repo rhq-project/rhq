@@ -35,16 +35,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public abstract class AncestryUtil {
 
     /**
-     * Get the complete set of resource types in the ancestry of the provided resources. This is useful for
+     * Get the complete set of resource types in the ancestries provided. This is useful for
      * being able to load all the types in advance of generating decoded values.
      *  
      * @return
      */
-    public static HashSet<Integer> getResourceTypeIds(Collection<Resource> resources) {
+    public static HashSet<Integer> getAncestryTypeIds(Collection<String> ancestries) {
         HashSet<Integer> result = new HashSet<Integer>();
 
-        for (Resource resource : resources) {
-            String ancestry = resource.getAncestry();
+        for (String ancestry : ancestries) {
             if (null == ancestry) {
                 continue;
             }
@@ -112,9 +111,8 @@ public abstract class AncestryUtil {
      *
      * @return the long name for the resource
      */
-    public static String getResourceLongName(Resource resource) {
+    public static String getResourceLongName(int resourceId, String resourceName, ResourceType type) {
         StringBuilder sb = new StringBuilder();
-        ResourceType type = resource.getResourceType();
         if (type != null) {
             if (type.getPlugin() != null) {
                 sb.append(type.getPlugin());
@@ -125,9 +123,9 @@ public abstract class AncestryUtil {
             sb.append(" ");
         }
 
-        String url = LinkManager.getResourceLink(resource.getId());
-        String suffix = String.valueOf(resource.getId());
-        sb.append(SeleniumUtility.getLocatableHref(url, resource.getName(), suffix));
+        String url = LinkManager.getResourceLink(resourceId);
+        String suffix = String.valueOf(resourceId);
+        sb.append(SeleniumUtility.getLocatableHref(url, resourceName, suffix));
 
         return sb.toString();
     }

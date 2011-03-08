@@ -18,7 +18,6 @@ package org.rhq.enterprise.gui.coregui.client.resource;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,6 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageList;
@@ -66,7 +64,9 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
 
         AVAILABILITY("availabilityType", CoreGUI.getMessages().common_title_availability()),
 
-        RESOURCE("resource", CoreGUI.getMessages().common_title_resource());
+        RESOURCE("resource", CoreGUI.getMessages().common_title_resource()),
+
+        TYPE("resourceType", CoreGUI.getMessages().common_title_type());
 
         /**
          * Corresponds to a property name of Resource (e.g. resourceType.name).
@@ -181,20 +181,16 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
     protected void dataRetrieved(final PageList<ProblemResourceComposite> result, final DSResponse response,
         final DSRequest request) {
         HashSet<Integer> typesSet = new HashSet<Integer>();
-        ArrayList<Resource> resources = new ArrayList<Resource>(result.size());
+        HashSet<String> ancestries = new HashSet<String>();
         for (ProblemResourceComposite resourceComposite : result) {
-            Resource resource = resourceComposite.getResource();
-            resources.add(resource);
-            ResourceType type = resource.getResourceType();
-            if (type != null) {
-                typesSet.add(type.getId());
-            }
+            typesSet.add(resourceComposite.getResourceTypeId());
+            ancestries.add(resourceComposite.getAncestry());
         }
 
         // In addition to the types of the result resources, get the types of their ancestry
-        // NOTE: this may be too labor intensive in general, but since this is a singleton I coudln't
+        // NOTE: this may be too labor intensive in general, but since this datasource is a singleton I couldn't
         //       make it easily optional.
-        typesSet.addAll(AncestryUtil.getResourceTypeIds(resources));
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
         ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
@@ -203,12 +199,19 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
+                    // enhance resource name
+                    int resourceId = record.getAttributeAsInt("id");
+                    int resourceTypeId = record.getAttributeAsInt(Field.TYPE.propertyName);
+                    String resourceName = record.getAttributeAsString(Field.RESOURCE.propertyName);
+                    ResourceType type = types.get(resourceTypeId);
+                    record.setAttribute(Field.RESOURCE.propertyName, AncestryUtil.getResourceLongName(resourceId,
+                        resourceName, type));
+
                     // decode ancestry
                     String ancestry = record.getAttributeAsString(Field.ANCESTRY.propertyName());
                     if (null == ancestry) {
                         continue;
                     }
-                    int resourceId = record.getAttributeAsInt("id");
                     String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
                     // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
                     // decoded strings as different attributes. 
@@ -225,13 +228,13 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
     @Override
     public ListGridRecord copyValues(ProblemResourceComposite from) {
         ListGridRecord record = new ListGridRecord();
-        Resource resource = from.getResource();
-        record.setAttribute("id", resource.getId());
-        record.setAttribute(Field.RESOURCE.propertyName, AncestryUtil.getResourceLongName(resource));
-        record.setAttribute(Field.ANCESTRY.propertyName, resource.getAncestry());
+        record.setAttribute("id", from.getResourceId());
+        record.setAttribute(Field.ANCESTRY.propertyName, from.getAncestry());
         record.setAttribute(Field.ALERTS.propertyName, from.getNumAlerts());
         record.setAttribute(Field.AVAILABILITY.propertyName, ImageManager.getAvailabilityIconFromAvailType(from
             .getAvailabilityType()));
+        record.setAttribute(Field.RESOURCE.propertyName, from.getResourceName());
+        record.setAttribute(Field.TYPE.propertyName, from.getResourceTypeId());
 
         record.setAttribute("entity", from);
         return record;

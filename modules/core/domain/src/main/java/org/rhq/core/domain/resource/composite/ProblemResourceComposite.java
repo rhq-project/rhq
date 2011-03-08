@@ -25,7 +25,6 @@ package org.rhq.core.domain.resource.composite;
 import java.io.Serializable;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * Information on a resource that is considered having a "problem" - it is either {@link AvailabilityType#DOWN down},
@@ -37,44 +36,47 @@ public class ProblemResourceComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Resource resource;
+    //private Resource resource;
+    private int resourceId;
+    private int resourceTypeId;
+    private String resourceName;
+    private String ancestry;
     private long numAlerts;
     private AvailabilityType availabilityType;
-
-    // TODO: The Resource entity has been added. Leaving these for backCompat in portal war. When portal war is
-    //       removed these fields should go. Note, keep availabilityType as it is not present by default in Resource.
-    private int resourceId;
-    private String resourceName;
 
     /** Private no args contstructor for JAXB serialization. */
     @SuppressWarnings("unused")
     private ProblemResourceComposite() {
     }
 
-    public ProblemResourceComposite(Resource resource, long numAlerts, int resourceId, String resourceName,
-        AvailabilityType availabilityType) {
-        this.resource = resource;
-        this.numAlerts = numAlerts;
-        this.availabilityType = availabilityType; // pull explicitly because lazy-loaded by default         
-
+    public ProblemResourceComposite(int resourceId, int resourceTypeId, String resourceName, String ancestry,
+        long numAlerts, AvailabilityType availabilityType) {
         this.resourceId = resourceId;
+        this.resourceTypeId = resourceTypeId;
         this.resourceName = resourceName;
+        this.ancestry = ancestry;
+        this.numAlerts = numAlerts;
+        this.availabilityType = availabilityType; // pull explicitly because lazy-loaded by default
     }
 
     public int getResourceId() {
         return resourceId;
     }
 
-    public Resource getResource() {
-        return resource;
-    }
-
-    public void setResource(Resource resource) {
-        this.resource = resource;
+    public int getResourceTypeId() {
+        return resourceTypeId;
     }
 
     public String getResourceName() {
         return resourceName;
+    }
+
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    public long getNumAlerts() {
+        return numAlerts;
     }
 
     /**
@@ -85,10 +87,6 @@ public class ProblemResourceComposite implements Serializable {
      */
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
-    }
-
-    public long getNumAlerts() {
-        return numAlerts;
     }
 
     @Override

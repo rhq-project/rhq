@@ -149,17 +149,19 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
         HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
         for (Resource resource : result) {
             ResourceType type = resource.getResourceType();
             if (type != null) {
                 typesSet.add(type.getId());
             }
+            ancestries.add(resource.getAncestry());
         }
 
         // In addition to the types of the result resources, get the types of their ancestry
-        // NOTE: this may be too labor intensive in general, but since this is a singleton I coudln't
+        // NOTE: this may be too labor intensive in general, but since this is a singleton I couldn't
         //       make it easily optional.
-        typesSet.addAll(AncestryUtil.getResourceTypeIds(result));
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
         ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {

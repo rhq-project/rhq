@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
@@ -37,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 
 /**
+ * @author Simeon Pinder
  * @author Greg Hinkle
  */
 public class PortletFactory {
@@ -44,7 +47,17 @@ public class PortletFactory {
     private static HashMap<String, PortletViewFactory> registeredPortletFactoryMap;
     private static HashMap<String, String> registeredPortletNameMap;
 
+    //Group portlet registrations, diff from default portlets as only applicable for specific group
+    private static HashMap<String, PortletViewFactory> registeredGroupPortletFactoryMap;
+    //Resource portlet registrations, diff from default portlets as only applicable for specific resource
+    private static HashMap<String, PortletViewFactory> registeredResourcePortletFactoryMap;
+    private static HashMap<String, String> registeredGroupPortletNameMap;
+    private static HashMap<String, String> registeredResourcePortletNameMap;
+    private static HashMap<String, String> registeredPortletIconMap;
+
     static {
+        //############## Default Dashboard  ############################
+        //defines portlet factory mappings for landing page Dashboard
         registeredPortletFactoryMap = new HashMap<String, PortletViewFactory>();
         registeredPortletFactoryMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(RecentlyAddedResourcesPortlet.KEY,
@@ -60,6 +73,7 @@ public class PortletFactory {
         registeredPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
 
+        //defines portlet name mappings for landing page Dashboard
         registeredPortletNameMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
         registeredPortletNameMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.NAME);
         registeredPortletNameMap.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.NAME);
@@ -73,11 +87,38 @@ public class PortletFactory {
         registeredPortletNameMap.put(MessagePortlet.KEY, MessagePortlet.NAME);
         registeredPortletNameMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.NAME);
         registeredPortletNameMap.put(OperationsPortlet.KEY, OperationsPortlet.NAME);
+
+        //############## Group Activity Dashboard  ############################################
+        //defines mapping for Group Activity Dashboard
+        registeredGroupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
+        registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
+
+        //register group portlet names
+        registeredGroupPortletNameMap = new HashMap<String, String>(registeredGroupPortletFactoryMap.size());
+        registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
+
+        //############## Resource Activity Dashboard  ############################################
+        //defines mapping for Group Activity Dashboard
+        registeredResourcePortletFactoryMap = new HashMap<String, PortletViewFactory>();
+
+        //register resource portlet names
+        registeredResourcePortletNameMap = new HashMap<String, String>(registeredResourcePortletFactoryMap.size());
+
+        //############## Portlet icon mappings  ############################################
+        //register portlet names
+        registeredPortletIconMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
+        registeredPortletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertLargeIcon());
     }
 
     public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
         PortletViewFactory viewFactory = registeredPortletFactoryMap.get(storedPortlet.getPortletKey());
+        if (viewFactory == null) {//check group view factory
+            viewFactory = registeredGroupPortletFactoryMap.get(storedPortlet.getPortletKey());
+        }
+        if (viewFactory == null) {//check resource view factory
+            viewFactory = registeredResourcePortletFactoryMap.get(storedPortlet.getPortletKey());
+        }
 
         Portlet view = viewFactory.getInstance(locatorId);
         view.configure(portletWindow, storedPortlet);
@@ -96,6 +137,18 @@ public class PortletFactory {
         return portletKeys;
     }
 
+    public static List<String> getRegisteredGroupPortletKeys() {
+
+        ArrayList<String> portletKeys = new ArrayList<String>(registeredGroupPortletFactoryMap.keySet());
+        return portletKeys;
+    }
+
+    public static List<String> getRegisteredResourcePortletKeys() {
+
+        ArrayList<String> portletKeys = new ArrayList<String>(registeredResourcePortletFactoryMap.keySet());
+        return portletKeys;
+    }
+
     /** 
      * @return Unmodifiable Map of registered portlet keys to names
      */
@@ -104,15 +157,56 @@ public class PortletFactory {
         return registeredPortletNameMap;
     }
 
+    public static HashMap<String, String> getRegisteredGroupPortletNameMap() {
+
+        return registeredGroupPortletNameMap;
+    }
+
+    public static HashMap<String, String> getRegisteredResourcePortletNameMap() {
+
+        return registeredResourcePortletNameMap;
+    }
+
     public static String getRegisteredPortletName(String key) {
 
         return registeredPortletNameMap.get(key);
+    }
+
+    public static String getRegisteredGroupPortletName(String key) {
+
+        return registeredGroupPortletNameMap.get(key);
+    }
+
+    public static String getRegisteredResourcePortletName(String key) {
+
+        return registeredResourcePortletNameMap.get(key);
+    }
+
+    public static String getRegisteredPortletIcon(String key) {
+
+        return registeredPortletIconMap.get(key);
     }
 
     public static PortletViewFactory getRegisteredPortletFactory(String key) {
         PortletViewFactory portletFactory = null;
         if ((key != null) & (!key.trim().isEmpty())) {
             portletFactory = registeredPortletFactoryMap.get(key);
+        }
+        return portletFactory;
+    }
+
+    public static PortletViewFactory getRegisteredGroupPortletFactory(String key) {
+        PortletViewFactory portletFactory = null;
+        if ((key != null) & (!key.trim().isEmpty())) {
+            portletFactory = registeredGroupPortletFactoryMap.get(key);
+        }
+        return portletFactory;
+    }
+
+    public static PortletViewFactory getRegisteredResourcePortletFactory(String key) {
+        PortletViewFactory portletFactory = null;
+        if ((key != null) & (!key.trim().isEmpty())) {
+            portletFactory = registeredResourcePortletFactoryMap.get(key);
         }
         return portletFactory;
     }

@@ -78,23 +78,23 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(extendLocatorId("RecentBundleDeploy"));
 
     //retrieve localized text
-    protected String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
-    protected String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
-    protected String RECENT_ALERTS = MSG.common_title_recent_alerts();
-    protected String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
-    protected String RECENT_OOB = MSG.common_title_recent_oob_metrics();
-    protected String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
-    protected String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
-    protected String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
-    protected String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    protected String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
-    protected String RECENT_EVENTS = MSG.common_title_recent_event_counts();
-    protected String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
-    protected String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
-    protected String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
-    protected String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
-    protected String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
-    protected String SEE_MORE = MSG.common_msg_see_more();
+    public static String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
+    public static String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
+    public static String RECENT_ALERTS = MSG.common_title_recent_alerts();
+    public static String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
+    public static String RECENT_OOB = MSG.common_title_recent_oob_metrics();
+    public static String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
+    public static String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
+    public static String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
+    public static String RECENT_OPERATIONS = MSG.common_title_recent_operations();
+    public static String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
+    public static String RECENT_EVENTS = MSG.common_title_recent_event_counts();
+    public static String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
+    public static String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
+    public static String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
+    public static String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
+    public static String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
+    public static String SEE_MORE = MSG.common_msg_see_more();
 
     private ResourceGroupComposite groupComposite = null;
     private ResourceComposite resourceComposite = null;
@@ -393,7 +393,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param emptyMessage Contents of the empty region
      * @return
      */
-    public LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
+    public static LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
         LocatableDynamicForm row = null;
         row = new LocatableDynamicForm(locatorId);
 
@@ -406,7 +406,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return row;
     }
 
-    public StaticTextItem newTextItemIcon(String imageSrc, String mouseOver) {
+    public static StaticTextItem newTextItemIcon(String imageSrc, String mouseOver) {
         StaticTextItem iconItem = new StaticTextItem();
         FormItemIcon img = new FormItemIcon();
         img.setSrc(imageSrc);
@@ -420,7 +420,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return iconItem;
     }
 
-    public LinkItem newLinkItem(String title, String destination) {
+    public static LinkItem newLinkItem(String title, String destination) {
         LinkItem link = new LinkItem();
         link.setLinkTitle(title);
         link.setTitle(title);
@@ -430,7 +430,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return link;
     }
 
-    public StaticTextItem newTextItem(String contents) {
+    public static StaticTextItem newTextItem(String contents) {
         StaticTextItem item = new StaticTextItem();
         item.setDefaultValue(contents);
         item.setShowTitle(false);
@@ -445,7 +445,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param linkDestination
      * @param column
      */
-    protected void addSeeMoreLink(LocatableDynamicForm form, String linkDestination, VLayout column) {
+    public static void addSeeMoreLink(LocatableDynamicForm form, String linkDestination, VLayout column) {
         if ((form != null) && (column != null)) {
             form.setNumCols(1);
             LinkItem link = newLinkItem(SEE_MORE, linkDestination);

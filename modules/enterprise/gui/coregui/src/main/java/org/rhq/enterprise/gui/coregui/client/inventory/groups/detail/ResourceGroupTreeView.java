@@ -219,7 +219,6 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 selectedNode = treeGrid.getTree().findById(String.valueOf(this.selectedGroup.getId()));
             }
 
-            // TODO reselect tree to selected node
             if (selectedNode != null) {
                 TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
                 treeGrid.getTree().openFolders(parents);

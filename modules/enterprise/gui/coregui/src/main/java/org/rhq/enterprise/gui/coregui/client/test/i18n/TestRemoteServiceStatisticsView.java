@@ -153,6 +153,14 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
 
+        addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                refresh();
+            }
+        });
+
         if (window != null) {
             LinkedHashMap<String, Integer> timerValues = new LinkedHashMap<String, Integer>();
             timerValues.put("Now", Integer.valueOf("-2"));
@@ -172,43 +180,35 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
 
-            addTableAction(extendLocatorId("refreshTimer"), "Refresh", null, timerValues, new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+            addTableAction(extendLocatorId("refreshTimer"), "Refresh Timer", null, timerValues,
+                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                    Integer timeout = (Integer) actionValue;
+                        Integer timeout = (Integer) actionValue;
 
-                    // if being asked to refresh now, just refresh but don't touch our schedules
-                    if (timeout == null || timeout.intValue() == -2) {
-                        refresh();
-                        return;
+                        // if being asked to refresh now, just refresh but don't touch our schedules
+                        if (timeout == null || timeout.intValue() == -2) {
+                            refresh();
+                            return;
+                        }
+
+                        // cancel everything - will reinstate if user elected to do one of these
+                        refreshTimer.cancel();
+                        refreshOnPageChange = false;
+
+                        if (timeout.intValue() == -1) {
+                            setTableTitle(TABLE_TITLE);
+                        } else if (timeout.intValue() == 0) {
+                            refreshOnPageChange = true;
+                            setTableTitle(TABLE_TITLE + " (refresh on page change)");
+                        } else {
+                            refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
+                            setTableTitle(TABLE_TITLE + " (refresh every " + timeout + "s)");
+                        }
                     }
-
-                    // cancel everything - will reinstate if user elected to do one of these
-                    refreshTimer.cancel();
-                    refreshOnPageChange = false;
-
-                    if (timeout.intValue() == -1) {
-                        setTableTitle(TABLE_TITLE);
-                    } else if (timeout.intValue() == 0) {
-                        refreshOnPageChange = true;
-                        setTableTitle(TABLE_TITLE + " (refresh on page change)");
-                    } else {
-                        refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
-                        setTableTitle(TABLE_TITLE + " (refresh every " + timeout + "s)");
-                    }
-                }
-            });
+                });
         } else { // not in the standalone window
-            addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    refresh();
-                }
-            });
-
             addTableAction(extendLocatorId("showInWin"), "Show In Window", new AbstractTableAction(
                 TableActionEnablement.ALWAYS) {
                 @Override

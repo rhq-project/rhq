@@ -38,6 +38,7 @@ import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -172,6 +173,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                     config.put(prop);
                 }
 
+                // build our config definition and populate our config editor
                 editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config),
                     config);
                 editor.addPropertyValueChangeListener(SystemSettingsView.this);
@@ -518,8 +520,23 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         ldapBindPW.setDefaultValue("");
         def.put(ldapBindPW);
 
-        return def;
+        //
+        // if the config is missing any properties for which we have defaults, set them to their defaults
+        //
+        Map<String, PropertyDefinition> allDefinitions = def.getPropertyDefinitions();
+        for (Map.Entry<String, PropertyDefinition> defEntry : allDefinitions.entrySet()) {
+            String propertyName = defEntry.getKey();
+            PropertyDefinition propertyDef = defEntry.getValue();
+            if (config.get(propertyName) == null) {
+                if (propertyDef instanceof PropertyDefinitionSimple
+                    && ((PropertyDefinitionSimple) propertyDef).getDefaultValue() != null) {
+                    config.put(new PropertySimple(propertyName, ((PropertyDefinitionSimple) propertyDef)
+                        .getDefaultValue()));
+                }
+            }
+        }
 
+        return def;
     }
 
     private DynamicForm getServerDetails() {

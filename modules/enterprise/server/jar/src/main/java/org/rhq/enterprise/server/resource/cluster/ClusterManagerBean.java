@@ -184,20 +184,20 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
         query.setParameter("groupId", groupId);
         List<Object[]> rs = query.getResultList();
 
-        Map<Integer, List<Object[]>> dataMap = new HashMap<Integer, List<Object[]>>();
+        Map<Integer, List<ClusterTreeQueryResults>> dataMap = new HashMap<Integer, List<ClusterTreeQueryResults>>();
         Set<Integer> explicitResources = new HashSet<Integer>();
 
         for (Object[] d : rs) {
-
-            Integer parentId = (Integer) d[2];
-            List<Object[]> childList = dataMap.get(parentId);
+            ClusterTreeQueryResults row = new ClusterTreeQueryResults(d);
+            Integer parentId = row.parentId;
+            List<ClusterTreeQueryResults> childList = dataMap.get(parentId);
             if (childList == null) {
-                childList = new ArrayList<Object[]>();
+                childList = new ArrayList<ClusterTreeQueryResults>();
                 dataMap.put(parentId, childList);
             }
-            childList.add(d);
-            if ((Long) d[5] > 0) {
-                explicitResources.add((Integer) d[0]);
+            childList.add(row);
+            if (row.isExplicitResource) {
+                explicitResources.add(row.resourceId);
             }
         }
 
@@ -209,7 +209,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
     }
 
     private void buildTree(int groupId, ClusterFlyweight parent, Set<Integer> parentIds,
-        Map<Integer, List<Object[]>> data) {
+        Map<Integer, List<ClusterTreeQueryResults>> data) {
 
         for (Integer parentId : parentIds) {
 
@@ -217,8 +217,8 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
 
             if (data.get(parentId) != null) {
-                for (Object[] child : data.get(parentId)) {
-                    ClusterKeyFlyweight n = new ClusterKeyFlyweight((Integer) child[1], (String) child[3]);
+                for (ClusterTreeQueryResults child : data.get(parentId)) {
+                    ClusterKeyFlyweight n = new ClusterKeyFlyweight(child.resourceTypeId, child.resourceKey);
                     ClusterFlyweight flyweight = children.get(n);
                     Set<Integer> memberList = members.get(n);
                     if (flyweight == null) {
@@ -227,8 +227,8 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
                         memberList = new HashSet<Integer>();
                         members.put(n, memberList);
                     }
-                    flyweight.addResource((String) child[4]);
-                    memberList.add((Integer) child[0]);
+                    flyweight.addResource(child.resourceName);
+                    memberList.add(child.resourceId);
                 }
             }
 
@@ -237,6 +237,24 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             for (ClusterFlyweight child : children.values()) {
                 buildTree(groupId, child, members.get(child.getClusterKey()), data);
             }
+        }
+    }
+
+    private class ClusterTreeQueryResults {
+        Integer resourceId;
+        Integer resourceTypeId;
+        Integer parentId;
+        String resourceKey;
+        String resourceName;
+        boolean isExplicitResource;
+
+        private ClusterTreeQueryResults(Object[] queryResults) {
+            resourceId = (Integer) queryResults[0];
+            resourceTypeId = (Integer) queryResults[1];
+            parentId = (Integer) queryResults[2];
+            resourceKey = (String) queryResults[3];
+            resourceName = (String) queryResults[4];
+            isExplicitResource = ((Number) queryResults[5]).intValue() > 0;
         }
     }
 

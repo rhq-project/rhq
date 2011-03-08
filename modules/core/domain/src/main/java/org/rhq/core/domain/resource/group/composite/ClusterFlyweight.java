@@ -27,6 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * This is a cluster node in a group tree. A cluster node represents an aggregation
+ * of one or more individual resources that are identical, where "identical" means
+ * the same resource type and resource key (see {@link ClusterKeyFlyweight}.
+ * The number of individual resources that make up this cluster node is the
+ * {@link #getMembers() member count}. The total size of the cluster (that is,
+ * the maximum number of members that can be expected) is {@link #getClusterSize()}.
+ * 
  * @author Greg Hinkle
  */
 public class ClusterFlyweight implements Serializable {
@@ -34,14 +41,11 @@ public class ClusterFlyweight implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int groupId;
-
     private ClusterKeyFlyweight clusterKey;
-
     private String name;
-
     private List<ClusterFlyweight> children = new ArrayList<ClusterFlyweight>(0);
-
-    private int members;
+    private int members = 0;
+    private int clusterSize = 0;
 
     public ClusterFlyweight() {
     }
@@ -54,11 +58,23 @@ public class ClusterFlyweight implements Serializable {
         this.clusterKey = clusterKey;
     }
 
+    public int getGroupId() {
+        return groupId;
+    }
+
+    public ClusterKeyFlyweight getClusterKey() {
+        return clusterKey;
+    }
+
+    public String getName() {
+        return (name != null) ? name : "?";
+    }
+
     public void addResource(String s) {
         if (name == null) {
             name = s;
         } else if (!name.equals(s)) {
-            name = "?";
+            name = "..."; // more than one "identical" resource had different names - don't know what to call this node
         }
     }
 
@@ -70,24 +86,61 @@ public class ClusterFlyweight implements Serializable {
         this.members = members;
     }
 
-    public void setChildren(List<ClusterFlyweight> clusterKeyFlyweights) {
-        this.children = (null != clusterKeyFlyweights) ? clusterKeyFlyweights : new ArrayList<ClusterFlyweight>(0);
+    public void incrementMembers() {
+        this.members++;
     }
 
-    public int getGroupId() {
-        return groupId;
+    public int getClusterSize() {
+        return clusterSize;
     }
 
-    public ClusterKeyFlyweight getClusterKey() {
-        return clusterKey;
-    }
-
-    public String getName() {
-        return name;
+    public void setClusterSize(int size) {
+        this.clusterSize = size;
     }
 
     public List<ClusterFlyweight> getChildren() {
         return children;
+    }
+
+    public void setChildren(List<ClusterFlyweight> clusterKeyFlyweights) {
+        if (clusterKeyFlyweights == null) {
+            this.children = new ArrayList<ClusterFlyweight>(0);
+        } else {
+            this.children = clusterKeyFlyweights;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 1;
+        result = 31 * result + groupId;
+        result = 31 * result + ((clusterKey == null) ? 0 : clusterKey.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ClusterFlyweight)) {
+            return false;
+        }
+
+        ClusterFlyweight other = (ClusterFlyweight) obj;
+
+        if (groupId != other.groupId) {
+            return false;
+        }
+
+        if (clusterKey == null) {
+            if (other.clusterKey != null) {
+                return false;
+            }
+        } else if (!clusterKey.equals(other.clusterKey)) {
+            return false;
+        }
+        return true;
     }
 
 }

@@ -44,13 +44,21 @@ public class ClusterKeyFlyweight implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ClusterKeyFlyweight)) {
+            return false;
+        }
 
         ClusterKeyFlyweight node = (ClusterKeyFlyweight) o;
 
-        if (resourceTypeId != node.resourceTypeId) return false;
-        if (resourceKey != null ? !resourceKey.equals(node.resourceKey) : node.resourceKey != null) return false;
+        if (resourceTypeId != node.resourceTypeId) {
+            return false;
+        }
+        if (resourceKey != null ? !resourceKey.equals(node.resourceKey) : node.resourceKey != null) {
+            return false;
+        }
 
         return true;
     }
@@ -72,9 +80,6 @@ public class ClusterKeyFlyweight implements Serializable {
 
     @Override
     public String toString() {
-        return "ClusterKeyFlyweight{" +
-                "resourceTypeId=" + resourceTypeId +
-                ", resourceKey='" + resourceKey + '\'' +
-                '}';
+        return "ClusterKeyFlyweight[" + "type=" + resourceTypeId + ",key=" + resourceKey + ']';
     }
 }

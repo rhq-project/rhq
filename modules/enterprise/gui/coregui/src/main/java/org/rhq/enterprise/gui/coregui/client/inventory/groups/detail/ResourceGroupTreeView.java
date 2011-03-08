@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.components.tree.TreeNodeComparator;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -395,6 +397,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 subcategoryNode.setChildren(subcategoryChildren.toArray(new TreeNode[subcategoryChildren.size()]));
             }
 
+            Collections.sort(childNodes, new TreeNodeComparator());
             parentNode.setChildren(childNodes.toArray(new TreeNode[childNodes.size()]));
         }
     }

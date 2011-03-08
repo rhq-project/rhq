@@ -176,10 +176,14 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
     }
 
     public ClusterFlyweight getClusterTree(Subject subject, int groupId) {
-        Query query = entityManager
-            .createQuery("SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, "
-                + "(SELECT count(r2) FROM Resource r2 join r2.explicitGroups g2 WHERE g2.id = :groupId and r2.id = r.id) "
-                + "FROM Resource r join r.implicitGroups g " + "WHERE g.id = :groupId");
+        final String queryString = // 
+        "SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, " //
+            + "         (SELECT count(r2)" //
+            + "            FROM Resource r2 JOIN r2.explicitGroups g2 " //
+            + "           WHERE g2.id = :groupId and r2.id = r.id) " //
+            + "    FROM Resource r join r.implicitGroups g " //
+            + "   WHERE g.id = :groupId ";
+        Query query = entityManager.createQuery(queryString);
 
         query.setParameter("groupId", groupId);
         List<Object[]> rs = query.getResultList();
@@ -238,6 +242,10 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
         // has the same as children above except its values aren't child nodes, but just the child nodes' resource IDs
         Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
 
+        // we would expect a maximum number of identical child resources to be the same as the number of parents we have.
+        // in other words, this happens when each individual parent resource has an identical child (which is the typical use case). 
+        int maxChildrenExpected = parentIds.size();
+
         // loop through each identical parent resource to aggregate their children into a single cluster node
         for (Integer parentId : parentIds) {
 
@@ -249,6 +257,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
                     Set<Integer> memberList;
                     if (childNode == null) {
                         childNode = new ClusterFlyweight(childNodeKey);
+                        childNode.setClusterSize(maxChildrenExpected);
                         children.put(childNodeKey, childNode);
                         memberList = new HashSet<Integer>();
                         members.put(childNodeKey, memberList);
@@ -256,6 +265,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
                         memberList = members.get(childNodeKey);
                     }
                     childNode.addResource(child.resourceName);
+                    childNode.incrementMembers();
                     memberList.add(child.resourceId);
                 }
             }

@@ -59,11 +59,14 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     public RolesView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_roles());
 
-        fetchManageSecurityPermissionAsync();
-
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
+    }
+
+    @Override
+    protected void onDraw() {
+        fetchManageSecurityPermissionAsync();
     }
 
     @Override
@@ -158,6 +161,9 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
                     refresh();
                 } else {
                     hasManageSecurity = false;
+                }
+                if (!initialized) {
+                    RolesView.super.onDraw();
                 }
                 initialized = true;
             }

@@ -283,7 +283,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         Integer id = getFilter(request, Field.ID, Integer.class);
         criteria.addFilterId(id);
 
-        Integer subjectId = request.getCriteria().getAttributeAsInt(CriteriaField.SUBJECT_ID);
+        Integer subjectId = getFilter(request, CriteriaField.SUBJECT_ID, Integer.class);
         if (subjectId != null) {
             criteria.addFilterSubjectId(subjectId);
         }

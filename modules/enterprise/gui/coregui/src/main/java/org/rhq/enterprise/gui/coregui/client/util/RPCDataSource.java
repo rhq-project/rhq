@@ -21,7 +21,9 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -507,7 +509,8 @@ public abstract class RPCDataSource<T> extends DataSource {
     @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
         Criteria criteria = request.getCriteria();
-        Map<String, Object> criteriaMap = criteria.getValues();
+        Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() :
+                Collections.<String, Object>emptyMap();
 
         S result = null;
 

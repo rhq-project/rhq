@@ -61,17 +61,14 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     private Timer refreshTimer;
 
     public FavoriteResourcesPortlet(String locatorId) {
-        super(locatorId);
+        super(locatorId, createInitialCriteria());
         setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
         setShowFooter(false);
     }
 
-    @Override
-    protected void configureTable() {
-        super.configureTable();
-
+    private static Criteria createInitialCriteria() {
         Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
@@ -83,7 +80,12 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
             criteria.addCriteria("resourceIds", favArray);
         }
 
-        refresh(criteria);
+        return criteria;
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
 
         getListGrid().addFieldStateChangedHandler(new FieldStateChangedHandler() {
             public void onFieldStateChanged(FieldStateChangedEvent fieldStateChangedEvent) {

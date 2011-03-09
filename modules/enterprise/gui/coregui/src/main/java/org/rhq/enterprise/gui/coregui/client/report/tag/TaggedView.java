@@ -138,7 +138,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
         }
 
         for (Table t : viewsWithTags) {
-            t.refresh(criteria);
+            t.refresh();
         }
     }
 

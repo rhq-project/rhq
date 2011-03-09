@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -31,6 +33,8 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -49,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -63,7 +67,6 @@ import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the:
@@ -77,12 +80,37 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet,
     PropertyValueChangeListener {
 
-    private interface Constant {
+    public interface Constant {
         String ALERT_PRIORITY = "ALERT_PRIORITY";
+        String ALERT_METRIC_RANGE_ENABLE = "ALERT_METRIC_RANGE_ENABLE";
+        String ALERT_METRIC_RANGE_BEGIN_END_FLAG = "ALERT_METRIC_RANGE_BEGIN_END_FLAG";
+        String ALERT_METRIC_RANGE = "ALERT_METRIC_RANGE";
+        String ALERT_METRIC_RANGE_LASTN = "ALERT_METRIC_RANGE_LASTN";
+        String ALERT_METRIC_RANGE_LASTN_DEFAULT = String.valueOf(8);
+        String ALERT_METRIC_RANGE_UNIT = "ALERT_METRIC_RANGE_UNIT";
         String RESULT_SORT_ORDER = "RESULT_SORT_ORDER";
         String RESULT_COUNT = "RESULT_COUNT";
         String RESULT_COUNT_DEFAULT = "5";
         String CUSTOM_REFRESH = "CUSTOM_REFRESH";
+    }
+
+    //configuration map initialization
+    private static Map<String, String> CONFIG_PROPERTY_INITIALIZATION = new HashMap<String, String>();
+    static {// Key, Default value
+        //alert priority, if empty initialize to "" i.e. all priorities
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_PRIORITY, "");
+        //result sort order, if empty initialize to "DESC"
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.RESULT_SORT_ORDER, PageOrdering.DESC.name());
+        //result count, if empty initialize to 5
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
+        //whether to specify time range for alerts. Defaults to false
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_METRIC_RANGE_ENABLE, String.valueOf(false));
+        //whether Begin and End values set for time. Aka. Advanced/full range setting Defaults to false
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_METRIC_RANGE_BEGIN_END_FLAG, String.valueOf(false));
+        //whether in simple mode. Ex. 8 hrs. Defaults to 8
+        CONFIG_PROPERTY_INITIALIZATION
+            .put(Constant.ALERT_METRIC_RANGE_LASTN, Constant.ALERT_METRIC_RANGE_LASTN_DEFAULT);
+
     }
 
     private int groupId = -1;
@@ -93,7 +121,7 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
     private SelectItem alertPrioritySelector = null;
     private SelectItem resultSortSelector = null;
     private SelectItem resultCountSelector = null;
-    private MeasurementRangeEditor measurementRangeEditor = null;
+    private CustomConfigMeasurementRangeEditor measurementRangeEditor = null;
     private DashboardPortlet storedPortlet;
 
     public GroupAlertsPortlet(String locatorId) {
@@ -128,12 +156,9 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
 
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
-    //    private AlertPortletDataSource dataSource;
     //instance ui widgets
-    private Canvas containerCanvas;
 
     private Timer refreshTimer;
-    private LocatableIButton saveButton;
 
     /** Responsible for initialization and lazy configuration of the portlet values
      */
@@ -150,17 +175,10 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
         portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
-        //alert priority, if empty initialize to "" i.e. all priorities
-        if (portletConfig.getSimple(Constant.ALERT_PRIORITY) == null) {
-            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
-        }
-        //result sort order, if empty initialize to "DESC"
-        if (portletConfig.getSimple(Constant.RESULT_SORT_ORDER) == null) {
-            portletConfig.put(new PropertySimple(Constant.RESULT_SORT_ORDER, PageOrdering.DESC));
-        }
-        //result count, if empty initialize to 5
-        if (portletConfig.getSimple(Constant.RESULT_COUNT) == null) {
-            portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
+        for (String key : CONFIG_PROPERTY_INITIALIZATION.keySet()) {
+            if (portletConfig.getSimple(key) == null) {
+                portletConfig.put(new PropertySimple(key, CONFIG_PROPERTY_INITIALIZATION.get(key)));
+            }
         }
 
         //custom refresh
@@ -175,7 +193,6 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-
             return new GroupAlertsPortlet(locatorId);
         }
     }
@@ -218,6 +235,18 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
                 pc.setPrimarySortOrder(PageOrdering.ASC);
             }
         }
+        //result timeframe if enabled
+        property = portletConfig.getSimple(Constant.ALERT_METRIC_RANGE_ENABLE);
+        if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+            property = portletConfig.getSimple(Constant.ALERT_METRIC_RANGE);
+            if (property != null) {
+                String currentSetting = property.getStringValue();
+                String[] range = currentSetting.split(",");
+                criteria.addFilterStartTime(Long.valueOf(range[0]));
+                criteria.addFilterEndTime(Long.valueOf(range[1]));
+            }
+        }
+
         //result count
         property = portletConfig.getSimple(Constant.RESULT_COUNT);
         if (property != null) {
@@ -264,7 +293,8 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
                         + "/Alerts/History/", column);
                 } else {
                     LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentAlertsContent
-                        .extendLocatorId("None"), AbstractActivityView.RECENT_ALERTS_NONE);
+                    //                        .extendLocatorId("None"), AbstractActivityView.RECENT_ALERTS_NONE);
+                        .extendLocatorId("None"), "No results using criteria specified.");
                     column.addMember(row);
                 }
                 for (Canvas child : recentAlertsContent.getChildren()) {
@@ -288,8 +318,8 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
 
     @Override
     public DynamicForm getCustomSettingsForm() {
-        LocatableDynamicForm custom = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(custom.extendLocatorId("page"));
+        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
         final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
         form.setMargin(5);
@@ -307,12 +337,13 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
             "Displays N results with alerts", countSelections);
 
         //add range selector
-        measurementRangeEditor = new MeasurementRangeEditor(page.extendLocatorId("alertTimeFrame"));
+        measurementRangeEditor = new CustomConfigMeasurementRangeEditor(page.extendLocatorId("alertTimeFrame"),
+            portletConfig);
 
         form.setItems(alertPrioritySelector, resultSortSelector, resultCountSelector);
 
         //submit handler
-        custom.addSubmitValuesHandler(new SubmitValuesHandler() {
+        customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
@@ -338,9 +369,26 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
                     portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
                 }
 
+                //alert time range filter. Check for enabled and then persist property. Dealing with compound widget.
+                FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+                CheckboxItem itemC = (CheckboxItem) item;
+                selectedValue = String.valueOf(itemC.getValueAsBoolean());
+                if (!selectedValue.trim().isEmpty()) {//then call
+                    portletConfig.put(new PropertySimple(Constant.ALERT_METRIC_RANGE_ENABLE, selectedValue));
+                }
+
+                //alert time advanced time filter enabled.
+                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
+                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
+                    portletConfig.put(new PropertySimple(Constant.ALERT_METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
+                }
+
                 //alert time frame
-                Map selectedValue3 = measurementRangeEditor.getValues();
-                String selectedValue2 = measurementRangeEditor.getValue("") + "";
+                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
+                if (begEnd.get(0) != 0) {//advanced settings
+                    portletConfig.put(new PropertySimple(Constant.ALERT_METRIC_RANGE, (begEnd.get(0) + "," + begEnd
+                        .get(1))));
+                }
 
                 //persist
                 storedPortlet.setConfiguration(portletConfig);
@@ -351,8 +399,8 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
         form.markForRedraw();
         page.addMember(measurementRangeEditor);
         page.addMember(form);
-        custom.addChild(page);
-        return custom;
+        customSettings.addChild(page);
+        return customSettings;
     }
 
     /* single select combobox for number of items to display on the dashboard
@@ -395,7 +443,6 @@ public class GroupAlertsPortlet extends LocatableVLayout implements CustomSettin
     private SelectItem getAlertPriorityEditor() {
         SelectItem priorityFilter = new SelectItem("severities", MSG.view_alerts_table_filter_priority());
         priorityFilter.setWrapTitle(false);
-        //        priorityFilter.setWidth("*");
         priorityFilter.setWidth(200);
         priorityFilter.setMultiple(true);
         priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);

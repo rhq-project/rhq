@@ -34,7 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -60,7 +60,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
-        addExtraWidget(new MeasurementRangeEditor(extendLocatorId("range")), true);
+        addExtraWidget(new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")), true);
         addTableAction(extendLocatorId("liveValue"), MSG.view_measureTable_getLive(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {

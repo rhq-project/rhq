@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
 import java.util.Set;
 
@@ -55,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.PortletAlertSelector;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -64,13 +65,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Simeon Pinder
- * @author Greg Hinkle
  */
-public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "RecentAlerts";
-    // A default displayed, persisted name for the portlet    
+    public static final String KEY = "Group: Alerts2";
+    // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
 
     //widget keys also used in form population
@@ -104,7 +104,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     public static final int ALERT_RESOURCE_SELECTION_WIDTH = 800;
     public static final String ID = "id";
 
-    // set on initial configuration, the window for this portlet view. 
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
     //shared private UI elements
@@ -116,7 +116,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
     private Timer refreshTimer;
 
-    public RecentAlertsPortlet(String locatorId) {
+    public GroupAlertsPortlet2(String locatorId) {
         super(locatorId);
 
         //override the shared datasource
@@ -283,7 +283,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
     public DynamicForm getCustomSettingsForm() {
         //root dynamic form instance
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
-        form.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
+        form.setWidth(GroupAlertsPortlet2.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
         form.setHeight(400);
         form.setMargin(5);
 
@@ -527,7 +527,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
                 configure(portletWindow, storedPortlet);
 
-                refresh();//reload form with new data selections                
+                refresh();//reload form with new data selections
                 markForRedraw();
             }
         });
@@ -562,7 +562,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
 
         public final Portlet getInstance(String locatorId) {
 
-            return new RecentAlertsPortlet(locatorId);
+            return new GroupAlertsPortlet2(locatorId);
         }
     }
 

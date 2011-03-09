@@ -19,10 +19,10 @@
 
 package org.rhq.enterprise.gui.coregui.client.util.preferences;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
@@ -58,40 +58,6 @@ public class MeasurementUserPreferences {
 
     public static class MetricViewsPreferences {
         public List<String> views;
-    }
-
-    public static class MetricRangePreferences {
-        // if readOnly is true, then the beginning and ending range dates are specified with explicit dates
-        // if readOnly is false, then the time is relative to NOW and is specified as <lastN> units of <unit> time
-        public boolean explicitBeginEnd;
-
-        // simple, when readOnly is false
-        public int lastN;
-        public int unit; // see MeasurementUtility.UNIT_xxx
-
-        // advanced, when readOnly is true
-        public Long begin;
-        public Long end;
-
-        /**
-         * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
-         * milliseconds since the epoch) of the time frame.
-         **/
-        public ArrayList<Long> getBeginEndTimes() {
-            if (explicitBeginEnd) {
-                ArrayList<Long> times = new ArrayList<Long>(2);
-                times.add(begin);
-                times.add(end);
-                return times;
-            } else {
-                return MeasurementUtility.calculateTimeFrame(lastN, unit);
-            }
-        }
-
-        public String toString() {
-            return (explicitBeginEnd) ? "[begin=" + begin + end + ",end=" + end + "]" : "[lastN=" + lastN + ",unit="
-                + unit + "]";
-        }
     }
 
     public MetricRangePreferences getMetricRangePreferences() {

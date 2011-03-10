@@ -404,4 +404,12 @@ public class ImageManager {
 
         return "subsystems/event/Events" + icon + "_16.png";
     }
+
+    public static String getMonitorIcon() {
+        return "subsystems/monitor/Monitor_16.png";
+    }
+
+    public static String getMonitorLargeIcon() {
+        return "subsystems/monitor/Monitor_24.png";
+    }
 }

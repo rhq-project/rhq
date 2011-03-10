@@ -120,24 +120,30 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
      */
     @Override
     protected void configureTable() {
+        if (isDetailsEnabled()) {
+            ListGrid grid = getListGrid();
 
-        // Make the value of some specific field a link to the details view for the corresponding record
-        ListGrid grid = getListGrid();
-        ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
-        if (field != null) {
-            field.setCellFormatter(getDetailsLinkColumnCellFormatter());
-        }
-
-        setListGridDoubleClickHandler(new DoubleClickHandler() {
-            @Override
-            public void onDoubleClick(DoubleClickEvent event) {
-                ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
-                if (selectedRows != null && selectedRows.length == 1) {
-                    showDetails(selectedRows[0]);
-                }
+            // Make the value of some specific field a link to the details view for the corresponding record.
+            ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
+            if (field != null) {
+                field.setCellFormatter(getDetailsLinkColumnCellFormatter());
             }
-        });
+
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        showDetails(selectedRows[0]);
+                    }
+                }
+            });
+        }
+    }
+
+    protected boolean isDetailsEnabled() {
+        return true;
     }
 
     /**

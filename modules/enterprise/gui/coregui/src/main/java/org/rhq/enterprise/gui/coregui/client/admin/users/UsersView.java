@@ -22,10 +22,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
@@ -52,6 +55,7 @@ public class UsersView extends TableSection<UsersDataSource> {
     private static final String HEADER_ICON = "global/User_24.png";
 
     private boolean hasManageSecurity;
+    private boolean initialized;
 
     public UsersView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_users());
@@ -60,25 +64,38 @@ public class UsersView extends TableSection<UsersDataSource> {
 
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
+
+        fetchManageSecurityPermissionAsync();
     }
 
     @Override
     protected void configureTable() {
+        updateSelectionStyle();
+        getListGrid().addCellClickHandler(new CellClickHandler() {
+            public void onCellClick(CellClickEvent event) {
+                updateSelectionStyle();
+            }
+        });
+
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             createDeleteAction());
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
-
-        fetchManageSecurityPermissionAsync();
 
         super.configureTable();
     }
 
+    @Override
+    public void refresh() {
+        super.refresh();
+
+        updateSelectionStyle();
+    }
+
     private void fetchManageSecurityPermissionAsync() {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            @Override
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null) {
                     hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
@@ -86,8 +103,19 @@ public class UsersView extends TableSection<UsersDataSource> {
                 } else {
                     hasManageSecurity = false;
                 }
+                initialized = true;
             }
         });
+    }
+
+    private void updateSelectionStyle() {
+        if (initialized) {
+            if (!hasManageSecurity) {
+                getListGrid().deselectAllRecords();
+            }
+            SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
+            getListGrid().setSelectionType(selectionStyle);
+        }
     }
 
     private List<ListGridField> createFields() {
@@ -138,9 +166,25 @@ public class UsersView extends TableSection<UsersDataSource> {
         return fields;
     }
 
+    private TableAction createNewAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return hasManageSecurity;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                newDetails();
+            }
+        };
+    }
+
     private TableAction createDeleteAction() {
         return new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
+                if (!hasManageSecurity) {
+                    return false;
+                }
+
                 int count = selection.length;
                 if (count == 0) {
                     return false;
@@ -158,18 +202,6 @@ public class UsersView extends TableSection<UsersDataSource> {
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteSelectedRecords();
-            }
-        };
-    }
-
-    private TableAction createNewAction() {
-        return new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return hasManageSecurity;
-            }
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                newDetails();
             }
         };
     }

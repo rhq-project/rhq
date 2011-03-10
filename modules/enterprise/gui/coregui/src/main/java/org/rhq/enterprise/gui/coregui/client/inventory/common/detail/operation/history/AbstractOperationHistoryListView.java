@@ -89,18 +89,18 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
         // TODO: i18n
         addTableAction(extendLocatorId("ForceDelete"), MSG.view_operationHistoryList_button_forceDelete(),
-                getDeleteConfirmMessage(), new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                int count = selection.length;
-                return (count >= 1 && hasControlPermission());
-            }
+            getDeleteConfirmMessage(), new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    return (count >= 1 && hasControlPermission());
+                }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                DSRequest requestProperties = new DSRequest();
-                requestProperties.setAttribute("force", true);
-                deleteSelectedRecords(requestProperties);
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    DSRequest requestProperties = new DSRequest();
+                    requestProperties.setAttribute("force", true);
+                    deleteSelectedRecords(requestProperties);
+                }
+            });
 
         super.configureTable();
     }
@@ -158,18 +158,18 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
-                    case SUCCESS: {
-                        return MSG.common_status_success();
-                    }
-                    case FAILURE: {
-                        return MSG.common_status_failed();
-                    }
-                    case INPROGRESS: {
-                        return MSG.common_status_inprogress();
-                    }
-                    case CANCELED: {
-                        return MSG.common_status_canceled();
-                    }
+                case SUCCESS: {
+                    return MSG.common_status_success();
+                }
+                case FAILURE: {
+                    return MSG.common_status_failed();
+                }
+                case INPROGRESS: {
+                    return MSG.common_status_inprogress();
+                }
+                case CANCELED: {
+                    return MSG.common_status_canceled();
+                }
                 }
                 // should never get here
                 return MSG.common_status_unknown();
@@ -244,6 +244,14 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             }
         });*/
         return resourceField;
+    }
+
+    protected ListGridField createAncestryField() {
+        ListGridField ancestryField = new ListGridField(ResourceOperationHistoryDataSource.Field.ANCESTRY, MSG
+            .common_title_ancestry());
+        ancestryField.setAlign(Alignment.LEFT);
+        ancestryField.setCellAlign(Alignment.LEFT);
+        return ancestryField;
     }
 
     @Override

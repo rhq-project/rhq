@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -55,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * The content pane for the group Summary>Dashboard subtab.
  *
+ * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
 
@@ -125,7 +127,9 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
         Canvas[] members = getMembers();
         removeMembers(members);
 
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard);
+        //pass in the group information
+        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, this.groupComposite
+            .getResourceGroup(), null);
         addMember(dashboardView);
 
         footer = new LocatableToolStrip(extendLocatorId("Footer"));
@@ -185,9 +189,13 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         // Left Column
-        DashboardPortlet dummyLeft = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        dummyLeft.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(dummyLeft, 0, 0);
+        //        DashboardPortlet dummyLeft = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
+        //        dummyLeft.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
+        //        dashboard.addPortlet(dummyLeft, 0, 0);
+
+        DashboardPortlet groupAlerts = new DashboardPortlet(GroupAlertsPortlet.NAME, GroupAlertsPortlet.KEY, 220);
+        //        groupAlerts.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
+        dashboard.addPortlet(groupAlerts, 0, 0);
 
         // right Column
         DashboardPortlet dummyRight = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);

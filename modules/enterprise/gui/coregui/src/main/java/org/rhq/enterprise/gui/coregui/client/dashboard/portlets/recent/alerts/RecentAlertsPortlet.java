@@ -304,6 +304,7 @@ public class RecentAlertsPortlet extends AlertHistoryView implements CustomSetti
         final SelectItem alertRangeLastComboBox = new SelectItem(ALERT_RANGE_DISPLAY_AMOUNT_VALUE);
         alertRangeLastComboBox.setTitle(MSG.view_measureRange_last());
         alertRangeLastComboBox.setType("selection");
+        alertRangeLastComboBox.setWrapTitle(false);
         //define acceptable values for display amount
         String[] acceptableDisplayValues = { "5", "10", MSG.common_label_unlimited() };
         alertRangeLastComboBox.setValueMap(acceptableDisplayValues);

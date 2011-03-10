@@ -50,6 +50,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -92,6 +94,8 @@ public class DashboardView extends LocatableVLayout {
     private int refreshInterval = 0;
     private LocatableIMenuButton refreshMenuButton;
     private HashMap<String, PortletViewFactory> portletMap = null;
+    private ResourceGroup focusGroup = null;
+    private Resource focusResource = null;
 
     // this is used to prevent an odd smartgwt problem where onInit() can get called multiple times if
     // the view is set to a Tab's pane.
@@ -102,6 +106,13 @@ public class DashboardView extends LocatableVLayout {
 
         this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
+    }
+
+    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard,
+        ResourceGroup group, Resource resource) {
+        this(locatorId, dashboardContainer, storedDashboard);
+        this.focusGroup = group;
+        this.focusResource = resource;
     }
 
     @Override
@@ -230,6 +241,22 @@ public class DashboardView extends LocatableVLayout {
         for (String portletKey : keyNameMap.keySet()) {
             nameKeyMap.put(keyNameMap.get(portletKey), portletKey);
         }
+        //if resourceGroup passed in then add additional portlets to list
+        if (this.focusGroup != null) {
+            HashMap<String, String> groupKeyNameMap = PortletFactory.getRegisteredGroupPortletNameMap();
+            for (String portletKey : groupKeyNameMap.keySet()) {
+                nameKeyMap.put(groupKeyNameMap.get(portletKey), portletKey);
+            }
+        }
+
+        //if resource passed in then add additional portlets to list
+        if (this.focusResource != null) {
+            HashMap<String, String> resourceKeyNameMap = PortletFactory.getRegisteredResourcePortletNameMap();
+            for (String portletKey : resourceKeyNameMap.keySet()) {
+                nameKeyMap.put(resourceKeyNameMap.get(portletKey), portletKey);
+            }
+        }
+
         // now use the reversed map for the menu generation
         for (String portletName : nameKeyMap.keySet()) {
             MenuItem menuItem = new MenuItem(portletName);

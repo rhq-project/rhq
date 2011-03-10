@@ -228,7 +228,6 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                     SeleniumUtility.getSafeId(String.valueOf(this.selectedGroup.getId())));
             }
 
-            // TODO reselect tree to selected node
             if (selectedNode != null) {
                 TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
                 treeGrid.getTree().openFolders(parents);

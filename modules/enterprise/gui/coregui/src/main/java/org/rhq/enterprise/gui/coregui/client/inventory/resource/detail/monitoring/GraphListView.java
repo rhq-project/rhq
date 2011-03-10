@@ -36,7 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -67,7 +67,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
 
         //        addMember(loadingLabel);
 
-        addMember(new MeasurementRangeEditor(this.getLocatorId()));
+        addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
 
         if (resource != null) {
             buildGraphs();

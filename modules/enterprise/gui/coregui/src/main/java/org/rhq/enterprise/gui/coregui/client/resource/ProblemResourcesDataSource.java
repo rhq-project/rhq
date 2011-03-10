@@ -58,15 +58,15 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
 
     public enum Field {
 
-        ALERTS("numAlerts", CoreGUI.getMessages().dataSource_problemResources_field_alerts()),
+        ALERTS("numAlerts", MSG.dataSource_problemResources_field_alerts()),
 
-        ANCESTRY("resource.ancestry", CoreGUI.getMessages().common_title_ancestry()),
+        ANCESTRY("ancestry", MSG.common_title_ancestry()),
 
-        AVAILABILITY("availabilityType", CoreGUI.getMessages().common_title_availability()),
+        AVAILABILITY("availabilityType", MSG.common_title_availability()),
 
-        RESOURCE("resource", CoreGUI.getMessages().common_title_resource()),
+        RESOURCE("resource", MSG.common_title_resource()),
 
-        TYPE("resourceType", CoreGUI.getMessages().common_title_type());
+        TYPE("typeId", MSG.common_title_type());
 
         /**
          * Corresponds to a property name of Resource (e.g. resourceType.name).

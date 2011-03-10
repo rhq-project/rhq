@@ -111,6 +111,13 @@ public class ClusterFlyweight implements Serializable {
     }
 
     @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("ClusterFlyweight [name=").append(name).append(", clusterKey=").append(clusterKey).append("]");
+        return builder.toString();
+    }
+
+    @Override
     public int hashCode() {
         int result = 1;
         result = 31 * result + groupId;

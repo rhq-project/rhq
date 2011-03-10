@@ -55,6 +55,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -65,8 +66,24 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * This is the view that renders the left hand tree for groups.
+ * There are three main types of nodes in the group tree:
+ * 1. Cluster Node - This represents a single aggregate resource that is of a specific resource type.
+ *                   If a group has members with one or more resources with an identical resource key and type,
+ *                   those identical resources are represented with one cluster node. Each cluster node
+ *                   is associated with a resource type and an unique cluster key.
+ * 2. Auto Type Group Node - This is a folder node whose children are all of a specific resource type.
+ *                           The children are typically cluster nodes. An example of this kind of node is
+ *                           "WARs", where there can be many different WARs deployed on an individual member resource
+ *                           but a WAR can be clustered (copied) across many member resources. Each auto type group node
+ *                           is associated with a resource type but they do not have cluster keys.
+ * 3. Subcategory Node these are simply nodes that group other kinds of nodes. Plugin developers define subcategories
+ *                     in plugin descriptors to organize resource types. Subcategories are not associated with any
+ *                     particular resource type and do not have cluster keys.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
+ * @author John Mazzitelli
  */
 public class ResourceGroupTreeView extends LocatableVLayout implements BookmarkableView {
 
@@ -142,6 +159,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
+                    selectedNodeId = null; // if user selected a valid node, we'll set this later
                     ResourceGroupEnhancedTreeNode selectedNode = (ResourceGroupEnhancedTreeNode) selectionEvent
                         .getRecord();
                     com.allen_sauer.gwt.log.client.Log.info("Node selected in tree: " + selectedNode);
@@ -160,11 +178,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                                 selectedNodeId = selectedNode.getID();
                                 String groupId = selectedNodeId;
                                 com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
-                                String viewPath = ResourceGroupTopView.VIEW_ID + "/" + groupId;
-                                String currentViewPath = History.getToken();
-                                if (!currentViewPath.startsWith(viewPath)) {
-                                    CoreGUI.goToView(viewPath);
-                                }
+                                String viewPath = LinkManager.getResourceGroupLink(Integer.parseInt(groupId));
+                                CoreGUI.goToView(viewPath, true);
                             } else {
                                 // the user selected a auto type group node; we have got nothing to show, so cancel the selection of this node
                                 treeGrid.deselectRecord(selectedNode);
@@ -185,12 +200,18 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 event.cancel();
 
                 // don't select the node on a right click, since we're not navigating to it
-                treeGrid.deselectRecord(event.getNode());
+                ResourceGroupEnhancedTreeNode node = (ResourceGroupEnhancedTreeNode) event.getNode();
+                treeGrid.deselectRecord(node);
                 if (null != selectedNodeId) {
-                    treeGrid.selectRecord(treeGrid.getTree().findById(SeleniumUtility.getSafeId(selectedNodeId)));
+                    treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
                 }
 
-                contextMenu.showContextMenu(event.getNode());
+                // only show the context menu for cluster nodes and our top root node
+                ResourceType type = node.getResourceType();
+                ClusterKey key = node.getClusterKey();
+                if (type != null && (key != null || node.getParentID().equals(FAKE_ROOT_ID))) {
+                    contextMenu.showContextMenu(node);
+                }
             }
         });
 
@@ -264,7 +285,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             } else {
                 // TODO not sure when this else would happen, why would a group's cluster key be null?
                 selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().findById(
-                    SeleniumUtility.getSafeId(String.valueOf(this.selectedGroup.getId())));
+                    String.valueOf(this.selectedGroup.getId()));
             }
 
             if (selectedNode != null) {

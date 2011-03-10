@@ -99,6 +99,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     public static String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
     public static String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
     public static String SEE_MORE = MSG.common_msg_see_more();
+    public static String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
 
     private ResourceGroupComposite groupComposite = null;
     private ResourceComposite resourceComposite = null;

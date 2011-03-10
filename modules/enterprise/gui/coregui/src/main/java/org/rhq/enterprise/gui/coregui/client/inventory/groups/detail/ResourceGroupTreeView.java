@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.components.tree.TreeNodeComparator;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -307,7 +309,6 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         loadTree(rootNode, root, rootKey);
 
         Tree tree = new Tree();
-
         tree.setRoot(fakeRoot);
         org.rhq.enterprise.gui.coregui.client.util.TreeUtility.printTree(tree);
 
@@ -417,12 +418,17 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 for (ResourceGroupEnhancedTreeNode subcatChild : subcategoryChildren) {
                     subcatChild.setParentID(subcategoryNode.getID());
                 }
-                subcategoryNode.setChildren(subcategoryChildren
-                    .toArray(new ResourceGroupEnhancedTreeNode[subcategoryChildren.size()]));
+                createSortedArray(subcategoryChildren);
+                subcategoryNode.setChildren(createSortedArray(subcategoryChildren));
             }
 
-            parentNode.setChildren(childNodes.toArray(new ResourceGroupEnhancedTreeNode[childNodes.size()]));
+            parentNode.setChildren(createSortedArray(childNodes));
         }
+    }
+
+    private ResourceGroupEnhancedTreeNode[] createSortedArray(List<ResourceGroupEnhancedTreeNode> list) {
+        Collections.sort(list, new TreeNodeComparator());
+        return list.toArray(new ResourceGroupEnhancedTreeNode[list.size()]);
     }
 
     private ResourceGroupEnhancedTreeNode createClusterGroupNode(ClusterKey parentKey, ResourceType type,
@@ -456,7 +462,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         for (ResourceGroupEnhancedTreeNode memberNode : memberNodes) {
             memberNode.setParentID(autoTypeGroupNodeId);
         }
-        autoTypeGroupNode.setChildren(memberNodes.toArray(new ResourceGroupEnhancedTreeNode[memberNodes.size()]));
+        autoTypeGroupNode.setChildren(createSortedArray(memberNodes));
         return autoTypeGroupNode;
     }
 

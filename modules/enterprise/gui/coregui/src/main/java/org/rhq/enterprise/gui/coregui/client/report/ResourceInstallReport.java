@@ -91,7 +91,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     private void showResourceList(Criteria criteria) {
         hideResourceList();
         resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria);
-        resourceList.setHideSearchBar(true); // we don't want to enable search - the contents of this table are very specific
         addMember(resourceList);
         markForRedraw();
     }

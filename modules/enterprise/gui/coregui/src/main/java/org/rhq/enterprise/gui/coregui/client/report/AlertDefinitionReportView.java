@@ -8,7 +8,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -56,7 +55,6 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid lg = (ListGrid) event.getSource();
                 ListGridRecord selected = lg.getSelectedRecord();
-                SC.say(selected.getAttribute("name")); // TODO deleteme
             }
         });
     }

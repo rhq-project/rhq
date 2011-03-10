@@ -126,27 +126,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         nameField.setWidth("25%");
         setFields(nameField);
 
-        // even though we hide this by default, a user could unhide it, so at least i18n in that case
-        getField(ResourceDataSourceField.CATEGORY.propertyName()).setCellFormatter(new CellFormatter() {
-            @Override
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String catStr = record.getAttribute(ResourceDataSourceField.CATEGORY.propertyName());
-                if (catStr == null) {
-                    return "?";
-                }
-                ResourceCategory cat = ResourceCategory.valueOf(catStr);
-                switch (cat) {
-                case PLATFORM:
-                    return MSG.common_title_platform();
-                case SERVER:
-                    return MSG.common_title_server();
-                case SERVICE:
-                    return MSG.common_title_service();
-                }
-                return "???";
-            }
-        });
-
         getField("cpu").setWidth("25%");
         getField("memory").setWidth("25%");
         getField("swap").setWidth("25%");

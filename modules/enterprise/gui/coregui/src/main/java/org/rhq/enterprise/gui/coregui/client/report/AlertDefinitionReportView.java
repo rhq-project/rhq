@@ -55,6 +55,13 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid lg = (ListGrid) event.getSource();
                 ListGridRecord selected = lg.getSelectedRecord();
+                if (selected != null) {
+                    AlertDefinition alertDef = getDataSource().copyValues(selected);
+                    int resourceId = alertDef.getResource().getId();
+                    int alertDefId = alertDef.getId();
+                    String link = LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId);
+                    CoreGUI.goToView(link);
+                }
             }
         });
     }

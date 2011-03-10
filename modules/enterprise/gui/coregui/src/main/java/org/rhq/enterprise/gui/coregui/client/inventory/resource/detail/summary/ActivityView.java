@@ -50,7 +50,6 @@ import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedCom
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -189,7 +188,7 @@ public class ActivityView extends AbstractActivityView {
         PageControl pageControl = new PageControl(0, 5);
         pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
         GWTServiceLookup.getOperationService().findRecentCompletedOperations(resourceId, pageControl,
-            new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
+            new AsyncCallback<PageList<ResourceOperationLastCompletedComposite>>() {
 
                 @Override
                 public void onFailure(Throwable caught) {
@@ -198,12 +197,12 @@ public class ActivityView extends AbstractActivityView {
                 }
 
                 @Override
-                public void onSuccess(List<DisambiguationReport<ResourceOperationLastCompletedComposite>> result) {
+                public void onSuccess(PageList<ResourceOperationLastCompletedComposite> result) {
                     VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         int rowNum = 0;
-                        for (DisambiguationReport<ResourceOperationLastCompletedComposite> report : result) {
+                        for (ResourceOperationLastCompletedComposite report : result) {
                             // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
                             // may be repeatable.
                             LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
@@ -211,12 +210,11 @@ public class ActivityView extends AbstractActivityView {
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
-                                .getOriginal().getOperationStatus()), report.getOriginal().getOperationStatus()
-                                .getDisplayName());
-                            LinkItem link = newLinkItem(report.getOriginal().getOperationName() + ": ", LinkManager
+                                .getOperationStatus()), report.getOperationStatus().getDisplayName());
+                            LinkItem link = newLinkItem(report.getOperationName() + ": ", LinkManager
                                 .getResourceLink(resourceId)
-                                + "/Operations/History/" + report.getOriginal().getOperationHistoryId());
-                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
+                                + "/Operations/History/" + report.getOperationHistoryId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report
                                 .getOperationStartTime()));
                             row.setItems(iconItem, link, time);
 

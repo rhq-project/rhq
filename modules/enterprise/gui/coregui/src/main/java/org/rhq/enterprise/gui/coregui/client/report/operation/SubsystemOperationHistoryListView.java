@@ -19,8 +19,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.operation;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
@@ -29,10 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.h
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
-
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Ian Springer
@@ -69,16 +70,20 @@ public class SubsystemOperationHistoryListView extends AbstractOperationHistoryL
         List<ListGridField> fields = super.createFields();
 
         ListGridField resourceField = createResourceField();
-        resourceField.setWidth("40%");
+        resourceField.setWidth("20%");
         fields.add(1, resourceField);
+
+        ListGridField ancestryField = createAncestryField();
+        resourceField.setWidth("20%");
+        fields.add(2, ancestryField);
 
         for (ListGridField field : fields) {
             String fieldName = field.getName();
             if (fieldName.equals(AbstractOperationHistoryDataSource.Field.SUBJECT)) {
                 field.setWidth("10%");
             }
-            if (fieldName.equals(AbstractOperationHistoryDataSource.Field.OPERATION_NAME) ||
-                fieldName.equals(AbstractOperationHistoryDataSource.Field.STARTED_TIME)) {
+            if (fieldName.equals(AbstractOperationHistoryDataSource.Field.OPERATION_NAME)
+                || fieldName.equals(AbstractOperationHistoryDataSource.Field.STARTED_TIME)) {
                 field.setWidth("25%");
             }
         }

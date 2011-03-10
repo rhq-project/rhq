@@ -44,7 +44,6 @@ import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -59,13 +58,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements ResourceGWTService {
 
-    private static final long serialVersionUID = 1L;
+    static final long serialVersionUID = 1L;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
-    private static String[] importantFields = { //
+    public static final String[] importantFields = { //
     "serialVersionUID", //
         //                    "ROOT                            \n" +
         //                    "ROOT_ID                         \n" +
@@ -110,12 +109,6 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
     private static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
 
-    private static final IntExtractor<ProblemResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ProblemResourceComposite>() {
-        public int extract(ProblemResourceComposite object) {
-            return object.getResourceId();
-        }
-    };
-
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -142,7 +135,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
                 criteria);
-            if (result.size() > 1) {
+            if (result.size() > 0) {
                 List<Resource> resources = new ArrayList<Resource>(result.size());
                 for (ResourceComposite composite : result) {
                     resources.add(composite.getResource());

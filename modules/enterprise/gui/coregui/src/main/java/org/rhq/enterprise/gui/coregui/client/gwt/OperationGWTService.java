@@ -31,7 +31,6 @@ import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -40,22 +39,18 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface OperationGWTService extends RemoteService {
 
-    PageList<DisambiguationReport<ResourceOperationHistory>> findResourceOperationHistoriesByCriteria(
+    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
         ResourceOperationHistoryCriteria criteria) throws RuntimeException;
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
         throws RuntimeException;
 
-    List<DisambiguationReport<GroupOperationHistory>> findGroupOperationHistoriesByCriteriaDisambiguated(
-        GroupOperationHistoryCriteria criteria) throws RuntimeException;
-
     void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int resourceId,
+    PageList<ResourceOperationLastCompletedComposite> findRecentCompletedOperations(int resourceId,
         PageControl pageControl) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize)
-        throws RuntimeException;
+    PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException;
 
     void invokeResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout) throws RuntimeException;

@@ -291,7 +291,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                         .view_adminConfig_systemSettings()));
                 label.setWidth100();
                 label.setHeight(20);
-                label.setPadding(5);
+                label.setPadding(10);
                 updateTab(this.ldapGroupsTab, label);
             }
         }
@@ -303,10 +303,12 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
 
-        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, MSG.common_title_name());
+        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME);
+        nameItem.setShowTitle(true);
         items.add(nameItem);
 
-        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
+        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION);
+        descriptionItem.setShowTitle(true);
         descriptionItem.setColSpan(form.getNumCols());
         items.add(descriptionItem);
 

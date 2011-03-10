@@ -32,7 +32,6 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -156,19 +155,6 @@ public interface ResourceFactoryManagerLocal {
      */
     PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
         PageControl pageControl);
-
-    /**
-     * Creates a new resource in the inventory.
-     * This should NOT be made accessible to remote clients, do not call this unless you know what you are doing
-     *
-     * @param  parentResourceId parent of the new resource
-     * @param  resourceTypeId   type of resource being created
-     * @param  resourceName     name of the new resource
-     * @param  resourceKey      resource key of the new resource
-     *
-     * @return resource object after it's been persisted
-     */
-    Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName, String resourceKey);
 
     /**
      * Persists a record in the resource history to indicate a request has been made to create a configuration-backed

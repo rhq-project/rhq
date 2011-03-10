@@ -1132,7 +1132,7 @@
            It will ensure that sources and javadoc jars are built and published
            for each source module. -->
       <profile>
-         <id>release</id>
+         <id>publish</id>
 
          <build>
             <plugins>

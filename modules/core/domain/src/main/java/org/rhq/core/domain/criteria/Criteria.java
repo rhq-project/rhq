@@ -46,6 +46,21 @@ public abstract class Criteria implements Serializable {
     }
 
     /**
+     * This is the type of a filter value when the override for that filter does not
+     * define any query parameter. ON means the filter is enabled and will take effect,
+     * OFF means the filter will not be used in the query.
+     * Example, from AlertDefinitionCriteria:
+     *    private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
+     *    ...
+     *    filterOverrides.put("resourceTypeOnly", "resourceType IS NOT NULL"); // notice no ? parameter
+     * 
+     * Note: Typically a null value is analogous to OFF.
+     */
+    public enum NonBindingOverrideFilter {
+        ON, OFF;
+    }
+
+    /**
      * Apply a restriction to reduce the cost of the {@link Criteria}-based query generation and execution routines.
      */
     public enum Restriction {

@@ -122,6 +122,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private String[] excludedFieldNames;
     private boolean autoFetchData;
     private boolean flexRowDisplay = true;
+    private boolean hideSearchBar = false;
+    private String initialSearchBarSearchText = null;
 
     private DS dataSource;
 
@@ -177,6 +179,28 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.autoFetchData = autoFetchData;
     }
 
+    /**
+     * If this returns true, then even if a {@link #getSearchSubsystem() search subsystem}
+     * is defined by the table class, the search bar will not be shown.
+     * 
+     * @return true if the search bar is to be hidden (default is false)
+     */
+    public boolean getHideSearchBar() {
+        return this.hideSearchBar;
+    }
+
+    public void setHideSearchBar(boolean flag) {
+        this.hideSearchBar = flag;
+    }
+
+    public String getInitialSearchBarSearchText() {
+        return this.initialSearchBarSearchText;
+    }
+
+    public void setInitialSearchBarSearchText(String text) {
+        this.initialSearchBarSearchText = text;
+    }
+
     public void setFlexRowDisplay(boolean flexRowDisplay) {
         this.flexRowDisplay = flexRowDisplay;
     }
@@ -190,12 +214,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         /*
          * table filters and search bar are currently mutually exclusive
          */
+
         if (getSearchSubsystem() == null) {
             configureTableFilters();
         } else {
-            final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
-                getSearchSubsystem());
-            setFilterFormItems(searchFilter);
+            if (!this.hideSearchBar) {
+                final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
+                    getSearchSubsystem(), getInitialSearchBarSearchText());
+                setFilterFormItems(searchFilter);
+            }
         }
 
         listGrid = new LocatableListGrid(getLocatorId());
@@ -431,7 +458,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    listGrid.invalidateCache();
+                    refresh();
                 }
             });
             footer.addMember(refreshButton);
@@ -518,18 +545,57 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
 
-    public void refresh(Criteria criteria) {
+    /**
+     * Refreshes the list grid with the explicit criteria.
+     * Usually you do not want to call this - to maintain proper filtering
+     * and usage of the initial criteria, call {@link #refresh()} instead.
+     *  
+     * @param criteria the criteria to use to refresh the table with
+     */
+    protected void refresh(Criteria criteria) {
         if (null != this.listGrid) {
-            this.listGrid.invalidateCache();
             this.listGrid.setCriteria(criteria);
+            this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
     }
 
+    /**
+     * Refreshes the list grid so it reloads. This attempts to maintain
+     * the original criteria along with any current filter settings.
+     */
     public void refresh() {
         if (null != this.listGrid) {
-            this.listGrid.invalidateCache();
-            this.listGrid.markForRedraw();
+            // if this table has a filter form (table filters OR search bar)
+            // we need to refresh it as per the filtering.
+            if (this.filterForm != null && this.filterForm.hasContent()) {
+                Criteria filterFormCriteria = this.filterForm.getValuesAsCriteria();
+                if (this.criteria == null) {
+                    // there was no initial criteria, filter based on the filter form data only
+                    refresh(filterFormCriteria);
+                } else {
+                    // there is both initial criteria and filters. We need criteria that combines both.
+                    Criteria fullCriteria = new Criteria();
+                    String[] criteriaAttribs = this.criteria.getAttributes(); // the initial criteria attributes
+                    for (String attribName : criteriaAttribs) {
+                        Object attribValue = this.criteria.getAttributeAsObject(attribName);
+                        fullCriteria.setAttribute(attribName, attribValue);
+                    }
+                    if (filterFormCriteria != null) {
+                        criteriaAttribs = filterFormCriteria.getAttributes(); // the filter form criteria attributes (like the search bar)
+                        for (String attribName : criteriaAttribs) {
+                            Object attribValue = filterFormCriteria.getAttributeAsObject(attribName);
+                            fullCriteria.setAttribute(attribName, attribValue);
+                        }
+                    }
+                    refresh(fullCriteria);
+                }
+            } else {
+                // If there are no filters, just do a default refresh by simply invalidating the cache.
+                // This should reuse the original initial criteria.
+                this.listGrid.invalidateCache();
+                this.listGrid.markForRedraw();
+            }
         }
     }
 
@@ -828,6 +894,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     String name = searchBarItem.getName();
                     searchBarItem.setName(name + "_hidden");
                     hiddenItem = new HiddenItem(name);
+                    hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
                 }
             }
 
@@ -842,7 +909,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
 
         private void fetchFilteredTableData() {
-            table.refresh(getValuesAsCriteria());
+            table.refresh();
         }
 
         public void onKeyPress(KeyPressEvent event) {

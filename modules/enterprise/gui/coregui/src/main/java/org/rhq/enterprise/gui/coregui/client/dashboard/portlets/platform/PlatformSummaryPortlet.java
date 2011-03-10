@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -114,21 +115,48 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
     private void buildUI() {
 
-        ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 250);
+        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
+            .common_title_name());
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
+                    + "</a>";
             }
         });
+        nameField.setWidth("25%");
         setFields(nameField);
 
-        getField("icon").setWidth(25);
+        // even though we hide this by default, a user could unhide it, so at least i18n in that case
+        getField(ResourceDataSourceField.CATEGORY.propertyName()).setCellFormatter(new CellFormatter() {
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String catStr = record.getAttribute(ResourceDataSourceField.CATEGORY.propertyName());
+                if (catStr == null) {
+                    return "?";
+                }
+                ResourceCategory cat = ResourceCategory.valueOf(catStr);
+                switch (cat) {
+                case PLATFORM:
+                    return MSG.common_title_platform();
+                case SERVER:
+                    return MSG.common_title_server();
+                case SERVICE:
+                    return MSG.common_title_service();
+                }
+                return "???";
+            }
+        });
+
+        getField("cpu").setWidth("25%");
+        getField("memory").setWidth("25%");
+        getField("swap").setWidth("25%");
 
         hideField("id");
-        hideField("description");
-        hideField("pluginName");
-        hideField("category");
-        hideField("currentAvailability");
+        hideField(ResourceDataSourceField.TYPE.propertyName()); // we could show this, do we want to indicate the kind of platform?
+        hideField(ResourceDataSourceField.DESCRIPTION.propertyName()); // we could show this, but it makes the table wider
+        hideField(ResourceDataSourceField.PLUGIN.propertyName()); // its always the platform plugin, no need to show this
+        hideField(ResourceDataSourceField.CATEGORY.propertyName()); // we only ever show platforms, no need to show this
+        hideField(ResourceDataSourceField.AVAILABILITY.propertyName()); // the icon badging will indicate availability
 
         this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
@@ -141,6 +169,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     // this can happen if the agent is down, don't crash out of the entire portlet
                     record.setAttribute("cpu", MSG.common_val_na());
                     record.setAttribute("memory", MSG.common_val_na());
+                    record.setAttribute("swap", MSG.common_val_na());
 
                     setSortField(1);
                     refreshFields();
@@ -148,21 +177,11 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                 }
 
                 public void onSuccess(Set<MeasurementData> result) {
-
                     for (MeasurementData data : result) {
                         if (data instanceof MeasurementDataNumeric) {
                             record.setAttribute(data.getName(), ((MeasurementDataNumeric) data).getValue());
                         }
                     }
-
-                    /*double idle = record.getAttributeAsDouble(CPUMetric.Idle.property);
-                    record.setAttribute("cpu", 1 - idle);
-
-                    double totalMem = record.getAttributeAsDouble(MemoryMetric.Total.property);
-                    double usedMem = record.getAttributeAsDouble(MemoryMetric.Used.property);
-                    double percent = usedMem / totalMem;
-                    record.setAttribute("memory", percent);
-                    */
 
                     setSortField(1);
                     refreshFields();
@@ -276,7 +295,33 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
                     return bar;
                 }
+            } else if (fieldName.equals("swap")) {
+                if (listGridRecord.getAttribute(SwapMetric.Total.property) != null) {
+                    HLayout bar = new HLayout();
+                    bar.setHeight(18);
+                    bar.setWidth100();
 
+                    double total = listGridRecord.getAttributeAsDouble(SwapMetric.Total.property);
+                    double value = listGridRecord.getAttributeAsDouble(SwapMetric.Used.property);
+                    double percent = value / total;
+
+                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
+                        MeasurementUnits.PERCENTAGE, true));
+                    text.setAutoWidth();
+                    bar.addMember(text);
+
+                    Img first = new Img("availBar/up.png");
+                    first.setHeight(18);
+                    first.setWidth((percent * 100) + "%");
+                    bar.addMember(first);
+
+                    Img second = new Img("availBar/unknown.png");
+                    second.setHeight(18);
+                    second.setWidth((100 - (percent * 100)) + "%");
+                    bar.addMember(second);
+
+                    return bar;
+                }
             }
             return null;
 

@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -42,6 +43,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -99,7 +101,38 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
-        idField.setWidth(10);
+        idField.setWidth(50);
+
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName());
+        categoryField.setTitle("&nbsp;");
+        categoryField.setWidth(25);
+        categoryField.setAlign(Alignment.CENTER);
+        categoryField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String categoryName = (String) value;
+                GroupCategory category = GroupCategory.valueOf(categoryName);
+                String icon = ImageManager.getGroupIcon(category);
+                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+            }
+        });
+        categoryField.setShowHover(true);
+        categoryField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String categoryName = record.getAttribute(CATEGORY.propertyName());
+                GroupCategory category = GroupCategory.valueOf(categoryName);
+                String displayName = null;
+                switch (category) {
+                case COMPATIBLE:
+                    displayName = MSG.view_group_summary_compatible();
+                    break;
+                case MIXED:
+                    displayName = MSG.view_group_summary_mixed();
+                    break;
+                }
+                return displayName;
+            }
+        });
 
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
         nameField.setWidth("40%");
@@ -121,25 +154,6 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
         pluginNameField.setWidth("10%");
 
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryField.setWidth(70);
-        categoryField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String categoryName = (String) value;
-                GroupCategory category = GroupCategory.valueOf(categoryName);
-                String displayName = "";
-                switch (category) {
-                case COMPATIBLE:
-                    displayName = MSG.view_group_summary_compatible();
-                    break;
-                case MIXED:
-                    displayName = MSG.view_group_summary_mixed();
-                    break;
-                }
-                return displayName;
-            }
-        });
-
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
             .view_inventory_groups_children(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
         availabilityChildrenField.setWrap(false);
@@ -150,7 +164,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+        setListGridFields(idField, categoryField, nameField, descriptionField, typeNameField, pluginNameField,
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {

@@ -457,6 +457,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 public void onClick(ClickEvent clickEvent) {
                     reset();
                     resetButton.disable();
+                    saveButton.disable();
                 }
             });
             hLayout.addMember(resetButton);

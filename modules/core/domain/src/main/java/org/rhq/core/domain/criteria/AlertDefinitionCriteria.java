@@ -54,12 +54,16 @@ public class AlertDefinitionCriteria extends Criteria {
     private List<Integer> filterResourceGroupIds; // requires overrides
     private Boolean filterEnabled;
     private Boolean filterDeleted = false; // find enabled definitions by default
+    private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
+    private NonBindingOverrideFilter filterResourceTypeOnly; // requires overrides - finds only alert templates
     private List<String> filterNotificationSenderNames;
     
     private boolean fetchAlerts;
     private boolean fetchGroupAlertDefinition;
     private boolean fetchConditions;
     private boolean fetchAlertNotifications;
+    private boolean fetchResource;
+    private boolean fetchResourceType;
 
     private PageOrdering sortName;
     private PageOrdering sortPriority;
@@ -69,7 +73,9 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
-        filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");        
+        filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
+        filterOverrides.put("resourceOnly", "resource IS NOT NULL");
+        filterOverrides.put("resourceTypeOnly", "resourceType IS NOT NULL");
         filterOverrides.put("notificationSenderNames", "id IN (" +
                                 "SELECT notif.alertDefinition.id FROM AlertNotification notif " +
                                 "WHERE notif.senderName IN ( ? ))");
@@ -129,6 +135,15 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterDeleted = filterDeleted;
     }
 
+    public void addFilterResourceOnly(boolean filterResourceOnly) {
+        this.filterResourceOnly = (filterResourceOnly ? NonBindingOverrideFilter.ON : NonBindingOverrideFilter.OFF);
+    }
+
+    public void addFilterResourceTypeOnly(boolean filterResourceTypeOnly) {
+        this.filterResourceTypeOnly = (filterResourceTypeOnly ? NonBindingOverrideFilter.ON
+            : NonBindingOverrideFilter.OFF);
+    }
+
     public void addFilterNotificationNames(String... notificationNames) {
         fetchAlertNotifications(true);
         this.filterNotificationSenderNames = Arrays.asList(notificationNames);
@@ -148,6 +163,14 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public void fetchAlertNotifications(boolean fetchAlertNotifications) {
         this.fetchAlertNotifications = fetchAlertNotifications;
+    }
+
+    public void fetchResource(boolean fetchResource) {
+        this.fetchResource = fetchResource;
+    }
+
+    public void fetchResourceType(boolean fetchResourceType) {
+        this.fetchResourceType = fetchResourceType;
     }
 
     public void addSortName(PageOrdering sortName) {

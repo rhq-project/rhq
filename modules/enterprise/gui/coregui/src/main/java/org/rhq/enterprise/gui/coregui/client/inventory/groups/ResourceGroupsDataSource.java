@@ -77,12 +77,10 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         fields.add(idDataField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
-        nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
-        descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());

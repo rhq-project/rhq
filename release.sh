@@ -414,12 +414,12 @@ fi
  
 # Run a test build before tagging. This will publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 
-echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
+#echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
 # NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
-mvn install $MAVEN_ARGS -Ddbreset
-[ "$?" -ne 0 ] && abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Test build succeeded!"
+#mvn install $MAVEN_ARGS -Ddbreset
+#[ "$?" -ne 0 ] && abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
+#echo
+#echo "Test build succeeded!"
 
 
 # Clean up the snapshot jars produced by the test build from module target dirs.
@@ -432,9 +432,9 @@ mvn clean $MAVEN_ARGS
 # If this is a production build perform a dry run of tagging the release. Skip this for test builds to reduce the
 # build time 
 
-if [ "$MODE" = "production" ]; then
+if [ "$MODE" = "todo" ]; then
     echo "Doing a dry run of tagging the release..."
-    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
+    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
     [ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
     mvn release:clean $MAVEN_ARGS
     [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
@@ -446,7 +446,7 @@ fi
 # If the dry run was skipped or succeeded, tag it for real.
 
 echo "Tagging the release..."
-mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME
+mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME
 [ "$?" -ne 0 ] && abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Tagging succeeded!"

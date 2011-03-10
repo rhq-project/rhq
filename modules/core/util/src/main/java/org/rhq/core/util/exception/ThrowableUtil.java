@@ -33,6 +33,11 @@ import java.util.ArrayList;
  * @author John Mazzitelli
  */
 public class ThrowableUtil {
+
+    private static final String EXCEPTION_WAS_NULL = ">> exception was null <<";
+    private static final String DOTS = " ... ";
+    private static final String ARROW = " -> ";
+
     /**
      * Prevent instantiation.
      */
@@ -58,16 +63,97 @@ public class ThrowableUtil {
             ret_message.append(msgs[0]);
 
             for (int i = 1; i < msgs.length; i++) {
-                ret_message.append(" -> ");
+                ret_message.append(ARROW);
                 ret_message.append(msgs[i]);
             }
         } else {
-            ret_message.append(">> exception was null <<");
+            ret_message.append(EXCEPTION_WAS_NULL);
         }
 
         return ret_message.toString();
     }
 
+    /**
+     * Generates a string with all exception messages similarly to {@link #getAllMessages(Throwable, boolean)}
+     * but limits the length of the string to the provided limit.
+     * The messages are left out of the resulting string in the following manner:
+     * <ul>
+     * <li>The last message (i.e. the ultimate cause) is *always* in the output, regardless the maxSize
+     * <li>The first throwable is output, then the second, etc. up until the point where appending the
+     * next message *AND* the last message would make the output longer than maxSize.
+     * <li>An ellipsis is appended if the ultimate cause isn't the direct cause of the 
+     * throwable which was last output according to the above algo.
+     * </ul>
+     * @param t
+     * @param includeExceptionNames
+     * @param maxSize the maximum size of the message. If &lt; 0, the output is not limited.
+     * @return
+     */
+    public static final String getAllMessages(Throwable t, boolean includeExceptionNames, int maxSize) {
+        if (maxSize < 0) {
+            return getAllMessages(t, includeExceptionNames);
+        }
+        
+        if (t == null) {
+            return EXCEPTION_WAS_NULL;
+        }
+
+        int arrowLength = ARROW.length();
+        int dotsLength = DOTS.length();
+        
+        StringBuilder bld = new StringBuilder();
+        
+        String[] msgs = getAllMessagesArray(t, includeExceptionNames);
+        
+        //reduce the max size by the length of the last message
+        int maxDottedSize = maxSize - msgs[msgs.length - 1].length() - dotsLength;
+        // the dots and arrow have different lengths so we have to specialize for
+        //the case where the output actually fits in the maxSize
+        int maxFullSize = maxDottedSize + dotsLength - arrowLength; 
+        
+        if (msgs.length == 1 || maxDottedSize < 0) {
+            return msgs[msgs.length - 1];
+        }
+        
+        int maxIdx = msgs.length - 1;
+        int lastIdx = maxIdx - 1;
+        int curLen = msgs[0].length();
+        
+        if (curLen <= maxDottedSize) {
+            bld.append(msgs[0]);
+        }
+        
+        int curIdx = 1;
+        for(; curIdx < maxIdx; ++curIdx) {
+            int lenIncr = arrowLength + msgs[curIdx].length();
+            
+            if (curIdx == lastIdx) {
+                if (curLen + lenIncr > maxFullSize) {
+                    break;
+                }
+            } else {
+                if (curLen + lenIncr > maxDottedSize) {
+                    break;
+                }
+            }
+            
+            bld.append(ARROW);
+            bld.append(msgs[curIdx]);
+            
+            curLen += lenIncr;
+        }
+        
+        if (curIdx < msgs.length - 1) {
+            bld.append(DOTS);
+        } else {
+            bld.append(ARROW);
+        }
+        
+        bld.append(msgs[msgs.length - 1]);
+        
+        return bld.toString();
+    }
+    
     /**
      * Same as {@link #getAllMessages(Throwable, boolean)} with the "include exception name" parameter set to <code>
      * true</code>.
@@ -94,6 +180,7 @@ public class ThrowableUtil {
         ArrayList<String> list = new ArrayList<String>();
 
         if (t != null) {
+            
             String msg;
 
             if (includeExceptionName) {
@@ -157,7 +244,7 @@ public class ThrowableUtil {
             ret_message.append(msgs[0]);
 
             for (int i = 1; i < msgs.length; i++) {
-                ret_message.append(" -> ");
+                ret_message.append(ARROW);
                 ret_message.append(msgs[i]);
             }
         } else {

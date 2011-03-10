@@ -36,30 +36,47 @@ public class ProblemResourceComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    //private Resource resource;
     private int resourceId;
+    private int resourceTypeId;
     private String resourceName;
-    private AvailabilityType availabilityType;
+    private String ancestry;
     private long numAlerts;
+    private AvailabilityType availabilityType;
 
     /** Private no args contstructor for JAXB serialization. */
     @SuppressWarnings("unused")
     private ProblemResourceComposite() {
     }
 
-    public ProblemResourceComposite(int resourceId, String resourceName, AvailabilityType availabilityType,
-        long numAlerts) {
+    public ProblemResourceComposite(int resourceId, int resourceTypeId, String resourceName, String ancestry,
+        long numAlerts, AvailabilityType availabilityType) {
         this.resourceId = resourceId;
+        this.resourceTypeId = resourceTypeId;
         this.resourceName = resourceName;
-        this.availabilityType = availabilityType;
+        this.ancestry = ancestry;
         this.numAlerts = numAlerts;
+        this.availabilityType = availabilityType; // pull explicitly because lazy-loaded by default
     }
 
     public int getResourceId() {
         return resourceId;
     }
 
+    public int getResourceTypeId() {
+        return resourceTypeId;
+    }
+
     public String getResourceName() {
         return resourceName;
+    }
+
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    public long getNumAlerts() {
+        return numAlerts;
     }
 
     /**
@@ -70,10 +87,6 @@ public class ProblemResourceComposite implements Serializable {
      */
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
-    }
-
-    public long getNumAlerts() {
-        return numAlerts;
     }
 
     @Override

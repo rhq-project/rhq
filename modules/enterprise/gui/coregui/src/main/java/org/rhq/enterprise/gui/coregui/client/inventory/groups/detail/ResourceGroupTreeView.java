@@ -211,7 +211,6 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         if (groupId == this.rootGroupId) {
             // Still looking at the same compat-recursive tree
 
-            // TODO reselect tree to selected node
             TreeNode selectedNode;
             if (this.selectedGroup.getClusterKey() != null) {
                 //selectedNode = treeGrid.getTree().findById(this.selectedGroup.getClusterKey());
@@ -219,11 +218,14 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             } else {
                 selectedNode = treeGrid.getTree().findById(String.valueOf(this.selectedGroup.getId()));
             }
-            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-            treeGrid.getTree().openFolders(parents);
-            treeGrid.getTree().openFolder(selectedNode);
-            treeGrid.selectRecord(selectedNode);
 
+            // TODO reselect tree to selected node
+            if (selectedNode != null) {
+                TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                treeGrid.getTree().openFolders(parents);
+                treeGrid.getTree().openFolder(selectedNode);
+                treeGrid.selectRecord(selectedNode);
+            }
         } else {
             this.rootGroupId = groupId;
             GWTServiceLookup.getClusterService().getClusterTree(groupId, new AsyncCallback<ClusterFlyweight>() {

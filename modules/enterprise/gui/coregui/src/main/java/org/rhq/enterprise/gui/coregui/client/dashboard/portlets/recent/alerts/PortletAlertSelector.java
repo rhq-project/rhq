@@ -50,7 +50,6 @@ public class PortletAlertSelector extends ResourceSelector {
         //populate fields for grid.
         ListGridField nameField = new ListGridField("name", MSG.common_title_name());
         ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 50);
-        iconField.setImageURLPrefix("types/");
         iconField.setType(ListGridFieldType.ICON);
         assignedGrid.setFields(iconField, nameField);
 

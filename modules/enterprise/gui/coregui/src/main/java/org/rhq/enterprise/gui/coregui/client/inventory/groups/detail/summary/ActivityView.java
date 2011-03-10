@@ -50,7 +50,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -195,8 +194,8 @@ public class ActivityView extends AbstractActivityView {
         criteria.setPageControl(pageControl);
         criteria.addSortStatus(PageOrdering.DESC);
 
-        GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteriaDisambiguated(criteria,
-            new AsyncCallback<List<DisambiguationReport<GroupOperationHistory>>>() {
+        GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<GroupOperationHistory>>() {
 
                 @Override
                 public void onFailure(Throwable caught) {
@@ -204,12 +203,12 @@ public class ActivityView extends AbstractActivityView {
                 }
 
                 @Override
-                public void onSuccess(List<DisambiguationReport<GroupOperationHistory>> result) {
+                public void onSuccess(PageList<GroupOperationHistory> result) {
                     VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         int rowNum = 0;
-                        for (DisambiguationReport<GroupOperationHistory> report : result) {
+                        for (GroupOperationHistory report : result) {
                             // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
                             // may be repeatable.
                             LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
@@ -217,11 +216,10 @@ public class ActivityView extends AbstractActivityView {
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
-                                .getOriginal().getStatus()), report.getOriginal().getStatus().getDisplayName());
-                            LinkItem link = newLinkItem(report.getOriginal().getOperationDefinition().getDisplayName()
-                                + ": ", ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/"
-                                + report.getOriginal().getId());
-                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
+                                .getStatus()), report.getStatus().getDisplayName());
+                            LinkItem link = newLinkItem(report.getOperationDefinition().getDisplayName() + ": ",
+                                ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/" + report.getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report
                                 .getStartedTime()));
                             row.setItems(iconItem, link, time);
 

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -61,9 +62,13 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public static final String FILTER_GROUP_ID = "groupId";
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    // a decoded resource ancestry for display, with   
+    public static final String ATTR_ANCESTRY_RESOURCES = ANCESTRY.name() + "Resources";
+    public static final String ATTR_ANCESTRY_TYPES = ANCESTRY.name() + "Types";
 
     private static ResourceDatasource INSTANCE;
+
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public static ResourceDatasource getInstance() {
         if (INSTANCE == null) {
@@ -82,18 +87,26 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
+        return addResourceDatasourceFields(fields);
+    }
+
+    public static List<DataSourceField> addResourceDatasourceFields(List<DataSourceField> fields) {
         DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceImageField iconField = new DataSourceImageField("icon", "");
-        iconField.setImageURLPrefix("types/");
+        DataSourceImageField iconField = new DataSourceImageField("icon", " ");
+        iconField.setWidth(25);
         fields.add(iconField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
+
+        DataSourceTextField ancestryDataField = new DataSourceTextField(ANCESTRY.propertyName(), ANCESTRY.title(), 200);
+        ancestryDataField.setCanEdit(false);
+        fields.add(ancestryDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
@@ -107,6 +120,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         fields.add(pluginNameDataField);
 
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
+        categoryDataField.setHidden(true); // our icon will show this, no need to make this visible by default
         fields.add(categoryDataField);
 
         DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
@@ -135,24 +149,45 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
         HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
         for (Resource resource : result) {
             ResourceType type = resource.getResourceType();
             if (type != null) {
                 typesSet.add(type.getId());
             }
+            ancestries.add(resource.getAncestry());
         }
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        // NOTE: this may be too labor intensive in general, but since this is a singleton I couldn't
+        //       make it easily optional.
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
         ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
+                    // replace type id with type name
                     Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
                     ResourceType type = types.get(typeId);
                     if (type != null) {
                         record.setAttribute(TYPE.propertyName(), type.getName());
                     }
+
+                    // decode ancestry
+                    String ancestry = record.getAttributeAsString(ANCESTRY.propertyName());
+                    if (null == ancestry) {
+                        continue;
+                    }
+                    int resourceId = record.getAttributeAsInt("id");
+                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
+                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
+                    // decoded strings as different attributes. 
+                    record.setAttribute(ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
+                    record.setAttribute(ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -177,6 +212,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
+        criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;
@@ -200,12 +236,13 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute("id", from.getId());
         record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(ANCESTRY.propertyName(), from.getAncestry());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
-        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
-            + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
+        record.setAttribute("icon", ImageManager.getResourceIcon(from.getResourceType().getCategory(), from
+            .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
             .getCurrentAvailability().getAvailabilityType()));
 

@@ -32,9 +32,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -149,6 +152,17 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         treeGrid.setLeaveScrollbarGap(false);
         treeGrid.setOpenerImage("resources/dir.png");
         treeGrid.setOpenerIconSize(16);
+        treeGrid.setCanHover(true);
+        treeGrid.setShowHover(true);
+        treeGrid.setHoverWidth(250);
+        treeGrid.setHoverWrap(true);
+        treeGrid.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String tooltip = record.getAttribute(ResourceGroupEnhancedTreeNode.TOOLTIP_KEY);
+                return tooltip;
+            }
+        });
 
         addMember(this.treeGrid);
 
@@ -506,6 +520,24 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         node.setClusterKey(key);
         node.setResourceType(type);
         node.setIsFolder(!child.getChildren().isEmpty());
+
+        int memberCount = child.getMembers();
+        int clusterSize = child.getClusterSize();
+
+        if (memberCount < clusterSize) {
+            // it appears one or more individual group members doesn't have a resource with the given cluster key
+            // label the tree node so the user knows this cluster node is not representative of the entire group membership
+            double percentage = (double) memberCount / (double) clusterSize;
+            String percentageStr = NumberFormat.getFormat("0%").format(percentage);
+            String title = child.getName() + " <span style=\"color: red; font-style: italic\">(" + percentageStr
+                + ")</span>";
+            node.setTitle(title);
+
+            // "1 out of 2 group members have "foo" child resources"
+            node.setTooltip(MSG.group_tree_partialClusterTooltip(String.valueOf(memberCount), String
+                .valueOf(clusterSize), child.getName()));
+        }
+
         return node;
     }
 
@@ -561,11 +593,20 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     }
 
     class ResourceGroupEnhancedTreeNode extends EnhancedTreeNode {
+        private static final String TOOLTIP_KEY = "tooltip";
         private static final String CLUSTER_KEY = "key";
         private static final String RESOURCE_TYPE = "resourceType";
 
         public ResourceGroupEnhancedTreeNode(String name) {
             super(name);
+        }
+
+        public String getTooltip() {
+            return getAttribute(TOOLTIP_KEY);
+        }
+
+        public void setTooltip(String tooltip) {
+            setAttribute(TOOLTIP_KEY, tooltip);
         }
 
         public ClusterKey getClusterKey() {

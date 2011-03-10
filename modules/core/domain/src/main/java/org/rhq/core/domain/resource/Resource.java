@@ -1259,6 +1259,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @PrePersist
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
+        updateAncestryForResource();
     }
 
     @PostPersist

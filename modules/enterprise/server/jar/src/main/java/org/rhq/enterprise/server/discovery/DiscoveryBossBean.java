@@ -884,8 +884,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         resource.setItime(System.currentTimeMillis());
         resource.setModifiedBy(subjectManager.getOverlord().getName());
-        // This can be removed I think because the ancestry should be built under the covers
-        //resource.buildLineage();
         for (Resource childResource : resource.getChildResources()) {
             initAutoDiscoveredResource(childResource, resource);
         }

@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -554,7 +556,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      */
     protected void refresh(Criteria criteria) {
         if (null != this.listGrid) {
-            this.listGrid.setCriteria(criteria);
+            if (criteria != null) {
+                this.listGrid.setCriteria(criteria);
+            }
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
@@ -576,17 +580,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 } else {
                     // there is both initial criteria and filters. We need criteria that combines both.
                     Criteria fullCriteria = new Criteria();
-                    String[] criteriaAttribs = this.criteria.getAttributes(); // the initial criteria attributes
-                    for (String attribName : criteriaAttribs) {
-                        Object attribValue = this.criteria.getAttributeAsObject(attribName);
-                        fullCriteria.setAttribute(attribName, attribValue);
-                    }
+                    addCriteria(fullCriteria, this.criteria);
                     if (filterFormCriteria != null) {
-                        criteriaAttribs = filterFormCriteria.getAttributes(); // the filter form criteria attributes (like the search bar)
-                        for (String attribName : criteriaAttribs) {
-                            Object attribValue = filterFormCriteria.getAttributeAsObject(attribName);
-                            fullCriteria.setAttribute(attribName, attribValue);
-                        }
+                        addCriteria(fullCriteria, filterFormCriteria);
                     }
                     refresh(fullCriteria);
                 }
@@ -595,6 +591,41 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 // This should reuse the original initial criteria.
                 this.listGrid.invalidateCache();
                 this.listGrid.markForRedraw();
+            }
+        }
+    }
+
+    // Smartgwt 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
+    // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
+    // supports adding array types and Objects.
+    // This method takes the src criteria and adds it to the dest criteria.
+    @SuppressWarnings("unchecked")
+    private static void addCriteria(Criteria dest, Criteria src) {
+        Map otherMap = src.getValues();
+        Set otherKeys = otherMap.keySet();
+        for (Iterator i = otherKeys.iterator(); i.hasNext();) {
+            String field = (String) i.next();
+            Object value = otherMap.get(field);
+
+            if (value instanceof Integer) {
+                dest.addCriteria(field, (Integer) value);
+            } else if (value instanceof Float) {
+                dest.addCriteria(field, (Float) value);
+            } else if (value instanceof String) {
+                dest.addCriteria(field, (String) value);
+            } else if (value instanceof Date) {
+                dest.addCriteria(field, (Date) value);
+            } else if (value instanceof Boolean) {
+                dest.addCriteria(field, (Boolean) value);
+            } else if (value instanceof Integer[]) {
+                dest.addCriteria(field, (Integer[]) value);
+            } else if (value instanceof Double[]) {
+                dest.addCriteria(field, (Double[]) value);
+            } else if (value instanceof String[]) {
+                dest.addCriteria(field, (String[]) value);
+            } else {
+                // this is the magic piece - we need to get attrib as an object and set that value
+                dest.setAttribute(field, src.getAttributeAsObject(field));
             }
         }
     }

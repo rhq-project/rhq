@@ -412,4 +412,13 @@ public class ImageManager {
     public static String getMonitorLargeIcon() {
         return "subsystems/monitor/Monitor_24.png";
     }
+
+    public static String getMonitorFailedIcon() {
+        return "subsystems/monitor/Monitor_failed_16.png";
+    }
+
+    public static String getMonitorFailedLargeIcon() {
+        return "subsystems/monitor/Monitor_failed_24.png";
+    }
+
 }

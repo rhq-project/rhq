@@ -29,12 +29,15 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -46,6 +49,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
@@ -453,6 +457,26 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             form.setItems(link);
             column.addMember(form);
         }
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+     *
+     * @param resultCountSelector
+     * @param portletConfig
+     * returns populated configuration object.
+     */
+    public static Configuration saveResultCounterSettings(final SelectItem resultCountSelector,
+        final Configuration portletConfig) {
+        String selectedValue;
+        if ((resultCountSelector != null) && (portletConfig != null)) {
+            selectedValue = resultCountSelector.getValue().toString();
+            if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
+                portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
+            } else {
+                portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
+            }
+        }
+        return portletConfig;
     }
 
     protected boolean displayGroupConfigurationUpdates(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {

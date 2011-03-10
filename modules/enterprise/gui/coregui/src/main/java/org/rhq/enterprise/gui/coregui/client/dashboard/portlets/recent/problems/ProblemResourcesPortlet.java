@@ -70,7 +70,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  *
  * @author Simeon Pinder
  */
-public class ProblemResourcesPortlet extends Table implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> implements CustomSettingsPortlet,
+    AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ProblemResources";
@@ -93,7 +94,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
     private Timer refreshTimer;
 
-    @SuppressWarnings("unchecked")
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId, NAME, true);
 
@@ -335,7 +335,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     }
 
     private String[] timeRange = null;
-    private Timer reloader;
 
     public String[] getTimeRange() {
         return timeRange;

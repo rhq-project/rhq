@@ -70,6 +70,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class ResourceGroupTreeView extends LocatableVLayout implements BookmarkableView {
 
+    private static final String FAKE_ROOT_ID = "__fakeRoot__"; // id of the parent node of our real root node
+
     private TreeGrid treeGrid;
 
     private ViewId currentViewId;
@@ -142,27 +144,38 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     ResourceGroupEnhancedTreeNode selectedNode = (ResourceGroupEnhancedTreeNode) selectionEvent
                         .getRecord();
-                    selectedNodeId = selectedNode.getID();
                     com.allen_sauer.gwt.log.client.Log.info("Node selected in tree: " + selectedNode);
+
                     ResourceType type = selectedNode.getResourceType();
+                    ClusterKey key = selectedNode.getClusterKey();
                     if (type != null) {
-                        // It's a cluster group node, not a subcategory node or an autoTypeGroup node.
-                        ClusterKey key = selectedNode.getClusterKey();
-                        if (key == null) {
-                            // The root group was selected.
-                            String groupId = selectedNode.getID();
-                            com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
-                            String viewPath = ResourceGroupTopView.VIEW_ID + "/" + groupId;
-                            String currentViewPath = History.getToken();
-                            if (!currentViewPath.startsWith(viewPath)) {
-                                CoreGUI.goToView(viewPath);
-                            }
-                        } else {
+                        if (key != null) {
+                            // the user selected a cluster node - let's switch to that cluster group view
                             com.allen_sauer.gwt.log.client.Log.debug("Selecting cluster group [" + key + "]...");
+                            selectedNodeId = selectedNode.getID();
                             selectClusterGroup(key);
+                        } else {
+                            if (selectedNode.getParentID().equals(FAKE_ROOT_ID)) {
+                                // the user selected the top group node
+                                selectedNodeId = selectedNode.getID();
+                                String groupId = selectedNodeId;
+                                com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
+                                String viewPath = ResourceGroupTopView.VIEW_ID + "/" + groupId;
+                                String currentViewPath = History.getToken();
+                                if (!currentViewPath.startsWith(viewPath)) {
+                                    CoreGUI.goToView(viewPath);
+                                }
+                            } else {
+                                // the user selected a auto type group node; we have got nothing to show, so cancel the selection of this node
+                                treeGrid.deselectRecord(selectedNode);
+                            }
                         }
+                    } else {
+                        // the user selected a subcategory; we have got nothing to show, so cancel the selection of this node
+                        treeGrid.deselectRecord(selectedNode);
                     }
                 }
+                return;
             }
         });
 
@@ -217,7 +230,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         String icon = ImageManager.getGroupIcon(GroupCategory.MIXED);
                         rootNode.setIcon(icon);
                         rootNode.setID(String.valueOf(rootResourceGroup.getId()));
-                        fakeRoot.setID("__fakeRoot__");
+                        fakeRoot.setID(FAKE_ROOT_ID);
                         rootNode.setParentID(fakeRoot.getID());
                         fakeRoot.setChildren(new ResourceGroupEnhancedTreeNode[] { rootNode });
                         Tree tree = new Tree();
@@ -316,7 +329,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     private void loadTree(ClusterFlyweight root) {
         ClusterKey rootKey = new ClusterKey(root.getGroupId());
         ResourceGroupEnhancedTreeNode fakeRoot = new ResourceGroupEnhancedTreeNode("fakeRootNode");
-        fakeRoot.setID("__fakeRoot__");
+        fakeRoot.setID(FAKE_ROOT_ID);
 
         ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(rootResourceGroup.getName());
         rootNode.setID(rootKey.getKey());

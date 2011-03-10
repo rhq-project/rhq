@@ -49,6 +49,7 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
 
     public static abstract class Field extends AbstractOperationHistoryDataSource.Field {
         public static final String RESOURCE = "resource";
+        public static final String RESOURCE_ID = "resource.id";
         public static final String ANCESTRY = "resource.ancestry";
         public static final String TYPE = "resource.resourceType.id";
         public static final String GROUP_OPERATION_HISTORY = "groupOperationHistory";
@@ -126,7 +127,7 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
                     // enhance resource name
-                    int resourceId = record.getAttributeAsInt("id");
+                    int resourceId = record.getAttributeAsInt(Field.RESOURCE_ID);
                     int resourceTypeId = record.getAttributeAsInt(Field.TYPE);
                     String resourceName = record.getAttributeAsString(Field.RESOURCE);
                     ResourceType type = types.get(resourceTypeId);
@@ -159,6 +160,7 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
         ListGridRecord record = super.copyValues(from);
 
         record.setAttribute(Field.ID, from.getId());
+        record.setAttribute(Field.RESOURCE_ID, from.getResource().getId());
         record.setAttribute(Field.RESOURCE, from.getResource().getName());
         record.setAttribute(Field.ANCESTRY, from.getResource().getAncestry());
         record.setAttribute(Field.TYPE, from.getResource().getResourceType().getId());

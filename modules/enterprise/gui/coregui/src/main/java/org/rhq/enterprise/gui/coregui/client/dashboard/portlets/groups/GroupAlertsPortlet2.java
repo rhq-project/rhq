@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -29,18 +32,15 @@ import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
@@ -49,17 +49,18 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletConfigurationDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.PortletAlertSelector;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -69,39 +70,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "Group: Alerts2";
+    public static final String KEY = "GroupAlerts2";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
+    //    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
+    public static final String NAME = "Group: Alerts2";
 
-    //widget keys also used in form population
-    public static final String ALERT_RANGE_DISPLAY_AMOUNT_VALUE = "alert-range-display-amount-value";
-    public static final String ALERT_RANGE_PRIORITY_VALUE = "alert-range-priority-value";
-    public static final String ALERT_RANGE_TIME_VALUE = "alert-range-time-value";
     public static final String ALERT_RANGE_RESOURCES_VALUE = "alert-range-resource-value";
     public static final String ALERT_RANGE_RESOURCE_IDS = "alert-range-resource-ids";
-    //configuration default information
-    private static final String defaultAlertCountValue = "5";
-    private static final String PRIORITY_ALL = MSG.common_label_all();
-    private static final String PRIORITY_HIGH = AlertPriority.HIGH.getDisplayName();
-    private static final String PRIORITY_MEDIUM = AlertPriority.MEDIUM.getDisplayName();
-    private static final String PRIORITY_LOW = AlertPriority.LOW.getDisplayName();
-    private static final String defaultPriorityValue = PRIORITY_ALL;
-    private static final String TIME_30_MINS = "30 " + MSG.common_label_minutes();
-    private static final String TIME_HOUR = MSG.common_label_hour();
-    private static final String TIME_12_HRS = "12 " + MSG.common_label_hours();
-    private static final String TIME_DAY = MSG.common_label_day();
-    private static final String TIME_WEEK = MSG.common_label_week();
-    private static final String TIME_MONTH = MSG.common_label_month();
-    private static final String defaultTimeValue = TIME_DAY;
     public static final String RESOURCES_ALL = MSG.common_label_all_resources();
     public static final String RESOURCES_SELECTED = MSG.common_label_selected_resources();
     public static final String defaultResourceValue = RESOURCES_ALL;
-    private static final String unlimited = MSG.common_label_unlimited();
-    //alert resource labels
-    public static final String ALERT_LABEL_SELECTED_RESOURCES = MSG.common_title_selected_resources();
-    public static final String ALERT_LABEL_AVAILABLE_RESOURCES = MSG.common_title_available_resources();
-    public static final String ALERT_LABEL_RESOURCE_INVENTORY = MSG.common_title_resource_inventory();
-    public static final int ALERT_RESOURCE_SELECTION_WIDTH = 800;
     public static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
@@ -110,17 +88,29 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     //shared private UI elements
     private AlertResourceSelectorRegion resourceSelector;
 
-    private AlertPortletDataSource dataSource;
+    private AlertPortletConfigurationDataSource dataSource;
     //instance ui widgets
     private Canvas containerCanvas;
 
     private Timer refreshTimer;
+    private DashboardPortlet storedPortlet;
+    private Configuration portletConfig;
+    private int groupId;
+    private boolean portletConfigInitialized = false;
 
     public GroupAlertsPortlet2(String locatorId) {
         super(locatorId);
 
         //override the shared datasource
-        this.dataSource = new AlertPortletDataSource();
+        //figure out which page we're loading
+        String currentPage = History.getToken();
+        String[] elements = currentPage.split("/");
+        int currentGroupIdentifier = Integer.valueOf(elements[1]);
+        this.groupId = currentGroupIdentifier;
+
+        //initalize the datasource
+        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, currentGroupIdentifier,
+            null);
         setDataSource(this.dataSource);
 
         setShowHeader(false);
@@ -131,8 +121,18 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         setOverflow(Overflow.VISIBLE);
     }
 
-    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+    private static HashMap<String, String> updatedMapping = new HashMap<String, String>();
+    static {
+        updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
+        //Key, default
+        updatedMapping.put(ALERT_RANGE_RESOURCES_VALUE, RESOURCES_ALL);
+        updatedMapping.put(ALERT_RANGE_RESOURCE_IDS, RESOURCES_ALL);
+    }
 
+    /** Responsible for initialization and lazy configuration of the portlet values
+     */
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+        //populate portlet configuration details
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
         }
@@ -140,56 +140,21 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
+        this.storedPortlet = storedPortlet;
+        portletConfig = storedPortlet.getConfiguration();
 
-        //Operation range property - retrieve existing value
-        PropertySimple property = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE);
-        if ((property != null) && (property.getStringValue() != null)) {
-            //retrieve and translate to int
-            String retrieved = property.getStringValue();
-            int translatedAlertRangeSelection = translatedAlertRangeSelection(retrieved);
-            getDataSource().setAlertRangeCompleted(translatedAlertRangeSelection);
-        } else {//create setting
-            storedPortlet.getConfiguration().put(
-                new PropertySimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE, defaultAlertCountValue));
-            getDataSource().setAlertRangeCompleted(Integer.parseInt(defaultAlertCountValue));
-        }
-        //Operation priority property setting
-        property = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_PRIORITY_VALUE);
-        if ((property != null) && (property.getStringValue() != null)) {
-            //retrieve and translate to int
-            String retrieved = property.getStringValue();
-            int translatedPriorityIndex = translatedPriorityToValidIndex(retrieved);
-            getDataSource().setAlertPriorityIndex(translatedPriorityIndex);
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(ALERT_RANGE_PRIORITY_VALUE, defaultPriorityValue));
-            getDataSource().setAlertPriorityIndex(translatedPriorityToValidIndex(PRIORITY_ALL));
+        if (!portletConfigInitialized) {
+            this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, this.groupId, null);
+            setDataSource(this.dataSource);
+            portletConfigInitialized = true;
         }
 
-        //Range to time that alerts will be shown for
-        property = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_TIME_VALUE);
-        if ((property != null) && (property.getStringValue() != null)) {
-            //retrieve and translate to int
-            String retrieved = property.getStringValue();
-            long translatedRange = translateTimeToValidRange(retrieved);
-            getDataSource().setAlertTimeRange(translatedRange);
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(ALERT_RANGE_TIME_VALUE, defaultTimeValue));
-            getDataSource().setAlertTimeRange(translateTimeToValidRange(defaultTimeValue));
-        }
-
-        //Range of resources to be included in the query
-        property = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE);
-        if ((property != null) && (property.getStringValue() != null)) {
-            //retrieve and translate to int
-            String retrieved = property.getStringValue();
-            if (retrieved.trim().equalsIgnoreCase(RESOURCES_SELECTED)) {
-                getDataSource().setAlertResourcesToUse(RESOURCES_SELECTED);
-            } else {
-                getDataSource().setAlertResourcesToUse(RESOURCES_ALL);
+        //lazy init any elements not yet configured.
+        for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
+            if (portletConfig.getSimple(key) == null) {
+                portletConfig.put(new PropertySimple(key,
+                    PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
             }
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(ALERT_RANGE_RESOURCES_VALUE, defaultResourceValue));
-            getDataSource().setAlertResourcesToUse(RESOURCES_ALL);
         }
 
         //resource ids to be conditionally included in the query
@@ -213,347 +178,99 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
                 containerCanvas.addChild(new Canvas());
             }
         }
-    }
 
-    private int translatedAlertRangeSelection(String retrieved) {
-        int translated = -1;
-        if ((retrieved != null) && (!retrieved.trim().isEmpty())) {
-            if (retrieved.equalsIgnoreCase(unlimited)) {
-                translated = -1;
-            } else {
-                translated = Integer.parseInt(retrieved);//default to all
-            }
-        } else {//default to defaultValue
-            if (defaultAlertCountValue.equalsIgnoreCase(unlimited)) {
-                translated = -1;
-            } else {
-                translated = Integer.parseInt(defaultAlertCountValue);
-            }
-        }
-        return translated;
-    }
-
-    private int translatedPriorityToValidIndex(String retrieved) {
-        int translatedPriority = 0;//default to all
-        if ((retrieved != null) && (!retrieved.trim().isEmpty())) {
-            if (retrieved.equalsIgnoreCase(PRIORITY_HIGH)) {
-                translatedPriority = 3;
-            } else if (retrieved.equalsIgnoreCase(PRIORITY_MEDIUM)) {
-                translatedPriority = 2;
-            } else if (retrieved.equalsIgnoreCase(PRIORITY_LOW)) {
-                translatedPriority = 1;
-            } else {
-                translatedPriority = 0;//default to all
-            }
-        }
-        return translatedPriority;
-    }
-
-    /**Translates the UI selection options into time values for alert query.
-     *
-     * @param retrieved
-     * @return long value mapping to string passed in.
-     */
-    private long translateTimeToValidRange(String retrieved) {
-        long translated = 0;//default to ALL
-        if ((retrieved != null) && (!retrieved.trim().isEmpty())) {
-            if (retrieved.equalsIgnoreCase(TIME_30_MINS)) {
-                translated = MeasurementUtility.MINUTES * 30;
-            } else if (retrieved.equalsIgnoreCase(TIME_HOUR)) {
-                translated = MeasurementUtility.HOURS;
-            } else if (retrieved.equalsIgnoreCase(TIME_12_HRS)) {
-                translated = MeasurementUtility.HOURS * 12;
-            } else if (retrieved.equalsIgnoreCase(TIME_DAY)) {
-                translated = MeasurementUtility.DAYS;
-            } else if (retrieved.equalsIgnoreCase(TIME_WEEK)) {
-                translated = MeasurementUtility.WEEKS;
-            } else if (retrieved.equalsIgnoreCase(TIME_MONTH)) {
-                translated = MeasurementUtility.DAYS * 28;//replicated from old struts def.
-            } else {
-                translated = MeasurementUtility.DAYS;//default to day otherwise.
-            }
-        }
-        return translated;
     }
 
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
     }
 
+    @Override
     public DynamicForm getCustomSettingsForm() {
-        //root dynamic form instance
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
-        form.setWidth(GroupAlertsPortlet2.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
-        form.setHeight(400);
+        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        //build editor form container
+        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
         form.setMargin(5);
 
-        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+        //add label about what configuration affects
 
-        //vertical container
-        VLayout column = new VLayout();
+        //add alert priority selector
+        final SelectItem alertPrioritySelector = PortletConfigurationEditorComponent
+            .getAlertPriorityEditor(portletConfig);
+        //add sort priority selector
+        //        final SelectItem resultSortSelector = PortletConfigurationEditorComponent
+        //            .getResulSortOrderEditor(portletConfig);
+        //add result count selector
+        final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
 
-        //label
-        LocatableLabel alertRangeLabel = new LocatableLabel(extendLocatorId("DynamicForm_Label_Alert_Range"), "<b>"
-            + MSG.common_title_alert_range() + "</b>");
+        //add range selector
+        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+            .getMeasurementRangeEditor(portletConfig);
 
-        //horizontal layout
-        LocatableHLayout row = new LocatableHLayout(extendLocatorId("alert-range-settings-row-1"));
-        row.setMembersMargin(10);
-
-        //-------------combobox for number of completed scheduled ops to display on the dashboard
-        final SelectItem alertRangeLastComboBox = new SelectItem(ALERT_RANGE_DISPLAY_AMOUNT_VALUE);
-        alertRangeLastComboBox.setTitle(MSG.view_measureRange_last());
-        alertRangeLastComboBox.setType("selection");
-        alertRangeLastComboBox.setWrapTitle(false);
-        //define acceptable values for display amount
-        String[] acceptableDisplayValues = { "5", "10", MSG.common_label_unlimited() };
-        alertRangeLastComboBox.setValueMap(acceptableDisplayValues);
-        //set width of dropdown display region
-        alertRangeLastComboBox.setWidth(100);
-        alertRangeLastComboBox.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent event) {
-                String selectedItem = "" + event.getValue();
-                //stuff into the master form for retrieval
-                form.setValue(ALERT_RANGE_DISPLAY_AMOUNT_VALUE, selectedItem);
-            }
-        });
-
-        //default selected value to 'unlimited'(live lists) and check both combobox settings here.
-        String selectedValue = defaultAlertCountValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE)
-                    .getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(
-                    new PropertySimple(ALERT_RANGE_DISPLAY_AMOUNT_VALUE, defaultAlertCountValue));
-            }
-        }
-        //prepopulate the combobox with the previously stored selection
-        alertRangeLastComboBox.setDefaultValue(selectedValue);
-
-        //-------------combobox for number of completed scheduled ops to display on the dashboard
-        final SelectItem alertRangePriorityComboBox = new SelectItem(ALERT_RANGE_PRIORITY_VALUE);
-        alertRangePriorityComboBox.setTitle("");
-        alertRangePriorityComboBox.setHint("<nobr> <b> " + MSG.view_portlet_recentAlerts_config_priority_label()
-            + "</b></nobr>");
-        alertRangePriorityComboBox.setType("selection");
-        //define acceptable values for display amount
-        String[] acceptablePriorityDisplayValues = { PRIORITY_ALL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW };
-        alertRangePriorityComboBox.setValueMap(acceptablePriorityDisplayValues);
-        //set width of dropdown display region
-        alertRangePriorityComboBox.setWidth(100);
-        alertRangePriorityComboBox.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent event) {
-                String selectedItem = "" + event.getValue();
-                //stuff into the master form for retrieval
-                form.setValue(ALERT_RANGE_PRIORITY_VALUE, selectedItem);
-            }
-        });
-
-        //default selected value to 'unlimited'(live lists) and check both combobox settings here.
-        selectedValue = defaultPriorityValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(ALERT_RANGE_PRIORITY_VALUE) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_PRIORITY_VALUE).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(
-                    new PropertySimple(ALERT_RANGE_PRIORITY_VALUE, defaultPriorityValue));
-            }
-        }
-        //prepopulate the combobox with the previously stored selection
-        alertRangePriorityComboBox.setDefaultValue(selectedValue);
-        row.addMember(alertRangeLabel);
-        DynamicForm wrappedRange = new DynamicForm();
-        wrappedRange.setFields(alertRangeLastComboBox);
-        row.addMember(wrappedRange);
-
-        DynamicForm wrappedPriority = new DynamicForm();
-        wrappedPriority.setFields(alertRangePriorityComboBox);
-        row.addMember(wrappedPriority);
-
-        //horizontal layout
-        LocatableHLayout row2 = new LocatableHLayout(extendLocatorId("alert-range-settings-row-2"));
-
-        LocatableLabel alertRangeSpanLabel = new LocatableLabel(extendLocatorId("range-span-label"), "<b>"
-            + MSG.view_portlet_recentAlerts_config_when() + "<b>");
-        //------------- Build second combobox for timeframe for problem resources search.
-        final SelectItem alertRangeTimeComboBox = new SelectItem(ALERT_RANGE_TIME_VALUE);
-        alertRangeTimeComboBox.setTitle("");
-        alertRangeTimeComboBox.setHint("");
-        alertRangeTimeComboBox.setType("selection");
-        String[] acceptableTimeDisplayValues = { TIME_30_MINS, TIME_HOUR, TIME_12_HRS, TIME_DAY, TIME_WEEK, TIME_MONTH };
-        alertRangeTimeComboBox.setValueMap(acceptableTimeDisplayValues);
-        alertRangeTimeComboBox.setWidth(100);
-        alertRangeTimeComboBox.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent event) {
-                String selectedItem = "" + event.getValue();
-                //stuff into the master form for retrieval
-                form.setValue(ALERT_RANGE_TIME_VALUE, selectedItem);
-            }
-        });
-
-        //set to default
-        selectedValue = defaultTimeValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(ALERT_RANGE_TIME_VALUE) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_TIME_VALUE).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(ALERT_RANGE_TIME_VALUE, defaultTimeValue));
-            }
-        }
-        //prepopulate the combobox with the previously stored selection
-        alertRangeTimeComboBox.setDefaultValue(selectedValue);
-        DynamicForm timeSelectionWrapper = new DynamicForm();
-        timeSelectionWrapper.setFields(alertRangeTimeComboBox);
-
-        // build resource selection drop down
-        //------------- Build second combobox for timeframe for problem resources search.
-        final SelectItem alertResourcesComboBox = new SelectItem(ALERT_RANGE_RESOURCES_VALUE);
-        alertResourcesComboBox.setTitle(MSG.common_val_for());
-        alertResourcesComboBox.setHint("");
-        alertResourcesComboBox.setType("selection");
-        String[] acceptableResourceDisplayValues = { RESOURCES_ALL, RESOURCES_SELECTED };
-        alertResourcesComboBox.setValueMap(acceptableResourceDisplayValues);
-        alertResourcesComboBox.setWidth(150);
-        alertResourcesComboBox.addChangeHandler(new ChangeHandler() {
-            public void onChange(ChangeEvent event) {
-                String selectedItem = "" + event.getValue();
-                //stuff into the master form for retrieval
-                form.setValue(ALERT_RANGE_RESOURCES_VALUE, selectedItem);
-                //empty out earlier canvas
-                for (Canvas c : containerCanvas.getChildren()) {
-                    c.destroy();
-                }
-                if (selectedItem.equals(RESOURCES_SELECTED)) {
-                    containerCanvas.addChild(resourceSelector.getCanvas());
-                } else {
-                    containerCanvas.addChild(new Canvas());
-                }
-            }
-        });
-
-        //set to default
-        selectedValue = defaultResourceValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE)
-                    .getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(
-                    new PropertySimple(ALERT_RANGE_RESOURCES_VALUE, defaultResourceValue));
-            }
-        }
-        //prepopulate the combobox with the previously stored selection
-        alertResourcesComboBox.setDefaultValue(selectedValue);
-        DynamicForm resourceSelectionWrapper = new DynamicForm();
-        resourceSelectionWrapper.setFields(alertResourcesComboBox);
-
-        alertRangeSpanLabel.setWrap(false);
-        alertRangeSpanLabel.setWidth(150);
-        row2.addMember(alertRangeSpanLabel);
-        row2.addMember(timeSelectionWrapper);
-        row2.addMember(resourceSelectionWrapper);
-
-        //if portlet config setting exist, then retrieve
-        Integer[] alertFilterResourceIds = null;
-        alertFilterResourceIds = getDataSource().extractFilterResourceIds(storedPortlet, alertFilterResourceIds);
-
-        LocatableHLayout resourceSelectionRegion = new LocatableHLayout(extendLocatorId("selection-canvas"));
-        resourceSelector = new AlertResourceSelectorRegion(extendLocatorId("ResourcesWithAlerts"),
-            alertFilterResourceIds);
-        resourceSelectionRegion.setWidth100();
-
-        if (alertFilterResourceIds != null) {
-            getDataSource().setAlertFilterResourceId(alertFilterResourceIds);
-            resourceSelector.setCurrentlyAssignedIds(alertFilterResourceIds);
-        }
-
-        //instantiate canvas area to display empty or rich resource selection based on dropdown selection
-        containerCanvas = new Canvas();
-        String previousAlertFilterChoice = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE)
-            .getStringValue();
-
-        //reload the ResourceSelectionRegion if user has chosen to focus on specific resources with alerts
-        if (previousAlertFilterChoice.equals(RESOURCES_SELECTED)) {
-            containerCanvas.addChild(resourceSelector.getCanvas());
-        } else {// define empty canvas
-            containerCanvas.addChild(new Canvas());
-        }
-
-        //add contain resource selection region.
-        resourceSelectionRegion.addMember(containerCanvas);
-
-        //finish construction of the layout
-        column.addMember(row);
-        column.addMember(row2);
-        SpacerItem verticalSpace = new SpacerItem();
-        verticalSpace.setHeight(20);
-        DynamicForm spacerWrapper = new DynamicForm();
-        spacerWrapper.setItems(verticalSpace);
-        column.addMember(spacerWrapper);
-        column.addMember(resourceSelectionRegion);
-        form.addChild(column);
+        form.setItems(alertPrioritySelector, resultCountSelector);
 
         //submit handler
-        form.addSubmitValuesHandler(new SubmitValuesHandler() {
+        customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
+
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
-                //no need to insert validation here as user not allowed to enter values
-                parseFormAndPopulateConfiguration(form, storedPortlet, ALERT_RANGE_DISPLAY_AMOUNT_VALUE,
-                    ALERT_RANGE_PRIORITY_VALUE, ALERT_RANGE_RESOURCES_VALUE, ALERT_RANGE_TIME_VALUE);
-
-                //retrieve alert-resource-selection property
-                PropertySimple prop = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE);
-
-                //check to see if "Selected Resources" or "All Resources"
-                if (prop != null && RESOURCES_SELECTED.equals(prop.getStringValue())) {
-                    //retrieve currentlyAssignedIds
-                    Integer[] valuesToPersist = resourceSelector.getListGridValues();
-                    resourceSelector.setCurrentlyAssignedIds(valuesToPersist);
-
-                    //build property list of ids to persist
-                    PropertyList list = new PropertyList(ALERT_RANGE_RESOURCE_IDS);
-                    for (int rid : resourceSelector.getCurrentlyAssignedIds()) {
-                        list.add(new PropertySimple(ALERT_RANGE_RESOURCE_IDS, rid));
-                    }
-                    storedPortlet.getConfiguration().put(new PropertyList(ALERT_RANGE_RESOURCE_IDS, list));
-                    getDataSource().setAlertFilterResourceId(resourceSelector.getCurrentlyAssignedIds());
+                //alert severity
+                String selectedValue = alertPrioritySelector.getValue().toString();
+                if ((selectedValue.trim().isEmpty()) || (selectedValue.split(",").length == 3)) {//then no alertPriority specified
+                    portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
+                } else {//some subset of available alertPriorities will be used
+                    portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));
+                }
+                //                //result sort order
+                //                selectedValue = resultSortSelector.getValue().toString();
+                //                if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(PageOrdering.DESC.name()))) {//then desc
+                //                    portletConfig.put(new PropertySimple(Constant.RESULT_SORT_ORDER, PageOrdering.DESC));
+                //                } else {
+                //                    portletConfig.put(new PropertySimple(Constant.RESULT_SORT_ORDER, PageOrdering.ASC));
+                //                }
+                //result count
+                selectedValue = resultCountSelector.getValue().toString();
+                if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
+                    portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
+                } else {
+                    portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
                 }
 
-                configure(portletWindow, storedPortlet);
+                //alert time range filter. Check for enabled and then persist property. Dealing with compound widget.
+                FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+                CheckboxItem itemC = (CheckboxItem) item;
+                selectedValue = String.valueOf(itemC.getValueAsBoolean());
+                if (!selectedValue.trim().isEmpty()) {//then call
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
+                }
 
-                refresh();//reload form with new data selections
-                markForRedraw();
+                //alert time advanced time filter enabled.
+                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
+                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
+                }
+
+                //alert time frame
+                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
+                if (begEnd.get(0) != 0) {//advanced settings
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
+                }
+
+                //persist and reload portlet
+                storedPortlet.setConfiguration(portletConfig);
+                configure(portletWindow, storedPortlet);
+                refresh();
             }
         });
-
-        return form;
+        form.markForRedraw();
+        page.addMember(measurementRangeEditor);
+        page.addMember(form);
+        customSettings.addChild(page);
+        return customSettings;
     }
 
-    /**Iterates over DynamicForm instance to check for properties passed in and if they have been set
-     * to put that property into the DashboardPortlet configuration.
-     *
-     * @param form Dynamic form storing user selections
-     * @param portlet Container for configuration changes
-     * @param properties Variable list of keys used to verify or populate properties.
-     */
-    private void parseFormAndPopulateConfiguration(final DynamicForm form, DashboardPortlet storedPortlet,
-        String... properties) {
-        if ((form != null) && (storedPortlet != null)) {
-            for (String property : properties) {
-                if (form.getValue(property) != null) {//if new value supplied
-                    storedPortlet.getConfiguration().put(new PropertySimple(property, form.getValue(property)));
-                }
-            }
-        }
-    }
-
-    public AlertPortletDataSource getDataSource() {
+    public AlertPortletConfigurationDataSource getDataSource() {
         return dataSource;
     }
 
@@ -592,7 +309,6 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     @Override
     protected void onDestroy() {
         if (refreshTimer != null) {
-
             refreshTimer.cancel();
         }
 
@@ -627,7 +343,6 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
 
     @Override
     protected void configureTable() {
-        // TODO Auto-generated method stub
         super.configureTable();
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
@@ -644,9 +359,27 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         });
     }
 
+    @Override
+    protected void onInit() {
+        super.onInit();
+        getListGrid().setEmptyMessage("No results found using specified criteria.");
+    }
+
+    @Override
+    protected void refreshTableInfo() {
+        super.refreshTableInfo();
+        if (getTableInfo() != null) {
+            int count = getListGrid().getSelection().length;
+            getTableInfo().setContents(
+            //                MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
+                //Ex. Total Rows: {0} (selected: {1})
+                "Matching Rows: " + String.valueOf(getListGrid().getTotalRows()) + " (selected "
+                    + String.valueOf(count) + ")");
+        }
+    }
 }
 
-/** Bundles a ResourceSelector instance with labelling in Canvas for display.
+/** Bundles a ResourceSelector instance with labeling in Canvas for display.
  *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
  */
 class AlertResourceSelectorRegion extends LocatableVLayout {

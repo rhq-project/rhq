@@ -23,16 +23,16 @@ import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
 
-    public static final String PREF_METRIC_RANGE = GroupAlertsPortlet.Constant.ALERT_METRIC_RANGE;
-    public static final String PREF_METRIC_RANGE_LASTN = GroupAlertsPortlet.Constant.ALERT_METRIC_RANGE_LASTN;
-    public static final String PREF_METRIC_RANGE_UNIT = GroupAlertsPortlet.Constant.ALERT_METRIC_RANGE_UNIT;
-    public static final String PREF_METRIC_RANGE_BEGIN_END_FLAG = GroupAlertsPortlet.Constant.ALERT_METRIC_RANGE_BEGIN_END_FLAG;
-    public static final String ALERT_METRIC_RANGE_ENABLE = GroupAlertsPortlet.Constant.ALERT_METRIC_RANGE_ENABLE;
+    public static final String PREF_METRIC_RANGE = Constant.METRIC_RANGE;
+    public static final String PREF_METRIC_RANGE_LASTN = Constant.METRIC_RANGE_LASTN;
+    public static final String PREF_METRIC_RANGE_UNIT = Constant.METRIC_RANGE_UNIT;
+    public static final String PREF_METRIC_RANGE_BEGIN_END_FLAG = Constant.METRIC_RANGE_BEGIN_END_FLAG;
+    public static final String ALERT_METRIC_RANGE_ENABLE = Constant.METRIC_RANGE_ENABLE;
 
     public static final String DEFAULT_VALUE_RANGE_RO = Boolean.FALSE.toString();
     public static final Integer DEFAULT_VALUE_RANGE_LASTN = Integer.valueOf(8);
@@ -156,7 +156,7 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
         //disable text field view to prevent bad data entry. Use widget or dropdowns.
         //TODO: spinder 3/9/11: this should be renabled to allow minute/second tuning here too, but need to handle validation.
         advancedStartItem.setUseTextField(false);
-        //        advancedEndItem.setUseTextField(false);
+        advancedEndItem.setUseTextField(false);
         advancedStartItem.setType("selection");
         simpleLastValuesItem.setWidth(50);
         simpleLastUnitsItem.setWidth(70);

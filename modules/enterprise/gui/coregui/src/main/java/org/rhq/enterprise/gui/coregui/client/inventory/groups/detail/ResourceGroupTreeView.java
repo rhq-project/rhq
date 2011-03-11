@@ -294,10 +294,11 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
             ResourceGroupEnhancedTreeNode selectedNode;
             if (this.selectedGroup.getClusterKey() != null) {
+                // a child cluster node leaf was selected
                 selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().find(
                     ResourceGroupEnhancedTreeNode.CLUSTER_KEY, this.selectedGroup.getClusterKey());
             } else {
-                // TODO not sure when this else would happen, why would a group's cluster key be null?
+                // the top root node, representing the group itself, was selected
                 selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().findById(
                     String.valueOf(this.selectedGroup.getId()));
             }

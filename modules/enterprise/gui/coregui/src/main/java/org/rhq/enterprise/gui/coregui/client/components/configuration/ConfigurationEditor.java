@@ -56,6 +56,7 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FloatItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -506,10 +507,39 @@ public class ConfigurationEditor extends LocatableVLayout {
         form.setColWidths(190, 28, 210);
 
         List<FormItem> fields = new ArrayList<FormItem>();
+        addHeaderItems(fields);
         addItemsForPropertiesRecursively(locatorId, propertyDefinitions, propertyMap, fields);
         form.setFields(fields.toArray(new FormItem[fields.size()]));
 
         return form;
+    }
+
+    private void addHeaderItems(List<FormItem> fields) {
+        final String CELL_STYLE = "configurationEditorHeaderCell";
+
+        StaticTextItem nameHeader = new StaticTextItem();
+        nameHeader.setValue("Property");
+        nameHeader.setShowTitle(false);
+        nameHeader.setCellStyle(CELL_STYLE);
+        fields.add(nameHeader);
+
+        StaticTextItem unsetHeader = new StaticTextItem();
+        unsetHeader.setValue("Unset?");
+        unsetHeader.setShowTitle(false);
+        unsetHeader.setCellStyle(CELL_STYLE);
+        fields.add(unsetHeader);
+
+        StaticTextItem valueHeader = new StaticTextItem();
+        valueHeader.setValue("Value");
+        valueHeader.setShowTitle(false);
+        valueHeader.setCellStyle(CELL_STYLE);
+        fields.add(valueHeader);
+
+        StaticTextItem descriptionHeader = new StaticTextItem();
+        descriptionHeader.setValue("Description");
+        descriptionHeader.setShowTitle(false);
+        descriptionHeader.setCellStyle(CELL_STYLE);
+        fields.add(descriptionHeader);
     }
 
     private void addItemsForPropertiesRecursively(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
@@ -1199,67 +1229,90 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         FormItem valueItem = null;
 
-        List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
-        if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
-            LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();
-            for (PropertyDefinitionEnumeration option : propertyDefinitionSimple.getEnumeratedValues()) {
-                valueOptions.put(option.getValue(), option.getName());
+        boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple);
+
+        if (propertyIsReadOnly) {
+            valueItem = new StaticTextItem();
+        } else {
+
+
+            List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
+            if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
+                LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();
+                for (PropertyDefinitionEnumeration option : propertyDefinitionSimple.getEnumeratedValues()) {
+                    valueOptions.put(option.getValue(), option.getName());
+                }
+
+                if (valueOptions.size() > 5) {
+                    valueItem = new SelectItem();
+                } else {
+                    valueItem = new RadioGroupItem();
+                }
+                valueItem.setValueMap(valueOptions);
+                if (propertySimple != null) {
+                    valueItem.setValue(propertySimple.getStringValue());
+                }
+            } else {
+                switch (propertyDefinitionSimple.getType()) {
+                case STRING:
+                case FILE:
+                case DIRECTORY:
+                    valueItem = new TextItem();
+                    break;
+                case LONG_STRING:
+                    valueItem = new TextAreaItem();
+                    break;
+                case PASSWORD:
+                    valueItem = new PasswordItem();
+                    break;
+                case BOOLEAN:
+                    RadioGroupItem radioGroupItem = new RadioGroupItem();
+                    radioGroupItem.setVertical(false);
+                    valueItem = radioGroupItem;
+                    LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+                    valueMap.put("true", MSG.common_val_yes());
+                    valueMap.put("false", MSG.common_val_no());
+                    valueItem.setValueMap(valueMap);
+                    break;
+                case INTEGER:
+                case LONG:
+                    valueItem = new IntegerItem();
+                    break;
+                case FLOAT:
+                case DOUBLE:
+                    valueItem = new FloatItem();
+                    break;
+                }
             }
 
-            if (valueOptions.size() > 5) {
-                valueItem = new SelectItem();
-            } else {
-                valueItem = new RadioGroupItem();
-            }
-            valueItem.setValueMap(valueOptions);
-            if (propertySimple != null) {
-                valueItem.setValue(propertySimple.getStringValue());
-            }
-        } else {
-            switch (propertyDefinitionSimple.getType()) {
-            case STRING:
-            case FILE:
-            case DIRECTORY:
-                valueItem = new TextItem();
-                break;
-            case LONG_STRING:
-                valueItem = new TextAreaItem();
-                break;
-            case PASSWORD:
-                valueItem = new PasswordItem();
-                break;
-            case BOOLEAN:
-                RadioGroupItem radioGroupItem = new RadioGroupItem();
-                radioGroupItem.setVertical(false);
-                valueItem = radioGroupItem;
-                LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-                valueMap.put("true", MSG.common_val_yes());
-                valueMap.put("false", MSG.common_val_no());
-                valueItem.setValueMap(valueMap);
-                break;
-            case INTEGER:
-            case LONG:
-                valueItem = new IntegerItem();
-                break;
-            case FLOAT:
-            case DOUBLE:
-                valueItem = new FloatItem();
-                break;
-            }
+            valueItem.setDisabled(isUnset(propertyDefinitionSimple, propertySimple));
+
+            List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
+            valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
+
+            valueItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changedEvent) {
+                    updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                    // Only fire a prop value change event if the prop's a top-level simple or a simple within a
+                    // top-level map.
+                    if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
+                        boolean isValid = changedEvent.getItem().validate();
+                        firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                    }
+                }
+            });
         }
 
-        // for more robust and repeatable item locators (not positional) assign a name and title   
+        // for more robust and repeatable item locators (not positional) assign a name and title
         valueItem.setName(propertySimple.getName());
         valueItem.setTitle("none");
         valueItem.setShowTitle(false);
+        // TODO (ips): I don't think we want to use setDefaultValue(), as it will cause the input to be reset to the
+        //             value if the user clears it.
         valueItem.setDefaultValue(propertySimple.getStringValue());
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
+        valueItem.setWidth(220);
 
-        List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
-        valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
-
-        valueItem.setDisabled(isReadOnly(propertyDefinitionSimple, propertySimple)
-            || isUnset(propertyDefinitionSimple, propertySimple));
         /*
                 Click handlers seem to be turned off for disabled fields... need an alternative
                 valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
@@ -1271,20 +1324,6 @@ public class ConfigurationEditor extends LocatableVLayout {
                     }
                 });
         */
-
-        valueItem.setWidth(220);
-
-        valueItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent changedEvent) {
-                updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
-                // Only fire a prop value change event if the prop's a top-level simple or a simple within a
-                // top-level map.
-                if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
-                    boolean isValid = changedEvent.getItem().validate();
-                    firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
-                }
-            }
-        });
 
         return valueItem;
     }

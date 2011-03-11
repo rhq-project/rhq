@@ -104,14 +104,15 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                 }
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    ResourceOperationHistory roh = result.get(0);
-                    if (showResourceField) {
-                        Resource resource = roh.getResource();
+                    ResourceOperationHistory resourceOperationHistory = result.get(0);
 
+                    if (showResourceField) {
+                        Resource resource = resourceOperationHistory.getResource();
                         disambiguatedResourceName = AncestryUtil.getResourceLongName(resource.getId(), resource
                             .getName(), resource.getResourceType());
-                        displayDetails(roh);
                     }
+
+                    displayDetails(resourceOperationHistory);
                 }
             });
     }
@@ -136,6 +137,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                 editor.setReadOnly(true);
                 resultsSection.addMember(editor);
             } else {
+                // TODO: i18n
                 Label noResultsLabel = new Label("This operation does not return any results.");
                 noResultsLabel.setHeight(17);
                 resultsSection.addMember(noResultsLabel);

@@ -186,6 +186,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // set the resource deleted and update the db in case it matters to the child operations
             resource.setInventoryStatus(InventoryStatus.DELETED);
+            resource.setParentResource(null);
             resource.setItime(System.currentTimeMillis());
             entityManager.merge(resource);
 

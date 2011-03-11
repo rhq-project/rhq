@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
+
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 
 /**
@@ -30,19 +31,27 @@ import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 public class TreeUtility {
 
     public static void printTree(Tree tree) {
-        TreeNode rootNode = tree.getRoot();
-        printTreeNode(tree, rootNode);
+        String treeString = getTreeString(tree);
+        System.out.print(treeString);
+        com.allen_sauer.gwt.log.client.Log.info(treeString);
     }
 
-    private static void printTreeNode(Tree tree, TreeNode node) {
+    public static String getTreeString(Tree tree) {
+        TreeNode rootNode = tree.getRoot();
+        StringBuilder str = new StringBuilder();
+        appendTreeNode(tree, rootNode, str);
+        return str.toString();
+    }
+
+    private static void appendTreeNode(Tree tree, TreeNode node, StringBuilder str) {
         int level = tree.getLevel(node);
         for (int i = 0; i < level; i++) {
-            System.out.print("    ");
+            str.append("    ");
         }
-        com.allen_sauer.gwt.log.client.Log.info("* " + toString(node));
+        str.append("* ").append(toString(node)).append('\n');
         TreeNode[] childNodes = tree.getChildren(node);
         for (TreeNode childNode : childNodes) {
-            printTreeNode(tree, childNode);
+            appendTreeNode(tree, childNode, str);
         }
     }
 
@@ -67,5 +76,5 @@ public class TreeUtility {
 
     private TreeUtility() {
     }
-    
+
 }

@@ -67,6 +67,15 @@ public class EnhancedTreeNode extends TreeNode {
         return getAttribute(Attributes.PARENT_ID);
     }
 
+    public boolean isFolderNode() {
+        Boolean isFolder = getAttributeAsBoolean(Attributes.IS_FOLDER);
+        if (isFolder == null) {
+            Object children = getAttributeAsBoolean(Attributes.CHILDREN);
+            isFolder = Boolean.valueOf(children != null);
+        }
+        return isFolder.booleanValue();
+    }
+
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
@@ -95,6 +104,8 @@ public class EnhancedTreeNode extends TreeNode {
         public static final String PARENT_ID = "parentId";
         public static final String NAME = "name";
         public static final String DESCRIPTION = "description";
+        public static final String IS_FOLDER = "isFolder";
+        public static final String CHILDREN = "children";
 
         private Attributes() {
         }

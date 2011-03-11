@@ -28,7 +28,6 @@ import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -61,12 +60,17 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Greg Hinkle
  */
 public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
+
     public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_platformSummary();
+
+    private static final String FIELD_CPU = "cpu";
+    private static final String FIELD_MEMORY = "memory";
+    private static final String FIELD_SWAP = "swap";
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
@@ -123,33 +127,21 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     + "</a>";
             }
         });
-        nameField.setWidth("25%");
+        nameField.setWidth("20%");
         setFields(nameField);
 
-        // even though we hide this by default, a user could unhide it, so at least i18n in that case
-        getField(ResourceDataSourceField.CATEGORY.propertyName()).setCellFormatter(new CellFormatter() {
-            @Override
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String catStr = record.getAttribute(ResourceDataSourceField.CATEGORY.propertyName());
-                if (catStr == null) {
-                    return "?";
-                }
-                ResourceCategory cat = ResourceCategory.valueOf(catStr);
-                switch (cat) {
-                case PLATFORM:
-                    return MSG.common_title_platform();
-                case SERVER:
-                    return MSG.common_title_server();
-                case SERVICE:
-                    return MSG.common_title_service();
-                }
-                return "???";
-            }
-        });
+        ListGridField cpuField = getField(FIELD_CPU);
+        ListGridField memoryField = getField(FIELD_MEMORY);
+        ListGridField swapField = getField(FIELD_SWAP);
 
-        getField("cpu").setWidth("25%");
-        getField("memory").setWidth("25%");
-        getField("swap").setWidth("25%");
+        cpuField.setWidth("20%");
+        memoryField.setWidth("20%");
+        swapField.setWidth("20%");
+
+        // the way the field data is calculated, we can't sort on the graph columns
+        cpuField.setCanSort(false);
+        memoryField.setCanSort(false);
+        swapField.setCanSort(false);
 
         hideField("id");
         hideField(ResourceDataSourceField.TYPE.propertyName()); // we could show this, do we want to indicate the kind of platform?
@@ -167,9 +159,9 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
             new AsyncCallback<Set<MeasurementData>>() {
                 public void onFailure(Throwable caught) {
                     // this can happen if the agent is down, don't crash out of the entire portlet
-                    record.setAttribute("cpu", MSG.common_val_na());
-                    record.setAttribute("memory", MSG.common_val_na());
-                    record.setAttribute("swap", MSG.common_val_na());
+                    record.setAttribute(FIELD_CPU, MSG.common_val_na());
+                    record.setAttribute(FIELD_MEMORY, MSG.common_val_na());
+                    record.setAttribute(FIELD_SWAP, MSG.common_val_na());
 
                     setSortField(1);
                     refreshFields();
@@ -231,17 +223,13 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         return new HTMLFlow(MSG.view_portlet_help_platformSummary());
     }
 
-    public DynamicForm getCustomSettingsForm() {
-        return null; // TODO: Implement this method.
-    }
-
     @Override
     protected Canvas createRecordComponent(ListGridRecord listGridRecord, Integer colNum) {
 
         String fieldName = this.getFieldName(colNum);
 
         try {
-            if (fieldName.equals("cpu")) {
+            if (fieldName.equals(FIELD_CPU)) {
                 if (listGridRecord.getAttribute(CPUMetric.Idle.property) != null) {
                     HLayout bar = new HLayout();
                     bar.setHeight(18);
@@ -268,7 +256,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     return bar;
                 }
 
-            } else if (fieldName.equals("memory")) {
+            } else if (fieldName.equals(FIELD_MEMORY)) {
                 if (listGridRecord.getAttribute(MemoryMetric.Total.property) != null) {
                     HLayout bar = new HLayout();
                     bar.setHeight(18);
@@ -295,7 +283,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
                     return bar;
                 }
-            } else if (fieldName.equals("swap")) {
+            } else if (fieldName.equals(FIELD_SWAP)) {
                 if (listGridRecord.getAttribute(SwapMetric.Total.property) != null) {
                     HLayout bar = new HLayout();
                     bar.setHeight(18);

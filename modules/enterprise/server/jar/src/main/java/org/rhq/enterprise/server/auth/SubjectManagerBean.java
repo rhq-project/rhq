@@ -107,7 +107,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @EJB
     @IgnoreDependency
     private RepoManagerLocal repoManager;
-    
+
     private SessionManager sessionManager = SessionManager.getInstance();
 
     /**
@@ -369,7 +369,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         Properties config = systemManager.getSystemConfiguration(getOverlord());
 
         _checkAuthentication(username, password);
-        
+
         // User is authenticated!
 
         Subject subject = getSubjectByName(username);
@@ -423,12 +423,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject checkAuthentication(String username, String password) {
         try {
             _checkAuthentication(username, password);
-            return getSubjectByName(username);            
+            return getSubjectByName(username);
         } catch (LoginException e) {
             return null;
         }
     }
-    
+
     private void _checkAuthentication(String username, String password) throws LoginException {
         try {
             UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
@@ -442,7 +442,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new LoginException(e.getMessage());
         }
     }
-    
+
     /**This method is applied to Subject instances that may require LDAP auth/authz processing.
      * Called from both SLSB and SubjectGWTServiceImpl and:
      * -if Subject passed in has Principal(not LDAP account) then we immediately return Subject as no processing needed.
@@ -474,7 +474,17 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
                 if (ldapConfigured) {//we can proceed with LDAP checking
                     //check that session is valid. RHQ auth has already occurred. Security check required to initiate following
-                    if (!isValidSessionId(subject.getSessionId(), subject.getName(), subject.getId())) {
+                    //spinder BZ:682755: 3/10/11: can't use isValidSessionId() as it also compares subject.id which is changing during case insensitive
+                    // and new registration. This worked before because HTTP get took longer to invalidate sessions.
+                    Subject sessionSubject = null;
+                    try {
+                        sessionSubject = sessionManager.getSubject(subject.getSessionId());
+                    } catch (SessionNotFoundException e) {
+                        throw new LoginException("User session not valid. Login to proceed.");
+                    } catch (SessionTimeoutException e) {
+                        throw new LoginException("User session not valid. Login to proceed.");
+                    }
+                    if (!subject.getName().equals(sessionSubject.getName())) {
                         throw new LoginException("User session not valid. Login to proceed.");
                     }
 
@@ -760,7 +770,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
         repoManager.removeOwnershipOfSubject(doomedSubject.getId());
-        
+
         entityManager.remove(doomedSubject);
 
         return;

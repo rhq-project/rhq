@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Greg Hinkle
  */
+@SuppressWarnings("unchecked")
 public class ResourceSearchView extends Table {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();

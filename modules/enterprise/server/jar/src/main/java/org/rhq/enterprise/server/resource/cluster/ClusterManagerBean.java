@@ -165,82 +165,146 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
     @SuppressWarnings("unchecked")
     public List<Resource> getAutoClusterResources(Subject subject, ClusterKey clusterKey) {
         // Build the query
-        String queryString = getClusterKeyQuery(clusterKey);
+        Map<String, Object> params = new HashMap<String, Object>();
+        String queryString = getClusterKeyQuery(clusterKey, params);
         if (log.isDebugEnabled()) {
             log.debug("getAutoClusterResources() generated query: " + queryString);
         }
         Query query = entityManager.createQuery(queryString);
+        for (Map.Entry<String, Object> param : params.entrySet()) {
+            query.setParameter(param.getKey(), param.getValue());
+        }
         List<Resource> rs = query.getResultList();
 
         return rs;
     }
 
     public ClusterFlyweight getClusterTree(Subject subject, int groupId) {
-        Query query = entityManager
-            .createQuery("SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, "
-                + "(SELECT count(r2) FROM Resource r2 join r2.explicitGroups g2 WHERE g2.id = :groupId and r2.id = r.id) "
-                + "FROM Resource r join r.implicitGroups g " + "WHERE g.id = :groupId");
+        final String queryString = // 
+        "SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, " //
+            + "         (SELECT count(r2)" //
+            + "            FROM Resource r2 JOIN r2.explicitGroups g2 " //
+            + "           WHERE g2.id = :groupId and r2.id = r.id) " //
+            + "    FROM Resource r join r.implicitGroups g " //
+            + "   WHERE g.id = :groupId ";
+        Query query = entityManager.createQuery(queryString);
 
         query.setParameter("groupId", groupId);
         List<Object[]> rs = query.getResultList();
 
-        Map<Integer, List<Object[]>> dataMap = new HashMap<Integer, List<Object[]>>();
+        Map<Integer, List<ClusterTreeQueryResults>> dataMap = new HashMap<Integer, List<ClusterTreeQueryResults>>();
         Set<Integer> explicitResources = new HashSet<Integer>();
 
         for (Object[] d : rs) {
-
-            Integer parentId = (Integer) d[2];
-            List<Object[]> childList = dataMap.get(parentId);
+            ClusterTreeQueryResults row = new ClusterTreeQueryResults(d);
+            Integer parentId = row.parentId;
+            List<ClusterTreeQueryResults> childList = dataMap.get(parentId);
             if (childList == null) {
-                childList = new ArrayList<Object[]>();
+                childList = new ArrayList<ClusterTreeQueryResults>();
                 dataMap.put(parentId, childList);
             }
-            childList.add(d);
-            if ((Long) d[5] > 0) {
-                explicitResources.add((Integer) d[0]);
+            childList.add(row);
+            if (row.isExplicitResource) {
+                explicitResources.add(row.resourceId);
             }
         }
 
-        ClusterFlyweight key = new ClusterFlyweight(groupId);
+        ClusterFlyweight topTreeNode = new ClusterFlyweight(groupId);
 
-        buildTree(groupId, key, explicitResources, dataMap);
+        // dataMap contains one key for every *parent resource* that is a parent to a group resource.
+        // this could include platform resources if group members are top level servers.
+        buildTree(groupId, topTreeNode, explicitResources, dataMap);
 
-        return key;
+        return topTreeNode;
     }
 
+    /**
+     * Recursively builds tree nodes (where tree nodes are of type ClusterFlyweight).
+     * The <code>parent</code> object will be modified - it is the tree that is being built.
+     * The parent node reprents a single cluster node, where a cluster node is an aggregation
+     * of N identical resources that belong to the group (where "identical" means the same
+     * resource type and resource key).
+     * 
+     * @param groupId identifies the group whose tree is being built
+     * @param parent the top "parent cluster node" of the tree - will get its children assigned to it via this method
+     * @param parentIds the resource IDs for all identical parent resources that make up the one "parent cluster node"
+     * @param data keyed on resource ID whose list is that of the resource's children. A few of these data
+     *             won't necessarily be placed in the "parent" top node because these may not be part of the tree, but
+     *             may be parents themselves of the top most resources (for example, if I have a group of JBossAS
+     *             Server resources, some of these data will be the platform resources since they are parents to the
+     *             JBossAS Server resources - those platforms will not be represented in the "parent" top tree node).
+     *             Every parent resource, regardless of where they are in the cluster hierarchy, is represented by a key
+     *             in this data map.
+     */
     private void buildTree(int groupId, ClusterFlyweight parent, Set<Integer> parentIds,
-        Map<Integer, List<Object[]>> data) {
+        Map<Integer, List<ClusterTreeQueryResults>> data) {
 
+        // this is the children cluster nodes for the parent cluster node we are building
+        // notice the key to this map is a ClusterKeyFlyweight, which is a resourceType/resourceKey tuple
+        Map<ClusterKeyFlyweight, ClusterFlyweight> children = new HashMap<ClusterKeyFlyweight, ClusterFlyweight>();
+
+        // has the same as children above except its values aren't child nodes, but just the child nodes' resource IDs
+        Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
+
+        // we would expect a maximum number of identical child resources to be the same as the number of parents we have.
+        // in other words, this happens when each individual parent resource has an identical child (which is the typical use case). 
+        int maxChildrenExpected = parentIds.size();
+
+        // loop through each identical parent resource to aggregate their children into a single cluster node
         for (Integer parentId : parentIds) {
 
-            Map<ClusterKeyFlyweight, ClusterFlyweight> children = new HashMap<ClusterKeyFlyweight, ClusterFlyweight>();
-            Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
-
-            if (data.get(parentId) != null) {
-                for (Object[] child : data.get(parentId)) {
-                    ClusterKeyFlyweight n = new ClusterKeyFlyweight((Integer) child[1], (String) child[3]);
-                    ClusterFlyweight flyweight = children.get(n);
-                    Set<Integer> memberList = members.get(n);
-                    if (flyweight == null) {
-                        flyweight = new ClusterFlyweight(n);
-                        children.put(n, flyweight);
+            List<ClusterTreeQueryResults> directChildren = data.get(parentId);
+            if (directChildren != null) {
+                for (ClusterTreeQueryResults child : directChildren) {
+                    ClusterKeyFlyweight childNodeKey = new ClusterKeyFlyweight(child.resourceTypeId, child.resourceKey);
+                    ClusterFlyweight childNode = children.get(childNodeKey);
+                    Set<Integer> memberList;
+                    if (childNode == null) {
+                        childNode = new ClusterFlyweight(childNodeKey);
+                        childNode.setClusterSize(maxChildrenExpected);
+                        children.put(childNodeKey, childNode);
                         memberList = new HashSet<Integer>();
-                        members.put(n, memberList);
+                        members.put(childNodeKey, memberList);
+                    } else {
+                        memberList = members.get(childNodeKey);
                     }
-                    flyweight.addResource((String) child[4]);
-                    memberList.add((Integer) child[0]);
+                    childNode.addResource(child.resourceName);
+                    childNode.incrementMembers();
+                    memberList.add(child.resourceId);
                 }
             }
+        }
 
-            parent.setChildren(new ArrayList<ClusterFlyweight>(children.values()));
+        // now that we have aggregated all the children for the individual yet identical parent resources, assign those
+        // aggregated child nodes to the parent cluster node
+        parent.setChildren(new ArrayList<ClusterFlyweight>(children.values()));
 
-            for (ClusterFlyweight child : children.values()) {
-                buildTree(groupId, child, members.get(child.getClusterKey()), data);
-            }
+        for (ClusterFlyweight child : children.values()) {
+            buildTree(groupId, child, members.get(child.getClusterKey()), data);
+        }
+
+        return;
+    }
+
+    private class ClusterTreeQueryResults {
+        Integer resourceId;
+        Integer resourceTypeId;
+        Integer parentId;
+        String resourceKey;
+        String resourceName;
+        boolean isExplicitResource;
+
+        private ClusterTreeQueryResults(Object[] queryResults) {
+            resourceId = (Integer) queryResults[0];
+            resourceTypeId = (Integer) queryResults[1];
+            parentId = (Integer) queryResults[2];
+            resourceKey = (String) queryResults[3];
+            resourceName = (String) queryResults[4];
+            isExplicitResource = ((Number) queryResults[5]).intValue() > 0;
         }
     }
 
-    private String getClusterKeyQuery(ClusterKey clusterKey) {
+    private String getClusterKeyQuery(ClusterKey clusterKey, Map<String, Object> params) {
         if (null == clusterKey)
             return null;
         if (0 == clusterKey.getDepth())
@@ -248,7 +312,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
 
         StringBuilder query = new StringBuilder();
 
-        buildQuery(query, clusterKey, clusterKey.getHierarchy());
+        buildQuery(query, params, clusterKey, clusterKey.getHierarchy());
 
         return query.toString();
     }
@@ -263,25 +327,33 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
      *     SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir 
      *     WHERE rg = :rgId
      *  </pre>
-     *  The parameters are actually filled in with the literal values.
+     * 
+     *  Some of the parameters are actually filled in with the literal values, however, the params
+     *  map will be filled with some parameters that need to be set on the query before the query can
+     *  be executed. This is necessary to avoid having to escape characters (like backslashes) that might
+     *  exist in resource keys.
      */
-    private void buildQuery(StringBuilder query, ClusterKey clusterKey, List<ClusterKey.Node> nodes) {
+    private void buildQuery(StringBuilder query, Map<String, Object> params, ClusterKey clusterKey,
+        List<ClusterKey.Node> nodes) {
         int size = nodes.size();
         ClusterKey.Node node = nodes.get(size - 1);
         String alias = "r" + size;
+        String keyParam = "key" + size;
 
         // TODO: Change subquery syntax to be like the JOIN below.
         query.append(" SELECT " + alias + " FROM Resource " + alias + " WHERE ");
-        query.append(alias + ".resourceKey = '" + node.getResourceKey() + "' AND ");
+        query.append(alias + ".resourceKey = :" + keyParam + " AND ");
         query.append(alias + ".resourceType = " + node.getResourceTypeId() + " AND ");
         query.append(alias + ".parentResource IN ( ");
+
+        params.put(keyParam, node.getResourceKey());
 
         // this is an authorization-related query, so use implicitResource (not explicitResources)
         if (1 == size) {
             query.append("SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
                 + clusterKey.getClusterGroupId());
         } else {
-            buildQuery(query, clusterKey, nodes.subList(0, size - 1));
+            buildQuery(query, params, clusterKey, nodes.subList(0, size - 1));
         }
 
         query.append(")");

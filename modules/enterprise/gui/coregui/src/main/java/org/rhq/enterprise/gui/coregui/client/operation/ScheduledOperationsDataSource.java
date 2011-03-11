@@ -19,25 +19,30 @@
 package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -45,20 +50,59 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * translating the deserialized content into specific record entries for display
  * 
  * @author Simeon Pinder
+ * @author Jay Shaughnessy
  */
-public class ScheduledOperationsDataSource extends
-    RPCDataSource<DisambiguationReport<ResourceOperationScheduleComposite>> {
+public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperationScheduleComposite> {
 
-    // fields
-    public static final String FIELD_RESOURCE = "resource";
-    public static final String FIELD_LOCATION = "location";
-    public static final String FIELD_OPERATION = "operation";
-    public static final String FIELD_TIME = "time";
+    public enum Field {
+
+        ANCESTRY("ancestry", MSG.common_title_ancestry()),
+
+        OPERATION("operationName", MSG.dataSource_operationSchedule_field_operationName()),
+
+        RESOURCE("resource", MSG.common_title_resource()),
+
+        TIME("operationNextFireTime", MSG.dataSource_operationSchedule_field_nextFireTime()),
+
+        TYPE("typeId", MSG.common_title_type());
+
+        /**
+         * Corresponds to a property name of Resource (e.g. resourceType.name).
+         */
+        private String propertyName;
+
+        /**
+         * The table header for the field or property (e.g. Type).
+         */
+        private String title;
+
+        private Field(String propertyName, String title) {
+            this.propertyName = propertyName;
+            this.title = title;
+        }
+
+        public String propertyName() {
+            return propertyName;
+        }
+
+        public String title() {
+            return title;
+        }
+
+        public ListGridField getListGridField() {
+            return new ListGridField(propertyName, title);
+        }
+
+        public ListGridField getListGridField(int width) {
+            return new ListGridField(propertyName, title, width);
+        }
+    }
+
+    private Portlet portlet;
 
     //config settings
     private boolean operationsRangeNextEnabled = false;
     private int operationsRangeScheduled = -1;
-    private Portlet portlet;
 
     /** Build list of fields for the datasource and then adds them to it.
      */
@@ -73,21 +117,18 @@ public class ScheduledOperationsDataSource extends
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE,
-            MSG.dataSource_scheduledOperations_field_resource());
-        resourceField.setPrimaryKey(true);
+        DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE.propertyName, Field.RESOURCE.title);
         fields.add(resourceField);
 
-        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION,
-            MSG.dataSource_scheduledOperations_field_location(), 200);
-        fields.add(locationField);
+        DataSourceTextField ancestryField = new DataSourceTextField(Field.ANCESTRY.propertyName(), Field.ANCESTRY
+            .title());
+        fields.add(ancestryField);
 
-        DataSourceTextField operationField = new DataSourceTextField(FIELD_OPERATION,
-            MSG.dataSource_scheduledOperations_field_operation());
+        DataSourceTextField operationField = new DataSourceTextField(Field.OPERATION.propertyName(), Field.OPERATION
+            .title());
         fields.add(operationField);
 
-        DataSourceDateTimeField timeField = new DataSourceDateTimeField(FIELD_TIME,
-            MSG.dataSource_scheduledOperations_field_time());
+        DataSourceTextField timeField = new DataSourceTextField(Field.TIME.propertyName(), Field.TIME.title());
         fields.add(timeField);
 
         return fields;
@@ -124,80 +165,83 @@ public class ScheduledOperationsDataSource extends
         }
 
         GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
-            new AsyncCallback<List<DisambiguationReport<ResourceOperationScheduleComposite>>>() {
+            new AsyncCallback<PageList<ResourceOperationScheduleComposite>>() {
 
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(MSG.dataSource_scheduledOperations_error_fetchFailure(),
                         throwable);
                 }
 
-                public void onSuccess(List<DisambiguationReport<ResourceOperationScheduleComposite>> scheduledOpsList) {
-
-                    //translate DisambiguationReport into dataset entries
-                    response.setData(buildList(scheduledOpsList));
-                    //entry count
-                    if (null != scheduledOpsList) {
-                        response.setTotalRows(scheduledOpsList.size());
-                    } else {
-                        response.setTotalRows(0);
-                    }
-                    //pass off for processing
-                    processResponse(request.getRequestId(), response);
+                public void onSuccess(PageList<ResourceOperationScheduleComposite> result) {
+                    dataRetrieved(result, response, request);
                 }
             });
     }
 
-    /** Translates the DisambiguationReport of ProblemResourceComposites into specific
-     *  and ordered record values.
-     * 
-     * @param list DisambiguationReport of entries.
-     * @return Record[] ordered record entries.
-     */
-    protected Record[] buildList(List<DisambiguationReport<ResourceOperationScheduleComposite>> list) {
-
-        ListGridRecord[] dataValues = null;
-        if (list != null) {
-            dataValues = new ListGridRecord[list.size()];
-            int indx = 0;
-
-            for (DisambiguationReport<ResourceOperationScheduleComposite> report : list) {
-                ListGridRecord record = new ListGridRecord();
-
-                //disambiguated Resource name, decorated with html anchors to problem resources 
-                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-                    report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId(), true));
-                //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(report.getParents(), true));
-                //operation name.
-                record.setAttribute(FIELD_OPERATION, report.getOriginal().getOperationName());
-                //timestamp.
-                record.setAttribute(FIELD_TIME, new Date(report.getOriginal().getOperationNextFireTime()));
-
-                dataValues[indx++] = record;
-            }
+    protected void dataRetrieved(final PageList<ResourceOperationScheduleComposite> result, final DSResponse response,
+        final DSRequest request) {
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
+        for (ResourceOperationScheduleComposite composite : result) {
+            typesSet.add(composite.getResourceTypeId());
+            ancestries.add(composite.getAncestry());
         }
-        return dataValues;
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        // NOTE: this may be too labor intensive in general, but since this datasource is a singleton I couldn't
+        //       make it easily optional.
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+
+                Record[] records = buildRecords(result);
+                for (Record record : records) {
+                    // enhance resource name
+                    int resourceId = record.getAttributeAsInt("id");
+                    int resourceTypeId = record.getAttributeAsInt(Field.TYPE.propertyName);
+                    String resourceName = record.getAttributeAsString(Field.RESOURCE.propertyName);
+                    ResourceType type = types.get(resourceTypeId);
+                    record.setAttribute(Field.RESOURCE.propertyName, AncestryUtil.getResourceLongName(resourceId,
+                        resourceName, type));
+
+                    // decode ancestry
+                    String ancestry = record.getAttributeAsString(Field.ANCESTRY.propertyName());
+                    if (null == ancestry) {
+                        continue;
+                    }
+                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
+                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
+                    // decoded strings as different attributes. 
+                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
+                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
+                }
+                response.setData(records);
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
     @Override
-    public DisambiguationReport<ResourceOperationScheduleComposite> copyValues(Record from) {
-        throw new UnsupportedOperationException("ResourceOperations data is read only");
+    public ResourceOperationScheduleComposite copyValues(Record from) {
+        throw new UnsupportedOperationException("ResourceOperationScheduleComposite data is read only");
     }
 
     @Override
-    public ListGridRecord copyValues(DisambiguationReport<ResourceOperationScheduleComposite> from) {
+    public ListGridRecord copyValues(ResourceOperationScheduleComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-            from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
-        record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(from.getParents(), true));
-        record.setAttribute(FIELD_OPERATION, from.getOriginal().getOperationName());
-        record.setAttribute(FIELD_TIME, from.getOriginal().getOperationNextFireTime());
+        record.setAttribute("id", from.getResourceId());
+        record.setAttribute(Field.ANCESTRY.propertyName, from.getAncestry());
+        record.setAttribute(Field.OPERATION.propertyName, from.getOperationName());
+        record.setAttribute(Field.RESOURCE.propertyName, from.getResourceName());
+        record.setAttribute(Field.TIME.propertyName, new Date(from.getOperationNextFireTime()));
+        record.setAttribute(Field.TYPE.propertyName, from.getResourceTypeId());
 
         record.setAttribute("entity", from);
-
         return record;
-
     }
 
     public boolean isOperationsRangeScheduleEnabled() {

@@ -29,12 +29,15 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -46,6 +49,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
@@ -78,23 +82,24 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(extendLocatorId("RecentBundleDeploy"));
 
     //retrieve localized text
-    protected String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
-    protected String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
-    protected String RECENT_ALERTS = MSG.common_title_recent_alerts();
-    protected String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
-    protected String RECENT_OOB = MSG.common_title_recent_oob_metrics();
-    protected String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
-    protected String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
-    protected String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
-    protected String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    protected String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
-    protected String RECENT_EVENTS = MSG.common_title_recent_event_counts();
-    protected String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
-    protected String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
-    protected String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
-    protected String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
-    protected String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
-    protected String SEE_MORE = MSG.common_msg_see_more();
+    public static String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
+    public static String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
+    public static String RECENT_ALERTS = MSG.common_title_recent_alerts();
+    public static String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
+    public static String RECENT_OOB = MSG.common_title_recent_oob_metrics();
+    public static String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
+    public static String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
+    public static String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
+    public static String RECENT_OPERATIONS = MSG.common_title_recent_operations();
+    public static String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
+    public static String RECENT_EVENTS = MSG.common_title_recent_event_counts();
+    public static String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
+    public static String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
+    public static String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
+    public static String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
+    public static String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
+    public static String SEE_MORE = MSG.common_msg_see_more();
+    public static String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
 
     private ResourceGroupComposite groupComposite = null;
     private ResourceComposite resourceComposite = null;
@@ -379,7 +384,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param md MeasurementDefinition
      * @return formatted String representation of the last value retrieved.
      */
-    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
+    //    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
+    public static String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
         String convertedValue = "";
         String[] convertedValues = GwtMonitorUtils.formatSimpleMetrics(new double[] { lastValue }, md);
         convertedValue = convertedValues[0];
@@ -393,7 +399,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param emptyMessage Contents of the empty region
      * @return
      */
-    public LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
+    public static LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
         LocatableDynamicForm row = null;
         row = new LocatableDynamicForm(locatorId);
 
@@ -406,7 +412,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return row;
     }
 
-    public StaticTextItem newTextItemIcon(String imageSrc, String mouseOver) {
+    public static StaticTextItem newTextItemIcon(String imageSrc, String mouseOver) {
         StaticTextItem iconItem = new StaticTextItem();
         FormItemIcon img = new FormItemIcon();
         img.setSrc(imageSrc);
@@ -420,7 +426,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return iconItem;
     }
 
-    public LinkItem newLinkItem(String title, String destination) {
+    public static LinkItem newLinkItem(String title, String destination) {
         LinkItem link = new LinkItem();
         link.setLinkTitle(title);
         link.setTitle(title);
@@ -430,7 +436,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return link;
     }
 
-    public StaticTextItem newTextItem(String contents) {
+    public static StaticTextItem newTextItem(String contents) {
         StaticTextItem item = new StaticTextItem();
         item.setDefaultValue(contents);
         item.setShowTitle(false);
@@ -445,13 +451,33 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param linkDestination
      * @param column
      */
-    protected void addSeeMoreLink(LocatableDynamicForm form, String linkDestination, VLayout column) {
+    public static void addSeeMoreLink(LocatableDynamicForm form, String linkDestination, VLayout column) {
         if ((form != null) && (column != null)) {
             form.setNumCols(1);
             LinkItem link = newLinkItem(SEE_MORE, linkDestination);
             form.setItems(link);
             column.addMember(form);
         }
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+     *
+     * @param resultCountSelector
+     * @param portletConfig
+     * returns populated configuration object.
+     */
+    public static Configuration saveResultCounterSettings(final SelectItem resultCountSelector,
+        final Configuration portletConfig) {
+        String selectedValue;
+        if ((resultCountSelector != null) && (portletConfig != null)) {
+            selectedValue = resultCountSelector.getValue().toString();
+            if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
+                portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
+            } else {
+                portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
+            }
+        }
+        return portletConfig;
     }
 
     protected boolean displayGroupConfigurationUpdates(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {

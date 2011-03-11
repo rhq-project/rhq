@@ -117,11 +117,28 @@ public class PortletWindow extends LocatableWindow {
             "[SKIN]/headerIcons/clipboard.png"), rssHandler);
         RssHeader.setTooltip(RSS);
 
+        //detect customized Header icon
+        HeaderControl headerIcon = null;
+        String portletKey = storedPortlet.getPortletKey();
+        String iconUrl = PortletFactory.getRegisteredPortletIcon(portletKey);
+        if ((iconUrl != null) && (!iconUrl.trim().isEmpty())) {
+            HeaderIcon icon = new HeaderIcon(iconUrl);
+            headerIcon = new HeaderControl(icon);
+        }
+
         // customize the appearance and order of the controls in the window header
-        setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(
-            extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler), new LocatableHeaderControl(
-            extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
-            extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
+        if (headerIcon != null) {
+            setHeaderControls(HeaderControls.MINIMIZE_BUTTON, headerIcon, HeaderControls.HEADER_LABEL,
+                new LocatableHeaderControl(extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler),
+                new LocatableHeaderControl(extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler),
+                new LocatableHeaderControl(extendLocatorId("Help"), HeaderControl.HELP, helpHandler),
+                HeaderControls.CLOSE_BUTTON);
+        } else {
+            setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(
+                extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler), new LocatableHeaderControl(
+                extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
+                extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
+        }
 
         // enable predefined component animation
         setAnimateMinimize(true);

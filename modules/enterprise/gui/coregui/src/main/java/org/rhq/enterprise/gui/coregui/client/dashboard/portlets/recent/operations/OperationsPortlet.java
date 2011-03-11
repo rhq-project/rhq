@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
  */
 
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -29,7 +30,11 @@ import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HeaderSpan;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -43,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -105,8 +111,6 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     @Override
     protected void onInit() {
         super.onInit();
-        //set title for larger container
-        //setTitle(TITLE);
 
         this.recentOperationsGrid = new LocatableListGrid(recentOperations);
         recentOperationsGrid.setDataSource(getDataSourceCompleted());
@@ -114,9 +118,12 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         recentOperationsGrid.setTitle(recentOperations);
         recentOperationsGrid.setWidth100();
         //defining header span
-        String[] completedRows = new String[] { RecentOperationsDataSource.FIELD_LOCATION,
-            RecentOperationsDataSource.FIELD_OPERATION, RecentOperationsDataSource.FIELD_RESOURCE,
-            RecentOperationsDataSource.FIELD_STATUS, RecentOperationsDataSource.FIELD_TIME };
+        String[] completedRows = new String[] { //
+        RecentOperationsDataSource.Field.RESOURCE.propertyName(), //
+            RecentOperationsDataSource.Field.ANCESTRY.propertyName(), //            
+            RecentOperationsDataSource.Field.OPERATION.propertyName(), //
+            RecentOperationsDataSource.Field.TIME.propertyName(), //
+            RecentOperationsDataSource.Field.STATUS.propertyName() };
         recentOperationsGrid.setHeaderSpans(new HeaderSpan(recentOperations, completedRows));
         recentOperationsGrid.setHeaderSpanHeight(20);
         recentOperationsGrid.setHeaderHeight(40);
@@ -131,9 +138,11 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         scheduledOperationsGrid.setAutoFetchData(true);
         scheduledOperationsGrid.setTitle(scheduledOperations);
         scheduledOperationsGrid.setWidth100();
-        String[] scheduledRows = new String[] { ScheduledOperationsDataSource.FIELD_LOCATION,
-            ScheduledOperationsDataSource.FIELD_OPERATION, ScheduledOperationsDataSource.FIELD_RESOURCE,
-            ScheduledOperationsDataSource.FIELD_TIME };
+        String[] scheduledRows = new String[] { //
+        ScheduledOperationsDataSource.Field.RESOURCE.propertyName(), //
+            ScheduledOperationsDataSource.Field.ANCESTRY.propertyName(), //            
+            ScheduledOperationsDataSource.Field.OPERATION.propertyName(), //
+            ScheduledOperationsDataSource.Field.TIME.propertyName() };
         scheduledOperationsGrid.setHeaderSpans(new HeaderSpan(scheduledOperations, scheduledRows));
         scheduledOperationsGrid.setHeaderSpanHeight(20);
         scheduledOperationsGrid.setHeaderHeight(40);
@@ -144,7 +153,69 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         scheduledOperationsGrid.setWrapCells(true);
 
         addMember(scheduledOperationsGrid);
+    }
 
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        ListGridField resourceRecent = new ListGridField(RecentOperationsDataSource.Field.RESOURCE.propertyName(),
+            RecentOperationsDataSource.Field.RESOURCE.title());
+
+        ListGridField ancestryRecent = new ListGridField(RecentOperationsDataSource.Field.ANCESTRY.propertyName(),
+            RecentOperationsDataSource.Field.ANCESTRY.title());
+        ancestryRecent.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+            }
+        });
+        ancestryRecent.setShowHover(true);
+        ancestryRecent.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return "<p style='width:400px'>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+            }
+        });
+
+        ListGridField operationRecent = new ListGridField(RecentOperationsDataSource.Field.OPERATION.propertyName(),
+            RecentOperationsDataSource.Field.OPERATION.title());
+
+        ListGridField timeRecent = new ListGridField(RecentOperationsDataSource.Field.TIME.propertyName(),
+            RecentOperationsDataSource.Field.TIME.title(), 150);
+
+        ListGridField statusRecent = new ListGridField(RecentOperationsDataSource.Field.STATUS.propertyName(),
+            RecentOperationsDataSource.Field.STATUS.title(), 50);
+        statusRecent.setAlign(Alignment.CENTER);
+
+        recentOperationsGrid.setFields(resourceRecent, ancestryRecent, operationRecent, timeRecent, statusRecent);
+
+        ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
+            ScheduledOperationsDataSource.Field.RESOURCE.title());
+
+        ListGridField ancestryNext = new ListGridField(ScheduledOperationsDataSource.Field.ANCESTRY.propertyName(),
+            ScheduledOperationsDataSource.Field.ANCESTRY.title());
+        ancestryNext.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+            }
+        });
+        ancestryNext.setShowHover(true);
+        ancestryNext.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return "<p style='width:400px'>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
+                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+            }
+        });
+
+        ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
+            ScheduledOperationsDataSource.Field.OPERATION.title());
+
+        ListGridField timeNext = new ListGridField(ScheduledOperationsDataSource.Field.TIME.propertyName(),
+            ScheduledOperationsDataSource.Field.TIME.title(), 150);
+
+        scheduledOperationsGrid.setFields(resourceNext, ancestryNext, operationNext, timeNext);
     }
 
     @Override

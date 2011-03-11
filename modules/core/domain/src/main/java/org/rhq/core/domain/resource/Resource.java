@@ -909,7 +909,6 @@ public class Resource implements Comparable<Resource>, Serializable {
     private String name;
 
     @Column(name = "ANCESTRY", nullable = true)
-    @Summary(index = 5)
     private String ancestry;
 
     @Column(name = "INVENTORY_STATUS")

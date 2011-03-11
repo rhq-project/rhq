@@ -165,11 +165,15 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
     @SuppressWarnings("unchecked")
     public List<Resource> getAutoClusterResources(Subject subject, ClusterKey clusterKey) {
         // Build the query
-        String queryString = getClusterKeyQuery(clusterKey);
+        Map<String, Object> params = new HashMap<String, Object>();
+        String queryString = getClusterKeyQuery(clusterKey, params);
         if (log.isDebugEnabled()) {
             log.debug("getAutoClusterResources() generated query: " + queryString);
         }
         Query query = entityManager.createQuery(queryString);
+        for (Map.Entry<String, Object> param : params.entrySet()) {
+            query.setParameter(param.getKey(), param.getValue());
+        }
         List<Resource> rs = query.getResultList();
 
         return rs;
@@ -300,7 +304,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
         }
     }
 
-    private String getClusterKeyQuery(ClusterKey clusterKey) {
+    private String getClusterKeyQuery(ClusterKey clusterKey, Map<String, Object> params) {
         if (null == clusterKey)
             return null;
         if (0 == clusterKey.getDepth())
@@ -308,7 +312,7 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
 
         StringBuilder query = new StringBuilder();
 
-        buildQuery(query, clusterKey, clusterKey.getHierarchy());
+        buildQuery(query, params, clusterKey, clusterKey.getHierarchy());
 
         return query.toString();
     }
@@ -323,25 +327,33 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
      *     SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir 
      *     WHERE rg = :rgId
      *  </pre>
-     *  The parameters are actually filled in with the literal values.
+     * 
+     *  Some of the parameters are actually filled in with the literal values, however, the params
+     *  map will be filled with some parameters that need to be set on the query before the query can
+     *  be executed. This is necessary to avoid having to escape characters (like backslashes) that might
+     *  exist in resource keys.
      */
-    private void buildQuery(StringBuilder query, ClusterKey clusterKey, List<ClusterKey.Node> nodes) {
+    private void buildQuery(StringBuilder query, Map<String, Object> params, ClusterKey clusterKey,
+        List<ClusterKey.Node> nodes) {
         int size = nodes.size();
         ClusterKey.Node node = nodes.get(size - 1);
         String alias = "r" + size;
+        String keyParam = "key" + size;
 
         // TODO: Change subquery syntax to be like the JOIN below.
         query.append(" SELECT " + alias + " FROM Resource " + alias + " WHERE ");
-        query.append(alias + ".resourceKey = '" + node.getResourceKey() + "' AND ");
+        query.append(alias + ".resourceKey = :" + keyParam + " AND ");
         query.append(alias + ".resourceType = " + node.getResourceTypeId() + " AND ");
         query.append(alias + ".parentResource IN ( ");
+
+        params.put(keyParam, node.getResourceKey());
 
         // this is an authorization-related query, so use implicitResource (not explicitResources)
         if (1 == size) {
             query.append("SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
                 + clusterKey.getClusterGroupId());
         } else {
-            buildQuery(query, clusterKey, nodes.subList(0, size - 1));
+            buildQuery(query, params, clusterKey, nodes.subList(0, size - 1));
         }
 
         query.append(")");

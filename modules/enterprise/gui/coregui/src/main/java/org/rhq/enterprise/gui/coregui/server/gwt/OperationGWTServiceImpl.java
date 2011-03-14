@@ -67,7 +67,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         try {
             PageList<ResourceOperationHistory> result = operationManager.findResourceOperationHistoriesByCriteria(
                 getSessionSubject(), criteria);
-            if (result.size() > 0) {
+            if (!result.isEmpty()) {
                 List<Resource> resources = new ArrayList<Resource>(result.size());
                 for (ResourceOperationHistory history : result) {
                     resources.add(history.getResource());

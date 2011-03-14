@@ -43,6 +43,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -247,8 +248,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     }
 
     protected ListGridField createAncestryField() {
-        ListGridField ancestryField = new ListGridField(ResourceOperationHistoryDataSource.Field.ANCESTRY, MSG
-            .common_title_ancestry());
+        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
         ancestryField.setAlign(Alignment.LEFT);
         ancestryField.setCellAlign(Alignment.LEFT);
         return ancestryField;

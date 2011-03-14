@@ -1,6 +1,5 @@
 package org.rhq.enterprise.gui.coregui.client.alert;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -96,11 +95,7 @@ public class AlertPortletDataSource extends AlertDataSource {
             }
 
             public void onSuccess(PageList<Alert> result) {
-                long fetchTime = System.currentTimeMillis() - start;
-                Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
-                processResponse(request.getRequestId(), response);
+                dataRetrieved(result, response, request);
             }
         });
     }

@@ -27,10 +27,12 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -39,6 +41,7 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -50,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 /**
  * @author Joseph Marques
  */
-public class EventCompositeHistoryView extends TableSection {
+public class EventCompositeHistoryView extends TableSection<EventCompositeDatasource> {
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier("timestamp", SortDirection.DESCENDING);
     private EntityContext context;
@@ -97,18 +100,53 @@ public class EventCompositeHistoryView extends TableSection {
 
     @Override
     protected void configureTable() {
-        ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp(), 125);
-        ListGridField severityField = new ListGridField("severity", MSG.view_inventory_eventHistory_severity(), 75);
+        ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp());
+
+        ListGridField severityField = new ListGridField("severity", MSG.view_inventory_eventHistory_severity());
+        severityField.setAlign(Alignment.CENTER);
         severityField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return Canvas.imgHTML("subsystems/event/" + o + "_16.png", 16, 16) + o;
+                String icon = ImageManager.getEventSeverityBadge(EventSeverity.valueOf(o.toString()));
+                return Canvas.imgHTML(icon);
             }
         });
+        severityField.setShowHover(true);
+        severityField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                EventSeverity severity = EventSeverity.valueOf(record.getAttribute("severity"));
+                switch (severity) {
+                case DEBUG:
+                    return MSG.common_severity_debug();
+                case INFO:
+                    return MSG.common_severity_info();
+                case WARN:
+                    return MSG.common_severity_warn();
+                case ERROR:
+                    return MSG.common_severity_error();
+                case FATAL:
+                    return MSG.common_severity_fatal();
+                }
+                return null;
+            }
+        });
+
         ListGridField detailsField = new ListGridField("details-highlight", MSG.view_inventory_eventHistory_details());
-        ListGridField sourceField = new ListGridField("source", MSG.view_inventory_eventHistory_sourceLocation(), 275);
+        detailsField.setCellFormatter(new CellFormatter() {
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (((String) value).length() <= 200) {
+                    return (String) value;
+                } else {
+                    return ((String) value).substring(0, 200); // first 200 chars
+                }
+            }
+        });
+
+        ListGridField sourceField = new ListGridField("source", MSG.view_inventory_eventHistory_sourceLocation());
         sourceField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String sourceLocation = (String) o;
+                String sourceLocation = listGridRecord.getAttribute("source");
                 int length = sourceLocation.length();
                 if (length > 40) {
                     return "..." + sourceLocation.substring(length - 40); // the last 40 chars
@@ -116,6 +154,19 @@ public class EventCompositeHistoryView extends TableSection {
                 return sourceLocation;
             }
         });
+        sourceField.setShowHover(true);
+        sourceField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String sourceLocation = record.getAttribute("source");
+                return (sourceLocation.length() > 40) ? sourceLocation : null;
+            }
+        });
+
+        timestampField.setWidth("20%");
+        severityField.setWidth("25");
+        detailsField.setWidth("*");
+        sourceField.setWidth("20%");
 
         setListGridFields(timestampField, severityField, detailsField, sourceField);
 

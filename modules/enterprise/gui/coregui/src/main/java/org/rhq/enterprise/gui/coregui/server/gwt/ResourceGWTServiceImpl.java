@@ -107,7 +107,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "productVersion                  "}
         "tags" };
 
-    private static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
+    public static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
 
     @Override
     public void init(ServletConfig config) throws ServletException {

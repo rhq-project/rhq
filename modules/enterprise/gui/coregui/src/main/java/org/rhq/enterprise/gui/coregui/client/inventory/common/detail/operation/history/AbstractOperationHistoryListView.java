@@ -26,8 +26,10 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -75,6 +77,11 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     protected void configureTable() {
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
+
+        // explicitly sort on started time so the user can see the last operation at the top and is sorted descendingly
+        SortSpecifier sortspec = new SortSpecifier(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
+            SortDirection.DESCENDING);
+        getListGrid().setSort(new SortSpecifier[] { sortspec });
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {

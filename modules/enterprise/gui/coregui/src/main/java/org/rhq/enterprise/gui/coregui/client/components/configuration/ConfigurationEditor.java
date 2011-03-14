@@ -500,7 +500,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (propertyMap instanceof Configuration) {
             this.topLevelPropertiesValuesManager.addMember(form);
         }
-        form.setValidateOnExit(true);  // TODO: Remove this?
+        //form.setValidateOnExit(true);  // TODO: Remove this?
         form.setHiliteRequiredFields(true);
         form.setNumCols(4);
         form.setCellPadding(5);
@@ -1051,6 +1051,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         final DynamicForm listGrid = new DynamicForm();
         vLayout.addMember(listGrid);
 
+        // TODO (ips, 03/14/11): Make this a ListGrid, rather than a SelectItem.
         final SelectItem membersItem = new SelectItem(propertyList.getName());
         membersItem.setShowTitle(false);
         membersItem.setMultiple(true);
@@ -1114,11 +1115,12 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
-            final IButton newButton = new LocatableIButton(extendLocatorId("New"), MSG.common_button_new());
+            final IButton newButton = new LocatableIButton(vLayout.extendLocatorId("New"), MSG.common_button_new());
             newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             newButton.setTooltip(MSG.view_configEdit_tooltip_2());
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
+                    // TODO: selenium locators
                     final Window popup = new Window();
                     popup.setTitle(MSG.view_configEdit_addItem());
                     popup.setWidth(300);
@@ -1139,6 +1141,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                     final PropertySimple newMemberPropertySimple = new PropertySimple(propertyName, null);
 
                     FormItem simpleField = buildSimpleField(memberPropertyDefinitionSimple, newMemberPropertySimple);
+                    simpleField.setTitle(memberPropertyDefinitionSimple.getDisplayName());
+                    simpleField.setShowTitle(true);
                     simpleField.setAlign(Alignment.CENTER);
                     simpleField.setDisabled(false);
                     simpleField.setRequired(true);
@@ -1433,9 +1437,6 @@ public class ConfigurationEditor extends LocatableVLayout {
             lengthRangeValidator.setMax(PropertySimple.MAX_VALUE_LENGTH);
             typeValidator = lengthRangeValidator;
             break;
-        case BOOLEAN:
-            typeValidator = new IsBooleanValidator();
-            break;
         case INTEGER:
         case LONG:
             typeValidator = new IsIntegerValidator();
@@ -1510,6 +1511,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         final LocatableVLayout layout = new LocatableVLayout(popup.extendLocatorId("Layout"));
         layout.setHeight100();
+        layout.setMargin(8);
 
         final DynamicForm childForm = buildPropertiesForm(layout.extendLocatorId("Form"), memberDefinitions, workingMap);
         childForm.setHeight100();
@@ -1525,6 +1527,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
+                if (!childForm.validate()) {
+                    okButton.disable();
+                    return;
+                }
                 if (newRow) {
                     try {
                         list.add(workingMap);
@@ -1555,7 +1561,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         // Only enable the OK button if all properties are valid.
         childForm.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                okButton.setDisabled(!childForm.validate());
+                // TODO (ips, 03/14/11): Ideally, we would validate the form here, but it's preventing boolean prop
+                //                       radio buttons from being selectable, most likely due to a SmartGWT bug.
+                //okButton.setDisabled(!childForm.validate());
+                okButton.setDisabled(false);
             }
         });
 

@@ -517,6 +517,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     private void addHeaderItems(List<FormItem> fields) {
         final String CELL_STYLE = "configurationEditorHeaderCell";
 
+        // TODO: i18n
         StaticTextItem nameHeader = new StaticTextItem();
         nameHeader.setValue("Property");
         nameHeader.setShowTitle(false);

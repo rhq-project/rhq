@@ -18,12 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertDefinitionGWTService;
@@ -44,6 +46,17 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         try {
             PageList<AlertDefinition> results = this.alertDefManager.findAlertDefinitionsByCriteria(
                 getSessionSubject(), criteria);
+            if (!results.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(results.size());
+                for (AlertDefinition alertDefinition : results) {
+                    Resource res = alertDefinition.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
             return SerialUtility.prepare(results, "findAlertDefinitionsByCriteria");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));

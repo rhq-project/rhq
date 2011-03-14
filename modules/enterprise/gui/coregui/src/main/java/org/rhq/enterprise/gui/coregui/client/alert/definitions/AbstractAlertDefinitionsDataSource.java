@@ -195,10 +195,16 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
                 }
 
                 public void onSuccess(PageList<AlertDefinition> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
+                    dataRetrieved(result, response, request);
                 }
             });
+    }
+
+    protected void dataRetrieved(final PageList<AlertDefinition> result, final DSResponse response,
+        final DSRequest request) {
+
+        response.setData(buildRecords(result));
+        processResponse(request.getRequestId(), response);
     }
 
     protected abstract AlertDefinitionCriteria getCriteria(DSRequest request);

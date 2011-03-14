@@ -164,8 +164,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         fields.add(statusField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
-            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG
-                .view_alerts_field_resource());
+            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager

@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.resource;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,35 +117,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     // ResourceFactoryManagerLocal Implementation  --------------------------------------------
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName,
-        String resourceKey) {
-        // Load persisted entities
-        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
-        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
-
-        Subject overLord = subjectManager.getOverlord();
-        // Check to see if the resource exists but marked as deleted
-        Resource resource = resourceManager.getResourceByParentAndKey(overLord, parentResource, resourceKey,
-            resourceType.getPlugin(), resourceType.getName());
-
-        if (resource == null) {
-            // Create the resource
-            resource = new Resource(resourceKey, resourceName, resourceType);
-            resource.setParentResource(parentResource);
-            resource.setAgent(parentResource.getAgent());
-            resource.setInventoryStatus(InventoryStatus.COMMITTED);
-
-            // Persist the resource
-            entityManager.persist(resource);
-        } else {
-            resource.setInventoryStatus(InventoryStatus.COMMITTED);
-            resource.setItime(Calendar.getInstance().getTimeInMillis());
-        }
-
-        return resource;
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeCreateResource(CreateResourceResponse response) {
         log.debug("Received call to complete create resource: " + response);
 
@@ -216,6 +186,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // set the resource deleted and update the db in case it matters to the child operations
             resource.setInventoryStatus(InventoryStatus.DELETED);
+            resource.setParentResource(null);
             resource.setItime(System.currentTimeMillis());
             entityManager.merge(resource);
 
@@ -230,6 +201,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests() {
         try {
             Query query;

@@ -19,10 +19,10 @@
 
 package org.rhq.enterprise.gui.coregui.client.util.preferences;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
@@ -60,50 +60,17 @@ public class MeasurementUserPreferences {
         public List<String> views;
     }
 
-    public static class MetricRangePreferences {
-        // if readOnly is true, then the beginning and ending range dates are specified with explicit dates
-        // if readOnly is false, then the time is relative to NOW and is specified as <lastN> units of <unit> time
-        public boolean explicitBeginEnd;
-
-        // simple, when readOnly is false
-        public int lastN;
-        public int unit; // see MeasurementUtility.UNIT_xxx
-
-        // advanced, when readOnly is true
-        public Long begin;
-        public Long end;
-
-        /**
-         * Returns a two element <code>List</code> of <code>Long</code> objects representing the begin and end times (in
-         * milliseconds since the epoch) of the time frame.
-         **/
-        public ArrayList<Long> getBeginEndTimes() {
-            if (explicitBeginEnd) {
-                ArrayList<Long> times = new ArrayList<Long>(2);
-                times.add(begin);
-                times.add(end);
-                return times;
-            } else {
-                return MeasurementUtility.calculateTimeFrame(lastN, unit);
-            }
-        }
-
-        public String toString() {
-            return (explicitBeginEnd) ? "[begin=" + begin + end + ",end=" + end + "]" : "[lastN=" + lastN + ",unit="
-                + unit + "]";
-        }
-    }
-
     public MetricRangePreferences getMetricRangePreferences() {
         MetricRangePreferences prefs = new MetricRangePreferences();
 
         prefs.explicitBeginEnd = Boolean.valueOf(
-            userPrefs.getPreference(PREF_METRIC_RANGE_BEGIN_END_FLAG, DEFAULT_VALUE_RANGE_RO)).booleanValue();
+            userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_BEGIN_END_FLAG, DEFAULT_VALUE_RANGE_RO))
+            .booleanValue();
         if (prefs.explicitBeginEnd == false) {
-            prefs.lastN = Integer.valueOf(userPrefs.getPreference(PREF_METRIC_RANGE_LASTN, DEFAULT_VALUE_RANGE_LASTN
-                .toString()));
-            prefs.unit = Integer.valueOf(userPrefs.getPreference(PREF_METRIC_RANGE_UNIT, DEFAULT_VALUE_RANGE_UNIT
-                .toString()));
+            prefs.lastN = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_LASTN,
+                DEFAULT_VALUE_RANGE_LASTN.toString()));
+            prefs.unit = Integer.valueOf(userPrefs.getPreferenceEmptyStringIsDefault(PREF_METRIC_RANGE_UNIT,
+                DEFAULT_VALUE_RANGE_UNIT.toString()));
 
             List<Long> range = MeasurementUtility.calculateTimeFrame(prefs.lastN, prefs.unit);
             prefs.begin = range.get(0);
@@ -111,7 +78,7 @@ public class MeasurementUserPreferences {
         } else {
             try {
                 String rangeString = userPrefs.getPreference(PREF_METRIC_RANGE);
-                if (rangeString != null) {
+                if (rangeString != null && rangeString.trim().length() > 0) {
                     if (rangeString.contains(",")) { // legacy support: old prefs used to use commas
                         rangeString = rangeString.replace(",", UserPreferences.PREF_LIST_DELIM);
                         //userPrefs.setPreference(PREF_METRIC_RANGE, rangeString); // TODO set only if we don't support JSF anymore

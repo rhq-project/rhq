@@ -30,10 +30,10 @@ import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -59,8 +59,7 @@ public interface ResourceGWTService extends RemoteService {
 
     List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException;
 
-    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems)
-        throws RuntimeException;
+    PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException;
 
     Resource getPlatformForResource(int resourceId) throws RuntimeException;
 
@@ -82,4 +81,5 @@ public interface ResourceGWTService extends RemoteService {
 
     List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException;
 
+    List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException;
 }

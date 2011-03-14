@@ -53,7 +53,6 @@ public class ClusterKey implements Serializable {
     private int clusterGroupId = 0;
     private List<ClusterKey.Node> hierarchy;
     private String key = null;
-    private String namedKey = null;
 
     public ClusterKey() {
     }

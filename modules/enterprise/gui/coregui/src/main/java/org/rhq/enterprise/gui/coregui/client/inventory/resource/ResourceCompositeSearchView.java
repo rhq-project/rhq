@@ -44,10 +44,11 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, null, criteria, title, headerIcons);
     }
 
-    protected RPCDataSource getDataSourceInstance() {
+    protected RPCDataSource<?> getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void configureTable() {
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG

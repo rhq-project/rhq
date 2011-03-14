@@ -84,7 +84,7 @@
     <jaxb-impl.version>2.1.9</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
-    <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
+    <ojdbc5.version>11.2.0.2.0</ojdbc5.version>
     <ems.version>1.2.15.1</ems.version>
     <postgresql.version>9.0-801.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
@@ -632,7 +632,7 @@
         </configuration>
       </plugin>
 
-      <!-- Ensure all code compiles and runs on Java 5 or later. -->
+      <!-- Ensure all code compiles and runs on Java 6 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -1127,6 +1127,43 @@
               </plugin>
             </plugins>
           </build>
+      </profile>
+
+      <!-- This profile should be enabled when a release is being published. 
+           It will ensure that sources and javadoc jars are built and published
+           for each source module. -->
+      <profile>
+         <id>publish</id>
+
+         <build>
+            <plugins>
+
+                <plugin>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <executions>
+                    <execution>
+                      <id>attach-sources</id>
+                      <goals>
+                        <goal>jar</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                </plugin>
+
+                <plugin>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <executions>
+                    <execution>
+                      <id>attach-javadocs</id>
+                      <goals>
+                        <goal>jar</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                </plugin>
+
+            </plugins>
+         </build>
       </profile>
 
   </profiles>

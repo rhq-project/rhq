@@ -9,7 +9,9 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import java.util.List;
 
 /**
+ * A ListGridRecord representation of an RHQ PropertyMap.
  *
+ * @author Ian Springer
  */
 public class PropertyMapListGridRecord extends ListGridRecord {
 
@@ -41,22 +43,28 @@ public class PropertyMapListGridRecord extends ListGridRecord {
             PropertySimple propertySimple = propertyMap.getSimple(propertyName);
 
             if ((propertySimple != null) && (propertySimple.getStringValue() != null)) {
-                switch (((PropertyDefinitionSimple) subDef).getType()) {
-                    case BOOLEAN:
-                        setAttribute(propertyName, propertySimple.getBooleanValue());
-                        break;
-                    case INTEGER:
-                        setAttribute(propertyName, propertySimple.getIntegerValue());
-                        break;
-                    case FLOAT:
-                        setAttribute(propertyName, propertySimple.getFloatValue());
-                        break;
-                    case DOUBLE:
-                        setAttribute(propertyName, propertySimple.getDoubleValue());
-                        break;
-                    default:
-                        setAttribute(propertyName, propertySimple.getStringValue());
-                        break;
+                try {
+                    switch (((PropertyDefinitionSimple) subDef).getType()) {
+                        case BOOLEAN:
+                            setAttribute(propertyName, propertySimple.getBooleanValue());
+                            break;
+                        case INTEGER:
+                            setAttribute(propertyName, propertySimple.getIntegerValue());
+                            break;
+                        case FLOAT:
+                            setAttribute(propertyName, propertySimple.getFloatValue());
+                            break;
+                        case DOUBLE:
+                            setAttribute(propertyName, propertySimple.getDoubleValue());
+                            break;
+                        default:
+                            setAttribute(propertyName, propertySimple.getStringValue());
+                            break;
+                    }
+                } catch (Exception e) {
+                    // value is not valid according to the type specified by the prop def; validation code in
+                    // ConfigurationEditor should catch this later on - for now, set the value as a string.
+                    setAttribute(propertyName, propertySimple.getStringValue());
                 }
             } else {
                 setAttribute(propertyName, (String) null);

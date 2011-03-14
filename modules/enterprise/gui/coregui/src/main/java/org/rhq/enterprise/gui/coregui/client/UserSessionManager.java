@@ -354,7 +354,7 @@ public class UserSessionManager {
                                                 }
 
                                                 public void onSuccess(Subject result) {
-                                                    Log.trace("Succesfully processed subject '"
+                                                    Log.trace("Successfully processed subject '"
                                                         + validSessionSubject.getName() + "' for LDAP.");
                                                     callback.onSuccess(validSessionSubject);
                                                     return;

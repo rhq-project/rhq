@@ -61,8 +61,8 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
                     }
 
                     public void onSuccess(PageList<GroupOperationHistory> result) {
-                        GroupOperationHistory item = result.get(0);
-                        displayDetails(item);
+                        GroupOperationHistory groupOperationHistory = result.get(0);
+                        displayDetails(groupOperationHistory);
                     }
                 });
     }

@@ -112,7 +112,7 @@ public class Message {
     }
 
     public Message(String conciseMessage, Throwable details, Severity severity, EnumSet<Option> options) {
-        this(conciseMessage, ErrorHandler.getAllMessages(details), severity, options);
+        this(conciseMessage, ErrorHandler.getAllMessages(details, true), severity, options);
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {

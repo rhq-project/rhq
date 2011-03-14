@@ -427,6 +427,15 @@ public final class CriteriaQueryGenerator {
         StringBuilder conjunctiveResults = new StringBuilder();
         boolean firstCrit = true;
         for (Map.Entry<String, Object> filterField : filterFields.entrySet()) {
+            Object filterFieldValue = filterField.getValue();
+
+            // if this filter field is non-binding (that is, the query has no parameter whose value is to be bound for the field)
+            // and that filter field is turned off, do nothing and continue to the next filter.
+            // this in effect does not filter on this field at all.
+            if (Criteria.NonBindingOverrideFilter.OFF.equals(filterFieldValue)) {
+                continue;
+            }
+
             if (firstCrit) {
                 firstCrit = false;
             } else {
@@ -439,7 +448,7 @@ public final class CriteriaQueryGenerator {
                 fragment = fixFilterOverride(override, fieldName);
             } else {
                 String operator = "=";
-                if (filterField.getValue() instanceof String) {
+                if (filterFieldValue instanceof String) {
                     operator = "like";
                     if (wantCaseInsensitiveMatch) {
                         fragment = "LOWER( " + alias + "." + fieldName + " ) " + operator + " :" + fieldName;
@@ -754,6 +763,8 @@ public final class CriteriaQueryGenerator {
                 query.setParameter("tagSemantic", tag.getSemantic());
                 query.setParameter("tagName", tag.getName());
 
+            } else if (value instanceof Criteria.NonBindingOverrideFilter) {
+                // skip this one - do nothing since there is no parameter binding for this value
             } else {
                 if (value instanceof String) {
                     value = prepareStringBindValue((String) value);

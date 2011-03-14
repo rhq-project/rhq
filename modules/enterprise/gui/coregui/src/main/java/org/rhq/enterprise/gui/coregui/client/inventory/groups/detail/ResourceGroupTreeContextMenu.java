@@ -23,7 +23,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ClusterKey;
@@ -31,6 +30,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTreeView.ResourceGroupEnhancedTreeNode;
 
 /**
  * @author Greg Hinkle
@@ -41,7 +41,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
         super(locatorId);
     }
 
-    public void showContextMenu(TreeNode node) {
+    public void showContextMenu(ResourceGroupEnhancedTreeNode node) {
 
         final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
         if (clusterKey != null) {

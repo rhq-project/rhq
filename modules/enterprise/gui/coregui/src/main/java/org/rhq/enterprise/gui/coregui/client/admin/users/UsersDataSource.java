@@ -54,7 +54,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class UsersDataSource extends RPCDataSource<Subject> {
 
     private static UsersDataSource INSTANCE;
-    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
+
+    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@([a-zA-Z0-9\\-])+(\\.([a-zA-Z0-9\\-])+)*$";
     private static final String MASKED_PASSWORD_VALUE = "XXXXXXXX";
 
     public static abstract class Field {

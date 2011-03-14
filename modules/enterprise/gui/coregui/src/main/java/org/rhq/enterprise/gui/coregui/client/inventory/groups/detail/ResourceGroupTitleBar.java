@@ -234,8 +234,20 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.group = groupComposite.getResourceGroup();
         update();
 
+        String catName = null;
+        switch (group.getGroupCategory()) {
+        case COMPATIBLE: {
+            catName = MSG.view_group_summary_compatible();
+            break;
+        }
+        case MIXED: {
+            catName = MSG.view_group_summary_mixed();
+            break;
+        }
+        }
+
         this.title.setContents("<span class=\"SectionHeader\">" + group.getName()
-            + "</span>&nbsp;<span class=\"subtitle\">" + group.getGroupCategory().name() + "</span>");
+            + "</span>&nbsp;<span class=\"subtitle\">" + catName + "</span>");
 
         Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
         this.favorite = favorites.contains(group.getId());

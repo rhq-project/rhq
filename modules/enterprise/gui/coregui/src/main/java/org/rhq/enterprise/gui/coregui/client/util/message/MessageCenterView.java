@@ -22,12 +22,13 @@ import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.TitleOrientation;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.menu.IMenuButton;
@@ -97,8 +98,9 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
     private void showDetails(Message message) {
         DynamicForm form = new LocatableDynamicForm(extendLocatorId("Details"));
         form.setWrapItemTitles(false);
+        form.setAlign(Alignment.LEFT);
 
-        StaticTextItem title = new StaticTextItem("title", MSG.view_messageCenter_messageTitle());
+        StaticTextItem title = new StaticTextItem("theMessage", MSG.common_title_message());
         title.setValue(message.conciseMessage);
 
         StaticTextItem severity = new StaticTextItem("severity", MSG.view_messageCenter_messageSeverity());
@@ -111,29 +113,26 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
         date.setValue(message.fired);
 
         StaticTextItem detail = new StaticTextItem("detail", MSG.view_messageCenter_messageDetail());
-        detail.setTitleOrientation(TitleOrientation.TOP);
+        detail.setTitleVAlign(VerticalAlignment.TOP);
         detail.setValue(message.detailedMessage);
-        detail.setColSpan(2);
 
-        ButtonItem okButton = new ButtonItem("ok", MSG.common_button_ok());
-        okButton.setColSpan(2);
-        okButton.setAlign(Alignment.CENTER);
+        form.setItems(title, severity, date, detail);
 
-        form.setItems(title, severity, date, detail, okButton);
-
-        final Window window = new LocatableWindow(this.extendLocatorId("Message"));
-        window.setTitle(message.conciseMessage);
+        final Window window = new LocatableWindow(this.extendLocatorId("MessageWindow"));
+        window.setTitle(MSG.view_messageCenter_messageTitle());
         window.setWidth(600);
         window.setHeight(400);
         window.setIsModal(true);
         window.setShowModalMask(true);
         window.setCanDragResize(true);
+        window.setShowMaximizeButton(true);
+        window.setShowMinimizeButton(false);
         window.centerInPage();
         window.addItem(form);
         window.show();
-        okButton.focusInItem();
-        okButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+        window.addCloseClickHandler(new CloseClickHandler() {
+            @Override
+            public void onCloseClick(CloseClientEvent event) {
                 window.destroy();
             }
         });

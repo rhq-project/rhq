@@ -34,9 +34,13 @@ public class SearchBarItem extends CanvasItem {
     private FlexSearchBar searchBar;
 
     public SearchBarItem(String name, String title, SearchSubsystem subsystem) {
+        this(name, title, subsystem, null);
+    }
+
+    public SearchBarItem(String name, String title, SearchSubsystem subsystem, String initialSearchText) {
         super(name, title);
 
-        searchBar = new FlexSearchBar(subsystem);
+        searchBar = new FlexSearchBar(subsystem, initialSearchText);
 
         searchBar.setHeight("30px");
         canvas.addChild(searchBar);

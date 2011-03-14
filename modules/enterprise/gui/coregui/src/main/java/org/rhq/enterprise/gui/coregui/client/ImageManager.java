@@ -36,7 +36,7 @@ public class ImageManager {
     }
 
     /**
-     * Returns a generic edit icon.
+     * Returns a generic view icon.
      */
     public static String getViewIcon() {
         return "[SKIN]/actions/view.png";
@@ -47,6 +47,13 @@ public class ImageManager {
      */
     public static String getEditIcon() {
         return "[SKIN]/actions/edit.png";
+    }
+
+    /**
+     * Returns a generic remove icon.
+     */
+    public static String getRemoveIcon() {
+        return "[SKIN]/actions/remove.png";
     }
 
     /**
@@ -396,5 +403,29 @@ public class ImageManager {
         }
 
         return "subsystems/event/Events" + icon + "_16.png";
+    }
+
+    public static String getEventLargeIcon() {
+        return "subsystems/event/Events_24.png";
+    }
+
+    public static String getEventIcon() {
+        return "subsystems/event/Events_16.png";
+    }
+
+    public static String getMonitorIcon() {
+        return "subsystems/monitor/Monitor_16.png";
+    }
+
+    public static String getMonitorLargeIcon() {
+        return "subsystems/monitor/Monitor_24.png";
+    }
+
+    public static String getMonitorFailedIcon() {
+        return "subsystems/monitor/Monitor_failed_16.png";
+    }
+
+    public static String getMonitorFailedLargeIcon() {
+        return "subsystems/monitor/Monitor_failed_24.png";
     }
 }

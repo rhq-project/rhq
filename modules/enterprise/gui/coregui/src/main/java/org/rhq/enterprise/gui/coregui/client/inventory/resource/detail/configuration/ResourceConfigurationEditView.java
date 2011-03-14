@@ -160,10 +160,17 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                 }
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
-                    String version = String.valueOf(result.getId());
-                    Message message = new Message(MSG.view_configurationDetails_messageConcise(version), MSG
-                            .view_configurationDetails_messageDetailed(version, resource.getName()),
-                            Message.Severity.Info);
+                    Message message;
+                    if (result != null) {
+                        String version = String.valueOf(result.getId());
+                        message = new Message(MSG.view_configurationDetails_messageConcise(version), MSG
+                                .view_configurationDetails_messageDetailed(version, resource.getName()),
+                                Message.Severity.Info);
+                    } else {
+                        // TODO: i18n
+                        message = new Message("Configuration was not updated, since the new configuration is equivalent to the current configuration.",
+                                Message.Severity.Warning);
+                    }
                     String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
                             ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1);

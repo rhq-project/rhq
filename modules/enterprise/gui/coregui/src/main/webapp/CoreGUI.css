@@ -398,3 +398,10 @@ a:hover {
     font-weight: bolder;
     color: #B77  /* medium red */
 }
+
+.configurationEditorHeaderCell {
+    border-style: solid;
+    border-width: 1px;
+    background-color: #EEE; /* light gray */
+    font-weight: bolder;
+}

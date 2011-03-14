@@ -44,6 +44,7 @@ import org.rhq.bindings.SandboxedScriptEngine;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.StandardScriptPermissions;
+import org.rhq.bindings.engine.ScriptEngineInitializer;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SenderResult;
@@ -69,6 +70,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class CliSender extends AlertSender<CliComponent> {
 
+    private static final String ENGINE_NAME = "JavaScript";
+
+    private static final int MAX_RESULT_SIZE = 4000;
+    
     public static final String PROP_PACKAGE_ID = "packageId";
     public static final String PROP_REPO_ID = "repoId";
     public static final String PROP_USER_ID = "userId";
@@ -92,13 +97,13 @@ public class CliSender extends AlertSender<CliComponent> {
      * Simple strongly typed representation of the alert configuration
      */
     private static class Config {
-        Subject subject;
+        Subject subject;        
         int packageId;
         int repoId;
     }
 
     private static class ExceptionHolder {
-        public Throwable throwable;
+        public ScriptException scriptException;
     }
     
     public SenderResult send(Alert alert) {
@@ -133,7 +138,7 @@ public class CliSender extends AlertSender<CliComponent> {
                         sandbox.eval(rdr);
                         SessionManager.getInstance().invalidate(config.subject.getSessionId());
                     } catch (ScriptException e) {
-                        exceptionHolder.throwable = e;
+                        exceptionHolder.scriptException = e;
                     }
                 }
             }, "Script Runner for alert " + alert);
@@ -148,8 +153,16 @@ public class CliSender extends AlertSender<CliComponent> {
             
             scriptRunner.interrupt();
 
-            if (exceptionHolder.throwable != null) {
-                throw new Exception("Script failed with an exception.", exceptionHolder.throwable);
+            if (exceptionHolder.scriptException != null) {
+                LOG.info("The script execution for CLI notification of alert [" + alert + "] failed.", exceptionHolder.scriptException);
+                
+                //make things pretty for the UI
+                ScriptEngineInitializer initializer = ScriptEngineFactory.getInitializer(ENGINE_NAME);
+                String message = initializer.extractUserFriendlyErrorMessage(exceptionHolder.scriptException);
+                int col = exceptionHolder.scriptException.getColumnNumber();
+                int line = exceptionHolder.scriptException.getLineNumber();
+                String scriptName = createSummary(config, "script $packageName ($packageVersion) in repo $repoName");
+                throw new ScriptException(message, scriptName, line, col);
             }
             
             scriptOut.flush();
@@ -159,13 +172,17 @@ public class CliSender extends AlertSender<CliComponent> {
                 scriptOutput = "Script generated no output.";
             }
             
+            if (scriptOutput.length() > remainingResultSize(result)) {
+                scriptOutput = scriptOutput.substring(0, remainingResultSize(result));
+            }
+            
             result.addSuccessMessage(scriptOutput);
 
             return result;
         } catch (IllegalArgumentException e) {
-            return SenderResult.getSimpleFailure(e.getMessage());
+            return SenderResult.getSimpleFailure(e.getMessage()); //well, let's just hope the message doesn't exceed 4k.
         } catch (Exception e) {
-            result.addFailureMessage(ThrowableUtil.getAllMessages(e));
+            result.addFailureMessage(ThrowableUtil.getAllMessages(e, true, remainingResultSize(result)));
             return result;
         } finally {
             if (engine != null) {
@@ -381,7 +398,7 @@ public class CliSender extends AlertSender<CliComponent> {
             ScriptEngine engine = SCRIPT_ENGINES.poll();
 
             if (engine == null) {
-                engine = ScriptEngineFactory.getScriptEngine("JavaScript",
+                engine = ScriptEngineFactory.getScriptEngine(ENGINE_NAME,
                     new PackageFinder(Collections.<File> emptyList()), bindings);                
             } else {
                 ScriptEngineFactory.injectStandardBindings(engine, bindings, true);
@@ -399,5 +416,21 @@ public class CliSender extends AlertSender<CliComponent> {
             --ENGINES_IN_USE;
             SCRIPT_ENGINES.notify();
         }
+    }
+    
+    private static int remainingResultSize(SenderResult r) {
+        //the "10" is a ballpark to allow for some formatting
+        //done by the receivers of the SenderResult.
+        int ret = MAX_RESULT_SIZE - r.getSummary().length() - 10;
+        
+        for(String m : r.getSuccessMessages()) {
+            ret -= m.length() + 10;
+        }
+        
+        for(String m : r.getFailureMessages()) {
+            ret -= m.length() + 10;
+        }
+        
+        return ret;
     }
 }

@@ -37,14 +37,13 @@ import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -52,7 +51,6 @@ import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -60,31 +58,32 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements ResourceGWTService {
 
-    private static final long serialVersionUID = 1L;
+    static final long serialVersionUID = 1L;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
-    private static String[] importantFields = { "serialVersionUID",
-    //                    "ROOT                            \n" +
+    public static final String[] importantFields = { //
+    "serialVersionUID", //
+        //                    "ROOT                            \n" +
         //                    "ROOT_ID                         \n" +
-        "id",
-
+        "id", //
         "uuid", // This is important, because it is what Resource's equals() and hashCode() impls use.
         //                    "resourceKey                     \n" +
-        "name",
-
+        "name", //
+        "ancestry", //
         //                    "connected                       \n" +
         //                    "version                         \n" +
-        "description",
-
+        "description", //
         //                    "ctime                           \n" +
         //                    "mtime                           \n" +
         //                    "itime                           \n" +
         //                    "modifiedBy                      \n" +
         //                    "location                        \n" +
-        "resourceType", "childResources", "parentResource",
+        "resourceType", //
+        "childResources", //
+        "parentResource", //
         //                    "resourceConfiguration           \n" +
         //                    "pluginConfiguration             \n" +
         //                    "agent                           \n" +
@@ -92,7 +91,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "resourceConfigurationUpdates    \n" +
         //                    "pluginConfigurationUpdates      \n" +
         //                    "implicitGroups                  \n" +
-        "explicitGroups",
+        "explicitGroups", //
         //                    "contentServiceRequests          \n" +
         //                    "createChildResourceRequests     \n" +
         //                    "deleteResourceRequests          \n" +
@@ -100,21 +99,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "installedPackages               \n" +
         //                    "installedPackageHistory         \n" +
         //                    "resourceRepos                   \n" +
-        "schedules",
+        "schedules", //
         //                    "availability                    \n" +
-        "currentAvailability",
+        "currentAvailability", //
         //                    "resourceErrors                  \n" +
         //                    "eventSources                    \n" +
         //                    "productVersion                  "}
         "tags" };
 
     private static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
-
-    private static final IntExtractor<ProblemResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ProblemResourceComposite>() {
-        public int extract(ProblemResourceComposite object) {
-            return object.getResourceId();
-        }
-    };
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -142,9 +135,11 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
                 criteria);
-            List<Resource> resources = new ArrayList<Resource>(result.size());
-
-            if (resources.size() > 1) {
+            if (result.size() > 0) {
+                List<Resource> resources = new ArrayList<Resource>(result.size());
+                for (ResourceComposite composite : result) {
+                    resources.add(composite.getResource());
+                }
                 ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
             }
 
@@ -157,20 +152,13 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
      *  Criteria passed in not currently used.
      */
-    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems)
-        throws RuntimeException {
+    public PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException {
         try {
-            List<ProblemResourceComposite> located = new ArrayList<ProblemResourceComposite>();
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
-            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            PageList<ProblemResourceComposite> result = problemManager.findProblemResources(getSessionSubject(), ctime,
+                new PageControl(0, maxItems));
 
-            //retrieve list of discovered problem resources. Grab all, live scrolling data
-            located = problemManager.findProblemResources(getSessionSubject(), ctime, new PageControl(0, maxItems));
-
-            //translate the returned problem resources to disambiguated links
-            List<DisambiguationReport<ProblemResourceComposite>> translated = resourceManager.disambiguate(located,
-                RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
-            return translated;
+            return SerialUtility.prepare(result, "ResourceService.findProblemResources");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -338,4 +326,13 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException {
+        try {
+            List<ResourceInstallCount> result = resourceManager.findResourceInstallCounts(getSessionSubject(),
+                groupByVersions);
+            return SerialUtility.prepare(result, "ResourceService.findResourceInstallCounts");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
 }

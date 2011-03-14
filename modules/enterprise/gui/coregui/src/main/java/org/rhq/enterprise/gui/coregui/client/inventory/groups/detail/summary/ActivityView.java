@@ -36,7 +36,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -51,7 +50,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -129,19 +127,12 @@ public class ActivityView extends AbstractActivityView {
      */
     private void getRecentAlerts() {
         final int groupId = this.groupComposite.getResourceGroup().getId();
-        Integer[] filterGroupAlertDefinitionIds;
-        Set<AlertDefinition> alertDefinitions = this.groupComposite.getResourceGroup().getAlertDefinitions();
-        filterGroupAlertDefinitionIds = new Integer[alertDefinitions.size()];
-        int i = 0;
-        for (AlertDefinition def : alertDefinitions) {
-            filterGroupAlertDefinitionIds[i++] = def.getId();
-        }
         //fetches last five alerts for this resource
         AlertCriteria criteria = new AlertCriteria();
         PageControl pageControl = new PageControl(0, 5);
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
         criteria.setPageControl(pageControl);
-        criteria.addFilterGroupAlertDefinitionIds(filterGroupAlertDefinitionIds);
+        criteria.addFilterResourceGroupIds(groupId);
         GWTServiceLookup.getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             @Override
             public void onSuccess(PageList<Alert> result) {
@@ -203,8 +194,8 @@ public class ActivityView extends AbstractActivityView {
         criteria.setPageControl(pageControl);
         criteria.addSortStatus(PageOrdering.DESC);
 
-        GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteriaDisambiguated(criteria,
-            new AsyncCallback<List<DisambiguationReport<GroupOperationHistory>>>() {
+        GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<GroupOperationHistory>>() {
 
                 @Override
                 public void onFailure(Throwable caught) {
@@ -212,12 +203,12 @@ public class ActivityView extends AbstractActivityView {
                 }
 
                 @Override
-                public void onSuccess(List<DisambiguationReport<GroupOperationHistory>> result) {
+                public void onSuccess(PageList<GroupOperationHistory> result) {
                     VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         int rowNum = 0;
-                        for (DisambiguationReport<GroupOperationHistory> report : result) {
+                        for (GroupOperationHistory report : result) {
                             // operation history records do not have a usable locatorId, we'll use rownum, which is unique and
                             // may be repeatable.
                             LocatableDynamicForm row = new LocatableDynamicForm(recentOperationsContent
@@ -225,11 +216,10 @@ public class ActivityView extends AbstractActivityView {
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = newTextItemIcon(ImageManager.getOperationResultsIcon(report
-                                .getOriginal().getStatus()), report.getOriginal().getStatus().getDisplayName());
-                            LinkItem link = newLinkItem(report.getOriginal().getOperationDefinition().getDisplayName()
-                                + ": ", ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/"
-                                + report.getOriginal().getId());
-                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report.getOriginal()
+                                .getStatus()), report.getStatus().getDisplayName());
+                            LinkItem link = newLinkItem(report.getOperationDefinition().getDisplayName() + ": ",
+                                ReportDecorator.GWT_GROUP_URL + groupId + "/Operations/History/" + report.getId());
+                            StaticTextItem time = newTextItem(GwtRelativeDurationConverter.format(report
                                 .getStartedTime()));
                             row.setItems(iconItem, link, time);
 

@@ -48,6 +48,7 @@ import com.smartgwt.client.widgets.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -242,8 +243,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     private SectionStack buildAvailableItemsStack() {
         SectionStack availableSectionStack = new LocatableSectionStack(extendLocatorId("Available"));
-        availableSectionStack.setWidth(300);
-        availableSectionStack.setHeight(250);
+        availableSectionStack.setWidth("*");
+        availableSectionStack.setHeight100();
 
         SectionStackSection availableSection = new SectionStackSection(getAvailableItemsGridTitle());
         availableSection.setCanCollapse(false);
@@ -272,6 +273,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             availableFields.add(iconField);
         }
         ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
+        if (supportsNameHoverCustomizer()) {
+            nameField.setShowHover(true);
+            nameField.setHoverCustomizer(getNameHoverCustomizer());
+        }
         availableFields.add(nameField);
         this.availableGrid.setFields(availableFields.toArray(new ListGridField[availableFields.size()]));
 
@@ -404,8 +409,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     private SectionStack buildAssignedItemsStack() {
         SectionStack assignedSectionStack = new LocatableSectionStack(extendLocatorId("Assigned"));
-        assignedSectionStack.setWidth(300);
-        assignedSectionStack.setHeight(250);
+        assignedSectionStack.setWidth("*");
+        assignedSectionStack.setHeight100();
         assignedSectionStack.setAlign(Alignment.LEFT);
 
         SectionStackSection assignedSection = new SectionStackSection(getAssignedItemsGridTitle());
@@ -435,6 +440,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             assignedFields.add(iconField);
         }
         ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
+        if (supportsNameHoverCustomizer()) {
+            nameField.setShowHover(true);
+            nameField.setHoverCustomizer(getNameHoverCustomizer());
+        }
+
         assignedFields.add(nameField);
         this.assignedGrid.setFields(assignedFields.toArray(new ListGridField[assignedFields.size()]));
 
@@ -478,6 +488,14 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
 
         return assignedSectionStack;
+    }
+
+    protected boolean supportsNameHoverCustomizer() {
+        return false;
+    }
+
+    protected HoverCustomizer getNameHoverCustomizer() {
+        return null;
     }
 
     private void notifyAssignedItemsChangedHandlers() {

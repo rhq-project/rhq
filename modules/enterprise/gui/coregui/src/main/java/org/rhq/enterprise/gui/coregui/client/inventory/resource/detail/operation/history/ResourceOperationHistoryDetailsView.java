@@ -19,28 +19,29 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.List;
 
 /**
  * @author Ian Springer
@@ -66,7 +67,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
         if (this.showResourceField) {
             StaticTextItem resourceItem = new StaticTextItem(ResourceOperationHistoryDataSource.Field.RESOURCE,
-                    "Resource");
+                "Resource");
             resourceItem.setValue(this.disambiguatedResourceName);
             items.add(1, resourceItem);
         }
@@ -74,9 +75,11 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         GroupOperationHistory groupOperationHistory = operationHistory.getGroupOperationHistory();
         if (groupOperationHistory != null) {
             StaticTextItem groupOperationHistoryItem = new StaticTextItem(
-                    ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
-            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup().getId(), groupOperationHistory.getId());
-            String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId() + "</a> (on group '" + groupOperationHistory.getGroup().getName() + "')";
+                ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
+            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup()
+                .getId(), groupOperationHistory.getId());
+            String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId()
+                + "</a> (on group '" + groupOperationHistory.getGroup().getName() + "')";
             groupOperationHistoryItem.setValue(value);
             items.add(groupOperationHistoryItem);
         }
@@ -94,20 +97,22 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         criteria.fetchResults(true);
 
         GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<DisambiguationReport<ResourceOperationHistory>>>() {
+            new AsyncCallback<PageList<ResourceOperationHistory>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler()
                         .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
                 }
 
-                public void onSuccess(PageList<DisambiguationReport<ResourceOperationHistory>> result) {
-                    DisambiguationReport<ResourceOperationHistory> disambiguationReport = result.get(0);
+                public void onSuccess(PageList<ResourceOperationHistory> result) {
+                    ResourceOperationHistory resourceOperationHistory = result.get(0);
+
                     if (showResourceField) {
-                        disambiguatedResourceName = ReportDecorator.decorateDisambiguationReport(disambiguationReport,
-                                disambiguationReport.getId(), true);
+                        Resource resource = resourceOperationHistory.getResource();
+                        disambiguatedResourceName = AncestryUtil.getResourceLongName(resource.getId(), resource
+                            .getName(), resource.getResourceType());
                     }
-                    ResourceOperationHistory item = disambiguationReport.getOriginal();
-                    displayDetails(item);
+
+                    displayDetails(resourceOperationHistory);
                 }
             });
     }
@@ -123,14 +128,16 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
             resultsSection.addMember(title);
 
             OperationDefinition operationDefinition = operationHistory.getOperationDefinition();
-            ConfigurationDefinition resultsConfigurationDefinition = operationDefinition.getResultsConfigurationDefinition();
-            if (resultsConfigurationDefinition != null &&
-                    !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
+            ConfigurationDefinition resultsConfigurationDefinition = operationDefinition
+                .getResultsConfigurationDefinition();
+            if (resultsConfigurationDefinition != null
+                && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
                 ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"), operationDefinition
                     .getResultsConfigurationDefinition(), operationHistory.getResults());
                 editor.setReadOnly(true);
                 resultsSection.addMember(editor);
             } else {
+                // TODO: i18n
                 Label noResultsLabel = new Label("This operation does not return any results.");
                 noResultsLabel.setHeight(17);
                 resultsSection.addMember(noResultsLabel);

@@ -32,10 +32,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
@@ -138,8 +136,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
             .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
-                // TODO this isn't really want we want - we need to impl a true view with all alert definitions in a table
-                return new ResourceTypeTreeView(extendLocatorId(ResourceTypeTreeView.VIEW_ID.getName()));
+                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
             }
         });
 
@@ -148,13 +145,12 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildInventorySection() {
-        NavigationItem inventorySummaryItem = new NavigationItem(new ViewName("InventorySummary", MSG
-            .common_title_inventorySummary()), "subsystems/inventory/Inventory_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId("InventorySummary"),
-                    "/rhq/admin/report/resourceInstallReport-body.xhtml");
-            }
-        });
+        NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
+            "subsystems/inventory/Inventory_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
+                }
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
             .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {

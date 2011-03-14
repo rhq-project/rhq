@@ -23,6 +23,8 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,10 +32,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -54,6 +58,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -64,10 +69,28 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * This is the view that renders the left hand tree for groups.
+ * There are three main types of nodes in the group tree:
+ * 1. Cluster Node - This represents a single aggregate resource that is of a specific resource type.
+ *                   If a group has members with one or more resources with an identical resource key and type,
+ *                   those identical resources are represented with one cluster node. Each cluster node
+ *                   is associated with a resource type and an unique cluster key.
+ * 2. Auto Type Group Node - This is a folder node whose children are all of a specific resource type.
+ *                           The children are typically cluster nodes. An example of this kind of node is
+ *                           "WARs", where there can be many different WARs deployed on an individual member resource
+ *                           but a WAR can be clustered (copied) across many member resources. Each auto type group node
+ *                           is associated with a resource type but they do not have cluster keys.
+ * 3. Subcategory Node these are simply nodes that group other kinds of nodes. Plugin developers define subcategories
+ *                     in plugin descriptors to organize resource types. Subcategories are not associated with any
+ *                     particular resource type and do not have cluster keys.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
+ * @author John Mazzitelli
  */
 public class ResourceGroupTreeView extends LocatableVLayout implements BookmarkableView {
+
+    private static final String FAKE_ROOT_ID = "__fakeRoot__"; // id of the parent node of our real root node
 
     private TreeGrid treeGrid;
 
@@ -82,6 +105,30 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     private Map<Integer, ResourceType> typeMap;
     private ResourceGroup selectedGroup;
 
+    private Comparator<ResourceGroupEnhancedTreeNode> treeNodeComparator = new Comparator<ResourceGroupEnhancedTreeNode>() {
+        @Override
+        public int compare(ResourceGroupEnhancedTreeNode o1, ResourceGroupEnhancedTreeNode o2) {
+            // folders always come before leaf nodes
+            boolean o1IsFolder = o1.isFolderNode();
+            boolean o2IsFolder = o2.isFolderNode();
+            if (o1IsFolder != o2IsFolder) {
+                return o1IsFolder ? -1 : 1;
+            } else if (o1IsFolder) {
+                // subcategory and autoTypeGroup nodes (i.e. "folder icons") come before cluster type group nodes
+                boolean o1IsClusterNode = o1.getClusterKey() != null;
+                boolean o2IsClusterNode = o2.getClusterKey() != null;
+                if (o1IsClusterNode != o2IsClusterNode) {
+                    return !o1IsClusterNode ? -1 : 1;
+                }
+            }
+
+            // the two nodes are either both leaves or both folders; sort by name
+            String s1 = o1.getName();
+            String s2 = o2.getName();
+            return s1.compareToIgnoreCase(s2);
+        }
+    };
+
     public ResourceGroupTreeView(String locatorId) {
         super(locatorId);
 
@@ -95,14 +142,27 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     protected void onInit() {
         super.onInit();
 
-        this.treeGrid = new TreeGrid();
-        this.treeGrid.setWidth100();
-        this.treeGrid.setHeight100();
+        treeGrid = new CustomResourceGroupTreeGrid(extendLocatorId("groupTree"));
+        treeGrid.setWidth100();
+        treeGrid.setHeight100();
         treeGrid.setAnimateFolders(false);
         treeGrid.setSelectionType(SelectionStyle.SINGLE);
         treeGrid.setShowRollOver(false);
-        treeGrid.setSortField("name");
         treeGrid.setShowHeader(false);
+        treeGrid.setLeaveScrollbarGap(false);
+        treeGrid.setOpenerImage("resources/dir.png");
+        treeGrid.setOpenerIconSize(16);
+        treeGrid.setCanHover(true);
+        treeGrid.setShowHover(true);
+        treeGrid.setHoverWidth(250);
+        treeGrid.setHoverWrap(true);
+        treeGrid.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String tooltip = record.getAttribute(ResourceGroupEnhancedTreeNode.TOOLTIP_KEY);
+                return tooltip;
+            }
+        });
 
         addMember(this.treeGrid);
 
@@ -113,28 +173,38 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
-                    Record selectedNode = selectionEvent.getRecord();
-                    selectedNodeId = selectedNode.getAttribute("id");
+                    selectedNodeId = null; // if user selected a valid node, we'll set this later
+                    ResourceGroupEnhancedTreeNode selectedNode = (ResourceGroupEnhancedTreeNode) selectionEvent
+                        .getRecord();
                     com.allen_sauer.gwt.log.client.Log.info("Node selected in tree: " + selectedNode);
-                    ResourceType type = (ResourceType) selectedNode.getAttributeAsObject("resourceType");
+
+                    ResourceType type = selectedNode.getResourceType();
+                    ClusterKey key = selectedNode.getClusterKey();
                     if (type != null) {
-                        // It's a cluster group node, not a subcategory node or an autoTypeGroup node.
-                        ClusterKey key = (ClusterKey) selectedNode.getAttributeAsObject("key");
-                        if (key == null) {
-                            // The root group was selected.
-                            String groupId = selectedNode.getAttribute("id");
-                            com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
-                            String viewPath = ResourceGroupTopView.VIEW_ID + "/" + groupId;
-                            String currentViewPath = History.getToken();
-                            if (!currentViewPath.startsWith(viewPath)) {
-                                CoreGUI.goToView(viewPath);
-                            }
-                        } else {
+                        if (key != null) {
+                            // the user selected a cluster node - let's switch to that cluster group view
                             com.allen_sauer.gwt.log.client.Log.debug("Selecting cluster group [" + key + "]...");
+                            selectedNodeId = selectedNode.getID();
                             selectClusterGroup(key);
+                        } else {
+                            if (selectedNode.getParentID().equals(FAKE_ROOT_ID)) {
+                                // the user selected the top group node
+                                selectedNodeId = selectedNode.getID();
+                                String groupId = selectedNodeId;
+                                com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
+                                String viewPath = LinkManager.getResourceGroupLink(Integer.parseInt(groupId));
+                                CoreGUI.goToView(viewPath, true);
+                            } else {
+                                // the user selected a auto type group node; we have got nothing to show, so cancel the selection of this node
+                                treeGrid.deselectRecord(selectedNode);
+                            }
                         }
+                    } else {
+                        // the user selected a subcategory; we have got nothing to show, so cancel the selection of this node
+                        treeGrid.deselectRecord(selectedNode);
                     }
                 }
+                return;
             }
         });
 
@@ -144,12 +214,18 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 event.cancel();
 
                 // don't select the node on a right click, since we're not navigating to it
-                treeGrid.deselectRecord(event.getNode());
+                ResourceGroupEnhancedTreeNode node = (ResourceGroupEnhancedTreeNode) event.getNode();
+                treeGrid.deselectRecord(node);
                 if (null != selectedNodeId) {
                     treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
                 }
 
-                contextMenu.showContextMenu(event.getNode());
+                // only show the context menu for cluster nodes and our top root node
+                ResourceType type = node.getResourceType();
+                ClusterKey key = node.getClusterKey();
+                if (type != null && (key != null || node.getParentID().equals(FAKE_ROOT_ID))) {
+                    contextMenu.showContextMenu(node);
+                }
             }
         });
 
@@ -179,14 +255,19 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                     GroupCategory groupCategory = group.getGroupCategory();
                     switch (groupCategory) {
                     case MIXED:
+                        // For mixed groups, there will only ever be one item in the tree, even if the group is recursive.
+                        // This is because mixed groups don't normally have clustered/identical resources across members
+                        // so there is no attempt here to build auto cluster nodes.
                         ResourceGroupTreeView.this.rootResourceGroup = group;
                         ResourceGroupTreeView.this.rootGroupId = rootResourceGroup.getId();
-                        TreeNode fakeRoot = new TreeNode("fakeRootNode");
-                        TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
+                        ResourceGroupEnhancedTreeNode fakeRoot = new ResourceGroupEnhancedTreeNode("fakeRootNode");
+                        ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(group.getName());
                         String icon = ImageManager.getGroupIcon(GroupCategory.MIXED);
                         rootNode.setIcon(icon);
-                        rootNode.setID(String.valueOf(rootResourceGroup.getId())); //getClusterKey().toString());
-                        fakeRoot.setChildren(new TreeNode[] { rootNode });
+                        rootNode.setID(String.valueOf(rootResourceGroup.getId()));
+                        fakeRoot.setID(FAKE_ROOT_ID);
+                        rootNode.setParentID(fakeRoot.getID());
+                        fakeRoot.setChildren(new ResourceGroupEnhancedTreeNode[] { rootNode });
                         Tree tree = new Tree();
                         tree.setRoot(fakeRoot);
                         treeGrid.setData(tree);
@@ -211,19 +292,23 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         if (groupId == this.rootGroupId) {
             // Still looking at the same compat-recursive tree
 
-            // TODO reselect tree to selected node
-            TreeNode selectedNode;
+            ResourceGroupEnhancedTreeNode selectedNode;
             if (this.selectedGroup.getClusterKey() != null) {
-                //selectedNode = treeGrid.getTree().findById(this.selectedGroup.getClusterKey());
-                selectedNode = treeGrid.getTree().find("key", this.selectedGroup.getClusterKey());
+                // a child cluster node leaf was selected
+                selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().find(
+                    ResourceGroupEnhancedTreeNode.CLUSTER_KEY, this.selectedGroup.getClusterKey());
             } else {
-                selectedNode = treeGrid.getTree().findById(String.valueOf(this.selectedGroup.getId()));
+                // the top root node, representing the group itself, was selected
+                selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().findById(
+                    String.valueOf(this.selectedGroup.getId()));
             }
-            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-            treeGrid.getTree().openFolders(parents);
-            treeGrid.getTree().openFolder(selectedNode);
-            treeGrid.selectRecord(selectedNode);
 
+            if (selectedNode != null) {
+                TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                treeGrid.getTree().openFolders(parents);
+                treeGrid.getTree().openFolder(selectedNode);
+                treeGrid.selectRecord(selectedNode);
+            }
         } else {
             this.rootGroupId = groupId;
             GWTServiceLookup.getClusterService().getClusterTree(groupId, new AsyncCallback<ClusterFlyweight>() {
@@ -265,8 +350,6 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 @Override
                 public void onSuccess(ResourceGroup result) {
                     renderAutoCluster(result);
-                    //int groupId = result.getId();
-                    //History.newItem(ResourceGroupTopView.VIEW_ID + "/" + groupId);
                 }
             });
     }
@@ -280,32 +363,35 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     }
 
     private void loadTree(ClusterFlyweight root) {
-        TreeNode fakeRoot = new TreeNode("fakeRootNode");
+        ClusterKey rootKey = new ClusterKey(root.getGroupId());
+        ResourceGroupEnhancedTreeNode fakeRoot = new ResourceGroupEnhancedTreeNode("fakeRootNode");
+        fakeRoot.setID(FAKE_ROOT_ID);
 
-        TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
-        rootNode.setID(String.valueOf(root.getGroupId())); //getClusterKey().toString());
+        ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(rootResourceGroup.getName());
+        rootNode.setID(rootKey.getKey());
+        rootNode.setParentID(fakeRoot.getID());
 
         ResourceType rootResourceType = typeMap.get(rootResourceGroup.getResourceType().getId());
-        rootNode.setAttribute("resourceType", rootResourceType);
+        rootNode.setResourceType(rootResourceType);
+
         String icon = ImageManager.getClusteredResourceIcon(rootResourceType.getCategory());
         rootNode.setIcon(icon);
 
-        fakeRoot.setChildren(new TreeNode[] { rootNode });
+        fakeRoot.setChildren(new ResourceGroupEnhancedTreeNode[] { rootNode });
 
-        ClusterKey rootKey = new ClusterKey(root.getGroupId());
         loadTree(rootNode, root, rootKey);
 
         Tree tree = new Tree();
-
         tree.setRoot(fakeRoot);
-        //TreeUtility.printTree(tree);
+        org.rhq.enterprise.gui.coregui.client.util.TreeUtility.printTree(tree);
 
         treeGrid.setData(tree);
         treeGrid.getTree().openFolder(rootNode);
         treeGrid.markForRedraw();
     }
 
-    public void loadTree(TreeNode parentNode, ClusterFlyweight parentClusterGroup, ClusterKey parentKey) {
+    public void loadTree(ResourceGroupEnhancedTreeNode parentNode, ClusterFlyweight parentClusterGroup,
+        ClusterKey parentKey) {
         if (!parentClusterGroup.getChildren().isEmpty()) {
             // First pass - group the children by type.
             Map<ResourceType, List<ClusterFlyweight>> childrenByType = new HashMap<ResourceType, List<ClusterFlyweight>>();
@@ -322,26 +408,27 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             }
 
             // Second pass - process each of the sets of like-typed children created in the first pass.
-            List<TreeNode> childNodes = new ArrayList<TreeNode>();
-            Map<String, TreeNode> subCategoryNodesByName = new HashMap<String, TreeNode>();
-            Map<String, List<TreeNode>> subCategoryChildrenByName = new HashMap<String, List<TreeNode>>();
+            List<ResourceGroupEnhancedTreeNode> childNodes = new ArrayList<ResourceGroupEnhancedTreeNode>();
+            Map<String, ResourceGroupEnhancedTreeNode> subCategoryNodesByName = new HashMap<String, ResourceGroupEnhancedTreeNode>();
+            Map<String, List<ResourceGroupEnhancedTreeNode>> subCategoryChildrenByName = new HashMap<String, List<ResourceGroupEnhancedTreeNode>>();
             for (ResourceType childType : childrenByType.keySet()) {
                 List<ClusterFlyweight> children = childrenByType.get(childType);
-                List<TreeNode> nodesByType = new ArrayList<TreeNode>();
+                List<ResourceGroupEnhancedTreeNode> nodesByType = new ArrayList<ResourceGroupEnhancedTreeNode>();
                 for (ClusterFlyweight child : children) {
-                    TreeNode node = createClusterGroupNode(parentKey, childType, child);
+                    ResourceGroupEnhancedTreeNode node = createClusterGroupNode(parentKey, childType, child);
                     nodesByType.add(node);
 
                     if (!child.getChildren().isEmpty()) {
-                        // Recurse.
-                        ClusterKey key = (ClusterKey) node.getAttributeAsObject("key");
-                        loadTree(node, child, key);
+                        ClusterKey key = node.getClusterKey();
+                        loadTree(node, child, key); // recurse
                     }
                 }
 
                 // Insert an autoTypeGroup node if the type is not a singleton.
                 if (!childType.isSingleton()) {
-                    TreeNode autoTypeGroupNode = createAutoTypeGroupNode(childType, nodesByType);
+                    // This will override the parent IDs of all nodesByType nodes with the auto group node ID that is being created
+                    ResourceGroupEnhancedTreeNode autoTypeGroupNode = createAutoTypeGroupNode(parentKey, childType,
+                        nodesByType);
                     nodesByType.clear();
                     nodesByType.add(autoTypeGroupNode);
                 }
@@ -349,19 +436,24 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 // Insert subcategory node(s) if the type has a subcategory.
                 ResourceSubCategory subcategory = childType.getSubCategory();
                 if (subcategory != null) {
-                    TreeNode lastSubcategoryNode = null;
+                    ResourceGroupEnhancedTreeNode lastSubcategoryNode = null;
 
                     ResourceSubCategory currentSubCategory = subcategory;
                     boolean currentSubcategoryNodeCreated = false;
                     do {
-                        TreeNode currentSubcategoryNode = subCategoryNodesByName.get(currentSubCategory.getName());
+                        ResourceGroupEnhancedTreeNode currentSubcategoryNode = subCategoryNodesByName
+                            .get(currentSubCategory.getName());
                         if (currentSubcategoryNode == null) {
-                            currentSubcategoryNode = new EnhancedTreeNode(currentSubCategory.getName());
-                            // Note, subcategory names are typically already plural, so there's no need to pluralize them.
-                            currentSubcategoryNode.setTitle(currentSubCategory.getDisplayName());
+                            // This node represents a subcategory. It is not associated with any specific resource type
+                            // or cluster key - it is merely a way plugin developers organize different resource types into groups.
+                            currentSubcategoryNode = new ResourceGroupEnhancedTreeNode(currentSubCategory.getName());
+                            currentSubcategoryNode.setTitle(currentSubCategory.getDisplayName()); // subcategory names are normally plural already, no need to pluralize them
                             currentSubcategoryNode.setIsFolder(true);
+                            currentSubcategoryNode.setID("cat" + currentSubCategory.getName());
+                            currentSubcategoryNode.setParentID(parentKey.getKey());
                             subCategoryNodesByName.put(currentSubCategory.getName(), currentSubcategoryNode);
-                            subCategoryChildrenByName.put(currentSubCategory.getName(), new ArrayList<TreeNode>());
+                            subCategoryChildrenByName.put(currentSubCategory.getName(),
+                                new ArrayList<ResourceGroupEnhancedTreeNode>());
 
                             if (currentSubCategory.getParentSubCategory() == null) {
                                 // It's a root subcategory - add a node for it to the tree.
@@ -372,15 +464,20 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         }
 
                         if (lastSubcategoryNode != null) {
-                            List<TreeNode> currentSubcategoryChildren = subCategoryChildrenByName
+                            List<ResourceGroupEnhancedTreeNode> currentSubcategoryChildren = subCategoryChildrenByName
                                 .get(currentSubcategoryNode.getName());
+                            // make sure we re-parent the child so it is under the subcategory folder
+                            for (ResourceGroupEnhancedTreeNode currentSubcategoryChild : currentSubcategoryChildren) {
+                                currentSubcategoryChild.setParentID(currentSubcategoryNode.getID());
+                            }
                             currentSubcategoryChildren.add(lastSubcategoryNode);
                         }
                         lastSubcategoryNode = currentSubcategoryNode;
                     } while (currentSubcategoryNodeCreated
                         && (currentSubCategory = currentSubCategory.getParentSubCategory()) != null);
 
-                    List<TreeNode> subcategoryChildren = subCategoryChildrenByName.get(subcategory.getName());
+                    List<ResourceGroupEnhancedTreeNode> subcategoryChildren = subCategoryChildrenByName.get(subcategory
+                        .getName());
                     subcategoryChildren.addAll(nodesByType);
                 } else {
                     childNodes.addAll(nodesByType);
@@ -388,36 +485,83 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             }
 
             for (String subcategoryName : subCategoryNodesByName.keySet()) {
-                TreeNode subcategoryNode = subCategoryNodesByName.get(subcategoryName);
-                List<TreeNode> subcategoryChildren = subCategoryChildrenByName.get(subcategoryName);
-                subcategoryNode.setChildren(subcategoryChildren.toArray(new TreeNode[subcategoryChildren.size()]));
+                ResourceGroupEnhancedTreeNode subcategoryNode = subCategoryNodesByName.get(subcategoryName);
+                List<ResourceGroupEnhancedTreeNode> subcategoryChildren = subCategoryChildrenByName
+                    .get(subcategoryName);
+                // make sure the parent for the subcat children are referring to the parent subcat node
+                for (ResourceGroupEnhancedTreeNode subcatChild : subcategoryChildren) {
+                    subcatChild.setParentID(subcategoryNode.getID());
+                }
+                createSortedArray(subcategoryChildren);
+                subcategoryNode.setChildren(createSortedArray(subcategoryChildren));
             }
 
-            parentNode.setChildren(childNodes.toArray(new TreeNode[childNodes.size()]));
+            parentNode.setChildren(createSortedArray(childNodes));
         }
     }
 
-    private TreeNode createClusterGroupNode(ClusterKey parentKey, ResourceType type, ClusterFlyweight child) {
-        TreeNode node = new EnhancedTreeNode(child.getName());
+    private ResourceGroupEnhancedTreeNode[] createSortedArray(List<ResourceGroupEnhancedTreeNode> list) {
+        Collections.sort(list, this.treeNodeComparator);
+        return list.toArray(new ResourceGroupEnhancedTreeNode[list.size()]);
+    }
+
+    private ResourceGroupEnhancedTreeNode createClusterGroupNode(ClusterKey parentKey, ResourceType type,
+        ClusterFlyweight child) {
+
+        // This node represents one type of resource that has 1 or more individual resources as members in the group.
+        // It will be associated with both a resource type and a cluster key.
+        ResourceGroupEnhancedTreeNode node = new ResourceGroupEnhancedTreeNode(child.getName());
 
         ClusterKeyFlyweight keyFlyweight = child.getClusterKey();
         ClusterKey key = new ClusterKey(parentKey, keyFlyweight.getResourceTypeId(), keyFlyweight.getResourceKey());
         String id = key.getKey();
-        node.setID(SeleniumUtility.getSafeId(id));
-        node.setAttribute("key", key);
-        node.setAttribute("resourceType", type);
+        String parentId = parentKey.getKey();
+        node.setID(id);
+        node.setParentID(parentId);
+        node.setClusterKey(key);
+        node.setResourceType(type);
         node.setIsFolder(!child.getChildren().isEmpty());
 
-        String icon = ImageManager.getClusteredResourceIcon(type.getCategory());
-        node.setIcon(icon);
+        int memberCount = child.getMembers();
+        int clusterSize = child.getClusterSize();
+
+        if (memberCount < clusterSize) {
+            // it appears one or more individual group members doesn't have a resource with the given cluster key
+            // label the tree node so the user knows this cluster node is not representative of the entire group membership
+            double percentage = (double) memberCount / (double) clusterSize;
+            String percentageStr = NumberFormat.getFormat("0%").format(percentage);
+            String title = child.getName() + " <span style=\"color: red; font-style: italic\">(" + percentageStr
+                + ")</span>";
+            node.setTitle(title);
+
+            // "1 out of 2 group members have "foo" child resources"
+            node.setTooltip(MSG.group_tree_partialClusterTooltip(String.valueOf(memberCount), String
+                .valueOf(clusterSize), child.getName()));
+        }
+
         return node;
     }
 
-    private TreeNode createAutoTypeGroupNode(ResourceType type, List<TreeNode> memberNodes) {
+    private ResourceGroupEnhancedTreeNode createAutoTypeGroupNode(ClusterKey parentKey, ResourceType type,
+        List<ResourceGroupEnhancedTreeNode> memberNodes) {
+
+        // This node represents a group of resources all of the same type but have different resource keys -
+        // in other words, individual members of the group have multiple resources of this type (for example,
+        // an auto type group node of type WAR means our group members each have multiple WARs deployed to them,
+        // so this node represents the parent to all the different WARs cluster nodes).
+        // This node will be associated with only a resource type (not a cluster key)
         String name = StringUtility.pluralize(type.getName());
-        TreeNode autoTypeGroupNode = new EnhancedTreeNode(name);
+        ResourceGroupEnhancedTreeNode autoTypeGroupNode = new ResourceGroupEnhancedTreeNode(name);
+        String parentId = parentKey.getKey();
+        String autoTypeGroupNodeId = "rt" + String.valueOf(type.getId());
+        autoTypeGroupNode.setID(autoTypeGroupNodeId);
+        autoTypeGroupNode.setParentID(parentId);
+        autoTypeGroupNode.setResourceType(type); // notice this node has a resource type, but not a cluster key
         autoTypeGroupNode.setIsFolder(true);
-        autoTypeGroupNode.setChildren(memberNodes.toArray(new TreeNode[memberNodes.size()]));
+        for (ResourceGroupEnhancedTreeNode memberNode : memberNodes) {
+            memberNode.setParentID(autoTypeGroupNodeId);
+        }
+        autoTypeGroupNode.setChildren(createSortedArray(memberNodes));
         return autoTypeGroupNode;
     }
 
@@ -447,5 +591,50 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         for (ClusterFlyweight child : clusterFlyweight.getChildren()) {
             getTreeTypes(child, typeIds);
         }
+    }
+
+    class ResourceGroupEnhancedTreeNode extends EnhancedTreeNode {
+        private static final String TOOLTIP_KEY = "tooltip";
+        private static final String CLUSTER_KEY = "key";
+        private static final String RESOURCE_TYPE = "resourceType";
+
+        public ResourceGroupEnhancedTreeNode(String name) {
+            super(name);
+        }
+
+        public String getTooltip() {
+            return getAttribute(TOOLTIP_KEY);
+        }
+
+        public void setTooltip(String tooltip) {
+            setAttribute(TOOLTIP_KEY, tooltip);
+        }
+
+        public ClusterKey getClusterKey() {
+            return (ClusterKey) getAttributeAsObject(CLUSTER_KEY);
+        }
+
+        public void setClusterKey(ClusterKey key) {
+            setAttribute(CLUSTER_KEY, key);
+        }
+
+        @Override
+        public void setID(String id) {
+            super.setID(SeleniumUtility.getSafeId(id));
+        }
+
+        @Override
+        public void setParentID(String parentID) {
+            super.setParentID(SeleniumUtility.getSafeId(parentID));
+        }
+
+        public ResourceType getResourceType() {
+            return (ResourceType) getAttributeAsObject(RESOURCE_TYPE);
+        }
+
+        public void setResourceType(ResourceType rt) {
+            setAttribute(RESOURCE_TYPE, rt);
+        }
+
     }
 }

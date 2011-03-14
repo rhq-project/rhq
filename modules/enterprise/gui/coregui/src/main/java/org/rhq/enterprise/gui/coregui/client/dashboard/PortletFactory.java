@@ -97,7 +97,7 @@ public class PortletFactory {
         registeredGroupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
         registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupAlertsPortlet2.KEY, GroupAlertsPortlet2.Factory.INSTANCE);
-        //        registeredGroupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
+        registeredGroupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.Factory.INSTANCE);
 
@@ -105,7 +105,7 @@ public class PortletFactory {
         registeredGroupPortletNameMap = new HashMap<String, String>(registeredGroupPortletFactoryMap.size());
         registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupAlertsPortlet2.KEY, GroupAlertsPortlet2.NAME);
-        //        registeredGroupPortletNameMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.NAME);
+        registeredGroupPortletNameMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.NAME);
 

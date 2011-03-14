@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -177,9 +178,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     protected HoverCustomizer getNameHoverCustomizer() {
         return new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return "<p style='width:400px'>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         };
     }

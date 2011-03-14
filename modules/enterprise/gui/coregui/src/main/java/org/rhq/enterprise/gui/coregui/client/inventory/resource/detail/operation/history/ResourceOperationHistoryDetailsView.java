@@ -40,8 +40,8 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -108,8 +108,9 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
                     if (showResourceField) {
                         Resource resource = resourceOperationHistory.getResource();
-                        disambiguatedResourceName = AncestryUtil.getResourceLongName(resource.getId(), resource
-                            .getName(), resource.getResourceType());
+                        String url = LinkManager.getResourceLink(resource.getId());
+                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(), String
+                            .valueOf(resource.getId()));
                     }
 
                     displayDetails(resourceOperationHistory);

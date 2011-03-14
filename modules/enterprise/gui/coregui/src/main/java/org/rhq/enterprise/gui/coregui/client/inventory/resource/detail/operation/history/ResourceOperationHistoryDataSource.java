@@ -49,9 +49,6 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
 
     public static abstract class Field extends AbstractOperationHistoryDataSource.Field {
         public static final String RESOURCE = "resource";
-        public static final String RESOURCE_ID = "resource.id";
-        public static final String ANCESTRY = "resource.ancestry";
-        public static final String TYPE = "resource.resourceType.id";
         public static final String GROUP_OPERATION_HISTORY = "groupOperationHistory";
     }
 
@@ -66,9 +63,6 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
 
         DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE);
         fields.add(resourceField);
-
-        DataSourceTextField ancestryField = new DataSourceTextField(Field.ANCESTRY);
-        fields.add(ancestryField);
 
         return fields;
     }
@@ -123,30 +117,17 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
-                    // enhance resource name
-                    int resourceId = record.getAttributeAsInt(Field.RESOURCE_ID);
-                    int resourceTypeId = record.getAttributeAsInt(Field.TYPE);
-                    String resourceName = record.getAttributeAsString(Field.RESOURCE);
-                    ResourceType type = types.get(resourceTypeId);
-                    record.setAttribute(Field.RESOURCE, AncestryUtil
-                        .getResourceLongName(resourceId, resourceName, type));
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
-                    // decode ancestry
-                    String ancestry = record.getAttributeAsString(Field.ANCESTRY);
-                    if (null == ancestry) {
-                        continue;
-                    }
-                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
-                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
-                    // decoded strings as different attributes. 
-                    //record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
-                    //record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
-                    // TODO: If we elect to use a hover handler then we'll need ListGridFields set up
-                    // Until then we'll just set the Ancestry field.
-                    record.setAttribute(Field.ANCESTRY, decodedAncestry[0]);
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -160,10 +141,13 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
         ListGridRecord record = super.copyValues(from);
 
         record.setAttribute(Field.ID, from.getId());
-        record.setAttribute(Field.RESOURCE_ID, from.getResource().getId());
         record.setAttribute(Field.RESOURCE, from.getResource().getName());
-        record.setAttribute(Field.ANCESTRY, from.getResource().getAncestry());
-        record.setAttribute(Field.TYPE, from.getResource().getResourceType().getId());
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ID, from.getResource().getId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResource().getName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getResource().getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResource().getResourceType().getId());
 
         return record;
     }

@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
 
 //import java.text.SimpleDateFormat;
 import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.ALERTS;
-import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.RESOURCE;
 
@@ -49,6 +48,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
@@ -57,12 +57,13 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of Resources with alerts,
@@ -121,19 +122,30 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         }
 
         ListGridField resourceField = new ListGridField(RESOURCE.propertyName(), RESOURCE.title());
+        resourceField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id"));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
+        resourceField.setShowHover(true);
+        resourceField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
 
-        ListGridField ancestryField = new ListGridField(ANCESTRY.propertyName(), ANCESTRY.title());
+        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
         ancestryField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
             }
         });
         ancestryField.setShowHover(true);
         ancestryField.setHoverCustomizer(new HoverCustomizer() {
+
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return "<p style='width:400px'>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         });
 

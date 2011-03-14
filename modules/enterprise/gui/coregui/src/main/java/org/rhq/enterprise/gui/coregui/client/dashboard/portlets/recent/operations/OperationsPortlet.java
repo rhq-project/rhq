@@ -42,13 +42,14 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -57,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a live table of completed Operations and scheduled operations. 
@@ -120,7 +122,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         //defining header span
         String[] completedRows = new String[] { //
         RecentOperationsDataSource.Field.RESOURCE.propertyName(), //
-            RecentOperationsDataSource.Field.ANCESTRY.propertyName(), //            
+            AncestryUtil.RESOURCE_ANCESTRY, //            
             RecentOperationsDataSource.Field.OPERATION.propertyName(), //
             RecentOperationsDataSource.Field.TIME.propertyName(), //
             RecentOperationsDataSource.Field.STATUS.propertyName() };
@@ -140,7 +142,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         scheduledOperationsGrid.setWidth100();
         String[] scheduledRows = new String[] { //
         ScheduledOperationsDataSource.Field.RESOURCE.propertyName(), //
-            ScheduledOperationsDataSource.Field.ANCESTRY.propertyName(), //            
+            AncestryUtil.RESOURCE_ANCESTRY, //            
             ScheduledOperationsDataSource.Field.OPERATION.propertyName(), //
             ScheduledOperationsDataSource.Field.TIME.propertyName() };
         scheduledOperationsGrid.setHeaderSpans(new HeaderSpan(scheduledOperations, scheduledRows));
@@ -161,20 +163,29 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         ListGridField resourceRecent = new ListGridField(RecentOperationsDataSource.Field.RESOURCE.propertyName(),
             RecentOperationsDataSource.Field.RESOURCE.title());
+        resourceRecent.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
+        resourceRecent.setShowHover(true);
+        resourceRecent.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
 
-        ListGridField ancestryRecent = new ListGridField(RecentOperationsDataSource.Field.ANCESTRY.propertyName(),
-            RecentOperationsDataSource.Field.ANCESTRY.title());
+        ListGridField ancestryRecent = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
         ancestryRecent.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
             }
         });
         ancestryRecent.setShowHover(true);
         ancestryRecent.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return "<p style='width:400px'>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         });
 
@@ -192,20 +203,29 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
             ScheduledOperationsDataSource.Field.RESOURCE.title());
+        resourceNext.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
+        resourceNext.setShowHover(true);
+        resourceNext.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
 
-        ListGridField ancestryNext = new ListGridField(ScheduledOperationsDataSource.Field.ANCESTRY.propertyName(),
-            ScheduledOperationsDataSource.Field.ANCESTRY.title());
+        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
         ancestryNext.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
             }
         });
         ancestryNext.setShowHover(true);
         ancestryNext.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return "<p style='width:400px'>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         });
 

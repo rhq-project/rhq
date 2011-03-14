@@ -1,6 +1,5 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -110,6 +109,8 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
@@ -120,17 +121,12 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
                         record.setAttribute(TYPE.propertyName(), type.getName());
                     }
 
-                    // decode ancestry
-                    String ancestry = record.getAttributeAsString(ANCESTRY.propertyName());
-                    if (null == ancestry) {
-                        continue;
-                    }
-                    int resourceId = record.getAttributeAsInt("id");
-                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
-                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
-                    // decoded strings as different attributes. 
-                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
-                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -173,7 +169,6 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute("resource", res);
         record.setAttribute("id", res.getId());
         record.setAttribute(NAME.propertyName(), res.getName());
-        record.setAttribute(ANCESTRY.propertyName(), res.getAncestry());
         record.setAttribute(DESCRIPTION.propertyName(), res.getDescription());
         record.setAttribute(TYPE.propertyName(), res.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), res.getResourceType().getPlugin());
@@ -183,7 +178,12 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
 
-        record.setAttribute("resourcePersmission", from.getResourcePermission());
+        record.setAttribute("resourcePermission", from.getResourcePermission());
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, res.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, res.getResourceType().getId());
+
         return record;
     }
 

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -62,10 +61,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public static final String FILTER_GROUP_ID = "groupId";
 
-    // a decoded resource ancestry for display, with   
-    public static final String ATTR_ANCESTRY_RESOURCES = ANCESTRY.name() + "Resources";
-    public static final String ATTR_ANCESTRY_TYPES = ANCESTRY.name() + "Types";
-
     private static ResourceDatasource INSTANCE;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -103,10 +98,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
-
-        DataSourceTextField ancestryDataField = new DataSourceTextField(ANCESTRY.propertyName(), ANCESTRY.title(), 200);
-        ancestryDataField.setCanEdit(false);
-        fields.add(ancestryDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
@@ -159,14 +150,14 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         }
 
         // In addition to the types of the result resources, get the types of their ancestry
-        // NOTE: this may be too labor intensive in general, but since this is a singleton I couldn't
-        //       make it easily optional.
         typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
         ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
@@ -177,17 +168,12 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                         record.setAttribute(TYPE.propertyName(), type.getName());
                     }
 
-                    // decode ancestry
-                    String ancestry = record.getAttributeAsString(ANCESTRY.propertyName());
-                    if (null == ancestry) {
-                        continue;
-                    }
-                    int resourceId = record.getAttributeAsInt("id");
-                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
-                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
-                    // decoded strings as different attributes. 
-                    record.setAttribute(ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
-                    record.setAttribute(ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -236,7 +222,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute("id", from.getId());
         record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
-        record.setAttribute(ANCESTRY.propertyName(), from.getAncestry());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
@@ -245,6 +230,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
             .getCurrentAvailability().getAvailabilityType()));
+
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceType().getId());
 
         return record;
     }

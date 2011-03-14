@@ -81,8 +81,12 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     //TODO: change this to use the Smart GWT default value.
     public static String RANGE_DISABLED_MESSAGE_DEFAULT = MSG.common_msg_noItemsToShow();
 
-    private static String recentOperations = MSG.common_title_recent_operations();
-    private static String scheduledOperations = MSG.common_title_scheduled_operations();
+    private static final String RECENT_OPERATIONS = MSG.common_title_recent_operations();
+    private static final String SCHEDULED_OPERATIONS = MSG.common_title_scheduled_operations();
+
+    private static final int WIDTH_RECENT_TIME = 150;
+    private static final int WIDTH_RECENT_STATUS = 50;
+    private static final int WIDTH_SCHEDULED_TIME = WIDTH_RECENT_TIME + WIDTH_RECENT_STATUS;
 
     // set on initial configuration, the window for this portlet view. 
     private PortletWindow portletWindow;
@@ -114,10 +118,10 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     protected void onInit() {
         super.onInit();
 
-        this.recentOperationsGrid = new LocatableListGrid(recentOperations);
+        this.recentOperationsGrid = new LocatableListGrid(RECENT_OPERATIONS);
         recentOperationsGrid.setDataSource(getDataSourceCompleted());
         recentOperationsGrid.setAutoFetchData(true);
-        recentOperationsGrid.setTitle(recentOperations);
+        recentOperationsGrid.setTitle(RECENT_OPERATIONS);
         recentOperationsGrid.setWidth100();
         //defining header span
         String[] completedRows = new String[] { //
@@ -126,7 +130,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
             RecentOperationsDataSource.Field.OPERATION.propertyName(), //
             RecentOperationsDataSource.Field.TIME.propertyName(), //
             RecentOperationsDataSource.Field.STATUS.propertyName() };
-        recentOperationsGrid.setHeaderSpans(new HeaderSpan(recentOperations, completedRows));
+        recentOperationsGrid.setHeaderSpans(new HeaderSpan(RECENT_OPERATIONS, completedRows));
         recentOperationsGrid.setHeaderSpanHeight(20);
         recentOperationsGrid.setHeaderHeight(40);
         recentOperationsGrid.setResizeFieldsInRealTime(true);
@@ -135,21 +139,21 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         addMember(recentOperationsGrid);
 
         // Add the list table as the top half of the view.
-        this.scheduledOperationsGrid = new LocatableListGrid(scheduledOperations);
+        this.scheduledOperationsGrid = new LocatableListGrid(SCHEDULED_OPERATIONS);
         scheduledOperationsGrid.setDataSource(getDataSourceScheduled());
         scheduledOperationsGrid.setAutoFetchData(true);
-        scheduledOperationsGrid.setTitle(scheduledOperations);
+        scheduledOperationsGrid.setTitle(SCHEDULED_OPERATIONS);
         scheduledOperationsGrid.setWidth100();
         String[] scheduledRows = new String[] { //
         ScheduledOperationsDataSource.Field.RESOURCE.propertyName(), //
             AncestryUtil.RESOURCE_ANCESTRY, //            
             ScheduledOperationsDataSource.Field.OPERATION.propertyName(), //
             ScheduledOperationsDataSource.Field.TIME.propertyName() };
-        scheduledOperationsGrid.setHeaderSpans(new HeaderSpan(scheduledOperations, scheduledRows));
+        scheduledOperationsGrid.setHeaderSpans(new HeaderSpan(SCHEDULED_OPERATIONS, scheduledRows));
         scheduledOperationsGrid.setHeaderSpanHeight(20);
         scheduledOperationsGrid.setHeaderHeight(40);
 
-        scheduledOperationsGrid.setTitle(scheduledOperations);
+        scheduledOperationsGrid.setTitle(SCHEDULED_OPERATIONS);
         scheduledOperationsGrid.setResizeFieldsInRealTime(true);
         scheduledOperationsGrid.setCellHeight(50);
         scheduledOperationsGrid.setWrapCells(true);
@@ -193,10 +197,10 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
             RecentOperationsDataSource.Field.OPERATION.title());
 
         ListGridField timeRecent = new ListGridField(RecentOperationsDataSource.Field.TIME.propertyName(),
-            RecentOperationsDataSource.Field.TIME.title(), 150);
+            RecentOperationsDataSource.Field.TIME.title(), WIDTH_RECENT_TIME);
 
         ListGridField statusRecent = new ListGridField(RecentOperationsDataSource.Field.STATUS.propertyName(),
-            RecentOperationsDataSource.Field.STATUS.title(), 50);
+            RecentOperationsDataSource.Field.STATUS.title(), WIDTH_RECENT_STATUS);
         statusRecent.setAlign(Alignment.CENTER);
 
         recentOperationsGrid.setFields(resourceRecent, ancestryRecent, operationRecent, timeRecent, statusRecent);
@@ -233,7 +237,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
             ScheduledOperationsDataSource.Field.OPERATION.title());
 
         ListGridField timeNext = new ListGridField(ScheduledOperationsDataSource.Field.TIME.propertyName(),
-            ScheduledOperationsDataSource.Field.TIME.title(), 150);
+            ScheduledOperationsDataSource.Field.TIME.title(), WIDTH_SCHEDULED_TIME);
 
         scheduledOperationsGrid.setFields(resourceNext, ancestryNext, operationNext, timeNext);
     }

@@ -405,6 +405,19 @@ public class ImageManager {
         return "subsystems/event/Events" + icon + "_16.png";
     }
 
+    /**
+     * This returns an icon of the badge (e.g. the red X or the blue I) without the
+     * event icon. This is used if you have a table of events and the user knows they are
+     * events so there is no need to show the event icon itself- showing a bigger badge
+     * to indicate severity is more useful.
+     * 
+     * @param severity
+     * @return badge icon
+     */
+    public static String getEventSeverityBadge(EventSeverity severity) {
+        return "subsystems/event/" + severity.name() + "_16.png";
+    }
+
     public static String getEventLargeIcon() {
         return "subsystems/event/Events_24.png";
     }

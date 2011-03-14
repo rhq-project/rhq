@@ -19,7 +19,11 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.util.Map;
+
 import org.quartz.StatefulJob;
+
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 /**
  * The actual quartz job that the plugin container will submit when it needs to invoke
@@ -33,4 +37,9 @@ import org.quartz.StatefulJob;
  * @author John Mazzitelli
  */
 public class StatefulJobWrapper extends AbstractJobWrapper implements StatefulJob {
+    @Override
+    protected ScheduledJobInvocationContext createContext(ScheduledJobDefinition jobDefinition,
+        ServerPluginContext pluginContext, ServerPluginComponent serverPluginComponent, Map<String, String> jobData) {
+        return new StatefulScheduledJobInvocationContext(jobDefinition, pluginContext, serverPluginComponent, jobData);
+    }
 }

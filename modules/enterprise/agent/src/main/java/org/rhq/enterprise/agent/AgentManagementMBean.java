@@ -82,6 +82,8 @@ public interface AgentManagementMBean {
      */
     String PLUGIN_INFO_MD5 = "md5";
 
+    void switchToServer(String server);
+
     /**
      * This will perform an agent <i>hot-restart</i>. The agent will be {@link #shutdown()} and then immediately started
      * again. This is usually called after a client has

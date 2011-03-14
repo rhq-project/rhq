@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;

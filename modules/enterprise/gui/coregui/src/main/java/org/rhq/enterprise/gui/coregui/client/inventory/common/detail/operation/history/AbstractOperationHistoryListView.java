@@ -43,12 +43,13 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -238,19 +239,23 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     }
 
     protected ListGridField createResourceField() {
-        ListGridField resourceField = new ListGridField(ResourceOperationHistoryDataSource.Field.RESOURCE, MSG
-            .common_title_resource());
+        ListGridField resourceField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
         resourceField.setAlign(Alignment.LEFT);
         resourceField.setCellAlign(Alignment.LEFT);
-        //resourceField.setSuppressValueIcon(true);
-        //resourceField.setValueIcons(new HashMap<String, String>(0));
-        /*resourceField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                Resource resource = (Resource) value;
-                String url = LinkManager.getResourceLink(resource.getId());
-                return "<a href=\"" + url + "\">" + resource.getName() + "</a>";
+        resourceField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
             }
-        });*/
+        });
+        resourceField.setShowHover(true);
+        resourceField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+
         return resourceField;
     }
 
@@ -258,6 +263,19 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
         ancestryField.setAlign(Alignment.LEFT);
         ancestryField.setCellAlign(Alignment.LEFT);
+        ancestryField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
+            }
+        });
+        ancestryField.setShowHover(true);
+        ancestryField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+            }
+        });
+
         return ancestryField;
     }
 

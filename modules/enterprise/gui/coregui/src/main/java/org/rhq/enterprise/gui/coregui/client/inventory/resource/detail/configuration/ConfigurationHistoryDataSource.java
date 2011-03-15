@@ -89,7 +89,6 @@ public class ConfigurationHistoryDataSource extends AbstractConfigurationHistory
                 }
 
                 public void onSuccess(final PageList<ResourceConfigurationUpdate> result) {
-                    final ListGridRecord[] records = buildRecords(result);
                     if (resourceId == null) {
                         HashSet<Integer> typesSet = new HashSet<Integer>();
                         HashSet<String> ancestries = new HashSet<String>();
@@ -128,6 +127,8 @@ public class ConfigurationHistoryDataSource extends AbstractConfigurationHistory
 
                         return;
                     }
+
+                    final ListGridRecord[] records = buildRecords(result);
 
                     // we are obtaining a single resource's history items. Let's find out which is
                     // its latest, current config item so we can mark it as such

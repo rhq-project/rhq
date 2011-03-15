@@ -103,12 +103,17 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
                 long fetchDuration = System.currentTimeMillis() - startTime;
                 com.allen_sauer.gwt.log.client.Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
 
-                response.setData(buildRecords(result));
-                // For paging to work, we have to specify size of full result set.
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
+                dataRetrieved(result, response, request);
             }
         });
+    }
+
+    protected void dataRetrieved(final PageList<MeasurementDataTrait> result, final DSResponse response,
+        final DSRequest request) {
+        response.setData(buildRecords(result));
+        // For paging to work, we have to specify size of full result set.
+        response.setTotalRows(result.getTotalSize());
+        processResponse(request.getRequestId(), response);
     }
 
     protected MeasurementDataTraitCriteria getCriteria(DSRequest request) {

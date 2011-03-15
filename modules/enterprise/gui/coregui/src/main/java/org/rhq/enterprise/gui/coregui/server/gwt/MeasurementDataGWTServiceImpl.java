@@ -35,6 +35,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -266,8 +267,20 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(dataManager.findTraitsByCriteria(getSessionSubject(), criteria),
-                "MeasurementDataService.findTraitsByCriteria");
+            PageList<MeasurementDataTrait> results = dataManager.findTraitsByCriteria(getSessionSubject(), criteria);
+            if (!results.isEmpty() && null != results.get(0).getSchedule()
+                && null != results.get(0).getSchedule().getResource()) {
+                List<Resource> resources = new ArrayList<Resource>(results.size());
+                for (MeasurementDataTrait result : results) {
+                    Resource res = result.getSchedule().getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
+            return SerialUtility.prepare(results, "MeasurementDataService.findTraitsByCriteria");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }

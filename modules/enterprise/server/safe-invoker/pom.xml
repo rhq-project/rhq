@@ -49,6 +49,63 @@
    </dependencies>
 
   <profiles>
+  
+       <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.jar</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                           <tasks>
+                              <mkdir dir="${rhq.deploymentDir}" />
+                              <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentName}" />
+                              <echo>*** Updating ${deployment.file}...</echo>
+                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentName}" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+           </plugins>
+         </build>
+      </profile>
+  
      <profile>
       <id>cobertura</id>
       <activation>

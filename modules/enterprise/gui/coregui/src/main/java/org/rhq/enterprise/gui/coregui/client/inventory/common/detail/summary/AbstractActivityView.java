@@ -43,6 +43,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
@@ -480,6 +481,25 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             } else {
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
             }
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param operationStatusSelector
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveOperationStatusSelectorSettings(final SelectItem operationStatusSelector,
+        final Configuration portletConfig) {
+        String selectedValue;
+        selectedValue = operationStatusSelector.getValue().toString();
+        if ((selectedValue.trim().isEmpty())
+            || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {//then no operation status specified
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, ""));
+        } else {//some subset of available alertPriorities will be used
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, selectedValue));
         }
         return portletConfig;
     }

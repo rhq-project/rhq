@@ -72,7 +72,6 @@ public abstract class OperationHistoryCriteria extends Criteria {
             + "    WHERE roh.resource.id IN ( ? ) ) ");
 
         filterOverrides.put("stati", "status IN ( ? )");
-        filterOverrides.put("status", "status");
 
         sortOverrides.put("startTime", "startedTime");
         sortOverrides.put("endTime", "modifiedTime");

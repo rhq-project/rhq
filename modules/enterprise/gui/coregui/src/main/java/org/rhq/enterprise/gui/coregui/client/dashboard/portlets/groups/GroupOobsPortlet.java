@@ -95,7 +95,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupOobs";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = "Group: OOB Metrics";
+    public static final String NAME = MSG.view_portlet_defaultName_group_oobs();
     public static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
@@ -104,6 +104,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
 
     private Timer refreshTimer;
 
+    //defines the list of configuration elements to load/persist for this portlet
     private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);

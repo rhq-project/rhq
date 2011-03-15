@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
@@ -83,6 +85,20 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     private PortletWindow portletWindow;
 
     private GroupOperationsCriteriaHistoryListView dataSource;
+
+    //defines the list of configuration elements to load/persist for this portlet
+    private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
+    static {
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_ENABLE);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_LASTN);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
+        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
+        CONFIG_INCLUDE.add(Constant.RESULT_SORT_ORDER);
+        CONFIG_INCLUDE.add(Constant.RESULT_SORT_PRIORITY);
+        CONFIG_INCLUDE.add(Constant.OPERATION_STATUS);
+    }
 
     //instance ui widgets
     private Canvas containerCanvas;
@@ -197,7 +213,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
-            if (portletConfig.getSimple(key) == null) {
+            if ((portletConfig.getSimple(key) == null) && CONFIG_INCLUDE.contains(key)) {
                 portletConfig.put(new PropertySimple(key,
                     PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
             }

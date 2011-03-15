@@ -86,6 +86,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     private long start = -1;
     private long end = -1;
 
+    //defines the list of configuration elements to load/persist for this portlet
     private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
@@ -172,18 +173,22 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         getRecentMetrics();
     }
 
+    /** Builds custom config UI, using shared widgets
+     */
     @Override
     public DynamicForm getCustomSettingsForm() {
+        //root form.
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        //embed range editor in it own container
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         //submit handler
         customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
-
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+                //retrieve range editor values
                 portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
                     portletConfig);
 

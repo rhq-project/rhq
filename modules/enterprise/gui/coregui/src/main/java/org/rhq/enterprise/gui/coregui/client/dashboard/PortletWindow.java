@@ -36,6 +36,8 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopHandler;
+import com.smartgwt.client.widgets.events.MouseOverEvent;
+import com.smartgwt.client.widgets.events.MouseOverHandler;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -57,6 +59,7 @@ public class PortletWindow extends LocatableWindow {
     // A reference to the stored/persisted DashboardPortlet, so changes made to this will
     // get persisted when the dashboard is persisted.
     private DashboardPortlet storedPortlet;
+    private HeaderControl headerIcon;
 
     // The actual portlet content view
     private Portlet view;
@@ -118,12 +121,18 @@ public class PortletWindow extends LocatableWindow {
         RssHeader.setTooltip(RSS);
 
         //detect customized Header icon
-        HeaderControl headerIcon = null;
+        headerIcon = null;
         String portletKey = storedPortlet.getPortletKey();
-        String iconUrl = PortletFactory.getRegisteredPortletIcon(portletKey);
+        final String iconUrl = PortletFactory.getRegisteredPortletIcon(portletKey);
         if ((iconUrl != null) && (!iconUrl.trim().isEmpty())) {
             HeaderIcon icon = new HeaderIcon(iconUrl);
             headerIcon = new HeaderControl(icon);
+            headerIcon.addMouseOverHandler(new MouseOverHandler() {
+                @Override
+                public void onMouseOver(MouseOverEvent event) {
+                    headerIcon.setIcon(iconUrl);
+                }
+            });
         }
 
         // customize the appearance and order of the controls in the window header

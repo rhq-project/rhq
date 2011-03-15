@@ -30,6 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEven
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
@@ -102,6 +103,7 @@ public class PortletFactory {
         registeredGroupPortletFactoryMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupOperationsPortlet.KEY, GroupOperationsPortlet.Factory.INSTANCE);
+        registeredGroupPortletFactoryMap.put(GroupPkgHistoryPortlet.KEY, GroupPkgHistoryPortlet.Factory.INSTANCE);
 
         //register group portlet names
         registeredGroupPortletNameMap = new HashMap<String, String>(registeredGroupPortletFactoryMap.size());
@@ -111,6 +113,7 @@ public class PortletFactory {
         registeredGroupPortletNameMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupOperationsPortlet.KEY, GroupOperationsPortlet.NAME);
+        registeredGroupPortletNameMap.put(GroupPkgHistoryPortlet.KEY, GroupPkgHistoryPortlet.NAME);
 
         //############## Resource Activity Dashboard  ############################################
         //defines mapping for Group Activity Dashboard
@@ -128,6 +131,7 @@ public class PortletFactory {
         registeredPortletIconMap.put(GroupOobsPortlet.KEY, ImageManager.getMonitorFailedLargeIcon());
         registeredPortletIconMap.put(GroupEventsPortlet.KEY, ImageManager.getEventLargeIcon());
         registeredPortletIconMap.put(GroupOperationsPortlet.KEY, ImageManager.getOperationLargeIcon());
+        registeredPortletIconMap.put(GroupPkgHistoryPortlet.KEY, ImageManager.getActivityPackageLargeIcon());
     }
 
     public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet) {

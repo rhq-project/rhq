@@ -450,4 +450,8 @@ public class ImageManager {
         return "subsystems/control/Operation_16.png";
     }
 
+    public static String getActivityPackageLargeIcon() {
+        return "subsystems/content/Package_24.png";
+    }
+
 }

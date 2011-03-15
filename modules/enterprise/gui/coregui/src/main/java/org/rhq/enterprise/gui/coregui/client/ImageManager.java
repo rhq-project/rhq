@@ -454,4 +454,15 @@ public class ImageManager {
         return "subsystems/content/Package_24.png";
     }
 
+    public static String getActivityPackageIcon() {
+        return "subsystems/content/Package_16.png";
+    }
+
+    public static String getBundleLargeIcon() {
+        return "subsystems/content/Content_24.png";
+    }
+
+    public static String getBundleIcon() {
+        return "subsystems/content/Content_16.png";
+    }
 }

@@ -395,6 +395,15 @@ public interface ResourceManagerLocal {
     void clearResourceConfigError(int resourceId);
 
     /**
+     * Clears errors of the given type.
+     * @param subject the user that is making the request
+     * @param resourceId id of the resource
+     * @param resourceErrorType type of error to clear
+     * @return the number of errors that were cleared
+     */
+    int clearResourceConfigErrorByType(Subject subject, int resourceId, ResourceErrorType resourceErrorType);
+
+    /**
      * Returns the platform Resource associated with the specified Agent.
      *
      * @param agent an Agent

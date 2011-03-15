@@ -1855,26 +1855,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public void addResourceError(ResourceError resourceError) {
-        Subject overlord = subjectManager.getOverlord();
-        Resource resource;
-        try {
-            resource = getResourceById(overlord, resourceError.getResource().getId());
-        } catch (ResourceNotFoundException rnfe) {
-            throw new ResourceNotFoundException("Resource error  an unknown Resource id: " + resourceError);
-        }
+        ResourceErrorType resourceErrorType = resourceError.getErrorType();
 
-        if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
-            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK
-            || resourceError.getErrorType() == ResourceErrorType.UPGRADE) {
+        if (resourceErrorType == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
+            || resourceErrorType == ResourceErrorType.AVAILABILITY_CHECK
+            || resourceErrorType == ResourceErrorType.UPGRADE) {
             // there should be at most one invalid plugin configuration error, availability check
             // or upgrade error per resource, so delete any currently existing ones before we add this new one
-            List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());
-
-            // there should only ever be at most 1, but loop through the list just in case something got screwed up
-            // and there ended up more than 1 associated with the resource.
-            for (ResourceError doomedError : doomedErrors) {
-                entityManager.remove(doomedError);
-            }
+            Subject overlord = subjectManager.getOverlord();
+            int resourceId = resourceError.getResource().getId();
+            resourceManager.clearResourceConfigErrorByType(overlord, resourceId, resourceErrorType);
         }
 
         entityManager.persist(resourceError);
@@ -1882,24 +1872,40 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
-    public void clearResourceConfigError(int resourceId) {
-        // TODO Add subject permissions to this method
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int clearResourceConfigErrorByType(Subject subject, int resourceId, ResourceErrorType resourceErrorType) {
 
-        Query q = entityManager
-            .createQuery("delete from ResourceError e where e.resource.id = :resourceId and e.errorType = :type");
-
-        q.setParameter("resourceId", resourceId);
-        q.setParameter("type", ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
-
-        int updates = q.executeUpdate();
-
-        if (updates > 1) {
-            log.error("Resource [" + resourceId + "] has [" + updates
-                + "] INVALID_PLUGIN_CONFIGURATION ResourceError associated with it.");
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("Cannot delete resource errors of type [" + resourceErrorType + "]. User ["
+                + subject.getName() + "] does not have permission to operate on resource ID [" + resourceId + "].");
         }
 
+        Query q = entityManager
+            .createQuery("DELETE FROM ResourceError e WHERE e.resource.id = :resourceId AND e.errorType = :type");
+
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("type", resourceErrorType);
+
+        int updates = q.executeUpdate();
+        return updates;
     }
 
+    public void clearResourceConfigError(int resourceId) {
+        // TODO change sig to get user passed in, rather than using overlord/assuming user is authz'ed
+        Subject s = subjectManager.getOverlord();
+
+        // make a direct local call - no need to go through the ByType method's REQUIRES_NEW interface here
+        int cleared = clearResourceConfigErrorByType(s, resourceId, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
+
+        if (cleared > 1) {
+            log.warn("Resource [" + resourceId + "] had [" + cleared
+                + "] INVALID_PLUGIN_CONFIGURATION ResourceErrors associated with it.");
+        }
+
+        return;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void deleteResourceError(Subject user, int resourceErrorId) {
         ResourceError error = entityManager.find(ResourceError.class, resourceErrorId);
 

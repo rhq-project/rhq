@@ -371,10 +371,7 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         if (getTableInfo() != null) {
             int count = getListGrid().getSelection().length;
             getTableInfo().setContents(
-            //                MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
-                //Ex. Total Rows: {0} (selected: {1})
-                "Matching Rows: " + String.valueOf(getListGrid().getTotalRows()) + " (selected "
-                    + String.valueOf(count) + ")");
+                MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }
     }
 }

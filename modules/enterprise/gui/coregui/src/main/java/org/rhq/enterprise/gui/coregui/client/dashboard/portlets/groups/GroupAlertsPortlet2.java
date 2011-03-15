@@ -362,7 +362,7 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     @Override
     protected void onInit() {
         super.onInit();
-        getListGrid().setEmptyMessage("No results found using specified criteria.");
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     @Override

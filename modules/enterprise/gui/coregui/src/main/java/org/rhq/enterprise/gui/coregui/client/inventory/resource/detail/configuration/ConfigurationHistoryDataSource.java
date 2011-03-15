@@ -18,19 +18,28 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
+import java.util.HashSet;
+import java.util.Map;
+
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 
 /**
  * A data source that loads information about all the configuration changes that happened
@@ -82,10 +91,42 @@ public class ConfigurationHistoryDataSource extends AbstractConfigurationHistory
                 public void onSuccess(final PageList<ResourceConfigurationUpdate> result) {
                     final ListGridRecord[] records = buildRecords(result);
                     if (resourceId == null) {
-                        response.setData(records);
-                        response.setTotalRows(result.getTotalSize());
-                        processResponse(request.getRequestId(), response);
-                        return; // we can finish now, we don't need any additional information
+                        HashSet<Integer> typesSet = new HashSet<Integer>();
+                        HashSet<String> ancestries = new HashSet<String>();
+                        for (ResourceConfigurationUpdate update : result) {
+                            Resource resource = update.getResource();
+                            typesSet.add(resource.getResourceType().getId());
+                            ancestries.add(resource.getAncestry());
+                        }
+
+                        // In addition to the types of the result resources, get the types of their ancestry
+                        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+                        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+                        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
+                            new TypesLoadedCallback() {
+                                @Override
+                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                                    Record[] records = buildRecords(result);
+                                    for (Record record : records) {
+                                        // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                                        // Build the decoded ancestry Strings now for display
+                                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil
+                                            .getAncestryValue(record));
+                                    }
+                                    response.setData(records);
+                                    response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                                    processResponse(request.getRequestId(), response);
+                                }
+                            });
+
+                        return;
                     }
 
                     // we are obtaining a single resource's history items. Let's find out which is

@@ -16,6 +16,7 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -155,9 +156,20 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Integer resourceId, Long beginDate,
         Long endDate, boolean suppressOldest, PageControl pc) throws RuntimeException {
         try {
-            PageList<ResourceConfigurationUpdate> result = configurationManager.findResourceConfigurationUpdates(
+            PageList<ResourceConfigurationUpdate> updates = configurationManager.findResourceConfigurationUpdates(
                 getSessionSubject(), resourceId, beginDate, endDate, suppressOldest, pc);
-            return SerialUtility.prepare(result, "ConfigurationService.findResourceConfigurationUpdates");
+            if (!updates.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(updates.size());
+                for (ResourceConfigurationUpdate update : updates) {
+                    Resource res = update.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
+            return SerialUtility.prepare(updates, "ConfigurationService.findResourceConfigurationUpdates");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -193,6 +205,17 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             PageList<ResourceConfigurationUpdate> updates = configurationManager
                 .findResourceConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            if (!updates.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(updates.size());
+                for (ResourceConfigurationUpdate update : updates) {
+                    Resource res = update.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
             return SerialUtility.prepare(updates, "ConfigurationService.findResourceConfigurationUpdatesByCriteria");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
@@ -205,6 +228,17 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             PageList<PluginConfigurationUpdate> updates = configurationManager
                 .findPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            if (!updates.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(updates.size());
+                for (PluginConfigurationUpdate update : updates) {
+                    Resource res = update.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
             return SerialUtility.prepare(updates, "ConfigurationService.findPluginConfigurationUpdatesByCriteria");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));

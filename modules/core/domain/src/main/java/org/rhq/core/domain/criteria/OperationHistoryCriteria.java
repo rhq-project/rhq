@@ -45,7 +45,7 @@ public abstract class OperationHistoryCriteria extends Criteria {
     private String filterJobName;
     private String filterJobGroup;
     private OperationRequestStatus filterStatus;
-    private List<OperationRequestStatus> filterStati; // requires overrides
+    private List<OperationRequestStatus> filterStatuses; // requires overrides
     private String filterErrorMessage;
     private Integer filterOperationDefinitionId; // requires override
     private String filterOperationName; // requires override
@@ -71,7 +71,7 @@ public abstract class OperationHistoryCriteria extends Criteria {
             + "     FROM ResourceOperationHistory roh " //
             + "    WHERE roh.resource.id IN ( ? ) ) ");
 
-        filterOverrides.put("stati", "status IN ( ? )");
+        filterOverrides.put("statuses", "status IN ( ? )");
 
         sortOverrides.put("startTime", "startedTime");
         sortOverrides.put("endTime", "modifiedTime");
@@ -96,8 +96,8 @@ public abstract class OperationHistoryCriteria extends Criteria {
         this.filterStatus = filterStatus;
     }
 
-    public void addFilterStati(OperationRequestStatus... operationStatus) {
-        this.filterStati = CriteriaUtils.getListIgnoringNulls(operationStatus);
+    public void addFilterStatuses(OperationRequestStatus... operationStatus) {
+        this.filterStatuses = CriteriaUtils.getListIgnoringNulls(operationStatus);
     }
 
     public void addFilterErrorMessage(String filterErrorMessage) {

@@ -449,7 +449,7 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
                         OperationRequestStatus s = OperationRequestStatus.valueOf(priority);
                         operationStati[indx++] = s;
                     }
-                    criteria.addFilterStati(operationStati);
+                    criteria.addFilterStatuses(operationStati);
                 }
             }
         }

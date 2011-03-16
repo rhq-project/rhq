@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.footer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -34,6 +35,7 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
@@ -42,6 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 
 /**
@@ -117,114 +122,184 @@ public class FavoritesButton extends LocatableIMenuButton {
                         CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
                     }
 
-                    public void onSuccess(Favorites favorites) {
-                        // generate the menus
-                        if (!favoriteResourceIds.isEmpty()) {
-                            List<MenuItem> items = new ArrayList<MenuItem>(favoriteResourceIds.size());
-
-                            for (final Integer resourceId : favoriteResourceIds) {
-                                Resource resource = favorites.getResource(resourceId);
-                                if (null == resource) {
-                                    // if the resource is gone just skip it
-                                    continue;
-                                }
-
-                                MenuItem item = new MenuItem(String.valueOf(resourceId));
-                                // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
-                                //       disambiguated Resource names.
-                                item.setTitle(resource.getName());
-                                item.setIcon(ImageManager.getResourceIcon(resource));
-                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                                    public void onClick(MenuItemClickEvent event) {
-                                        CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
-                                    }
-                                });
-                                items.add(item);
-                            }
-                            favoriteResourcesMenu.setItems(items.toArray(new MenuItem[items.size()]));
+                    public void onSuccess(final Favorites favorites) {
+                        // For Ancestry we need all the resource types and ancestry resource types loaded
+                        HashSet<Integer> typesSet = new HashSet<Integer>();
+                        HashSet<String> ancestries = new HashSet<String>();
+                        for (Resource resource : favorites.resources) {
+                            typesSet.add(resource.getResourceType().getId());
+                            ancestries.add(resource.getAncestry());
                         }
 
-                        if (!favoriteGroupIds.isEmpty()) {
-                            List<MenuItem> items = new ArrayList<MenuItem>(favoriteGroupIds.size());
+                        // In addition to the types of the result resources, get the types of their ancestry
+                        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
-                            for (final Integer groupId : favoriteGroupIds) {
-                                ResourceGroupComposite groupComposite = favorites.getGroupComposite(groupId);
-                                if (null == groupComposite) {
-                                    // if the resource group is gone just skip it
-                                    continue;
+                        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+                        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
+                            new TypesLoadedCallback() {
+                                @Override
+                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                                    // generate the menus
+                                    buildFavoriteResourcesMenu(favorites, favoriteResourcesMenu, favoriteResourceIds,
+                                        typesWrapper);
+                                    buildFavoriteGroupsMenu(favorites, favoriteGroupsMenu, favoriteGroupIds);
+                                    buildRecentlyViewedMenu(favorites, recentlyViewedMenu, recentResourceIds,
+                                        recentGroupIds, typesWrapper);
+
+                                    favoritesMenu.showContextMenu();
                                 }
-                                ResourceGroup group = groupComposite.getResourceGroup();
-
-                                MenuItem item = new MenuItem(String.valueOf(groupId));
-                                item.setTitle(group.getName());
-                                item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite
-                                    .getImplicitAvail()));
-
-                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                                    public void onClick(MenuItemClickEvent event) {
-                                        CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
-                                    }
-                                });
-                                items.add(item);
-                            }
-                            favoriteGroupsMenu.setItems(items.toArray(new MenuItem[items.size()]));
-                        }
-
-                        if (!(recentResourceIds.isEmpty() && recentGroupIds.isEmpty())) {
-                            List<MenuItem> items = new ArrayList<MenuItem>(recentResourceIds.size()
-                                + recentGroupIds.size());
-
-                            for (final Integer resourceId : recentResourceIds) {
-                                Resource resource = favorites.getResource(resourceId);
-                                if (null == resource) {
-                                    // if the resource is gone just skip it
-                                    continue;
-                                }
-
-                                MenuItem item = new MenuItem(String.valueOf(resourceId));
-                                // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
-                                //       disambiguated Resource names.
-                                item.setTitle(resource.getName());
-                                item.setIcon(ImageManager.getResourceIcon(resource));
-                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                                    public void onClick(MenuItemClickEvent event) {
-                                        CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
-                                    }
-                                });
-                                items.add(item);
-                            }
-                            if (!recentResourceIds.isEmpty() && !recentGroupIds.isEmpty()) {
-                                items.add(new MenuItemSeparator());
-                            }
-                            for (final Integer groupId : recentGroupIds) {
-                                ResourceGroupComposite groupComposite = favorites.getGroupComposite(groupId);
-                                if (null == groupComposite) {
-                                    // if the resource group is gone just skip it
-                                    continue;
-                                }
-                                ResourceGroup group = groupComposite.getResourceGroup();
-
-                                MenuItem item = new MenuItem(String.valueOf(groupId));
-                                item.setTitle(group.getName());
-                                item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite
-                                    .getImplicitAvail()));
-
-                                item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                                    public void onClick(MenuItemClickEvent event) {
-                                        CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
-                                    }
-                                });
-                                items.add(item);
-                            }
-
-                            recentlyViewedMenu.setItems(items.toArray(new MenuItem[items.size()]));
-                        }
-
-                        favoritesMenu.showContextMenu();
+                            });
                     }
                 });
             }
         });
+    }
+
+    private void buildFavoriteResourcesMenu(Favorites favorites, Menu menu, Set<Integer> resourceIds,
+        AncestryUtil.MapWrapper typesWrapper) {
+
+        if (resourceIds.isEmpty()) {
+            menu.setItems();
+            return;
+        }
+
+        List<MenuItem> items = new ArrayList<MenuItem>(resourceIds.size());
+
+        for (final Integer resourceId : resourceIds) {
+            Resource resource = favorites.getResource(resourceId);
+            if (null == resource) {
+                // if the resource is gone just skip it
+                continue;
+            }
+
+            MenuItem item = new MenuItem(resource.getName());
+            item.setIcon(ImageManager.getResourceIcon(resource));
+
+            // build a subMenu to display a disambiguated resource
+            item.setAttribute(AncestryUtil.RESOURCE_ID, resourceId);
+            item.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+            item.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            item.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+            item.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+            Menu ancestryMenu = new Menu();
+            MenuItem ancestryItem = new MenuItem(AncestryUtil.getAncestryHoverHTML(item, 0));
+            ancestryItem.setEnabled(false);
+            ancestryMenu.setItems(ancestryItem);
+            item.setSubmenu(ancestryMenu);
+
+            item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
+                }
+            });
+
+            items.add(item);
+        }
+
+        menu.setCanSelectParentItems(Boolean.TRUE);
+        menu.setItems(items.toArray(new MenuItem[items.size()]));
+    }
+
+    private void buildFavoriteGroupsMenu(Favorites favorites, Menu menu, Set<Integer> groupIds) {
+
+        if (groupIds.isEmpty()) {
+            menu.setItems();
+            return;
+        }
+
+        List<MenuItem> items = new ArrayList<MenuItem>(groupIds.size());
+
+        for (final Integer groupId : groupIds) {
+            ResourceGroupComposite groupComposite = favorites.getGroupComposite(groupId);
+            if (null == groupComposite) {
+                // if the resource group is gone just skip it
+                continue;
+            }
+            ResourceGroup group = groupComposite.getResourceGroup();
+
+            MenuItem item = new MenuItem(String.valueOf(groupId));
+            item.setTitle(group.getName());
+            item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite.getImplicitAvail()));
+
+            item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                }
+            });
+            items.add(item);
+        }
+        menu.setItems(items.toArray(new MenuItem[items.size()]));
+    }
+
+    private void buildRecentlyViewedMenu(Favorites favorites, Menu menu, List<Integer> recentResourceIds,
+        List<Integer> recentGroupIds, AncestryUtil.MapWrapper typesWrapper) {
+
+        if (recentResourceIds.isEmpty() && recentGroupIds.isEmpty()) {
+            return;
+        }
+        List<MenuItem> items = new ArrayList<MenuItem>(recentResourceIds.size() + recentGroupIds.size() + 1);
+
+        for (final Integer resourceId : recentResourceIds) {
+            Resource resource = favorites.getResource(resourceId);
+            if (null == resource) {
+                // if the resource is gone just skip it
+                continue;
+            }
+
+            MenuItem item = new MenuItem(resource.getName());
+            item.setIcon(ImageManager.getResourceIcon(resource));
+
+            // build a subMenu to display a disambiguated resource
+            item.setAttribute(AncestryUtil.RESOURCE_ID, resourceId);
+            item.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+            item.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            item.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+            item.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+            Menu ancestryMenu = new Menu();
+            MenuItem ancestryItem = new MenuItem(AncestryUtil.getAncestryHoverHTML(item, 0));
+            ancestryItem.setEnabled(false);
+            ancestryMenu.setItems(ancestryItem);
+            item.setSubmenu(ancestryMenu);
+
+            item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceLink(resourceId));
+                }
+            });
+
+            items.add(item);
+        }
+
+        if (!recentResourceIds.isEmpty() && !recentGroupIds.isEmpty()) {
+            items.add(new MenuItemSeparator());
+        }
+
+        for (final Integer groupId : recentGroupIds) {
+            ResourceGroupComposite groupComposite = favorites.getGroupComposite(groupId);
+            if (null == groupComposite) {
+                // if the resource group is gone just skip it
+                continue;
+            }
+            ResourceGroup group = groupComposite.getResourceGroup();
+
+            MenuItem item = new MenuItem(String.valueOf(groupId));
+            item.setTitle(group.getName());
+            item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(), groupComposite.getImplicitAvail()));
+
+            item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                }
+            });
+            items.add(item);
+        }
+
+        menu.setCanSelectParentItems(Boolean.TRUE);
+        menu.setItems(items.toArray(new MenuItem[items.size()]));
     }
 
     private void fetchFavorites(Set<Integer> resourceIds, final Set<Integer> groupIds,

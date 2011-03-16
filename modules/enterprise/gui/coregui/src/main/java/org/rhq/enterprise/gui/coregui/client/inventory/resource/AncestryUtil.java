@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -36,7 +37,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  */
 public abstract class AncestryUtil {
-
     // ListGrid Record attribute names expected to be set on records processed by the utility  
     public static final String RESOURCE_ANCESTRY = "resourceAncestry";
     public static final String RESOURCE_ANCESTRY_VALUE = "resourceAncestryDecoded";
@@ -46,6 +46,9 @@ public abstract class AncestryUtil {
     public static final String RESOURCE_ID = "resourceId";
     public static final String RESOURCE_NAME = "resourceName";
     public static final String RESOURCE_TYPE_ID = "resourceTypeId";
+
+    private static final String TITLE_ANCESTRY = CoreGUI.getMessages().util_ancestry_parentAncestry() + " ";
+    private static final String TITLE_PLATFORM = CoreGUI.getMessages().common_title_platform() + ": ";
 
     /**
      * Get the complete set of resource types in the ancestries provided. This is useful for
@@ -158,11 +161,6 @@ public abstract class AncestryUtil {
             return ancestryHover;
         }
 
-        String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
-        if (null == ancestry) {
-            return "";
-        }
-
         Integer resourceId = listGridRecord.getAttributeAsInt(RESOURCE_ID);
         // if not set assume the standard "id" attr is a resourceId
         resourceId = (null != resourceId) ? resourceId : listGridRecord.getAttributeAsInt("id");
@@ -174,38 +172,43 @@ public abstract class AncestryUtil {
         Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
         ResourceType type = types.get(resourceTypeId);
         String resourceLongName = getResourceLongName(resourceName, type);
+        String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
 
         width = (width <= 0) ? 500 : width;
 
         // decode ancestry
         StringBuilder sb = new StringBuilder("<p style='width:");
         sb.append(width);
-        sb.append("px'>Parent Ancestry for: ");
+        sb.append("px'>");
+        String title = (null != ancestry) ? TITLE_ANCESTRY : TITLE_PLATFORM;
+        sb.append(title);
         sb.append(resourceLongName);
-        sb.append("<hr/>");
-        String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
-        for (int i = ancestryEntries.length - 1, j = 0; i >= 0; --i, ++j) {
-            String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
-            int ancestorTypeId = Integer.valueOf(entryTokens[0]);
-            String ancestorName = entryTokens[2];
+        if (null != ancestry) {
+            sb.append("<hr/>");
+            String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+            for (int i = ancestryEntries.length - 1, j = 0; i >= 0; --i, ++j) {
+                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                int ancestorTypeId = Integer.valueOf(entryTokens[0]);
+                String ancestorName = entryTokens[2];
 
-            // indent with spaces
-            if (j > 0) {
-                sb.append("<br/>");
-                for (int k = 0; k < j; ++k) {
-                    sb.append("&nbsp;&nbsp;");
+                // indent with spaces
+                if (j > 0) {
+                    sb.append("<br/>");
+                    for (int k = 0; k < j; ++k) {
+                        sb.append("&nbsp;&nbsp;");
+                    }
                 }
+                type = types.get(ancestorTypeId);
+                sb.append(getResourceLongName(ancestorName, type));
             }
-            type = types.get(ancestorTypeId);
-            sb.append(getResourceLongName(ancestorName, type));
-        }
 
-        // add target resource, indent with spaces
-        sb.append("<br/>");
-        for (int k = 0; k <= ancestryEntries.length; ++k) {
-            sb.append("&nbsp;&nbsp;");
+            // add target resource, indent with spaces
+            sb.append("<br/>");
+            for (int k = 0; k <= ancestryEntries.length; ++k) {
+                sb.append("&nbsp;&nbsp;");
+            }
+            sb.append(resourceLongName);
         }
-        sb.append(resourceLongName);
 
         sb.append("</p>");
 

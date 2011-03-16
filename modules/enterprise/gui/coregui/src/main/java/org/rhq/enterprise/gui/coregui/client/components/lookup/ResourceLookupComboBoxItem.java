@@ -25,10 +25,14 @@ package org.rhq.enterprise.gui.coregui.client.components.lookup;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 
 /**
@@ -39,21 +43,40 @@ public class ResourceLookupComboBoxItem extends ComboBoxItem {
 
     public ResourceLookupComboBoxItem(String name, String title) {
         super(name, title);
-        setWidth(300);
-        setHint("resource search");
+        setHint(MSG.widget_resourceSelector_selectResource());
         setShowHintInField(false);
 
         setOptionDataSource(new ResourceDatasource());
 
         ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 250);
+        nameField.setShowHover(true);
+        nameField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+
+        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry(),
+            300);
+        ancestryField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getAncestryValue(listGridRecord, false);
+            }
+        });
+        ancestryField.setShowHover(true);
+        ancestryField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+            }
+        });
+
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
-        ListGridField typeNameField = new ListGridField("typeName", MSG.common_title_type(), 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", MSG.common_title_plugin(), 100);
         ListGridField categoryField = new ListGridField("category", MSG.common_title_category(), 60);
         ListGridField availabilityField = new ListGridField("currentAvailability", MSG.common_title_availability(), 55);
         availabilityField.setAlign(Alignment.CENTER);
 
-        setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
+        setPickListFields(nameField, ancestryField, descriptionField, categoryField, availabilityField);
 
         setValueField("id");
         setDisplayField("name");

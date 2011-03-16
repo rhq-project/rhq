@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidat
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -149,7 +150,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
         typeItem.setTooltip(MSG.view_summaryOverviewForm_label_plugin() + type.getPlugin() + "\n<br>"
             + MSG.view_summaryOverviewForm_label_type() + type.getName());
-        typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
+        typeItem.setValue(AncestryUtil.getFormattedType(type));
         formItems.add(typeItem);
 
         final Resource resource = this.resourceComposite.getResource();

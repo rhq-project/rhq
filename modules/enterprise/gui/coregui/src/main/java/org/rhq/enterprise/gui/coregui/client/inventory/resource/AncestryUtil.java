@@ -115,9 +115,7 @@ public abstract class AncestryUtil {
                 }
                 ResourceType rt = types.get(ancestorTypeId);
                 sbTypes.append(href);
-                sbTypes.append(" [" + rt.getPlugin() + " / ");
-                sbTypes.append(rt.getName());
-                sbTypes.append("]");
+                addFormattedType(sbTypes, rt);
             }
         }
 
@@ -129,7 +127,24 @@ public abstract class AncestryUtil {
         return result;
     }
 
+    public static String getFormattedType(ResourceType type) {
+        return addFormattedType(new StringBuilder(), type).toString();
+    }
+
+    private static StringBuilder addFormattedType(StringBuilder sb, ResourceType type) {
+        sb.append(" [<i>");
+        sb.append(type.getPlugin());
+        sb.append("</i>, ");
+        sb.append(type.getName());
+        sb.append("]");
+        return sb;
+    }
+
     public static String getAncestryValue(Record record) {
+        return getAncestryValue(record, true);
+    }
+
+    public static String getAncestryValue(Record record, boolean generateLinks) {
         String ancestry = record.getAttributeAsString(RESOURCE_ANCESTRY);
         if (null == ancestry) {
             return "";
@@ -146,10 +161,14 @@ public abstract class AncestryUtil {
             String ancestorName = entryTokens[2];
 
             sbResources.append((i > 0) ? " < " : "");
-            String url = LinkManager.getResourceLink(ancestorResourceId);
-            String suffix = resourceId + "_" + entryTokens[1];
-            String href = SeleniumUtility.getLocatableHref(url, ancestorName, suffix);
-            sbResources.append(href);
+            if (generateLinks) {
+                String url = LinkManager.getResourceLink(ancestorResourceId);
+                String suffix = resourceId + "_" + entryTokens[1];
+                String href = SeleniumUtility.getLocatableHref(url, ancestorName, suffix);
+                sbResources.append(href);
+            } else {
+                sbResources.append(ancestorName);
+            }
         }
 
         return sbResources.toString();
@@ -218,15 +237,13 @@ public abstract class AncestryUtil {
     }
 
     private static String getResourceLongName(String resourceName, ResourceType type) {
-        StringBuffer sb = new StringBuffer("<b>");
+        StringBuilder sb = new StringBuilder("<b>");
 
         sb.append(resourceName);
         sb.append("</b>");
 
         if (type != null) {
-            sb.append(" [" + type.getPlugin() + " / ");
-            sb.append(type.getName());
-            sb.append("]");
+            addFormattedType(sb, type);
         }
 
         return sb.toString();

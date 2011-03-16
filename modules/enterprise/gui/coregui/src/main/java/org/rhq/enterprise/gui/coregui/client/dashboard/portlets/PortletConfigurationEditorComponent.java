@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -56,6 +57,7 @@ public class PortletConfigurationEditorComponent {
         String RESULT_COUNT = "RESULT_COUNT";
         String RESULT_COUNT_DEFAULT = "5";
         String CUSTOM_REFRESH = "CUSTOM_REFRESH";
+        String OPERATION_STATUS = "OPERATION_STATUS";
     }
 
     //configuration map initialization
@@ -73,6 +75,8 @@ public class PortletConfigurationEditorComponent {
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.METRIC_RANGE_BEGIN_END_FLAG, String.valueOf(false));
         //whether in simple mode. Ex. 8 hrs. Defaults to 8
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.METRIC_RANGE_LASTN, Constant.METRIC_RANGE_LASTN_DEFAULT);
+        //operation status, if empty initialize to "" i.e. all stati
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.OPERATION_STATUS, "");
     }
 
     /* Single select combobox for number of items to display on the dashboard
@@ -193,6 +197,80 @@ public class PortletConfigurationEditorComponent {
      */
     public static CustomConfigMeasurementRangeEditor getMeasurementRangeEditor(Configuration portletConfig) {
         return new CustomConfigMeasurementRangeEditor("alertTimeFrame", portletConfig);
+    }
+
+    public static SelectItem getOperationStatusEditor(Configuration portletConfig) {
+        SelectItem priorityFilter = new SelectItem(Constant.OPERATION_STATUS, "Operation Status");
+        priorityFilter.setWrapTitle(false);
+        priorityFilter.setWidth(325);
+        priorityFilter.setMultiple(true);
+        priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
+
+        LinkedHashMap<String, String> stati = new LinkedHashMap<String, String>(4);
+        stati.put(OperationRequestStatus.SUCCESS.name(), MSG.common_status_success());
+        stati.put(OperationRequestStatus.INPROGRESS.name(), MSG.common_status_inprogress());
+        stati.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
+        stati.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
+
+        LinkedHashMap<String, String> statusIcons = new LinkedHashMap<String, String>(3);
+        statusIcons.put(OperationRequestStatus.SUCCESS.name(), ImageManager
+            .getOperationResultsIcon(OperationRequestStatus.SUCCESS));
+        statusIcons.put(OperationRequestStatus.INPROGRESS.name(), ImageManager
+            .getOperationResultsIcon(OperationRequestStatus.INPROGRESS));
+        statusIcons.put(OperationRequestStatus.CANCELED.name(), ImageManager
+            .getOperationResultsIcon(OperationRequestStatus.CANCELED));
+        statusIcons.put(OperationRequestStatus.FAILURE.name(), ImageManager
+            .getOperationResultsIcon(OperationRequestStatus.FAILURE));
+        priorityFilter.setValueMap(stati);
+        priorityFilter.setValueIcons(statusIcons);
+        //reload current settings if they exist, otherwise enable all.
+        String currentValue = portletConfig.getSimple(Constant.OPERATION_STATUS).getStringValue();
+        if (currentValue.isEmpty() || currentValue.split(",").length == OperationRequestStatus.values().length) {
+            priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS.name(),
+                OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
+        } else {
+            //spinder:3/4/11 doing this nonsense due to some weird smartgwt issue with SelectItem in VLayout.
+            if (currentValue.equalsIgnoreCase(OperationRequestStatus.SUCCESS.name())) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,CANCELED,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
+                    .name(), OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,CANCELED")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
+                    .name(), OperationRequestStatus.CANCELED.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
+                    .name(), OperationRequestStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,CANCELED,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.CANCELED.name(),
+                    OperationRequestStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,CANCELED")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.CANCELED.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS")) {
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS,CANCELED,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.CANCELED
+                    .name(), OperationRequestStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS,CANCELED")) {
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.CANCELED
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.INPROGRESS.name(), OperationRequestStatus.FAILURE
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("CANCELED")) {
+                priorityFilter.setValues(OperationRequestStatus.CANCELED.name());
+            } else if (currentValue.equalsIgnoreCase("CANCELED,FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("FAILURE")) {
+                priorityFilter.setValues(OperationRequestStatus.FAILURE.name());
+            }
+        }
+        return priorityFilter;
     }
 
 }

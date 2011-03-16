@@ -31,8 +31,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -98,7 +96,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupEvents";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = "Group: Event Counts";
+    public static final String NAME = MSG.view_portlet_defaultName_group_events();
     public static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
@@ -172,26 +170,9 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
 
-                String selectedValue = null;
-                //alert time range filter. Check for enabled and then persist property. Dealing with compound widget.
-                FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
-                CheckboxItem itemC = (CheckboxItem) item;
-                selectedValue = String.valueOf(itemC.getValueAsBoolean());
-                if (!selectedValue.trim().isEmpty()) {//then call
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
-                }
-
-                //alert time advanced time filter enabled.
-                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
-                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
-                }
-
-                //alert time frame
-                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
-                if (begEnd.get(0) != 0) {//advanced settings
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
-                }
+                //persist the measurement range selections
+                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
+                    portletConfig);
 
                 //persist
                 storedPortlet.setConfiguration(portletConfig);
@@ -199,7 +180,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                 loadData();
                 customSettings.markForRedraw();
             }
-
         });
         page.addMember(measurementRangeEditor);
         customSettings.addChild(page);

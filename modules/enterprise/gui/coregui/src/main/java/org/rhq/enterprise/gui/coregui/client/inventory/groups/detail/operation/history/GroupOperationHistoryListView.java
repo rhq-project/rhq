@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 
@@ -32,9 +33,9 @@ public class GroupOperationHistoryListView extends AbstractOperationHistoryListV
     private ResourceGroupComposite groupComposite;
 
     public GroupOperationHistoryListView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, new GroupOperationHistoryDataSource(), null,
-            new Criteria(GroupOperationHistoryDataSource.CriteriaField.GROUP_ID,
-            String.valueOf(groupComposite.getResourceGroup().getId())));
+        super(locatorId, new GroupOperationHistoryDataSource(), null, new Criteria(
+            GroupOperationHistoryDataSource.CriteriaField.GROUP_ID, String.valueOf(groupComposite.getResourceGroup()
+                .getId())));
         this.groupComposite = groupComposite;
     }
 

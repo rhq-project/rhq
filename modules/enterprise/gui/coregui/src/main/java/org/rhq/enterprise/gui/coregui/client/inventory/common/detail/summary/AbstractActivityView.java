@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary;
 
+import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -27,6 +28,8 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -40,6 +43,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
@@ -49,6 +53,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -475,6 +480,58 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
             } else {
                 portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
+            }
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param operationStatusSelector
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveOperationStatusSelectorSettings(final SelectItem operationStatusSelector,
+        final Configuration portletConfig) {
+        String selectedValue;
+        selectedValue = operationStatusSelector.getValue().toString();
+        if ((selectedValue.trim().isEmpty())
+            || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {//then no operation status specified
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, ""));
+        } else {//some subset of available alertPriorities will be used
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, selectedValue));
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param measurementRangeEditor
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveMeasurementRangeEditorSettings(
+        final CustomConfigMeasurementRangeEditor measurementRangeEditor, Configuration portletConfig) {
+        String selectedValue = null;
+        if ((measurementRangeEditor != null) && (portletConfig != null)) {
+            //time range filter. Check for enabled and then persist property. Dealing with compound widget.
+            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+            CheckboxItem itemC = (CheckboxItem) item;
+            selectedValue = String.valueOf(itemC.getValueAsBoolean());
+            if (!selectedValue.trim().isEmpty()) {//then call
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
+            }
+
+            //time advanced time filter enabled.
+            selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
+            if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
+            }
+
+            //time frame
+            List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
+            if (begEnd.get(0) != 0) {//advanced settings
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
             }
         }
         return portletConfig;

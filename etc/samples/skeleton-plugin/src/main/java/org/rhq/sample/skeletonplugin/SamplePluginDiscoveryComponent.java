@@ -21,10 +21,14 @@ package org.rhq.sample.skeletonplugin;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -35,8 +39,42 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author John Mazzitelli
  */
-public class SamplePluginDiscoveryComponent implements ResourceDiscoveryComponent {
+@SuppressWarnings("unchecked")
+public class SamplePluginDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private final Log log = LogFactory.getLog(SamplePluginDiscoveryComponent.class);
+
+    /**
+     * This discovery method is the way the plugin supports "manual-add" capability. The plugin
+     * descriptor must specify supportsManualAdd="true" to allow the resource to be manually added.
+     * If that attribute is false, this method will never be used since it will not be possible to manually
+     * add an instance of the resource.
+     *
+     * Review the javadoc for both {@link ManualAddFacet} and {@link ResourceDiscoveryContext} to learn what
+     * you need to do in this method.
+     *
+     * @see ManualAddFacet#discoverResource(Configuration, ResourceDiscoveryContext)
+     */
+    @Override
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+        ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
+
+        // pluginConfiguration contains information on a resource that was manually added by the user.
+        // take it and build a details object that represents that resource.
+
+        // key = this must be a unique string across all of your resources - see docs for uniqueness rules
+        // name = this is the name you give the new resource; it does not necessarily have to be unique
+        // version = this is any string that corresponds to the resource's version
+        // description = this is any string that you want to assign as the default description for your resource
+        String key = "My Manually Added Resource Key";
+        String name = "My Resource";
+        String version = "1.0";
+        String description = "This describes My Resource";
+
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
+            version, description, pluginConfiguration, null);
+
+        return resource;
+    }
 
     /**
      * Review the javadoc for both {@link ResourceDiscoveryComponent} and {@link ResourceDiscoveryContext} to learn what
@@ -44,6 +82,7 @@ public class SamplePluginDiscoveryComponent implements ResourceDiscoveryComponen
      *
      * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
      */
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         log.info("Discovering my custom plugin's resources");
 
@@ -52,12 +91,6 @@ public class SamplePluginDiscoveryComponent implements ResourceDiscoveryComponen
         List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             // determine if you want to include the result in this method's returned set of discovered resources
-        }
-
-        List<Configuration> pluginConfigs = context.getPluginConfigurations();
-        for (Configuration pluginConfig : pluginConfigs) {
-            // pluginConfig contains information on a resource that was manually discovered/entered by the user
-            // take it and build a details object that represents that resource
         }
 
         // now perform your own discovery mechanism, if you have one.  For each resource discovered, you need to

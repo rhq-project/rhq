@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet2;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
@@ -97,7 +98,7 @@ public class PortletFactory {
         //############## Group Activity Dashboard  ############################################
         //defines mapping for Group Activity Dashboard
         registeredGroupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
-        //        registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
+        registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupAlertsPortlet2.KEY, GroupAlertsPortlet2.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.Factory.INSTANCE);
@@ -109,7 +110,7 @@ public class PortletFactory {
 
         //register group portlet names
         registeredGroupPortletNameMap = new HashMap<String, String>(registeredGroupPortletFactoryMap.size());
-        //        registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
+        registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupAlertsPortlet2.KEY, GroupAlertsPortlet2.NAME);
         registeredGroupPortletNameMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.NAME);
@@ -128,7 +129,7 @@ public class PortletFactory {
         //############## Portlet icon mappings  ############################################
         //register portlet names
         registeredPortletIconMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
-        //        registeredPortletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertLargeIcon());
+        registeredPortletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertLargeIcon());
         registeredPortletIconMap.put(GroupAlertsPortlet2.KEY, ImageManager.getAlertLargeIcon());
         registeredPortletIconMap.put(GroupMetricsPortlet.KEY, ImageManager.getMonitorLargeIcon());
         registeredPortletIconMap.put(GroupOobsPortlet.KEY, ImageManager.getMonitorFailedLargeIcon());

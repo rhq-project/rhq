@@ -67,10 +67,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupAlerts";
+    public static final String KEY = "GroupAlerts2";
     // A default displayed, persisted name for the portlet
     //    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
-    public static final String NAME = MSG.view_portlet_defaultName_group_alerts();
+    public static final String NAME = MSG.view_portlet_defaultName_group_alerts() + "2";
 
     public static final String ALERT_RANGE_RESOURCES_VALUE = "alert-range-resource-value";
     public static final String ALERT_RANGE_RESOURCE_IDS = "alert-range-resource-ids";

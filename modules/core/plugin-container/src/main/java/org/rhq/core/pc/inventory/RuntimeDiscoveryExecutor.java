@@ -46,8 +46,6 @@ import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 
@@ -138,15 +136,37 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             // Discover platform services here
             discoverForResource(platform, report, false);
 
-            // Next discover all other services and non-top-level servers
-            Set<Resource> servers = new HashSet<Resource>(platform.getChildResources()); // prevent concurrent mod
-            for (Resource server : servers) {
-                discoverForResource(server, report, false);
-            }
+            // Next discover all other services and non-top-level servers, recursively down the hierarchy
+            discoverForResourceRecursive(platform, report);
         } else {
             // Run a single scan for just a resource and its descendants
             discoverForResource(resource, report, false);
         }
+
+        return;
+    }
+
+    private void discoverForResourceRecursive(Resource parent, InventoryReport report) throws PluginContainerException {
+        Set<Resource> children = parent.getChildResources();
+        if (children != null && !children.isEmpty()) {
+            Set<Resource> childrenCopy = new HashSet<Resource>(children); // prevent concurrent mod
+            for (Resource child : childrenCopy) {
+                // See if the child has new children itself. Then we check those children to see if there are grandchildren.
+                // Note that if the child has already been added to the report, there is no need to process it again, so skip it.
+                boolean alreadyProcessed = report.getAddedRoots().contains(child);
+                if (!alreadyProcessed) {
+                    discoverForResource(child, report, alreadyProcessed);
+                    // We need to recurse here even though discoverForResource recurses over child, too.
+                    // This is because that discovery above only goes over newly discovered resources.
+                    // It is possible this child has already existing children (e.g. previously manually added)
+                    // that they themselves might have additional new children that need discovering.
+                    discoverForResourceRecursive(child, report);
+                }
+            }
+            childrenCopy.clear(); // help GC
+            childrenCopy = null;
+        }
+        return;
     }
 
     /**
@@ -214,9 +234,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             return;
         }
 
-        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-
         // For each child resource type of the server, do a discovery for resources of that type
+        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
         for (ResourceType childResourceType : parent.getResourceType().getChildResourceTypes()) {
             try {
                 // Make sure we have a discovery component for that type, otherwise there is nothing to do
@@ -240,8 +259,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                         + childResourceType + "]");
                 }
                 Set<Resource> childResources = this.inventoryManager.executeComponentDiscovery(childResourceType,
-                    discoveryComponent, parentContainer, Collections.<ProcessScanResult>emptyList());
-                
+                    discoveryComponent, parentContainer, Collections.<ProcessScanResult> emptyList());
+
                 // For each discovered resource, update it in the inventory manager and recursively discover its child resources
                 Map<String, Resource> mergedResources = new HashMap<String, Resource>();
 
@@ -263,12 +282,14 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 log.error("Error in runtime discovery", t);
             }
         }
+
+        return;
     }
 
     // TODO: Move this to InventoryManager, so it can be used by AutoDiscoveryExecutor too.
     private void removeStaleResources(Resource parent, ResourceType childResourceType,
         Map<String, Resource> mergedResources) {
-        Set<Resource> existingChildResources = new HashSet(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
+        Set<Resource> existingChildResources = new HashSet<Resource>(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
         for (Resource existingChildResource : existingChildResources) {
             // NOTE: If inside Agent, only remove Resources w/ id == 0. Other Resources may still exist in the
             //       the Server's inventory.
@@ -279,5 +300,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
             }
         }
+        existingChildResources.clear(); // help GC
+        existingChildResources = null;
     }
 }

@@ -28,7 +28,6 @@ import java.util.Properties;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -53,7 +52,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         try {
             return systemManager.getServerDetails(getSessionSubject()).getProductInfo();
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -62,7 +61,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         try {
             return systemManager.getServerDetails(getSessionSubject());
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -72,7 +71,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             Properties props = systemManager.getSystemConfiguration(getSessionSubject());
             return convertFromProperties(props);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -82,7 +81,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             Properties props = convertToProperties(map);
             systemManager.setSystemConfiguration(getSessionSubject(), props, skipValidation);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -96,7 +95,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
             return convertFromProperties(props);
         } catch (Throwable t) {
-            throw new RuntimeException("Agent download information not available. " + ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t, "Agent download information not available.");
         }
     }
 
@@ -115,7 +114,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             }
             return map;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
 
     }
@@ -146,7 +145,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             p.load(new FileInputStream(versionFile));
             return convertFromProperties(p);
         } catch (Throwable t) {
-            throw new RuntimeException("Unable to retrieve client version info. " + ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t, "Unable to retrieve client version info.");
         }
     }
 
@@ -163,7 +162,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             ret.put(file.getName(), "/downloads/bundle-deployer/" + file.getName());
             return ret;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
 
     }

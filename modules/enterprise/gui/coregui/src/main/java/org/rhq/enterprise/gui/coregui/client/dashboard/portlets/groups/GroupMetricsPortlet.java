@@ -79,14 +79,27 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
 
     private int groupId = -1;
     protected LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
-    private boolean currentlyLoading = false;
-    private Configuration portletConfig = null;
-    private DashboardPortlet storedPortlet;
-    private String baseViewPath = "";
-    private long start = -1;
-    private long end = -1;
+    protected boolean currentlyLoading = false;
+    protected Configuration portletConfig = null;
+    protected DashboardPortlet storedPortlet;
+    protected String baseViewPath = "";
+    protected long start = -1;
+    protected long end = -1;
 
-    private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "GroupMetrics";
+    // A default displayed, persisted name for the portlet
+    public static final String NAME = MSG.view_portlet_defaultName_group_metrics();
+    public static final String ID = "id";
+
+    // set on initial configuration, the window for this portlet view.
+    protected PortletWindow portletWindow;
+    //instance ui widgets
+
+    protected Timer refreshTimer;
+
+    //defines the list of configuration elements to load/persist for this portlet
+    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
@@ -103,12 +116,12 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         int currentGroupIdentifier = Integer.valueOf(elements[1]);
         this.groupId = currentGroupIdentifier;
         baseViewPath = elements[0];
-        initializeUi();
     }
 
     @Override
     protected void onInit() {
         super.onInit();
+        initializeUi();
         loadData();
     }
 
@@ -119,18 +132,6 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         setMembersMargin(5);
         addMember(recentMeasurementsContent);
     }
-
-    // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupMetrics";
-    // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_metrics();
-    public static final String ID = "id";
-
-    // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
-    //instance ui widgets
-
-    private Timer refreshTimer;
 
     /** Responsible for initialization and lazy configuration of the portlet values
      */
@@ -172,18 +173,22 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         getRecentMetrics();
     }
 
+    /** Builds custom config UI, using shared widgets
+     */
     @Override
     public DynamicForm getCustomSettingsForm() {
+        //root form.
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        //embed range editor in it own container
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         //submit handler
         customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
-
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+                //retrieve range editor values
                 portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
                     portletConfig);
 

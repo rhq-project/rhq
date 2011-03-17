@@ -42,7 +42,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -51,7 +51,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -60,7 +60,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getExplicitGroupPermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -69,7 +69,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getImplicitGroupPermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -79,7 +79,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .getExplicitGlobalPermissions(getSessionSubject())),
                 "AuthorizationManager.getExplicitGlobalPermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

@@ -31,6 +31,7 @@ import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
@@ -92,6 +93,37 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         String methodName = rpcMethod.getName();
 
         this.rpcMethod.set(className + "." + methodName);
+    }
+
+    /**
+     * Our GWT Service implementations should call this whenever it needs to send an exception to the GWT client.
+     * @param t the server side exception that needs to be thrown
+     * @returns a RuntimeException that is the real exception that should be thrown to the GWT client
+     */
+    protected RuntimeException getExceptionToThrowToClient(Throwable t) throws RuntimeException {
+        return getExceptionToThrowToClient(t, null);
+    }
+
+    /**
+     * Our GWT Service implementations should call this whenever it needs to send an exception to the GWT client.
+     * @param t the server side exception that needs to be thrown
+     * @param message an extra message to put in the returned exception
+     * @returns a RuntimeException that is the real exception that should be thrown to the GWT client
+     */
+    protected RuntimeException getExceptionToThrowToClient(Throwable t, String message) throws RuntimeException {
+        // this id is so the user can correlate this exception in the server log with the client message in the browser
+        StringBuilder id = new StringBuilder("[");
+        id.append(System.currentTimeMillis());
+        if (message != null) {
+            id.append(" ").append(message);
+        }
+        id.append("] ");
+
+        // log the exception server-side
+        Log.warn("Sending exception to client: " + id.toString(), t);
+
+        // cannot assume gwt client has our exception classes, only send the messages in a generic runtime exception
+        return new RuntimeException(id.toString() + ThrowableUtil.getAllMessages(t));
     }
 
     @SuppressWarnings("unchecked")

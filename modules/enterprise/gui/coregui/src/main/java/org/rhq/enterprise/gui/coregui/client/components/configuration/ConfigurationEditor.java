@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -56,7 +57,6 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FloatItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -72,7 +72,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
-import com.smartgwt.client.widgets.form.validator.IsBooleanValidator;
 import com.smartgwt.client.widgets.form.validator.IsFloatValidator;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
@@ -162,7 +161,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private String editorTitle = null;
     private boolean readOnly = false;
-    private Set<String> invalidPropertyNames = new HashSet<String>();
+    private Map<String, String> invalidPropertyNameToDisplayNameMap = new HashMap<String, String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
 
     public static enum ConfigType {
@@ -246,11 +245,11 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public boolean validate() {
-        return this.topLevelPropertiesValuesManager.validate();
+        return (this.topLevelPropertiesValuesManager.validate());
     }
 
     public boolean isValid() {
-        return this.topLevelPropertiesValuesManager.hasErrors();
+        return (!this.topLevelPropertiesValuesManager.hasErrors());
     }
 
     public void addPropertyValueChangeListener(PropertyValueChangeListener propertyValueChangeListener) {
@@ -397,6 +396,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             DynamicForm form = buildPropertiesForm(layout.extendLocatorId("Props"), propertyDefinitions, configuration);
             form.setBorder("1px solid #AAA");
+            form.validate();
             layout.addMember(form);
         } else {
             // One or more prop groups, so create a section stack with one section per group.
@@ -421,7 +421,25 @@ public class ConfigurationEditor extends LocatableVLayout {
             layout.addMember(sectionStack);
         }
 
+        fireInitialPropertyChangedEvent();
+
         return layout;
+    }
+
+    private void fireInitialPropertyChangedEvent() {
+        Map validationErrors = this.topLevelPropertiesValuesManager.getErrors();
+        if (validationErrors != null) {
+            for (Object key : validationErrors.keySet()) {
+                String propertyName = (String) key;
+                PropertyDefinition propertyDefinition = this.configurationDefinition.get(propertyName);
+                this.invalidPropertyNameToDisplayNameMap.put(propertyName, propertyDefinition.getDisplayName());
+            }
+            if (!this.invalidPropertyNameToDisplayNameMap.isEmpty()) {
+                PropertyValueChangeEvent event = new PropertyValueChangeEvent(null, null, true,
+                        this.invalidPropertyNameToDisplayNameMap);
+                firePropertyChangedEvent(event);
+            }
+        }
     }
 
     private LocatableToolStrip buildToolStrip(LocatableVLayout layout, final SectionStack sectionStack) {
@@ -471,7 +489,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         SectionStackSection section;
         if (group == null) {
             section = new SectionStackSection(MSG.common_title_generalProp());
-
+            section.setExpanded(true);
         } else {
             section = new SectionStackSection(
                 "<div style=\"float:left; font-weight: bold;\">"
@@ -488,6 +506,12 @@ public class ConfigurationEditor extends LocatableVLayout {
                 .getPropertiesInGroup(group.getName())));
 
         DynamicForm form = buildPropertiesForm(locatorId, propertyDefinitions, configuration);
+
+        // If the group contains any invalid properties, expand the section so the user can see the error icons next to
+        // the invalid properties.
+        if (!form.validate()) {
+            section.setExpanded(true);
+        }
 
         section.addItem(form);
         return section;
@@ -697,25 +721,31 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected void firePropertyChangedEvent(Property property, PropertyDefinition propertyDefinition, boolean isValid) {
-        boolean wasValidBefore = this.invalidPropertyNames.isEmpty();
-        Property topLevelProperty = getTopLevelProperty(property);
+        boolean wasValidBefore = this.invalidPropertyNameToDisplayNameMap.isEmpty();
+        PropertyDefinition topLevelPropertyDefinition = getTopLevelPropertyDefinition(propertyDefinition);
+        boolean invalidPropertySetChanged;
         if (isValid) {
-            this.invalidPropertyNames.remove(topLevelProperty.getName());
+            invalidPropertySetChanged =
+                    (this.invalidPropertyNameToDisplayNameMap.remove(topLevelPropertyDefinition.getName()) != null);
         } else {
-            this.invalidPropertyNames.add(topLevelProperty.getName());
+            invalidPropertySetChanged =
+                    (this.invalidPropertyNameToDisplayNameMap.put(topLevelPropertyDefinition.getName(),
+                    topLevelPropertyDefinition.getDisplayName()) != null);
         }
-        boolean isValidNow = this.invalidPropertyNames.isEmpty();
 
-        boolean validationStateChanged = (isValidNow != wasValidBefore);
+        PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
+                invalidPropertySetChanged, this.invalidPropertyNameToDisplayNameMap);
+        firePropertyChangedEvent(event);
+    }
+
+    private void firePropertyChangedEvent(PropertyValueChangeEvent event) {
         for (PropertyValueChangeListener propertyValueChangeListener : this.propertyValueChangeListeners) {
-            PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
-                validationStateChanged, this.invalidPropertyNames);
             propertyValueChangeListener.propertyValueChanged(event);
         }
     }
 
-    public Set<String> getInvalidPropertyNames() {
-        return this.invalidPropertyNames;
+    public Map<String, String> getInvalidPropertyNames() {
+        return this.invalidPropertyNameToDisplayNameMap;
     }
 
     private FormItem buildMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
@@ -1346,6 +1376,21 @@ public class ConfigurationEditor extends LocatableVLayout {
         propertySimple.setValue(value);
     }
 
+    protected static PropertyDefinition getTopLevelPropertyDefinition(PropertyDefinition propertyDefinition) {
+        PropertyDefinition currentPropertyDefinition = propertyDefinition;
+        while (currentPropertyDefinition.getConfigurationDefinition() == null) {
+            if (currentPropertyDefinition.getParentPropertyListDefinition() != null) {
+                currentPropertyDefinition = currentPropertyDefinition.getParentPropertyListDefinition();
+            } else if (currentPropertyDefinition.getParentPropertyMapDefinition() != null) {
+                currentPropertyDefinition = currentPropertyDefinition.getParentPropertyMapDefinition();
+            } else {
+                Log.error("Property definition " + currentPropertyDefinition + " has no parent.");
+                break;
+            }
+        }
+        return currentPropertyDefinition;
+    }
+
     protected static Property getTopLevelProperty(Property property) {
         Property currentProperty = property;
         while (currentProperty.getConfiguration() == null) {
@@ -1424,7 +1469,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return (propertyDefinition.isReadOnly());
     }
 
-    protected List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
+    protected List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, PropertySimple property) {
         List<Validator> validators = new ArrayList<Validator>();
 
         Validator typeValidator = null;
@@ -1480,11 +1525,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
-        if (property.getErrorMessage() != null) {
-            this.invalidPropertyNames.add(property.getName());
-            PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
-            validators.add(validator);
-        }
+        PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
+        validators.add(validator);
 
         return validators;
     }
@@ -1631,7 +1673,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         @Override
         protected boolean condition(Object value) {
             String errorMessage = this.property.getErrorMessage();
-            boolean valid = (errorMessage != null);
+            boolean valid = (errorMessage == null);
             if (!valid) {
                 setErrorMessage(errorMessage);
             }

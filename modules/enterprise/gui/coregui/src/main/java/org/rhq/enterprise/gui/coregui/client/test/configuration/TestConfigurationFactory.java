@@ -221,8 +221,10 @@ public abstract class TestConfigurationFactory {
         configuration.setVersion(1);        
 
         configuration.put(new PropertySimple("String1", "blah"));
-        configuration.put(new PropertySimple("String2",
-            "a really, really, really, really, really long value that won't fit in the text input box"));
+        PropertySimple string2Prop = new PropertySimple("String2",
+                "a really, really, really, really, really long value that won't fit in the text input box");
+        string2Prop.setErrorMessage("illegal value!");
+        configuration.put(string2Prop);
         configuration.put(new PropertySimple("LongString", "blah blah blah\nblah blah blah"));
         configuration.put(new PropertySimple("Password", null));
         configuration.put(new PropertySimple("Boolean", false));
@@ -280,7 +282,9 @@ public abstract class TestConfigurationFactory {
         configuration.put(new PropertyList("ReadOnlyListOfMaps", propMap4, propMap5));
 
         configuration.put(new PropertySimple("myString1", "grouped String 1"));
-        configuration.put(new PropertySimple("myString2", "grouped String 2"));
+        PropertySimple myString2Prop = new PropertySimple("myString2", "grouped String 2");
+        myString2Prop.setErrorMessage("bogus value!");
+        configuration.put(myString2Prop);
         configuration.put(new PropertySimple("myString3", "strings are cool"));
         configuration.put(new PropertySimple("myEnum", "Burlington"));
 

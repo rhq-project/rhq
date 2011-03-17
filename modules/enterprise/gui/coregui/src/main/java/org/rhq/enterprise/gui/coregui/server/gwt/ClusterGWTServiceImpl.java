@@ -49,7 +49,7 @@ public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements Clu
             return SerialUtility.prepare(clusterManager.createAutoClusterBackingGroup(getSessionSubject(), clusterKey,
                 addResources), "ClusterGWTServiceImpl.createAutoClusterBackingGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -58,7 +58,7 @@ public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements Clu
             return SerialUtility.prepare(clusterManager.getAutoClusterBackingGroup(getSessionSubject(), clusterKey),
                 "ClusterGWTServiceImpl.getAutoClusterBackingGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -67,7 +67,7 @@ public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements Clu
             return SerialUtility.prepare(clusterManager.getAutoClusterResources(getSessionSubject(), clusterKey),
                 "ClusterGWTServiceImpl.getAutoClusterResources");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -76,7 +76,7 @@ public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements Clu
             return SerialUtility.prepare(clusterManager.getClusterTree(getSessionSubject(), groupId),
                 "ClusterGWTServiceImpl.getClusterTree");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
 
     }

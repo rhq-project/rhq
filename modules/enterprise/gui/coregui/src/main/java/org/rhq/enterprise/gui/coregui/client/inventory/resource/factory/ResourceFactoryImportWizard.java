@@ -79,8 +79,8 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
         int createTypeId = getChildType().getId();
         Configuration newConfiguration = this.getNewResourceConfiguration();
 
-        GWTServiceLookup.getResourceService().manuallyAddResource(createTypeId, parentResourceId, newConfiguration,
-            new AsyncCallback<Resource>() {
+        GWTServiceLookup.getResourceService(300000).manuallyAddResource(createTypeId, parentResourceId,
+            newConfiguration, new AsyncCallback<Resource>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_importFailure(), caught);
                     getView().closeDialog();

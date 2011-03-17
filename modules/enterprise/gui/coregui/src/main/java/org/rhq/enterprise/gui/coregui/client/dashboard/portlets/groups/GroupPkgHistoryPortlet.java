@@ -37,9 +37,12 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -56,23 +59,24 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-/**This portlet allows the end user to customize the OOB display
+/**This portlet allows the end user to customize the Package History display
  *
  * @author Simeon Pinder
  */
-public class GroupOobsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupOobs";
+    public static final String KEY = "GroupPackageHistory";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_oobs();
-    public static final String ID = "id";
+    public static final String NAME = MSG.view_portlet_defaultName_group_pkg_hisory();
 
     private int groupId = -1;
-    protected LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
+    protected LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
     protected boolean currentlyLoading = false;
     protected Configuration portletConfig = null;
     protected DashboardPortlet storedPortlet;
+
+    public static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
@@ -80,13 +84,12 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
 
     protected Timer refreshTimer;
 
-    //defines the list of configuration elements to load/persist for this portlet
     protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupOobsPortlet(String locatorId) {
+    public GroupPkgHistoryPortlet(String locatorId) {
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
@@ -107,7 +110,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     protected void initializeUi() {
         setPadding(5);
         setMembersMargin(5);
-        addMember(recentOobContent);
+        addMember(recentPkgHistoryContent);
     }
 
     /** Responsible for initialization and lazy configuration of the portlet values
@@ -134,20 +137,20 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_help_oobs());
+        return new HTMLFlow(MSG.view_portlet_help_pkg_history());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new GroupOobsPortlet(locatorId);
+            return new GroupPkgHistoryPortlet(locatorId);
         }
     }
 
     protected void loadData() {
         currentlyLoading = true;
-        getRecentOobs();
+        getRecentPkgHistory();
     }
 
     @Override
@@ -155,7 +158,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
+        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("pkg-history"));
         form.setMargin(5);
         //add result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
@@ -182,13 +185,13 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         return customSettings;
     }
 
-    /** Fetches OOB measurements and updates the DynamicForm instance with the latest N
-     *  oob change details.
+    /** Fetches recent package history information and updates the DynamicForm instance with details.
      */
-    private void getRecentOobs() {
+    private void getRecentPkgHistory() {
         final int groupId = this.groupId;
-        int resultCount = 5;//default to
+        InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
 
+        int resultCount = 5;//default to
         //result count
         PropertySimple property = portletConfig.getSimple(Constant.RESULT_COUNT);
         if (property != null) {
@@ -199,49 +202,63 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                 resultCount = Integer.valueOf(currentSetting);
             }
         }
+        PageControl pageControl = new PageControl(0, resultCount);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
 
-        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, resultCount,
-            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
-                        + caught.getMessage());
-                }
+        criteria.addSortStatus(PageOrdering.DESC);
 
-                @Override
-                public void onSuccess(PageList<MeasurementOOBComposite> result) {
-                    VLayout column = new VLayout();
-                    column.setHeight(10);
-                    if (!result.isEmpty()) {
-                        for (MeasurementOOBComposite oob : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
-                                .getScheduleName()));
-                            row.setNumCols(2);
+        GWTServiceLookup.getContentService().findInstalledPackageHistoryByCriteria(criteria,
 
-                            String title = oob.getScheduleName() + ":";
-                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
-                                + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
-                            LinkItem link = AbstractActivityView.newLinkItem(title, destination);
-                            StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
-                                .format(oob.getTimestamp()));
+        new AsyncCallback<PageList<InstalledPackageHistory>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
+                    + caught.getMessage());
+            }
 
-                            row.setItems(link, time);
-                            column.addMember(row);
-                        }
-                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
-                    } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentOobContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_OOB_NONE);
+            @Override
+            public void onSuccess(PageList<InstalledPackageHistory> result) {
+                VLayout column = new VLayout();
+                column.setHeight(10);
+                if (!result.isEmpty()) {
+                    for (InstalledPackageHistory history : result) {
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                            .extendLocatorId(history.getPackageVersion().getFileName()
+                                + history.getPackageVersion().getVersion()));
+                        row.setNumCols(3);
+
+                        StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
+                            "subsystems/content/Package_16.png", null);
+                        String title = history.getPackageVersion().getFileName() + ":";
+                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                            + "&selectedHistoryId=" + history.getId();
+                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
+                        StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
+                            .format(history.getTimestamp()));
+
+                        row.setItems(iconItem, link, time);
                         column.addMember(row);
                     }
-                    recentOobContent.setContents("");
-                    for (Canvas child : recentOobContent.getChildren()) {
-                        child.destroy();
-                    }
-                    recentOobContent.addChild(column);
-                    recentOobContent.markForRedraw();
+                    //                    //insert see more link
+                    //                    LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                    //                        .extendLocatorId("PkgHistoryContentSeeMore"));
+                    //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
+                    //                    addSeeMoreLink(row, destination, column);
+                } else {
+                    LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentPkgHistoryContent
+                        .extendLocatorId("None"), MSG.view_portlet_results_empty());
+                    column.addMember(row);
                 }
-            });
+                //cleanup
+                for (Canvas child : recentPkgHistoryContent.getChildren()) {
+                    child.destroy();
+                }
+                recentPkgHistoryContent.addChild(column);
+                recentPkgHistoryContent.markForRedraw();
+                markForRedraw();
+            }
+        });
     }
 
     @Override

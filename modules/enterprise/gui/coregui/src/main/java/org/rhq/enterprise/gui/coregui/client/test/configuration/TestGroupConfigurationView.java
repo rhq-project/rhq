@@ -22,7 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.test.configuration;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -99,8 +99,8 @@ public class TestGroupConfigurationView
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
                 message = new Message("All properties now have valid values, so the configuration can now be saved.",
@@ -109,7 +109,7 @@ public class TestGroupConfigurationView
             else {
                 this.saveButton.disable();
                 message = new Message(
-                    "The following properties have invalid values: " + invalidPropertyNames 
+                    "The following properties have invalid values: " + invalidPropertyNames.values()
                         + " - the values must be corrected before the configuration can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }

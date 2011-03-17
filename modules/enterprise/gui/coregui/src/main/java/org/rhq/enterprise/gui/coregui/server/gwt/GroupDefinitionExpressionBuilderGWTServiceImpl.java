@@ -42,7 +42,7 @@ public class GroupDefinitionExpressionBuilderGWTServiceImpl extends AbstractGWTS
         try {
             return new ArrayList<String>(builder.getPluginConfigurationPropertyNames(resourceTypeId));
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -51,7 +51,7 @@ public class GroupDefinitionExpressionBuilderGWTServiceImpl extends AbstractGWTS
         try {
             return new ArrayList<String>(builder.getResourceConfigurationPropertyNames(resourceTypeId));
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -60,7 +60,7 @@ public class GroupDefinitionExpressionBuilderGWTServiceImpl extends AbstractGWTS
         try {
             return new ArrayList<String>(builder.getTraitPropertyNames(resourceTypeId));
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

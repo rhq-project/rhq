@@ -53,7 +53,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url);
             return SerialUtility.prepare(results, "createBundleVersionViaURL");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -62,7 +62,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             BundleVersion results = bundleManager.createBundleVersionViaRecipe(getSessionSubject(), recipe);
             return SerialUtility.prepare(results, "createBundleVersionViaRecipe");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -75,7 +75,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 bundleDestinationId, description, configuration);
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -87,7 +87,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 description, deployDir, groupId);
             return SerialUtility.prepare(result, "createBundleDestination");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -98,7 +98,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 version, recipe);
             return SerialUtility.prepare(results, "createBundleVersion");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -106,7 +106,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             bundleManager.deleteBundles(getSessionSubject(), bundleIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -114,7 +114,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             bundleManager.deleteBundle(getSessionSubject(), bundleId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -122,7 +122,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             bundleManager.deleteBundleDeployment(getSessionSubject(), bundleDeploymentId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -130,7 +130,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             bundleManager.deleteBundleDestination(getSessionSubject(), bundleDestinationId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -138,7 +138,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             bundleManager.deleteBundleVersion(getSessionSubject(), bundleVersionId, deleteBundleIfEmpty);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -148,7 +148,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             bundleTypes.addAll(bundleManager.getAllBundleTypes(getSessionSubject()));
             return SerialUtility.prepare(bundleTypes, "getAllBundleTypes");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -158,7 +158,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             results.putAll(bundleManager.getAllBundleVersionFilenames(getSessionSubject(), bundleVersionId));
             return SerialUtility.prepare(results, "getAllBundleVersionFilenames");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -170,7 +170,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 prevDeploymentId);
             return SerialUtility.prepare(result, "getBundleDeploymentName");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -181,7 +181,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleBundleDeployment");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -192,7 +192,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 bundleDeploymentId, deploymentDescription, isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleRevertBundleDeployment");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -201,7 +201,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             PageList<Bundle> results = bundleManager.findBundlesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundlesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -212,7 +212,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleDeploymentsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -223,7 +223,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleDestinationsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -232,7 +232,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             PageList<BundleFile> result = bundleManager.findBundleFilesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleFilesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -243,7 +243,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleResourceDeploymentsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -252,7 +252,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -263,7 +263,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundlesWithLatestVersionCompositesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -271,7 +271,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             bundleManager.purgeBundleDestination(getSessionSubject(), bundleDestinationId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

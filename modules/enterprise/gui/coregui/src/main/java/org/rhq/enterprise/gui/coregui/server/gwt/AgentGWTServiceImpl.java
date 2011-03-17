@@ -41,7 +41,7 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
             return SerialUtility.prepare(agentManager.getAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.getAgentForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -52,7 +52,7 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
             return SerialUtility.prepare(agentManager.pingAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.pingAgentForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -61,7 +61,7 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     //            return SerialUtility.prepare(availabilityManager.findAvailabilityForResource(getSessionSubject(),
     //                resourceId, pc), "AvailabilityService.findAvailabilityForResource");
     //        } catch (Throwable t) {
-    //            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+    //            throw getExceptionToThrowToClient(t);
     //        }
     //    }
 }

@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -533,6 +534,22 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             if (begEnd.get(0) != 0) {//advanced settings
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
             }
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param alertPrioritySelector
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveAlertPrioritySettings(SelectItem alertPrioritySelector, Configuration portletConfig) {
+        String selectedValue = alertPrioritySelector.getValue().toString();
+        if ((selectedValue.trim().isEmpty()) || (selectedValue.split(",").length == AlertPriority.values().length)) {//then no alertPriority specified
+            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
+        } else {//some subset of available alertPriorities will be used
+            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));
         }
         return portletConfig;
     }

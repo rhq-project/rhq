@@ -43,7 +43,7 @@ public class ResourceBossGWTServiceImpl extends AbstractGWTServiceImpl implement
             // note: this does not need to be sent through SerialUtility.prepare as it has no entities
             return resourceBoss.getInventorySummary(getSessionSubject());
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

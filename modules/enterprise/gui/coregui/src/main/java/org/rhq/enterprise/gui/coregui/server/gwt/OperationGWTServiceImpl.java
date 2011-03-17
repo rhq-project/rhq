@@ -38,7 +38,6 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -77,7 +76,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
             return SerialUtility.prepare(result, "OperationService.findResourceOperationHistoriesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -89,15 +88,15 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
             return SerialUtility.prepare(result, "OperationService.findGroupOperationHistoriesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) {
+    public void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException {
         try {
             operationManager.deleteOperationHistory(getSessionSubject(), operationHistoryId, deleteEvenIfInProgress);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -108,7 +107,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
                 resourceId, operationName, 0, 0, 0, 0, parameters, description);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -121,35 +120,33 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
                 resourceId, operationName, parameters, cronTrigger, description);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
     public int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException {
         try {
             return operationManager.scheduleResourceOperation(getSessionSubject(), resourceOperationSchedule);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
     public int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException {
         try {
             return operationManager.scheduleGroupOperation(getSessionSubject(), groupOperationSchedule);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) {
+    public ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) throws RuntimeException {
         ResourceOperationSchedule resourceOperationSchedule = operationManager.getResourceOperationSchedule(
             getSessionSubject(), scheduleId);
         return SerialUtility.prepare(resourceOperationSchedule, "getResourceOperationSchedule");
     }
 
-    public GroupOperationSchedule getGroupOperationSchedule(int scheduleId) {
+    public GroupOperationSchedule getGroupOperationSchedule(int scheduleId) throws RuntimeException {
         GroupOperationSchedule groupOperationSchedule = operationManager.getGroupOperationSchedule(getSessionSubject(),
             scheduleId);
         return SerialUtility.prepare(groupOperationSchedule, "getGroupOperationSchedule");
@@ -160,9 +157,8 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         try {
             operationManager.unscheduleResourceOperation(getSessionSubject(), resourceOperationSchedule.getJobId()
                 .toString(), resourceOperationSchedule.getResource().getId());
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -170,9 +166,8 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         try {
             operationManager.unscheduleGroupOperation(getSessionSubject(),
                 groupOperationSchedule.getJobId().toString(), groupOperationSchedule.getGroup().getId());
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -191,7 +186,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
             return SerialUtility.prepare(lastCompletedResourceOps, "OperationService.findRecentCompletedOperations");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -206,7 +201,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
             return SerialUtility.prepare(scheduledResourceOps, "OperationService.findScheduledOperations");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -217,7 +212,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
             return SerialUtility.prepare(resourceOperationSchedules, "findScheduledResourceOperations");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -228,7 +223,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
             return SerialUtility.prepare(groupOperationSchedules, "findScheduledGroupOperations");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

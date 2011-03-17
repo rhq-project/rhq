@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -230,15 +229,15 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout implement
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
                 message = new Message(MSG.view_group_pluginConfig_edit_valid(), Message.Severity.Info, EnumSet.of(
                     Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message(MSG.view_group_pluginConfig_edit_invalid(invalidPropertyNames.toString()),
+                message = new Message(MSG.view_group_pluginConfig_edit_invalid(invalidPropertyNames.values().toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

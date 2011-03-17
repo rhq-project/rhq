@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -32,8 +31,6 @@ import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -57,8 +54,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.PortletAlertSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -70,10 +67,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupAlerts2";
+    public static final String KEY = "GroupAlerts";
     // A default displayed, persisted name for the portlet
-    //    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
-    public static final String NAME = "Group: Alerts2";
+    public static final String NAME = MSG.view_portlet_defaultName_group_alerts();
 
     public static final String ALERT_RANGE_RESOURCES_VALUE = "alert-range-resource-value";
     public static final String ALERT_RANGE_RESOURCE_IDS = "alert-range-resource-ids";
@@ -83,20 +79,28 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     public static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
+    protected PortletWindow portletWindow;
 
     //shared private UI elements
-    private AlertResourceSelectorRegion resourceSelector;
+    protected AlertResourceSelectorRegion resourceSelector;
 
-    private AlertPortletConfigurationDataSource dataSource;
+    protected AlertPortletConfigurationDataSource dataSource;
     //instance ui widgets
-    private Canvas containerCanvas;
+    protected Canvas containerCanvas;
 
-    private Timer refreshTimer;
-    private DashboardPortlet storedPortlet;
-    private Configuration portletConfig;
+    protected Timer refreshTimer;
+    protected DashboardPortlet storedPortlet;
+    protected Configuration portletConfig;
     private int groupId;
-    private boolean portletConfigInitialized = false;
+    protected boolean portletConfigInitialized = false;
+
+    protected static HashMap<String, String> updatedMapping = new HashMap<String, String>();
+    static {
+        updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
+        //Key, default
+        updatedMapping.put(ALERT_RANGE_RESOURCES_VALUE, RESOURCES_ALL);
+        updatedMapping.put(ALERT_RANGE_RESOURCE_IDS, RESOURCES_ALL);
+    }
 
     public GroupAlertsPortlet2(String locatorId) {
         super(locatorId);
@@ -105,28 +109,24 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        this.groupId = Integer.valueOf(elements[1]);
 
+        setShowFilterForm(false); //disable filter form for portlet
+        setOverflow(Overflow.VISIBLE);
+    }
+
+    /**Defines layout for the portlet page.
+     */
+    protected void initializeUi() {
         //initalize the datasource
-        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, currentGroupIdentifier,
-            null);
+        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, this.groupId, null);
         setDataSource(this.dataSource);
 
         setShowHeader(false);
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
-        setShowFilterForm(false); //disable filter form for portlet
 
-        setOverflow(Overflow.VISIBLE);
-    }
-
-    private static HashMap<String, String> updatedMapping = new HashMap<String, String>();
-    static {
-        updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
-        //Key, default
-        updatedMapping.put(ALERT_RANGE_RESOURCES_VALUE, RESOURCES_ALL);
-        updatedMapping.put(ALERT_RANGE_RESOURCE_IDS, RESOURCES_ALL);
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     /** Responsible for initialization and lazy configuration of the portlet values
@@ -215,13 +215,10 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+                String selectedValue;
                 //alert severity
-                String selectedValue = alertPrioritySelector.getValue().toString();
-                if ((selectedValue.trim().isEmpty()) || (selectedValue.split(",").length == 3)) {//then no alertPriority specified
-                    portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
-                } else {//some subset of available alertPriorities will be used
-                    portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));
-                }
+                portletConfig = AbstractActivityView.saveAlertPrioritySettings(alertPrioritySelector, portletConfig);
+
                 //                //result sort order
                 //                selectedValue = resultSortSelector.getValue().toString();
                 //                if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(PageOrdering.DESC.name()))) {//then desc
@@ -230,32 +227,11 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
                 //                    portletConfig.put(new PropertySimple(Constant.RESULT_SORT_ORDER, PageOrdering.ASC));
                 //                }
                 //result count
-                selectedValue = resultCountSelector.getValue().toString();
-                if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT))) {//then 5
-                    portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT));
-                } else {
-                    portletConfig.put(new PropertySimple(Constant.RESULT_COUNT, selectedValue));
-                }
+                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
 
-                //alert time range filter. Check for enabled and then persist property. Dealing with compound widget.
-                FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
-                CheckboxItem itemC = (CheckboxItem) item;
-                selectedValue = String.valueOf(itemC.getValueAsBoolean());
-                if (!selectedValue.trim().isEmpty()) {//then call
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
-                }
-
-                //alert time advanced time filter enabled.
-                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
-                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
-                }
-
-                //alert time frame
-                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
-                if (begEnd.get(0) != 0) {//advanced settings
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
-                }
+                //time range settings
+                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
+                    portletConfig);
 
                 //persist and reload portlet
                 storedPortlet.setConfiguration(portletConfig);
@@ -362,7 +338,8 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     @Override
     protected void onInit() {
         super.onInit();
-        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
+        initializeUi();
+        //        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     @Override
@@ -379,7 +356,8 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
 /** Bundles a ResourceSelector instance with labeling in Canvas for display.
  *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
  */
-class AlertResourceSelectorRegion extends LocatableVLayout {
+//class AlertResourceSelectorRegion extends LocatableVLayout {
+final class AlertResourceSelectorRegion extends LocatableVLayout {
     public AlertResourceSelectorRegion(String locatorId, Integer[] assigned) {
         super(locatorId);
         this.currentlyAssignedIds = assigned;

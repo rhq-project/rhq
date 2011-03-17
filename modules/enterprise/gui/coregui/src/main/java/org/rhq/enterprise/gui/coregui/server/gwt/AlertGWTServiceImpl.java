@@ -53,7 +53,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
             }
             return SerialUtility.prepare(result, "AlertService.findAlertsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -61,7 +61,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.deleteAlerts(getSessionSubject(), alertIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -69,7 +69,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.deleteAlertsByContext(getSessionSubject(), context);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -77,7 +77,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -85,7 +85,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.acknowledgeAlertsByContext(getSessionSubject(), context);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

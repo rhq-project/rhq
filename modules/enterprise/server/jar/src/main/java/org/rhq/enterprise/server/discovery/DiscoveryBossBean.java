@@ -339,16 +339,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Resource result = null;
 
-        try {
-            ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
-            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear
-            entityManager.clear();
-            MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
-                pluginConfiguration);
-            result = this.resourceManager.getResourceById(subject, response.getResourceId());
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
+        ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
+        // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear
+        entityManager.clear();
+        MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
+            pluginConfiguration);
+        result = this.resourceManager.getResourceById(subject, response.getResourceId());
 
         return result;
     }

@@ -22,7 +22,6 @@ package org.rhq.enterprise.gui.coregui.client.admin;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
@@ -204,8 +203,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
     @Override
     public void propertyValueChanged(PropertyValueChangeEvent event) {
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
             } else {

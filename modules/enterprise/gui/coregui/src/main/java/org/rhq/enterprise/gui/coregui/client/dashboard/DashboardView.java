@@ -244,6 +244,15 @@ public class DashboardView extends LocatableVLayout {
         //if resourceGroup passed in then add additional portlets to list
         if (this.focusGroup != null) {
             HashMap<String, String> groupKeyNameMap = PortletFactory.getRegisteredGroupPortletNameMap();
+            //find current list of portlets already stored. Exclude them
+            for (DashboardPortlet currentPortlet : storedDashboard.getPortlets()) {
+                if (groupKeyNameMap.containsKey(currentPortlet.getPortletKey())) {
+                    groupKeyNameMap.remove(currentPortlet.getPortletKey());
+                }
+            }
+
+            //TODO: spinder 3/16/11: still need to be done.
+            //filter out portlets not relevent for group(compat|mixed) or facets
             for (String portletKey : groupKeyNameMap.keySet()) {
                 nameKeyMap.put(groupKeyNameMap.get(portletKey), portletKey);
             }
@@ -252,6 +261,13 @@ public class DashboardView extends LocatableVLayout {
         //if resource passed in then add additional portlets to list
         if (this.focusResource != null) {
             HashMap<String, String> resourceKeyNameMap = PortletFactory.getRegisteredResourcePortletNameMap();
+            //find current list of portlets already stored. Exclude them
+            for (DashboardPortlet currentPortlet : storedDashboard.getPortlets()) {
+                if (resourceKeyNameMap.containsKey(currentPortlet.getPortletKey())) {
+                    resourceKeyNameMap.remove(currentPortlet.getPortletKey());
+                }
+            }
+
             for (String portletKey : resourceKeyNameMap.keySet()) {
                 nameKeyMap.put(resourceKeyNameMap.get(portletKey), portletKey);
             }
@@ -370,6 +386,7 @@ public class DashboardView extends LocatableVLayout {
         }
         updateRefreshMenu();
         this.refreshMenuButton.markForRedraw();
+        markForRedraw();
 
         return editForm;
     }

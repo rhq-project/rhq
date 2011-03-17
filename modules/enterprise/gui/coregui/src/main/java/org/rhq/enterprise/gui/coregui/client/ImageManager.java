@@ -321,7 +321,7 @@ public class ImageManager {
     }
 
     public static String getAlertIcon() {
-        return "subsystems/alert/Alert_16.png";
+        return "subsystems/alert/Alert_LOW_16.png";
     }
 
     public static String getAlertLargeIcon() {
@@ -450,4 +450,19 @@ public class ImageManager {
         return "subsystems/control/Operation_16.png";
     }
 
+    public static String getActivityPackageLargeIcon() {
+        return "subsystems/content/Package_24.png";
+    }
+
+    public static String getActivityPackageIcon() {
+        return "subsystems/content/Package_16.png";
+    }
+
+    public static String getBundleLargeIcon() {
+        return "subsystems/content/Content_24.png";
+    }
+
+    public static String getBundleIcon() {
+        return "subsystems/content/Content_16.png";
+    }
 }

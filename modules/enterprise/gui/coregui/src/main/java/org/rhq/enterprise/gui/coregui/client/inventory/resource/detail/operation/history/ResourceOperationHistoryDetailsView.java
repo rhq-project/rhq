@@ -34,6 +34,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -50,9 +51,15 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
     private String disambiguatedResourceName;
     private boolean showResourceField;
+    private ResourceComposite resourceComposite;
 
     public ResourceOperationHistoryDetailsView(String locatorId) {
         this(locatorId, false);
+    }
+
+    public ResourceOperationHistoryDetailsView(String locatorId, ResourceComposite resourceComposite) {
+        this(locatorId);
+        this.resourceComposite = resourceComposite;
     }
 
     public ResourceOperationHistoryDetailsView(String locatorId, boolean showResourceField) {

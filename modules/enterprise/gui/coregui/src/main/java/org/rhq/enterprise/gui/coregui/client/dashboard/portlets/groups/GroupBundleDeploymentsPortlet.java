@@ -35,11 +35,14 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.GroupBundleDeploymentCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -50,29 +53,32 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-/**This portlet allows the end user to customize the OOB display
+/**This portlet allows the end user to customize the Bundle Deployment display
  *
  * @author Simeon Pinder
  */
-public class GroupOobsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
-
-    // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupOobs";
-    // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_oobs();
-    public static final String ID = "id";
+public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements CustomSettingsPortlet,
+    AutoRefreshPortlet {
 
     private int groupId = -1;
-    protected LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
+    protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(
+        extendLocatorId("RecentBundleDeployments"));
     protected boolean currentlyLoading = false;
     protected Configuration portletConfig = null;
     protected DashboardPortlet storedPortlet;
+
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "GroupBundleDeployments";
+    // A default displayed, persisted name for the portlet
+    public static final String NAME = MSG.view_portlet_defaultName_group_bundles();
+    protected static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
@@ -80,13 +86,12 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
 
     protected Timer refreshTimer;
 
-    //defines the list of configuration elements to load/persist for this portlet
     protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupOobsPortlet(String locatorId) {
+    public GroupBundleDeploymentsPortlet(String locatorId) {
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
@@ -107,7 +112,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     protected void initializeUi() {
         setPadding(5);
         setMembersMargin(5);
-        addMember(recentOobContent);
+        addMember(recentBundleDeployContent);
     }
 
     /** Responsible for initialization and lazy configuration of the portlet values
@@ -134,20 +139,20 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_help_oobs());
+        return new HTMLFlow(MSG.view_portlet_help_bundle_deps());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new GroupOobsPortlet(locatorId);
+            return new GroupBundleDeploymentsPortlet(locatorId);
         }
     }
 
     protected void loadData() {
         currentlyLoading = true;
-        getRecentOobs();
+        getRecentBundleDeployments();
     }
 
     @Override
@@ -155,7 +160,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
+        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("bundle-deps"));
         form.setMargin(5);
         //add result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
@@ -182,13 +187,13 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         return customSettings;
     }
 
-    /** Fetches OOB measurements and updates the DynamicForm instance with the latest N
-     *  oob change details.
+    /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
      */
-    private void getRecentOobs() {
+    protected void getRecentBundleDeployments() {
         final int groupId = this.groupId;
-        int resultCount = 5;//default to
+        GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
 
+        int resultCount = 5;//default to
         //result count
         PropertySimple property = portletConfig.getSimple(Constant.RESULT_COUNT);
         if (property != null) {
@@ -199,47 +204,62 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                 resultCount = Integer.valueOf(currentSetting);
             }
         }
+        PageControl pageControl = new PageControl(0, resultCount);
+        criteria.setPageControl(pageControl);
+        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addSortStatus(PageOrdering.DESC);
+        criteria.fetchDestination(true);
+        criteria.fetchBundleVersion(true);
 
-        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, resultCount,
-            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+        GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleDeployment>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
+                    Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
                         + caught.getMessage());
                 }
 
                 @Override
-                public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                public void onSuccess(PageList<BundleDeployment> result) {
                     VLayout column = new VLayout();
                     column.setHeight(10);
                     if (!result.isEmpty()) {
-                        for (MeasurementOOBComposite oob : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
-                                .getScheduleName()));
-                            row.setNumCols(2);
+                        for (BundleDeployment deployment : result) {
+                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
+                                .extendLocatorId(deployment.getBundleVersion().getName()
+                                    + deployment.getBundleVersion().getVersion()));
+                            row.setNumCols(3);
 
-                            String title = oob.getScheduleName() + ":";
-                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
-                                + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
+                            StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
+                                "subsystems/content/Content_16.png", null);
+                            String title = deployment.getBundleVersion().getName() + "["
+                                + deployment.getBundleVersion().getVersion() + "]:";
+                            String destination = ReportDecorator.GWT_BUNDLE_URL
+                                + deployment.getBundleVersion().getBundle().getId() + "/destinations/"
+                                + deployment.getDestination().getId();
                             LinkItem link = AbstractActivityView.newLinkItem(title, destination);
                             StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
-                                .format(oob.getTimestamp()));
+                                .format(deployment.getCtime()));
 
-                            row.setItems(link, time);
+                            row.setItems(iconItem, link, time);
                             column.addMember(row);
                         }
-                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
+                        //insert see more link
+                        //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
+                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentOobContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_OOB_NONE);
+                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentBundleDeployContent
+                            .extendLocatorId("None"), MSG.view_portlet_results_empty());
                         column.addMember(row);
                     }
-                    recentOobContent.setContents("");
-                    for (Canvas child : recentOobContent.getChildren()) {
+                    //cleanup
+                    for (Canvas child : recentBundleDeployContent.getChildren()) {
                         child.destroy();
                     }
-                    recentOobContent.addChild(column);
-                    recentOobContent.markForRedraw();
+                    recentBundleDeployContent.addChild(column);
+                    recentBundleDeployContent.markForRedraw();
+                    markForRedraw();
                 }
             });
     }
@@ -255,7 +275,6 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         }
 
         if (refreshInterval >= MeasurementUtility.MINUTES) {
-
             refreshTimer = new Timer() {
                 public void run() {
                     if (!currentlyLoading) {
@@ -264,7 +283,6 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                     }
                 }
             };
-
             refreshTimer.scheduleRepeating(refreshInterval);
         }
     }
@@ -272,7 +290,6 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     @Override
     protected void onDestroy() {
         if (refreshTimer != null) {
-
             refreshTimer.cancel();
         }
         super.onDestroy();

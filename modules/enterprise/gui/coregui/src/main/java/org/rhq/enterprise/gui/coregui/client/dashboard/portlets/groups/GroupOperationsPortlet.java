@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
@@ -77,25 +79,39 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_group_operations();
 
-    public static final String ID = "id";
+    protected static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
+    protected PortletWindow portletWindow;
 
-    private GroupOperationsCriteriaHistoryListView dataSource;
+    protected GroupOperationsCriteriaHistoryListView dataSource;
+
+    //defines the list of configuration elements to load/persist for this portlet
+    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
+    static {
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_ENABLE);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_LASTN);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
+        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
+        CONFIG_INCLUDE.add(Constant.RESULT_SORT_ORDER);
+        CONFIG_INCLUDE.add(Constant.RESULT_SORT_PRIORITY);
+        CONFIG_INCLUDE.add(Constant.OPERATION_STATUS);
+    }
 
     //instance ui widgets
-    private Canvas containerCanvas;
+    protected Canvas containerCanvas;
 
-    private Timer refreshTimer;
-    private DashboardPortlet storedPortlet;
-    private Configuration portletConfig;
-    private int groupId;
-    private boolean portletConfigInitialized = false;
+    protected Timer refreshTimer;
+    protected DashboardPortlet storedPortlet;
+    protected Configuration portletConfig;
+    protected int groupId;
+    protected boolean portletConfigInitialized = false;
     private ResourceGroupComposite groupComposite;
-    private String baseViewPath = "";
+    protected String baseViewPath = "";
     protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
-    private String locatorId;
+    protected String locatorId;
     private GroupOperationsCriteriaHistoryListView groupOperations;
 
     public GroupOperationsPortlet(String locatorId) {
@@ -108,13 +124,12 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         this.groupId = currentGroupIdentifier;
         //populate basepath
         baseViewPath = elements[0];
-
-        initializeUi();
     }
 
     @Override
     protected void onInit() {
         super.onInit();
+        initializeUi();
         loadData();
     }
 
@@ -197,7 +212,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
-            if (portletConfig.getSimple(key) == null) {
+            if ((portletConfig.getSimple(key) == null) && CONFIG_INCLUDE.contains(key)) {
                 portletConfig.put(new PropertySimple(key,
                     PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
             }
@@ -449,7 +464,7 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
                         OperationRequestStatus s = OperationRequestStatus.valueOf(priority);
                         operationStati[indx++] = s;
                     }
-                    criteria.addFilterStati(operationStati);
+                    criteria.addFilterStatuses(operationStati);
                 }
             }
         }

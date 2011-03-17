@@ -384,6 +384,15 @@ public class StartupServlet extends HttpServlet {
             log("Cannot schedule purge resource types job: " + e.getMessage());
         }
 
+        try {
+            // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 60 * 5;
+            scheduler.scheduleSimpleRepeatingJob(PurgePluginsJob.class, true, false, initialDelay, interval);
+        } catch (Exception e) {
+            log("Cannot schedule purge plugins job: " + e.getMessage());
+        }
+
         // DynaGroup Auto-Recalculation Job
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.

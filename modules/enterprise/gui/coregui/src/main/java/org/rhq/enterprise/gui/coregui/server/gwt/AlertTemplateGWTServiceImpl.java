@@ -37,7 +37,7 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .createAlertTemplate(getSessionSubject(), alertDefinition, resourceTypeId);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -49,7 +49,7 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 purgeInternals);
             return SerialUtility.prepare(results, "AlertTemplateService.updateAlertTemplate");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -59,7 +59,7 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
             alertTemplateManager.enableAlertTemplates(getSessionSubject(), alertDefinitionIds);
             return;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -69,7 +69,7 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
             alertTemplateManager.disableAlertTemplates(getSessionSubject(), alertDefinitionIds);
             return;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -79,7 +79,7 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
             alertTemplateManager.removeAlertTemplates(getSessionSubject(), alertDefinitionIds);
             return;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

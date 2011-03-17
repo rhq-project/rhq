@@ -60,7 +60,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         try {
             contentManager.deletePackageVersion(getSessionSubject(), packageVersionId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -70,7 +70,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),
                 "ContentService.findPackageVersionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -79,7 +79,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentManager.findPackagesByCriteria(getSessionSubject(), criteria),
                 "ContentService.findPackagesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -91,7 +91,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
                 "ContentService.findInstalledPackageHistoryByCriteria");
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
     
@@ -100,7 +100,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentManager.findPackagesWithLatestVersion(getSessionSubject(), criteria),
                 "ContentService.findPackagesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
     public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
@@ -110,7 +110,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentUiManager.getInstalledPackageHistoryForResource(resourceId, pc),
                 "ContentService.getInstalledPackageHistoryForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -119,7 +119,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentManager.findArchitectures(getSessionSubject()),
                 "ContentService.getArchitectures");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -128,7 +128,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentManager.getResourceCreationPackageType(resourceTypeId),
                 "ContentService.getResourceCreationPackageType");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
     
@@ -138,7 +138,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
             return SerialUtility.prepare(contentManager.findPackageTypeWithVersionFormat(getSessionSubject(), resourceTypeId, packageTypeName),
                 "ContentService.findPackageType");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

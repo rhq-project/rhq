@@ -47,7 +47,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             List<SearchSuggestion> results = searchAssistManager.getTabAwareSuggestions(expression, caretPosition, tab);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -58,7 +58,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -66,7 +66,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
         try {
             return savedSearchManager.createSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -76,7 +76,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             savedSearch.setName(newName);
             return savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -86,7 +86,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             savedSearch.setPattern(newPattern);
             return savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -94,7 +94,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
         try {
             savedSearchManager.deleteSavedSearch(getSessionSubject(), savedSearchId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -103,7 +103,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             return SerialUtility.prepare(savedSearchManager.findSavedSearchesByCriteria(getSessionSubject(), criteria),
                 "SearchService.findRolesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

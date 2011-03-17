@@ -45,7 +45,7 @@ public class DashboardGWTServiceImpl extends AbstractGWTServiceImpl implements D
             return SerialUtility.prepare(dashboardManager.findDashboardsByCriteria(getSessionSubject(), criteria),
                 "DashboardManager.findDashboardsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -54,7 +54,7 @@ public class DashboardGWTServiceImpl extends AbstractGWTServiceImpl implements D
             return SerialUtility.prepare(dashboardManager.storeDashboard(getSessionSubject(), dashboard),
                 "DashboardManager.storeDashboard");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -62,7 +62,7 @@ public class DashboardGWTServiceImpl extends AbstractGWTServiceImpl implements D
         try {
             dashboardManager.removeDashboard(getSessionSubject(), dashboardId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

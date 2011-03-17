@@ -59,7 +59,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
 
             return SerialUtility.prepare(results, "findAlertDefinitionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -69,7 +69,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.createAlertDefinition(getSessionSubject(), alertDefinition, resourceId);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -81,7 +81,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
                 alertDefinition, updateInternals);
             return SerialUtility.prepare(results, "updateAlertDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -91,7 +91,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.enableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -101,7 +101,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.disableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -111,7 +111,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.removeAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -121,7 +121,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             String[] results = alertDefManager.getAlertNotificationConfigurationPreview(getSessionSubject(), notifs);
             return SerialUtility.prepare(results, "getAlertNotificationConfigurationPreview");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -134,7 +134,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             }
             return SerialUtility.prepare(results.toArray(new String[results.size()]), "getAllAlertSenders");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -144,7 +144,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             ConfigurationDefinition results = alertNotifManager.getConfigurationDefinitionForSender(sender);
             return SerialUtility.prepare(results, "getConfigurationDefinitionForSender");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

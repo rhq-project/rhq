@@ -44,7 +44,6 @@ import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -126,7 +125,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             return SerialUtility.prepare(result, "ResourceService.findResourcesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -145,7 +144,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             return SerialUtility.prepare(result, "ResourceService.findResourceCompositesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -160,7 +159,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             return SerialUtility.prepare(result, "ResourceService.findProblemResources");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -171,7 +170,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 "ResourceService.getResourceLineageAndSiblings");
 
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -180,7 +179,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId),
                 "ResourceService.getPlatformForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -198,7 +197,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             return SerialUtility.prepare(platforms, "ResourceService.findRecentlyAddedResources");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -207,7 +206,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
                 "ResourceService.uninventoryResources");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -215,7 +214,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             resourceManager.updateResource(getSessionSubject(), resource);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -237,7 +236,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             resourceFactoryManager.createResource(getSessionSubject(), parentResourceId, newResourceTypeId,
                 newResourceName, pluginConfig, newResourceConfiguration);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -259,7 +258,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             resourceFactoryManager.createPackageBackedResourceViaPackageVersion(getSessionSubject(), parentResourceId,
                 newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -268,7 +267,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
                 "ResourceService.deleteResources");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -278,7 +277,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
                 .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -286,7 +285,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             discoveryBoss.importResources(getSessionSubject(), resourceIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -294,7 +293,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             discoveryBoss.ignoreResources(getSessionSubject(), resourceIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -302,7 +301,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -311,7 +310,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
                 "ResourceService.getResourceErrors");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -322,7 +321,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 pluginConfiguration);
             return SerialUtility.prepare(result, "ResourceService.manuallyAddResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -332,7 +331,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 groupByVersions);
             return SerialUtility.prepare(result, "ResourceService.findResourceInstallCounts");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

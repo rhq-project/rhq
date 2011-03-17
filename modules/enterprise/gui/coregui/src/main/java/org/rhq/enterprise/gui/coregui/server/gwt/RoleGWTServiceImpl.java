@@ -41,7 +41,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
             return SerialUtility.prepare(roleManager.findRolesByCriteria(getSessionSubject(), criteria),
                 "RoleService.findRolesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -49,7 +49,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         try {
             return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role), "RoleService.createRole");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -57,7 +57,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         try {
             return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role), "RoleService.updateRole");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -65,7 +65,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         try {
             roleManager.deleteRoles(getSessionSubject(), roleIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -73,7 +73,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         try {
             roleManager.setAssignedResourceGroups(getSessionSubject(), roleId, resourceGroupIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -81,7 +81,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         try {
             roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -89,7 +89,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         try {
             roleManager.setAssignedSubjectRoles(getSessionSubject(), subjectId, roleIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

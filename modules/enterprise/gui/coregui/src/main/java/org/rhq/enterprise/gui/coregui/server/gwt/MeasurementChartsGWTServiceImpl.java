@@ -45,7 +45,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
                 .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, viewName));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForAutoGroup1");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -58,7 +58,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
                     enabledOnly));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForAutoGroup2");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -73,7 +73,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
                 .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, viewName));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup1");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -86,7 +86,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
                     enabledOnly));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup2");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -101,7 +101,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
                 .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, viewName));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource1");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -113,7 +113,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
                 .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin, end));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource2");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

@@ -62,7 +62,11 @@ public class ResourceActivationContext extends AbstractResourceOrGroupActivation
         if (this.facets == null) {
             ResourceFacets resourceFacets = this.resourceTypeManager.getResourceFacets(resource.getResourceType()
                 .getId());
-            this.facets = EnumSet.copyOf(resourceFacets.getFacets());
+            try {
+                this.facets = EnumSet.copyOf(resourceFacets.getFacets());
+            } catch (IllegalArgumentException e) {
+                this.facets = EnumSet.noneOf(ResourceTypeFacet.class);
+            }
         }
         return this.facets;
     }

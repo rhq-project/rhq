@@ -18,14 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.message;
 
-import java.util.List;
-
-import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -34,6 +29,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -50,6 +46,10 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
 
     public static final String LOCATOR_ID = "MessageCenter";
 
+    private Menu messagesMenu;
+    private IMenuButton messageCenterButton;
+    private int messageCount;
+
     public MessageCenterView(String locatorId) {
         super(locatorId, 5);
         setHeight100();
@@ -60,39 +60,63 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
     @Override
     protected void onDraw() {
         super.onDraw();
+
+        messagesMenu = new LocatableMenu(this.extendLocatorId("Messages"));
+
+        messageCenterButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), MSG
+            .view_messageCenter_messageTitle(), messagesMenu);
+        messageCenterButton.setAutoFit(true);
+
+        emptyMenu();
+        addMember(messageCenterButton);
+
         CoreGUI.getMessageCenter().addMessageListener(this);
+    }
 
-        final Menu recentEventsMenu = new LocatableMenu(this.extendLocatorId("Messages"));
+    public void onMessage(final Message message) {
+        if (!message.isTransient()) {
+            if (messageCount == 0) {
+                addClearMenuItem();
+            }
+            messageCount++;
 
-        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), MSG
-            .view_messageCenter_messageTitle(), recentEventsMenu);
-        recentEventsButton.setAutoFit(true);
-
-        recentEventsButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                List<Message> messages = CoreGUI.getMessageCenter().getMessages();
-                if (messages.isEmpty()) {
-                    recentEventsMenu.setItems(new MenuItem(MSG.view_messageCenter_noRecentMessages()));
-                } else {
-                    MenuItem[] items = new MenuItem[messages.size()];
-                    for (int i = 0, messagesSize = messages.size(); i < messagesSize; i++) {
-                        final Message message = messages.get(i);
-                        MenuItem messageItem = new MenuItem(message.conciseMessage, getSeverityIcon(message.severity));
-
-                        items[i] = messageItem;
-
-                        messageItem.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-                            public void onClick(MenuItemClickEvent event) {
-                                showDetails(message);
-                            }
-                        });
-                    }
-                    recentEventsMenu.setItems(items);
+            MenuItem messageItem = new MenuItem(message.conciseMessage, getSeverityIcon(message.severity));
+            messageItem.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(MenuItemClickEvent event) {
+                    showDetails(message);
                 }
+            });
+            messagesMenu.addItem(messageItem, 1);
+
+            // to avoid flooding the message center, clip old messages
+            final int maxMessages = 25;
+            if (messageCount > maxMessages) {
+                MenuItem[] items = messagesMenu.getItems();
+                MenuItem[] clippedItems = new MenuItem[maxMessages + 1]; // +1 to take into account the Clear All Messages item
+                System.arraycopy(items, 0, clippedItems, 0, clippedItems.length);
+                messagesMenu.setItems(clippedItems);
+            }
+        }
+    }
+
+    private void addClearMenuItem() {
+        MenuItem clearItem = new MenuItem(MSG.view_messageCenter_clearAllMessages());
+        clearItem.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+            @Override
+            public void onClick(MenuItemClickEvent event) {
+                emptyMenu();
             }
         });
+        messagesMenu.setItems(clearItem); // setItems making this the only item in the menu
+        markForRedraw();
+    }
 
-        addMember(recentEventsButton);
+    private void emptyMenu() {
+        CoreGUI.getMessageCenter().getMessages().clear();
+        messageCount = 0;
+        messagesMenu.setItems(new MenuItem(MSG.view_messageCenter_noRecentMessages()));
+        markForRedraw();
     }
 
     private void showDetails(Message message) {
@@ -138,31 +162,6 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
         });
     }
 
-    public void onMessage(final Message message) {
-        if (!message.isTransient()) {
-            logMessage(message);
-        }
-    }
-
-    private void logMessage(Message message) {
-        // TODO: Format the message better.
-        String logMessage = message.toString();
-        switch (message.getSeverity()) {
-        case Info:
-            Log.info(logMessage);
-            break;
-        case Warning:
-            Log.warn(logMessage);
-            break;
-        case Error:
-            Log.error(logMessage);
-            break;
-        case Fatal:
-            Log.fatal(logMessage);
-            break;
-        }
-    }
-
     private String getSeverityIcon(Message.Severity severity) {
         String iconSrc = null;
         switch (severity) {
@@ -179,5 +178,4 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
         }
         return iconSrc;
     }
-
 }

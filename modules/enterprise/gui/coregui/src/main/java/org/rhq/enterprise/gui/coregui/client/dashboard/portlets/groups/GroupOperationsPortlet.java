@@ -190,8 +190,10 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     protected void initializeUi() {
         setPadding(5);
         setMembersMargin(5);
-        setHeight100();
+        setHeight("*");
         setWidth100();
+        //tell canvas to fill it's component
+        recentOperationsContent.setHeight100();
         addMember(recentOperationsContent);
         markForRedraw();
     }

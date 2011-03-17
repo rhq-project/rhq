@@ -26,6 +26,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -53,6 +54,7 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
     private Integer groupId = null;
     private Integer[] resourceIds = null;
     private String alertResourcesToUse;
+    private EntityContext entityContext;
 
     public AlertPortletConfigurationDataSource() {
         super();
@@ -65,6 +67,11 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
         this.configuration = configuration;
         this.groupId = groupId;
         this.resourceIds = resourceIds;
+        if (groupId != null) {
+            entityContext = EntityContext.forGroup(groupId);
+        } else if ((resourceIds != null) && (resourceIds.length > 0)) {
+            entityContext = EntityContext.forResource(resourceIds[0]);
+        }
     }
 
     /** Override the executeFetch for AlertPortlet to allow specifying smaller than total
@@ -155,9 +162,13 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
                 Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
-                processResponse(request.getRequestId(), response);
+                if (entityContext.type != EntityContext.Type.Resource) {
+                    dataRetrieved(result, response, request);
+                } else {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.size());
+                    processResponse(request.getRequestId(), response);
+                }
             }
         });
     }

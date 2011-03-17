@@ -321,7 +321,7 @@ public class ImageManager {
     }
 
     public static String getAlertIcon() {
-        return "subsystems/alert/Alert_16.png";
+        return "subsystems/alert/Alert_LOW_16.png";
     }
 
     public static String getAlertLargeIcon() {

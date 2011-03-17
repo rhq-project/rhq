@@ -261,6 +261,13 @@ public class DashboardView extends LocatableVLayout {
         //if resource passed in then add additional portlets to list
         if (this.focusResource != null) {
             HashMap<String, String> resourceKeyNameMap = PortletFactory.getRegisteredResourcePortletNameMap();
+            //find current list of portlets already stored. Exclude them
+            for (DashboardPortlet currentPortlet : storedDashboard.getPortlets()) {
+                if (resourceKeyNameMap.containsKey(currentPortlet.getPortletKey())) {
+                    resourceKeyNameMap.remove(currentPortlet.getPortletKey());
+                }
+            }
+
             for (String portletKey : resourceKeyNameMap.keySet()) {
                 nameKeyMap.put(resourceKeyNameMap.get(portletKey), portletKey);
             }
@@ -379,6 +386,7 @@ public class DashboardView extends LocatableVLayout {
         }
         updateRefreshMenu();
         this.refreshMenuButton.markForRedraw();
+        markForRedraw();
 
         return editForm;
     }

@@ -16,86 +16,51 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
-
-import java.util.ArrayList;
-import java.util.List;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
-import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the Package History display
  *
  * @author Simeon Pinder
  */
-public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupPackageHistory";
+    public static final String KEY = "ResourcePackageHistory";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_pkg_hisory();
+    public static final String NAME = MSG.view_portlet_defaultName_resource_pkg_hisory();
 
-    private int groupId = -1;
-    protected LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
-    protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
+    private int resourceId = -1;
 
-    public static final String ID = "id";
-
-    // set on initial configuration, the window for this portlet view.
-    protected PortletWindow portletWindow;
-    //instance ui widgets
-
-    protected Timer refreshTimer;
-
-    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
-    static {
-        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
-    }
-
-    public GroupPkgHistoryPortlet(String locatorId) {
+    public ResourcePkgHistoryPortlet(String locatorId) {
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        int currentResourceIdentifier = Integer.valueOf(elements[1]);
+        this.resourceId = currentResourceIdentifier;
     }
 
     @Override
@@ -113,38 +78,11 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
         addMember(recentPkgHistoryContent);
     }
 
-    /** Responsible for initialization and lazy configuration of the portlet values
-     */
-    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        //populate portlet configuration details
-        if (null == this.portletWindow && null != portletWindow) {
-            this.portletWindow = portletWindow;
-        }
-
-        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
-            return;
-        }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
-
-        //lazy init any elements not yet configured.
-        for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
-            if ((portletConfig.getSimple(key) == null) && CONFIG_INCLUDE.contains(key)) {
-                portletConfig.put(new PropertySimple(key,
-                    PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
-            }
-        }
-    }
-
-    public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_help_pkg_history());
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new GroupPkgHistoryPortlet(locatorId);
+            return new ResourcePkgHistoryPortlet(locatorId);
         }
     }
 
@@ -153,42 +91,10 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
         getRecentPkgHistory();
     }
 
-    @Override
-    public DynamicForm getCustomSettingsForm() {
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
-        //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("pkg-history"));
-        form.setMargin(5);
-        //add result count selector
-        final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
-        form.setItems(resultCountSelector);
-
-        //submit handler
-        customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
-
-            @Override
-            public void onSubmitValues(SubmitValuesEvent event) {
-
-                //results count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
-
-                //persist
-                storedPortlet.setConfiguration(portletConfig);
-                configure(portletWindow, storedPortlet);
-                loadData();
-            }
-
-        });
-        page.addMember(form);
-        customSettings.addChild(page);
-        return customSettings;
-    }
-
     /** Fetches recent package history information and updates the DynamicForm instance with details.
      */
     private void getRecentPkgHistory() {
-        final int groupId = this.groupId;
+        final int resourceId = this.resourceId;
         InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
 
         int resultCount = 5;//default to
@@ -204,7 +110,8 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
         }
         PageControl pageControl = new PageControl(0, resultCount);
         criteria.setPageControl(pageControl);
-        criteria.addFilterResourceGroupIds(groupId);
+        //        criteria.addFilterResourceGroupIds(resourceId);
+        criteria.addFilterResourceId(resourceId);
 
         criteria.addSortStatus(PageOrdering.DESC);
 
@@ -213,7 +120,7 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
         new AsyncCallback<PageList<InstalledPackageHistory>>() {
             @Override
             public void onFailure(Throwable caught) {
-                Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
+                Log.debug("Error retrieving installed package history for group [" + resourceId + "]:"
                     + caught.getMessage());
             }
 
@@ -231,7 +138,7 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
                         StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
                             "subsystems/content/Package_16.png", null);
                         String title = history.getPackageVersion().getFileName() + ":";
-                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
                             + "&selectedHistoryId=" + history.getId();
                         LinkItem link = AbstractActivityView.newLinkItem(title, destination);
                         StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
@@ -260,45 +167,4 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
             }
         });
     }
-
-    @Override
-    public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-
-            refreshTimer = new Timer() {
-                public void run() {
-                    if (!currentlyLoading) {
-                        loadData();
-                        redraw();
-                    }
-                }
-            };
-
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (refreshTimer != null) {
-
-            refreshTimer.cancel();
-        }
-        super.onDestroy();
-    }
-
-    @Override
-    public void redraw() {
-        super.redraw();
-        loadData();
-    }
-
 }

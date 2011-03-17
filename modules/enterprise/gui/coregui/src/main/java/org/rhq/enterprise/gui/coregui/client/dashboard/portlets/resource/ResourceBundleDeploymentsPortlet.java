@@ -16,88 +16,52 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
-
-import java.util.ArrayList;
-import java.util.List;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
-import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.GroupBundleDeploymentCriteria;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.criteria.ResourceBundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the Bundle Deployment display
  *
  * @author Simeon Pinder
  */
-public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements CustomSettingsPortlet,
-    AutoRefreshPortlet {
-
-    private int groupId = -1;
-    protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(
-        extendLocatorId("RecentBundleDeployments"));
-    protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
+public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupBundleDeployments";
+    public static final String KEY = "ResourceBundleDeployments";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_bundles();
-    protected static final String ID = "id";
+    public static final String NAME = MSG.view_portlet_defaultName_resource_bundles();
 
-    // set on initial configuration, the window for this portlet view.
-    protected PortletWindow portletWindow;
-    //instance ui widgets
+    private int resourceId = -1;
 
-    protected Timer refreshTimer;
-
-    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
-    static {
-        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
-    }
-
-    public GroupBundleDeploymentsPortlet(String locatorId) {
+    public ResourceBundleDeploymentsPortlet(String locatorId) {
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        int currentResourceIdentifier = Integer.valueOf(elements[1]);
+        this.resourceId = currentResourceIdentifier;
     }
 
     @Override
@@ -115,38 +79,11 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         addMember(recentBundleDeployContent);
     }
 
-    /** Responsible for initialization and lazy configuration of the portlet values
-     */
-    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        //populate portlet configuration details
-        if (null == this.portletWindow && null != portletWindow) {
-            this.portletWindow = portletWindow;
-        }
-
-        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
-            return;
-        }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
-
-        //lazy init any elements not yet configured.
-        for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
-            if ((portletConfig.getSimple(key) == null) && CONFIG_INCLUDE.contains(key)) {
-                portletConfig.put(new PropertySimple(key,
-                    PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
-            }
-        }
-    }
-
-    public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_help_bundle_deps());
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new GroupBundleDeploymentsPortlet(locatorId);
+            return new ResourceBundleDeploymentsPortlet(locatorId);
         }
     }
 
@@ -155,43 +92,11 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         getRecentBundleDeployments();
     }
 
-    @Override
-    public DynamicForm getCustomSettingsForm() {
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
-        //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("bundle-deps"));
-        form.setMargin(5);
-        //add result count selector
-        final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
-        form.setItems(resultCountSelector);
-
-        //submit handler
-        customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
-
-            @Override
-            public void onSubmitValues(SubmitValuesEvent event) {
-
-                //results count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
-
-                //persist
-                storedPortlet.setConfiguration(portletConfig);
-                configure(portletWindow, storedPortlet);
-                loadData();
-            }
-
-        });
-        page.addMember(form);
-        customSettings.addChild(page);
-        return customSettings;
-    }
-
     /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
      */
     protected void getRecentBundleDeployments() {
-        final int groupId = this.groupId;
-        GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
+        final int resourceId = this.resourceId;
+        ResourceBundleDeploymentCriteria criteria = new ResourceBundleDeploymentCriteria();
 
         int resultCount = 5;//default to
         //result count
@@ -206,16 +111,17 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         }
         PageControl pageControl = new PageControl(0, resultCount);
         criteria.setPageControl(pageControl);
-        criteria.addFilterResourceGroupIds(groupId);
+        criteria.addFilterResourceIds(resourceId);
         criteria.addSortStatus(PageOrdering.DESC);
         criteria.fetchDestination(true);
         criteria.fetchBundleVersion(true);
+        criteria.fetchResourceDeployments(true);
 
         GWTServiceLookup.getBundleService().findBundleDeploymentsByCriteria(criteria,
             new AsyncCallback<PageList<BundleDeployment>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
+                    Log.debug("Error retrieving installed bundle deployments for resource [" + resourceId + "]:"
                         + caught.getMessage());
                 }
 
@@ -263,42 +169,4 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                 }
             });
     }
-
-    @Override
-    public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-            refreshTimer = new Timer() {
-                public void run() {
-                    if (!currentlyLoading) {
-                        loadData();
-                        redraw();
-                    }
-                }
-            };
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-        super.onDestroy();
-    }
-
-    @Override
-    public void redraw() {
-        super.redraw();
-        loadData();
-    }
-
 }

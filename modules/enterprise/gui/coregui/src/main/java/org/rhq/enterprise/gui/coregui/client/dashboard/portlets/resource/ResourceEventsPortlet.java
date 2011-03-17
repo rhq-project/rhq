@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,81 +24,44 @@ import java.util.Map;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
-import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the Events display
  *
  * @author Simeon Pinder
  */
-public class GroupEventsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class ResourceEventsPortlet extends GroupEventsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupEvents";
+    public static final String KEY = "ResourceEvents";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_events();
+    public static final String NAME = MSG.view_portlet_defaultName_resource_events();
 
-    public static final String ID = "id";
+    private int resourceId = -1;
 
-    // set on initial configuration, the window for this portlet view.
-    protected PortletWindow portletWindow;
-    //instance ui widgets
-
-    protected Timer refreshTimer;
-
-    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
-    static {
-        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_ENABLE);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_LASTN);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
-    }
-
-    private int groupId = -1;
-    protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
-    protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
-
-    public GroupEventsPortlet(String locatorId) {
+    public ResourceEventsPortlet(String locatorId) {
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        //        int currentGroupIdentifier = Integer.valueOf(elements[1]);
+        this.resourceId = Integer.valueOf(elements[1]);
     }
 
     @Override
@@ -116,38 +79,11 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         addMember(recentEventsContent);
     }
 
-    /** Responsible for initialization and lazy configuration of the portlet values
-     */
-    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        //populate portlet configuration details
-        if (null == this.portletWindow && null != portletWindow) {
-            this.portletWindow = portletWindow;
-        }
-
-        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
-            return;
-        }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
-
-        //lazy init any elements not yet configured.
-        for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
-            if ((portletConfig.getSimple(key) == null) && CONFIG_INCLUDE.contains(key)) {
-                portletConfig.put(new PropertySimple(key,
-                    PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
-            }
-        }
-    }
-
-    public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_help_eventcounts());
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            return new GroupEventsPortlet(locatorId);
+            return new ResourceEventsPortlet(locatorId);
         }
     }
 
@@ -156,42 +92,11 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         getRecentEventUpdates();
     }
 
-    @Override
-    public DynamicForm getCustomSettingsForm() {
-        final LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
-
-        //add range selector
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
-            .getMeasurementRangeEditor(portletConfig);
-
-        //submit handler
-        customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
-
-            @Override
-            public void onSubmitValues(SubmitValuesEvent event) {
-
-                //persist the measurement range selections
-                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
-                    portletConfig);
-
-                //persist
-                storedPortlet.setConfiguration(portletConfig);
-                configure(portletWindow, storedPortlet);
-                loadData();
-                customSettings.markForRedraw();
-            }
-        });
-        page.addMember(measurementRangeEditor);
-        customSettings.addChild(page);
-        return customSettings;
-    }
-
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */
     private void getRecentEventUpdates() {
-        final int groupId = this.groupId;
+        final int resourceId = this.resourceId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);
 
@@ -207,14 +112,13 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
             }
         }
 
-        GWTServiceLookup.getEventService().getEventCountsBySeverityForGroup(groupId, start, end,
+        //        GWTServiceLookup.getEventService().getEventCountsBySeverityForGroup(resourceId, start, end,
+        GWTServiceLookup.getEventService().getEventCountsBySeverity(resourceId, start, end,
             new AsyncCallback<Map<EventSeverity, Integer>>() {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log
-                        .debug("Error retrieving recent event counts for group [" + groupId + "]:"
-                            + caught.getMessage());
+                    Log.debug("Error retrieving event counts for resource [" + resourceId + "]:" + caught.getMessage());
                 }
 
                 @Override
@@ -253,7 +157,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum)));
-                        AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId
+                        //                        AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + resourceId
+                        AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId
                             + "/Events/History/", column);
                     } else {
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentEventsContent
@@ -269,45 +174,4 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                 }
             });
     }
-
-    @Override
-    public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-
-            refreshTimer = new Timer() {
-                public void run() {
-                    if (!currentlyLoading) {
-                        loadData();
-                        redraw();
-                    }
-                }
-            };
-
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (refreshTimer != null) {
-
-            refreshTimer.cancel();
-        }
-        super.onDestroy();
-    }
-
-    @Override
-    public void redraw() {
-        super.redraw();
-        loadData();
-    }
-
 }

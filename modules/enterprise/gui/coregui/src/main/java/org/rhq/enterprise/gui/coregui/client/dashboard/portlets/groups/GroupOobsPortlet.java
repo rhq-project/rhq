@@ -62,11 +62,29 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class GroupOobsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "GroupOobs";
+    // A default displayed, persisted name for the portlet
+    public static final String NAME = MSG.view_portlet_defaultName_group_oobs();
+    public static final String ID = "id";
+
     private int groupId = -1;
     protected LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
-    private boolean currentlyLoading = false;
-    private Configuration portletConfig = null;
-    private DashboardPortlet storedPortlet;
+    protected boolean currentlyLoading = false;
+    protected Configuration portletConfig = null;
+    protected DashboardPortlet storedPortlet;
+
+    // set on initial configuration, the window for this portlet view.
+    protected PortletWindow portletWindow;
+    //instance ui widgets
+
+    protected Timer refreshTimer;
+
+    //defines the list of configuration elements to load/persist for this portlet
+    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
+    static {
+        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
+    }
 
     public GroupOobsPortlet(String locatorId) {
         super(locatorId);
@@ -75,12 +93,12 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         String[] elements = currentPage.split("/");
         int currentGroupIdentifier = Integer.valueOf(elements[1]);
         this.groupId = currentGroupIdentifier;
-        initializeUi();
     }
 
     @Override
     protected void onInit() {
         super.onInit();
+        initializeUi();
         loadData();
     }
 
@@ -90,24 +108,6 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         setPadding(5);
         setMembersMargin(5);
         addMember(recentOobContent);
-    }
-
-    // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupOobs";
-    // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_group_oobs();
-    public static final String ID = "id";
-
-    // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
-    //instance ui widgets
-
-    private Timer refreshTimer;
-
-    //defines the list of configuration elements to load/persist for this portlet
-    private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
-    static {
-        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
     /** Responsible for initialization and lazy configuration of the portlet values

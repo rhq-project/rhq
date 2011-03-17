@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet2;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
@@ -40,6 +39,13 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.Re
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -98,7 +104,7 @@ public class PortletFactory {
         //############## Group Activity Dashboard  ############################################
         //defines mapping for Group Activity Dashboard
         registeredGroupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
-        registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
+        //        registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupAlertsPortlet2.KEY, GroupAlertsPortlet2.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
         registeredGroupPortletFactoryMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.Factory.INSTANCE);
@@ -110,7 +116,7 @@ public class PortletFactory {
 
         //register group portlet names
         registeredGroupPortletNameMap = new HashMap<String, String>(registeredGroupPortletFactoryMap.size());
-        registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
+        //        registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupAlertsPortlet2.KEY, GroupAlertsPortlet2.NAME);
         registeredGroupPortletNameMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.NAME);
         registeredGroupPortletNameMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.NAME);
@@ -122,21 +128,46 @@ public class PortletFactory {
         //############## Resource Activity Dashboard  ############################################
         //defines mapping for Group Activity Dashboard
         registeredResourcePortletFactoryMap = new HashMap<String, PortletViewFactory>();
+        registeredResourcePortletFactoryMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourceOobsPortlet.KEY, ResourceOobsPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourceAlertsPortlet.KEY, ResourceAlertsPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourceOperationsPortlet.KEY,
+            ResourceOperationsPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourcePkgHistoryPortlet.KEY,
+            ResourcePkgHistoryPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourceBundleDeploymentsPortlet.KEY,
+            ResourceBundleDeploymentsPortlet.Factory.INSTANCE);
 
         //register resource portlet names
         registeredResourcePortletNameMap = new HashMap<String, String>(registeredResourcePortletFactoryMap.size());
+        registeredResourcePortletNameMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourceOobsPortlet.KEY, ResourceOobsPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourceOperationsPortlet.KEY, ResourceOperationsPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourcePkgHistoryPortlet.KEY, ResourcePkgHistoryPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourceAlertsPortlet.KEY, ResourceAlertsPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourceBundleDeploymentsPortlet.KEY,
+            ResourceBundleDeploymentsPortlet.NAME);
 
         //############## Portlet icon mappings  ############################################
         //register portlet names
         registeredPortletIconMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
-        registeredPortletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertLargeIcon());
-        registeredPortletIconMap.put(GroupAlertsPortlet2.KEY, ImageManager.getAlertLargeIcon());
-        registeredPortletIconMap.put(GroupMetricsPortlet.KEY, ImageManager.getMonitorLargeIcon());
-        registeredPortletIconMap.put(GroupOobsPortlet.KEY, ImageManager.getMonitorFailedLargeIcon());
-        registeredPortletIconMap.put(GroupEventsPortlet.KEY, ImageManager.getEventLargeIcon());
-        registeredPortletIconMap.put(GroupOperationsPortlet.KEY, ImageManager.getOperationLargeIcon());
-        registeredPortletIconMap.put(GroupPkgHistoryPortlet.KEY, ImageManager.getActivityPackageLargeIcon());
-        registeredPortletIconMap.put(GroupBundleDeploymentsPortlet.KEY, ImageManager.getBundleLargeIcon());
+        //        registeredPortletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertIcon());
+        registeredPortletIconMap.put(GroupAlertsPortlet2.KEY, ImageManager.getAlertIcon());
+        registeredPortletIconMap.put(ResourceAlertsPortlet.KEY, ImageManager.getAlertIcon());
+        registeredPortletIconMap.put(GroupMetricsPortlet.KEY, ImageManager.getMonitorIcon());
+        registeredPortletIconMap.put(ResourceMetricsPortlet.KEY, ImageManager.getMonitorIcon());
+        registeredPortletIconMap.put(GroupOobsPortlet.KEY, ImageManager.getMonitorFailedIcon());
+        registeredPortletIconMap.put(ResourceOobsPortlet.KEY, ImageManager.getMonitorFailedIcon());
+        registeredPortletIconMap.put(GroupEventsPortlet.KEY, ImageManager.getEventIcon());
+        registeredPortletIconMap.put(ResourceEventsPortlet.KEY, ImageManager.getEventIcon());
+        registeredPortletIconMap.put(GroupOperationsPortlet.KEY, ImageManager.getOperationIcon());
+        registeredPortletIconMap.put(ResourceOperationsPortlet.KEY, ImageManager.getOperationIcon());
+        registeredPortletIconMap.put(GroupPkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
+        registeredPortletIconMap.put(ResourcePkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
+        registeredPortletIconMap.put(GroupBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
+        registeredPortletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
     }
 
     public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet) {

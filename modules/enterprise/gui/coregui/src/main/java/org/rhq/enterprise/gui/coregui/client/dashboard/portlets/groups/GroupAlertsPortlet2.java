@@ -67,10 +67,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupAlerts2";
+    public static final String KEY = "GroupAlerts";
     // A default displayed, persisted name for the portlet
-    //    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
-    public static final String NAME = MSG.view_portlet_defaultName_group_alerts() + "2";
+    public static final String NAME = MSG.view_portlet_defaultName_group_alerts();
 
     public static final String ALERT_RANGE_RESOURCES_VALUE = "alert-range-resource-value";
     public static final String ALERT_RANGE_RESOURCE_IDS = "alert-range-resource-ids";
@@ -80,20 +79,28 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     public static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
+    protected PortletWindow portletWindow;
 
     //shared private UI elements
-    private AlertResourceSelectorRegion resourceSelector;
+    protected AlertResourceSelectorRegion resourceSelector;
 
-    private AlertPortletConfigurationDataSource dataSource;
+    protected AlertPortletConfigurationDataSource dataSource;
     //instance ui widgets
-    private Canvas containerCanvas;
+    protected Canvas containerCanvas;
 
-    private Timer refreshTimer;
-    private DashboardPortlet storedPortlet;
-    private Configuration portletConfig;
+    protected Timer refreshTimer;
+    protected DashboardPortlet storedPortlet;
+    protected Configuration portletConfig;
     private int groupId;
-    private boolean portletConfigInitialized = false;
+    protected boolean portletConfigInitialized = false;
+
+    protected static HashMap<String, String> updatedMapping = new HashMap<String, String>();
+    static {
+        updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
+        //Key, default
+        updatedMapping.put(ALERT_RANGE_RESOURCES_VALUE, RESOURCES_ALL);
+        updatedMapping.put(ALERT_RANGE_RESOURCE_IDS, RESOURCES_ALL);
+    }
 
     public GroupAlertsPortlet2(String locatorId) {
         super(locatorId);
@@ -102,28 +109,24 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        this.groupId = Integer.valueOf(elements[1]);
 
+        setShowFilterForm(false); //disable filter form for portlet
+        setOverflow(Overflow.VISIBLE);
+    }
+
+    /**Defines layout for the portlet page.
+     */
+    protected void initializeUi() {
         //initalize the datasource
-        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, currentGroupIdentifier,
-            null);
+        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, this.groupId, null);
         setDataSource(this.dataSource);
 
         setShowHeader(false);
         setShowFooter(true);
         setShowFooterRefresh(false); //disable footer refresh
-        setShowFilterForm(false); //disable filter form for portlet
 
-        setOverflow(Overflow.VISIBLE);
-    }
-
-    private static HashMap<String, String> updatedMapping = new HashMap<String, String>();
-    static {
-        updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
-        //Key, default
-        updatedMapping.put(ALERT_RANGE_RESOURCES_VALUE, RESOURCES_ALL);
-        updatedMapping.put(ALERT_RANGE_RESOURCE_IDS, RESOURCES_ALL);
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     /** Responsible for initialization and lazy configuration of the portlet values
@@ -335,7 +338,8 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     @Override
     protected void onInit() {
         super.onInit();
-        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
+        initializeUi();
+        //        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     @Override
@@ -352,7 +356,8 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
 /** Bundles a ResourceSelector instance with labeling in Canvas for display.
  *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
  */
-class AlertResourceSelectorRegion extends LocatableVLayout {
+//class AlertResourceSelectorRegion extends LocatableVLayout {
+final class AlertResourceSelectorRegion extends LocatableVLayout {
     public AlertResourceSelectorRegion(String locatorId, Integer[] assigned) {
         super(locatorId);
         this.currentlyAssignedIds = assigned;

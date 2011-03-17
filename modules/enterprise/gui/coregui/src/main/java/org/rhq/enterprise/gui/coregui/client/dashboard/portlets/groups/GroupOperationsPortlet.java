@@ -79,15 +79,15 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_group_operations();
 
-    public static final String ID = "id";
+    protected static final String ID = "id";
 
     // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
+    protected PortletWindow portletWindow;
 
-    private GroupOperationsCriteriaHistoryListView dataSource;
+    protected GroupOperationsCriteriaHistoryListView dataSource;
 
     //defines the list of configuration elements to load/persist for this portlet
-    private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
+    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
@@ -101,17 +101,17 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     }
 
     //instance ui widgets
-    private Canvas containerCanvas;
+    protected Canvas containerCanvas;
 
-    private Timer refreshTimer;
-    private DashboardPortlet storedPortlet;
-    private Configuration portletConfig;
-    private int groupId;
-    private boolean portletConfigInitialized = false;
+    protected Timer refreshTimer;
+    protected DashboardPortlet storedPortlet;
+    protected Configuration portletConfig;
+    protected int groupId;
+    protected boolean portletConfigInitialized = false;
     private ResourceGroupComposite groupComposite;
-    private String baseViewPath = "";
+    protected String baseViewPath = "";
     protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
-    private String locatorId;
+    protected String locatorId;
     private GroupOperationsCriteriaHistoryListView groupOperations;
 
     public GroupOperationsPortlet(String locatorId) {
@@ -124,13 +124,12 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         this.groupId = currentGroupIdentifier;
         //populate basepath
         baseViewPath = elements[0];
-
-        initializeUi();
     }
 
     @Override
     protected void onInit() {
         super.onInit();
+        initializeUi();
         loadData();
     }
 

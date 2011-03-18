@@ -87,13 +87,13 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
                     showDetails(message);
                 }
             });
-            messagesMenu.addItem(messageItem, 1);
+            messagesMenu.addItem(messageItem, 2); // put this just below the "clear all msgs" item and the separator
 
             // to avoid flooding the message center, clip old messages
             final int maxMessages = 25;
             if (messageCount > maxMessages) {
                 MenuItem[] items = messagesMenu.getItems();
-                MenuItem[] clippedItems = new MenuItem[maxMessages + 1]; // +1 to take into account the Clear All Messages item
+                MenuItem[] clippedItems = new MenuItem[maxMessages + 2]; // +2 to take into account the Clear All Messages item and the separator
                 System.arraycopy(items, 0, clippedItems, 0, clippedItems.length);
                 messagesMenu.setItems(clippedItems);
             }
@@ -109,6 +109,11 @@ public class MessageCenterView extends LocatableVLayout implements MessageCenter
             }
         });
         messagesMenu.setItems(clearItem); // setItems making this the only item in the menu
+
+        MenuItem separator = new MenuItem();
+        separator.setIsSeparator(true);
+        messagesMenu.addItem(separator);
+
         markForRedraw();
     }
 

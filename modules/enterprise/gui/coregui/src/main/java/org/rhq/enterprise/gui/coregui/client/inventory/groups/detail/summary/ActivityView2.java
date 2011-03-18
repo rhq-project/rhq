@@ -45,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -193,9 +192,9 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
         //        dummyLeft.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
         //        dashboard.addPortlet(dummyLeft, 0, 0);
 
-        DashboardPortlet groupAlerts = new DashboardPortlet(GroupAlertsPortlet.NAME, GroupAlertsPortlet.KEY, 220);
+        //        DashboardPortlet groupAlerts = new DashboardPortlet(GroupAlertsPortlet3.NAME, GroupAlertsPortlet3.KEY, 220);
         //        groupAlerts.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(groupAlerts, 0, 0);
+        //        dashboard.addPortlet(groupAlerts, 0, 0);
 
         // right Column
         DashboardPortlet dummyRight = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);

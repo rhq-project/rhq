@@ -59,11 +59,10 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryDetailsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -347,36 +346,17 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
  *
  * @author spinder
  */
-class GroupOperationsCriteriaHistoryListView extends AbstractOperationHistoryListView {
-
-    private AbstractOperationHistoryDataSource datasource;
+class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListView {
 
     public GroupOperationsCriteriaHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource,
         String title, Criteria criteria, ResourceGroupComposite composite) {
-        super(locatorId, dataSource, title, criteria);
-        this.datasource = dataSource;
-        this.groupComposite = composite;
+        super(locatorId, composite);
+        setDataSource(dataSource);
         setShowFooterRefresh(false); //disable footer refresh
     }
 
-    private ResourceGroupComposite groupComposite;
-
-    @Override
-    protected boolean hasControlPermission() {
-        return this.groupComposite.getResourcePermission().isControl();
-    }
-
-    @Override
-    public Canvas getDetailsView(int id) {
-        return new GroupOperationHistoryDetailsView(extendLocatorId("DetailsView"), this.groupComposite);
-    }
-
-    public AbstractOperationHistoryDataSource getDatasource() {
-        return datasource;
-    }
-
     public void setDatasource(AbstractOperationHistoryDataSource datasource) {
-        this.datasource = datasource;
+        setDataSource(datasource);
     }
 
     @Override
@@ -405,8 +385,10 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
+        //initialize criteria
         GroupOperationHistoryCriteria criteria = new GroupOperationHistoryCriteria();
 
+        //retrieve group identifier
         if (request.getCriteria().getValues().containsKey(CriteriaField.GROUP_ID)) {
             int groupId = Integer.parseInt((String) request.getCriteria().getValues().get(CriteriaField.GROUP_ID));
             criteria.addFilterResourceGroupIds(Arrays.asList(groupId));
@@ -431,12 +413,34 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
             //result timeframe if enabled
             property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
             if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-                property = portletConfig.getSimple(Constant.METRIC_RANGE);
+
+                boolean isAdvanced = false;
+                //detect type of widget[Simple|Advanced]
+                property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
                 if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] range = currentSetting.split(",");
-                    criteria.addFilterStartTime(Long.valueOf(range[0]));
-                    criteria.addFilterEndTime(Long.valueOf(range[1]));
+                    isAdvanced = property.getBooleanValue();
+                }
+                if (isAdvanced) {
+                    //Advanced time settings
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE);
+                    if (property != null) {
+                        String currentSetting = property.getStringValue();
+                        String[] range = currentSetting.split(",");
+                        criteria.addFilterStartTime(Long.valueOf(range[0]));
+                        criteria.addFilterEndTime(Long.valueOf(range[1]));
+                    }
+                } else {
+                    //Simple time settings
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
+                    if (property != null) {
+                        int lastN = property.getIntegerValue();
+                        property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
+                        int lastUnits = property.getIntegerValue();
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
+                            .valueOf(lastUnits));
+                        criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                        criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                    }
                 }
             }
 

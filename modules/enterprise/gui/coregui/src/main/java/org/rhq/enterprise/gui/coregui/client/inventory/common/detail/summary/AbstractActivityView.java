@@ -524,15 +524,23 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             }
 
             //time advanced time filter enabled.
+            boolean isAdvanceTimeSetting = false;
             selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
             if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
+                isAdvanceTimeSetting = Boolean.valueOf(selectedValue);
             }
 
             //time frame
             List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
-            if (begEnd.get(0) != 0) {//advanced settings
+            if (isAdvanceTimeSetting) {//advanced settings
                 portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
+            } else {
+                //save not advanced time range
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_LASTN, measurementRangeEditor
+                    .getMetricRangePreferences().lastN));
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_UNIT, measurementRangeEditor
+                    .getMetricRangePreferences().unit));
             }
         }
         return portletConfig;

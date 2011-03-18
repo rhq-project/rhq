@@ -31,10 +31,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.types.TimeFormatter;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -47,7 +44,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SortNormalizer;
-import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -55,8 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
@@ -65,10 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * also be displayed in its own non-modal dialog window. If you want this table
  * shown in a dialog window, call {@link #showMessageCenterWindow()}.
  * 
- * This Table also can provide a standalone button that you can add to any layout,
- * see {@link #getMessageCenterButton()}. The button, when pressed, will popup
- * the dialog message window as explained above.
- *  
  * Note: this class has to be very careful about catching any and all exceptions.
  * Otherwise, an uncaught exception will cause a flooding of global exception
  * messages (since the unhandled exception handler in CoreGUI will recursively
@@ -87,12 +77,11 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     private static final String FIELD_CONCISEMESSAGE = "conciseMessage";
     private static final String FIELD_OBJECT = "object";
 
-    private Layout messageCenterButton;
     private MessageCenterWindow window;
 
     public MessageCenterView(String locatorId) {
-        super(locatorId, MSG.view_messageCenter_messageTitle(), new SortSpecifier[] { new SortSpecifier(FIELD_TIME,
-            SortDirection.DESCENDING) });
+        super(locatorId, MSG.view_messageCenter_messageTitle(), null, new SortSpecifier[] { new SortSpecifier(
+            FIELD_TIME, SortDirection.DESCENDING) }, null, false);
         CoreGUI.getMessageCenter().addMessageListener(this);
     }
 
@@ -107,38 +96,6 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         }
     }
 
-    /**
-     * Returns a button enclosed in a layout. When the button is pressed, the 
-     * Message Center non-modal dialog window will popup.
-     * 
-     * To press the button programmatically (i.e. to popup the message center window),
-     * call {@link #showMessageCenterWindow()}.
-     * 
-     * @return layout enclosing the button to popup the message center window 
-     */
-    public Layout getMessageCenterButton() {
-        if (messageCenterButton == null) {
-            messageCenterButton = new LocatableVLayout(extendLocatorId("layout"));
-            messageCenterButton.setMembersMargin(5);
-            messageCenterButton.setHeight100();
-            messageCenterButton.setAlign(Alignment.CENTER);
-            messageCenterButton.setAutoWidth();
-
-            IButton button = new LocatableIButton(extendLocatorId("button"), MSG.view_messageCenter_messageTitle());
-            button.setAlign(Alignment.CENTER);
-            button.setAutoFit(true);
-            button.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                @Override
-                public void onClick(ClickEvent event) {
-                    showMessageCenterWindow();
-                }
-            });
-
-            messageCenterButton.addMember(button);
-        }
-        return messageCenterButton;
-    }
-
     private Window createWindow() {
         if (window == null) {
             window = new MessageCenterWindow("MessageCenterViewWindow");
@@ -147,17 +104,9 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                 @Override
                 public void onCloseClick(CloseClientEvent event) {
                     try {
-                        // try really really hard to make selenium ID generation happy (TODO: it still doesn't)
-                        Canvas[] members = MessageCenterView.this.getMembers();
-                        for (Canvas member : members) {
-                            member.destroy();
-                        }
-                        MessageCenterView.this.destroy();
-                        window.destroy();
+                        window.hide();
                     } catch (Throwable e) {
                         Log.warn("Cannot destroy message center", e);
-                    } finally {
-                        window = null;
                     }
                 }
             });
@@ -296,7 +245,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         maxMessagesMap.put("50", Integer.valueOf("50"));
         maxMessagesMap.put("100", Integer.valueOf("100"));
         maxMessagesMap.put("200", Integer.valueOf("200"));
-        addTableAction(extendLocatorId("maxMessageMeny"), MSG.view_messageCenter_maxMessages(), null, maxMessagesMap,
+        addTableAction(extendLocatorId("maxMessageMenu"), MSG.view_messageCenter_maxMessages(), null, maxMessagesMap,
             new AbstractTableAction(TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -317,7 +266,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             new AbstractTableAction(TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    for (Severity severity : EnumSet.allOf(Severity.class)) {
+                    for (Severity severity : java.util.EnumSet.allOf(Severity.class)) {
                         Message m = new Message(severity.name() + ':' + System.currentTimeMillis(), severity);
                         CoreGUI.getMessageCenter().notify(m);
                     }
@@ -389,22 +338,22 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
 
         form.setItems(title, severity, date, detail);
 
-        final Window window = new LocatableWindow(this.extendLocatorId("MessageWindow"));
-        window.setTitle(MSG.common_title_message());
-        window.setWidth(600);
-        window.setHeight(400);
-        window.setIsModal(true);
-        window.setShowModalMask(true);
-        window.setCanDragResize(true);
-        window.setShowMaximizeButton(true);
-        window.setShowMinimizeButton(false);
-        window.centerInPage();
-        window.addItem(form);
-        window.show();
-        window.addCloseClickHandler(new CloseClickHandler() {
+        final Window dialogWin = new LocatableWindow(this.extendLocatorId("MessageWindow"));
+        dialogWin.setTitle(MSG.common_title_message());
+        dialogWin.setWidth(600);
+        dialogWin.setHeight(400);
+        dialogWin.setIsModal(true);
+        dialogWin.setShowModalMask(true);
+        dialogWin.setCanDragResize(true);
+        dialogWin.setShowMaximizeButton(true);
+        dialogWin.setShowMinimizeButton(false);
+        dialogWin.centerInPage();
+        dialogWin.addItem(form);
+        dialogWin.show();
+        dialogWin.addCloseClickHandler(new CloseClickHandler() {
             @Override
             public void onCloseClick(CloseClientEvent event) {
-                window.destroy();
+                dialogWin.destroy();
             }
         });
     }

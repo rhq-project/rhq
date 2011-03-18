@@ -48,6 +48,7 @@ public class Footer extends LocatableHLayout {
     private static final String LOCATOR_ID = "CoreFooter";
 
     private MessageBar messageBar;
+    private MessageCenterView messageCenter;
 
     public Footer() {
         super(LOCATOR_ID);
@@ -62,7 +63,7 @@ public class Footer extends LocatableHLayout {
     protected void onDraw() {
         super.onDraw();
 
-        final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
+        messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
         messageBar = new MessageBar();
@@ -81,7 +82,7 @@ public class Footer extends LocatableHLayout {
         favoritesLayout.addMember(favoritesButton);
         addMember(favoritesLayout);
 
-        addMember(messageCenter);
+        addMember(messageCenter.getMessageCenterButton());
 
         addMember(createHSpacer(0));
 
@@ -169,6 +170,10 @@ public class Footer extends LocatableHLayout {
 
     public MessageBar getMessageBar() {
         return messageBar;
+    }
+
+    public MessageCenterView getMessageCenter() {
+        return messageCenter;
     }
 
     private HLayout createHSpacer(int width) {

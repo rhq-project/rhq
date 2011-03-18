@@ -143,6 +143,15 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             }
         });
 
+        KeyIdentifier messageCenterWindowKey = new KeyIdentifier();
+        messageCenterWindowKey.setCtrlKey(true);
+        messageCenterWindowKey.setKeyName("M");
+        Page.registerKey(messageCenterWindowKey, new KeyCallback() {
+            public void execute(String keyName) {
+                footer.getMessageCenter().showMessageCenterWindow();
+            }
+        });
+
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
                 getErrorHandler().handleError(MSG.view_core_uncaught(), e);

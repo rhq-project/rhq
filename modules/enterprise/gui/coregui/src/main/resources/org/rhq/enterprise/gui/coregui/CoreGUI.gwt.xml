@@ -64,7 +64,12 @@
     </generate-with>
     
     <!-- External javascript libraries -->
-    <script src="/coregui/js/jquery-1.4.4.js"/>
+    <!-- jquery.sparkline requires jquery. We don't explicitly provide jquery here because it is already
+         embedded in the GFlot JAR (the charting lib used for GraphPortlet).  Furthermore, GFlot 1.0.0 requires
+         its older, embedded version of jquery (1.3.2).  Fortunately, sparkline is compatible with this older version.
+         We will need to provide jquery explicitly (like the commented version below) if we remove GFlot.
+         <script src="/coregui/js/jquery-1.4.4.js"/>
+    -->
     <script src="/coregui/js/jquery.sparkline-1.6.js"/>
 
     <!--

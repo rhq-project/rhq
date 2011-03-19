@@ -1,5 +1,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
+import java.util.HashMap;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -27,7 +28,10 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -167,15 +171,50 @@ public class Activity2View extends LocatableVLayout implements DashboardContaine
         dashboard.setColumnWidths("40%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-        // Left Column
-        DashboardPortlet dummyLeft = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        dummyLeft.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(dummyLeft, 0, 0);
+        //figure out which portlets to display and how
+        HashMap<String, String> resKeyNameMap = PortletFactory.getRegisteredResourcePortletNameMap();
+        resKeyNameMap = DashboardView.processPortletNameMapForResource(resKeyNameMap, resourceComposite);
+        int colLeft = 0;
+        int colRight = 1;
+        int rowLeft = 0;
+        int rowRight = 0;
+        //Left Column
+        if (resKeyNameMap.containsKey(ResourceMetricsPortlet.KEY)) {//measurments top left if available
+            DashboardPortlet measurements = new DashboardPortlet(ResourceMetricsPortlet.NAME,
+                ResourceMetricsPortlet.KEY, 220);
+            dashboard.addPortlet(measurements, colLeft, rowLeft++);
+            resKeyNameMap.remove(ResourceMetricsPortlet.KEY);
+        }
 
-        // right Column
-        DashboardPortlet dummyRight = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        dummyRight.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(dummyRight, 1, 0);
+        // right Column(approx 60%. As larger more room to display table and N rows.)
+        if (resKeyNameMap.containsKey(ResourceAlertsPortlet.KEY)) {//alerts top right if available
+            DashboardPortlet alerts = new DashboardPortlet(ResourceAlertsPortlet.NAME, ResourceAlertsPortlet.KEY, 220);
+            dashboard.addPortlet(alerts, colRight, rowRight++);
+            resKeyNameMap.remove(ResourceAlertsPortlet.KEY);
+        }
+        if (resKeyNameMap.containsKey(ResourceOperationsPortlet.KEY)) {//operations if available
+            DashboardPortlet ops = new DashboardPortlet(ResourceOperationsPortlet.NAME, ResourceOperationsPortlet.KEY,
+                220);
+            dashboard.addPortlet(ops, colRight, rowRight++);
+            resKeyNameMap.remove(ResourceOperationsPortlet.KEY);
+        }
+
+        //Fill out left column(typically smaller portlets) then alternate cols with remaining
+        boolean displayLeft = false;
+        for (String key : resKeyNameMap.keySet()) {
+            DashboardPortlet portlet = new DashboardPortlet(resKeyNameMap.get(key), key, 100);
+            if (rowLeft < 4) {
+                dashboard.addPortlet(portlet, colLeft, rowLeft++);
+            } else {//alternate
+                if (!displayLeft) {
+                    dashboard.addPortlet(portlet, colRight, rowRight++);
+                } else {
+                    dashboard.addPortlet(portlet, colLeft, rowLeft++);
+                }
+                //toggle
+                displayLeft = !displayLeft;
+            }
+        }
 
         return dashboard;
     }

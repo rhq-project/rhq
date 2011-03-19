@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
+import java.util.HashMap;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -45,7 +46,10 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -180,25 +184,52 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
         dashboard.setGroup(group);
         dashboard.setColumns(2);
 
-        // TODO, add real portlets
         // set leftmost column and let the rest be equally divided
         dashboard.setColumnWidths("40%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-        // Left Column
-        //        DashboardPortlet dummyLeft = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        //        dummyLeft.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        //        dashboard.addPortlet(dummyLeft, 0, 0);
+        //figure out which portlets to display and how
+        HashMap<String, String> groupKeyNameMap = PortletFactory.getRegisteredGroupPortletNameMap();
+        groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupKeyNameMap, groupComposite);
+        int colLeft = 0;
+        int colRight = 1;
+        int rowLeft = 0;
+        int rowRight = 0;
+        //Left Column
+        if (groupKeyNameMap.containsKey(GroupMetricsPortlet.KEY)) {//measurments top left if available
+            DashboardPortlet measurements = new DashboardPortlet(GroupMetricsPortlet.NAME, GroupMetricsPortlet.KEY, 220);
+            dashboard.addPortlet(measurements, colLeft, rowLeft++);
+            groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
+        }
 
-        //        DashboardPortlet groupAlerts = new DashboardPortlet(GroupAlertsPortlet3.NAME, GroupAlertsPortlet3.KEY, 220);
-        //        groupAlerts.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        //        dashboard.addPortlet(groupAlerts, 0, 0);
+        // right Column(approx 60%. As larger more room to display table and N rows.)
+        if (groupKeyNameMap.containsKey(GroupAlertsPortlet.KEY)) {//alerts top right if available
+            DashboardPortlet alerts = new DashboardPortlet(GroupAlertsPortlet.NAME, GroupAlertsPortlet.KEY, 220);
+            dashboard.addPortlet(alerts, colRight, rowRight++);
+            groupKeyNameMap.remove(GroupAlertsPortlet.KEY);
+        }
+        if (groupKeyNameMap.containsKey(GroupOperationsPortlet.KEY)) {//operations if available
+            DashboardPortlet ops = new DashboardPortlet(GroupOperationsPortlet.NAME, GroupOperationsPortlet.KEY, 220);
+            dashboard.addPortlet(ops, colRight, rowRight++);
+            groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
+        }
 
-        // right Column
-        DashboardPortlet dummyRight = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 220);
-        dummyRight.getConfiguration().put(new PropertySimple("message", "<br/>Coming Soon... :-)"));
-        dashboard.addPortlet(dummyRight, 1, 0);
-
+        //Fill out left column(typically smaller portlets) then alternate cols with remaining
+        boolean displayLeft = false;
+        for (String key : groupKeyNameMap.keySet()) {
+            DashboardPortlet portlet = new DashboardPortlet(groupKeyNameMap.get(key), key, 100);
+            if (rowLeft < 4) {
+                dashboard.addPortlet(portlet, colLeft, rowLeft++);
+            } else {//alternate
+                if (!displayLeft) {
+                    dashboard.addPortlet(portlet, colRight, rowRight++);
+                } else {
+                    dashboard.addPortlet(portlet, colLeft, rowLeft++);
+                }
+                //toggle
+                displayLeft = !displayLeft;
+            }
+        }
         return dashboard;
     }
 

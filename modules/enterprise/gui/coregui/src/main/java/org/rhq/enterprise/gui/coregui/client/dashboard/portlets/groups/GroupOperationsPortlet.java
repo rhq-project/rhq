@@ -348,10 +348,13 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
  */
 class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListView {
 
+    private ResourceGroupComposite composite;
+
     public GroupOperationsCriteriaHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource,
         String title, Criteria criteria, ResourceGroupComposite composite) {
         super(locatorId, composite);
         setDataSource(dataSource);
+        this.composite = composite;
         setShowFooterRefresh(false); //disable footer refresh
     }
 
@@ -367,6 +370,11 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
             getTableInfo().setContents(
                 MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }
+    }
+
+    @Override
+    protected String getBasePath() {
+        return "ResourceGroup/" + composite.getResourceGroup().getId() + "/Operations/History";
     }
 }
 

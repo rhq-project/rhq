@@ -266,6 +266,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                     }
                     recentEventsContent.addChild(column);
                     recentEventsContent.markForRedraw();
+                    markForRedraw();
                 }
             });
     }

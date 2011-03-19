@@ -163,6 +163,7 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                     for (Canvas child : recentBundleDeployContent.getChildren()) {
                         child.destroy();
                     }
+                    column.markForRedraw();
                     recentBundleDeployContent.addChild(column);
                     recentBundleDeployContent.markForRedraw();
                     markForRedraw();

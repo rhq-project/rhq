@@ -156,7 +156,6 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         Set<ResourceTypeFacet> resourceFacets = null;
         if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
             group = groupComposite.getResourceGroup();
-            group = groupComposite.getResourceGroup();
             groupCategory = groupComposite.getResourceGroup().getGroupCategory();
             facets = groupComposite.getResourceFacets().getFacets();
         }

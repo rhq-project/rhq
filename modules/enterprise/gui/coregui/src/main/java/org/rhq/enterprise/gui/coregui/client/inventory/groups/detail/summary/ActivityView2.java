@@ -125,10 +125,8 @@ public class ActivityView2 extends LocatableVLayout implements DashboardContaine
     private void setDashboard(Dashboard dashboard) {
         Canvas[] members = getMembers();
         removeMembers(members);
-
         //pass in the group information
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, this.groupComposite
-            .getResourceGroup(), null);
+        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, groupComposite, null);
         addMember(dashboardView);
 
         footer = new LocatableToolStrip(extendLocatorId("Footer"));

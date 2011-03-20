@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /** Shared portlet configuration component where initial configuration settings
  *  and widgets shared across portlet editors is defined.
@@ -51,6 +52,7 @@ public class PortletConfigurationEditorComponent {
         String METRIC_RANGE_LASTN = "METRIC_RANGE_LASTN";
         String METRIC_RANGE_LASTN_DEFAULT = String.valueOf(8);
         String METRIC_RANGE_UNIT = "METRIC_RANGE_UNIT";
+        String METRIC_RANGE_UNIT_DEFAULT = String.valueOf(MeasurementUtility.UNIT_HOURS);
         String RESULT_SEVERITY = "severities";
         String RESULT_SORT_ORDER = "RESULT_SORT_ORDER";
         String RESULT_SORT_PRIORITY = "sort.priority";
@@ -75,6 +77,8 @@ public class PortletConfigurationEditorComponent {
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.METRIC_RANGE_BEGIN_END_FLAG, String.valueOf(false));
         //whether in simple mode. Ex. 8 hrs. Defaults to 8
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.METRIC_RANGE_LASTN, Constant.METRIC_RANGE_LASTN_DEFAULT);
+        //whether in simple mode. Ex. 8 hrs. Defaults to 8
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.METRIC_RANGE_UNIT, Constant.METRIC_RANGE_UNIT_DEFAULT);
         //operation status, if empty initialize to "" i.e. all stati
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.OPERATION_STATUS, "");
     }

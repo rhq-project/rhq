@@ -460,7 +460,6 @@ public class DashboardView extends LocatableVLayout {
         this.refreshMenuButton.markForRedraw();
         markForRedraw();
         //attempt to initialize
-        editForm.show();
         editForm.markForRedraw();
         markForRedraw();
     }

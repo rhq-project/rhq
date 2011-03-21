@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -66,7 +68,7 @@ public class PortletFactory {
     private static final HashMap<String, PortletViewFactory> registeredResourcePortletFactoryMap;
     private static final HashMap<String, String> registeredGroupPortletNameMap;
     private static final HashMap<String, String> registeredResourcePortletNameMap;
-    private static final HashMap<String, String> registeredPortletIconMap;
+    private static HashMap<String, String> registeredPortletIconMap;
 
     static {
         //############## Default Dashboard  ############################
@@ -209,19 +211,24 @@ public class PortletFactory {
     /** 
      * @return Unmodifiable Map of registered portlet keys to names
      */
-    public static HashMap<String, String> getRegisteredPortletNameMap() {
-
-        return registeredPortletNameMap;
+    public static Map<String, String> getRegisteredPortletNameMap() {
+        return Collections.unmodifiableMap(registeredPortletNameMap);
     }
 
-    public static HashMap<String, String> getRegisteredGroupPortletNameMap() {
+    /** 
+     * @return Unmodifiable Map of registered portlet keys to names
+     */
+    public static Map<String, String> getRegisteredGroupPortletNameMap() {
 
-        return registeredGroupPortletNameMap;
+        return Collections.unmodifiableMap(registeredGroupPortletNameMap);
     }
 
-    public static HashMap<String, String> getRegisteredResourcePortletNameMap() {
+    /** 
+     * @return Unmodifiable Map of registered portlet keys to names
+     */
+    public static Map<String, String> getRegisteredResourcePortletNameMap() {
 
-        return registeredResourcePortletNameMap;
+        return Collections.unmodifiableMap(registeredResourcePortletNameMap);
     }
 
     public static String getRegisteredPortletName(String key) {

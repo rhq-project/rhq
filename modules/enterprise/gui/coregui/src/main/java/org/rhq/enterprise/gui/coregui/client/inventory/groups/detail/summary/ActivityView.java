@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -48,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -189,8 +191,13 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         //figure out which portlets to display and how
-        HashMap<String, String> groupKeyNameMap = PortletFactory.getRegisteredGroupPortletNameMap();
+        Map<String, String> groupKeyNameMap = new HashMap<String, String>(PortletFactory
+            .getRegisteredGroupPortletNameMap());
+        //remove BundleDeployment and add back later if relevant.
+        groupKeyNameMap.remove(GroupBundleDeploymentsPortlet.KEY);
         groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupKeyNameMap, groupComposite);
+        //TODO: spinder 3/21/11 need asynch call to execute and then update the menu for bundle
+
         int colLeft = 0;
         int colRight = 1;
         int rowLeft = 0;

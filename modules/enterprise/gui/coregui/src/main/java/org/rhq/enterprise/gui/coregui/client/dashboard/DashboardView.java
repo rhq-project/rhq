@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -194,7 +195,8 @@ public class DashboardView extends LocatableVLayout {
 
     private DynamicForm buildEditForm() {
         editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
-        final HashMap<String, String> groupKeyNameMap = PortletFactory.getRegisteredGroupPortletNameMap();
+        final Map<String, String> groupKeyNameMap = new HashMap<String, String>(PortletFactory
+            .getRegisteredGroupPortletNameMap());
         //remove BundleDeployment and add back later if relevant.
         groupKeyNameMap.remove(GroupBundleDeploymentsPortlet.KEY);
         //if group, need to do asynch check for bundlePortlet to ensure only Platform members
@@ -246,7 +248,7 @@ public class DashboardView extends LocatableVLayout {
      *
      * @param groupKeyNameMap
      */
-    private void populateBuildEditForm(HashMap<String, String> groupKeyNameMap) {
+    private void populateBuildEditForm(Map<String, String> groupKeyNameMap) {
         editForm.setMargin(5);
         editForm.setAutoWidth();
         editForm.setNumCols(canEditName() ? 12 : 10);
@@ -312,7 +314,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));
-        HashMap<String, String> keyNameMap = PortletFactory.getRegisteredPortletNameMap();
+        HashMap<String, String> keyNameMap = new HashMap<String, String>(PortletFactory.getRegisteredPortletNameMap());
         // the assumption here is that the portlet names are unique. we want a sorted menu here, so create a
         // sorted map from portlet name to portlet key and use that to generate the menu. It would be nice if you
         // could just call Menu.sort() but it's not supported (yet?).
@@ -333,7 +335,8 @@ public class DashboardView extends LocatableVLayout {
             }
         }
 
-        HashMap<String, String> resourceKeyNameMap = PortletFactory.getRegisteredResourcePortletNameMap();
+        HashMap<String, String> resourceKeyNameMap = new HashMap<String, String>(PortletFactory
+            .getRegisteredResourcePortletNameMap());
         //if resource passed in then add additional portlets to list
         if (this.resource != null) {
             //trim out portlets that should not be visible
@@ -504,7 +507,7 @@ public class DashboardView extends LocatableVLayout {
     /**Process the portletName map to exclude portlets that should not be visible for this
      * group. All except BundleDeployment visibility is handled here. Bundle requires runtime check.
      */
-    public static HashMap<String, String> processPortletNameMapForGroup(HashMap<String, String> groupKeyNameMap,
+    public static Map<String, String> processPortletNameMapForGroup(Map<String, String> groupKeyNameMap,
         ResourceGroupComposite composite) {
         if ((composite != null) && (composite.getResourceGroup() != null) && (groupKeyNameMap != null)
             && !groupKeyNameMap.isEmpty()) {

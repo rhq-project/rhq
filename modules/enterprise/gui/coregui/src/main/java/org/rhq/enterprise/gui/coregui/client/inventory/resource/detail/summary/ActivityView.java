@@ -172,7 +172,8 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         //figure out which portlets to display and how
-        HashMap<String, String> resKeyNameMap = PortletFactory.getRegisteredResourcePortletNameMap();
+        HashMap<String, String> resKeyNameMap = new HashMap<String, String>(PortletFactory
+            .getRegisteredResourcePortletNameMap());
         resKeyNameMap = DashboardView.processPortletNameMapForResource(resKeyNameMap, resourceComposite);
         int colLeft = 0;
         int colRight = 1;

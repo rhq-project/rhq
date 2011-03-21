@@ -189,9 +189,24 @@ public abstract class AncestryUtil {
         Map<Integer, ResourceType> types = ((MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES))
             .getMap();
         Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
+        String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
+
+        String result = getAncestryHoverHTMLString(resourceId, resourceName, ancestry, resourceTypeId, types, width);
+
+        listGridRecord.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
+        return result;
+    }
+
+    public static String getAncestryHoverHTMLForResource(Resource resource, Map<Integer, ResourceType> types, int width) {
+
+        return getAncestryHoverHTMLString(resource.getId(), resource.getName(), resource.getAncestry(), resource
+            .getResourceType().getId(), types, width);
+    }
+
+    private static String getAncestryHoverHTMLString(int resourceId, String resourceName, String ancestry,
+        int resourceTypeId, Map<Integer, ResourceType> types, int width) {
         ResourceType type = types.get(resourceTypeId);
         String resourceLongName = getResourceLongName(resourceName, type);
-        String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
 
         width = (width <= 0) ? 500 : width;
 
@@ -231,9 +246,7 @@ public abstract class AncestryUtil {
 
         sb.append("</p>");
 
-        String result = sb.toString();
-        listGridRecord.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
-        return result;
+        return sb.toString();
     }
 
     private static String getResourceLongName(String resourceName, ResourceType type) {

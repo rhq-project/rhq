@@ -219,12 +219,33 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
         if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-            property = portletConfig.getSimple(Constant.METRIC_RANGE);
+
+            boolean isAdvanced = false;
+            //detect type of widget[Simple|Advanced]
+            property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
             if (property != null) {
-                String currentSetting = property.getStringValue();
-                String[] range = currentSetting.split(",");
-                start = Long.valueOf(range[0]);
-                end = Long.valueOf(range[1]);
+                isAdvanced = property.getBooleanValue();
+            }
+            if (isAdvanced) {
+                //Advanced time settings
+                property = portletConfig.getSimple(Constant.METRIC_RANGE);
+                if (property != null) {
+                    String currentSetting = property.getStringValue();
+                    String[] range = currentSetting.split(",");
+                    start = Long.valueOf(range[0]);
+                    end = Long.valueOf(range[1]);
+                }
+            } else {
+                //Simple time settings
+                property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
+                if (property != null) {
+                    int lastN = property.getIntegerValue();
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
+                    int lastUnits = property.getIntegerValue();
+                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer.valueOf(lastUnits));
+                    start = Long.valueOf(beginEnd.get(0));
+                    end = Long.valueOf(beginEnd.get(1));
+                }
             }
         }
 

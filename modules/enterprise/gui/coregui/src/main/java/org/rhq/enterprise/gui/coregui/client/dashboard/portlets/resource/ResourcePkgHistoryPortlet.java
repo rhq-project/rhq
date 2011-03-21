@@ -110,7 +110,6 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
         }
         PageControl pageControl = new PageControl(0, resultCount);
         criteria.setPageControl(pageControl);
-        //        criteria.addFilterResourceGroupIds(resourceId);
         criteria.addFilterResourceId(resourceId);
 
         criteria.addSortStatus(PageOrdering.DESC);

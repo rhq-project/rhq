@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
+
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -40,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /** Customize the AlertDataSource to pull fetch criteria information from
  *  the Configuration object passed in.
@@ -116,15 +119,38 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
                     pc.setPrimarySortOrder(PageOrdering.ASC);
                 }
             }
+
             //result timeframe if enabled
             property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
             if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-                property = portletConfig.getSimple(Constant.METRIC_RANGE);
+
+                boolean isAdvanced = false;
+                //detect type of widget[Simple|Advanced]
+                property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
                 if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] range = currentSetting.split(",");
-                    criteria.addFilterStartTime(Long.valueOf(range[0]));
-                    criteria.addFilterEndTime(Long.valueOf(range[1]));
+                    isAdvanced = property.getBooleanValue();
+                }
+                if (isAdvanced) {
+                    //Advanced time settings
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE);
+                    if (property != null) {
+                        String currentSetting = property.getStringValue();
+                        String[] range = currentSetting.split(",");
+                        criteria.addFilterStartTime(Long.valueOf(range[0]));
+                        criteria.addFilterEndTime(Long.valueOf(range[1]));
+                    }
+                } else {
+                    //Simple time settings
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
+                    if (property != null) {
+                        int lastN = property.getIntegerValue();
+                        property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
+                        int lastUnits = property.getIntegerValue();
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
+                            .valueOf(lastUnits));
+                        criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                        criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                    }
                 }
             }
 

@@ -284,12 +284,13 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         availableSectionStack.addSection(availableSection);
 
         // Load data.
-        this.datasource = getDataSource();
-        populateAvailableGrid(new Criteria());
-
         if (this.availableFilterForm != null) {
+            // this grabs any initial criteria prior to the first data fetch
+            latestCriteria = getLatestCriteria(availableFilterForm);
+
             this.availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
                 public void onItemChanged(ItemChangedEvent itemChangedEvent) {
+
                     latestCriteria = getLatestCriteria(availableFilterForm);
 
                     Timer timer = new Timer() {
@@ -306,6 +307,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 }
             });
         }
+        this.datasource = getDataSource();
+        populateAvailableGrid((null == latestCriteria) ? new Criteria() : latestCriteria);
 
         // Add event handlers.
 

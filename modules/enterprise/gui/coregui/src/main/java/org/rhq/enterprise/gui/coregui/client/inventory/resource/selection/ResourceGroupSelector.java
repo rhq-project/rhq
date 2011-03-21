@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -26,8 +28,11 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -37,12 +42,32 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
+    private static final ViewName GROUP_COMPATIBLE = new ViewName(GroupCategory.COMPATIBLE.getName(), MSG
+        .view_group_summary_compatible());
+    private static final ViewName GROUP_MIXED = new ViewName(GroupCategory.MIXED.getName(), MSG
+        .view_group_summary_mixed());
+    private static LinkedHashMap<String, String> CATEGORY_VALUE_MAP = new LinkedHashMap<String, String>();
+
+    GroupCategory categoryFilter;
+
+    static {
+        CATEGORY_VALUE_MAP.put(GroupCategory.COMPATIBLE.getName(), MSG.view_group_summary_compatible() + "-!");
+        CATEGORY_VALUE_MAP.put(GroupCategory.MIXED.getName(), MSG.view_group_summary_mixed() + "-!");
+
+    }
+
     public ResourceGroupSelector(String locatorId) {
         this(locatorId, false);
     }
-    
+
     public ResourceGroupSelector(String locatorId, boolean isReadOnly) {
+        this(locatorId, null, isReadOnly);
+    }
+
+    public ResourceGroupSelector(String locatorId, GroupCategory categoryFilter, boolean isReadOnly) {
         super(locatorId, isReadOnly);
+
+        this.categoryFilter = categoryFilter;
     }
 
     protected DynamicForm getAvailableFilterForm() {
@@ -53,8 +78,21 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         final TextItem search = new TextItem("search", MSG.common_title_search());
 
         SelectItem groupCategorySelect = new SelectItem("groupCategory", MSG.widget_resourceSelector_groupCategory());
-        groupCategorySelect.setValueMap("Compatible", "Mixed"); // I don't think we can i18n these, may need these literal values - need to double check this
-        groupCategorySelect.setAllowEmptyValue(true);
+        //groupCategorySelect.setValueMap(GROUP_COMPATIBLE.getTitle(), GROUP_MIXED.getTitle());
+        groupCategorySelect.setValueMap(CATEGORY_VALUE_MAP);
+        if (null == categoryFilter) {
+            groupCategorySelect.setAllowEmptyValue(true);
+        } else {
+            switch (categoryFilter) {
+            case COMPATIBLE:
+                groupCategorySelect.setValue(GroupCategory.COMPATIBLE.getName());
+                break;
+            case MIXED:
+                groupCategorySelect.setValue(GroupCategory.MIXED.getName());
+                break;
+            }
+            groupCategorySelect.setDisabled(true);
+        }
         availableFilterForm.setItems(search, groupCategorySelect, new SpacerItem());
 
         return availableFilterForm;
@@ -72,10 +110,10 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         String category = (String) availableFilterForm.getValue("groupCategory");
         Criteria criteria = new Criteria();
         if (null != search) {
-            criteria.addCriteria("name", search);
+            criteria.addCriteria(ResourceGroupDataSourceField.NAME.propertyName(), search);
         }
         if (null != category) {
-            criteria.addCriteria("category", category);
+            criteria.addCriteria(ResourceGroupDataSourceField.CATEGORY.propertyName(), category);
         }
 
         return criteria;

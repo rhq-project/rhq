@@ -31,7 +31,6 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -42,17 +41,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
-    private static final ViewName GROUP_COMPATIBLE = new ViewName(GroupCategory.COMPATIBLE.getName(), MSG
-        .view_group_summary_compatible());
-    private static final ViewName GROUP_MIXED = new ViewName(GroupCategory.MIXED.getName(), MSG
-        .view_group_summary_mixed());
     private static LinkedHashMap<String, String> CATEGORY_VALUE_MAP = new LinkedHashMap<String, String>();
 
     GroupCategory categoryFilter;
 
     static {
-        CATEGORY_VALUE_MAP.put(GroupCategory.COMPATIBLE.getName(), MSG.view_group_summary_compatible() + "-!");
-        CATEGORY_VALUE_MAP.put(GroupCategory.MIXED.getName(), MSG.view_group_summary_mixed() + "-!");
+        CATEGORY_VALUE_MAP.put(GroupCategory.COMPATIBLE.getName(), MSG.view_group_summary_compatible());
+        CATEGORY_VALUE_MAP.put(GroupCategory.MIXED.getName(), MSG.view_group_summary_mixed());
 
     }
 
@@ -78,7 +73,6 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         final TextItem search = new TextItem("search", MSG.common_title_search());
 
         SelectItem groupCategorySelect = new SelectItem("groupCategory", MSG.widget_resourceSelector_groupCategory());
-        //groupCategorySelect.setValueMap(GROUP_COMPATIBLE.getTitle(), GROUP_MIXED.getTitle());
         groupCategorySelect.setValueMap(CATEGORY_VALUE_MAP);
         if (null == categoryFilter) {
             groupCategorySelect.setAllowEmptyValue(true);

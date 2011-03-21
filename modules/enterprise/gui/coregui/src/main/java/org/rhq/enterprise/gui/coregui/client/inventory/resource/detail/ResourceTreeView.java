@@ -71,7 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -421,8 +421,9 @@ public class ResourceTreeView extends LocatableVLayout {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), ResourceDetailView.Tab.OPERATIONS,
-                                ResourceDetailView.OperationsSubTab.SCHEDULES) + "/0/" + operationDefinition.getId());
+                        CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(),
+                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            + "/0/" + operationDefinition.getId());
                     }
                 });
                 opSubMenu.addItem(operationItem);
@@ -547,12 +548,12 @@ public class ResourceTreeView extends LocatableVLayout {
 
                             addToDBItem.addClickHandler(new ClickHandler() {
                                 public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                    DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
-                                        GraphPortlet.KEY, 250);
+                                    DashboardPortlet p = new DashboardPortlet(MSG
+                                        .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY, 250);
                                     p.getConfiguration().put(
-                                        new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                        new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
                                     p.getConfiguration().put(
-                                        new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
+                                        new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
                                     d.addPortlet(p);
 

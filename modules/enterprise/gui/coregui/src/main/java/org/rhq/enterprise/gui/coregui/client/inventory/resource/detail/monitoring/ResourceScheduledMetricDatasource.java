@@ -118,6 +118,25 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
                         processResponse(request.getRequestId(), response);
                     }
                 });
+
+        } else if (request.getCriteria().getValues().containsKey("resourceGroupId")) {
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.fetchDefinition(true);
+
+            criteria.addFilterResourceGroupId(request.getCriteria().getAttributeAsInt("resourceGroupId"));
+
+            GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
+                new AsyncCallback<PageList<MeasurementSchedule>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_schedules_loadFailed(), caught);
+                    }
+
+                    public void onSuccess(PageList<MeasurementSchedule> result) {
+                        response.setData(buildRecords(result));
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+
         } else {
             processResponse(request.getRequestId(), response);
         }

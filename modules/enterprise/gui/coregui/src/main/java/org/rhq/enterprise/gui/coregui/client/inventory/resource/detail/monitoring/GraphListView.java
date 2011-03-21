@@ -127,7 +127,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     }
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        SmallGraphView graph = new SmallGraphView(extendLocatorId(def.getName()), resource.getId(), def, data);
+        ResourceMetricGraphView graph = new ResourceMetricGraphView(extendLocatorId(def.getName()), resource.getId(), def, data);
         graph.setWidth("95%");
         graph.setHeight(220);
 

@@ -33,9 +33,10 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetr
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
@@ -71,8 +72,8 @@ public class PortletFactory {
     private static HashMap<String, String> registeredPortletIconMap;
 
     static {
-        //############## Default Dashboard  ############################
-        //defines portlet factory mappings for landing page Dashboard
+        // ############# Global Dashboard  ############################
+        // defines portlet factory mappings for global Dashboard
         registeredPortletFactoryMap = new HashMap<String, PortletViewFactory>();
         registeredPortletFactoryMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(RecentlyAddedResourcesPortlet.KEY,
@@ -80,7 +81,8 @@ public class PortletFactory {
         registeredPortletFactoryMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(GraphPortlet.KEY, GraphPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
@@ -88,14 +90,15 @@ public class PortletFactory {
         registeredPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
 
-        //defines portlet name mappings for landing page Dashboard
+        // defines portlet name mappings for global Dashboard
         registeredPortletNameMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
         registeredPortletNameMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.NAME);
         registeredPortletNameMap.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.NAME);
         registeredPortletNameMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.NAME);
         registeredPortletNameMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.NAME);
         registeredPortletNameMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.NAME);
-        registeredPortletNameMap.put(GraphPortlet.KEY, GraphPortlet.NAME);
+        registeredPortletNameMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.NAME);
+        registeredPortletNameMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.NAME);
         registeredPortletNameMap.put(TagCloudPortlet.KEY, TagCloudPortlet.NAME);
         registeredPortletNameMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.NAME);
         registeredPortletNameMap.put(MashupPortlet.KEY, MashupPortlet.NAME);

@@ -64,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView2;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView3;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
@@ -263,7 +263,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSubTab(this.summaryTab, this.summaryActivity2, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ActivityView2(summaryActivity2.extendLocatorId("View2"), groupComposite);
+                return new ActivityView3(summaryActivity2.extendLocatorId("View2"), groupComposite);
             }
         });
         // TODO (ips): Add Timeline subtab?

@@ -474,22 +474,24 @@ public class DashboardView extends LocatableVLayout {
             Resource resource = composite.getResource();
             //filter out portlets not relevent for facets
             Set<ResourceTypeFacet> facets = composite.getResourceFacets().getFacets();
-            //Operation related portlets
-            if (!facets.contains(ResourceTypeFacet.OPERATION)) {
-                resourceKeyNameMap.remove(ResourceOperationsPortlet.KEY);
-            }
-            //MEASUREMENT related portlets(METRICS)
-            if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
-                resourceKeyNameMap.remove(ResourceMetricsPortlet.KEY);
-                resourceKeyNameMap.remove(ResourceMetricsPortlet.KEY);
-            }
-            //Content related portlets
-            if (!facets.contains(ResourceTypeFacet.CONTENT)) {
-                resourceKeyNameMap.remove(ResourcePkgHistoryPortlet.KEY);
-            }
-            //Event related portlets
-            if (!facets.contains(ResourceTypeFacet.EVENT)) {
-                resourceKeyNameMap.remove(ResourceEventsPortlet.KEY);
+            if (!facets.isEmpty()) {
+                //Operation related portlets
+                if (!facets.contains(ResourceTypeFacet.OPERATION)) {
+                    resourceKeyNameMap.remove(ResourceOperationsPortlet.KEY);
+                }
+                //MEASUREMENT related portlets(METRICS)
+                if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
+                    resourceKeyNameMap.remove(ResourceMetricsPortlet.KEY);
+                    resourceKeyNameMap.remove(ResourceMetricsPortlet.KEY);
+                }
+                //Content related portlets
+                if (!facets.contains(ResourceTypeFacet.CONTENT)) {
+                    resourceKeyNameMap.remove(ResourcePkgHistoryPortlet.KEY);
+                }
+                //Event related portlets
+                if (!facets.contains(ResourceTypeFacet.EVENT)) {
+                    resourceKeyNameMap.remove(ResourceEventsPortlet.KEY);
+                }
             }
             //Bundle related portlet
             if (!resource.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
@@ -513,18 +515,20 @@ public class DashboardView extends LocatableVLayout {
             //            ResourceGroup group = composite.getResourceGroup();
             //compatible if not a compatible group may need to do some pruning.
             if (groupCategory != GroupCategory.COMPATIBLE) {
-                //Operations related portlets(Config,PkgHistory)
-                if (!facets.contains(ResourceTypeFacet.OPERATION)) {
-                    groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
-                }
-                //MEASUREMENT related portlets(METRICS)
-                if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
-                    groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
-                    groupKeyNameMap.remove(GroupOobsPortlet.KEY);
-                }
-                //CONTENT related portlets(CONTENT)
-                if (!facets.contains(ResourceTypeFacet.CONTENT)) {
-                    groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
+                if (!facets.isEmpty()) {
+                    //Operations related portlets(Config,PkgHistory)
+                    if (!facets.contains(ResourceTypeFacet.OPERATION)) {
+                        groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
+                    }
+                    //MEASUREMENT related portlets(METRICS)
+                    if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
+                        groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
+                        groupKeyNameMap.remove(GroupOobsPortlet.KEY);
+                    }
+                    //CONTENT related portlets(CONTENT)
+                    if (!facets.contains(ResourceTypeFacet.CONTENT)) {
+                        groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
+                    }
                 }
                 //                //EVENT related portlets
                 //                if (!facets.contains(ResourceTypeFacet.EVENT)) {

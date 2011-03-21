@@ -41,7 +41,6 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -87,7 +86,7 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
     protected void onInit() {
         //        super.onInit();
         initializeUi();
-        //        loadData();
+        loadData();
     }
 
     @Override
@@ -107,9 +106,9 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
         //add filter operation status type selector
         final SelectItem operationStatusSelector = PortletConfigurationEditorComponent
             .getOperationStatusEditor(portletConfig);
-        //add sort priority selector
-        final SelectItem resultSortSelector = PortletConfigurationEditorComponent
-            .getResulSortOrderEditor(portletConfig);
+        //        //add sort priority selector
+        //        final SelectItem resultSortSelector = PortletConfigurationEditorComponent
+        //            .getResulSortOrderEditor(portletConfig);
         //add result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
 
@@ -117,7 +116,7 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
-        form.setItems(operationStatusSelector, resultSortSelector, resultCountSelector);
+        form.setItems(operationStatusSelector, resultCountSelector);
 
         //submit handler
         customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
@@ -279,18 +278,18 @@ class ResourceOperationsCriteriaDataSource extends ResourceOperationHistoryDataS
 
         //retrieve previous settings from portlet config
         if (portletConfig != null) {
-            //result sort order
-            PropertySimple property = portletConfig.getSimple(Constant.RESULT_SORT_ORDER);
-            if (property != null) {
-                String currentSetting = property.getStringValue();
-                if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase(PageOrdering.DESC.name())) {
-                    criteria.addSortStatus(PageOrdering.DESC);
-                } else {
-                    criteria.addSortStatus(PageOrdering.ASC);
-                }
-            }
+            //            //result sort order
+            //            PropertySimple property = portletConfig.getSimple(Constant.RESULT_SORT_ORDER);
+            //            if (property != null) {
+            //                String currentSetting = property.getStringValue();
+            //                if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase(PageOrdering.DESC.name())) {
+            //                    criteria.addSortStatus(PageOrdering.DESC);
+            //                } else {
+            //                    criteria.addSortStatus(PageOrdering.ASC);
+            //                }
+            //            }
             //result timeframe if enabled
-            property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
+            PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
             if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
 
                 boolean isAdvanced = false;

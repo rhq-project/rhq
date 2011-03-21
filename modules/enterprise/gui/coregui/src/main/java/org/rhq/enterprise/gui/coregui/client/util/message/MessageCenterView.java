@@ -291,7 +291,9 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     public void refresh() {
         try {
             super.refresh();
-            getListGrid().setRecords(transform(CoreGUI.getMessageCenter().getMessages()));
+            if ((getListGrid() != null) && (CoreGUI.getMessageCenter().getMessages() != null)) {
+                getListGrid().setRecords(transform(CoreGUI.getMessageCenter().getMessages()));
+            }
             refreshTableInfo();
         } catch (Throwable e) {
             Log.error("Cannot refresh messages", e);

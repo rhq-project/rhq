@@ -57,16 +57,16 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePort
  */
 public class PortletFactory {
 
-    private static HashMap<String, PortletViewFactory> registeredPortletFactoryMap;
-    private static HashMap<String, String> registeredPortletNameMap;
+    private static final HashMap<String, PortletViewFactory> registeredPortletFactoryMap;
+    private static final HashMap<String, String> registeredPortletNameMap;
 
     //Group portlet registrations, diff from default portlets as only applicable for specific group
-    private static HashMap<String, PortletViewFactory> registeredGroupPortletFactoryMap;
+    private static final HashMap<String, PortletViewFactory> registeredGroupPortletFactoryMap;
     //Resource portlet registrations, diff from default portlets as only applicable for specific resource
-    private static HashMap<String, PortletViewFactory> registeredResourcePortletFactoryMap;
-    private static HashMap<String, String> registeredGroupPortletNameMap;
-    private static HashMap<String, String> registeredResourcePortletNameMap;
-    private static HashMap<String, String> registeredPortletIconMap;
+    private static final HashMap<String, PortletViewFactory> registeredResourcePortletFactoryMap;
+    private static final HashMap<String, String> registeredGroupPortletNameMap;
+    private static final HashMap<String, String> registeredResourcePortletNameMap;
+    private static final HashMap<String, String> registeredPortletIconMap;
 
     static {
         //############## Default Dashboard  ############################

@@ -245,6 +245,11 @@ class ResourceOperationsCriteriaHistoryListView extends AbstractOperationHistory
                 MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }
     }
+
+    @Override
+    protected String getBasePath() {
+        return "Resource/" + resourceComposite.getResource().getId() + "/Operations/History";
+    }
 }
 
 /** Provide implementation of ResourceOperationHistoryDataSource that dynamically

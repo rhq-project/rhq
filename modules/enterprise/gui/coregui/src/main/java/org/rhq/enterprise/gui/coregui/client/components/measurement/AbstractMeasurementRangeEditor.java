@@ -219,6 +219,7 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
             advancedStartItem.enable();
             advancedEndItem.enable();
             advancedSimpleButton.enable();
+            markForRedraw();
         }
     }
 

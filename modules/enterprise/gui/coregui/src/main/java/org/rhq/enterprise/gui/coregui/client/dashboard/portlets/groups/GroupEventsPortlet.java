@@ -250,6 +250,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
                             column.addMember(row);
                         }
+                        column.markForRedraw();
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum)));

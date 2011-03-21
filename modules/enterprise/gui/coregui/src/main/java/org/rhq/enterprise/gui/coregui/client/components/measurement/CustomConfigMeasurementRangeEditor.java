@@ -36,8 +36,8 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
     public static final String ALERT_METRIC_RANGE_ENABLE = Constant.METRIC_RANGE_ENABLE;
 
     public static final String DEFAULT_VALUE_RANGE_RO = Boolean.FALSE.toString();
-    public static final Integer DEFAULT_VALUE_RANGE_LASTN = Integer.valueOf(8);
-    public static final Integer DEFAULT_VALUE_RANGE_UNIT = Integer.valueOf(3);
+    public static final Integer DEFAULT_VALUE_RANGE_LASTN = Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT);
+    public static final Integer DEFAULT_VALUE_RANGE_UNIT = Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT);
 
     private ConfigurationMeasurementPreferences measurementPrefs;
 
@@ -106,7 +106,7 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
             if (metricRangePreferences == null) {
                 metricRangePreferences = new MetricRangePreferences();
             }
-            //            //parse config and lazily init timing elements
+            //parse config and lazily init timing elements
             metricRangePreferences.explicitBeginEnd = Boolean.valueOf(
                 config.getSimple(PREF_METRIC_RANGE_BEGIN_END_FLAG).getStringValue()).booleanValue();
             //check to display advanced settings widget components

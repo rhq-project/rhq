@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
+import java.util.ArrayList;
+
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -25,6 +27,10 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
+import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -37,15 +43,20 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Simeon Pinder
@@ -74,9 +85,71 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
 
     @Override
     protected void onInit() {
-        super.onInit();
+        //        super.onInit();
         initializeUi();
+        //        loadData();
+    }
+
+    @Override
+    public void redraw() {
         loadData();
+    }
+
+    @Override
+    public DynamicForm getCustomSettingsForm() {
+        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        //build editor form container
+        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
+        form.setMargin(5);
+
+        //add label about what configuration affects? redundant?
+        //add filter operation status type selector
+        final SelectItem operationStatusSelector = PortletConfigurationEditorComponent
+            .getOperationStatusEditor(portletConfig);
+        //add sort priority selector
+        final SelectItem resultSortSelector = PortletConfigurationEditorComponent
+            .getResulSortOrderEditor(portletConfig);
+        //add result count selector
+        final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
+
+        //add range selector
+        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+            .getMeasurementRangeEditor(portletConfig);
+
+        form.setItems(operationStatusSelector, resultSortSelector, resultCountSelector);
+
+        //submit handler
+        customSettings.addSubmitValuesHandler(new SubmitValuesHandler() {
+
+            @Override
+            public void onSubmitValues(SubmitValuesEvent event) {
+
+                //result count
+                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
+
+                //time range configuration
+                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
+                    portletConfig);
+
+                //operation priority
+                portletConfig = AbstractActivityView.saveOperationStatusSelectorSettings(operationStatusSelector,
+                    portletConfig);
+
+                //persist and reload portlet
+                storedPortlet.setConfiguration(portletConfig);
+                configure(portletWindow, storedPortlet);
+                //resynch the config object in the datasource
+                resourceOperations.setDatasource(new ResourceOperationsCriteriaDataSource(portletConfig));
+                //apply latest settings to the visible result set
+                redraw();
+            }
+        });
+        form.markForRedraw();
+        page.addMember(measurementRangeEditor);
+        page.addMember(form);
+        customSettings.addChild(page);
+        return customSettings;
     }
 
     private void loadData() {
@@ -134,9 +207,9 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
  */
 class ResourceOperationsCriteriaHistoryListView extends AbstractOperationHistoryListView {
 
-    private AbstractOperationHistoryDataSource datasource;
+    private ResourceOperationsCriteriaDataSource datasource;
 
-    public ResourceOperationsCriteriaHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource,
+    public ResourceOperationsCriteriaHistoryListView(String locatorId, ResourceOperationsCriteriaDataSource dataSource,
         String title, Criteria criteria, ResourceComposite composite) {
         super(locatorId, dataSource, title, criteria);
         this.datasource = dataSource;
@@ -156,11 +229,11 @@ class ResourceOperationsCriteriaHistoryListView extends AbstractOperationHistory
         return new ResourceOperationHistoryDetailsView(extendLocatorId("DetailsView"), this.resourceComposite);
     }
 
-    public AbstractOperationHistoryDataSource getDatasource() {
+    public ResourceOperationsCriteriaDataSource getDatasource() {
         return datasource;
     }
 
-    public void setDatasource(AbstractOperationHistoryDataSource datasource) {
+    public void setDatasource(ResourceOperationsCriteriaDataSource datasource) {
         this.datasource = datasource;
     }
 
@@ -219,12 +292,34 @@ class ResourceOperationsCriteriaDataSource extends ResourceOperationHistoryDataS
             //result timeframe if enabled
             property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
             if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-                property = portletConfig.getSimple(Constant.METRIC_RANGE);
+
+                boolean isAdvanced = false;
+                //detect type of widget[Simple|Advanced]
+                property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
                 if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] range = currentSetting.split(",");
-                    criteria.addFilterStartTime(Long.valueOf(range[0]));
-                    criteria.addFilterEndTime(Long.valueOf(range[1]));
+                    isAdvanced = property.getBooleanValue();
+                }
+                if (isAdvanced) {
+                    //Advanced time settings
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE);
+                    if (property != null) {
+                        String currentSetting = property.getStringValue();
+                        String[] range = currentSetting.split(",");
+                        criteria.addFilterStartTime(Long.valueOf(range[0]));
+                        criteria.addFilterEndTime(Long.valueOf(range[1]));
+                    }
+                } else {
+                    //Simple time settings
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
+                    if (property != null) {
+                        int lastN = property.getIntegerValue();
+                        property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
+                        int lastUnits = property.getIntegerValue();
+                        ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
+                            .valueOf(lastUnits));
+                        criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                        criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                    }
                 }
             }
 

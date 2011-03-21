@@ -273,7 +273,6 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
 
             refreshTimer = new Timer() {
                 public void run() {
-
                     redraw();
                 }
             };

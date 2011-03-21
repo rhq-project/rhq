@@ -58,7 +58,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryDataSource;
@@ -83,7 +82,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
 
-    protected GroupOperationsCriteriaHistoryListView dataSource;
+    private GroupOperationsCriteriaHistoryListView groupOperations;
 
     //defines the list of configuration elements to load/persist for this portlet
     protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
@@ -111,7 +110,6 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     protected String baseViewPath = "";
     protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
     protected String locatorId;
-    private GroupOperationsCriteriaHistoryListView groupOperations;
 
     public GroupOperationsPortlet(String locatorId) {
         super(locatorId);
@@ -233,7 +231,6 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         form.setMargin(5);
 
         //add label about what configuration affects? redundant?
-
         //add filter operation status type selector
         final SelectItem operationStatusSelector = PortletConfigurationEditorComponent
             .getOperationStatusEditor(portletConfig);
@@ -256,7 +253,6 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
             public void onSubmitValues(SubmitValuesEvent event) {
 
                 //result count
-                String selectedValue;
                 portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
 
                 //time range configuration
@@ -350,16 +346,16 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
 
     private ResourceGroupComposite composite;
 
-    public GroupOperationsCriteriaHistoryListView(String locatorId, AbstractOperationHistoryDataSource dataSource,
+    public GroupOperationsCriteriaHistoryListView(String locatorId, GroupOperationsCriteriaDataSource dataSource,
         String title, Criteria criteria, ResourceGroupComposite composite) {
         super(locatorId, composite);
-        setDataSource(dataSource);
+        super.setDataSource(dataSource);
         this.composite = composite;
         setShowFooterRefresh(false); //disable footer refresh
     }
 
-    public void setDatasource(AbstractOperationHistoryDataSource datasource) {
-        setDataSource(datasource);
+    public void setDatasource(GroupOperationsCriteriaDataSource datasource) {
+        super.setDataSource(datasource);
     }
 
     @Override

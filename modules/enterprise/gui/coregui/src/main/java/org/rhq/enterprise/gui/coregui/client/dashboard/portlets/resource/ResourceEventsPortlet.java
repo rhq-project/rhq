@@ -60,7 +60,6 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        //        int currentGroupIdentifier = Integer.valueOf(elements[1]);
         this.resourceId = Integer.valueOf(elements[1]);
     }
 
@@ -157,7 +156,6 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum)));
-                        //                        AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + resourceId
                         AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId
                             + "/Events/History/", column);
                     } else {

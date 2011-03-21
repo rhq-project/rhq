@@ -58,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfig
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -517,29 +518,40 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             //time range filter. Check for enabled and then persist property. Dealing with compound widget.
             FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
             CheckboxItem itemC = (CheckboxItem) item;
-            selectedValue = String.valueOf(itemC.getValueAsBoolean());
-            if (!selectedValue.trim().isEmpty()) {//then call
-                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
-            }
+            boolean persistTimeRangeSettings = itemC.getValueAsBoolean();
+            if (persistTimeRangeSettings) {//retrieve values and persist
+                selectedValue = String.valueOf(itemC.getValueAsBoolean());
+                if (!selectedValue.trim().isEmpty()) {//then call
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
+                }
 
-            //time advanced time filter enabled.
-            boolean isAdvanceTimeSetting = false;
-            selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
-            if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
-                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
-                isAdvanceTimeSetting = Boolean.valueOf(selectedValue);
-            }
+                //time advanced time filter enabled.
+                boolean isAdvanceTimeSetting = false;
+                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
+                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
+                    isAdvanceTimeSetting = Boolean.valueOf(selectedValue);
+                }
 
-            //time frame
-            List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
-            if (isAdvanceTimeSetting) {//advanced settings
-                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
-            } else {
-                //save not advanced time range
-                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_LASTN, measurementRangeEditor
-                    .getMetricRangePreferences().lastN));
-                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_UNIT, measurementRangeEditor
-                    .getMetricRangePreferences().unit));
+                //time frame
+                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
+                if (isAdvanceTimeSetting) {//advanced settings
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
+                } else {
+                    //save not advanced time range
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_LASTN, measurementRangeEditor
+                        .getMetricRangePreferences().lastN));
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_UNIT, measurementRangeEditor
+                        .getMetricRangePreferences().unit));
+                }
+            } else {//if disabled, reset time defaults
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
+                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(Integer
+                    .valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT), Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
+                //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE,
+                    (String.valueOf(rangeArray.get(0)) + "," + String.valueOf(rangeArray.get(1)))));
             }
         }
         return portletConfig;

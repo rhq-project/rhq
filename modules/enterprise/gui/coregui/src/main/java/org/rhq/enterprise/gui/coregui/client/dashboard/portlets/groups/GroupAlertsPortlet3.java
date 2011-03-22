@@ -18,38 +18,35 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
-import com.smartgwt.client.types.Overflow;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletConfigurationDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -58,76 +55,67 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.PortletAlertSelector;
+import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
-/**
+/**This portlet allows the end user to customize the:
+ * i)range
+ * ii)priority
+ * iii)etc.
+ * of alerts to display for the given group
+ *
  * @author Simeon Pinder
  */
-public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSettingsPortlet, AutoRefreshPortlet {
-
-    // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupAlerts2";
-    // A default displayed, persisted name for the portlet
-    //    public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
-    public static final String NAME = "Group: Alerts2";
-
-    public static final String ALERT_RANGE_RESOURCES_VALUE = "alert-range-resource-value";
-    public static final String ALERT_RANGE_RESOURCE_IDS = "alert-range-resource-ids";
-    public static final String RESOURCES_ALL = MSG.common_label_all_resources();
-    public static final String RESOURCES_SELECTED = MSG.common_label_selected_resources();
-    public static final String defaultResourceValue = RESOURCES_ALL;
-    public static final String ID = "id";
-
-    // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
-
-    //shared private UI elements
-    private AlertResourceSelectorRegion resourceSelector;
-
-    private AlertPortletConfigurationDataSource dataSource;
-    //instance ui widgets
-    private Canvas containerCanvas;
-
-    private Timer refreshTimer;
+public class GroupAlertsPortlet3 extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+    private int groupId = -1;
+    protected LocatableCanvas recentAlertsContent = new LocatableCanvas(extendLocatorId("RecentAlerts"));
+    private static AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
+    private boolean currentlyLoading = false;
+    private Configuration portletConfig = null;
     private DashboardPortlet storedPortlet;
-    private Configuration portletConfig;
-    private int groupId;
-    private boolean portletConfigInitialized = false;
 
-    public GroupAlertsPortlet2(String locatorId) {
+    public GroupAlertsPortlet3(String locatorId) {
         super(locatorId);
-
-        //override the shared datasource
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
         int currentGroupIdentifier = Integer.valueOf(elements[1]);
         this.groupId = currentGroupIdentifier;
-
-        //initalize the datasource
-        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, currentGroupIdentifier,
-            null);
-        setDataSource(this.dataSource);
-
-        setShowHeader(false);
-        setShowFooter(true);
-        setShowFooterRefresh(false); //disable footer refresh
-        setShowFilterForm(false); //disable filter form for portlet
-
-        setOverflow(Overflow.VISIBLE);
+        initializeUi();
     }
 
-    private static HashMap<String, String> updatedMapping = new HashMap<String, String>();
-    static {
-        updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
-        //Key, default
-        updatedMapping.put(ALERT_RANGE_RESOURCES_VALUE, RESOURCES_ALL);
-        updatedMapping.put(ALERT_RANGE_RESOURCE_IDS, RESOURCES_ALL);
+    @Override
+    protected void onInit() {
+        super.onInit();
+        loadData();
     }
+
+    /**Defines layout for the Activity page.
+     */
+    protected void initializeUi() {
+        setPadding(5);
+        setMembersMargin(5);
+        addMember(recentAlertsContent);
+    }
+
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "GroupAlerts";
+    // A default displayed, persisted name for the portlet
+    public static final String NAME = "Group: Alerts";
+    public static final String ID = "id";
+
+    // set on initial configuration, the window for this portlet view.
+    private PortletWindow portletWindow;
+    //instance ui widgets
+
+    private Timer refreshTimer;
 
     /** Responsible for initialization and lazy configuration of the portlet values
      */
@@ -143,12 +131,6 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         this.storedPortlet = storedPortlet;
         portletConfig = storedPortlet.getConfiguration();
 
-        if (!portletConfigInitialized) {
-            this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, this.groupId, null);
-            setDataSource(this.dataSource);
-            portletConfigInitialized = true;
-        }
-
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
             if (portletConfig.getSimple(key) == null) {
@@ -156,33 +138,137 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
                     PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
             }
         }
-
-        //resource ids to be conditionally included in the query
-        Integer[] filterResourceIds = null;
-        filterResourceIds = getDataSource().extractFilterResourceIds(storedPortlet, filterResourceIds);
-        //no defaults
-
-        if (filterResourceIds != null) {
-            getDataSource().setAlertFilterResourceId(filterResourceIds);
-        }
-
-        //conditionally display the selected resources ui
-        if (containerCanvas != null) {
-            //empty out earlier canvas
-            for (Canvas c : containerCanvas.getChildren()) {
-                c.destroy();
-            }
-            if ((resourceSelector != null) && getDataSource().getAlertResourcesToUse().equals(RESOURCES_SELECTED)) {
-                containerCanvas.addChild(resourceSelector.getCanvas());
-            } else {
-                containerCanvas.addChild(new Canvas());
-            }
-        }
-
     }
 
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
+    }
+
+    public static final class Factory implements PortletViewFactory {
+        public static PortletViewFactory INSTANCE = new Factory();
+
+        public final Portlet getInstance(String locatorId) {
+            return new GroupAlertsPortlet3(locatorId);
+        }
+    }
+
+    /** Fetches alerts and updates the DynamicForm instance with the latest
+     *  alert information.
+     */
+    private void getRecentAlerts() {
+        final int groupId = this.groupId;
+        currentlyLoading = false;
+        //fetches last five alerts for this resource
+        AlertCriteria criteria = new AlertCriteria();
+        //filter priority
+        PropertySimple property = portletConfig.getSimple(Constant.ALERT_PRIORITY);
+        if (property != null) {
+            String currentSetting = property.getStringValue();
+            String[] parsedValues = currentSetting.trim().split(",");
+            if (currentSetting.trim().isEmpty() || parsedValues.length == 3) {
+                //all alert priorities assumed
+            } else {
+                AlertPriority[] filterPriorities = new AlertPriority[parsedValues.length];
+                int indx = 0;
+                for (String priority : parsedValues) {
+                    AlertPriority p = AlertPriority.valueOf(priority);
+                    filterPriorities[indx++] = p;
+                }
+                criteria.addFilterPriorities(filterPriorities);
+            }
+        }
+        PageControl pc = new PageControl();
+        //result sort order
+        property = portletConfig.getSimple(Constant.RESULT_SORT_ORDER);
+        if (property != null) {
+            String currentSetting = property.getStringValue();
+            if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase(PageOrdering.DESC.name())) {
+                criteria.addSortCtime(PageOrdering.DESC);
+                pc.setPrimarySortOrder(PageOrdering.DESC);
+            } else {
+                criteria.addSortCtime(PageOrdering.ASC);
+                pc.setPrimarySortOrder(PageOrdering.ASC);
+            }
+        }
+        //result timeframe if enabled
+        property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
+        if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+            property = portletConfig.getSimple(Constant.METRIC_RANGE);
+            if (property != null) {
+                String currentSetting = property.getStringValue();
+                String[] range = currentSetting.split(",");
+                criteria.addFilterStartTime(Long.valueOf(range[0]));
+                criteria.addFilterEndTime(Long.valueOf(range[1]));
+            }
+        }
+
+        //result count
+        property = portletConfig.getSimple(Constant.RESULT_COUNT);
+        if (property != null) {
+            String currentSetting = property.getStringValue();
+            if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
+                PageControl pageControl = new PageControl(0, 5);
+                pc.setPageSize(5);
+            } else {
+                PageControl pageControl = new PageControl(0, Integer.valueOf(currentSetting));
+                pc.setPageSize(Integer.valueOf(currentSetting));
+            }
+        }
+        criteria.setPageControl(pc);
+        criteria.addFilterResourceGroupIds(groupId);
+        alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+            @Override
+            public void onSuccess(PageList<Alert> result) {
+                VLayout column = new VLayout();
+                column.setHeight(10);
+                if (!result.isEmpty()) {
+                    int rowNum = 0;
+                    for (Alert alert : result) {
+                        // alert history records do not have a usable locatorId, we'll use rownum, which is unique and
+                        // may be repeatable.
+                        LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                            .valueOf(rowNum++)));
+                        row.setNumCols(3);
+
+                        StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(ImageManager.getAlertIcon(alert
+                            .getAlertDefinition().getPriority()), alert.getAlertDefinition().getPriority()
+                            .getDisplayName());
+                        LinkItem link = AbstractActivityView.newLinkItem(alert.getAlertDefinition().getName() + ": ",
+                            ReportDecorator.GWT_GROUP_URL + groupId + "/Alerts/History/" + alert.getId());
+                        StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
+                            .format(alert.getCtime()));
+                        row.setItems(iconItem, link, time);
+
+                        column.addMember(row);
+                    }
+                    //link to more details
+                    LocatableDynamicForm row = new LocatableDynamicForm(recentAlertsContent.extendLocatorId(String
+                        .valueOf(rowNum++)));
+                    AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId
+                        + "/Alerts/History/", column);
+                } else {
+                    LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentAlertsContent
+                    //                        .extendLocatorId("None"), AbstractActivityView.RECENT_ALERTS_NONE);
+                        .extendLocatorId("None"), "No results found using criteria specified.");
+                    column.addMember(row);
+                }
+                for (Canvas child : recentAlertsContent.getChildren()) {
+                    child.destroy();
+                }
+                recentAlertsContent.addChild(column);
+                recentAlertsContent.markForRedraw();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving recent alerts for group [" + groupId + "]:" + caught.getMessage());
+            }
+        });
+    }
+
+    protected void loadData() {
+        currentlyLoading = true;
+        getRecentAlerts();
     }
 
     @Override
@@ -203,11 +289,11 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         //            .getResulSortOrderEditor(portletConfig);
         //add result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
-
         //add range selector
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
-
+        //TODO: spinder 3/10/11 renable sort selector once it's working in criteria
+        //        form.setItems(alertPrioritySelector, resultSortSelector, resultCountSelector);
         form.setItems(alertPrioritySelector, resultCountSelector);
 
         //submit handler
@@ -257,10 +343,10 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
                     portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
                 }
 
-                //persist and reload portlet
+                //persist
                 storedPortlet.setConfiguration(portletConfig);
                 configure(portletWindow, storedPortlet);
-                refresh();
+                loadData();
             }
         });
         form.markForRedraw();
@@ -268,19 +354,6 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
         page.addMember(form);
         customSettings.addChild(page);
         return customSettings;
-    }
-
-    public AlertPortletConfigurationDataSource getDataSource() {
-        return dataSource;
-    }
-
-    public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
-
-        public final Portlet getInstance(String locatorId) {
-
-            return new GroupAlertsPortlet2(locatorId);
-        }
     }
 
     @Override
@@ -297,8 +370,10 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
 
             refreshTimer = new Timer() {
                 public void run() {
-
-                    redraw();
+                    if (!currentlyLoading) {
+                        loadData();
+                        redraw();
+                    }
                 }
             };
 
@@ -309,111 +384,15 @@ public class GroupAlertsPortlet2 extends AlertHistoryView implements CustomSetti
     @Override
     protected void onDestroy() {
         if (refreshTimer != null) {
+
             refreshTimer.cancel();
         }
-
         super.onDestroy();
     }
 
     @Override
-    protected void setupTableInteractions(boolean hasWriteAccess) {
-        // The portlet is a "subsystem" view. Meaning the alerts displayed can be from any accessible group for
-        // the user.  This means the user can have varying permissions on the underlying groups and/or resources,
-        // which makes button enablement tricky. So, for the portlet don't even show the buttons unless the user
-        // is inventory manager.  Other users will just have to navigate to the alert in question in order to
-        // manipulate it.
-
-        //determine if the user is inventory manager and if so render the buttons
-        Set<Permission> permissions = this.portletWindow.getGlobalPermissions();
-        if ((null != permissions) && permissions.contains(Permission.MANAGE_INVENTORY)) {
-            super.setupTableInteractions(true);
-        }
-    }
-
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer recordId = getId(record);
-                Integer resourceId = record.getAttributeAsInt("resourceId");
-                String detailsUrl = LinkManager.getSubsystemAlertHistoryLink(resourceId, recordId);
-                return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
-            }
-        };
-    }
-
-    @Override
-    protected void configureTable() {
-        super.configureTable();
-
-        setListGridDoubleClickHandler(new DoubleClickHandler() {
-            @Override
-            public void onDoubleClick(DoubleClickEvent event) {
-                ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
-                if (selectedRows != null && selectedRows.length == 1) {
-                    Integer recordId = getId(selectedRows[0]);
-                    Integer resourceId = selectedRows[0].getAttributeAsInt("resourceId");
-                    CoreGUI.goToView(LinkManager.getSubsystemAlertHistoryLink(resourceId, recordId));
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-        getListGrid().setEmptyMessage("No results found using specified criteria.");
-    }
-
-    @Override
-    protected void refreshTableInfo() {
-        super.refreshTableInfo();
-        if (getTableInfo() != null) {
-            int count = getListGrid().getSelection().length;
-            getTableInfo().setContents(
-            //                MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
-                //Ex. Total Rows: {0} (selected: {1})
-                "Matching Rows: " + String.valueOf(getListGrid().getTotalRows()) + " (selected "
-                    + String.valueOf(count) + ")");
-        }
-    }
-}
-
-/** Bundles a ResourceSelector instance with labeling in Canvas for display.
- *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
- */
-class AlertResourceSelectorRegion extends LocatableVLayout {
-    public AlertResourceSelectorRegion(String locatorId, Integer[] assigned) {
-        super(locatorId);
-        this.currentlyAssignedIds = assigned;
-    }
-
-    private static final Messages MSG = CoreGUI.getMessages();
-    private PortletAlertSelector selector = null;
-
-    private Integer[] currentlyAssignedIds;
-
-    public Integer[] getCurrentlyAssignedIds() {
-        return currentlyAssignedIds;
-    }
-
-    public Integer[] getListGridValues() {
-        Integer[] listGridValues = new Integer[0];
-        if (null != selector) {
-            listGridValues = selector.getAssignedListGridValues();
-        }
-        return listGridValues;
-    }
-
-    public Canvas getCanvas() {
-        if (selector == null) {
-            selector = new PortletAlertSelector(extendLocatorId("AlertSelector"), this.currentlyAssignedIds,
-                ResourceType.ANY_PLATFORM_TYPE, false);
-        }
-        return selector;
-    }
-
-    public void setCurrentlyAssignedIds(Integer[] currentlyAssignedIds) {
-        this.currentlyAssignedIds = currentlyAssignedIds;
+    public void redraw() {
+        super.redraw();
+        loadData();
     }
 }

@@ -44,7 +44,7 @@ public class MeasurementScheduleGWTServiceImpl extends AbstractGWTServiceImpl im
             return SerialUtility.prepare(new ArrayList<MeasurementSchedule>(schedules),
                 "MeasurementSchedule.findSchedulesForResourceAndType");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

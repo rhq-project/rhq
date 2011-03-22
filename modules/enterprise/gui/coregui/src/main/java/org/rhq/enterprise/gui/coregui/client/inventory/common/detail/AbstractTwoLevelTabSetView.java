@@ -134,7 +134,14 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+
+        // We want to finish the tab selection process, which may involve async loading of content,
+        // before allowing more tab selection. This avoids potential tab "looping" that happens when a new
+        // tab is selected before the previous one could finish loading. So, disable the tab set here, and
+        // re-enable it later when the tab content is actuall rendered (see selectTab). 
+
         if (getSelectedItemId() == null) {
+            this.tabSet.disable();
             CoreGUI.goToView(History.getToken());
         } else {
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
@@ -144,6 +151,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
             if (!(History.getToken().equals(path) || History.getToken().startsWith(path + "/"))) {
+                this.tabSet.disable();
                 CoreGUI.goToView(path);
             }
         }
@@ -228,8 +236,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
                 ((RefreshableView) subView).refresh();
             }
 
+            // ensure the tabset is enabled (disabled in onTabSelected), and redraw
+            this.tabSet.enable();
             this.tabSet.markForRedraw();
         } catch (Exception e) {
+            this.tabSet.enable();
             Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
         }
     }

@@ -59,9 +59,9 @@ public interface OperationGWTService extends RemoteService {
 
     int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
 
-    ResourceOperationSchedule getResourceOperationSchedule(int scheduleId);
+    ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) throws RuntimeException;
 
-    GroupOperationSchedule getGroupOperationSchedule(int scheduleId);
+    GroupOperationSchedule getGroupOperationSchedule(int scheduleId) throws RuntimeException;
 
     void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
 

@@ -32,6 +32,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -40,7 +41,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -52,19 +52,15 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperationScheduleComposite> {
+public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperationScheduleComposite, Criteria> {
 
     public enum Field {
-
-        ANCESTRY("ancestry", MSG.common_title_ancestry()),
 
         OPERATION("operationName", MSG.dataSource_operationSchedule_field_operationName()),
 
         RESOURCE("resource", MSG.common_title_resource()),
 
-        TIME("operationNextFireTime", MSG.dataSource_operationSchedule_field_nextFireTime()),
-
-        TYPE("typeId", MSG.common_title_type());
+        TIME("operationNextFireTime", MSG.dataSource_operationSchedule_field_nextFireTime());
 
         /**
          * Corresponds to a property name of Resource (e.g. resourceType.name).
@@ -120,10 +116,6 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
         DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE.propertyName, Field.RESOURCE.title);
         fields.add(resourceField);
 
-        DataSourceTextField ancestryField = new DataSourceTextField(Field.ANCESTRY.propertyName(), Field.ANCESTRY
-            .title());
-        fields.add(ancestryField);
-
         DataSourceTextField operationField = new DataSourceTextField(Field.OPERATION.propertyName(), Field.OPERATION
             .title());
         fields.add(operationField);
@@ -139,7 +131,8 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
      * @param request incoming request
      * @param response outgoing response
      */
-    public void executeFetch(final DSRequest request, final DSResponse response) {
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         int pageSize = -1;
         //retrieve current portlet display settings
@@ -178,6 +171,12 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
             });
     }
 
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
+    }
+
     protected void dataRetrieved(final PageList<ResourceOperationScheduleComposite> result, final DSResponse response,
         final DSRequest request) {
         HashSet<Integer> typesSet = new HashSet<Integer>();
@@ -196,27 +195,17 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
-                    // enhance resource name
-                    int resourceId = record.getAttributeAsInt("id");
-                    int resourceTypeId = record.getAttributeAsInt(Field.TYPE.propertyName);
-                    String resourceName = record.getAttributeAsString(Field.RESOURCE.propertyName);
-                    ResourceType type = types.get(resourceTypeId);
-                    record.setAttribute(Field.RESOURCE.propertyName, AncestryUtil.getResourceLongName(resourceId,
-                        resourceName, type));
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
-                    // decode ancestry
-                    String ancestry = record.getAttributeAsString(Field.ANCESTRY.propertyName());
-                    if (null == ancestry) {
-                        continue;
-                    }
-                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
-                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
-                    // decoded strings as different attributes. 
-                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
-                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -233,12 +222,15 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
     @Override
     public ListGridRecord copyValues(ResourceOperationScheduleComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", from.getResourceId());
-        record.setAttribute(Field.ANCESTRY.propertyName, from.getAncestry());
         record.setAttribute(Field.OPERATION.propertyName, from.getOperationName());
         record.setAttribute(Field.RESOURCE.propertyName, from.getResourceName());
         record.setAttribute(Field.TIME.propertyName, new Date(from.getOperationNextFireTime()));
-        record.setAttribute(Field.TYPE.propertyName, from.getResourceTypeId());
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ID, from.getResourceId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResourceName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceTypeId());
 
         record.setAttribute("entity", from);
         return record;

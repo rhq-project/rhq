@@ -74,7 +74,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractSelector<T> extends LocatableVLayout {
+public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends LocatableVLayout {
 
     private static final String SELECTOR_KEY = "id";
 
@@ -84,7 +84,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected HLayout hlayout;
     protected LocatableListGrid availableGrid;
     protected LocatableListGrid assignedGrid;
-    protected RPCDataSource<T> datasource;
+    protected RPCDataSource<T, C> datasource;
 
     private Set<AssignedItemsChangedHandler> assignedItemsChangedHandlers = new HashSet<AssignedItemsChangedHandler>();
 
@@ -159,7 +159,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected abstract DynamicForm getAvailableFilterForm();
 
-    protected abstract RPCDataSource<T> getDataSource();
+    protected abstract RPCDataSource<T, C> getDataSource();
 
     protected abstract Criteria getLatestCriteria(DynamicForm availableFilterForm);
 
@@ -284,12 +284,13 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         availableSectionStack.addSection(availableSection);
 
         // Load data.
-        this.datasource = getDataSource();
-        populateAvailableGrid(new Criteria());
-
         if (this.availableFilterForm != null) {
+            // this grabs any initial criteria prior to the first data fetch
+            latestCriteria = getLatestCriteria(availableFilterForm);
+
             this.availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
                 public void onItemChanged(ItemChangedEvent itemChangedEvent) {
+
                     latestCriteria = getLatestCriteria(availableFilterForm);
 
                     Timer timer = new Timer() {
@@ -306,6 +307,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 }
             });
         }
+        this.datasource = getDataSource();
+        populateAvailableGrid((null == latestCriteria) ? new Criteria() : latestCriteria);
 
         // Add event handlers.
 

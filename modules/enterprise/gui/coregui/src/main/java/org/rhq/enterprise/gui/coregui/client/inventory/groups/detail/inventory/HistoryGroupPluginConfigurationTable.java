@@ -214,7 +214,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         return html;
     }
 
-    class DataSource extends RPCDataSource<GroupPluginConfigurationUpdate> {
+    class DataSource extends RPCDataSource<GroupPluginConfigurationUpdate, GroupPluginConfigurationUpdateCriteria> {
 
         public class Field {
             public static final String ID = "id";
@@ -246,13 +246,9 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         }
 
         @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
+        protected void executeFetch(final DSRequest request, final DSResponse response,
+            final GroupPluginConfigurationUpdateCriteria criteria) {
             ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-
-            GroupPluginConfigurationUpdateCriteria criteria = new GroupPluginConfigurationUpdateCriteria();
-            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-            groupList.add(HistoryGroupPluginConfigurationTable.this.group.getId());
-            criteria.addFilterResourceGroupIds(groupList);
 
             configurationService.findGroupPluginConfigurationUpdatesByCriteria(criteria,
                 new AsyncCallback<PageList<GroupPluginConfigurationUpdate>>() {
@@ -271,6 +267,15 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
                         processResponse(request.getRequestId(), response);
                     }
                 });
+        }
+
+        @Override
+        protected GroupPluginConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
+            GroupPluginConfigurationUpdateCriteria criteria = new GroupPluginConfigurationUpdateCriteria();
+            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
+            groupList.add(HistoryGroupPluginConfigurationTable.this.group.getId());
+            criteria.addFilterResourceGroupIds(groupList);
+            return criteria;
         }
     }
 }

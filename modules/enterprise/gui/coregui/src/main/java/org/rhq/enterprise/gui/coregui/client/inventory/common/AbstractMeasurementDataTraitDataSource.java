@@ -47,7 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSource<MeasurementDataTrait> {
+public abstract class AbstractMeasurementDataTraitDataSource extends
+    RPCDataSource<MeasurementDataTrait, MeasurementDataTraitCriteria> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementDataTraitDataSource() {
@@ -87,10 +88,9 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final MeasurementDataTraitCriteria criteria) {
         final long startTime = System.currentTimeMillis();
-
-        final MeasurementDataTraitCriteria criteria = getCriteria(request);
 
         this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
             public void onFailure(Throwable caught) {
@@ -103,15 +103,21 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
                 long fetchDuration = System.currentTimeMillis() - startTime;
                 com.allen_sauer.gwt.log.client.Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
 
-                response.setData(buildRecords(result));
-                // For paging to work, we have to specify size of full result set.
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
+                dataRetrieved(result, response, request);
             }
         });
     }
 
-    protected MeasurementDataTraitCriteria getCriteria(DSRequest request) {
+    protected void dataRetrieved(final PageList<MeasurementDataTrait> result, final DSResponse response,
+        final DSRequest request) {
+        response.setData(buildRecords(result));
+        // For paging to work, we have to specify size of full result set.
+        response.setTotalRows(result.getTotalSize());
+        processResponse(request.getRequestId(), response);
+    }
+
+    @Override
+    protected MeasurementDataTraitCriteria getFetchCriteria(DSRequest request) {
         MeasurementDataTraitCriteria criteria = new MeasurementDataTraitCriteria();
 
         Criteria requestCriteria = request.getCriteria();

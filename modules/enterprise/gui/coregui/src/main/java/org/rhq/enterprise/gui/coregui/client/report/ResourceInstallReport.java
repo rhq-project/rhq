@@ -190,7 +190,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             return url;
         }
 
-        class DataSource extends RPCDataSource<ResourceInstallCount> {
+        class DataSource extends RPCDataSource<ResourceInstallCount, org.rhq.core.domain.criteria.Criteria> {
 
             public class Field {
                 public static final String COUNT = "count"; // long that we convert to int
@@ -224,7 +224,14 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             }
 
             @Override
-            protected void executeFetch(final DSRequest request, final DSResponse response) {
+            protected org.rhq.core.domain.criteria.Criteria getFetchCriteria(DSRequest request) {
+                // we don't use criterias for this datasource, just return null
+                return null;
+            }
+
+            @Override
+            protected void executeFetch(final DSRequest request, final DSResponse response,
+                final org.rhq.core.domain.criteria.Criteria unused) {
                 ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
                 resourceService.findResourceInstallCounts(true, new AsyncCallback<List<ResourceInstallCount>>() {

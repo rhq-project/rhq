@@ -221,6 +221,8 @@ public class InstalledPluginsUIBean {
             }
 
             pluginMgr.deletePlugins(subject, Arrays.asList(getSelectedPluginIds()));
+            PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
+            scanner.scanAndRegister();
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted plugins: " + pluginNames);
         } catch (Exception e) {
             processException("Failed to delete agent plugins", e);
@@ -368,14 +370,31 @@ public class InstalledPluginsUIBean {
                 return;
             }
 
+            List<String> pluginsToDelete = new ArrayList<String>();
+            for (Plugin plugin : selectedPlugins) {
+                if (plugin.getStatus() != PluginStatusType.DELETED) {
+                    pluginsToDelete.add(plugin.getName());
+                }
+            }
+
+            if (!pluginsToDelete.isEmpty()) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Plugins must be deleted before they " +
+                    "they can be purged. The following plugins must first be deleted: " + pluginsToDelete + ". No " +
+                    "plugins were purged.");
+                return;
+            }
+
             List<String> pluginNames = new ArrayList<String>();
             for (Plugin plugin : selectedPlugins) {
                 pluginNames.add(plugin.getName());
             }
 
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            pluginMgr.purgePlugins(subject, getIds(getSelectedAgentPlugins()));
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Purged server plugins: " + pluginNames);
+            pluginMgr.markPluginsForPurge(subject, getIds(getSelectedAgentPlugins()));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Preparing to purge agent plugins: " +
+                pluginNames + ". This make take a few minutes since all type definitions from the plugins must " +
+                "first be purged from the system. The plugins will still be visible on this page until they have " +
+                "been purged.");
         } catch (Exception e) {
             processException("Failed to purge agent plugins", e);
         }

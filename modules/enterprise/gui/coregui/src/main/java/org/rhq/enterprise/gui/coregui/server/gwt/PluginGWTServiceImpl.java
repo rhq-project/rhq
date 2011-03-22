@@ -40,7 +40,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
         try {
             return new ArrayList<Plugin>(manager.getInstalledPlugins());
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

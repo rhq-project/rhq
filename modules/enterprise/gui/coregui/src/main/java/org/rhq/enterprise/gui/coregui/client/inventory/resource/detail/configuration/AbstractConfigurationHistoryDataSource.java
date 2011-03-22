@@ -39,11 +39,13 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -54,16 +56,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractResourceConfigurationUpdate> extends
-    RPCDataSource<T> {
+public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractResourceConfigurationUpdate, C extends AbstractResourceConfigurationUpdateCriteria>
+    extends RPCDataSource<T, C> {
 
     public static abstract class Field {
         public static final String ID = "id";
-        public static final String RESOURCE = "resource";
         public static final String CREATED_TIME = "createdTime";
         public static final String STATUS = "status";
         public static final String SUBJECT = "subject";
-        public static final String RESOURCE_TYPE_ID = "resourceTypeId";
         public static final String CONFIGURATION = "configuration";
         public static final String GROUP_CONFIG_UPDATE_ID = "groupConfigUpdateId";
         public static final String GROUP_ID = "groupId"; // will only be non-null if group config update id is non-null
@@ -212,27 +212,46 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         // determine the widths of our columns
         if (includeResourceFields) {
-            ListGridField resourceField = new ListGridField(Field.RESOURCE, MSG.common_title_resource());
-            resourceField.setCellFormatter(new CellFormatter() {
+            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
+            resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    if (listGridRecord == null) {
-                        return "unknown";
-                    }
-                    Resource res = (Resource) listGridRecord.getAttributeAsObject(Field.RESOURCE);
-                    String url = LinkManager.getResourceLink(res.getId());
-                    // TODO disambiguate the resource name
-                    return SeleniumUtility.getLocatableHref(url, res.getName(), null);
+                    String url = LinkManager
+                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
-            fields.add(resourceField);
+            resourceNameField.setShowHover(true);
+            resourceNameField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                }
+            });
+            fields.add(resourceNameField);
+
+            ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
+            ancestryField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
+                }
+            });
+            ancestryField.setShowHover(true);
+            ancestryField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+                }
+            });
+            fields.add(ancestryField);
 
             idField.setWidth("10%");
-            submittedTimeField.setWidth("20%");
-            completedTimeField.setWidth("20%");
+            submittedTimeField.setWidth(150);
+            completedTimeField.setWidth(150);
             statusField.setWidth("10%");
             subjectField.setWidth("10%");
             updateTypeField.setWidth("10%");
-            resourceField.setWidth("*");
+            resourceNameField.setWidth("30%");
+            ancestryField.setWidth("*");
         } else {
             idField.setWidth("10%");
             submittedTimeField.setWidth("20%");
@@ -264,8 +283,6 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
     public ListGridRecord copyValues(T from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(Field.ID, from.getId());
-        record.setAttribute(Field.RESOURCE, from.getResource());
-        record.setAttribute(Field.RESOURCE_TYPE_ID, from.getResource().getResourceType().getId());
         record.setAttribute(Field.SUBJECT, from.getSubjectName());
         record.setAttribute(Field.STATUS, from.getStatus().name());
         record.setAttribute(Field.CONFIGURATION, from.getConfiguration());
@@ -280,6 +297,14 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
             record.setAttribute(Field.GROUP_CONFIG_UPDATE_ID, from.getAbstractGroupConfigurationUpdate().getId());
             record.setAttribute(Field.GROUP_ID, from.getAbstractGroupConfigurationUpdate().getGroup().getId()); // note group must be eagerly loaded here
         }
+
+        // for ancestry handling
+        Resource resource = from.getResource();
+        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+
         record.setAttribute(Field.OBJECT, from);
         return record;
     }

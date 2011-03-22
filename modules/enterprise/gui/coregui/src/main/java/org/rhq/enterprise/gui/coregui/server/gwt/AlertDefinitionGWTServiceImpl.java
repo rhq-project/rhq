@@ -18,12 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertDefinitionGWTService;
@@ -44,9 +46,20 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         try {
             PageList<AlertDefinition> results = this.alertDefManager.findAlertDefinitionsByCriteria(
                 getSessionSubject(), criteria);
+            if (!results.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(results.size());
+                for (AlertDefinition alertDefinition : results) {
+                    Resource res = alertDefinition.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
             return SerialUtility.prepare(results, "findAlertDefinitionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -56,7 +69,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.createAlertDefinition(getSessionSubject(), alertDefinition, resourceId);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -68,7 +81,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
                 alertDefinition, updateInternals);
             return SerialUtility.prepare(results, "updateAlertDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -78,7 +91,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.enableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -88,7 +101,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.disableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -98,7 +111,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             int results = alertDefManager.removeAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -108,7 +121,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             String[] results = alertDefManager.getAlertNotificationConfigurationPreview(getSessionSubject(), notifs);
             return SerialUtility.prepare(results, "getAlertNotificationConfigurationPreview");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -121,7 +134,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             }
             return SerialUtility.prepare(results.toArray(new String[results.size()]), "getAllAlertSenders");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -131,7 +144,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             ConfigurationDefinition results = alertNotifManager.getConfigurationDefinitionForSender(sender);
             return SerialUtility.prepare(results, "getConfigurationDefinitionForSender");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

@@ -45,7 +45,7 @@ public class GroupAlertDefinitionsDataSource extends AbstractAlertDefinitionsDat
     }
 
     @Override
-    protected AlertDefinitionCriteria getCriteria(DSRequest request) {
+    protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
 
         Criteria requestCriteria = request.getCriteria();

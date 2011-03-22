@@ -1,6 +1,28 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -43,7 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *  
  * @author Jay Shaughnessy
  */
-public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite> {
+public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite, ResourceCriteria> {
     private static ResourceCompositeDataSource INSTANCE;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -69,9 +91,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         return ResourceDatasource.addResourceDatasourceFields(fields);
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceCriteria criteria = getFetchCriteria(request);
-
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
         getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -110,6 +130,8 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                 Record[] records = buildRecords(result);
                 for (Record record : records) {
@@ -120,17 +142,12 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
                         record.setAttribute(TYPE.propertyName(), type.getName());
                     }
 
-                    // decode ancestry
-                    String ancestry = record.getAttributeAsString(ANCESTRY.propertyName());
-                    if (null == ancestry) {
-                        continue;
-                    }
-                    int resourceId = record.getAttributeAsInt("id");
-                    String[] decodedAncestry = AncestryUtil.decodeAncestry(resourceId, ancestry, types);
-                    // Preserve the encoded ancestry for special-case formatting at higher levels. Set the
-                    // decoded strings as different attributes. 
-                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_RESOURCES, decodedAncestry[0]);
-                    record.setAttribute(ResourceDatasource.ATTR_ANCESTRY_TYPES, decodedAncestry[1]);
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
@@ -139,6 +156,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         });
     }
 
+    @Override
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
@@ -173,7 +191,6 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute("resource", res);
         record.setAttribute("id", res.getId());
         record.setAttribute(NAME.propertyName(), res.getName());
-        record.setAttribute(ANCESTRY.propertyName(), res.getAncestry());
         record.setAttribute(DESCRIPTION.propertyName(), res.getDescription());
         record.setAttribute(TYPE.propertyName(), res.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), res.getResourceType().getPlugin());
@@ -183,7 +200,12 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
 
-        record.setAttribute("resourcePersmission", from.getResourcePermission());
+        record.setAttribute("resourcePermission", from.getResourcePermission());
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, res.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, res.getResourceType().getId());
+
         return record;
     }
 

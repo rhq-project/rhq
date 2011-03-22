@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.EnumSet;
-import java.util.Set;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -158,8 +158,8 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
                 message = new Message(MSG.view_connectionSettingsDetails_allPropertiesValid(), Message.Severity.Info,
@@ -167,7 +167,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
             } else {
                 this.saveButton.disable();
                 message = new Message(MSG.view_connectionSettingsDetails_somePropertiesInvalid(invalidPropertyNames
-                    .toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                    .values().toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
         } else {

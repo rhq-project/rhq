@@ -48,9 +48,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicForm implements TableWidget {
 
     //keyed map of translated date units Ex. minutes,hours,days
-    private static LinkedHashMap<String, String> lastUnits;
+    protected static LinkedHashMap<String, String> lastUnits;
     //array of values available for displaying/selecting 'last N hours|minutes|days'.
-    private static String[] lastValues;
+    protected static String[] lastValues;
 
     protected boolean advanced;
     private ButtonItem advancedSimpleButton;
@@ -219,10 +219,11 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
             advancedStartItem.enable();
             advancedEndItem.enable();
             advancedSimpleButton.enable();
+            markForRedraw();
         }
     }
 
-    private void update() {
+    protected void update() {
         if (advanced) {
             advancedSimpleButton.setTitle(MSG.view_measureRange_simple());
             showItem("start");

@@ -38,7 +38,9 @@ import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
@@ -48,6 +50,7 @@ public class Footer extends LocatableHLayout {
     private static final String LOCATOR_ID = "CoreFooter";
 
     private MessageBar messageBar;
+    private MessageCenterView messageCenter;
 
     public Footer() {
         super(LOCATOR_ID);
@@ -62,7 +65,7 @@ public class Footer extends LocatableHLayout {
     protected void onDraw() {
         super.onDraw();
 
-        final MessageCenterView messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
+        messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
         messageBar = new MessageBar();
@@ -81,11 +84,32 @@ public class Footer extends LocatableHLayout {
         favoritesLayout.addMember(favoritesButton);
         addMember(favoritesLayout);
 
-        addMember(messageCenter);
+        addMember(getMessageCenterButton());
 
         addMember(createHSpacer(0));
 
         alertsMessage.schedule(60000);
+    }
+
+    private LocatableVLayout getMessageCenterButton() {
+        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("layout"));
+        layout.setMembersMargin(5);
+        layout.setHeight100();
+        layout.setAlign(Alignment.CENTER);
+        layout.setAutoWidth();
+
+        LocatableIButton button = new LocatableIButton(extendLocatorId("button"), MSG.view_messageCenter_messageTitle());
+        button.setAlign(Alignment.CENTER);
+        button.setAutoFit(true);
+        button.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                messageCenter.showMessageCenterWindow();
+            }
+        });
+
+        layout.addMember(button);
+        return layout;
     }
 
     public abstract static class RefreshableLabel extends LocatableLabel {
@@ -169,6 +193,10 @@ public class Footer extends LocatableHLayout {
 
     public MessageBar getMessageBar() {
         return messageBar;
+    }
+
+    public MessageCenterView getMessageCenter() {
+        return messageCenter;
     }
 
     private HLayout createHSpacer(int width) {

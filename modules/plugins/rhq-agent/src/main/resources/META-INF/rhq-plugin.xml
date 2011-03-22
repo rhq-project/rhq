@@ -170,6 +170,17 @@
          </results>
       </operation>
 
+      <operation name="switchToServer"
+                 description="Tell the agent to immediately switch to another server. The given server can be a simple
+                              hostname in which case, the current transport, port and transport parameters being used to
+                              talk to the current server will stay the same.  Otherwise, it will be assumed the server
+                              is a full endpoint URL.">
+          <parameters>
+              <c:simple-property name="server" description="A simple hostname or a full endpoint URL"
+                                 required="true"/>
+          </parameters>
+      </operation>
+
       <metric property="Trait.SigarVersion"
               displayName="SIGAR Version"
               dataType="trait"

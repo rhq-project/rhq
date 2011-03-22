@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Joseph Marques
  */
-public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
+public class EventCompositeDatasource extends RPCDataSource<EventComposite, EventCriteria> {
 
     private EntityContext entityContext;
 
@@ -108,9 +108,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        EventCriteria criteria = getFetchCriteria(request);
-
+    protected void executeFetch(final DSRequest request, final DSResponse response, final EventCriteria criteria) {
         GWTServiceLookup.getEventService().findEventCompositesByCriteria(criteria,
             new AsyncCallback<PageList<EventComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -128,7 +126,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
             });
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     protected EventCriteria getFetchCriteria(final DSRequest request) {
         EventCriteria criteria = new EventCriteria();
 
@@ -147,12 +145,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
         criteria.addFilterDetail((String) criteriaMap.get("details"));
 
         if (criteriaMap.get("severities") != null) {
-            String[] severityStrings = criteriaMap.get("severities").toString().split(",");
-            EventSeverity[] severities = new EventSeverity[severityStrings.length];
-            int i = 0;
-            for (String nextSeverity : severityStrings) {
-                severities[i++] = EventSeverity.valueOf(nextSeverity);
-            }
+            EventSeverity[] severities = getArrayFilter(request, "severities", EventSeverity.class);
             criteria.addFilterSeverities(severities);
         }
 

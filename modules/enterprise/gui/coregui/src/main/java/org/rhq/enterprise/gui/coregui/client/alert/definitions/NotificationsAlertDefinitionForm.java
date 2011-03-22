@@ -44,6 +44,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -167,7 +168,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         }
     }
 
-    private class NotificationDataSource extends RPCDataSource<AlertNotification> {
+    private class NotificationDataSource extends RPCDataSource<AlertNotification, Criteria> {
         public NotificationDataSource() {
             super();
             List<DataSourceField> fields = addDataSourceFields();
@@ -206,7 +207,13 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         }
 
         @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
+        protected Criteria getFetchCriteria(DSRequest request) {
+            // we don't use criterias for this datasource, just return null
+            return null;
+        }
+
+        @Override
+        protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
             final Record[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
 
             AlertNotification[] notifs = notifications.toArray(new AlertNotification[notifications.size()]);

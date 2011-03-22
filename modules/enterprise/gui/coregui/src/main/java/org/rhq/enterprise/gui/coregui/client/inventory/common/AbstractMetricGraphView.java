@@ -16,10 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 
 import ca.nanometrics.gflot.client.Axis;
@@ -39,7 +38,6 @@ import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -51,16 +49,8 @@ import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -69,61 +59,65 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
-public class SmallGraphView extends LocatableVLayout {
+public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 
+    /*
     private static final String[] MONTH_NAMES = { MSG.common_calendar_january_short(),
         MSG.common_calendar_february_short(), MSG.common_calendar_march_short(), MSG.common_calendar_april_short(),
         MSG.common_calendar_may_short(), MSG.common_calendar_june_short(), MSG.common_calendar_july_short(),
         MSG.common_calendar_august_short(), MSG.common_calendar_september_short(), MSG.common_calendar_october_short(),
         MSG.common_calendar_november_short(), MSG.common_calendar_december_short() };
+        */
 
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
-
     private final Label hoverLabel = new Label();
 
-    private int resourceId;
-
+    private int entityId;
     private int definitionId;
 
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
-    public SmallGraphView(String locatorId) {
+    public AbstractMetricGraphView(String locatorId) {
         super(locatorId);
     }
 
-    public SmallGraphView(String locatorId, int resourceId, int definitionId) {
+    public AbstractMetricGraphView(String locatorId, int entityId, int definitionId) {
         this(locatorId);
 
-        this.resourceId = resourceId;
+        this.entityId = entityId;
         this.definitionId = definitionId;
     }
 
-    public SmallGraphView(String locatorId, int resourceId, MeasurementDefinition def,
+    public AbstractMetricGraphView(String locatorId, int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
         this(locatorId);
 
-        this.resourceId = resourceId;
+        this.entityId = entityId;
         this.definition = def;
         this.data = data;
         setHeight100();
         setWidth100();
     }
 
-    public String getName() {
-        return "PlotHoverListener";
+    public abstract AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+        List<MeasurementDataNumericHighLowComposite> data);
+
+    protected abstract void renderGraph();
+
+    protected abstract HTMLFlow getEntityTitle();
+
+    public int getEntityId() {
+        return this.entityId;
     }
 
-    public int getResourceId() {
-        return resourceId;
-    }
-
-    public void setResourceId(int resourceId) {
-        this.resourceId = resourceId;
+    public void setEntityId(int entityId) {
+        this.entityId = entityId;
         this.definition = null;
     }
 
@@ -134,6 +128,22 @@ public class SmallGraphView extends LocatableVLayout {
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
         this.definition = null;
+    }
+
+    public MeasurementDefinition getDefinition() {
+        return definition;
+    }
+
+    public void setDefinition(MeasurementDefinition definition) {
+        this.definition = definition;
+    }
+
+    public List<MeasurementDataNumericHighLowComposite> getData() {
+        return data;
+    }
+
+    public void setData(List<MeasurementDataNumericHighLowComposite> data) {
+        this.data = data;
     }
 
     @Override
@@ -150,89 +160,42 @@ public class SmallGraphView extends LocatableVLayout {
         renderGraph();
     }
 
-    protected void renderGraph() {
-        if (this.definition == null) {
+    protected void drawGraph() {
 
-            ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
-            ResourceCriteria resourceCriteria = new ResourceCriteria();
-            resourceCriteria.addFilterId(resourceId);
-            resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
-                }
-
-                public void onSuccess(PageList<Resource> result) {
-                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                        result.get(0).getResourceType().getId(),
-                        EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                        new ResourceTypeRepository.TypeLoadedCallback() {
-                            public void onTypesLoaded(final ResourceType type) {
-
-                                for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                    if (def.getId() == definitionId) {
-                                        SmallGraphView.this.definition = def;
-
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId,
-                                            new int[] { definitionId },
-                                            System.currentTimeMillis() - (1000L * 60 * 60 * 8),
-                                            System.currentTimeMillis(), 60,
-                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                public void onFailure(Throwable caught) {
-                                                    CoreGUI.getErrorHandler().handleError(
-                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                }
-
-                                                public void onSuccess(
-                                                    List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                    SmallGraphView.this.data = result.get(0);
-
-                                                    drawGraph();
-                                                }
-                                            });
-                                    }
-                                }
-                            }
-                        });
-                }
-            });
-
-        } else {
-
-            drawGraph();
-
-        }
-    }
-
-    private void drawGraph() {
-
-        HLayout titleLayout = new LocatableHLayout(getLocatorId());
+        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 
         if (definition != null) {
-            titleLayout.setAutoHeight();
+            titleHLayout.setAutoHeight();
+            titleHLayout.setWidth100();
 
-            titleLayout.setWidth100();
+            HTMLFlow entityTitle = getEntityTitle();
+            if (null != entityTitle) {
+                entityTitle.setWidth("*");
+                titleHLayout.addMember(entityTitle);
+            }
+
+            if (supportsLiveGraphViewDialog()) {
+                Img liveGraph = new LocatableImg(extendLocatorId("Live"), "subsystems/monitor/Monitor_16.png", 16, 16);
+                liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
+
+                liveGraph.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        displayLiveGraphViewDialog();
+                    }
+                });
+                titleHLayout.addMember(liveGraph);
+            }
+
+            addMember(titleHLayout);
 
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
-            title.setWidth("*");
+            title.setWidth100();
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     displayAsDialog(extendLocatorId("Dialog"));
                 }
             });
-            titleLayout.addMember(title);
-
-            Img liveGraph = new LocatableImg(getLocatorId(), "subsystems/monitor/Monitor_16.png", 16, 16);
-            liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
-
-            liveGraph.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    LiveGraphView.displayAsDialog(getLocatorId(), resourceId, definition);
-                }
-            });
-            titleLayout.addMember(liveGraph);
-
-            addMember(titleLayout);
+            addMember(title);
         }
 
         PlotModel model = new PlotModel();
@@ -253,7 +216,7 @@ public class SmallGraphView extends LocatableVLayout {
         // create the plot
         SimplePlot plot = new SimplePlot(model, plotOptions);
         plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
-            - titleLayout.getHeight() - 50));
+            - titleHLayout.getHeight() - 50));
         //                "80%","80%");
 
         // add hover listener
@@ -302,11 +265,19 @@ public class SmallGraphView extends LocatableVLayout {
 
         // put it on a panel
 
-        addMember(new LocatableWidgetCanvas(this.getLocatorId(), plot));
+        addMember(new LocatableWidgetCanvas(extendLocatorId("Plot"), plot));
 
         plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
-            - titleLayout.getHeight() - 50));
+            - titleHLayout.getHeight() - 50));
 
+    }
+
+    protected boolean supportsLiveGraphViewDialog() {
+        return false;
+    }
+
+    protected void displayLiveGraphViewDialog() {
+        return;
     }
 
     @Override
@@ -321,7 +292,7 @@ public class SmallGraphView extends LocatableVLayout {
         hoverLabel.hide();
     }
 
-    private String getHover(PlotItem item) {
+    protected String getHover(PlotItem item) {
         if (definition != null) {
             com.google.gwt.i18n.client.DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
             return definition.getDisplayName() + ": "
@@ -332,7 +303,7 @@ public class SmallGraphView extends LocatableVLayout {
         }
     }
 
-    private void loadData(PlotModel model, PlotOptions plotOptions) {
+    protected void loadData(PlotModel model, PlotOptions plotOptions) {
         SeriesHandler handler = model.addSeries(definition.getDisplayName(), "#007f00");
 
         for (MeasurementDataNumericHighLowComposite d : data) {
@@ -364,7 +335,7 @@ public class SmallGraphView extends LocatableVLayout {
     }
 
     private void displayAsDialog(String locatorId) {
-        SmallGraphView graph = new SmallGraphView(locatorId, resourceId, definition, data);
+        AbstractMetricGraphView graph = getInstance(locatorId, entityId, definition, data);
         Window graphPopup = new Window();
         graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);

@@ -27,11 +27,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.content.ContentFacet;
@@ -44,6 +47,8 @@ import org.rhq.plugins.platform.win.WindowsSoftwareDelegate;
  * @author Greg Hinkle
  */
 public class WindowsPlatformComponent extends PlatformComponent implements ContentFacet {
+    private final Log log = LogFactory.getLog(WindowsPlatformComponent.class);
+
     private Win32EventLogDelegate eventLogDelegate;
     private boolean enableContentDiscovery = false;
 
@@ -51,9 +56,21 @@ public class WindowsPlatformComponent extends PlatformComponent implements Conte
         super.start(context);
         Configuration pluginConfiguration = context.getPluginConfiguration();
         if (pluginConfiguration.getSimple("eventTrackingEnabled").getBooleanValue()) {
-            eventLogDelegate = new Win32EventLogDelegate(pluginConfiguration);
-            eventLogDelegate.open();
-            context.getEventContext().registerEventPoller(eventLogDelegate, 60);
+            try {
+                eventLogDelegate = new Win32EventLogDelegate(pluginConfiguration);
+                eventLogDelegate.open();
+                context.getEventContext().registerEventPoller(eventLogDelegate, 60);
+            } catch (Throwable t) {
+                log.error("Failed to start the event logger. Will not be able to capture Windows events", t);
+                if (eventLogDelegate != null) {
+                    try {
+                        eventLogDelegate.close();
+                    } catch (Throwable t2) {
+                    } finally {
+                        eventLogDelegate = null;
+                    }
+                }
+            }
         }
 
         PropertySimple contentProp = pluginConfiguration.getSimple("enableContentDiscovery");

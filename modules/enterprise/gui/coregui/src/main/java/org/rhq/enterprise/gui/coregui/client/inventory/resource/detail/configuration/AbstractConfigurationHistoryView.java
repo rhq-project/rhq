@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
@@ -45,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigurationHistoryDataSource<? extends AbstractResourceConfigurationUpdate>>
+public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigurationHistoryDataSource<? extends AbstractResourceConfigurationUpdate, ? extends AbstractResourceConfigurationUpdateCriteria>>
     extends TableSection<T> {
 
     private Integer resourceId;

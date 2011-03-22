@@ -32,14 +32,15 @@ public class MessageCenter {
     private LinkedList<Message> messages = new LinkedList<Message>();
     private List<MessageListener> listeners = new ArrayList<MessageListener>();
 
-    private static final int MAX_MESSAGES = 50;
+    private int maxMessages = 50;
 
     public void notify(Message message) {
         log(message);
         if (!message.isTransient()) {
-            this.messages.add(message);
-            if (messages.size() > MAX_MESSAGES) {
-                messages.removeFirst();
+            // put the newest messages up front; old messages are at the end
+            this.messages.addFirst(message);
+            if (messages.size() > maxMessages) {
+                messages.removeLast(); // we should only have 1 extra, so removeLast should remove all extras
             }
         }
         for (MessageListener listener : listeners) {
@@ -49,6 +50,18 @@ public class MessageCenter {
 
     public void addMessageListener(MessageListener listener) {
         this.listeners.add(listener);
+    }
+
+    public int getMaxMessages() {
+        return maxMessages;
+    }
+
+    public void setMaxMessages(int max) {
+        // if we are shrinking the list, clip the extra, older, messages
+        if (max < this.maxMessages && messages.size() > max) {
+            messages.subList(max, messages.size()).clear();
+        }
+        this.maxMessages = max;
     }
 
     /**
@@ -65,7 +78,8 @@ public class MessageCenter {
     }
 
     private void log(Message message) {
-        String formattedMessage = "On " + message.getFired() + ", MessageCenter received " + message.getConciseMessage();
+        String formattedMessage = "At [" + message.getFired() + "] MessageCenter received: "
+            + message.getConciseMessage();
         if (message.severity == Message.Severity.Info) {
             Log.info(formattedMessage);
         } else if (message.severity == Message.Severity.Warning) {
@@ -78,5 +92,5 @@ public class MessageCenter {
             Log.debug(formattedMessage);
         }
     }
-    
+
 }

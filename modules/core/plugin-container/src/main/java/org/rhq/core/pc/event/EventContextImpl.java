@@ -104,12 +104,20 @@ public class EventContextImpl implements EventContext {
         return getEventManager().getSigar();
     }
     
-    private void registerEventPollerInternal(EventPoller poller, int pollingInterval, String sourceLocation) {
+    private void registerEventPollerInternal(final EventPoller poller, int pollingInterval,
+        final String sourceLocation) {
         EventDefinition eventDefinition = EventUtility.getEventDefinition(poller.getEventType(), this.resource.getResourceType());
         if (eventDefinition == null)
             throw new IllegalArgumentException("Poller has unknown event type - no EventDefinition exists with name '" + poller.getEventType() + "'.");
-        int adjustedPollingInterval = Math.max(EventContext.MINIMUM_POLLING_INTERVAL, pollingInterval);
-        getEventManager().registerEventPoller(poller, adjustedPollingInterval, this.resource, sourceLocation);
+        final int adjustedPollingInterval = Math.max(EventContext.MINIMUM_POLLING_INTERVAL, pollingInterval);
+        // Registering the event poller has to be done in a callback listener to avoid a potential deadlock.
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=677349 for a detailed explaination.
+        PluginContainer.getInstance().addInitializationListener(new PluginContainer.InitializationListener() {
+            @Override
+            public void initialized() {
+                getEventManager().registerEventPoller(poller, adjustedPollingInterval, resource, sourceLocation);
+            }
+        });
     }
 
     private void unregisterEventPollerInternal(String eventType, String sourceLocation) {

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary;
 
+import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -27,6 +28,8 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -36,10 +39,12 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
@@ -49,9 +54,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -149,7 +156,6 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         Set<ResourceTypeFacet> facets = null;
         Set<ResourceTypeFacet> resourceFacets = null;
         if ((groupComposite != null) && (groupComposite.getResourceGroup() != null)) {
-            group = groupComposite.getResourceGroup();
             group = groupComposite.getResourceGroup();
             groupCategory = groupComposite.getResourceGroup().getGroupCategory();
             facets = groupComposite.getResourceFacets().getFacets();
@@ -480,6 +486,93 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return portletConfig;
     }
 
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param operationStatusSelector
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveOperationStatusSelectorSettings(final SelectItem operationStatusSelector,
+        final Configuration portletConfig) {
+        String selectedValue;
+        selectedValue = operationStatusSelector.getValue().toString();
+        if ((selectedValue.trim().isEmpty())
+            || (selectedValue.split(",").length == OperationRequestStatus.values().length)) {//then no operation status specified
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, ""));
+        } else {//some subset of available alertPriorities will be used
+            portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, selectedValue));
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param measurementRangeEditor
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveMeasurementRangeEditorSettings(
+        final CustomConfigMeasurementRangeEditor measurementRangeEditor, Configuration portletConfig) {
+        String selectedValue = null;
+        if ((measurementRangeEditor != null) && (portletConfig != null)) {
+            //time range filter. Check for enabled and then persist property. Dealing with compound widget.
+            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+            CheckboxItem itemC = (CheckboxItem) item;
+            boolean persistTimeRangeSettings = itemC.getValueAsBoolean();
+            if (persistTimeRangeSettings) {//retrieve values and persist
+                selectedValue = String.valueOf(itemC.getValueAsBoolean());
+                if (!selectedValue.trim().isEmpty()) {//then call
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
+                }
+
+                //time advanced time filter enabled.
+                boolean isAdvanceTimeSetting = false;
+                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
+                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
+                    isAdvanceTimeSetting = Boolean.valueOf(selectedValue);
+                }
+
+                //time frame
+                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
+                if (isAdvanceTimeSetting) {//advanced settings
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
+                } else {
+                    //save not advanced time range
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_LASTN, measurementRangeEditor
+                        .getMetricRangePreferences().lastN));
+                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_UNIT, measurementRangeEditor
+                        .getMetricRangePreferences().unit));
+                }
+            } else {//if disabled, reset time defaults
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, false));
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, false));
+                List<Long> rangeArray = MeasurementUtility.calculateTimeFrame(Integer
+                    .valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT), Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT));
+                //                String[] range = {String.valueOf(rangeArray.get(0)),String.valueOf(rangeArray.get(1))};
+                portletConfig.put(new PropertySimple(Constant.METRIC_RANGE,
+                    (String.valueOf(rangeArray.get(0)) + "," + String.valueOf(rangeArray.get(1)))));
+            }
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param alertPrioritySelector
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveAlertPrioritySettings(SelectItem alertPrioritySelector, Configuration portletConfig) {
+        String selectedValue = alertPrioritySelector.getValue().toString();
+        if ((selectedValue.trim().isEmpty()) || (selectedValue.split(",").length == AlertPriority.values().length)) {//then no alertPriority specified
+            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, ""));
+        } else {//some subset of available alertPriorities will be used
+            portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));
+        }
+        return portletConfig;
+    }
+
     protected boolean displayGroupConfigurationUpdates(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         if ((groupCategory == null) || facets == null) {
             return false;
@@ -500,5 +593,40 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
         return ((groupCategory == GroupCategory.MIXED) || (groupCategory == GroupCategory.COMPATIBLE && facets
             .contains(ResourceTypeFacet.EVENT)));
+    }
+
+    /* Utility method to extract groupId from
+     *
+     */
+    public static int groupIdLookup(String currentPage) {
+        int groupId = -1;
+        if ((currentPage != null) && (!currentPage.trim().isEmpty())) {
+            String[] elements = currentPage.split("/");
+            //process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
+            try {
+                groupId = Integer.valueOf(elements[1]);
+            } catch (NumberFormatException nfe) {
+                groupId = Integer.valueOf(elements[2]);
+            }
+        }
+        return groupId;
+    }
+
+    /* Utility method to extract groupId from
+     *
+     */
+    public static String groupPathLookup(String currentPage) {
+        String groupBasePath = "";
+        if ((currentPage != null) && (!currentPage.trim().isEmpty())) {
+            String[] elements = currentPage.split("/");
+            //process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
+            try {
+                Integer.valueOf(elements[1]);
+                groupBasePath = elements[0];
+            } catch (NumberFormatException nfe) {
+                groupBasePath = elements[1] + "/" + elements[1];
+            }
+        }
+        return groupBasePath;
     }
 }

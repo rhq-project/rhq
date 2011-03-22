@@ -39,9 +39,7 @@ public enum ResourceDataSourceField {
 
     CATEGORY("resourceType.category", CoreGUI.getMessages().common_title_category()),
 
-    AVAILABILITY("currentAvailability", CoreGUI.getMessages().common_title_availability()),
-
-    ANCESTRY("ancestry", CoreGUI.getMessages().common_title_ancestry());
+    AVAILABILITY("currentAvailability", CoreGUI.getMessages().common_title_availability());
 
     /**
      * Corresponds to a property name of Resource (e.g. resourceType.name).

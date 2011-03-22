@@ -31,12 +31,17 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -70,6 +75,9 @@ public class PluginManagerBean implements PluginManagerLocal {
     @EJB
     private ResourceManagerLocal resourceMgr;
 
+    @EJB
+    private SubjectManagerLocal subjectMgr;
+
     /**
      * Returns the information on the given plugin as found in the database.
      * @param  name the name of a plugin
@@ -84,14 +92,27 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
-    public void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        deletePlugins(subject, pluginIds);
-
+    public void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception {
         for (Integer id : pluginIds) {
             Plugin plugin = entityManager.find(Plugin.class, id);
-            log.info("Purging [" + plugin + "] from the database");
-            entityManager.remove(plugin);
+            plugin.setCtime(Plugin.PURGED);
+            log.info("Scheduling plugin [" + plugin + "] to be purged from the database.");
         }
+    }
+
+    @Override
+    public boolean isReadyForPurge(Plugin plugin) {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterPluginName(plugin.getName());
+        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
+        PageList results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+
+        return results.getTotalSize() == 0;
+    }
+
+    @Override
+    public void purgePlugins(List<Plugin> plugins) {
+        entityManager.createNamedQuery(Plugin.PURGE_PLUGINS).setParameter("plugins", plugins).executeUpdate();
     }
 
     @Override
@@ -108,6 +129,11 @@ public class PluginManagerBean implements PluginManagerLocal {
     @Override
     public List<Plugin> findAllDeletedPlugins() {
         return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_DELETED).getResultList();
+    }
+
+    @Override
+    public List<Plugin> findPluginsMarkedForPurge() {
+        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_TO_PURGE).getResultList();
     }
 
     @SuppressWarnings("unchecked")

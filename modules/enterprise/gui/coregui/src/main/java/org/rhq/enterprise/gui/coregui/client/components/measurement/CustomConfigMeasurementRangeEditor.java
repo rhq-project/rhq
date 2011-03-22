@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.measurement;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -35,8 +36,8 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
     public static final String ALERT_METRIC_RANGE_ENABLE = Constant.METRIC_RANGE_ENABLE;
 
     public static final String DEFAULT_VALUE_RANGE_RO = Boolean.FALSE.toString();
-    public static final Integer DEFAULT_VALUE_RANGE_LASTN = Integer.valueOf(8);
-    public static final Integer DEFAULT_VALUE_RANGE_UNIT = Integer.valueOf(3);
+    public static final Integer DEFAULT_VALUE_RANGE_LASTN = Integer.valueOf(Constant.METRIC_RANGE_LASTN_DEFAULT);
+    public static final Integer DEFAULT_VALUE_RANGE_UNIT = Integer.valueOf(Constant.METRIC_RANGE_UNIT_DEFAULT);
 
     private ConfigurationMeasurementPreferences measurementPrefs;
 
@@ -59,6 +60,8 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
         } else {
             int lastN = Integer.valueOf(simpleLastValuesItem.getValueAsString());
             String unit = simpleLastUnitsItem.getValueAsString();
+            measurementPrefs.metricRangePreferences.lastN = lastN;
+            measurementPrefs.metricRangePreferences.unit = Integer.valueOf(unit);
             return MeasurementUtility.calculateTimeFrame(lastN, Integer.valueOf(unit));
         }
     }
@@ -103,12 +106,16 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
             if (metricRangePreferences == null) {
                 metricRangePreferences = new MetricRangePreferences();
             }
-            //            //parse config and lazily init timing elements
+            //parse config and lazily init timing elements
             metricRangePreferences.explicitBeginEnd = Boolean.valueOf(
                 config.getSimple(PREF_METRIC_RANGE_BEGIN_END_FLAG).getStringValue()).booleanValue();
             //check to display advanced settings widget components
             if (metricRangePreferences.explicitBeginEnd == false) {
+                //retrieve lastN
                 metricRangePreferences.lastN = config.getSimple(PREF_METRIC_RANGE_LASTN).getIntegerValue();
+                //retrieve lastN units
+                metricRangePreferences.unit = config.getSimple(PREF_METRIC_RANGE_UNIT).getIntegerValue();
+
                 List<Long> range = MeasurementUtility.calculateTimeFrame(metricRangePreferences.lastN,
                     metricRangePreferences.unit);
                 metricRangePreferences.begin = range.get(0);
@@ -170,10 +177,21 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
             enableRangeItem.setValue(false);
             enableMeasurementRange(true);
         }
-        //AlertMetric rangeValues
-        cp = measurementPrefs.configuration.getSimple(PREF_METRIC_RANGE);
-        if ((cp != null) && (!cp.getStringValue().trim().isEmpty())) {
-            String metricRange = cp.getStringValue();
+        //is advanced
+        boolean advanced = measurementPrefs.metricRangePreferences.explicitBeginEnd;
+        if (advanced) {
+            ArrayList<Long> beginEnd = measurementPrefs.metricRangePreferences.getBeginEndTimes();
+            if ((beginEnd != null) && (!beginEnd.isEmpty())) {
+                advancedStartItem.setValue(beginEnd.get(0));
+                advancedEndItem.setValue(beginEnd.get(1));
+            }
+        } else {//simple: set LastN and Units
+            if (lastUnits.containsKey(String.valueOf(measurementPrefs.metricRangePreferences.unit))) {
+                simpleLastUnitsItem.setValue(String.valueOf(measurementPrefs.metricRangePreferences.unit));
+            }
+            if (Arrays.asList(lastValues).contains(String.valueOf(measurementPrefs.metricRangePreferences.lastN))) {
+                simpleLastValuesItem.setValue(String.valueOf(measurementPrefs.metricRangePreferences.lastN));
+            }
         }
     }
 }

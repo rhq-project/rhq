@@ -38,6 +38,7 @@ public class Message {
 
     // TODO: Add Debug severity?
     public enum Severity {
+        // keep the order - the ordinals are sorted least severe to highest severe
         Blank("InfoBlank", "info/icn_info_blank.png"), //
         Info("InfoBlock", "info/icn_info_blue.png"), //
         Warning("WarnBlock", "info/icn_info_orange.png"), //

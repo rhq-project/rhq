@@ -69,7 +69,6 @@ import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
@@ -100,7 +99,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
 
-    private VLayout contents;
+    private LocatableVLayout contents;
 
     private HTMLFlow title;
 
@@ -211,6 +210,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected void onInit() {
         super.onInit();
 
+        contents = new LocatableVLayout(extendLocatorId("tableContents"));
+        contents.setWidth100();
+        contents.setHeight100();
+        //contents.setOverflow(Overflow.AUTO);
+        addMember(contents);
+
         filterForm = new TableFilter(this);
 
         /*
@@ -227,7 +232,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = new LocatableListGrid(getLocatorId());
+        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
         if (criteria != null) {
@@ -260,12 +265,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         if (dataSource != null) {
             listGrid.setDataSource(dataSource);
         }
-
-        contents = new LocatableVLayout(extendLocatorId("tableContents"));
-        contents.setWidth100();
-        contents.setHeight100();
-        //contents.setOverflow(Overflow.AUTO);
-        addMember(contents);
 
         contents.addMember(listGrid);
     }

@@ -321,7 +321,7 @@ public class ImageManager {
     }
 
     public static String getAlertIcon() {
-        return "subsystems/alert/Alert_16.png";
+        return "subsystems/alert/Flag_blue_16.png";
     }
 
     public static String getAlertLargeIcon() {
@@ -405,6 +405,19 @@ public class ImageManager {
         return "subsystems/event/Events" + icon + "_16.png";
     }
 
+    /**
+     * This returns an icon of the badge (e.g. the red X or the blue I) without the
+     * event icon. This is used if you have a table of events and the user knows they are
+     * events so there is no need to show the event icon itself- showing a bigger badge
+     * to indicate severity is more useful.
+     * 
+     * @param severity
+     * @return badge icon
+     */
+    public static String getEventSeverityBadge(EventSeverity severity) {
+        return "subsystems/event/" + severity.name() + "_16.png";
+    }
+
     public static String getEventLargeIcon() {
         return "subsystems/event/Events_24.png";
     }
@@ -427,5 +440,29 @@ public class ImageManager {
 
     public static String getMonitorFailedLargeIcon() {
         return "subsystems/monitor/Monitor_failed_24.png";
+    }
+
+    public static String getOperationLargeIcon() {
+        return "subsystems/control/Operation_24.png";
+    }
+
+    public static String getOperationIcon() {
+        return "subsystems/control/Operation_16.png";
+    }
+
+    public static String getActivityPackageLargeIcon() {
+        return "subsystems/content/Package_24.png";
+    }
+
+    public static String getActivityPackageIcon() {
+        return "subsystems/content/Package_16.png";
+    }
+
+    public static String getBundleLargeIcon() {
+        return "subsystems/content/Content_24.png";
+    }
+
+    public static String getBundleIcon() {
+        return "subsystems/content/Content_16.png";
     }
 }

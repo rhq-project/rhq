@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class UsersDataSource extends RPCDataSource<Subject> {
+public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
 
     private static UsersDataSource INSTANCE;
 
@@ -162,8 +162,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        SubjectCriteria criteria = getFetchCriteria(request);
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final SubjectCriteria criteria) {
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
@@ -329,6 +329,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return to;
     }
 
+    @Override
     protected SubjectCriteria getFetchCriteria(DSRequest request) {
         SubjectCriteria criteria = new SubjectCriteria();
 

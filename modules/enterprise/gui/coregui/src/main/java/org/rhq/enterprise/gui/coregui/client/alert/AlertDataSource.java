@@ -20,7 +20,9 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -47,6 +49,8 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -54,6 +58,9 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -63,7 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Joseph Marques
  * @author John Mazzitelli
  */
-public class AlertDataSource extends RPCDataSource<Alert> {
+public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     private EntityContext entityContext;
@@ -109,7 +116,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
+                Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                 Integer defId = listGridRecord.getAttributeAsInt("definitionId");
                 String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
                 return SeleniumUtility.getLocatableHref(url, o.toString(), null);
@@ -157,25 +164,47 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         fields.add(statusField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
-            // TODO need to disambiguate this
-            ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource());
+            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
-                    String url = LinkManager.getResourceLink(resourceId);
+                    String url = LinkManager
+                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                }
+            });
+            resourceNameField.setShowHover(true);
+            resourceNameField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }
             });
             fields.add(resourceNameField);
 
-            ctimeField.setWidth(100);
-            nameField.setWidth("25%");
-            conditionField.setWidth("40%");
+            ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
+            ancestryField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
+                }
+            });
+            ancestryField.setShowHover(true);
+            ancestryField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+                }
+            });
+            fields.add(ancestryField);
+
+            ctimeField.setWidth(125);
+            nameField.setWidth("20%");
+            conditionField.setWidth("30%");
             priorityField.setWidth(50);
-            statusField.setWidth("15%");
-            resourceNameField.setWidth("20%");
+            statusField.setWidth("80");
+            resourceNameField.setWidth("25%");
+            ancestryField.setWidth("25%");
         } else {
-            ctimeField.setWidth(100);
+            ctimeField.setWidth(125);
             nameField.setWidth("35%");
             conditionField.setWidth("40%");
             priorityField.setWidth(50);
@@ -185,10 +214,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
         final long start = System.currentTimeMillis();
-
-        AlertCriteria criteria = getCriteria(request);
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
@@ -201,15 +229,61 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
                 Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                response.setData(buildRecords(result));
-                // For paging to work, we have to specify size of full result set.
-                response.setTotalRows(result.getTotalSize());
+
+                if (entityContext.type != EntityContext.Type.Resource) {
+                    dataRetrieved(result, response, request);
+                } else {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                    processResponse(request.getRequestId(), response);
+                }
+            }
+        });
+    }
+
+    /**
+     * Additional processing to support a cross-resource view)
+     * @param result
+     * @param response
+     * @param request
+     */
+    protected void dataRetrieved(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
+        for (Alert alert : result) {
+            Resource resource = alert.getAlertDefinition().getResource();
+            typesSet.add(resource.getResourceType().getId());
+            ancestries.add(resource.getAncestry());
+        }
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                Record[] records = buildRecords(result);
+                for (Record record : records) {
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                }
+                response.setData(records);
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
     }
 
-    protected AlertCriteria getCriteria(DSRequest request) {
+    @Override
+    protected AlertCriteria getFetchCriteria(DSRequest request) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
 
@@ -240,10 +314,15 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
         record.setAttribute("definitionId", from.getAlertDefinition().getId());
-        record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
-        record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
+        Resource resource = from.getAlertDefinition().getResource();
         record.setAttribute("name", from.getAlertDefinition().getName());
         record.setAttribute("priority", ImageManager.getAlertIcon(from.getAlertDefinition().getPriority()));
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
@@ -310,5 +389,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     public AlertGWTServiceAsync getAlertService() {
         return alertService;
+    }
+
+    protected EntityContext getEntityContext() {
+        return entityContext;
+    }
+
+    protected void setEntityContext(EntityContext entityContext) {
+        this.entityContext = entityContext;
     }
 }

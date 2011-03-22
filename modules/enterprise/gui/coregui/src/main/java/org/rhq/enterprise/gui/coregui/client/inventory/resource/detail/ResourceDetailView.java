@@ -67,8 +67,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.Activity2View;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView3;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -287,7 +287,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.summaryTab, this.summaryActivity2, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new Activity2View(summaryActivity2.extendLocatorId("View"), resourceComposite);
+                return new ActivityView3(summaryActivity2.extendLocatorId("View"), resourceComposite);
             }
         });
 

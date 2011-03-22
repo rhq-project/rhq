@@ -31,8 +31,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -65,26 +63,48 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class GroupEventsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "GroupEvents";
+    // A default displayed, persisted name for the portlet
+    public static final String NAME = MSG.view_portlet_defaultName_group_events();
+
+    public static final String ID = "id";
+
+    // set on initial configuration, the window for this portlet view.
+    protected PortletWindow portletWindow;
+    //instance ui widgets
+
+    protected Timer refreshTimer;
+
+    protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
+    static {
+        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_ENABLE);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_LASTN);
+        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
+    }
+
     private int groupId = -1;
     protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
-    private boolean currentlyLoading = false;
-    private Configuration portletConfig = null;
-    private DashboardPortlet storedPortlet;
+    protected boolean currentlyLoading = false;
+    protected Configuration portletConfig = null;
+    protected DashboardPortlet storedPortlet;
 
     public GroupEventsPortlet(String locatorId) {
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
-        initializeUi();
+        int groupId = AbstractActivityView.groupIdLookup(currentPage);
+        this.groupId = groupId;
     }
 
     @Override
     protected void onInit() {
         super.onInit();
-        loadData();
+        initializeUi();
+        redraw();
     }
 
     /**Defines layout for the portlet page.
@@ -93,28 +113,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         setPadding(5);
         setMembersMargin(5);
         addMember(recentEventsContent);
-    }
-
-    // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "GroupEvents";
-    // A default displayed, persisted name for the portlet
-    public static final String NAME = "Group: Event Counts";
-    public static final String ID = "id";
-
-    // set on initial configuration, the window for this portlet view.
-    private PortletWindow portletWindow;
-    //instance ui widgets
-
-    private Timer refreshTimer;
-
-    private static List<String> CONFIG_INCLUDE = new ArrayList<String>();
-    static {
-        CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_ENABLE);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_LASTN);
-        CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
     }
 
     /** Responsible for initialization and lazy configuration of the portlet values
@@ -172,34 +170,16 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
 
-                String selectedValue = null;
-                //alert time range filter. Check for enabled and then persist property. Dealing with compound widget.
-                FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
-                CheckboxItem itemC = (CheckboxItem) item;
-                selectedValue = String.valueOf(itemC.getValueAsBoolean());
-                if (!selectedValue.trim().isEmpty()) {//then call
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_ENABLE, selectedValue));
-                }
-
-                //alert time advanced time filter enabled.
-                selectedValue = String.valueOf(measurementRangeEditor.isAdvanced());
-                if ((selectedValue != null) && (!selectedValue.trim().isEmpty())) {
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE_BEGIN_END_FLAG, selectedValue));
-                }
-
-                //alert time frame
-                List<Long> begEnd = measurementRangeEditor.getBeginEndTimes();
-                if (begEnd.get(0) != 0) {//advanced settings
-                    portletConfig.put(new PropertySimple(Constant.METRIC_RANGE, (begEnd.get(0) + "," + begEnd.get(1))));
-                }
+                //persist the measurement range selections
+                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
+                    portletConfig);
 
                 //persist
                 storedPortlet.setConfiguration(portletConfig);
                 configure(portletWindow, storedPortlet);
-                loadData();
+                redraw();
                 customSettings.markForRedraw();
             }
-
         });
         page.addMember(measurementRangeEditor);
         customSettings.addChild(page);
@@ -217,12 +197,33 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
         if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-            property = portletConfig.getSimple(Constant.METRIC_RANGE);
+
+            boolean isAdvanced = false;
+            //detect type of widget[Simple|Advanced]
+            property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
             if (property != null) {
-                String currentSetting = property.getStringValue();
-                String[] range = currentSetting.split(",");
-                start = Long.valueOf(range[0]);
-                end = Long.valueOf(range[1]);
+                isAdvanced = property.getBooleanValue();
+            }
+            if (isAdvanced) {
+                //Advanced time settings
+                property = portletConfig.getSimple(Constant.METRIC_RANGE);
+                if (property != null) {
+                    String currentSetting = property.getStringValue();
+                    String[] range = currentSetting.split(",");
+                    start = Long.valueOf(range[0]);
+                    end = Long.valueOf(range[1]);
+                }
+            } else {
+                //Simple time settings
+                property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
+                if (property != null) {
+                    int lastN = property.getIntegerValue();
+                    property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
+                    int lastUnits = property.getIntegerValue();
+                    ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer.valueOf(lastUnits));
+                    start = Long.valueOf(beginEnd.get(0));
+                    end = Long.valueOf(beginEnd.get(1));
+                }
             }
         }
 
@@ -269,6 +270,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
                             column.addMember(row);
                         }
+                        column.markForRedraw();
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum)));
@@ -285,6 +287,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                     }
                     recentEventsContent.addChild(column);
                     recentEventsContent.markForRedraw();
+                    markForRedraw();
                 }
             });
     }
@@ -304,7 +307,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
             refreshTimer = new Timer() {
                 public void run() {
                     if (!currentlyLoading) {
-                        loadData();
                         redraw();
                     }
                 }
@@ -328,5 +330,4 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         super.redraw();
         loadData();
     }
-
 }

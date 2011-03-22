@@ -35,16 +35,14 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
-import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDestinationListView extends Table<RPCDataSource<BundleDestination>> {
+public class BundleDestinationListView extends Table<BundleDestinationDataSource> {
 
     public BundleDestinationListView(String locatorId) {
         this(locatorId, null);

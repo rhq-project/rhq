@@ -36,7 +36,16 @@ public interface PluginManagerLocal {
      */
     List<Plugin> getInstalledPlugins();
 
+    /**
+     * @return All plugins that have been marked deleted.
+     */
     List<Plugin> findAllDeletedPlugins();
+
+
+    /**
+     * @return All plugins that are scheduled to be purged.
+     */
+    List<Plugin> findPluginsMarkedForPurge();
 
     /**
      * Returns a list of plugins with the specified ids. Both installed and deleted plugins will be included in the
@@ -69,17 +78,34 @@ public interface PluginManagerLocal {
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
-     * Permanently removes the plugins with the specified ids from the database. This operation first calls
-     * {@link #deletePlugins(Subject, List)} as a safeguard to ensure that the plugins are first deleted. In a HA
-     * deployment however, you should wait at least 5 minutes after deleting a plugin before purging it. Five minutes
-     * is the default interval of the agent plugin scanner. This should be sufficient time for servers in the cluster
-     * to delete the plugin from the file system.
+     * Schedules a plugin to be purged. Purging a plugin permanently deletes it from the database. Purging is done
+     * asynchronously and will not happen until all resource types defined by the plugin have first been purged. Plugins
+     * must first be deleted before they can be purged. A plugin is considered a candidate for being purged if its
+     * status is set to <code>DELETED</code> and its <code>ctime</code> is set to {@link Plugin#PURGED}. This method
+     * does not flip the status of the plugins to <code>DELETED</code> since it assumes that has already been done. It
+     * only sets <code>ctime</code> to <code>PURGED</code>.
      *
      * @param subject The user purging the plugin
      * @param pluginIds The ids of the plugins to be purged
      * @throws Exception if an error occurs
+     * @see  org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob PurgePluginsJob
      */
-    void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    /**
+     * @param plugin The plugin to check
+     * @return true if the plugin can be purged, false otherwise. A plugin can only be purged when all resource types
+     * defined by the plugin have already been purged.
+     */
+    boolean isReadyForPurge(Plugin plugin);
+
+    /**
+     * Permanently deletes the plugins from the database. This method assumes that the plugins are already in the
+     * deleted state. This method is not intended for general use. It is called from
+     * {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob PurgePluginsJob}.
+     * @param plugins The plugins to remove from the database.
+     */
+    void purgePlugins(List<Plugin> plugins);
 
     void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
 

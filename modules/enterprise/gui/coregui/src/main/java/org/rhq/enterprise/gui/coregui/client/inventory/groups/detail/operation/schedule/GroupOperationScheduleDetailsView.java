@@ -1,5 +1,10 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -11,9 +16,11 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -21,13 +28,9 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.sorter.ReorderableList;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
 
 /**
  * The details view of the Group Operations>Schedules subtab.
@@ -47,8 +50,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     private ReorderableList memberExecutionOrderer;
 
     public GroupOperationScheduleDetailsView(String locatorId, ResourceGroupComposite groupComposite, int scheduleId) {
-        super(locatorId, new GroupOperationScheduleDataSource(groupComposite),
-                groupComposite.getResourceGroup().getResourceType(), scheduleId);
+        super(locatorId, new GroupOperationScheduleDataSource(groupComposite), groupComposite.getResourceGroup()
+            .getResourceType(), scheduleId);
         this.groupComposite = groupComposite;
     }
 
@@ -61,8 +64,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     protected void init(final boolean isReadOnly) {
         if (isNewRecord()) {
             ResourceDatasource resourceDatasource = new ResourceDatasource();
-            Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID,
-                    String.valueOf(this.groupComposite.getResourceGroup().getId()));
+            Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(this.groupComposite
+                .getResourceGroup().getId()));
             resourceDatasource.fetchData(criteria, new DSCallback() {
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
                     if (response.getStatus() != DSResponse.STATUS_SUCCESS) {
@@ -94,8 +97,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         this.executionModeForm.setNumCols(2);
         this.executionModeForm.setColWidths(FIRST_COLUMN_WIDTH, "*");
 
-        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE,
-                MSG.view_group_operationScheduleDetails_field_execute());
+        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE, MSG
+            .view_group_operationScheduleDetails_field_execute());
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
         valueMap.put(EXECUTION_ORDER_PARALLEL, MSG.view_group_operationScheduleDetails_value_parallel());
         valueMap.put(EXECUTION_ORDER_SEQUENTIAL, MSG.view_group_operationScheduleDetails_value_sequential());
@@ -104,7 +107,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         executionModeItem.setShowTitle(true);
 
         final CheckboxItem haltOnFailureItem = new CheckboxItem(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE,
-                MSG.view_group_operationScheduleDetails_field_haltOnFailure());
+            MSG.view_group_operationScheduleDetails_field_haltOnFailure());
         haltOnFailureItem.setDefaultValue(false);
         haltOnFailureItem.setVisible(false);
         haltOnFailureItem.setLabelAsTitle(true);
@@ -120,8 +123,13 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         hLayout.addMember(horizontalSpacer);
         ResourceCategory resourceCategory = this.groupComposite.getResourceGroup().getResourceType().getCategory();
         String memberIcon = ImageManager.getResourceIcon(resourceCategory);
+        HoverCustomizer nameHoverCustomizer = new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+            }
+        };
         this.memberExecutionOrderer = new ReorderableList(extendLocatorId("MemberExecutionOrderer"),
-                this.memberResourceRecords, null, memberIcon);
+            this.memberResourceRecords, null, memberIcon, nameHoverCustomizer);
         this.memberExecutionOrderer.setVisible(false);
         this.memberExecutionOrderer.setNameFieldTitle(MSG.view_group_operationScheduleDetails_memberResource());
         hLayout.addMember(this.memberExecutionOrderer);
@@ -144,22 +152,24 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
 
     @Override
     protected void editExistingRecord(Record record) {
-        List<Resource> executionOrder =
-                (List<Resource>) record.getAttributeAsObject(GroupOperationScheduleDataSource.Field.EXECUTION_ORDER);
+        List<Resource> executionOrder = (List<Resource>) record
+            .getAttributeAsObject(GroupOperationScheduleDataSource.Field.EXECUTION_ORDER);
         if (executionOrder != null) {
             this.executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_SEQUENTIAL);
             ResourceDatasource resourceDatasource = new ResourceDatasource();
             ListGridRecord[] resourceRecords = resourceDatasource.buildRecords(executionOrder);
             this.memberExecutionOrderer.setRecords(resourceRecords);
             this.memberExecutionOrderer.show();
-            FormItem haltOnFailureItem = executionModeForm.getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+            FormItem haltOnFailureItem = executionModeForm
+                .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
             haltOnFailureItem.show();
         } else {
             this.executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_PARALLEL);
         }
 
         Object haltOnFailure = getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
-        FormItem haltOnFailureItem = this.executionModeForm.getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+        FormItem haltOnFailureItem = this.executionModeForm
+            .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
         haltOnFailureItem.setValue(haltOnFailure);
 
         super.editExistingRecord(record);
@@ -177,9 +187,11 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         } else {
             executionOrder = null;
         }
-        requestProperties.setAttribute(GroupOperationScheduleDataSource.RequestProperty.EXECUTION_ORDER, executionOrder);
+        requestProperties
+            .setAttribute(GroupOperationScheduleDataSource.RequestProperty.EXECUTION_ORDER, executionOrder);
 
-        Boolean haltOnFailure = (Boolean) this.executionModeForm.getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+        Boolean haltOnFailure = (Boolean) this.executionModeForm
+            .getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
         getForm().setValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE, haltOnFailure);
 
         super.save(requestProperties);

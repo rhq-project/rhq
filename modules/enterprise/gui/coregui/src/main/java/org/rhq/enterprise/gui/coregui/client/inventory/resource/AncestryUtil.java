@@ -22,8 +22,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -33,6 +37,18 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  */
 public abstract class AncestryUtil {
+    // ListGrid Record attribute names expected to be set on records processed by the utility  
+    public static final String RESOURCE_ANCESTRY = "resourceAncestry";
+    public static final String RESOURCE_ANCESTRY_VALUE = "resourceAncestryDecoded";
+    public static final String RESOURCE_ANCESTRY_HOVER = "resourceAncestryHover";
+    public static final String RESOURCE_ANCESTRY_TYPES = "resourceAncestryTypes";
+    public static final String RESOURCE_HOVER = "resourceHover";
+    public static final String RESOURCE_ID = "resourceId";
+    public static final String RESOURCE_NAME = "resourceName";
+    public static final String RESOURCE_TYPE_ID = "resourceTypeId";
+
+    private static final String TITLE_ANCESTRY = CoreGUI.getMessages().util_ancestry_parentAncestry() + " ";
+    private static final String TITLE_PLATFORM = CoreGUI.getMessages().common_title_platform() + ": ";
 
     /**
      * Get the complete set of resource types in the ancestries provided. This is useful for
@@ -75,7 +91,7 @@ public abstract class AncestryUtil {
         }
 
         StringBuilder sbResources = new StringBuilder();
-        StringBuilder sbTypes = (null != types) ? new StringBuilder() : null;
+        StringBuilder sbTypes = (null != types) ? new StringBuilder("Parent Ancestry<hr/>") : null;
         String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
         for (int i = 0; i < ancestryEntries.length; ++i) {
             String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
@@ -83,15 +99,23 @@ public abstract class AncestryUtil {
             int ancestorResourceId = Integer.valueOf(entryTokens[1]);
             String ancestorName = entryTokens[2];
 
-            sbResources.append((i > 0) ? " > " : "");
+            sbResources.append((i > 0) ? " < " : "");
+            //sbResources.append(" < ");
             String url = LinkManager.getResourceLink(ancestorResourceId);
             String suffix = resourceId + "_" + entryTokens[1];
-            sbResources.append(SeleniumUtility.getLocatableHref(url, ancestorName, suffix));
+            String href = SeleniumUtility.getLocatableHref(url, ancestorName, suffix);
+            sbResources.append(href);
 
             if (null != sbTypes) {
-                sbTypes.append((i > 0) ? " > " : "");
+                if (i > 0) {
+                    sbTypes.append("<br/>");
+                    for (int j = 0; j < i; ++j) {
+                        sbTypes.append("&nbsp;&nbsp;");
+                    }
+                }
                 ResourceType rt = types.get(ancestorTypeId);
-                sbTypes.append(rt.getName() + "[" + rt.getPlugin() + "]");
+                sbTypes.append(href);
+                addFormattedType(sbTypes, rt);
             }
         }
 
@@ -103,6 +127,141 @@ public abstract class AncestryUtil {
         return result;
     }
 
+    public static String getFormattedType(ResourceType type) {
+        return addFormattedType(new StringBuilder(), type).toString();
+    }
+
+    private static StringBuilder addFormattedType(StringBuilder sb, ResourceType type) {
+        sb.append(" [<i>");
+        sb.append(type.getPlugin());
+        sb.append("</i>, ");
+        sb.append(type.getName());
+        sb.append("]");
+        return sb;
+    }
+
+    public static String getAncestryValue(Record record) {
+        return getAncestryValue(record, true);
+    }
+
+    public static String getAncestryValue(Record record, boolean generateLinks) {
+        String ancestry = record.getAttributeAsString(RESOURCE_ANCESTRY);
+        if (null == ancestry) {
+            return "";
+        }
+
+        Integer resourceId = record.getAttributeAsInt(RESOURCE_ID);
+        // if not set assume the standard "id" attr is a resourceId
+        resourceId = (null != resourceId) ? resourceId : record.getAttributeAsInt("id");
+        StringBuilder sbResources = new StringBuilder();
+        String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+        for (int i = 0; i < ancestryEntries.length; ++i) {
+            String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+            int ancestorResourceId = Integer.valueOf(entryTokens[1]);
+            String ancestorName = entryTokens[2];
+
+            sbResources.append((i > 0) ? " < " : "");
+            if (generateLinks) {
+                String url = LinkManager.getResourceLink(ancestorResourceId);
+                String suffix = resourceId + "_" + entryTokens[1];
+                String href = SeleniumUtility.getLocatableHref(url, ancestorName, suffix);
+                sbResources.append(href);
+            } else {
+                sbResources.append(ancestorName);
+            }
+        }
+
+        return sbResources.toString();
+    }
+
+    public static String getAncestryHoverHTML(ListGridRecord listGridRecord, int width) {
+        String ancestryHover = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY_HOVER);
+        if (null != ancestryHover) {
+            return ancestryHover;
+        }
+
+        Integer resourceId = listGridRecord.getAttributeAsInt(RESOURCE_ID);
+        // if not set assume the standard "id" attr is a resourceId
+        resourceId = (null != resourceId) ? resourceId : listGridRecord.getAttributeAsInt("id");
+        String resourceName = listGridRecord.getAttribute(RESOURCE_NAME);
+        // if not set assume the standard "name" attr is a resourceName
+        resourceName = (null != resourceName) ? resourceName : listGridRecord.getAttribute("name");
+        Map<Integer, ResourceType> types = ((MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES))
+            .getMap();
+        Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
+        String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
+
+        String result = getAncestryHoverHTMLString(resourceId, resourceName, ancestry, resourceTypeId, types, width);
+
+        listGridRecord.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
+        return result;
+    }
+
+    public static String getAncestryHoverHTMLForResource(Resource resource, Map<Integer, ResourceType> types, int width) {
+
+        return getAncestryHoverHTMLString(resource.getId(), resource.getName(), resource.getAncestry(), resource
+            .getResourceType().getId(), types, width);
+    }
+
+    private static String getAncestryHoverHTMLString(int resourceId, String resourceName, String ancestry,
+        int resourceTypeId, Map<Integer, ResourceType> types, int width) {
+        ResourceType type = types.get(resourceTypeId);
+        String resourceLongName = getResourceLongName(resourceName, type);
+
+        width = (width <= 0) ? 500 : width;
+
+        // decode ancestry
+        StringBuilder sb = new StringBuilder("<p style='width:");
+        sb.append(width);
+        sb.append("px'>");
+        String title = (null != ancestry) ? TITLE_ANCESTRY : TITLE_PLATFORM;
+        sb.append(title);
+        sb.append(resourceLongName);
+        if (null != ancestry) {
+            sb.append("<hr/>");
+            String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+            for (int i = ancestryEntries.length - 1, j = 0; i >= 0; --i, ++j) {
+                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                int ancestorTypeId = Integer.valueOf(entryTokens[0]);
+                String ancestorName = entryTokens[2];
+
+                // indent with spaces
+                if (j > 0) {
+                    sb.append("<br/>");
+                    for (int k = 0; k < j; ++k) {
+                        sb.append("&nbsp;&nbsp;");
+                    }
+                }
+                type = types.get(ancestorTypeId);
+                sb.append(getResourceLongName(ancestorName, type));
+            }
+
+            // add target resource, indent with spaces
+            sb.append("<br/>");
+            for (int k = 0; k <= ancestryEntries.length; ++k) {
+                sb.append("&nbsp;&nbsp;");
+            }
+            sb.append(resourceLongName);
+        }
+
+        sb.append("</p>");
+
+        return sb.toString();
+    }
+
+    private static String getResourceLongName(String resourceName, ResourceType type) {
+        StringBuilder sb = new StringBuilder("<b>");
+
+        sb.append(resourceName);
+        sb.append("</b>");
+
+        if (type != null) {
+            addFormattedType(sb, type);
+        }
+
+        return sb.toString();
+    }
+
     /**
      * Get a resource name that combines type and resource information. This is useful for when we want to
      * use a single column for dispay of the resource "name". The name is wrapped in a navigable link.
@@ -111,23 +270,45 @@ public abstract class AncestryUtil {
      *
      * @return the long name for the resource
      */
-    public static String getResourceLongName(int resourceId, String resourceName, ResourceType type) {
-        StringBuilder sb = new StringBuilder();
-        if (type != null) {
-            if (type.getPlugin() != null) {
-                sb.append(type.getPlugin());
-                sb.append(" ");
-            }
-
-            sb.append(type.getName());
-            sb.append(" ");
+    public static String getResourceHoverHTML(Record record, int width) {
+        String resourceHover = record.getAttributeAsString(RESOURCE_HOVER);
+        if (null != resourceHover) {
+            return resourceHover;
         }
 
-        String url = LinkManager.getResourceLink(resourceId);
-        String suffix = String.valueOf(resourceId);
-        sb.append(SeleniumUtility.getLocatableHref(url, resourceName, suffix));
+        String resourceName = record.getAttribute(RESOURCE_NAME);
+        // if not set assume the standard "name" attr is a resourceName
+        resourceName = (null != resourceName) ? resourceName : record.getAttribute("name");
+        Map<Integer, ResourceType> types = ((MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES)).getMap();
+        Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
+        ResourceType type = types.get(resourceTypeId);
+        width = (width <= 0) ? 500 : width;
 
-        return sb.toString();
+        StringBuilder sb = new StringBuilder("<p style='width:");
+        sb.append(width);
+        sb.append("px'>");
+
+        sb.append(getResourceLongName(resourceName, type));
+
+        sb.append("</p>");
+
+        String result = sb.toString();
+        record.setAttribute(RESOURCE_HOVER, result);
+        return result;
+    }
+
+    // We do not want smargwt to see we are storing our map into an attribute because it barfs on our key/value pairs
+    // so instead we have to wrap it in a non-Map POJO Object so smartgwt just handles it as a java.lang.Object.
+    public static class MapWrapper {
+        private Map<Integer, ResourceType> map;
+
+        public MapWrapper(Map<Integer, ResourceType> map) {
+            this.map = map;
+        }
+
+        public Map<Integer, ResourceType> getMap() {
+            return this.map;
+        }
     }
 
 }

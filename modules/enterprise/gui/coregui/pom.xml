@@ -140,7 +140,9 @@
         </dependency>
         -->
 
-        <!-- the GWT graphing library -->
+        <!-- the GWT graphing library (note, this provides jquery 1.3.2. If we get rid of GFlot we will need
+             to provide jquery explcitly for jquery.sparkline support. See CoreGUI.gwt.xml for the jquery.sparkline
+             declaration and coregui/webapp/js for the lib inclusion.) -->
         <dependency>
             <groupId>ca.nanometrics</groupId>
             <artifactId>gflot</artifactId>

@@ -26,6 +26,8 @@ import java.beans.Introspector;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -86,6 +88,17 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+    /**
+     * Invoked by the plugin container immediately after it is initialized
+     */
+    public static interface InitializationListener {
+        /**
+         * Notifies the listener that the plugin container has been initialized. This method executes in the same
+         * thread in which {@link PluginContainer#initialize()} is executing.
+         */
+        void initialized();
+    }
+
     // our management interface
     private PluginContainerMBeanImpl mbean;
 
@@ -113,6 +126,9 @@ public class PluginContainer implements ContainerService {
 
     // this is to prevent race conditions on startup between components from all the different managers
     private ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+    private List<InitializationListener> initListeners;
+    private Object initListenersLock = new Object();
 
     /**
      * Returns the singleton instance.
@@ -228,6 +244,7 @@ public class PluginContainer implements ContainerService {
      * <p>If the plugin container has already been initialized, this method does nothing and returns.</p>
      */
     public void initialize() {
+        initListeners = new LinkedList<InitializationListener>();
         Lock lock = obtainWriteLock();
         try {
             if (!started) {
@@ -276,7 +293,16 @@ public class PluginContainer implements ContainerService {
         } finally {
             releaseLock(lock);
         }
-        
+
+        synchronized (initListenersLock) {
+            if (started) {
+                for (InitializationListener listener : initListeners) {
+                    listener.initialized();
+                }
+            }
+            initListeners.clear();
+        }
+
         return;
     }
 
@@ -596,6 +622,21 @@ public class PluginContainer implements ContainerService {
 
     public void notifyRebootRequestListener() {
         rebootListener.reboot();
+    }
+
+    /**
+     * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
+     * the PC is already initialized, then <code>listener</code> will be invoked immediately.
+     * @param listener The callback object to notify
+     */
+    public void addInitializationListener(InitializationListener listener) {
+        synchronized (initListenersLock) {
+            if (started) {
+                listener.initialized();
+            } else {
+                initListeners.add(listener);
+            }
+        }
     }
 
 }

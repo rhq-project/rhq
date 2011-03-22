@@ -43,6 +43,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -52,8 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-@SuppressWarnings("unchecked")
-public class BundleTreeDataSource extends RPCDataSource {
+public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
     private final boolean canManageBundles;
@@ -85,7 +85,7 @@ public class BundleTreeDataSource extends RPCDataSource {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         String p = request.getCriteria().getAttribute("parentId");
 
@@ -167,6 +167,13 @@ public class BundleTreeDataSource extends RPCDataSource {
                     });
             }
         }
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // our executeFetch will determine on its own what criteria to use based on what is to be fetched
+        // thus we don't return anything here and let the executeFetch do everything
+        return null;
     }
 
     @Override

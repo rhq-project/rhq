@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTService;
@@ -39,10 +43,17 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
 
     public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
-                "AlertService.findAlertsByCriteria");
+            PageList<Alert> result = this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria);
+            if (!result.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(result.size());
+                for (Alert alert : result) {
+                    resources.add(alert.getAlertDefinition().getResource());
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+            return SerialUtility.prepare(result, "AlertService.findAlertsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -50,7 +61,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.deleteAlerts(getSessionSubject(), alertIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -58,7 +69,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.deleteAlertsByContext(getSessionSubject(), context);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -66,7 +77,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -74,7 +85,7 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         try {
             return this.alertManager.acknowledgeAlertsByContext(getSessionSubject(), context);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

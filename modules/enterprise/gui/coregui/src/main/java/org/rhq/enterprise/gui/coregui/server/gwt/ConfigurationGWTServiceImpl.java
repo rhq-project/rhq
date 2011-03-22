@@ -16,6 +16,7 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -53,7 +54,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             this.configurationManager.purgePluginConfigurationUpdates(getSessionSubject(), configUpdateIds,
                 purgeInProgress);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -64,7 +65,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             configurationManager.purgeResourceConfigurationUpdates(getSessionSubject(), configUpdateIds,
                 purgeInProgress);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -73,7 +74,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             configurationManager.rollbackResourceConfiguration(getSessionSubject(), resourceId, configHistoryId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -82,7 +83,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             configurationManager.rollbackPluginConfiguration(getSessionSubject(), resourceId, configHistoryId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -93,7 +94,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 getSessionSubject(), resourceId);
             return SerialUtility.prepare(update, "ConfigurationService.getLatestResourceConfigurationUpdate");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -104,7 +105,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 getSessionSubject(), resourceId);
             return SerialUtility.prepare(update, "ConfigurationService.getLatestPluginConfigurationUpdate");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -114,7 +115,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             Configuration configuration = configurationManager.getPluginConfiguration(getSessionSubject(), resourceId);
             return SerialUtility.prepare(configuration, "ConfigurationService.getPluginConfiguration");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -125,7 +126,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 getSessionSubject(), resourceTypeId);
             return SerialUtility.prepare(definition, "ConfigurationService.getPluginConfigDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -136,7 +137,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .getResourceConfiguration(getSessionSubject(), resourceId);
             return SerialUtility.prepare(configuration, "ResourceConfiguration");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -147,7 +148,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .getResourceConfigurationDefinitionWithTemplatesForResourceType(getSessionSubject(), resourceTypeId);
             return SerialUtility.prepare(definition, "ResourceDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -155,11 +156,22 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Integer resourceId, Long beginDate,
         Long endDate, boolean suppressOldest, PageControl pc) throws RuntimeException {
         try {
-            PageList<ResourceConfigurationUpdate> result = configurationManager.findResourceConfigurationUpdates(
+            PageList<ResourceConfigurationUpdate> updates = configurationManager.findResourceConfigurationUpdates(
                 getSessionSubject(), resourceId, beginDate, endDate, suppressOldest, pc);
-            return SerialUtility.prepare(result, "ConfigurationService.findResourceConfigurationUpdates");
+            if (!updates.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(updates.size());
+                for (ResourceConfigurationUpdate update : updates) {
+                    Resource res = update.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
+            return SerialUtility.prepare(updates, "ConfigurationService.findResourceConfigurationUpdates");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -171,7 +183,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 resourceId, configuration);
             return SerialUtility.prepare(update, "ConfigurationService.updateResourceConfiguration");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -183,7 +195,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 resourceId, configuration);
             return SerialUtility.prepare(update, "ConfigurationService.updatePluginConfiguration");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -193,9 +205,20 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             PageList<ResourceConfigurationUpdate> updates = configurationManager
                 .findResourceConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            if (!updates.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(updates.size());
+                for (ResourceConfigurationUpdate update : updates) {
+                    Resource res = update.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
             return SerialUtility.prepare(updates, "ConfigurationService.findResourceConfigurationUpdatesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -205,9 +228,20 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             PageList<PluginConfigurationUpdate> updates = configurationManager
                 .findPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            if (!updates.isEmpty()) {
+                List<Resource> resources = new ArrayList<Resource>(updates.size());
+                for (PluginConfigurationUpdate update : updates) {
+                    Resource res = update.getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
             return SerialUtility.prepare(updates, "ConfigurationService.findPluginConfigurationUpdatesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -220,7 +254,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(updates,
                 "ConfigurationService.findGroupResourceConfigurationUpdatesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -232,7 +266,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .findGroupPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(updates, "ConfigurationService.findGroupPluginConfigurationUpdatesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -253,7 +287,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findResourceConfigurationsForGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -273,7 +307,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findPluginConfigurationsForGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -293,7 +327,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findResourceConfigurationsForGroupUpdate");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -313,7 +347,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
                 "ConfigurationService.findPluginConfigurationsForGroupUpdate");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -325,7 +359,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             this.configurationManager.scheduleGroupResourceConfigurationUpdate(getSessionSubject(), groupId,
                 configurations);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -337,7 +371,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId,
                 configurations);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -348,7 +382,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             this.configurationManager.deleteGroupPluginConfigurationUpdates(getSessionSubject(), groupId,
                 groupPluginConfigUpdateIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -359,7 +393,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             this.configurationManager.deleteGroupResourceConfigurationUpdates(getSessionSubject(), groupId,
                 groupResourceConfigUpdateIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -376,7 +410,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             }
             return configurationComposites;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -390,7 +424,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             }
             return configurations;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

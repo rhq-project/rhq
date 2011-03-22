@@ -36,27 +36,27 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
-public class GraphPortlet extends SmallGraphView implements CustomSettingsPortlet {
+public class ResourceGraphPortlet extends ResourceMetricGraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "Graph";
+    public static final String KEY = "ResourceMetric";
     // A default displayed, persisted name for the portlet    
-    public static final String NAME = MSG.view_portlet_defaultName_graph();
+    public static final String NAME = MSG.view_portlet_defaultName_resourceMetric();
 
     // set on initial configuration, the window for this portlet view. 
     private PortletWindow portletWindow;
 
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
-    public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
 
-    public GraphPortlet(String locatorId) {
+    public ResourceGraphPortlet(String locatorId) {
         super(locatorId);
         setOverflow(Overflow.HIDDEN);
     }
@@ -72,7 +72,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
         }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            setResourceId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
+            setEntityId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
             setDefinitionId(storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
         }
     }
@@ -126,7 +126,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
                     if (form.getValue(CFG_RESOURCE_ID) instanceof Integer) {
                         metric.fetchData();
-                        form.clearValue("defininitionId");
+                        form.clearValue(CFG_DEFINITION_ID);
                     }
                 }
             });
@@ -175,7 +175,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
         public final Portlet getInstance(String locatorId) {
 
-            return new GraphPortlet(locatorId);
+            return new ResourceGraphPortlet(locatorId);
         }
     }
 }

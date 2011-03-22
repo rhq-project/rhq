@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Joseph Marques
  */
-public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGroupComposite> {
+public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGroupComposite, ResourceGroupCriteria> {
 
     ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
@@ -100,9 +100,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceGroupCriteria criteria = getFetchCriteria(request);
-
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, ResourceGroupCriteria criteria) {
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -119,6 +118,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
             });
     }
 
+    @Override
     protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.setPageControl(getPageControl(request));

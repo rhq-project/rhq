@@ -214,7 +214,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<HistoryGroupRe
         return html;
     }
 
-    class DataSource extends RPCDataSource<GroupResourceConfigurationUpdate> {
+    class DataSource extends RPCDataSource<GroupResourceConfigurationUpdate, GroupResourceConfigurationUpdateCriteria> {
 
         public class Field {
             public static final String ID = "id";
@@ -246,13 +246,9 @@ public class HistoryGroupResourceConfigurationTable extends Table<HistoryGroupRe
         }
 
         @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
+        protected void executeFetch(final DSRequest request, final DSResponse response,
+            final GroupResourceConfigurationUpdateCriteria criteria) {
             ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-
-            GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
-            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-            groupList.add(HistoryGroupResourceConfigurationTable.this.group.getId());
-            criteria.addFilterResourceGroupIds(groupList);
 
             configurationService.findGroupResourceConfigurationUpdatesByCriteria(criteria,
                 new AsyncCallback<PageList<GroupResourceConfigurationUpdate>>() {
@@ -271,6 +267,15 @@ public class HistoryGroupResourceConfigurationTable extends Table<HistoryGroupRe
                         processResponse(request.getRequestId(), response);
                     }
                 });
+        }
+
+        @Override
+        protected GroupResourceConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
+            GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
+            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
+            groupList.add(HistoryGroupResourceConfigurationTable.this.group.getId());
+            criteria.addFilterResourceGroupIds(groupList);
+            return criteria;
         }
     }
 }

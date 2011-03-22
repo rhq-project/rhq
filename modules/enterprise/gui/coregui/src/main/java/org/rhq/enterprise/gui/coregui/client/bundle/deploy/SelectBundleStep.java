@@ -24,6 +24,7 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleSelector;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
@@ -33,7 +34,7 @@ public class SelectBundleStep extends AbstractWizardStep {
 
     private final BundleDeployWizard wizard;
 
-    private AbstractSelector<Bundle> selector;
+    private AbstractSelector<Bundle, BundleCriteria> selector;
 
     public SelectBundleStep(BundleDeployWizard wizard) {
         this.wizard = wizard;

@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
+public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, ResourceGroupCriteria> {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
@@ -95,9 +95,8 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceGroupCriteria criteria = getFetchCriteria(request);
-
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceGroupCriteria criteria) {
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_resourceGroups_loadFailed(), caught);
@@ -113,6 +112,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         });
     }
 
+    @Override
     protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.setPageControl(getPageControl(request));

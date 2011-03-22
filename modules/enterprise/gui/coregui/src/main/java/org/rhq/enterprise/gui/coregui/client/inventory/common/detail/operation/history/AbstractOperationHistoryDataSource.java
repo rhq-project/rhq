@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -27,18 +29,19 @@ import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.core.domain.criteria.OperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractOperationHistoryDataSource<T extends OperationHistory> extends RPCDataSource<T> {
+public abstract class AbstractOperationHistoryDataSource<T extends OperationHistory, C extends OperationHistoryCriteria>
+    extends RPCDataSource<T, C> {
 
     private T currentOperationHistory;
 
@@ -86,23 +89,23 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
         idField.setPrimaryKey(true);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME,
-                MSG.dataSource_operationHistory_field_operationName());
+        DataSourceTextField nameField = new DataSourceTextField(Field.OPERATION_NAME, MSG
+            .dataSource_operationHistory_field_operationName());
         fields.add(nameField);
 
         DataSourceTextField statusField = new DataSourceTextField(Field.STATUS, MSG.common_title_status());
         fields.add(statusField);
 
-        DataSourceDateTimeField createdTimeField = new DataSourceDateTimeField(Field.CREATED_TIME,
-                MSG.dataSource_operationHistory_field_createdTime());
+        DataSourceDateTimeField createdTimeField = new DataSourceDateTimeField(Field.CREATED_TIME, MSG
+            .dataSource_operationHistory_field_createdTime());
         fields.add(createdTimeField);
 
-        DataSourceDateTimeField startedTimeField = new DataSourceDateTimeField(Field.STARTED_TIME,
-                MSG.dataSource_operationHistory_field_startedTime());
+        DataSourceDateTimeField startedTimeField = new DataSourceDateTimeField(Field.STARTED_TIME, MSG
+            .dataSource_operationHistory_field_startedTime());
         fields.add(startedTimeField);
 
-        DataSourceTextField subjectField = new DataSourceTextField(Field.SUBJECT,
-                MSG.dataSource_operationHistory_field_subject());
+        DataSourceTextField subjectField = new DataSourceTextField(Field.SUBJECT, MSG
+            .dataSource_operationHistory_field_subject());
         fields.add(subjectField);
 
         return fields;

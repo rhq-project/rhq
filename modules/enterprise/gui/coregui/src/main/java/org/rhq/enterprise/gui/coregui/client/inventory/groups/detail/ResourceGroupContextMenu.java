@@ -44,7 +44,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -291,12 +291,16 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                 addToDBItem.addClickHandler(new ClickHandler() {
                                     public void onClick(MenuItemClickEvent menuItemClickEvent) {
 
-                                        DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " "
-                                            + MSG.view_tree_common_contextMenu_chart(), GraphPortlet.KEY, 250);
+                                        DashboardPortlet p = new DashboardPortlet(MSG
+                                            .view_tree_common_contextMenu_groupGraph(), ResourceGroupGraphPortlet.KEY,
+                                            250);
                                         p.getConfiguration().put(
-                                            new PropertySimple(GraphPortlet.CFG_RESOURCE_GROUP_ID, group.getId()));
-                                        p.getConfiguration().put(
-                                            new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
+                                            new PropertySimple(ResourceGroupGraphPortlet.CFG_RESOURCE_GROUP_ID, group
+                                                .getId()));
+                                        p.getConfiguration()
+                                            .put(
+                                                new PropertySimple(ResourceGroupGraphPortlet.CFG_DEFINITION_ID, def
+                                                    .getId()));
 
                                         d.addPortlet(p);
 

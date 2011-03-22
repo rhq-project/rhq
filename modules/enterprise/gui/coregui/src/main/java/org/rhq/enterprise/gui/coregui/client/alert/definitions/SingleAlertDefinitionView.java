@@ -52,6 +52,8 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
     private Button saveButton;
     private Button cancelButton;
 
+    private boolean allowedToModifyAlertDefinitions;
+
     public SingleAlertDefinitionView(String locatorId, AbstractAlertDefinitionsView alertDefView) {
         this(locatorId, alertDefView, null);
     }
@@ -61,6 +63,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         super(locatorId);
 
         this.alertDefinition = alertDefinition;
+        this.allowedToModifyAlertDefinitions = alertDefView.isAllowedToModifyAlertDefinitions();
 
         LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
         tabSet.setHeight100();
@@ -107,6 +110,8 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         buttons.addMember(saveButton);
         buttons.addMember(cancelButton);
 
+        editButton.setDisabled(!allowedToModifyAlertDefinitions);
+
         editButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -121,7 +126,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
                 setAlertDefinition(getAlertDefinition()); // loads data into static fields
                 makeViewOnly();
 
-                alertDefView.commitAlertDefinition(getAlertDefinition());                
+                alertDefView.commitAlertDefinition(getAlertDefinition());
             }
         });
 
@@ -155,6 +160,12 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
     }
 
     public void makeEditable() {
+        if (!this.allowedToModifyAlertDefinitions) {
+            // this is just a safety measure - we should never get here if we don't have perms, but just in case,
+            // don't do anything to allow the def to be editable. Should we notify the message center?
+            return;
+        }
+
         saveButton.show();
         cancelButton.show();
         editButton.hide();

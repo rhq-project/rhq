@@ -49,7 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<AlertDefinition> {
+public abstract class AbstractAlertDefinitionsDataSource extends
+    RPCDataSource<AlertDefinition, AlertDefinitionCriteria> {
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -184,8 +185,8 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        AlertDefinitionCriteria criteria = getCriteria(request);
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final AlertDefinitionCriteria criteria) {
         GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
             new AsyncCallback<PageList<AlertDefinition>>() {
                 public void onFailure(Throwable caught) {
@@ -195,13 +196,17 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
                 }
 
                 public void onSuccess(PageList<AlertDefinition> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
+                    dataRetrieved(result, response, request);
                 }
             });
     }
 
-    protected abstract AlertDefinitionCriteria getCriteria(DSRequest request);
+    protected void dataRetrieved(final PageList<AlertDefinition> result, final DSResponse response,
+        final DSRequest request) {
+
+        response.setData(buildRecords(result));
+        processResponse(request.getRequestId(), response);
+    }
 
     /**
      * Returns a criteria that will query for all alerts, but only for the ID and name fields. 

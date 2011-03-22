@@ -51,6 +51,7 @@ import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordi
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
@@ -165,6 +166,13 @@ public class StartupServlet extends HttpServlet {
         // Establish the current server mode for the server. This will move the server to NORMAL
         // mode from DOWN if necessary.  This can also affect comm layer behavior.
         serverManager.establishCurrentServerMode();
+        if ("true".equals(System.getProperty("rhq.sync.endpoint-address", "false"))) {
+            try {
+                serverManager.syncEndpointAddress();
+            } catch (SyncEndpointAddressException e) {
+                log("Failed to sync server endpoint address.", e);
+            }
+        }
     }
 
     /**
@@ -374,6 +382,15 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(PurgeResourceTypesJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log("Cannot schedule purge resource types job: " + e.getMessage());
+        }
+
+        try {
+            // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 60 * 5;
+            scheduler.scheduleSimpleRepeatingJob(PurgePluginsJob.class, true, false, initialDelay, interval);
+        } catch (Exception e) {
+            log("Cannot schedule purge plugins job: " + e.getMessage());
         }
 
         // DynaGroup Auto-Recalculation Job

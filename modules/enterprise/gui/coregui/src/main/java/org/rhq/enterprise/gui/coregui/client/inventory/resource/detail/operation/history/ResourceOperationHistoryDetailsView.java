@@ -34,14 +34,15 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -50,9 +51,15 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
     private String disambiguatedResourceName;
     private boolean showResourceField;
+    private ResourceComposite resourceComposite;
 
     public ResourceOperationHistoryDetailsView(String locatorId) {
         this(locatorId, false);
+    }
+
+    public ResourceOperationHistoryDetailsView(String locatorId, ResourceComposite resourceComposite) {
+        this(locatorId);
+        this.resourceComposite = resourceComposite;
     }
 
     public ResourceOperationHistoryDetailsView(String locatorId, boolean showResourceField) {
@@ -108,8 +115,9 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
                     if (showResourceField) {
                         Resource resource = resourceOperationHistory.getResource();
-                        disambiguatedResourceName = AncestryUtil.getResourceLongName(resource.getId(), resource
-                            .getName(), resource.getResourceType());
+                        String url = LinkManager.getResourceLink(resource.getId());
+                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(), String
+                            .valueOf(resource.getId()));
                     }
 
                     displayDetails(resourceOperationHistory);

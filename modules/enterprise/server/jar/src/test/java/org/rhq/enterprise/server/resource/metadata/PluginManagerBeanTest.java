@@ -1,6 +1,5 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.ejb.EJBException;
@@ -131,7 +130,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2",
             "Deleting a plugin should not remove it from the database");
 
-        pluginMgr.purgePlugins(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
+        pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
 
         assertEquals("Failed to purge plugins from the database", 1, pluginMgr.getPlugins().size());
     }

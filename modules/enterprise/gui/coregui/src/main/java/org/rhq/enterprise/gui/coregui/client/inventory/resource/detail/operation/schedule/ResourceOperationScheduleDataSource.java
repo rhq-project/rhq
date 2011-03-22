@@ -26,6 +26,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -53,33 +54,33 @@ public class ResourceOperationScheduleDataSource extends AbstractOperationSchedu
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
         final Integer scheduleId = request.getCriteria().getAttributeAsInt(Field.ID);
         if (scheduleId != null) {
-            operationService.getResourceOperationSchedule(scheduleId,  new AsyncCallback<ResourceOperationSchedule>() {
+            operationService.getResourceOperationSchedule(scheduleId, new AsyncCallback<ResourceOperationSchedule>() {
                 public void onSuccess(ResourceOperationSchedule result) {
                     sendSuccessResponse(request, response, result);
                 }
 
                 public void onFailure(Throwable caught) {
                     sendFailureResponse(request, response, "Failed to fetch ResourceOperationSchedule with id "
-                            + scheduleId + ".", caught);
+                        + scheduleId + ".", caught);
                 }
             });
         } else {
             operationService.findScheduledResourceOperations(this.resourceComposite.getResource().getId(),
-            new AsyncCallback<List<ResourceOperationSchedule>>() {
-                public void onSuccess(List<ResourceOperationSchedule> result) {
-                    Record[] records = buildRecords(result);
-                    response.setData(records);
-                    processResponse(request.getRequestId(), response);
-                }
+                new AsyncCallback<List<ResourceOperationSchedule>>() {
+                    public void onSuccess(List<ResourceOperationSchedule> result) {
+                        Record[] records = buildRecords(result);
+                        response.setData(records);
+                        processResponse(request.getRequestId(), response);
+                    }
 
-                public void onFailure(Throwable caught) {
-                    throw new RuntimeException("Failed to find scheduled operations for "
-                        + resourceComposite.getResource() + ".", caught);
-                }
-            });
+                    public void onFailure(Throwable caught) {
+                        throw new RuntimeException("Failed to find scheduled operations for "
+                            + resourceComposite.getResource() + ".", caught);
+                    }
+                });
         }
     }
 

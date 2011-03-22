@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
@@ -56,12 +56,19 @@ public class ReorderableList extends LocatableVLayout {
 
     private boolean isReadOnly;
 
+    private HoverCustomizer nameHoverCustomizer;
+
     public ReorderableList(String locatorId, ListGridRecord[] records, String itemTitle, String itemIcon) {
-        this(locatorId, false, records, itemTitle, itemIcon);
+        this(locatorId, false, records, itemTitle, itemIcon, null);
+    }
+
+    public ReorderableList(String locatorId, ListGridRecord[] records, String itemTitle, String itemIcon,
+        HoverCustomizer nameHoverCustomizer) {
+        this(locatorId, false, records, itemTitle, itemIcon, nameHoverCustomizer);
     }
 
     public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle,
-        String itemIcon) {
+        String itemIcon, HoverCustomizer nameHoverCustomizer) {
         super(locatorId);
 
         this.isReadOnly = isReadOnly;
@@ -80,6 +87,8 @@ public class ReorderableList extends LocatableVLayout {
 
         this.itemTitle = itemTitle;
         this.itemIcon = itemIcon;
+
+        this.nameHoverCustomizer = nameHoverCustomizer;
     }
 
     /**
@@ -126,6 +135,10 @@ public class ReorderableList extends LocatableVLayout {
             fields.add(iconField);
         }
         ListGridField nameField = new ListGridField(getNameField(), this.nameFieldTitle);
+        if (null != this.nameHoverCustomizer) {
+            nameField.setShowHover(true);
+            nameField.setHoverCustomizer(this.nameHoverCustomizer);
+        }
         fields.add(nameField);
         this.listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
 

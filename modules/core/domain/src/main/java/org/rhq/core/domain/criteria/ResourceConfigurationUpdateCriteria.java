@@ -41,7 +41,7 @@ import org.rhq.core.domain.util.PageOrdering;
 public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigurationUpdateCriteria {
     private static final long serialVersionUID = 1L;
 
-    public static final String SORT_FIELD_RESOURCE_NAME = "name";
+    public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
 
     private Integer filterGroupConfigurationUpdateId; // required overrides
@@ -53,7 +53,7 @@ public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigu
     private boolean fetchResource;
     private boolean fetchGroupConfigurationUpdate;
 
-    private PageOrdering sortName; // requires sort override
+    private PageOrdering sortResourceName; // requires sort override
     private PageOrdering sortResourceId; // requires sort override
 
     public ResourceConfigurationUpdateCriteria() {
@@ -107,7 +107,7 @@ public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigu
 
     public void addSortResourceName(PageOrdering sortName) {
         addSortField(SORT_FIELD_RESOURCE_NAME);
-        this.sortName = sortName;
+        this.sortResourceName = sortName;
     }
 
     public void addSortResourceId(PageOrdering sortResourceId) {

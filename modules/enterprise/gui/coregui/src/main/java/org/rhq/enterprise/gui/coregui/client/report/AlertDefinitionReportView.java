@@ -1,10 +1,13 @@
 package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -22,6 +25,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -30,6 +34,10 @@ import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefi
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
@@ -72,7 +80,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
         private static final String FIELD_RESOURCE = "resource";
 
         @Override
-        protected AlertDefinitionCriteria getCriteria(DSRequest request) {
+        protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
             AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterResourceOnly(true); // guarantees that all alert defs we get will have a non-null Resource object
             criteria.setPageControl(getPageControl(request));
@@ -114,19 +122,6 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             }
 
             // add more columns
-            ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
-            resourceField.setCellFormatter(new CellFormatter() {
-                @Override
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    AlertDefinition alertDef = copyValues(record);
-                    Resource resource = alertDef.getResource();
-                    String link = LinkManager.getResourceLink(resource.getId());
-                    // TODO: need disambiguation
-                    return "<a href=\"" + link + "\">" + resource.getName() + "</a>";
-                }
-            });
-            fields.add(resourceField);
-
             ListGridField parentField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
             parentField.setWidth(100);
             parentField.setShowHover(true);
@@ -182,8 +177,39 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                     }
                 }
             });
-
             fields.add(parentField);
+
+            ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
+            resourceField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    String url = LinkManager
+                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                }
+            });
+            resourceField.setShowHover(true);
+            resourceField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                }
+            });
+            fields.add(resourceField);
+
+            ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
+            ancestryField.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
+                }
+            });
+            ancestryField.setShowHover(true);
+            ancestryField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+                }
+            });
+            fields.add(ancestryField);
 
             return fields;
         }
@@ -193,8 +219,9 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             // in order to support sorting our list grid on the parent and resource columns,
             // we have to assign these to something that is sortable
             ListGridRecord record = super.copyValues(from);
+            Resource resource = from.getResource();
 
-            record.setAttribute(FIELD_RESOURCE, from.getResource().getName());
+            record.setAttribute(FIELD_RESOURCE, resource.getName());
 
             Integer parentId = from.getParentId(); // a valid non-zero number means the alert def came from a template
             AlertDefinition groupAlertDefinition = from.getGroupAlertDefinition();
@@ -204,6 +231,12 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             } else if (groupAlertDefinition != null) {
                 record.setAttribute(FIELD_PARENT, "<b>" + MSG.view_alert_definition_for_group() + "</b>");
             }
+
+            // for ancestry handling     
+            record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+            record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
             return record;
         }
@@ -228,6 +261,51 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             fields.add(parentField);
 
             return fields;
+        }
+
+        /**
+         * Additional processing to support a cross-resource view)
+         * @param result
+         * @param response
+         * @param request
+         */
+        protected void dataRetrieved(final PageList<AlertDefinition> result, final DSResponse response,
+            final DSRequest request) {
+            HashSet<Integer> typesSet = new HashSet<Integer>();
+            HashSet<String> ancestries = new HashSet<String>();
+            for (AlertDefinition alertDefinition : result) {
+                Resource resource = alertDefinition.getResource();
+                if (null != resource) {
+                    typesSet.add(resource.getResourceType().getId());
+                    ancestries.add(resource.getAncestry());
+                }
+            }
+
+            // In addition to the types of the result resources, get the types of their ancestry
+            typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+            ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+            typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+
+                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                    Record[] records = buildRecords(result);
+                    for (Record record : records) {
+                        // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                        // Build the decoded ancestry Strings now for display
+                        record
+                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                    }
+                    response.setData(records);
+                    response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                    processResponse(request.getRequestId(), response);
+                }
+            });
         }
     }
 }

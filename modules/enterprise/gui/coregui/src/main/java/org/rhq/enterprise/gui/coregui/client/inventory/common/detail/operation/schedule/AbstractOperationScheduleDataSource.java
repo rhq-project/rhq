@@ -37,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.ResourceType;
@@ -49,7 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RecordUtility;
 /**
  * @author Ian Springer
  */
-public abstract class AbstractOperationScheduleDataSource<T extends OperationSchedule> extends RPCDataSource<T> {
+public abstract class AbstractOperationScheduleDataSource<T extends OperationSchedule> extends
+    RPCDataSource<T, Criteria> {
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -92,14 +94,14 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID,
-                MSG.dataSource_operationSchedule_field_id());
+        DataSourceIntegerField idField = new DataSourceIntegerField(Field.ID, MSG
+            .dataSource_operationSchedule_field_id());
         idField.setPrimaryKey(true);
         idField.setCanEdit(false);
-        fields.add(idField);               
+        fields.add(idField);
 
-        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME,
-                MSG.dataSource_operationSchedule_field_operationName(), null, 100, true);
+        DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, MSG
+            .dataSource_operationSchedule_field_operationName(), null, 100, true);
         Set<OperationDefinition> operationDefinitions = this.resourceType.getOperationDefinitions();
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         for (OperationDefinition operationDefinition : operationDefinitions) {
@@ -108,26 +110,26 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         operationNameField.setValueMap(valueMap);
         fields.add(operationNameField);
 
-        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME,
-                MSG.dataSource_operationSchedule_field_operationDisplayName(), null, 100, true);
+        DataSourceTextField operationDisplayNameField = createTextField(Field.OPERATION_DISPLAY_NAME, MSG
+            .dataSource_operationSchedule_field_operationDisplayName(), null, 100, true);
         fields.add(operationDisplayNameField);
 
-        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY,
-                MSG.dataSource_operationSchedule_field_subject());
+        DataSourceField subjectField = new DataSourceField(Field.SUBJECT, FieldType.ANY, MSG
+            .dataSource_operationSchedule_field_subject());
         subjectField.setCanEdit(false);
         fields.add(subjectField);
 
-        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION,
-                MSG.dataSource_operationSchedule_field_description(), null, 100, false);
+        DataSourceTextField descriptionField = createTextField(Field.DESCRIPTION, MSG
+            .dataSource_operationSchedule_field_description(), null, 100, false);
         fields.add(descriptionField);
 
-        DataSourceDateTimeField nextFireTimeField = new DataSourceDateTimeField(Field.NEXT_FIRE_TIME,
-                MSG.dataSource_operationSchedule_field_nextFireTime());
+        DataSourceDateTimeField nextFireTimeField = new DataSourceDateTimeField(Field.NEXT_FIRE_TIME, MSG
+            .dataSource_operationSchedule_field_nextFireTime());
         nextFireTimeField.setCanEdit(false);
         fields.add(nextFireTimeField);
 
-        DataSourceIntegerField timeoutField = createIntegerField(Field.TIMEOUT,
-                MSG.dataSource_operationSchedule_field_timeout(), 30, null, false);
+        DataSourceIntegerField timeoutField = createIntegerField(Field.TIMEOUT, MSG
+            .dataSource_operationSchedule_field_timeout(), 30, null, false);
         fields.add(timeoutField);
 
         return fields;
@@ -140,7 +142,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         T to = createOperationSchedule();
 
         to.setId(from.getAttributeAsInt(Field.ID));
-        to.setJobName(from.getAttribute(Field.JOB_NAME));        
+        to.setJobName(from.getAttribute(Field.JOB_NAME));
         to.setJobGroup(from.getAttribute(Field.JOB_GROUP));
         SubjectRecord subjectRecord = (SubjectRecord) from.getAttributeAsRecord(Field.SUBJECT);
         to.setSubject(subjectRecord.toSubject());
@@ -174,11 +176,11 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         Configuration parameters = from.getParameters();
         to.setAttribute(Field.PARAMETERS, parameters);
         to.setAttribute(Field.OPERATION_NAME, from.getOperationName());
-        to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());        
+        to.setAttribute(Field.OPERATION_DISPLAY_NAME, from.getOperationDisplayName());
         to.setAttribute(Field.DESCRIPTION, from.getDescription());
         to.setAttribute(Field.NEXT_FIRE_TIME, from.getNextFireTime());
-        to.setAttribute(Field.TIMEOUT, (parameters != null) ?
-                parameters.getSimpleValue(OperationDefinition.TIMEOUT_PARAM_NAME, null) : null);
+        to.setAttribute(Field.TIMEOUT, (parameters != null) ? parameters.getSimpleValue(
+            OperationDefinition.TIMEOUT_PARAM_NAME, null) : null);
 
         JobTrigger jobTrigger = from.getJobTrigger();
         Record jobTriggerRecord = new ListGridRecord();
@@ -201,7 +203,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         } else {
             // calendar mode
             Date startTime = jobTriggerRecord.getAttributeAsDate(Field.START_TIME);
-            Long repeatInterval = (Long)jobTriggerRecord.getAttributeAsObject(Field.REPEAT_INTERVAL);
+            Long repeatInterval = (Long) jobTriggerRecord.getAttributeAsObject(Field.REPEAT_INTERVAL);
             Integer repeatCount = jobTriggerRecord.getAttributeAsInt(Field.REPEAT_COUNT);
             Date endTime = jobTriggerRecord.getAttributeAsDate(Field.END_TIME);
 
@@ -243,8 +245,18 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
     }
 
     protected void addRequestPropertiesToRecord(DSRequest request, Record record) {
-        Configuration parameters = (Configuration) request.getAttributeAsObject(GroupOperationScheduleDataSource.RequestProperty.PARAMETERS);
+        Configuration parameters = (Configuration) request
+            .getAttributeAsObject(GroupOperationScheduleDataSource.RequestProperty.PARAMETERS);
         record.setAttribute(GroupOperationScheduleDataSource.Field.PARAMETERS, parameters);
+    }
+
+    /**
+     * All data sources extending this type do not use the normal criteria object to query.
+     * So this just returns null.
+     */
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        return null;
     }
 
     public static class SubjectRecord extends ListGridRecord {

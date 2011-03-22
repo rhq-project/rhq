@@ -161,7 +161,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
         return builder.toString();
     }
 
-    private class RoleSelector extends AbstractSelector<Role> {
+    private class RoleSelector extends AbstractSelector<Role, RoleCriteria> {
         public RoleSelector(String id, Collection<Role> roles) {
             super(id);
             if (roles != null) {
@@ -171,7 +171,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
         }
 
         @Override
-        protected RPCDataSource<Role> getDataSource() {
+        protected RPCDataSource<Role, RoleCriteria> getDataSource() {
             return new RolesDataSource();
         }
 

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ANCESTRY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -61,7 +60,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Greg Hinkle
  */
-@SuppressWarnings("unchecked")
 public class ResourceSearchView extends Table {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
@@ -153,19 +151,24 @@ public class ResourceSearchView extends Table {
                 return SeleniumUtility.getLocatableHref(url, o.toString(), null);
             }
         });
+        nameField.setShowHover(true);
+        nameField.setHoverCustomizer(new HoverCustomizer() {
 
-        ListGridField ancestryField = new ListGridField(ANCESTRY.propertyName(), ANCESTRY.title());
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+
+        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
         ancestryField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES);
+                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
             }
         });
         ancestryField.setShowHover(true);
         ancestryField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return "<p style='width:400px'>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_RESOURCES) + "</br>"
-                    + listGridRecord.getAttributeAsString(ResourceDatasource.ATTR_ANCESTRY_TYPES) + "</p>";
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         });
 

@@ -42,7 +42,7 @@ public enum HttpdAddressUtility {
 
     APACHE_1_3 {
         
-        public List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag) {
+        public List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag, boolean substituteWildcards) {
             try {
                 List<ApacheDirective> ports = ag.search("/Port");
                 List<ApacheDirective> bindAddresses = ag.search("/BindAddress");
@@ -75,14 +75,14 @@ public enum HttpdAddressUtility {
                 }
                 
                 for (Address address : addresses) {
-                    if (!address.isPortDefined() || address.isPortWildcard()) {
+                    
+                    if (!address.isPortDefined()) {
                         address.port = 80;
                     }
-                    if (address.host == null || address.isHostDefault() || address.isHostWildcard()) {
-                        address = getLocalhost(address.port);
-                    }
                     
-                    updateWithServerName(address, ag);
+                    if (substituteWildcards) {
+                        substituteWildcards(ag, address);
+                    }
                 }
                 
                 return addresses;
@@ -95,17 +95,16 @@ public enum HttpdAddressUtility {
     },
     APACHE_2_x {
         
-        public List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag) {
+        public List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag, boolean substituteWildcards) {
             try {
                 List<Address> ret = new ArrayList<Address>();
                 
                 for(ApacheDirective n : ag.search("/Listen")) {
                     Address addr = parseListen(n.getValues().get(0));
-                    if (addr.host == null || addr.isHostDefault() || addr.isHostWildcard()) {
-                        addr = getLocalhost(addr.port);
-                    }
                     
-                    updateWithServerName(addr, ag);
+                    if (substituteWildcards) {
+                        substituteWildcards(ag, addr);
+                    }
                     
                     ret.add(addr);
                 }
@@ -283,9 +282,10 @@ public enum HttpdAddressUtility {
      * This returns all the addresses the server listens on.
      * 
      * @param ag the tree of the httpd configuration
+     * @param substituteWildcards true if wildcard substitution should be made on host and port specs
      * @return the addresses or null on failure
      */
-    public abstract List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag);
+    public abstract List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag, boolean substituteWildcards);
     
     /**
      * This just constructs a first available address under which the server or one of its virtual hosts can be reached.
@@ -297,7 +297,7 @@ public enum HttpdAddressUtility {
      * @return the address or null on failure
      */
     public Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort) {
-        List<Address> addressesToMatch = getAllMainServerAddresses(ag);
+        List<Address> addressesToMatch = getAllMainServerAddresses(ag, false);
         
         if (addressesToMatch == null) {
             return null;
@@ -305,6 +305,7 @@ public enum HttpdAddressUtility {
         
         for (Address address : addressesToMatch) {
             if (isAddressConforming(address, limitToHost, limitToPort, false)) {
+                substituteWildcards(ag, address);
                 return address;
             }
         }
@@ -362,6 +363,19 @@ public enum HttpdAddressUtility {
         return ret;
     }
     
+    private static void substituteWildcards(ApacheDirectiveTree ag, Address address) {
+        if (address.isPortWildcard()) {
+            address.port = 80;
+        }
+        
+        if (address.host == null || address.isHostDefault() || address.isHostWildcard()) {
+            address = getLocalhost(address.port);
+        }
+        
+        updateWithServerName(address, ag);
+        
+    }
+    
     /**
      * Checks that given address represents a possibly wildcarded limitingHost and limitingPort values.
      * 
@@ -417,7 +431,7 @@ public enum HttpdAddressUtility {
         }
     }
     
-    private static void updateWithServerName(Address address, ApacheDirectiveTree config) throws UnknownHostException {
+    private static void updateWithServerName(Address address, ApacheDirectiveTree config) {
         //check if there is a ServerName directive
         List<ApacheDirective> serverNameNodes = config.search("/ServerName");
 
@@ -430,7 +444,7 @@ public enum HttpdAddressUtility {
         }
     }
     
-    private static void updateWithServerName(Address address, String serverName) throws UnknownHostException {
+    private static void updateWithServerName(Address address, String serverName) {
         //the configuration may be invalid and/or the hostname can be unresolvable.
         //we try to match the address with the servername first by IP address
         //but if that fails (i.e. the hostname couldn't be resolved to an IP)

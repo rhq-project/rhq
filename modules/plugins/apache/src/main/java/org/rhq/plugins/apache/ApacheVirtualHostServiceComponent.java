@@ -502,7 +502,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             vhostAddressStrings.length);
 
         if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-            List<HttpdAddressUtility.Address> serverAddrs = parent.getAddressUtility().getAllMainServerAddresses(tree);
+            List<HttpdAddressUtility.Address> serverAddrs = parent.getAddressUtility().getAllMainServerAddresses(tree, true);
             if (serverAddrs != null) {
                 vhostAddresses.addAll(serverAddrs);
             }

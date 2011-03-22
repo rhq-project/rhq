@@ -160,6 +160,10 @@ public class StandaloneContainer {
                     break;
                 }
 
+                if (answer.equalsIgnoreCase(Command.STDIN.toString())) {
+                    br = new BufferedReader(new InputStreamReader(System.in));
+                }
+
                 // Check for history commands
                 answer = handleHistory(answer);
 
@@ -349,6 +353,9 @@ public class StandaloneContainer {
             break;
         case SET:
             set(tokens);
+            break;
+        case STDIN:
+            // handled in the outer loop
             break;
         case WAIT:
             Thread.sleep(Integer.valueOf(tokens[1]));
@@ -779,6 +786,7 @@ public class StandaloneContainer {
         RESOURCES("res", "", 0, "Shows the discovered resources"), //
         SET("set", "'resource' N", 2,
             "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
+        STDIN("stdin","",0, "Stop reading the batch file and wait for commands on stdin"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
         P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
         R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource.");

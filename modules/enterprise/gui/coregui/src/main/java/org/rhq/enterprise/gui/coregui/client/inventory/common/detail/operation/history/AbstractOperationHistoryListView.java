@@ -260,22 +260,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     }
 
     protected ListGridField createAncestryField() {
-        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
-        ancestryField.setAlign(Alignment.LEFT);
-        ancestryField.setCellAlign(Alignment.LEFT);
-        ancestryField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-            }
-        });
-        ancestryField.setShowHover(true);
-        ancestryField.setHoverCustomizer(new HoverCustomizer() {
-
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-            }
-        });
-
+        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
         return ancestryField;
     }
 

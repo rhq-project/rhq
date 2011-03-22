@@ -180,18 +180,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
             }
         });
 
-        ListGridField ancestryRecent = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
-        ancestryRecent.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-            }
-        });
-        ancestryRecent.setShowHover(true);
-        ancestryRecent.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-            }
-        });
+        ListGridField ancestryRecent = AncestryUtil.setupAncestryListGridField();
 
         ListGridField operationRecent = new ListGridField(RecentOperationsDataSource.Field.OPERATION.propertyName(),
             RecentOperationsDataSource.Field.OPERATION.title());
@@ -220,18 +209,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
             }
         });
 
-        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
-        ancestryNext.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-            }
-        });
-        ancestryNext.setShowHover(true);
-        ancestryNext.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-            }
-        });
+        ListGridField ancestryNext = AncestryUtil.setupAncestryListGridField();
 
         ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
             ScheduledOperationsDataSource.Field.OPERATION.title());

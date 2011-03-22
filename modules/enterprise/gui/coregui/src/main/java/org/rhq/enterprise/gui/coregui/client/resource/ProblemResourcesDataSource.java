@@ -33,6 +33,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageList;
@@ -53,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceComposite> {
+public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceComposite, Criteria> {
 
     public enum Field {
 
@@ -128,12 +129,18 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
         return fields;
     }
 
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
+    }
+
     /** Fetch the ProblemResource data, and populate the response object appropriately.
      *
      * @param request incoming request
      * @param response outgoing response
      */
-    public void executeFetch(final DSRequest request, final DSResponse response) {
+    public void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         long ctime = -1;
         int maxItems = -1;

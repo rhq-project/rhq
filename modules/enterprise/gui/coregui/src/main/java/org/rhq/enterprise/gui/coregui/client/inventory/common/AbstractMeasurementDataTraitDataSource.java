@@ -47,7 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSource<MeasurementDataTrait> {
+public abstract class AbstractMeasurementDataTraitDataSource extends
+    RPCDataSource<MeasurementDataTrait, MeasurementDataTraitCriteria> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementDataTraitDataSource() {
@@ -87,10 +88,9 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final MeasurementDataTraitCriteria criteria) {
         final long startTime = System.currentTimeMillis();
-
-        final MeasurementDataTraitCriteria criteria = getCriteria(request);
 
         this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
             public void onFailure(Throwable caught) {
@@ -116,7 +116,8 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
         processResponse(request.getRequestId(), response);
     }
 
-    protected MeasurementDataTraitCriteria getCriteria(DSRequest request) {
+    @Override
+    protected MeasurementDataTraitCriteria getFetchCriteria(DSRequest request) {
         MeasurementDataTraitCriteria criteria = new MeasurementDataTraitCriteria();
 
         Criteria requestCriteria = request.getCriteria();

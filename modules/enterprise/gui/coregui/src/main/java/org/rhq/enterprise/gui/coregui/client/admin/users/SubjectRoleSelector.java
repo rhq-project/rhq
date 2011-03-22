@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -34,7 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class SubjectRoleSelector extends AbstractSelector<Role> {
+public class SubjectRoleSelector extends AbstractSelector<Role, RoleCriteria> {
     private static final String ITEM_ICON = "global/Role_16.png";
 
     public SubjectRoleSelector(String locatorId, ListGridRecord[] roleRecords, boolean isReadOnly) {
@@ -48,7 +49,7 @@ public class SubjectRoleSelector extends AbstractSelector<Role> {
     }
 
     @Override
-    protected RPCDataSource<Role> getDataSource() {
+    protected RPCDataSource<Role, RoleCriteria> getDataSource() {
         return new RolesDataSource();
 
     }

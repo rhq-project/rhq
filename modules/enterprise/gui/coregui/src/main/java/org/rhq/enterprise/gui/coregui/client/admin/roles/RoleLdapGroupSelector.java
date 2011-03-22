@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 /**
  * @author Simeon Pinder
  */
-public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
+public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.core.domain.criteria.Criteria> {
 
     public static final String FIELD_ID = "id";
     public static final String FIELD_NAME = "name";
@@ -64,7 +64,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
 
     public RoleLdapGroupSelector(String locatorId, ListGridRecord[] assignedRecords, boolean isReadOnly) {
         super(locatorId, isReadOnly);
-        
+
         setAssigned(assignedRecords);
     }
 
@@ -83,7 +83,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
     }
 
     @Override
-    protected RPCDataSource<LdapGroup> getDataSource() {
+    protected RPCDataSource<LdapGroup, org.rhq.core.domain.criteria.Criteria> getDataSource() {
         return new LdapGroupsDataSource();
     }
 
@@ -104,7 +104,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
         return MSG.common_title_ldapGroups();
     }
 
-    public static class LdapGroupsDataSource extends RPCDataSource<LdapGroup> {
+    public static class LdapGroupsDataSource extends RPCDataSource<LdapGroup, org.rhq.core.domain.criteria.Criteria> {
 
         //cache ldap group data from external server
         private Set<Map<String, String>> cachedLdapGroupsAvailable;
@@ -142,15 +142,22 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
         }
 
         @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
+        protected void executeFetch(final DSRequest request, final DSResponse response,
+            final org.rhq.core.domain.criteria.Criteria unused) {
             //if not null then go through to initialize
             if (cachedLdapGroupsAvailable == null) {
                 fetchLdapGroupsFromServerAsync(request, response);
             } else {//use cached data and return correct response
                 //process cachedLdapGroupsAvailable based on criteria
                 PageList<LdapGroup> ldapGroups = filterCachedLdapGroups(request);
-                sendSuccessResponse(request, response, ldapGroups);                
+                sendSuccessResponse(request, response, ldapGroups);
             }
+        }
+
+        @Override
+        protected org.rhq.core.domain.criteria.Criteria getFetchCriteria(DSRequest request) {
+            // we don't use criterias for this datasource, just return null
+            return null;
         }
 
         private PageList<LdapGroup> filterCachedLdapGroups(DSRequest request) {
@@ -181,27 +188,25 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup> {
             } else {//return full list .. as no filtering done.
                 locatedGroupMaps = cachedLdapGroupsAvailable;
             }
-            @SuppressWarnings({"UnnecessaryLocalVariable"})
+            @SuppressWarnings( { "UnnecessaryLocalVariable" })
             PageList<LdapGroup> ldapGroups = convertToPageList(locatedGroupMaps);
             return ldapGroups;
         }
 
         private void fetchLdapGroupsFromServerAsync(final DSRequest request, final DSResponse response) {
-            GWTServiceLookup.getLdapService().findAvailableGroups(
-                new AsyncCallback<Set<Map<String, String>>>() {
-                    public void onSuccess(Set<Map<String, String>> locatedGroupMaps) {
-                        Log.debug("Successfully located " + locatedGroupMaps.size() + " available LDAP groups.");
-                        cachedLdapGroupsAvailable = locatedGroupMaps;
-                        //all groups displayed initially
-                        PageList<LdapGroup> ldapGroups = convertToPageList(locatedGroupMaps);
-                        sendSuccessResponse(request, response, ldapGroups);
-                    }
+            GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
+                public void onSuccess(Set<Map<String, String>> locatedGroupMaps) {
+                    Log.debug("Successfully located " + locatedGroupMaps.size() + " available LDAP groups.");
+                    cachedLdapGroupsAvailable = locatedGroupMaps;
+                    //all groups displayed initially
+                    PageList<LdapGroup> ldapGroups = convertToPageList(locatedGroupMaps);
+                    sendSuccessResponse(request, response, ldapGroups);
+                }
 
-                    public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsRole(),
-                            throwable);
-                    }
-                });//end of findAvailableGroups
+                public void onFailure(Throwable throwable) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsRole(), throwable);
+                }
+            });//end of findAvailableGroups
         }
     }
 

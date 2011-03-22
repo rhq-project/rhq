@@ -213,7 +213,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             return html;
         }
 
-        private class DataSource extends RPCDataSource<PluginConfigurationUpdate> {
+        private class DataSource extends RPCDataSource<PluginConfigurationUpdate, PluginConfigurationUpdateCriteria> {
 
             public class Field {
                 public static final String ID = "id";
@@ -252,12 +252,10 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             }
 
             @Override
-            protected void executeFetch(final DSRequest request, final DSResponse response) {
-                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+            protected void executeFetch(final DSRequest request, final DSResponse response,
+                final PluginConfigurationUpdateCriteria criteria) {
 
-                PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
-                criteria.addFilterGroupConfigurationUpdateId(HistoryGroupPluginConfigurationMembers.this.groupUpdateId);
-                criteria.fetchResource(true);
+                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
                 configurationService.findPluginConfigurationUpdatesByCriteria(criteria,
                     new AsyncCallback<PageList<PluginConfigurationUpdate>>() {
@@ -309,6 +307,14 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                             processResponse(request.getRequestId(), response);
                         }
                     });
+            }
+
+            @Override
+            protected PluginConfigurationUpdateCriteria getFetchCriteria(DSRequest request) {
+                PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
+                criteria.addFilterGroupConfigurationUpdateId(HistoryGroupPluginConfigurationMembers.this.groupUpdateId);
+                criteria.fetchResource(true);
+                return criteria;
             }
         }
     }

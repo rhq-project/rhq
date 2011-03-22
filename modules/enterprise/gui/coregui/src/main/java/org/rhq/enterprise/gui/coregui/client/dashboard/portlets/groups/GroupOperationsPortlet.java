@@ -403,7 +403,23 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
     private Configuration portletConfig;
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final GroupOperationHistoryCriteria criteria) {
+        operationService.findGroupOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<GroupOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
+                }
+
+                public void onSuccess(PageList<GroupOperationHistory> result) {
+                    response.setData(buildRecords(result));
+                    processResponse(request.getRequestId(), response);
+                }
+            });
+    }
+
+    @Override
+    protected GroupOperationHistoryCriteria getFetchCriteria(final DSRequest request) {
         //initialize criteria
         GroupOperationHistoryCriteria criteria = new GroupOperationHistoryCriteria();
 
@@ -493,17 +509,6 @@ class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource 
                 }
             }
         }
-
-        operationService.findGroupOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<GroupOperationHistory>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
-                }
-
-                public void onSuccess(PageList<GroupOperationHistory> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+        return criteria;
     }
 }

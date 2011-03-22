@@ -204,7 +204,8 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
  *
  * @author spinder
  */
-class ResourceOperationsCriteriaHistoryListView extends AbstractOperationHistoryListView {
+class ResourceOperationsCriteriaHistoryListView extends
+    AbstractOperationHistoryListView<ResourceOperationsCriteriaDataSource> {
 
     private ResourceOperationsCriteriaDataSource datasource;
 
@@ -266,7 +267,23 @@ class ResourceOperationsCriteriaDataSource extends ResourceOperationHistoryDataS
     private Configuration portletConfig;
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final ResourceOperationHistoryCriteria criteria) {
+        operationService.findResourceOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
+                }
+
+                public void onSuccess(PageList<ResourceOperationHistory> result) {
+                    response.setData(buildRecords(result));
+                    processResponse(request.getRequestId(), response);
+                }
+            });
+    }
+
+    @Override
+    protected ResourceOperationHistoryCriteria getFetchCriteria(final DSRequest request) {
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
 
         if (request.getCriteria().getValues().containsKey(CriteriaField.RESOURCE_ID)) {
@@ -357,17 +374,6 @@ class ResourceOperationsCriteriaDataSource extends ResourceOperationHistoryDataS
                 }
             }
         }
-
-        operationService.findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.dataSource_operationHistory_error_fetchFailure(), caught);
-                }
-
-                public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+        return criteria;
     }
 }

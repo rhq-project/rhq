@@ -34,6 +34,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -45,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBComposite> {
+public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBComposite, Criteria> {
 
     private int maximumFactor = 0;
 
@@ -58,22 +59,28 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField metricField = new DataSourceTextField("scheduleName", MSG.dataSource_measurementOob_field_scheduleName());
+        DataSourceTextField metricField = new DataSourceTextField("scheduleName", MSG
+            .dataSource_measurementOob_field_scheduleName());
         fields.add(metricField);
 
-        DataSourceTextField resourceField = new DataSourceTextField("resourceName", MSG.dataSource_measurementOob_field_resourceName());
+        DataSourceTextField resourceField = new DataSourceTextField("resourceName", MSG
+            .dataSource_measurementOob_field_resourceName());
         fields.add(resourceField);
 
-        DataSourceTextField parentField = new DataSourceTextField("parentName", MSG.dataSource_measurementOob_field_parentName());
+        DataSourceTextField parentField = new DataSourceTextField("parentName", MSG
+            .dataSource_measurementOob_field_parentName());
         fields.add(parentField);
 
-        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", MSG.dataSource_measurementOob_field_formattedBaseband());
+        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", MSG
+            .dataSource_measurementOob_field_formattedBaseband());
         fields.add(bandField);
 
-        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", MSG.dataSource_measurementOob_field_formattedOutlier());
+        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", MSG
+            .dataSource_measurementOob_field_formattedOutlier());
         fields.add(outlierField);
 
-        DataSourceTextField factorField = new DataSourceTextField("factor", MSG.dataSource_measurementOob_field_factor());
+        DataSourceTextField factorField = new DataSourceTextField("factor", MSG
+            .dataSource_measurementOob_field_factor());
         fields.add(factorField);
 
         return fields;
@@ -81,7 +88,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         PageControl pc = getPageControl(request);
 
@@ -98,6 +105,12 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
                 }
             });
 
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
     }
 
     @Override

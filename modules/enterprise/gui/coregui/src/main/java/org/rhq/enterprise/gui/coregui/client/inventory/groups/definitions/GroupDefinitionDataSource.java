@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
+public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, ResourceGroupDefinitionCriteria> {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
@@ -98,10 +98,8 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
-        criteria.setPageControl(getPageControl(request));
-
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final ResourceGroupDefinitionCriteria criteria) {
         groupService.findGroupDefinitionsByCriteria(criteria, new AsyncCallback<PageList<GroupDefinition>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_definitionLoadFailure(), caught);
@@ -114,6 +112,13 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    @Override
+    protected ResourceGroupDefinitionCriteria getFetchCriteria(final DSRequest request) {
+        ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
+        criteria.setPageControl(getPageControl(request));
+        return criteria;
     }
 
     @Override

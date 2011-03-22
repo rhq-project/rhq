@@ -172,7 +172,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         return builder.toString();
     }
 
-    private class SubjectSelector extends AbstractSelector<Subject> {
+    private class SubjectSelector extends AbstractSelector<Subject, SubjectCriteria> {
         public SubjectSelector(String id, Collection<Subject> subjects) {
             super(id);
             if (subjects != null) {
@@ -182,7 +182,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         }
 
         @Override
-        protected RPCDataSource<Subject> getDataSource() {
+        protected RPCDataSource<Subject, SubjectCriteria> getDataSource() {
             return new UsersDataSource();
         }
 

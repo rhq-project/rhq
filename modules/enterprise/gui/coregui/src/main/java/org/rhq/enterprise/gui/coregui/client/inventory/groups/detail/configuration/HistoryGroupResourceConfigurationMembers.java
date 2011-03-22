@@ -214,7 +214,8 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
             return html;
         }
 
-        private class DataSource extends RPCDataSource<ResourceConfigurationUpdate> {
+        private class DataSource extends
+            RPCDataSource<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> {
 
             public class Field {
                 public static final String ID = "id";
@@ -253,13 +254,9 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
             }
 
             @Override
-            protected void executeFetch(final DSRequest request, final DSResponse response) {
+            protected void executeFetch(final DSRequest request, final DSResponse response,
+                final ResourceConfigurationUpdateCriteria criteria) {
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-
-                ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-                criteria
-                    .addFilterGroupConfigurationUpdateId(HistoryGroupResourceConfigurationMembers.this.groupUpdateId);
-                criteria.fetchResource(true);
 
                 configurationService.findResourceConfigurationUpdatesByCriteria(criteria,
                     new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
@@ -311,6 +308,15 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
                             processResponse(request.getRequestId(), response);
                         }
                     });
+            }
+
+            @Override
+            protected ResourceConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
+                ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+                criteria
+                    .addFilterGroupConfigurationUpdateId(HistoryGroupResourceConfigurationMembers.this.groupUpdateId);
+                criteria.fetchResource(true);
+                return criteria;
             }
         }
     }

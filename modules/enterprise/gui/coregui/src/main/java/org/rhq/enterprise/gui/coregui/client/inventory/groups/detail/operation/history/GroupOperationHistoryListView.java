@@ -28,7 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.h
 /**
  * @author Ian Springer
  */
-public class GroupOperationHistoryListView extends AbstractOperationHistoryListView {
+public class GroupOperationHistoryListView extends AbstractOperationHistoryListView<GroupOperationHistoryDataSource> {
 
     private ResourceGroupComposite groupComposite;
 

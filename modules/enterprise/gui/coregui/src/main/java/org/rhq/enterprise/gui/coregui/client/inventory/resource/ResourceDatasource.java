@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class ResourceDatasource extends RPCDataSource<Resource> {
+public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria> {
 
     public static final String FILTER_GROUP_ID = "groupId";
 
@@ -122,9 +122,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceCriteria criteria = getFetchCriteria(request);
-
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
@@ -182,6 +180,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         });
     }
 
+    @Override
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));

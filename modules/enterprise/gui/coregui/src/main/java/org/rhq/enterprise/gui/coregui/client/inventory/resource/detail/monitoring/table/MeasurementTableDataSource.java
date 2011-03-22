@@ -9,6 +9,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
@@ -29,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * 
  * @author John Mazzitelli
  */
-public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySummary> {
+public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
     public static final String FIELD_METRIC_LABEL = "label";
     public static final String FIELD_ALERT_COUNT = "alertCount";
@@ -116,7 +117,13 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
+    }
+
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         // see MetricsTableUIBean for the old JSF class to see where this came from
 

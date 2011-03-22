@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
+public class ResourceGroupSelector extends AbstractSelector<ResourceGroup, ResourceGroupCriteria> {
 
     private static LinkedHashMap<String, String> CATEGORY_VALUE_MAP = new LinkedHashMap<String, String>();
 
@@ -92,7 +92,7 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         return availableFilterForm;
     }
 
-    protected RPCDataSource<ResourceGroup> getDataSource() {
+    protected RPCDataSource<ResourceGroup, ResourceGroupCriteria> getDataSource() {
         return new SelectedResourceGroupsDataSource();
     }
 

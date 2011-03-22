@@ -32,6 +32,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -51,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperationScheduleComposite> {
+public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperationScheduleComposite, Criteria> {
 
     public enum Field {
 
@@ -130,7 +131,8 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
      * @param request incoming request
      * @param response outgoing response
      */
-    public void executeFetch(final DSRequest request, final DSResponse response) {
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         int pageSize = -1;
         //retrieve current portlet display settings
@@ -167,6 +169,12 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
                     dataRetrieved(result, response, request);
                 }
             });
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
     }
 
     protected void dataRetrieved(final PageList<ResourceOperationScheduleComposite> result, final DSResponse response,

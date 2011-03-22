@@ -80,7 +80,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
         private static final String FIELD_RESOURCE = "resource";
 
         @Override
-        protected AlertDefinitionCriteria getCriteria(DSRequest request) {
+        protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
             AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterResourceOnly(true); // guarantees that all alert defs we get will have a non-null Resource object
             criteria.setPageControl(getPageControl(request));

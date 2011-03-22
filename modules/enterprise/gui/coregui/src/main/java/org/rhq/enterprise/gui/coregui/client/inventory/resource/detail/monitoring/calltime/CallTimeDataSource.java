@@ -30,6 +30,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -40,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
+public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite, Criteria> {
 
     private double maxMaximum;
 
@@ -74,7 +75,7 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
         int scheduleId = Integer.parseInt((String) request.getCriteria().getValues().get("scheduleId"));
         long now = System.currentTimeMillis();
         long eightHoursAgo = now - (1000L * 60 * 60 * 8);
@@ -95,6 +96,12 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
                     processResponse(request.getRequestId(), response);
                 }
             });
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
     }
 
     @Override

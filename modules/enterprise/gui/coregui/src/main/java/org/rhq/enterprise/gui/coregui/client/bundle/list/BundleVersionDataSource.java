@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author John Mazzitelli
  */
-public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
+public class BundleVersionDataSource extends RPCDataSource<BundleVersion, BundleVersionCriteria> {
 
     public static final String FIELD_ID = "id";
     public static final String FIELD_BUNDLE_ID = "bundleId";
@@ -83,8 +83,24 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final BundleVersionCriteria criteria) {
+        bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundleVersion_loadFailure(), caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
+            public void onSuccess(PageList<BundleVersion> result) {
+                response.setData(buildRecords(result));
+                response.setTotalRows(result.getTotalSize());
+                processResponse(request.getRequestId(), response);
+            }
+        });
+    }
+
+    @Override
+    protected BundleVersionCriteria getFetchCriteria(final DSRequest request) {
         BundleVersionCriteria criteria = new BundleVersionCriteria();
         criteria.fetchBundleFiles(true);
         criteria.fetchBundle(true);
@@ -106,21 +122,7 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
         if (request.getCriteria().getValues().get("tagName") != null) {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
-
-        bundleService.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundleVersion_loadFailure(), caught);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<BundleVersion> result) {
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
+        return criteria;
     }
 
     @Override

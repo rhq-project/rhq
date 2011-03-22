@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 /**
  * @author Greg Hinkle
  */
-public class ResourceSelector extends AbstractSelector<Resource> {
+public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteria> {
 
     private ResourceType resourceTypeFilter;
     private boolean forceResourceTypeFilter;
@@ -108,7 +108,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return valueMap;
     }
 
-    protected RPCDataSource<Resource> getDataSource() {
+    protected RPCDataSource<Resource, ResourceCriteria> getDataSource() {
         if (null == datasource) {
             datasource = new SelectedResourceDataSource();
         }

@@ -74,7 +74,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractSelector<T> extends LocatableVLayout {
+public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends LocatableVLayout {
 
     private static final String SELECTOR_KEY = "id";
 
@@ -84,7 +84,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected HLayout hlayout;
     protected LocatableListGrid availableGrid;
     protected LocatableListGrid assignedGrid;
-    protected RPCDataSource<T> datasource;
+    protected RPCDataSource<T, C> datasource;
 
     private Set<AssignedItemsChangedHandler> assignedItemsChangedHandlers = new HashSet<AssignedItemsChangedHandler>();
 
@@ -159,7 +159,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected abstract DynamicForm getAvailableFilterForm();
 
-    protected abstract RPCDataSource<T> getDataSource();
+    protected abstract RPCDataSource<T, C> getDataSource();
 
     protected abstract Criteria getLatestCriteria(DynamicForm availableFilterForm);
 

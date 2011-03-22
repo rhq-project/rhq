@@ -52,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class RolesDataSource extends RPCDataSource<Role> {
+public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -124,9 +124,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        RoleCriteria criteria = getFetchCriteria(request);
-
+    public void executeFetch(final DSRequest request, final DSResponse response, final RoleCriteria criteria) {
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
                 sendFailureResponse(request, response, MSG.view_adminRoles_failRoles(), caught);
@@ -142,7 +140,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
         Role roleToAdd = copyValues(recordToAdd);
 
-        final String rolename = roleToAdd.getName();
         roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
                 throw new RuntimeException(caught);
@@ -235,8 +232,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         if (cascade) {
             Set<ResourceGroup> resourceGroups = sourceRole.getResourceGroups();
-            ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
-                resourceGroups, false);
+            ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(resourceGroups,
+                false);
             targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
             Set<Subject> subjects = sourceRole.getSubjects();
@@ -244,8 +241,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
             targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
 
             Set<LdapGroup> ldapGroups = sourceRole.getLdapGroups();
-            ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource().buildRecords(
-                ldapGroups);
+            ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource()
+                .buildRecords(ldapGroups);
             targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
         }
 
@@ -273,7 +270,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return permissionRecords;
     }
 
-    private RoleCriteria getFetchCriteria(DSRequest request) {
+    protected RoleCriteria getFetchCriteria(DSRequest request) {
         RoleCriteria criteria = new RoleCriteria();
 
         // Pagination

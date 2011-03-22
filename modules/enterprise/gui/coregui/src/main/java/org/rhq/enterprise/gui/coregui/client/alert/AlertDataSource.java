@@ -70,7 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Joseph Marques
  * @author John Mazzitelli
  */
-public class AlertDataSource extends RPCDataSource<Alert> {
+public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     private EntityContext entityContext;
@@ -214,10 +214,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
         final long start = System.currentTimeMillis();
-
-        AlertCriteria criteria = getCriteria(request);
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
@@ -283,7 +282,8 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         });
     }
 
-    protected AlertCriteria getCriteria(DSRequest request) {
+    @Override
+    protected AlertCriteria getFetchCriteria(DSRequest request) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
 

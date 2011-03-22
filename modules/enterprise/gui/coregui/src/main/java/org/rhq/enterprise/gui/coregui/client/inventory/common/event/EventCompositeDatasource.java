@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Joseph Marques
  */
-public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
+public class EventCompositeDatasource extends RPCDataSource<EventComposite, EventCriteria> {
 
     private EntityContext entityContext;
 
@@ -108,9 +108,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        EventCriteria criteria = getFetchCriteria(request);
-
+    protected void executeFetch(final DSRequest request, final DSResponse response, final EventCriteria criteria) {
         GWTServiceLookup.getEventService().findEventCompositesByCriteria(criteria,
             new AsyncCallback<PageList<EventComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -128,7 +126,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
             });
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     protected EventCriteria getFetchCriteria(final DSRequest request) {
         EventCriteria criteria = new EventCriteria();
 

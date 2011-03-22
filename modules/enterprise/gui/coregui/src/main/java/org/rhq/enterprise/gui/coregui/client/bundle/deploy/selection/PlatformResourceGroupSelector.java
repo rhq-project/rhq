@@ -4,9 +4,7 @@ import com.smartgwt.client.data.DSRequest;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 public class PlatformResourceGroupSelector extends ResourceGroupSelector {
 
@@ -15,7 +13,7 @@ public class PlatformResourceGroupSelector extends ResourceGroupSelector {
     }
 
     @Override
-    protected RPCDataSource<ResourceGroup> getDataSource() {
+    protected SelectedPlatformResourceGroupsDataSource getDataSource() {
         return new SelectedPlatformResourceGroupsDataSource();
     }
 

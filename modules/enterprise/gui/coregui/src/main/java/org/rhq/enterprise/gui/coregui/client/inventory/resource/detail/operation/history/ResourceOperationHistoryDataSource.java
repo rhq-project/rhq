@@ -45,7 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 /**
  * @author Ian Springer
  */
-public class ResourceOperationHistoryDataSource extends AbstractOperationHistoryDataSource<ResourceOperationHistory> {
+public class ResourceOperationHistoryDataSource extends
+    AbstractOperationHistoryDataSource<ResourceOperationHistory, ResourceOperationHistoryCriteria> {
 
     public static abstract class Field extends AbstractOperationHistoryDataSource.Field {
         public static final String RESOURCE = "resource";
@@ -68,21 +69,8 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-
-        if (request.getCriteria().getValues().containsKey(CriteriaField.RESOURCE_ID)) {
-            int resourceId = getFilter(request, CriteriaField.RESOURCE_ID, Integer.class);
-            criteria.addFilterResourceIds(resourceId);
-        }
-
-        if (request.getCriteria().getValues().containsKey(CriteriaField.GROUP_OPERATION_HISTORY_ID)) {
-            int groupOperationHistoryId = getFilter(request, CriteriaField.GROUP_OPERATION_HISTORY_ID, Integer.class);
-            criteria.addFilterGroupOperationHistoryId(groupOperationHistoryId);
-        }
-
-        criteria.setPageControl(getPageControl(request));
-
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final ResourceOperationHistoryCriteria criteria) {
         operationService.findResourceOperationHistoriesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceOperationHistory>>() {
                 public void onFailure(Throwable caught) {
@@ -96,6 +84,24 @@ public class ResourceOperationHistoryDataSource extends AbstractOperationHistory
                     dataRetrieved(result, response, request);
                 }
             });
+    }
+
+    @Override
+    protected ResourceOperationHistoryCriteria getFetchCriteria(final DSRequest request) {
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+
+        if (request.getCriteria().getValues().containsKey(CriteriaField.RESOURCE_ID)) {
+            int resourceId = getFilter(request, CriteriaField.RESOURCE_ID, Integer.class);
+            criteria.addFilterResourceIds(resourceId);
+        }
+
+        if (request.getCriteria().getValues().containsKey(CriteriaField.GROUP_OPERATION_HISTORY_ID)) {
+            int groupOperationHistoryId = getFilter(request, CriteriaField.GROUP_OPERATION_HISTORY_ID, Integer.class);
+            criteria.addFilterGroupOperationHistoryId(groupOperationHistoryId);
+        }
+
+        criteria.setPageControl(getPageControl(request));
+        return criteria;
     }
 
     protected void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,

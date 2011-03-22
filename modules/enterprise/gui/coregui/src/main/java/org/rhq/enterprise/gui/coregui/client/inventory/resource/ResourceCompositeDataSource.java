@@ -1,3 +1,26 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
@@ -42,7 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *  
  * @author Jay Shaughnessy
  */
-public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite> {
+public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite, ResourceCriteria> {
     private static ResourceCompositeDataSource INSTANCE;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -68,9 +91,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         return ResourceDatasource.addResourceDatasourceFields(fields);
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceCriteria criteria = getFetchCriteria(request);
-
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
         getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -135,6 +156,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         });
     }
 
+    @Override
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));

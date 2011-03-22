@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author John Mazzitelli
  */
 public class PluginConfigurationHistoryDataSource extends
-    AbstractConfigurationHistoryDataSource<PluginConfigurationUpdate> {
+    AbstractConfigurationHistoryDataSource<PluginConfigurationUpdate, PluginConfigurationUpdateCriteria> {
 
     public PluginConfigurationHistoryDataSource() {
         super();
@@ -66,20 +66,10 @@ public class PluginConfigurationHistoryDataSource extends
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-        PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
-        criteria.fetchConfiguration(true);
-        criteria.fetchResource(true);
-        criteria.fetchGroupConfigurationUpdate(true);
-
-        criteria.setPageControl(getPageControl(request));
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final PluginConfigurationUpdateCriteria criteria) {
 
         final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
-        if (resourceId != null) {
-            criteria.addFilterResourceIds(resourceId);
-        }
-
         getConfigurationService().findPluginConfigurationUpdatesByCriteria(criteria,
             new AsyncCallback<PageList<PluginConfigurationUpdate>>() {
                 public void onFailure(Throwable caught) {
@@ -161,5 +151,21 @@ public class PluginConfigurationHistoryDataSource extends
                         });
                 }
             });
+    }
+
+    @Override
+    protected PluginConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
+        PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
+        criteria.fetchConfiguration(true);
+        criteria.fetchResource(true);
+        criteria.fetchGroupConfigurationUpdate(true);
+
+        criteria.setPageControl(getPageControl(request));
+
+        final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
+        if (resourceId != null) {
+            criteria.addFilterResourceIds(resourceId);
+        }
+        return criteria;
     }
 }

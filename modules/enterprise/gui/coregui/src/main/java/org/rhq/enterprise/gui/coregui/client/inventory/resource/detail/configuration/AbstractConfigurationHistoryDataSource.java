@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -55,8 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractResourceConfigurationUpdate> extends
-    RPCDataSource<T> {
+public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractResourceConfigurationUpdate, C extends AbstractResourceConfigurationUpdateCriteria>
+    extends RPCDataSource<T, C> {
 
     public static abstract class Field {
         public static final String ID = "id";

@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author John Mazzitelli
  */
-public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWithLatestVersionComposite> {
+public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWithLatestVersionComposite, BundleCriteria> {
 
     public static final String FIELD_ID = "id";
     public static final String FIELD_NAME = "name";
@@ -57,22 +57,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-        BundleCriteria criteria = new BundleCriteria();
-        criteria.setPageControl(getPageControl(request));
-        if (request.getCriteria().getValues().get("tagNamespace") != null) {
-            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
-        }
-
-        if (request.getCriteria().getValues().get("tagSemantic") != null) {
-            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
-        }
-
-        if (request.getCriteria().getValues().get("tagName") != null) {
-            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
-        }
-
+    protected void executeFetch(final DSRequest request, final DSResponse response, final BundleCriteria criteria) {
         bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -87,7 +72,24 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
                     processResponse(request.getRequestId(), response);
                 }
             });
+    }
 
+    @Override
+    protected BundleCriteria getFetchCriteria(final DSRequest request) {
+        BundleCriteria criteria = new BundleCriteria();
+        criteria.setPageControl(getPageControl(request));
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
+        return criteria;
     }
 
     @Override

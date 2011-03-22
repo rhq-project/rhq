@@ -33,6 +33,7 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -46,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class ResourceScheduledMetricDatasource extends RPCDataSource<MeasurementDefinition> {
+public class ResourceScheduledMetricDatasource extends RPCDataSource<MeasurementDefinition, Criteria> {
 
     public ResourceScheduledMetricDatasource() {
         List<DataSourceField> fields = addDataSourceFields();
@@ -83,12 +84,16 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
+        // due to the conditional below which determines what kind of criteria to use, this datasource
+        // doesn't rely on getFetchCriteria and the passed in criteria object. It is up to this method to
+        // correctly prepare the criteria we build here (e.g. set the page control properly).
         if (request.getCriteria().getValues().containsKey("id")) {
             MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
-
             criteria.addFilterId(request.getCriteria().getAttributeAsInt("id"));
+            criteria.setPageControl(getPageControl(request));
+
             GWTServiceLookup.getMeasurementDataService().findMeasurementDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementDefinition>>() {
                     public void onFailure(Throwable caught) {
@@ -104,8 +109,8 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
         } else if (request.getCriteria().getValues().containsKey("resourceId")) {
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
             criteria.fetchDefinition(true);
-
             criteria.addFilterResourceId(request.getCriteria().getAttributeAsInt("resourceId"));
+            criteria.setPageControl(getPageControl(request));
 
             GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
                 new AsyncCallback<PageList<MeasurementSchedule>>() {
@@ -140,6 +145,13 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
         } else {
             processResponse(request.getRequestId(), response);
         }
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // our executeFetch does some special conditional checking to determine what kind of criteria to use.
+        // because of this, we don't explicitly use this method to get the criteria for this datasource, just return null
+        return null;
     }
 
     private ListGridRecord[] buildRecords(PageList<MeasurementSchedule> list) {

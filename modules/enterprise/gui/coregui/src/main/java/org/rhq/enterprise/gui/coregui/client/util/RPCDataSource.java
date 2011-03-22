@@ -23,8 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -50,11 +48,9 @@ import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.hibernate.validator.RangeValidator;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -66,11 +62,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Base GWT-RPC oriented DataSource class.
+ * 
+ * The <T> type is the entity POJO type that represents a record retrieved by the data source
+ * The <C> type is the criteria type that is used to fetch data from the data source
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class RPCDataSource<T> extends DataSource {
+public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Criteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
 
@@ -111,7 +110,16 @@ public abstract class RPCDataSource<T> extends DataSource {
 
             switch (request.getOperationType()) {
             case FETCH:
-                executeFetch(request, response);
+                C criteria = getFetchCriteria(request);
+                if (criteria != null) {
+                    // unsure if this is the right thing to do - we are always going to supply a PageControl, but reading
+                    // the javadoc for setPageControl, it says this overrides addSortField, which is used by our criteria objects.
+                    // I still think this is OK, but if you are reading this as part of debugging a problem, investigate this.
+                    if (criteria.getPageControlOverrides() == null) {
+                        criteria.setPageControl(getPageControl(request));
+                    }
+                }
+                executeFetch(request, response, criteria);
                 break;
             case ADD:
                 ListGridRecord newRecord = getDataObject(request);
@@ -302,7 +310,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         }
 
         Set<T> results = new LinkedHashSet<T>(records.length);
-        int i = 0;
         for (Record record : records) {
             results.add(copyValues(record));
         }
@@ -341,6 +348,15 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /**
+     * Given a request, this returns a criteria object that should be used to fetch data that the request
+     * is asking for. If a particular data source subclass does not use criteria, this can return <code>null</code>.
+     * 
+     * @param request the request being made for data
+     * @return a criteria object that is to be used when fetching for the requested data, or <code>null</code> if not used
+     */
+    protected abstract C getFetchCriteria(final DSRequest request);
+
+    /**
      * Extensions should implement this method to retrieve data. Paging solutions should use
      * {@link #getPageControl(com.smartgwt.client.data.DSRequest)}. All implementations should call processResponse()
      * whether they fail or succeed. Data should be set on the request via setData. Implementations can use
@@ -348,8 +364,9 @@ public abstract class RPCDataSource<T> extends DataSource {
      *
      * @param request
      * @param response
+     * @param criteria can be used by the method to perform queries in order to fetch the required data
      */
-    protected abstract void executeFetch(final DSRequest request, final DSResponse response);
+    protected abstract void executeFetch(final DSRequest request, final DSResponse response, final C criteria);
 
     public abstract T copyValues(Record from);
 
@@ -509,8 +526,8 @@ public abstract class RPCDataSource<T> extends DataSource {
     @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
         Criteria criteria = request.getCriteria();
-        Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() :
-                Collections.<String, Object>emptyMap();
+        Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() : Collections
+            .<String, Object> emptyMap();
 
         S result = null;
 

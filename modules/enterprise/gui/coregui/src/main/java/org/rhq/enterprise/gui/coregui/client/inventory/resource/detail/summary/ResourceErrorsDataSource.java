@@ -34,6 +34,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -45,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Lukas Krejci
  * @author Simeon Pinder
  */
-public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
+public class ResourceErrorsDataSource extends RPCDataSource<ResourceError, Criteria> {
 
     public static abstract class Field {
         public static final String SUMMARY = "summary";
@@ -87,7 +88,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
      * @see org.rhq.enterprise.gui.coregui.client.util.RPCDataSource#executeFetch(com.smartgwt.client.data.DSRequest, com.smartgwt.client.data.DSResponse)
      */
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
         resourceService.findResourceErrors(resourceId, new AsyncCallback<List<ResourceError>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
@@ -101,6 +102,12 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
     }
 
     public ResourceError copyValues(Record from) {

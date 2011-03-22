@@ -41,7 +41,8 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 public enum HttpdAddressUtility {
 
     APACHE_1_3 {
-        public Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort) {
+        
+        public List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag) {
             try {
                 List<ApacheDirective> ports = ag.search("/Port");
                 List<ApacheDirective> bindAddresses = ag.search("/BindAddress");
@@ -50,7 +51,7 @@ public enum HttpdAddressUtility {
                 String port = "80"; //this is the default in apache 1.3
                 String bindAddress = null;
                 
-                List<Address> addressesToMatch = new ArrayList<Address>();
+                List<Address> addresses = new ArrayList<Address>();
                 
                 if (ports.size() > 0) {
                     List<String>values = ports.get(0).getValues();
@@ -67,28 +68,24 @@ public enum HttpdAddressUtility {
                 //listen directives take precedence over port/bindaddress combo
                 if (listens.size() > 0) {
                     for(ApacheDirective l : listens) {
-                        addressesToMatch.add(parseListen(l.getValues().get(0)));
+                        addresses.add(parseListen(l.getValues().get(0)));
                     }
                 } else {
-                    addressesToMatch.add(new Address(bindAddress, Integer.parseInt(port)));
+                    addresses.add(new Address(bindAddress, Integer.parseInt(port)));
                 }
                 
-                for (Address address : addressesToMatch) {
-                    if (isAddressConforming(address, limitToHost, limitToPort, false)) {
-                        if (!address.isPortDefined() || address.isPortWildcard()) {
-                            address.port = 80;
-                        }
-                        if (address.host == null || address.isHostDefault() || address.isHostWildcard()) {
-                            address = getLocalhost(address.port);
-                        }
-                        
-                        updateWithServerName(address, ag);
-                        
-                        return address;
+                for (Address address : addresses) {
+                    if (!address.isPortDefined() || address.isPortWildcard()) {
+                        address.port = 80;
                     }
+                    if (address.host == null || address.isHostDefault() || address.isHostWildcard()) {
+                        address = getLocalhost(address.port);
+                    }
+                    
+                    updateWithServerName(address, ag);
                 }
                 
-                return null;
+                return addresses;
             } catch (Exception e) {
                 log.warn("Failed to obtain main server address.", e);
 
@@ -97,23 +94,23 @@ public enum HttpdAddressUtility {
         }
     },
     APACHE_2_x {
-        public Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort) {
+        
+        public List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag) {
             try {
+                List<Address> ret = new ArrayList<Address>();
+                
                 for(ApacheDirective n : ag.search("/Listen")) {
                     Address addr = parseListen(n.getValues().get(0));
-                    if (isAddressConforming(addr, limitToHost, limitToPort, false)) {
-                        if (addr.host == null || addr.isHostDefault() || addr.isHostWildcard()) {
-                            addr = getLocalhost(addr.port);
-                        }
-                        
-                        updateWithServerName(addr, ag);
-                        
-                        return addr;
+                    if (addr.host == null || addr.isHostDefault() || addr.isHostWildcard()) {
+                        addr = getLocalhost(addr.port);
                     }
+                    
+                    updateWithServerName(addr, ag);
+                    
+                    ret.add(addr);
                 }
                 
-                //there has to be at least one Listen directive
-                throw new IllegalStateException("Could find a listen address on port " + limitToPort);
+                return ret;
             } catch (Exception e) {
                 log.warn("Failed to obtain main server address.", e);
 
@@ -283,6 +280,14 @@ public enum HttpdAddressUtility {
     }
 
     /**
+     * This returns all the addresses the server listens on.
+     * 
+     * @param ag the tree of the httpd configuration
+     * @return the addresses or null on failure
+     */
+    public abstract List<Address> getAllMainServerAddresses(ApacheDirectiveTree ag);
+    
+    /**
      * This just constructs a first available address under which the server or one of its virtual hosts can be reached.
      * 
      * @param ag the tree of the httpd configuration
@@ -291,7 +296,21 @@ public enum HttpdAddressUtility {
      * @param limitToPort if > 0, the sample address is looked for only for the given port
      * @return the address or null on failure
      */
-    public abstract Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort);
+    public Address getMainServerSampleAddress(ApacheDirectiveTree ag, String limitToHost, int limitToPort) {
+        List<Address> addressesToMatch = getAllMainServerAddresses(ag);
+        
+        if (addressesToMatch == null) {
+            return null;
+        }
+        
+        for (Address address : addressesToMatch) {
+            if (isAddressConforming(address, limitToHost, limitToPort, false)) {
+                return address;
+            }
+        }
+        
+        return null;
+    }
 
     /**
      * This constructs an address on which given virtual host can be accessed.

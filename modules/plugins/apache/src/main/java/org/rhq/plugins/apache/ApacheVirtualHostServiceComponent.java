@@ -502,9 +502,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             vhostAddressStrings.length);
 
         if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-            HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
-            if (serverAddr != null) {
-                vhostAddresses.add(serverAddr);
+            List<HttpdAddressUtility.Address> serverAddrs = parent.getAddressUtility().getAllMainServerAddresses(tree);
+            if (serverAddrs != null) {
+                vhostAddresses.addAll(serverAddrs);
             }
         } else {
             for (int i = 0; i < vhostAddressStrings.length; ++i) {

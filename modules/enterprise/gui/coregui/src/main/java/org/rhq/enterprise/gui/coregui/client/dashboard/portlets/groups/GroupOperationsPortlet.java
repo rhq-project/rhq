@@ -43,6 +43,7 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -116,10 +117,10 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        int groupId = AbstractActivityView.groupIdLookup(currentPage);
+        this.groupId = groupId;
         //populate basepath
-        baseViewPath = elements[0];
+        baseViewPath = AbstractActivityView.groupPathLookup(currentPage);
     }
 
     @Override
@@ -169,14 +170,22 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
 
                         groupOperations = new GroupOperationsCriteriaHistoryListView(locatorId,
                             new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
-
-                        //cleanup
-                        for (Canvas child : recentOperationsContent.getChildren()) {
-                            child.destroy();
-                        }
-                        recentOperationsContent.addChild(groupOperations);
-                        recentOperationsContent.markForRedraw();
+                    } else {
+                        Criteria criteria = new Criteria();
+                        ResourceGroup emptyGroup = new ResourceGroup("");
+                        emptyGroup.setId(-1);
+                        Long zero = new Long(0);
+                        groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, emptyGroup);
+                        groupOperations = new GroupOperationsCriteriaHistoryListView(locatorId,
+                            new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
                     }
+
+                    //cleanup
+                    for (Canvas child : recentOperationsContent.getChildren()) {
+                        child.destroy();
+                    }
+                    recentOperationsContent.addChild(groupOperations);
+                    recentOperationsContent.markForRedraw();
                 }
             });
     }
@@ -188,6 +197,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         setMembersMargin(5);
         setHeight("*");
         setWidth100();
+
         //tell canvas to fill it's component
         recentOperationsContent.setHeight100();
         addMember(recentOperationsContent);
@@ -370,6 +380,12 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
     @Override
     protected String getBasePath() {
         return "ResourceGroup/" + composite.getResourceGroup().getId() + "/Operations/History";
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 }
 

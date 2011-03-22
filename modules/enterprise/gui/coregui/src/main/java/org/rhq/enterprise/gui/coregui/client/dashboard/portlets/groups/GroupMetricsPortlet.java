@@ -113,8 +113,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        int groupId = AbstractActivityView.groupIdLookup(currentPage);
+        this.groupId = groupId;
         baseViewPath = elements[0];
     }
 
@@ -438,6 +438,10 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                     }
                                 });
                         }
+                    } else {
+                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentMeasurementsContent
+                            .extendLocatorId("None"), AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                        column.addMember(row);
                     }
                 }
             });

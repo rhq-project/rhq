@@ -108,8 +108,9 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
         //override the shared datasource
         //figure out which page we're loading
         String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        this.groupId = Integer.valueOf(elements[1]);
+        //get groupId
+        int groupId = AbstractActivityView.groupIdLookup(currentPage);
+        this.groupId = groupId;
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);

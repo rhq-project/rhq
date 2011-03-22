@@ -594,4 +594,39 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return ((groupCategory == GroupCategory.MIXED) || (groupCategory == GroupCategory.COMPATIBLE && facets
             .contains(ResourceTypeFacet.EVENT)));
     }
+
+    /* Utility method to extract groupId from
+     *
+     */
+    public static int groupIdLookup(String currentPage) {
+        int groupId = -1;
+        if ((currentPage != null) && (!currentPage.trim().isEmpty())) {
+            String[] elements = currentPage.split("/");
+            //process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
+            try {
+                groupId = Integer.valueOf(elements[1]);
+            } catch (NumberFormatException nfe) {
+                groupId = Integer.valueOf(elements[2]);
+            }
+        }
+        return groupId;
+    }
+
+    /* Utility method to extract groupId from
+     *
+     */
+    public static String groupPathLookup(String currentPage) {
+        String groupBasePath = "";
+        if ((currentPage != null) && (!currentPage.trim().isEmpty())) {
+            String[] elements = currentPage.split("/");
+            //process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
+            try {
+                Integer.valueOf(elements[1]);
+                groupBasePath = elements[0];
+            } catch (NumberFormatException nfe) {
+                groupBasePath = elements[1] + "/" + elements[1];
+            }
+        }
+        return groupBasePath;
+    }
 }

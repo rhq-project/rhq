@@ -96,9 +96,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        int currentGroupIdentifier = Integer.valueOf(elements[1]);
-        this.groupId = currentGroupIdentifier;
+        int groupId = AbstractActivityView.groupIdLookup(currentPage);
+        this.groupId = groupId;
     }
 
     @Override

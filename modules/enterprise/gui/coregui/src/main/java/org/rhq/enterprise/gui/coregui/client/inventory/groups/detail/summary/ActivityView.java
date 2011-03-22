@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -34,11 +35,16 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardCategory;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -83,8 +89,13 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     private Set<Permission> globalPermissions;
 
     private boolean editMode = false;
-
     private boolean isInitialized = false;
+    //default portlet positioning parameters
+    private int colLeft = 0;
+    private int colRight = 1;
+    private int rowLeft = 0;
+    private int rowRight = 0;
+    private boolean displayLeft = false;
 
     public ActivityView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
@@ -177,9 +188,9 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     protected Dashboard getDefaultDashboard() {
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        ResourceGroup group = groupComposite.getResourceGroup();
+        final ResourceGroup group = groupComposite.getResourceGroup();
 
-        Dashboard dashboard = new Dashboard();
+        final Dashboard dashboard = new Dashboard();
 
         dashboard.setName(DASHBOARD_NAME_PREFIX + sessionSubject.getId() + "_" + group.getId());
         dashboard.setCategory(DashboardCategory.GROUP);
@@ -196,12 +207,50 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         //remove BundleDeployment and add back later if relevant.
         groupKeyNameMap.remove(GroupBundleDeploymentsPortlet.KEY);
         groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupKeyNameMap, groupComposite);
-        //TODO: spinder 3/21/11 need asynch call to execute and then update the menu for bundle
 
-        int colLeft = 0;
-        int colRight = 1;
-        int rowLeft = 0;
-        int rowRight = 0;
+        //initiate asynch call to execute and then update the dashboard with bundle deployment portlet if necessary
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(group.getId());
+        criteria.fetchExplicitResources(true);
+        criteria.setPageControl(new PageControl(0, 1));
+        GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceGroup>>() {
+                @Override
+                public void onSuccess(PageList<ResourceGroup> results) {
+                    if (!results.isEmpty()) {
+                        ResourceGroup grp = results.get(0);
+                        Set<Resource> explicitMembers = grp.getExplicitResources();
+                        Resource[] currentResources = new Resource[explicitMembers.size()];
+                        explicitMembers.toArray(currentResources);
+                        Map<String, String> portletToAdd = new HashMap<String, String>();
+                        //membership dynamically determined if all platforms then will be compatible.
+                        if (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)) {
+                            if (currentResources[0].getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
+                                //this portlet allowed to add bundle portlet monitoring
+                                portletToAdd.put(GroupBundleDeploymentsPortlet.KEY, GroupBundleDeploymentsPortlet.NAME);
+                            }
+                            if (!portletToAdd.isEmpty()) {
+                                //update dashboard with that portlet and reload
+                                updateDashboardWithPortlets(portletToAdd, dashboard, 100);
+                                //request reload of dashboard widget
+                                setDashboard(dashboard);
+                                markForRedraw();
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving information for group [" + group.getId() + "]:" + caught.getMessage());
+                }
+            });
+
+        //reset positioning parameters
+        colLeft = 0;
+        colRight = 1;
+        rowLeft = 0;
+        rowRight = 0;
         //Left Column
         if (groupKeyNameMap.containsKey(GroupMetricsPortlet.KEY)) {//measurments top left if available
             DashboardPortlet measurements = new DashboardPortlet(GroupMetricsPortlet.NAME, GroupMetricsPortlet.KEY, 220);
@@ -222,22 +271,36 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         }
 
         //Fill out left column(typically smaller portlets) then alternate cols with remaining
-        boolean displayLeft = false;
-        for (String key : groupKeyNameMap.keySet()) {
-            DashboardPortlet portlet = new DashboardPortlet(groupKeyNameMap.get(key), key, 100);
-            if (rowLeft < 4) {
-                dashboard.addPortlet(portlet, colLeft, rowLeft++);
-            } else {//alternate
-                if (!displayLeft) {
-                    dashboard.addPortlet(portlet, colRight, rowRight++);
-                } else {
+        displayLeft = false;
+        updateDashboardWithPortlets(groupKeyNameMap, dashboard, 100);
+        return dashboard;
+    }
+
+    /**Iterates list of new portlets and updates the dashboard reference with these new portlets. 
+     * Attempts to fill the spaces around the remaining larger portlets if already installed, then alternates
+     * adding to left and right columns. Assumes dashboard has only two columns.
+     * 
+     * @param keyNameMap portlet key|name map
+     * @param dashboard dasboard instance to update
+     */
+    private void updateDashboardWithPortlets(Map<String, String> keyNameMap, Dashboard dashboard, int initialHeight) {
+        if ((keyNameMap != null) && (dashboard != null)) {
+            for (String key : keyNameMap.keySet()) {
+                //locate portlet and add to dashboard
+                DashboardPortlet portlet = new DashboardPortlet(keyNameMap.get(key), key, initialHeight);
+                if (rowLeft < 4) {
                     dashboard.addPortlet(portlet, colLeft, rowLeft++);
+                } else {//alternate
+                    if (!displayLeft) {
+                        dashboard.addPortlet(portlet, colRight, rowRight++);
+                    } else {
+                        dashboard.addPortlet(portlet, colLeft, rowLeft++);
+                    }
+                    //toggle
+                    displayLeft = !displayLeft;
                 }
-                //toggle
-                displayLeft = !displayLeft;
             }
         }
-        return dashboard;
     }
 
     @Override

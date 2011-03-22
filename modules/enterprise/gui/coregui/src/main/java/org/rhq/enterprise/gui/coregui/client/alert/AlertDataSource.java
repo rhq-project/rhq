@@ -390,4 +390,12 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     public AlertGWTServiceAsync getAlertService() {
         return alertService;
     }
+
+    protected EntityContext getEntityContext() {
+        return entityContext;
+    }
+
+    protected void setEntityContext(EntityContext entityContext) {
+        this.entityContext = entityContext;
+    }
 }

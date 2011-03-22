@@ -75,6 +75,7 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
         } else if ((resourceIds != null) && (resourceIds.length > 0)) {
             entityContext = EntityContext.forResource(resourceIds[0]);
         }
+        setEntityContext(entityContext);
     }
 
     /** Override the executeFetch for AlertPortlet to allow specifying smaller than total

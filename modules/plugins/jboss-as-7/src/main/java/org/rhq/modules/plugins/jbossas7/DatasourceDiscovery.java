@@ -45,7 +45,7 @@ public class DatasourceDiscovery implements ResourceDiscoveryComponent<Subsystem
 
             for (DataSource source : sources.getDataSource()) {
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                        discoveryContext.getResourceType(), // Type
+                        discoveryContext.getResourceType(), // DataType
                         source.getJndiName(), // Key
                         source.getJndiName(), // Name TODO improve
                         null, // version

@@ -22,6 +22,7 @@
     <properties>
         <scm.module.path>TODO</scm.module.path>
         <json.version>${project.json.version}</json.version>
+        <jackson.version>1.7.4</jackson.version>
     </properties>
 
     <build>
@@ -45,11 +46,15 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>org.json</groupId>
-                                    <artifactId>json</artifactId>
-                                    <version>${json.version}</version>
+                                    <groupId>org.codehaus.jackson</groupId>
+                                    <artifactId>jackson-mapper-asl</artifactId>
+                                    <version>${jackson.version}</version>
                                 </artifactItem>
-
+                                <artifactItem>
+                                    <groupId>org.codehaus.jackson</groupId>
+                                    <artifactId>jackson-core-asl</artifactId>
+                                    <version>${jackson.version}</version>
+                                </artifactItem>
 
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -177,11 +182,10 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${json.version}</version>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>commons-logging</groupId>

@@ -19,6 +19,8 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,8 +28,9 @@ import java.net.URLConnection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provide connections to the AS and reading / writing date from/to it.
@@ -53,66 +56,103 @@ public class ASConnection {
         }
     }
 
+
+    JsonNode getLevelData(@Nullable String base, boolean recursive, boolean includeMetrics) throws Exception{
+        String ops = null;
+        if (recursive)
+            ops = "recursive";
+        if (includeMetrics)
+            ops += "&include-runtime=true";
+
+        return getLevelData(base,ops);
+}
+    /**
+     * Return the default data for base
+     * @param base
+     * @return
+     * @throws Exception
+     */
+    JsonNode getLevelData(@Nullable String base) throws Exception {
+        return getLevelData(base,"operation=resource-description&recursive&include-runtime=true");
+    }
+
     /**
      * Return the JSON-Ojbect for a certain path.
      *
-     *
      * @param base Path to the object/subsystem. Can be null/"" for the base objects
-     * @param recursive Shall lover levels be recursively obtained. May generate a lot of data.
-     * @param includeMetrics Should metrice be requested as well?
+     * @param ops Operation to run on the api can be null
      * @return  A JSONObject encoding the level plus sub levels provided
      * @throws Exception If anything goes wrong
      */
-    JSONObject getLevelData(String base, boolean recursive, boolean includeMetrics) throws Exception {
+    JsonNode getLevelData(@Nullable String base, @Nullable String ops) throws Exception {
 
         URL url2;
+        String spec;
         if (base!=null && !base.isEmpty()) {
-            String spec;
             if (!base.startsWith("/")) {
                 spec = urlString + "/" + base;
             }
             else {
                 spec = urlString + base;
             }
-            if (recursive)
-                spec += "?recursive";
-            if (includeMetrics)
-                spec += "?include-runtime=true";  // TODO this will change ?query-metrics=true for metrics only
+            if (ops!=null) {
+                if (!ops.startsWith("?"))
+                    ops = "?" + ops;
+                spec += ops;
+            }
 
             url2 = new URL(spec);
         }
         else
             url2 = url;
 
-        URLConnection conn = url2.openConnection();
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-            conn.getInputStream()));
+        JsonNode tree = null;
 
-        String line;
-        StringBuilder builder = new StringBuilder();
-        while ((line = in.readLine()) != null) {
-            builder.append(line);
+        URLConnection conn = url2.openConnection();
+        InputStream inputStream = null;
+        try {
+            inputStream = conn.getInputStream();
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            return tree;
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                inputStream));
+        try {
+            String line;
+            StringBuilder builder = new StringBuilder();
+            while ((line = in.readLine()) != null) {
+                builder.append(line);
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            tree = mapper.readTree(builder.toString());
+
+        } catch (IOException ioe) {
+            System.err.println("for in put " + url2 + " : " + ioe.getMessage());
+        } finally {
+            in.close();
         }
 
-        JSONObject object = new JSONObject(builder.toString());
-
-        in.close();
-        return object;
+        return tree;
     }
 
 
-    boolean isErrorReply(JSONObject in) {
+    boolean isErrorReply(JsonNode in) {
         if (in.has("outcome")) {
             String outcome = null;
             try {
-                outcome = in.getString("outcome");
+                JsonNode outcomeNode = in.findValue("outcome");
+                outcome = outcomeNode.getTextValue();
                 if (outcome.equals("failed")) {
-                    String reason = in.getString("failure-description");
+                    JsonNode reasonNode = in.findValue("failure-description");
+                    String reason = reasonNode.getTextValue();
                     log.info(reason);
                     return true;
                 }
 
-            } catch (JSONException e) {
+            } catch (Exception e) {
                 e.printStackTrace(); // TODO
                 return true;
             }

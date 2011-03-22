@@ -93,7 +93,7 @@
 
     </server>
 
-    <server name="JBossAS (Standalone)"
+    <server name="JBossAS7 (Standalone)"
             discovery="BaseDiscovery"
             class="BaseComponent"
             >
@@ -178,8 +178,47 @@
 
              </service>
 
+            <service name="VHost"
+                    discovery="SubsystemDiscovery"
+                    class="BaseComponent">
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="/subsystem/web/virtual-server/*"/>
+                </plugin-configuration>
+
+
+            </service>
+
 
         </server>
+
+        <service name="NetworkInterface"
+                 discovery="InterfaceDiscovery"
+                 class="BaseComponent"
+                 description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
+            <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="/"/>
+            </plugin-configuration>
+        </service>
+
+        <service name="SocketBindingGroup"
+                 discovery="SocketBindingGroupDiscovery"
+                 class="BaseComponent"
+                 >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
+            </plugin-configuration>
+
+            <service name="SocketBinding"
+                     discovery="SocketBindingDiscovery"
+                     class="BaseComponent">
+                <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"/>
+                </plugin-configuration>
+
+             </service>
+         </service>
+
+
     </server>
 
     <server name="JBossAS (Managed)"

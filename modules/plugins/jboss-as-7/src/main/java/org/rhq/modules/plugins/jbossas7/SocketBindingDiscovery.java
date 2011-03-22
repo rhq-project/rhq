@@ -18,12 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.modules.plugins.jbossas7.json.Subsystem;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,13 +30,23 @@ import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.modules.plugins.jbossas7.json.Domain;
+import org.rhq.modules.plugins.jbossas7.json.SocketBindingGroup;
+
 /**
- * Discover subsystems
+ * Discover single bindings in a socket binding group
+ *
+ * TODO: Is this better a resource-configuration on the parent?
  *
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent> {
+public class SocketBindingDiscovery implements ResourceDiscoveryComponent<BaseComponent> {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -58,70 +62,44 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         BaseComponent parentComponent = context.getParentResourceComponent();
         ASConnection connection = parentComponent.getASConnection();
 
-
-        Configuration config = context.getDefaultPluginConfiguration();
-        String cpath = config.getSimpleValue("path", null);
-        boolean recursive = false;
-
-        String path;
-        if (cpath.endsWith("/*")) {
-            path = cpath.substring(0,cpath.length()-2);
-            recursive = true;
-        }
-        else
-            path = cpath;
+        String path = parentComponent.getPath();
 
 
-        JsonNode json = connection.getLevelData(path,recursive, false);
+        JsonNode json = connection.getLevelData(path,true,false);
         if (!connection.isErrorReply(json)) {
-            if (recursive) {
-                int i = path.lastIndexOf("/");
-                String subPath = path.substring(i+1);
 
-                JsonNode subNode = json.findPath(subPath);
-
-                Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
-
-                for (Map.Entry<String,Subsystem> entry: subsystemMap.entrySet()) {
-
-                    String key = entry.getKey();
-                    Subsystem subsystem = entry.getValue();
-
-                    String resKey = context.getParentResourceContext().getResourceKey() + "/" + key;
-                    String name = resKey.substring(resKey.lastIndexOf("/") + 1);
+            SocketBindingGroup bindingGroup = mapper.readValue(json, new TypeReference<SocketBindingGroup>() {});
+            // TODO put bindingGroup. {name, default-interface, port-offset into parent
 
 
-                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                            context.getResourceType(), // DataType
-                            path + "/" + key, // Key
-                            name, // Name
-                            null, // Version
-                            subsystem.description, // Description
-                            config,
-                            null);
-                    details.add(detail);
-                }
+            for (Map.Entry<String,SocketBindingGroup.Binding> entry: bindingGroup.bindings.entrySet()) {
 
-            }
-            else {
+                String key = entry.getKey();
+                String cpath = path + "/socket-binding/" + key;
 
 
-                String resKey = context.getParentResourceContext().getResourceKey();
+                String resKey = context.getParentResourceContext().getResourceKey() + "/" + key;
                 String name = resKey.substring(resKey.lastIndexOf("/") + 1);
 
+                Configuration config = context.getDefaultPluginConfiguration();
+
+                PropertySimple propertySimple = new PropertySimple("path",cpath);
+                config.put(propertySimple);
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                         context.getResourceType(), // DataType
                         path, // Key
                         name, // Name
                         null, // Version
-                        path, // Description
+                        "Binding Group", // Description
                         config,
                         null);
                 details.add(detail);
+                log.info("Added " + detail);
             }
 
             return details;
+
         }
 
         return Collections.emptySet();

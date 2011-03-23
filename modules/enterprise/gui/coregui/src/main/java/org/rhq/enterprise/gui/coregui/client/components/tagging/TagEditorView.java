@@ -66,12 +66,10 @@ public class TagEditorView extends LocatableLayout {
 
     private LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
 
-    private boolean editing = false;
     private boolean readOnly;
     private TagsChangedCallback callback;
 
     private boolean vertical = false;
-    private boolean alwaysEdit = false;
 
     public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback) {
         super(locatorId);
@@ -96,11 +94,6 @@ public class TagEditorView extends LocatableLayout {
         this.vertical = vertical;
     }
 
-    public void setAlwaysEdit(boolean alwaysEdit) {
-        this.alwaysEdit = alwaysEdit;
-        this.editing = true;
-    }
-
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -122,7 +115,6 @@ public class TagEditorView extends LocatableLayout {
         for (final Tag tag : tags) {
             LocatableHLayout tagLayout = new LocatableHLayout(((Locatable) layout).extendLocatorId(tag.getName()));
             tagLayout.setHeight(18);
-            //tagLayout.set
 
             HTMLFlow tagString = new HTMLFlow("<a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
                 + tag.toString() + "</a>");

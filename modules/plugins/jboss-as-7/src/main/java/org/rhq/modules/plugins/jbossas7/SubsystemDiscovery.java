@@ -106,7 +106,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             else {
 
 
-                String resKey = context.getParentResourceContext().getResourceKey();
+                String resKey = path;
                 String name = resKey.substring(resKey.lastIndexOf("/") + 1);
 
 

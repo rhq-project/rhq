@@ -32,9 +32,9 @@ import java.util.Set;
  *
  * @author Heiko W. Rupp
  */
-public class DatasourceDiscovery implements ResourceDiscoveryComponent<SubsystemComponent> {
+public class DatasourceDiscovery implements ResourceDiscoveryComponent<BaseComponent> {
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<SubsystemComponent> discoveryContext) throws InvalidPluginConfigurationException, Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent> discoveryContext) throws InvalidPluginConfigurationException, Exception {
 
 /*
         if (subsys instanceof DataSourcesSubsystemElement) {

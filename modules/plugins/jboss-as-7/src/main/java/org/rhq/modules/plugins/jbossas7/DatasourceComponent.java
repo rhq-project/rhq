@@ -28,9 +28,9 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  *
  * @author Heiko W. Rupp
  */
-public class DatasourceComponent implements ResourceComponent<SubsystemComponent> {
+public class DatasourceComponent implements ResourceComponent<BaseComponent> {
 
-    public void start(ResourceContext<SubsystemComponent> subsystemComponentResourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<BaseComponent> subsystemComponentResourceContext) throws InvalidPluginConfigurationException, Exception {
         // TODO: Customise this generated block
     }
 

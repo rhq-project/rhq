@@ -128,8 +128,8 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
-            new TagsChangedCallback() {
+        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(),
+            !resourceComposite.getResourcePermission().isInventory(), new TagsChangedCallback() {
                 public void tagsChanged(final HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags,
                         new AsyncCallback<Void>() {

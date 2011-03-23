@@ -164,8 +164,8 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                     } else if (isAutoCluster) {
                         CoreGUI.goToView(LinkManager.getAutoClusterTabLink(group.getId(), "Configuration", "Current"));
                     } else {
-                        CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
-                            "ConnectionSettings"));
+                        CoreGUI
+                            .goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Configuration", "Current"));
                     }
                 }
             });

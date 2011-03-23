@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tagging;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -30,6 +31,7 @@ import java.util.Set;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TextMatchStyle;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -41,7 +43,6 @@ import com.smartgwt.client.widgets.events.MouseOverHandler;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 
 import org.rhq.core.domain.criteria.TagCriteria;
@@ -51,34 +52,64 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDialog;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A reusable component that shows a set of tags and, if not read only, allows the user
+ * to delete existing tags or add new tags.
+ *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class TagEditorView extends LocatableLayout {
 
     private LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
-
     private boolean readOnly;
     private TagsChangedCallback callback;
-
-    private boolean vertical = false;
+    private HTMLFlow tagTitleLabel;
+    private ArrayList<LocatableHLayout> tagLayouts;
+    private Img addImg;
+    private TagInputDialog tagInputDialog;
 
     public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback) {
+        this(locatorId, tags, readOnly, callback, false);
+    }
+
+    public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback,
+        boolean vertical) {
+
         super(locatorId);
+
+        setVertical(vertical);
+        setAutoWidth();
+        if (!vertical) {
+            setMembersMargin(8);
+        }
 
         if (tags != null) {
             this.tags.addAll(tags);
         }
         this.readOnly = readOnly;
         this.callback = callback;
+
+        tagTitleLabel = new HTMLFlow("<b>" + MSG.view_tags_tags() + ":</b>");
+        tagTitleLabel.setAutoWidth();
+
+        if (!this.readOnly) {
+            tagInputDialog = new TagInputDialog(extendLocatorId("tagInputDialog"));
+
+            addImg = new LocatableImg(extendLocatorId("addImg"), "[skin]/images/actions/add.png", 16, 16);
+            addImg.setTooltip(MSG.view_tags_tooltip_2());
+            addImg.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    showTagInput();
+                }
+            });
+        }
     }
 
     public LinkedHashSet<Tag> getTags() {
@@ -86,40 +117,57 @@ public class TagEditorView extends LocatableLayout {
     }
 
     public void setTags(LinkedHashSet<Tag> tags) {
-        this.tags = tags;
+        this.tags.clear();
+        if (tags != null) {
+            this.tags.addAll(tags);
+        }
         setup();
-    }
-
-    public void setVertical(boolean vertical) {
-        this.vertical = vertical;
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
-
         setup();
     }
 
     private void setup() {
-        destroyMembers();
+        // remove old members
+        removeMember(tagTitleLabel);
+        if (tagLayouts != null) {
+            for (LocatableHLayout tagLayout : tagLayouts) {
+                removeMember(tagLayout);
+                tagLayout.destroy();
+            }
+        }
+        if (addImg != null) {
+            removeMember(addImg);
+        }
 
-        Layout layout = vertical ? new LocatableVLayout(getLocatorId()) : new LocatableHLayout(getLocatorId());
-        if (!vertical)
-            layout.setMembersMargin(8);
+        // add new members
+        addMember(tagTitleLabel);
+        tagLayouts = createTagLayouts();
+        for (LocatableHLayout tagLayout : tagLayouts) {
+            addMember(tagLayout);
+        }
+        if (!readOnly) {
+            addMember(addImg);
+            tagInputDialog.place(addImg);
+        }
 
-        HTMLFlow title = new HTMLFlow("<b>" + MSG.view_tags_tags() + ":</b>");
-        title.setAutoWidth();
-        layout.addMember(title);
+        markForRedraw();
+    }
+
+    private ArrayList<LocatableHLayout> createTagLayouts() {
+        ArrayList<LocatableHLayout> tagLayouts = new ArrayList<LocatableHLayout>(tags.size());
 
         for (final Tag tag : tags) {
-            LocatableHLayout tagLayout = new LocatableHLayout(((Locatable) layout).extendLocatorId(tag.getName()));
+            LocatableHLayout tagLayout = new LocatableHLayout(extendLocatorId(tag.getName()));
             tagLayout.setHeight(18);
+            tagLayout.setHeight(16);
 
             HTMLFlow tagString = new HTMLFlow("<a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
                 + tag.toString() + "</a>");
             tagString.setAutoWidth();
-
             tagLayout.addMember(tagString);
 
             if (!readOnly) {
@@ -136,6 +184,7 @@ public class TagEditorView extends LocatableLayout {
                         save();
                     }
                 });
+
                 tagLayout.addMember(remove);
                 tagLayout.addMember(spacer);
                 remove.hide();
@@ -154,38 +203,13 @@ public class TagEditorView extends LocatableLayout {
                 });
             }
 
-            tagLayout.setHeight(16);
-            layout.addMember(tagLayout);
+            tagLayouts.add(tagLayout);
         }
 
-        if (!readOnly) {
-            final Img modeImg = new LocatableImg(((Locatable) layout).getLocatorId(), "[skin]/images/actions/add.png",
-                16, 16);
-
-            modeImg.setTooltip(MSG.view_tags_tooltip_2());
-            modeImg.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-
-                    showTagInput(modeImg.getAbsoluteLeft(), modeImg.getAbsoluteTop());
-                }
-            });
-            layout.addMember(modeImg);
-        }
-
-        layout.setAutoWidth();
-        addMember(layout);
-
-        markForRedraw();
+        return tagLayouts;
     }
 
-    private void showTagInput(int left, int top) {
-        final LocatableDialog dialog = new LocatableDialog(getLocatorId());
-        final LocatableDynamicForm form = new LocatableDynamicForm(dialog.getLocatorId());
-        final ComboBoxItem tagInput = new ComboBoxItem("tag");
-
-        tagInput.setShowTitle(false);
-        tagInput.setHideEmptyPickList(true);
-        //            tagInput.setOptionDataSource(new TaggingDataSource());
+    private void showTagInput() {
         TagCriteria criteria = new TagCriteria();
         criteria.addSortNamespace(PageOrdering.ASC);
         criteria.addSortSemantic(PageOrdering.ASC);
@@ -201,69 +225,82 @@ public class TagEditorView extends LocatableLayout {
                 for (Tag tag : result) {
                     values[i++] = tag.toString();
                 }
-                tagInput.setValueMap(values);
+                tagInputDialog.setTagSuggestions(values);
             }
         });
 
-        tagInput.setValueField("tag");
-        tagInput.setDisplayField("tag");
-        tagInput.setType("comboBox");
-        tagInput.setTextMatchStyle(TextMatchStyle.SUBSTRING);
-        tagInput.setTooltip(MSG.view_tags_tooltip_3());
-        /*tagInput.addBlurHandler(new BlurHandler() {
-            public void onBlur(BlurEvent blurEvent) {
-                String tag = form.getValueAsString("tag");
-                if (tag != null) {
-                    Tag newTag = new Tag(tag);
-                    tags.add(newTag);
-                    save();
-        //                        TagEditorView.this.setup();
-                }
-            }
-        });*/
-        tagInput.addKeyPressHandler(new KeyPressHandler() {
-            public void onKeyPress(KeyPressEvent event) {
-                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
-                    String tag = form.getValueAsString("tag");
-                    if (tag != null) {
-                        Tag newTag = new Tag(tag);
-                        tags.add(newTag);
-                        save();
-                        dialog.destroy();
-                        //                            TagEditorView.this.setup();
-                    }
-                }
-            }
-        });
-
-        form.setFields(tagInput);
-
-        dialog.setIsModal(true);
-        dialog.setShowHeader(false);
-        dialog.setShowEdges(false);
-        dialog.setEdgeSize(10);
-        dialog.setWidth(200);
-        dialog.setHeight(30);
-
-        dialog.setShowToolbar(false);
-
-        Map bodyDefaults = new HashMap();
-        bodyDefaults.put("layoutLeftMargin", 5);
-        bodyDefaults.put("membersMargin", 10);
-        dialog.setBodyDefaults(bodyDefaults);
-
-        dialog.addItem(form);
-
-        dialog.setDismissOnEscape(true);
-        dialog.setDismissOnOutsideClick(true);
-
-        dialog.show();
-        dialog.moveTo(left - 8, top - 4);
-        tagInput.focusInItem();
+        tagInputDialog.show();
+        tagInputDialog.place(addImg);
+        markForRedraw();
     }
 
     private void save() {
         this.callback.tagsChanged(tags);
         TagEditorView.this.setup();
+    }
+
+    private class TagInputDialog extends LocatableDialog {
+        private ComboBoxItem tagInputItem;
+
+        public TagInputDialog(String locatorId) {
+            super(locatorId);
+
+            setIsModal(true);
+            setShowHeader(false);
+            setShowEdges(false);
+            setEdgeSize(10);
+            setWidth(200);
+            setHeight(30);
+            setShowToolbar(false);
+            setDismissOnEscape(true);
+            setDismissOnOutsideClick(true);
+            Map<String, Integer> bodyDefaults = new HashMap<String, Integer>(2);
+            bodyDefaults.put("layoutLeftMargin", 5);
+            bodyDefaults.put("membersMargin", 10);
+            setBodyDefaults(bodyDefaults);
+
+            final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("tagInputForm"));
+            addItem(form);
+
+            tagInputItem = new ComboBoxItem("tag");
+            tagInputItem.setShowTitle(false);
+            tagInputItem.setHideEmptyPickList(true);
+            tagInputItem.setValueField("tag");
+            tagInputItem.setDisplayField("tag");
+            tagInputItem.setType("comboBox");
+            tagInputItem.setTextMatchStyle(TextMatchStyle.SUBSTRING);
+            tagInputItem.setTooltip(MSG.view_tags_tooltip_3());
+            tagInputItem.addKeyPressHandler(new KeyPressHandler() {
+                public void onKeyPress(KeyPressEvent event) {
+                    if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                        //String tag = form.getValueAsString("tag");
+                        String tag = tagInputItem.getEnteredValue();
+                        if (tag != null) {
+                            Tag newTag = new Tag(tag);
+                            tags.add(newTag);
+                            TagEditorView.this.save();
+                            TagInputDialog.this.hide();
+                        }
+                    }
+                }
+            });
+            form.setFields(tagInputItem);
+        }
+
+        @Override
+        public void show() {
+            super.show();
+            tagInputItem.clearValue();
+            tagInputItem.focusInItem();
+        }
+
+        public void setTagSuggestions(String[] suggestions) {
+            tagInputItem.setValueMap(suggestions);
+        }
+
+        public void place(Canvas canvas) {
+            // move this object over top the given canvas
+            moveTo(canvas.getAbsoluteLeft() - 8, canvas.getAbsoluteTop() - 4);
+        }
     }
 }

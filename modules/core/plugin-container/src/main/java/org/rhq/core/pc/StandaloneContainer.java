@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -50,6 +51,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
@@ -366,6 +368,9 @@ public class StandaloneContainer {
         case R_CONFIG:
             showResourceConfig();
             break;
+        case SR_CONFIG:
+            setResourceConfig(tokens);
+            break;
         }
 
         return false;
@@ -425,6 +430,33 @@ public class StandaloneContainer {
         }
 
     }
+
+    private void setResourceConfig(String[] tokens) {
+        if (resourceId == 0) {
+            System.err.println("No resource set");
+            return;
+        }
+
+
+        Configuration config = null;
+        if (tokens.length > 1)
+            config = createConfigurationFromString(tokens[1]);
+        else {
+            System.err.println("Need at least 1 token");
+            return;
+        }
+
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,config,resourceId);
+
+        ConfigurationManager cm = pc.getConfigurationManager();
+
+        cm.updateResourceConfiguration(request);
+
+
+
+    }
+
+
 
     private ResourceType getTypeForResourceId() {
         ResourceContainer rc = inventoryManager.getResourceContainer(resourceId);
@@ -789,7 +821,9 @@ public class StandaloneContainer {
         STDIN("stdin","",0, "Stop reading the batch file and wait for commands on stdin"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
         P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
-        R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource.");
+        R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource."),
+        SR_CONFIG("src", "", 0, "[parameters] set resource config ")
+        ;
 
         private String abbrev;
         private String args;

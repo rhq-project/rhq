@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,63 +18,30 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.Map;
+import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonValue;
 
 /**
- * // TODO: Document this
+ * Operation to run on the server
  * @author Heiko W. Rupp
  */
 public class Operation {
-    @JsonProperty("operation-name")
-    public String operationName;
-    public String description;
-    @JsonProperty("request-properties")
-    public Map<String,As7RequestProperty> requestProperties;
-//    @JsonProperty("reply-properties")
-//    public ArrayList<As7ReplyProperty> replyProperties;
 
-    @Override
+    public String operation;
+    public List<NameValuePair> address;
+
+    public NameValuePair nvp;
+
+    @JsonValue
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Operation");
-        sb.append("{operationName='").append(operationName).append('\'');
-        sb.append(", description='").append(description).append('\'');
-        sb.append(", requestProperties=").append(requestProperties);
-//        sb.append(", replyProperties=").append(replyProperties);
-        sb.append('}');
-        return sb.toString();
-    }
-
-    public static class As7RequestProperty {
-        public String description;
-        public boolean required;
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("As7RequestProperty");
-            sb.append("{description='").append(description).append('\'');
-            sb.append(", required=").append(required);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    public  static class As7ReplyProperty {
-        @JsonProperty("value-type")
-        public String valueType;
-        public String description;
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("As7ReplyProperty");
-            sb.append("{valueType='").append(valueType).append('\'');
-            sb.append(", description='").append(description).append('\'');
-            sb.append('}');
-            return sb.toString();
-        }
+        StringBuilder b = new StringBuilder();
+        b.append("{");
+        b.append("operation:").append(operation).append(",\n");
+        b.append("address:").append(address).append(",\n");
+        b.append(nvp);
+        b.append("}");
+        return b.toString();
     }
 }
+

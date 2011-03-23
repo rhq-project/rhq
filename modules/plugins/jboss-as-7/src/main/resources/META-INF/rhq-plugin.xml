@@ -169,12 +169,19 @@
                     <c:simple-property name="path" readOnly="true" default="/subsystem/web/connector/*"/>
                 </plugin-configuration>
 
+
                 <metric property="bytesSent" measurementType="trendsup"/>
                 <metric property="bytesReceived" measurementType="trendsup"/>
                 <metric property="processingTime" measurementType="trendsup"/>
                 <metric property="errorCount" measurementType="trendsup"/>
                 <metric property="maxTime" />
                 <metric property="requestCount" measurementType="trendsup"/>
+
+                <resource-configuration>
+                    <c:simple-property name="protocol" required="false" description="The web connector protocol."/>
+                    <c:simple-property name="socket-binding" required="false" description="The web connector socket-binding reference, this connector should be bound to."/>
+                    <c:simple-property name="scheme" required="false" description="The web connector scheme"/>
+                </resource-configuration>
 
             </service>
 
@@ -185,6 +192,11 @@
                     <c:simple-property name="path" readOnly="true" default="/subsystem/web/virtual-server/*"/>
                 </plugin-configuration>
 
+                <resource-configuration>
+                    <c:simple-property name="access-log"/>
+                    <c:list-property name="alias" description="The virtual server aliases"/>
+                    <c:simple-property name="rewrite"/>
+                </resource-configuration>
 
             </service>
 
@@ -209,8 +221,8 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition"/>
-                <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group"/>
+                <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
+                <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
             </resource-configuration>
 
             <service name="SocketBinding"

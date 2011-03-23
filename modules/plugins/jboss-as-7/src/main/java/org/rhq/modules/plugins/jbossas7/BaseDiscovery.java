@@ -61,7 +61,11 @@ public class BaseDiscovery implements ResourceDiscoveryComponent
                 serverNameFull = "ASManager";
             } else {
                 serverNameFull = getBaseDirFromCommandLine(commandLine);
+                if (serverNameFull==null || serverNameFull.isEmpty())
+                    serverNameFull="JBossAS7";
                 serverName = serverNameFull.substring(serverNameFull.lastIndexOf("/")+1);
+                if (serverName.isEmpty())
+                    serverName = serverNameFull;
 
 //                DomainClient client = DomainClient.Factory.create(InetAddress.getByName("localhost"),9990); //
 //                Map<ServerIdentity,ServerStatus> serverStatuses = client.getServerStatuses();

@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
+import org.codehaus.jackson.annotate.JsonValue;
+
 /**
  *
  * @author Heiko W. Rupp
@@ -30,5 +32,11 @@ public class NameValuePair {
     public NameValuePair(String name, String value) {
         this.name = name;
         this.value = value;
+    }
+
+    @JsonValue
+    @Override
+    public String toString() {
+        return name +":"+ value ;
     }
 }

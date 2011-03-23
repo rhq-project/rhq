@@ -37,7 +37,7 @@ public class Subsystem {
     @JsonProperty("attributes") Map <String,Attribute> attributes;
     @JsonProperty("model-description")
     Subsystem modelDescription;
-    @JsonProperty("operations") Map<String,Operation> operations = new HashMap<String, Operation>();
+    @JsonProperty("operations") Map<String,OperationDescription> operations = new HashMap<String, OperationDescription>();
     public Map<String,Subsystem> children;
 
 
@@ -57,7 +57,7 @@ public class Subsystem {
         sb.append(", model-description=").append(modelDescription).append('\n');
         sb.append("\n, operations=");
         if (operations!=null) {
-            for (Map.Entry<String,Operation> ops : operations.entrySet())
+            for (Map.Entry<String,OperationDescription> ops : operations.entrySet())
                 sb.append("    ").append(ops).append('\n');
             }
         sb.append(", children=").append(children).append('\n');

@@ -24,9 +24,12 @@ import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -44,6 +47,8 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -144,14 +149,26 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        JsonNode json = connection.getLevelData(path,false,false);
+        JsonNode json = connection.getLevelData(key,false,false); // TODO path ? key?
 
         Configuration ret = new Configuration();
 
         for (PropertyDefinition propDef: configDef.getNonGroupedProperties()) {
             JsonNode sub = json.findValue(propDef.getName());
-            PropertySimple propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
-            ret.put(propertySimple);
+            if (propDef instanceof PropertyDefinitionSimple) {
+                PropertySimple propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
+                ret.put(propertySimple);
+            } else if (propDef instanceof PropertyDefinitionList) {
+                PropertyList propertyList = new PropertyList(propDef.getName());
+                Iterator<JsonNode> values = sub.getElements();
+                while (values.hasNext()) {
+                    JsonNode node = values.next();
+                    String value = node.getTextValue();
+                    PropertySimple propertySimple = new PropertySimple(propDef.getName(),value);
+                    propertyList.add(propertySimple);
+                }
+                ret.put(propertyList);
+            }
         }
 
 

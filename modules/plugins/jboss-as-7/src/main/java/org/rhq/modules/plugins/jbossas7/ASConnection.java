@@ -23,17 +23,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jetbrains.annotations.Nullable;
+import org.omg.CORBA.NamedValue;
 
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
 
 /**
  * Provide connections to the AS and reading / writing date from/to it.
@@ -83,7 +88,7 @@ public class ASConnection {
      * Return the JSON-Ojbect for a certain path.
      *
      * @param base Path to the object/subsystem. Can be null/"" for the base objects
-     * @param ops Operation to run on the api can be null
+     * @param ops OperationDescription to run on the api can be null
      * @return  A JSONObject encoding the level plus sub levels provided
      * @throws Exception If anything goes wrong
      */
@@ -151,21 +156,62 @@ public class ASConnection {
 
         try {
             URL url = getBaseUrl(path,"operation="+s);
-            URLConnection conn = url.openConnection();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+//            conn.setRequestMethod("POST");
             OutputStream out = conn.getOutputStream();
 
             ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(out,nvp);
+
+            Operation operation = new Operation();
+            operation.operation=s;
+            operation.nvp=nvp;
+            operation.address=pathToAddress(path);
+
+
+            String result = mapper.writeValueAsString(operation);
+            System.out.println("Json to send: " + result);
+            mapper.writeValue(out, operation);
+
             out.flush();
             out.close();
+
+            InputStream inputStream;
+            if (conn.getResponseCode()==HttpURLConnection.HTTP_OK) {
+                inputStream = conn.getInputStream();
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(
+                        inputStream));
+                String line;
+                StringBuilder builder = new StringBuilder();
+                while ((line = in.readLine()) != null) {
+                    builder.append(line);
+                }
+                System.out.println(builder.toString());
+            }
+
         } catch (IOException e) {
             e.printStackTrace();  // TODO: Customise this generated block
         }
 
     }
 
+    private List<NameValuePair> pathToAddress(String path) {
+        if (path.endsWith("/"))
+            path = path.substring(0,path.length()-1);
 
+        if (path.startsWith("/"))
+            path = path.substring(1);
 
+        List<NameValuePair> result = new ArrayList<NameValuePair>();
+        String[] components = path.split("/");
+        for (int i = 0; i < components.length ; i+=2) {
+            NameValuePair valuePair = new NameValuePair(components[i],components[i+1]);
+            result.add(valuePair);
+        }
+
+        return result;
+    }
 
     private URL getBaseUrl(String base, String ops) throws MalformedURLException {
         String spec;

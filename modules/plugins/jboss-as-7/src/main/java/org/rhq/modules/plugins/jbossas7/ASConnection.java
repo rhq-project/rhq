@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -31,6 +32,8 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jetbrains.annotations.Nullable;
+
+import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 
 /**
  * Provide connections to the AS and reading / writing date from/to it.
@@ -88,23 +91,7 @@ public class ASConnection {
 
         URL url2;
         String spec;
-        if (base!=null && !base.isEmpty()) {
-            if (!base.startsWith("/")) {
-                spec = urlString + "/" + base;
-            }
-            else {
-                spec = urlString + base;
-            }
-            if (ops!=null) {
-                if (!ops.startsWith("?"))
-                    ops = "?" + ops;
-                spec += ops;
-            }
-
-            url2 = new URL(spec);
-        }
-        else
-            url2 = url;
+        url2 = getBaseUrl(base, ops);
 
         JsonNode tree = null;
 
@@ -160,5 +147,47 @@ public class ASConnection {
         return false;
     }
 
+    public void execute(String path, String s, NameValuePair nvp) {
+
+        try {
+            URL url = getBaseUrl(path,"operation="+s);
+            URLConnection conn = url.openConnection();
+            OutputStream out = conn.getOutputStream();
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(out,nvp);
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        }
+
+    }
+
+
+
+
+    private URL getBaseUrl(String base, String ops) throws MalformedURLException {
+        String spec;
+        URL url2;
+        if (base!=null && !base.isEmpty()) {
+            if (!base.startsWith("/")) {
+                spec = urlString + "/" + base;
+            }
+            else {
+                spec = urlString + base;
+            }
+            if (ops!=null) {
+                if (!ops.startsWith("?"))
+                    ops = "?" + ops;
+                spec += ops;
+            }
+
+            url2 = new URL(spec);
+        }
+        else
+            url2 = url;
+        return url2;
+    }
 
 }

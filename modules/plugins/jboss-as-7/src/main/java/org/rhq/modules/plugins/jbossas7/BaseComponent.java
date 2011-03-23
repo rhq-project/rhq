@@ -23,12 +23,18 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -36,10 +42,12 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 
+import java.util.Map;
 import java.util.Set;
 
-public class BaseComponent implements ResourceComponent, MeasurementFacet
+public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -134,7 +142,33 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet
 
     protected String getPath() { return path; }
 
+    public Configuration loadResourceConfiguration() throws Exception {
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        JsonNode json = connection.getLevelData(path,false,false);
+
+        Configuration ret = new Configuration();
+
+        for (PropertyDefinition propDef: configDef.getNonGroupedProperties()) {
+            JsonNode sub = json.findValue(propDef.getName());
+            PropertySimple propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
+            ret.put(propertySimple);
+        }
 
 
+        return ret;
+    }
 
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+
+
+        Configuration conf = report.getConfiguration();
+        for (Map.Entry<String, PropertySimple> entry : conf.getSimpleProperties().entrySet()) {
+
+            NameValuePair nvp = new NameValuePair(entry.getKey(),entry.getValue().getStringValue());
+            connection.execute(path,"write-attribute",nvp);
+        }
+
+
+        // TODO: Customise this generated block
+    }
 }

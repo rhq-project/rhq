@@ -93,7 +93,7 @@
 
     </server>
 
-    <server name="JBossAS7 (Standalone)"
+    <server name="JBossAS7-Standalone"
             discovery="BaseDiscovery"
             class="BaseComponent"
             >
@@ -127,29 +127,29 @@
         />
         -->
 
-       <server name="Messaging"
+        <server name="Messaging"
                 discovery="SubsystemDiscovery"
                 class="BaseComponent">
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
             </plugin-configuration>
 
-           <resource-configuration>
-               <c:simple-property name="journal-min-files" />
-               <c:simple-property name="journal-type" />
-           </resource-configuration>
+            <resource-configuration>
+                <c:simple-property name="journal-min-files" />
+                <c:simple-property name="journal-type" />
+            </resource-configuration>
 
 
-           <service name="Acceptor"
-               discovery="SubsystemDiscovery"
-               class="BaseComponent"
-               >
-               <plugin-configuration>
-                   <c:simple-property name="path" readOnly="true" default="/subsystem/messaging/acceptor"/>
-               </plugin-configuration>
+            <service name="Acceptor"
+                     discovery="SubsystemDiscovery"
+                     class="BaseComponent"
+                    >
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="/subsystem/messaging/acceptor"/>
+                </plugin-configuration>
 
 
-           </service>
+            </service>
 
         </server>
 
@@ -164,7 +164,7 @@
             <service name="Connector"
                      discovery="SubsystemDiscovery"
                      class="BaseComponent"
-                     >
+                    >
                 <plugin-configuration>
                     <c:simple-property name="path" readOnly="true" default="/subsystem/web/connector/*"/>
                 </plugin-configuration>
@@ -176,11 +176,11 @@
                 <metric property="maxTime" />
                 <metric property="requestCount" measurementType="trendsup"/>
 
-             </service>
+            </service>
 
             <service name="VHost"
-                    discovery="SubsystemDiscovery"
-                    class="BaseComponent">
+                     discovery="SubsystemDiscovery"
+                     class="BaseComponent">
                 <plugin-configuration>
                     <c:simple-property name="path" readOnly="true" default="/subsystem/web/virtual-server/*"/>
                 </plugin-configuration>
@@ -196,32 +196,37 @@
                  class="BaseComponent"
                  description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
             <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true" default="/"/>
+                <c:simple-property name="path" readOnly="true" default="/"/>
             </plugin-configuration>
         </service>
 
         <service name="SocketBindingGroup"
                  discovery="SocketBindingGroupDiscovery"
                  class="BaseComponent"
-                 >
+                >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
             </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition"/>
+                <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group"/>
+            </resource-configuration>
 
             <service name="SocketBinding"
                      discovery="SocketBindingDiscovery"
                      class="BaseComponent">
                 <plugin-configuration>
-                        <c:simple-property name="path" readOnly="true"/>
+                    <c:simple-property name="path" readOnly="true"/>
                 </plugin-configuration>
 
-             </service>
-         </service>
+            </service>
+        </service>
 
 
     </server>
 
-    <server name="JBossAS (Managed)"
+    <server name="JBossAS-Managed"
             discovery="BaseDiscovery"
             class="BaseComponent"
             >
@@ -238,9 +243,9 @@
         <metric property="serverGroup" dataType="trait" displayType="summary" />
         <resource-configuration>
             <!--<c:group name="interfaces">-->
-                <c:simple-property name="loopback" default="127.0.0.1" />
-                <c:simple-property name="external" default="any" />
-                <c:simple-property name="public" default="any" />
+            <c:simple-property name="loopback" default="127.0.0.1" />
+            <c:simple-property name="external" default="any" />
+            <c:simple-property name="public" default="any" />
             <!--</c:group>-->
         </resource-configuration>
 
@@ -251,7 +256,7 @@
                 discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
                 class="org.rhq.plugins.jmx.JMXServerComponent"
                 singleton="true"
-        />
+                />
 
     </server>
 

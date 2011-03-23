@@ -59,17 +59,13 @@ public class ResourceLookupComboBoxItem extends ComboBoxItem {
 
         ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry(),
             300);
+        // needs to use a different cell formatter than what AncestryUtil.setupAncestryListGridField creates
         ancestryField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
                 return AncestryUtil.getAncestryValue(listGridRecord, false);
             }
         });
-        ancestryField.setShowHover(true);
-        ancestryField.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-            }
-        });
+        AncestryUtil.setupAncestryListGridFieldHover(ancestryField);
 
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
         ListGridField categoryField = new ListGridField("category", MSG.common_title_category(), 60);

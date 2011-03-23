@@ -69,20 +69,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         });
         resourceNameField.setCanGroupBy(true);
 
-        ListGridField ancestryField = listGrid.getField(AncestryUtil.RESOURCE_ANCESTRY);
-        ancestryField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-            }
-        });
-        ancestryField.setShowHover(true);
-        ancestryField.setHoverCustomizer(new HoverCustomizer() {
-
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-            }
-        });
-
+        AncestryUtil.setupAncestryListGridField(listGrid);
         super.configureTable();
     }
 

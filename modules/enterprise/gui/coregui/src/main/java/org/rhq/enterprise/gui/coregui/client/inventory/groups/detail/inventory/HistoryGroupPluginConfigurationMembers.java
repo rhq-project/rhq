@@ -117,20 +117,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                 }
             });
 
-            ListGridField fieldAncestry = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
-            fieldAncestry.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                    return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-                }
-            });
-            fieldAncestry.setShowHover(true);
-            fieldAncestry.setHoverCustomizer(new HoverCustomizer() {
-
-                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                    return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-                }
-            });
-
+            ListGridField fieldAncestry = AncestryUtil.setupAncestryListGridField();
             ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED, MSG
                 .common_title_dateCreated());
             ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG

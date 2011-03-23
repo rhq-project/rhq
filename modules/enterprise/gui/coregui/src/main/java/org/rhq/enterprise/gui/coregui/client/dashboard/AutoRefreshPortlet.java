@@ -32,4 +32,10 @@ public interface AutoRefreshPortlet extends Portlet {
      * should be canceled when the portlet goes out of scope (typically in an onDestroy() override).
      */
     void startRefreshCycle();
+
+    /**     
+     * @return true if the portlet is currently responding to a refresh (i.e. reloading data). This can be used
+     * to ignore refresh requests until a prior request is completed. 
+     */
+    boolean isRefreshing();
 }

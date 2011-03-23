@@ -46,9 +46,9 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -60,7 +60,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -207,10 +206,10 @@ public class GroupAlertsPortlet3 extends LocatableVLayout implements CustomSetti
         if (property != null) {
             String currentSetting = property.getStringValue();
             if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                PageControl pageControl = new PageControl(0, 5);
+                //PageControl pageControl = new PageControl(0, 5);
                 pc.setPageSize(5);
             } else {
-                PageControl pageControl = new PageControl(0, Integer.valueOf(currentSetting));
+                //PageControl pageControl = new PageControl(0, Integer.valueOf(currentSetting));
                 pc.setPageSize(Integer.valueOf(currentSetting));
             }
         }
@@ -356,38 +355,19 @@ public class GroupAlertsPortlet3 extends LocatableVLayout implements CustomSetti
         return customSettings;
     }
 
-    @Override
     public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-
-            refreshTimer = new Timer() {
-                public void run() {
-                    if (!currentlyLoading) {
-                        loadData();
-                        redraw();
-                    }
-                }
-            };
-
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        if (refreshTimer != null) {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
 
-            refreshTimer.cancel();
-        }
         super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return this.currentlyLoading;
     }
 
     @Override

@@ -39,7 +39,7 @@ public class ObjectFilter {
         for (Object object : collection) {
             filterFields(object, goodFields);
         }
-        com.allen_sauer.gwt.log.client.Log.info("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
+        Log.debug("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
 
         return collection;
     }
@@ -80,4 +80,5 @@ public class ObjectFilter {
         }
         return -1;
     }
+
 }

@@ -458,11 +458,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
         for (SectionStackSection section : sectionStack.getSections()) {
             MenuItem item = new MenuItem(section.getTitle());
+            item.setAttribute("name", section.getName());
             item.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    int x = event.getMenu().getItemNum(event.getItem());
-                    sectionStack.expandSection(x);
-                    sectionStack.showSection(x);
+                    int index = event.getMenu().getItemNum(event.getItem());
+                    sectionStack.expandSection(index);
+                    sectionStack.showSection(index);
                 }
             });
             menu.addItem(item);
@@ -491,13 +492,14 @@ public class ConfigurationEditor extends LocatableVLayout {
             section = new SectionStackSection(MSG.common_title_generalProp());
             section.setExpanded(true);
         } else {
-            section = new SectionStackSection(
-                "<div style=\"float:left; font-weight: bold;\">"
+            String title = "<div style=\"float:left; font-weight: bold;\">"
                     + group.getDisplayName()
                     + "</div>"
                     + (group.getDescription() != null ? ("<div style='padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
-                        + " - " + group.getDescription() + "</div>")
-                        : ""));
+                    + " - " + group.getDescription() + "</div>")
+                    : "");
+            section = new SectionStackSection(title);
+            section.setName(group.getName());
             section.setExpanded(!group.isDefaultHidden());
         }
 

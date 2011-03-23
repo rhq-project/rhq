@@ -52,7 +52,6 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -72,7 +71,6 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -80,11 +78,13 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -133,8 +133,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
-    private ToolStrip footer;
-    private ToolStrip footerExtraWidgets;
+    private LocatableToolStrip footer;
+    private LocatableToolStrip footerExtraWidgets;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -210,7 +210,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected void onInit() {
         super.onInit();
 
-        contents = new LocatableVLayout(extendLocatorId("tableContents"));
+        contents = new LocatableVLayout(extendLocatorId("Contents"));
         contents.setWidth100();
         contents.setHeight100();
         //contents.setOverflow(Overflow.AUTO);
@@ -287,7 +287,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             setTableTitle(this.tableTitle);
 
             if (showHeader) {
-                titleLayout = new HLayout();
+                titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
@@ -301,16 +301,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             // Footer
 
-            // A second toolstrip that optionaly appears before the main footer - it will contain extra widgets.
+            // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
-            this.footerExtraWidgets = new ToolStrip();
+            this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new ToolStrip();
+            this.footer = new LocatableToolStrip(contents.extendLocatorId("Footer"));
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -747,7 +747,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public void addTableAction(String locatorId, String title, String confirmation,
         LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
-        TableActionInfo info = new TableActionInfo(locatorId, title, confirmation, valueMap, tableAction);
+        // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
+        // extends the footer's locator ID as it should.
+        int underscoreIndex = locatorId.lastIndexOf('_');
+        String unqualifiedLocatorId;
+        if (underscoreIndex >= 0 && underscoreIndex != (locatorId.length() - 1)) {
+            unqualifiedLocatorId = locatorId.substring(underscoreIndex + 1);
+        } else {
+            unqualifiedLocatorId = locatorId;
+        }
+        TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
+                confirmation, valueMap, tableAction);
         tableActions.add(info);
     }
 
@@ -894,7 +904,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler,
+    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
         com.google.gwt.event.dom.client.KeyPressHandler {
 
         private Table<?> table;
@@ -902,7 +912,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         private HiddenItem hiddenItem;
 
         public TableFilter(Table<?> table) {
-            super();
+            super(table.extendLocatorId("TableFilter"));
             setWidth100();
             setPadding(5);
             this.table = table;
@@ -1050,4 +1060,5 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected SearchSubsystem getSearchSubsystem() {
         return null;
     }
+
 }

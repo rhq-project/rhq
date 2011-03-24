@@ -130,6 +130,11 @@ public class ASConnection {
         return tree;
     }
 
+    JsonNode getAttributeValue(@Nullable String base, @Nullable String attributeName) throws Exception {
+        String op = "operation=attribute&name=" + attributeName;
+        return getLevelData(base,op);
+    }
+
 
     boolean isErrorReply(JsonNode in) {
         if (in.has("outcome")) {

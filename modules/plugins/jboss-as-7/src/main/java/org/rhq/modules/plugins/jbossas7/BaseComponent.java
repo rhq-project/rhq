@@ -23,7 +23,6 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -44,13 +43,9 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -117,26 +112,24 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     /**
      * Gather measurement data
-     *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
+     * @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
     public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-        JsonNode obj = connection.getLevelData(key,false,true);
 
         for (MeasurementScheduleRequest req : metrics) {
-            if (obj.has(req.getName())) {
-/*
-                String val = obj.getString(req.getName());
-                if (req.getDataType()== DataType.MEASUREMENT) {
 
-                    Double d = Double.parseDouble(val);
-                    MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
-                    report.addData(data);
-                } else if (req.getDataType()== DataType.TRAIT) {
-                    MeasurementDataTrait data = new MeasurementDataTrait(req,val);
-                    report.addData(data);
-                }
-*/
+            JsonNode obj = connection.getAttributeValue(key, req.getName()); // TODO batching
+
+            String val = obj.getValueAsText();
+            if (req.getDataType()== DataType.MEASUREMENT) {
+
+                Double d = Double.parseDouble(val);
+                MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
+                report.addData(data);
+            } else if (req.getDataType()== DataType.TRAIT) {
+                MeasurementDataTrait data = new MeasurementDataTrait(req,val);
+                report.addData(data);
             }
         }
     }

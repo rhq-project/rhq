@@ -90,29 +90,26 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
      */
     public void showMessageCenterWindow() {
         try {
-            createWindow().show();
+            if (window == null) {
+                window = new MessageCenterWindow("MessageCenterViewWindow");
+                window.addItem(this);
+                window.addCloseClickHandler(new CloseClickHandler() {
+                    @Override
+                    public void onCloseClick(CloseClientEvent event) {
+                        try {
+                            window.hide();
+                        } catch (Throwable e) {
+                            Log.warn("Cannot destroy message center", e);
+                        }
+                    }
+                });
+            }
+
+            window.show();
+            markForRedraw(); // need this to ensure the list grid rows are selectable
         } catch (Throwable e) {
             Log.error("Cannot show message center window", e);
         }
-    }
-
-    private Window createWindow() {
-        if (window == null) {
-            window = new MessageCenterWindow("MessageCenterViewWindow");
-            window.addItem(this);
-            window.addCloseClickHandler(new CloseClickHandler() {
-                @Override
-                public void onCloseClick(CloseClientEvent event) {
-                    try {
-                        window.hide();
-                    } catch (Throwable e) {
-                        Log.warn("Cannot destroy message center", e);
-                    }
-                }
-            });
-        }
-
-        return window;
     }
 
     @Override

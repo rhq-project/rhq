@@ -223,16 +223,18 @@
             <resource-configuration>
                 <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
                 <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
+                <c:list-property name="socket-binding">
+                    <c:map-property name="binding">
+                        <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name."/>
+                        <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
+                        <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
+                        <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
+                        <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." />
+                        <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer"/>
+                    </c:map-property>
+                </c:list-property>
             </resource-configuration>
 
-            <service name="SocketBinding"
-                     discovery="SocketBindingDiscovery"
-                     class="BaseComponent">
-                <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true"/>
-                </plugin-configuration>
-
-            </service>
         </service>
 
 

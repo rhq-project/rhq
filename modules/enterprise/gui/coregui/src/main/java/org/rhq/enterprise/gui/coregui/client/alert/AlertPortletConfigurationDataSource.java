@@ -87,6 +87,7 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
         //initialize to only five for quick queries.
         criteria.setPageControl(new PageControl(0, Integer
             .valueOf(PortletConfigurationEditorComponent.Constant.RESULT_COUNT_DEFAULT)));
+
         //retrieve previous settings from portlet config
         if ((portlet != null) && (this.portlet instanceof DashboardPortlet)) {
             Configuration portletConfig = configuration;
@@ -160,10 +161,8 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
             if (property != null) {
                 String currentSetting = property.getStringValue();
                 if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                    PageControl pageControl = new PageControl(0, 5);
                     pc.setPageSize(5);
                 } else {
-                    PageControl pageControl = new PageControl(0, Integer.valueOf(currentSetting));
                     pc.setPageSize(Integer.valueOf(currentSetting));
                 }
             }

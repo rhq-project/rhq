@@ -515,9 +515,14 @@ public class DashboardView extends LocatableVLayout {
             //filter out portlets not relevent for facets
             Set<ResourceTypeFacet> facets = composite.getResourceFacets().getFacets();
             GroupCategory groupCategory = composite.getResourceGroup().getGroupCategory();
-            //            ResourceGroup group = composite.getResourceGroup();
-            //compatible if not a compatible group may need to do some pruning.
+            //if not a compatible group may need to do some pruning.
             if (groupCategory != GroupCategory.COMPATIBLE) {
+                groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
+                groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
+                groupKeyNameMap.remove(GroupOobsPortlet.KEY);
+                groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
+            } else {
+                //for compatible may still need to do some pruning.
                 if (!facets.isEmpty()) {
                     //Operations related portlets(Config,PkgHistory)
                     if (!facets.contains(ResourceTypeFacet.OPERATION)) {
@@ -533,12 +538,8 @@ public class DashboardView extends LocatableVLayout {
                         groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
                     }
                 }
-                //                //EVENT related portlets
-                //                if (!facets.contains(ResourceTypeFacet.EVENT)) {
-                //                    groupKeyNameMap.remove(GroupEventsPortlet.KEY);
-                //                }
-
             }
+
         }
         return groupKeyNameMap;
     }

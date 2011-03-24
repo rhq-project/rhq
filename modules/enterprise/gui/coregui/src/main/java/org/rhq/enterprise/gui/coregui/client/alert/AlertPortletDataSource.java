@@ -35,11 +35,8 @@ public class AlertPortletDataSource extends AlertDataSource {
         this.portlet = recentAlertsPortlet;
     }
 
-    /** Override the executeFetch for AlertPortlet to allow specifying smaller than total
-     *  result displays.
-     */
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
+    @Override
+    protected AlertCriteria getFetchCriteria(DSRequest request) {
         //retrieve previous settings from portlet config
         if ((portlet != null) && (this.portlet instanceof DashboardPortlet)) {
             //must check for whether portlet config
@@ -86,6 +83,14 @@ public class AlertPortletDataSource extends AlertDataSource {
             criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
         }
 
+        return criteria;
+    }
+
+    /** Override the executeFetch for AlertPortlet to allow specifying smaller than total
+     *  result displays.
+     */
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
         getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
             public void onFailure(Throwable caught) {

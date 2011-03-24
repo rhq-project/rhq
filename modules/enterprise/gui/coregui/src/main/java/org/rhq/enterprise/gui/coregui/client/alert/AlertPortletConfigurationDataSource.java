@@ -81,8 +81,34 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
     /** Override the executeFetch for AlertPortlet to allow specifying smaller than total
      *  result displays.
      */
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
         final long start = System.currentTimeMillis();
+
+        getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(PageList<Alert> result) {
+                long fetchTime = System.currentTimeMillis() - start;
+                Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                if (entityContext.type != EntityContext.Type.Resource) {
+                    dataRetrieved(result, response, request);
+                } else {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.size());
+                    processResponse(request.getRequestId(), response);
+                }
+            }
+        });
+    }
+
+    @Override
+    protected AlertCriteria getFetchCriteria(DSRequest request) {
         AlertCriteria criteria = new AlertCriteria();
         //initialize to only five for quick queries.
         criteria.setPageControl(new PageControl(0, Integer
@@ -176,27 +202,7 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
         }
         criteria.fetchAlertDefinition(true);
         criteria.fetchRecoveryAlertDefinition(true);
-
-        getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_alerts_loadFailed(), caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<Alert> result) {
-                long fetchTime = System.currentTimeMillis() - start;
-                Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                if (entityContext.type != EntityContext.Type.Resource) {
-                    dataRetrieved(result, response, request);
-                } else {
-                    response.setData(buildRecords(result));
-                    response.setTotalRows(result.size());
-                    processResponse(request.getRequestId(), response);
-                }
-            }
-        });
+        return criteria;
     }
 
     public String getAlertResourcesToUse() {

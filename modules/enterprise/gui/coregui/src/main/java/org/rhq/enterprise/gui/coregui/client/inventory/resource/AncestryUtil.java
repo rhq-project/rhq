@@ -341,11 +341,20 @@ public abstract class AncestryUtil {
         Map<Integer, ResourceType> types = ((MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES)).getMap();
         Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
         ResourceType type = types.get(resourceTypeId);
-        width = (width <= 0) ? 500 : width;
 
-        StringBuilder sb = new StringBuilder("<p style='width:");
-        sb.append(width);
-        sb.append("px'>");
+        // note: if width is negative, we do not explicitly define a width in the HTML, thus enabling auto-resizing.
+        Integer widthObj = null;
+        if (width >= 0) {
+            widthObj = (width == 0) ? Integer.valueOf(500) : Integer.valueOf(width);
+        }
+
+        StringBuilder sb = new StringBuilder("<p");
+        if (widthObj != null) {
+            sb.append(" style='width:");
+            sb.append(widthObj.toString());
+            sb.append("px'");
+        }
+        sb.append(">");
 
         sb.append(getResourceLongName(resourceName, type));
 

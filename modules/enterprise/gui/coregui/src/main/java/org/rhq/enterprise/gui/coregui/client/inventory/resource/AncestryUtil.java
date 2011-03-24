@@ -259,12 +259,20 @@ public abstract class AncestryUtil {
         ResourceType type = types.get(resourceTypeId);
         String resourceLongName = getResourceLongName(resourceName, type);
 
-        width = (width <= 0) ? 500 : width;
+        // note: if width is negative, we do not explicitly define a width in the HTML, thus enabling auto-resizing.
+        Integer widthObj = null;
+        if (width >= 0) {
+            widthObj = (width == 0) ? Integer.valueOf(500) : Integer.valueOf(width);
+        }
 
         // decode ancestry
-        StringBuilder sb = new StringBuilder("<p style='width:");
-        sb.append(width);
-        sb.append("px'>");
+        StringBuilder sb = new StringBuilder("<p");
+        if (widthObj != null) {
+            sb.append(" style='width:");
+            sb.append(widthObj.toString());
+            sb.append("px'");
+        }
+        sb.append(">");
         String title = (null != ancestry) ? TITLE_ANCESTRY : TITLE_PLATFORM;
         sb.append(title);
         sb.append(resourceLongName);

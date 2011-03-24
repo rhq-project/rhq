@@ -70,8 +70,11 @@ public class FavoritesButton extends LocatableIMenuButton {
         final Menu favoriteGroupsMenu = new Menu();
         final Menu recentlyViewedMenu = new Menu();
         favoriteResourcesMenu.setSubmenuDirection("left");
+        favoriteResourcesMenu.setAutoWidth();
         favoriteGroupsMenu.setSubmenuDirection("left");
+        favoriteGroupsMenu.setAutoWidth();
         recentlyViewedMenu.setSubmenuDirection("left");
+        recentlyViewedMenu.setAutoWidth();
         MenuItem favoriteResourcesMenuItem = new MenuItem(MSG.favorites_resources(), "Favorite_Resource_16.png");
         favoriteResourcesMenuItem.setSubmenu(favoriteResourcesMenu);
         favoriteResourcesMenu.setEmptyMessage(MSG.common_val_none());
@@ -102,7 +105,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                 // if we have no menu items at all, then show the empty menu now
                 if (favoriteGroupIds.isEmpty() && favoriteResourceIds.isEmpty() && recentResourceIds.isEmpty()
                     && recentGroupIds.isEmpty()) {
-                    favoritesMenu.showContextMenu();
+                    favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
                     return;
                 }
 
@@ -149,7 +152,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                                     buildRecentlyViewedMenu(favorites, recentlyViewedMenu, recentResourceIds,
                                         recentGroupIds, typesWrapper);
 
-                                    favoritesMenu.showContextMenu();
+                                    favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
                                 }
                             });
                     }
@@ -185,9 +188,11 @@ public class FavoritesButton extends LocatableIMenuButton {
             item.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
             item.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
             Menu ancestryMenu = new Menu();
-            MenuItem ancestryItem = new MenuItem(AncestryUtil.getAncestryHoverHTML(item, 0));
+            MenuItem ancestryItem = new MenuItem(AncestryUtil.getAncestryHoverHTML(item, -1));
             ancestryItem.setEnabled(false);
             ancestryMenu.setItems(ancestryItem);
+            ancestryMenu.setSubmenuDirection("left");
+            ancestryMenu.setAutoWidth();
             item.setSubmenu(ancestryMenu);
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
@@ -260,9 +265,11 @@ public class FavoritesButton extends LocatableIMenuButton {
             item.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
             Menu ancestryMenu = new Menu();
-            MenuItem ancestryItem = new MenuItem(AncestryUtil.getAncestryHoverHTML(item, 0));
+            MenuItem ancestryItem = new MenuItem(AncestryUtil.getAncestryHoverHTML(item, -1));
             ancestryItem.setEnabled(false);
             ancestryMenu.setItems(ancestryItem);
+            ancestryMenu.setSubmenuDirection("left");
+            ancestryMenu.setAutoWidth();
             item.setSubmenu(ancestryMenu);
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {

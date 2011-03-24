@@ -379,8 +379,6 @@
                   <c:option name="sslservlet" value="sslservlet" />
                   <c:option name="socket"     value="socket" />
                   <c:option name="sslsocket"  value="sslsocket" />
-                  <c:option name="http"       value="http" />
-                  <c:option name="https"      value="https" />
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.agent.server.bind-address" type="string" activationPolicy="restart" required="true" default="127.0.0.1" displayName="RHQ Server IP Address" description="The RHQ Server address that it is bound to" />

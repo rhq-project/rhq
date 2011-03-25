@@ -247,6 +247,16 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                     }
                 }
+                else if (memberDefinition instanceof PropertyDefinitionSimple) {
+                    String name = memberDefinition.getName();
+                    Iterator<String> keys = sub.getFieldNames();
+                    while(keys.hasNext()) {
+                        String entryKey = keys.next();
+
+                        PropertySimple propertySimple = new PropertySimple(name,entryKey);
+                        propertyList.add(propertySimple);
+                    }
+                }
                 ret.put(propertyList);
             }
         }

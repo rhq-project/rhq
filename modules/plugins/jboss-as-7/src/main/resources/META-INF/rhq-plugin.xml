@@ -135,9 +135,7 @@
                 </c:map-property>
             </c:list-property>
             <c:list-property name="extension" displayName="Installed extensions">
-                <c:map-property name="extension">
-                    <c:simple-property name="name" readOnly="true"/>
-                </c:map-property>
+                <c:simple-property name="name" readOnly="true"/>
             </c:list-property>
         </resource-configuration>
 

@@ -1267,12 +1267,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         FormItem valueItem = null;
 
         boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple);
-
         if (propertyIsReadOnly) {
             valueItem = new StaticTextItem();
         } else {
-
-
             List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
             if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
                 LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();

@@ -284,7 +284,6 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         setAllItems.add(canvasItem);
 
         masterValueItem.addChangedHandler(new ChangedHandler() {
-            @Override
             public void onChanged(ChangedEvent changedEvent) {
                 applyButton.enable();
                 applyButton.focus();
@@ -292,7 +291,6 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         });
 
         masterUnsetItem.addChangedHandler(new ChangedHandler() {
-            @Override
             public void onChanged(ChangedEvent changedEvent) {
                 applyButton.enable();
                 applyButton.focus();

@@ -204,25 +204,25 @@ public class ResourceTitleBar extends LocatableVLayout {
                 winModal.setWidth("70%");
                 winModal.setHeight("70%");
                 winModal.setIsModal(true);
+                winModal.setShowResizer(true);
+                winModal.setCanDragResize(true);
                 winModal.centerInPage();
-                winModal.setTitle(MSG.common_title_component_errors() + ":");
+                winModal.setTitle(MSG.common_title_component_errors());
 
                 LocatableVLayout form = new LocatableVLayout(extendLocatorId("_Modal_Form"));
                 form.setAlign(VerticalAlignment.CENTER);
-                form.setLayoutMargin(20);
+                form.setLayoutMargin(10);
                 form.setWidth100();
-                form.setHeight("40%");
-                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), MSG
-                    .view_summaryOverview_header_detectedErrors(), null, null,
-                    new String[] { ResourceErrorsDataSource.Field.DETAIL });
-                errorsGrid.setWidth100();
-                errorsGrid.setHeight("400");
+                form.setHeight100();
 
                 Resource resource = resourceComposite.getResource();
                 ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
 
-                errorsGrid.setShowFooter(false);
+                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), MSG
+                    .view_summaryOverview_header_detectedErrors(), null, null,
+                    new String[] { ResourceErrorsDataSource.Field.DETAIL });
                 errorsGrid.setDataSource(errors);
+
                 form.addMember(errorsGrid);
                 winModal.addItem(form);
 

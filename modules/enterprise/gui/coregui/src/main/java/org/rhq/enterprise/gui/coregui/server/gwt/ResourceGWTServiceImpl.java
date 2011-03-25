@@ -314,6 +314,16 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public void deleteResourceErrors(int[] resourceErrorIds) throws RuntimeException {
+        try {
+            for (int doomedId : resourceErrorIds) {
+                resourceManager.deleteResourceError(getSessionSubject(), doomedId);
+            }
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration)
         throws RuntimeException {
         try {

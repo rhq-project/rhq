@@ -93,17 +93,21 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     private static final String FAKE_ROOT_ID = "__fakeRoot__"; // id of the parent node of our real root node
 
     private TreeGrid treeGrid;
-
     private ViewId currentViewId;
-    private int rootGroupId;
-    private int selectedGroupId;
-    private String selectedNodeId;
-
+    private Map<Integer, ResourceType> typeMap;
     private ResourceGroupTreeContextMenu contextMenu;
 
+    // the root (top of tree) compat or mixed group
     private ResourceGroup rootResourceGroup;
-    private Map<Integer, ResourceType> typeMap;
-    private ResourceGroup selectedGroup;
+
+    // the root (top of tree) compat or mixed group id (may bet set prior to rootResourceGroup fetch)
+    private int rootGroupId;
+
+    // the currently selected tree node
+    private String currentNodeId;
+
+    // the currently selected group backing the tree node
+    private ResourceGroup currentGroup;
 
     private Comparator<ResourceGroupEnhancedTreeNode> treeNodeComparator = new Comparator<ResourceGroupEnhancedTreeNode>() {
         @Override
@@ -164,76 +168,93 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             }
         });
 
-        addMember(this.treeGrid);
-
         contextMenu = new ResourceGroupTreeContextMenu(extendLocatorId("contextMenu"));
         treeGrid.setContextMenu(contextMenu);
-
-        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            @Override
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
-                    selectedNodeId = null; // if user selected a valid node, we'll set this later
-                    ResourceGroupEnhancedTreeNode selectedNode = (ResourceGroupEnhancedTreeNode) selectionEvent
-                        .getRecord();
-                    com.allen_sauer.gwt.log.client.Log.info("Node selected in tree: " + selectedNode);
-
-                    ResourceType type = selectedNode.getResourceType();
-                    ClusterKey key = selectedNode.getClusterKey();
-                    if (type != null) {
-                        if (key != null) {
-                            // the user selected a cluster node - let's switch to that cluster group view
-                            com.allen_sauer.gwt.log.client.Log.debug("Selecting cluster group [" + key + "]...");
-                            selectedNodeId = selectedNode.getID();
-                            selectClusterGroup(key);
-                        } else {
-                            if (selectedNode.getParentID().equals(FAKE_ROOT_ID)) {
-                                // the user selected the top group node
-                                selectedNodeId = selectedNode.getID();
-                                String groupId = selectedNodeId;
-                                com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
-                                String viewPath = LinkManager.getResourceGroupLink(Integer.parseInt(groupId));
-                                CoreGUI.goToView(viewPath, true);
-                            } else {
-                                // the user selected a auto type group node; we have got nothing to show, so cancel the selection of this node
-                                treeGrid.deselectRecord(selectedNode);
-                            }
-                        }
-                    } else {
-                        // the user selected a subcategory; we have got nothing to show, so cancel the selection of this node
-                        treeGrid.deselectRecord(selectedNode);
-                    }
-                }
-                return;
-            }
-        });
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
                 // stop the browser right-click menu
                 event.cancel();
 
-                // don't select the node on a right click, since we're not navigating to it
-                ResourceGroupEnhancedTreeNode node = (ResourceGroupEnhancedTreeNode) event.getNode();
-                treeGrid.deselectRecord(node);
-                if (null != selectedNodeId) {
-                    treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                // don't select the node on a right click, since we're not navigating to it, and
+                // re-select the current node if necessary                
+                ResourceGroupEnhancedTreeNode contextNode = (ResourceGroupEnhancedTreeNode) event.getNode();
+
+                if (null != currentNodeId) {
+                    TreeNode currentNode = treeGrid.getTree().findById(currentNodeId);
+                    if (!contextNode.equals(currentNode)) {
+                        treeGrid.deselectRecord(contextNode);
+                        treeGrid.selectRecord(currentNode);
+                    }
                 }
 
                 // only show the context menu for cluster nodes and our top root node
-                ResourceType type = node.getResourceType();
-                ClusterKey key = node.getClusterKey();
-                if (type != null && (key != null || node.getParentID().equals(FAKE_ROOT_ID))) {
-                    contextMenu.showContextMenu(node);
+                if (contextNode.isCompatibleGroupTopNode() || contextNode.isAutoClusterNode()) {
+                    contextMenu.showContextMenu(contextNode);
                 }
             }
         });
 
+        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
+
+                    ResourceGroupEnhancedTreeNode newNode = (ResourceGroupEnhancedTreeNode) selectionEvent.getRecord();
+                    TreeNode currentNode = (null != currentNodeId) ? treeGrid.getTree().findById(currentNodeId) : null;
+
+                    // if re-selecting the current node just return, otherwise deselect the currently selected node
+                    if (null != currentNode) {
+                        if (newNode.equals(currentNode)) {
+                            return;
+                        } else {
+                            treeGrid.deselectRecord(currentNode);
+                        }
+                    }
+
+                    com.allen_sauer.gwt.log.client.Log.debug("Node selected in tree: " + newNode);
+
+                    if (newNode.isCompatibleGroupTopNode()) {
+                        currentNodeId = newNode.getID();
+                        com.allen_sauer.gwt.log.client.Log.debug("Selecting compatible group [" + currentNodeId
+                            + "]...");
+                        String viewPath = LinkManager.getResourceGroupLink(Integer.parseInt(currentNodeId));
+                        String currentViewPath = History.getToken();
+                        if (!currentViewPath.startsWith(viewPath.substring(1))) {
+                            CoreGUI.goToView(viewPath, true);
+                        } else {
+                            // this should not be necessary but for otherwise the top node does not always show selected
+                            treeGrid.markForRedraw();
+                        }
+
+                    } else if (newNode.isAutoClusterNode()) {
+                        ClusterKey key = newNode.getClusterKey();
+                        com.allen_sauer.gwt.log.client.Log.debug("Selecting autocluster group [" + key + "]...");
+                        currentNodeId = newNode.getID();
+                        // the user selected a cluster node - let's switch to that cluster group view                            
+                        selectClusterGroup(key);
+
+                    } else if (newNode.isMixedGroupTopNode()) {
+                        currentNodeId = newNode.getID();
+                        com.allen_sauer.gwt.log.client.Log.debug("Selecting mixed group [" + currentNodeId + "]...");
+
+                    } else {
+                        // a subcategory node, deselect and reselect the current node
+                        treeGrid.deselectRecord(newNode);
+                        if (null != currentNode) {
+                            treeGrid.selectRecord(currentNode);
+                        }
+                    }
+                }
+
+                return;
+            }
+        });
+
+        addMember(this.treeGrid);
     }
 
     public void setSelectedGroup(final int groupId, boolean isAutoCluster) {
-        this.selectedGroupId = groupId;
-
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         criteria.addFilterVisible(Boolean.valueOf(!isAutoCluster));
@@ -241,16 +262,15 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroup>>() {
-                @Override
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
                         MSG.view_tree_common_loadFailed_group(String.valueOf(groupId)), caught);
                 }
 
-                @Override
                 public void onSuccess(PageList<ResourceGroup> result) {
                     ResourceGroup group = result.get(0);
-                    ResourceGroupTreeView.this.selectedGroup = group;
+                    ResourceGroupTreeView.this.currentGroup = group;
 
                     GroupCategory groupCategory = group.getGroupCategory();
                     switch (groupCategory) {
@@ -271,8 +291,9 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         Tree tree = new Tree();
                         tree.setRoot(fakeRoot);
                         treeGrid.setData(tree);
-                        treeGrid.markForRedraw();
+                        treeGrid.selectRecord(rootNode);
                         break;
+
                     case COMPATIBLE:
                         if (group.getClusterResourceGroup() == null) {
                             // This is a straight up compatible group.
@@ -293,14 +314,14 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             // Still looking at the same compat-recursive tree
 
             ResourceGroupEnhancedTreeNode selectedNode;
-            if (this.selectedGroup.getClusterKey() != null) {
+            if (this.currentGroup.getClusterKey() != null) {
                 // a child cluster node leaf was selected
                 selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().find(
-                    ResourceGroupEnhancedTreeNode.CLUSTER_KEY, this.selectedGroup.getClusterKey());
+                    ResourceGroupEnhancedTreeNode.CLUSTER_KEY, this.currentGroup.getClusterKey());
             } else {
                 // the top root node, representing the group itself, was selected
                 selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().findById(
-                    String.valueOf(this.selectedGroup.getId()));
+                    String.valueOf(this.currentGroup.getId()));
             }
 
             if (selectedNode != null) {
@@ -331,7 +352,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(typeIds.toArray(new Integer[typeIds.size()]),
             EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
             new ResourceTypeRepository.TypesLoadedCallback() {
-                @Override
+
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
                     ResourceGroupTreeView.this.typeMap = types;
                     loadTree(root);
@@ -342,12 +363,11 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     private void selectClusterGroup(ClusterKey key) {
         GWTServiceLookup.getClusterService().createAutoClusterBackingGroup(key, true,
             new AsyncCallback<ResourceGroup>() {
-                @Override
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_createFailed_autoCluster(), caught);
                 }
 
-                @Override
                 public void onSuccess(ResourceGroup result) {
                     renderAutoCluster(result);
                 }
@@ -387,7 +407,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         treeGrid.setData(tree);
         treeGrid.getTree().openFolder(rootNode);
-        treeGrid.markForRedraw();
+        treeGrid.selectRecord(rootNode);
     }
 
     public void loadTree(ResourceGroupEnhancedTreeNode parentNode, ClusterFlyweight parentClusterGroup,
@@ -634,6 +654,30 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         public void setResourceType(ResourceType rt) {
             setAttribute(RESOURCE_TYPE, rt);
+        }
+
+        public boolean isTopNode() {
+            return getParentID().equals(FAKE_ROOT_ID);
+        }
+
+        public boolean isMixedGroupTopNode() {
+            return isTopNode() && (null == getResourceType());
+        }
+
+        public boolean isCompatibleGroupTopNode() {
+            return isTopNode() && (null != getResourceType()) && (null == getClusterKey());
+        }
+
+        public boolean isAutoGroupNode() {
+            return !isTopNode() && (null != getResourceType()) && (null == getClusterKey());
+        }
+
+        public boolean isAutoClusterNode() {
+            return (null != getResourceType()) && (null != getClusterKey()) && !isTopNode();
+        }
+
+        public boolean isSubCategoryNode() {
+            return (null == getResourceType()) && !isMixedGroupTopNode();
         }
 
     }

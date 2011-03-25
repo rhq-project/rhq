@@ -22,7 +22,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
@@ -48,19 +47,15 @@ public class CustomResourceGroupTreeGrid extends LocatableTreeGrid {
                 return node.getIcon();
             }
 
-            // if this node is associated with a resource type AND a cluster key, it is a cluster node
-            // if this node is associated only with a resource type, it is a auto type group node.
-            // if this node is not associated with either a resource type or cluster key, it is a subcategory node (which uses the default icon)
-            ResourceType resourceType = node.getResourceType();
-            if (resourceType != null) {
-                ClusterKey clusterKey = node.getClusterKey();
-                if (clusterKey != null) {
-                    String icon = ImageManager.getClusteredResourceIcon(resourceType.getCategory());
-                    return icon;
-                } else {
-                    boolean open = getTree().isOpen((TreeNode) record);
-                    return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
-                }
+            if (node.isAutoClusterNode()) {
+                ResourceType resourceType = node.getResourceType();
+                String icon = ImageManager.getClusteredResourceIcon(resourceType.getCategory());
+                return icon;
+
+            } else if (node.isCompatibleGroupTopNode() || node.isAutoGroupNode()) {
+                boolean open = getTree().isOpen((TreeNode) record);
+                return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
+
             }
 
             // use the default image - which is typically for subcategory nodes

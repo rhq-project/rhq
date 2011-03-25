@@ -115,6 +115,7 @@ public class ResourceTreeView extends LocatableVLayout {
         setShowResizeBar(true);
     }
 
+    @Override
     public void onInit() {
         // TODO (ips): Are we intentionally avoiding calling super.onInit() here? If so, why?
     }
@@ -141,6 +142,7 @@ public class ResourceTreeView extends LocatableVLayout {
         autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     ListGridRecord selectedRecord = treeGrid.getSelectedRecord();
@@ -168,6 +170,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
                         selectedNodeId = agNode.getID();
                         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
                                     caught);
@@ -192,27 +195,35 @@ public class ResourceTreeView extends LocatableVLayout {
         // setContextMenu(resourceContextMenu);
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
+
             public void onNodeContextClick(final NodeContextClickEvent event) {
                 // stop the browser right-click menu
                 event.cancel();
 
                 // don't select the node on a right click, since we're not navigating to it
                 treeGrid.deselectRecord(event.getNode());
+                TreeNode eventNode = event.getNode();
+
+                // re-select the current node if necessary
                 if (null != selectedNodeId) {
-                    treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                    TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
+                    if (!eventNode.equals(selectedNode)) {
+                        treeGrid.selectRecord(selectedNode);
+                    }
                 }
 
-                if (event.getNode() instanceof AutoGroupTreeNode) {
-                    showContextMenu((AutoGroupTreeNode) event.getNode());
-                } else if (event.getNode() instanceof ResourceTreeNode) {
-                    if (!((ResourceTreeNode) event.getNode()).isLocked()) {
-                        showContextMenu((ResourceTreeNode) event.getNode());
+                if (eventNode instanceof AutoGroupTreeNode) {
+                    showContextMenu((AutoGroupTreeNode) eventNode);
+                } else if (eventNode instanceof ResourceTreeNode) {
+                    if (!((ResourceTreeNode) eventNode).isLocked()) {
+                        showContextMenu((ResourceTreeNode) eventNode);
                     }
                 }
             }
         });
 
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
+
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 updateSelection();
             }
@@ -236,6 +247,7 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.addFilterAutoGroupParentResourceId(agNode.getParentResource().getId());
         criteria.addFilterVisible(false);
         resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
             }
@@ -315,6 +327,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private void showContextMenu(AutoGroupTreeNode agNode) {
         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), caught);
             }
@@ -334,6 +347,7 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.addFilterId(resourceId);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
@@ -359,6 +373,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
                                 ResourceTypeRepository.MetadataType.measurements),
                             new ResourceTypeRepository.TypeLoadedCallback() {
+
                                 public void onTypesLoaded(ResourceType type) {
                                     buildResourceContextMenu(resourceComposite, type);
                                     resourceContextMenu.showContextMenu();
@@ -386,6 +401,7 @@ public class ResourceTreeView extends LocatableVLayout {
         // plugin config
         MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
         pluginConfiguration.addClickHandler(new ClickHandler() {
+
             public void onClick(MenuItemClickEvent event) {
                 CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
             }
@@ -400,6 +416,7 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceConfiguration.setEnabled(enabled);
         if (enabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
+
                 public void onClick(MenuItemClickEvent event) {
                     CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Configuration", "Current"));
                 }
@@ -420,6 +437,7 @@ public class ResourceTreeView extends LocatableVLayout {
             for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
+
                     public void onClick(MenuItemClickEvent event) {
                         CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(),
                             ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
@@ -445,6 +463,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     MenuItem createItem = new MenuItem(childType.getName());
 
                     createItem.addClickHandler(new ClickHandler() {
+
                         public void onClick(MenuItemClickEvent event) {
                             ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
                         }
@@ -470,6 +489,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     MenuItem importItem = new MenuItem(childType.getName());
 
                     importItem.addClickHandler(new ClickHandler() {
+
                         public void onClick(MenuItemClickEvent event) {
                             ResourceFactoryImportWizard.showImportWizard(resource, childType);
                         }
@@ -497,6 +517,7 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.addFilterSupportsManualAdd(true);
         criteria.fetchParentResourceTypes(true);
         rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_manualAddChildren(),
                     caught);
@@ -508,6 +529,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         MenuItem item = new MenuItem(type.getName());
 
                         item.addClickHandler(new ClickHandler() {
+
                             public void onClick(MenuItemClickEvent event) {
                                 ResourceFactoryImportWizard.showImportWizard(resource, type);
                             }
@@ -527,6 +549,7 @@ public class ResourceTreeView extends LocatableVLayout {
         DashboardCriteria criteria = new DashboardCriteria();
         GWTServiceLookup.getDashboardService().findDashboardsByCriteria(criteria,
             new AsyncCallback<PageList<Dashboard>>() {
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(),
                         caught);
@@ -547,6 +570,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             defSubItem.addItem(addToDBItem);
 
                             addToDBItem.addClickHandler(new ClickHandler() {
+
                                 public void onClick(MenuItemClickEvent menuItemClickEvent) {
                                     DashboardPortlet p = new DashboardPortlet(MSG
                                         .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY, 250);
@@ -559,6 +583,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                                     GWTServiceLookup.getDashboardService().storeDashboard(d,
                                         new AsyncCallback<Dashboard>() {
+
                                             public void onFailure(Throwable caught) {
                                                 CoreGUI.getErrorHandler().handleError(
                                                     MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
@@ -651,6 +676,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         addMember(treeGrid);
 
                         treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
+
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
                                 Log.info("Done fetching data for tree.");
                                 updateSelection();
@@ -670,6 +696,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                 ResourceTypeRepository.MetadataType.children,
                                 ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+
                                 public void onResourceTypeLoaded(List<Resource> result) {
                                     treeGrid.getTree()
                                         .linkNodes(ResourceTreeDatasource.buildNodes(lineage, lockedData));
@@ -710,6 +737,7 @@ public class ResourceTreeView extends LocatableVLayout {
             criteria.addFilterVisible(false);
             criteria.fetchResourceType(true);
             resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
                 }
@@ -719,12 +747,10 @@ public class ResourceTreeView extends LocatableVLayout {
                     // load the tree up to the autogroup's parent resource                    
                     loadTree(backingGroup.getAutoGroupParentResource().getId(), new AsyncCallback<Void>() {
 
-                        @Override
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                         }
 
-                        @Override
                         public void onSuccess(Void arg) {
                             // get the node ID and use it to add a map entry, then call this again to finish up...
                             selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),

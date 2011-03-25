@@ -103,6 +103,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     @Override
     protected void onInit() {
         super.onInit();
+        //disable the refresh timer for this run
+        currentlyLoading = true;
         initializeUi();
         redraw();
     }
@@ -151,7 +153,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     }
 
     protected void loadData() {
-        currentlyLoading = true;
         getRecentEventUpdates();
     }
 
@@ -235,6 +236,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                     Log
                         .debug("Error retrieving recent event counts for group [" + groupId + "]:"
                             + caught.getMessage());
+                    setCurrentlyRefreshing(false);
                 }
 
                 @Override
@@ -288,12 +290,14 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                     recentEventsContent.addChild(column);
                     recentEventsContent.markForRedraw();
                     markForRedraw();
+                    setCurrentlyRefreshing(false);
                 }
             });
     }
 
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        markForRedraw();
     }
 
     @Override
@@ -303,6 +307,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         super.onDestroy();
     }
 
+    @Override
     public boolean isRefreshing() {
         return this.currentlyLoading;
     }
@@ -311,5 +316,9 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     public void redraw() {
         super.redraw();
         loadData();
+    }
+
+    protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {
+        this.currentlyLoading = currentlyRefreshing;
     }
 }

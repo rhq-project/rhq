@@ -75,6 +75,7 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
     public static final String RESOURCES_SELECTED = MSG.common_label_selected_resources();
     public static final String defaultResourceValue = RESOURCES_ALL;
     public static final String ID = "id";
+    private boolean currentlyRefreshing = false;
 
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
@@ -269,7 +270,7 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
     }
 
     public boolean isRefreshing() {
-        return false;
+        return this.currentlyRefreshing;
     }
 
     @Override
@@ -320,7 +321,6 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
     protected void onInit() {
         super.onInit();
         initializeUi();
-        //        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     @Override
@@ -331,6 +331,12 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
             getTableInfo().setContents(
                 MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }
+    }
+
+    @Override
+    public void redraw() {
+        super.redraw();
+        refresh();//is table so need to call this to reload
     }
 }
 

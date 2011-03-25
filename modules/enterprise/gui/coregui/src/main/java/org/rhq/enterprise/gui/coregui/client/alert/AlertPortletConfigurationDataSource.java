@@ -134,16 +134,15 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
                     criteria.addFilterPriorities(filterPriorities);
                 }
             }
+
             PageControl pc = new PageControl();
             //result sort order
             property = portletConfig.getSimple(Constant.RESULT_SORT_ORDER);
             if (property != null) {
                 String currentSetting = property.getStringValue();
                 if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase(PageOrdering.DESC.name())) {
-                    criteria.addSortCtime(PageOrdering.DESC);
                     pc.setPrimarySortOrder(PageOrdering.DESC);
                 } else {
-                    criteria.addSortCtime(PageOrdering.ASC);
                     pc.setPrimarySortOrder(PageOrdering.ASC);
                 }
             }
@@ -186,8 +185,8 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
             property = portletConfig.getSimple(Constant.RESULT_COUNT);
             if (property != null) {
                 String currentSetting = property.getStringValue();
-                if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                    pc.setPageSize(5);
+                if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase(Constant.RESULT_COUNT_DEFAULT)) {
+                    pc.setPageSize(Integer.valueOf(Constant.RESULT_COUNT_DEFAULT));
                 } else {
                     pc.setPageSize(Integer.valueOf(currentSetting));
                 }

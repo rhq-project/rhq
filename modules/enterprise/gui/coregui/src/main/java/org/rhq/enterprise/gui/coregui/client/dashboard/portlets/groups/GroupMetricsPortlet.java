@@ -121,6 +121,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     @Override
     protected void onInit() {
         super.onInit();
+        setRefreshing(true);
         initializeUi();
         loadData();
     }
@@ -274,6 +275,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
                         + caught.getMessage());
+                    setRefreshing(false);
                 }
 
                 @Override
@@ -325,6 +327,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                     Log
                                                         .debug("Error retrieving recent metrics charting data for group ["
                                                             + groupId + "]:" + caught.getMessage());
+                                                    setRefreshing(false);
                                                 }
 
                                                 @Override
@@ -433,6 +436,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                 AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                         column.addMember(row);
                                                     }
+                                                    setRefreshing(false);
                                                 }
                                             });
                                     }
@@ -442,6 +446,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentMeasurementsContent
                             .extendLocatorId("None"), AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                         column.addMember(row);
+                        setRefreshing(false);
                     }
                 }
             });
@@ -454,8 +459,12 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         recentMeasurementsContent.markForRedraw();
     }
 
+    @Override
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        //call out to 3rd party javascript lib
+        BrowserUtility.graphSparkLines();
+        recentMeasurementsContent.markForRedraw();
     }
 
     @Override
@@ -465,6 +474,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         super.onDestroy();
     }
 
+    @Override
     public boolean isRefreshing() {
         return this.currentlyLoading;
     }
@@ -485,5 +495,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
 
     public String getBaseViewPath() {
         return baseViewPath;
+    }
+
+    protected void setRefreshing(boolean currentlyRefreshing) {
+        this.currentlyLoading = currentlyRefreshing;
     }
 }

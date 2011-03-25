@@ -164,6 +164,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource resource composite for resource [" + resourceId + "]:"
                         + caught.getMessage());
+                    setRefreshing(false);
                 }
 
                 @Override
@@ -214,6 +215,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                 Log
                                                     .debug("Error retrieving recent metrics charting data for resource ["
                                                         + resourceId + "]:" + caught.getMessage());
+                                                setRefreshing(false);
                                             }
 
                                             @Override
@@ -322,11 +324,11 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                     column.addMember(row);
                                                 }
+                                                setRefreshing(false);
                                             }
                                         });
                                 }
                             });
-                        //                        }
                     }
                 }
             });

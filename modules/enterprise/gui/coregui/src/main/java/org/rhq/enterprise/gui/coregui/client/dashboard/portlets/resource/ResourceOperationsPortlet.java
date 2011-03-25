@@ -84,7 +84,7 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
 
     @Override
     protected void onInit() {
-        //        super.onInit();
+        setCurrentlyRefreshing(true);
         initializeUi();
         loadData();
     }
@@ -165,6 +165,7 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource composite for resource [" + resourceId + "]:"
                         + caught.getMessage());
+                    setCurrentlyRefreshing(false);
                 }
 
                 @Override
@@ -186,6 +187,7 @@ public class ResourceOperationsPortlet extends GroupOperationsPortlet {
                         recentOperationsContent.addChild(resourceOperations);
                         recentOperationsContent.markForRedraw();
                     }
+                    setCurrentlyRefreshing(false);
                 }
             });
     }

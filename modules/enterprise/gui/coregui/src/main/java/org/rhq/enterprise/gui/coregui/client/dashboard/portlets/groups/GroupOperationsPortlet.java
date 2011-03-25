@@ -78,6 +78,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     public static final String NAME = MSG.view_portlet_defaultName_group_operations();
 
     protected static final String ID = "id";
+    protected boolean currentlyRefreshing = false;
 
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
@@ -126,6 +127,8 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     @Override
     protected void onInit() {
         super.onInit();
+        //disable the refresh timer for this run
+        currentlyRefreshing = true;
         initializeUi();
         loadData();
     }
@@ -157,6 +160,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
                         + caught.getMessage());
+                    currentlyRefreshing = false;
                 }
 
                 @Override
@@ -186,6 +190,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                     }
                     recentOperationsContent.addChild(groupOperations);
                     recentOperationsContent.markForRedraw();
+                    currentlyRefreshing = false;
                 }
             });
     }
@@ -308,7 +313,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     }
 
     public boolean isRefreshing() {
-        return false;
+        return currentlyRefreshing;
     }
 
     private boolean isAutoGroup() {
@@ -327,6 +332,10 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     public void redraw() {
         super.redraw();
         loadData();
+    }
+
+    protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {
+        this.currentlyRefreshing = currentlyRefreshing;
     }
 }
 

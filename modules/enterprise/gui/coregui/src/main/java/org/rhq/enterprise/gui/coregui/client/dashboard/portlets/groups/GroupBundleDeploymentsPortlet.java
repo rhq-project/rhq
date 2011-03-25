@@ -215,6 +215,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
                         + caught.getMessage());
+                    currentlyLoading = false;
                 }
 
                 @Override
@@ -258,6 +259,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                     recentBundleDeployContent.addChild(column);
                     recentBundleDeployContent.markForRedraw();
                     markForRedraw();
+                    currentlyLoading = false;
                 }
             });
     }

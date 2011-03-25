@@ -204,6 +204,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
                         + caught.getMessage());
+                    currentlyLoading = false;
                 }
 
                 @Override
@@ -238,12 +239,14 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                     }
                     recentOobContent.addChild(column);
                     recentOobContent.markForRedraw();
+                    currentlyLoading = false;
                 }
             });
     }
 
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        recentOobContent.markForRedraw();
     }
 
     @Override

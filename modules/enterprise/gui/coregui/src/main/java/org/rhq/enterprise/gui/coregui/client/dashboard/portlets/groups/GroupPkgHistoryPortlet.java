@@ -213,6 +213,7 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
             public void onFailure(Throwable caught) {
                 Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
                     + caught.getMessage());
+                currentlyLoading = false;
             }
 
             @Override
@@ -255,6 +256,7 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
                 recentPkgHistoryContent.addChild(column);
                 recentPkgHistoryContent.markForRedraw();
                 markForRedraw();
+                currentlyLoading = false;
             }
         });
     }

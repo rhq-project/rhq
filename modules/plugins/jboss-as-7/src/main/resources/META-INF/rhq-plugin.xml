@@ -127,9 +127,25 @@
         />
         -->
 
+        <resource-configuration>
+            <c:list-property name="schema-locations" displayName="Schema locations">
+                <c:map-property name="location">
+                    <c:simple-property name="urn" readOnly="true"/>
+                    <c:simple-property name="location" readOnly="true"/>
+                </c:map-property>
+            </c:list-property>
+            <c:list-property name="extension" displayName="Installed extensions">
+                <c:map-property name="extension">
+                    <c:simple-property name="name" readOnly="true"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
+
         <server name="Messaging"
                 discovery="SubsystemDiscovery"
-                class="BaseComponent">
+                class="BaseComponent"
+                singleton="true"
+                >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
             </plugin-configuration>
@@ -156,6 +172,7 @@
         <server name="JBossWeb"
                 discovery="SubsystemDiscovery"
                 class="BaseComponent"
+                singleton="true"
                 >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="/subsystem/web"/>

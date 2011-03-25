@@ -51,13 +51,12 @@ public class OperationJsonTest {
 
         String result = mapper.writeValueAsString(operation);
 
-        System.out.println(operation);
-        System.out.println(result);
-
         Operation op = mapper.readValue(result,Operation.class);
         assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
         assert op.getName().equals("socket-binding") : "attribute name  is " + op.getName();
         assert op.getValue().equals("jndi") : "attribute value  is " + op.getValue();
+        assert op.getAddress().size()==2 : "Address did not contain 2 parts, but " + op.getAddress().size();
+
 
     }
 

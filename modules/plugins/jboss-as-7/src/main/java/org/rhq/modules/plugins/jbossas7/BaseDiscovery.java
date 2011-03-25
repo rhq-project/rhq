@@ -67,17 +67,6 @@ public class BaseDiscovery implements ResourceDiscoveryComponent
                 if (serverName.isEmpty())
                     serverName = serverNameFull;
 
-//                DomainClient client = DomainClient.Factory.create(InetAddress.getByName("localhost"),9990); //
-//                Map<ServerIdentity,ServerStatus> serverStatuses = client.getServerStatuses();
-//                for (Map.Entry<ServerIdentity,ServerStatus> entry : serverStatuses.entrySet()) {
-//                    ServerIdentity identity = entry.getKey();
-//                    ServerStatus status = entry.getValue();
-//                    if (identity.getServerName().equals(serverName)) {
-//                        String serverGroupName = identity.getServerGroupName();
-//                        config.put(new PropertySimple("server-group",serverGroupName));
-//                    }
-//
-//                }
             }
             String logFile = getLogFieFromCommandLine(commandLine);
             initLogEventSourcesConfigProp(logFile,config);

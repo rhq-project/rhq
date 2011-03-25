@@ -194,7 +194,6 @@ public class ASConnection {
                 while ((line = in.readLine()) != null) {
                     builder.append(line);
                 }
-//                System.out.println(builder.toString());
                 in.close();
             }
             else {
@@ -207,11 +206,12 @@ public class ASConnection {
                     while ((line = br.readLine()) != null) {
                         builder.append(line);
                     }
-//                    System.out.println(builder.toString());
                     br.close();
                 }
             }
-            JsonNode operationResult = mapper.readTree(builder.toString());
+            String outcome = builder.toString();
+            System.out.println("==> " + outcome);
+            JsonNode operationResult = mapper.readTree(outcome);
             return operationResult;
 
         } catch (IOException e) {

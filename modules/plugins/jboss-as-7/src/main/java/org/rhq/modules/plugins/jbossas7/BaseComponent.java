@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -45,8 +46,10 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,7 +63,6 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     ASConnection connection;
     String path;
     String key;
-
 
     /**
      * Return availability of this resource
@@ -145,9 +147,10 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        JsonNode json = connection.getLevelData(key,true,false); // TODO path ? key?
+        JsonNode json = connection.getLevelData(path,true,false); // TODO path ? key?
 
         Configuration ret = new Configuration();
+        ObjectMapper mapper = new ObjectMapper();
 
         for (PropertyDefinition propDef: configDef.getNonGroupedProperties()) {
             JsonNode sub = json.findValue(propDef.getName());
@@ -156,7 +159,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 ret.put(propertySimple);
             } else if (propDef instanceof PropertyDefinitionList) {
                 PropertyList propertyList = new PropertyList(propDef.getName());
-                if (((PropertyDefinitionList) propDef).getMemberDefinition()==null) {
+                PropertyDefinition memberDefinition = ((PropertyDefinitionList) propDef).getMemberDefinition();
+                if (memberDefinition ==null) {
                     Iterator<JsonNode> values = sub.getElements();
                     while (values.hasNext()) {
                         JsonNode node = values.next();
@@ -165,20 +169,82 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                         propertyList.add(propertySimple);
                     }
                 }
-                else if (((PropertyDefinitionList) propDef).getMemberDefinition() instanceof PropertyDefinitionMap) {
-                    Iterator<String> entries = sub.getFieldNames();
-                    while (entries.hasNext()) {
-                        String entryKey = entries.next();
-                        JsonNode node = sub.findPath(entryKey);
-                        PropertyMap map = new PropertyMap(((PropertyDefinitionList) propDef).getMemberDefinition().getName()); // TODO : name from def or 'entryKey' ?
-                        Iterator<String> fields = node.getFieldNames(); // TODO loop over fields from map and not from json
-                        while (fields.hasNext()) {
-                            String key = fields.next();
+                else if (memberDefinition instanceof PropertyDefinitionMap) {
+                    PropertySimple propertySimple;
 
-                            PropertySimple propertySimple = new PropertySimple(key,node.findValue(key).getValueAsText());
-                            map.put(propertySimple);
+                    if (sub.isArray()) {
+                        Iterator<JsonNode> entries = sub.getElements();
+                        while (entries.hasNext()) {
+                            JsonNode entry = entries.next(); // -> one row in the list i.e. one map
+
+                            // Distinguish here?
+
+                            PropertyMap map = new PropertyMap(memberDefinition.getName()); // TODO : name from def or 'entryKey' ?
+                            Iterator<JsonNode> fields = entry.getElements(); // TODO loop over fields from map and not from json
+                            while (fields.hasNext()) {
+                                JsonNode field  = fields.next();
+                                if (field.isObject()) {
+                                    // TODO only works for tuples at the moment - migrate to some different kind of parsing!
+                                    PROPERTY_VALUE prop = mapper.readValue(field,PROPERTY_VALUE.class);
+                                    // now need to find the names of the properties
+                                    List<PropertyDefinition> defList = ((PropertyDefinitionMap) memberDefinition).getSummaryPropertyDefinitions();
+                                    if (defList.isEmpty())
+                                        throw new IllegalArgumentException("Map " + memberDefinition.getName() + " has no members");
+                                    String key = defList.get(0).getName();
+                                    String value = prop.getKey();
+                                    propertySimple = new PropertySimple(key,value);
+                                    map.put(propertySimple);
+                                    if (defList.size()>1) {
+                                        key = defList.get(1).getName();
+                                        value = prop.getValue();
+                                        propertySimple = new PropertySimple(key,value);
+                                        map.put(propertySimple);
+
+                                    }
+                                } else { // TODO reached?
+                                    String key = field.getValueAsText();
+                                    if (key.equals("PROPERTY_VALUE")) { // TODO this may change in the future in the AS implementation
+                                        JsonNode pv = entry.findValue(key);
+                                        String k = pv.toString();
+                                        String v = pv.getValueAsText();
+                                        propertySimple = new PropertySimple(k,v);
+                                        map.put(propertySimple);
+
+                                    }
+                                    else {
+                                        propertySimple = new PropertySimple(key,entry.findValue(key).getValueAsText());
+                                        map.put(propertySimple);
+
+                                    }
+                                }
+                            }
+                            propertyList.add(map);
                         }
-                        propertyList.add(map);
+                    }
+                    else if (sub.isObject()) {
+                        Iterator<String> keys = sub.getFieldNames();
+                        while(keys.hasNext()) {
+                            String entryKey = keys.next();
+
+                            JsonNode node = sub.findPath(entryKey);
+                            PropertyMap map = new PropertyMap(memberDefinition.getName()); // TODO : name from def or 'entryKey' ?
+                            if (node.isObject()) {
+                                Iterator<String> fields = node.getFieldNames(); // TODO loop over fields from map and not from json
+                                while (fields.hasNext()) {
+                                    String key = fields.next();
+
+                                    propertySimple = new PropertySimple(key,node.findValue(key).getValueAsText());
+                                    map.put(propertySimple);
+                                }
+                                propertyList.add(map);
+                            } else if (sub.isNull()) {
+                                List<PropertyDefinition> defList = ((PropertyDefinitionMap) memberDefinition).getSummaryPropertyDefinitions();
+                                String key = defList.get(0).getName();
+                                propertySimple = new PropertySimple(key,entryKey);
+                                map.put(propertySimple);
+                            }
+                        }
+
                     }
                 }
                 ret.put(propertyList);

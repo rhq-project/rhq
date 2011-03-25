@@ -18,20 +18,44 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
+import java.io.Serializable;
+
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonValue;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
+import org.rhq.modules.plugins.jbossas7.json.serializer.PropertyValueDeserializer;
+import org.rhq.modules.plugins.jbossas7.json.serializer.PropertyValueSerializer;
 
 /**
- *
  * @author Heiko W. Rupp
  */
-public class NameValuePair {
+@JsonSerialize(using = PropertyValueSerializer.class)
+@JsonDeserialize(using = PropertyValueDeserializer.class)
+public class PROPERTY_VALUE implements Serializable{
 
-    public String name;
-    public String value;
+    private String key;
+    private String value;
 
-    public NameValuePair(String name, String value) {
-        this.name = name;
+    public PROPERTY_VALUE(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public void setValue(String value) {
         this.value = value;
     }
 

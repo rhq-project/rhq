@@ -35,8 +35,8 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jetbrains.annotations.Nullable;
-import org.omg.CORBA.NamedValue;
 
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 
@@ -157,10 +157,10 @@ public class ASConnection {
         return false;
     }
 
-    public void execute(String path, String s, NameValuePair nvp) {
+    public void execute(String path, String operationName, NameValuePair nvp) {
 
         try {
-            URL url = getBaseUrl(path,"operation="+s);
+            URL url = getBaseUrl(path,"operation="+operationName);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
 //            conn.setRequestMethod("POST");
@@ -168,11 +168,7 @@ public class ASConnection {
 
             ObjectMapper mapper = new ObjectMapper();
 
-            Operation operation = new Operation();
-            operation.operation=s;
-            operation.nvp=nvp;
-            operation.address=pathToAddress(path);
-
+            Operation operation = new Operation(operationName,pathToAddress(path),nvp);
 
             String result = mapper.writeValueAsString(operation);
             System.out.println("Json to send: " + result);
@@ -201,17 +197,17 @@ public class ASConnection {
 
     }
 
-    private List<NameValuePair> pathToAddress(String path) {
+    private List<PROPERTY_VALUE> pathToAddress(String path) {
         if (path.endsWith("/"))
             path = path.substring(0,path.length()-1);
 
         if (path.startsWith("/"))
             path = path.substring(1);
 
-        List<NameValuePair> result = new ArrayList<NameValuePair>();
+        List<PROPERTY_VALUE> result = new ArrayList<PROPERTY_VALUE>();
         String[] components = path.split("/");
         for (int i = 0; i < components.length ; i+=2) {
-            NameValuePair valuePair = new NameValuePair(components[i],components[i+1]);
+            PROPERTY_VALUE valuePair = new PROPERTY_VALUE(components[i],components[i+1]);
             result.add(valuePair);
         }
 

@@ -55,6 +55,7 @@ public class OperationMetadataManagerBean implements OperationMetadataManagerLoc
                     def.setResourceVersionRange(nDef.getResourceVersionRange());
                     def.setResultsConfigurationDefinition(nDef.getResultsConfigurationDefinition());
                     def.setTimeout(nDef.getTimeout());
+                    entityMgr.merge(def);
                 }
             }
         }

@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -195,10 +196,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         for (Map.Entry<String, PropertySimple> entry : conf.getSimpleProperties().entrySet()) {
 
             NameValuePair nvp = new NameValuePair(entry.getKey(),entry.getValue().getStringValue());
-            connection.execute(path,"write-attribute",nvp);
+            JsonNode result= connection.execute(key,"write-attribute",nvp); // TODO path / key handling
+            if(connection.isErrorReply(result)) {
+                report.setStatus(ConfigurationUpdateStatus.FAILURE);
+                report.setErrorMessage(connection.getFailureDescription(result));
+            }
         }
 
-
-        // TODO: Customise this generated block
     }
 }

@@ -51,6 +51,7 @@ public class ASConnection {
     private String host;
     URL url;
     String urlString;
+    private StringBuilder builder;
 
     public ASConnection(String host, int port) {
         this.host = host;
@@ -157,18 +158,23 @@ public class ASConnection {
         return false;
     }
 
-    public void execute(String path, String operationName, NameValuePair nvp) {
+    /**
+     * Execute an operation against the domain api
+     * @param path Node to manipulate
+     * @param operationName operation to run
+     * @param attributeValue attribute-name-value pair
+     */
+    public JsonNode execute(String path, String operationName, NameValuePair attributeValue) {
 
         try {
-            URL url = getBaseUrl(path,"operation="+operationName);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
-//            conn.setRequestMethod("POST");
+            conn.setRequestMethod("POST");
             OutputStream out = conn.getOutputStream();
 
             ObjectMapper mapper = new ObjectMapper();
 
-            Operation operation = new Operation(operationName,pathToAddress(path),nvp);
+            Operation operation = new Operation(operationName,pathToAddress(path),attributeValue);
 
             String result = mapper.writeValueAsString(operation);
             System.out.println("Json to send: " + result);
@@ -184,17 +190,35 @@ public class ASConnection {
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                         inputStream));
                 String line;
-                StringBuilder builder = new StringBuilder();
+                builder = new StringBuilder();
                 while ((line = in.readLine()) != null) {
                     builder.append(line);
                 }
-                System.out.println(builder.toString());
+//                System.out.println(builder.toString());
+                in.close();
             }
+            else {
+                System.out.println(conn.getResponseCode());
+                InputStream errorStream = conn.getErrorStream();
+                if (errorStream!=null) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(errorStream));
+                    String line;
+                    builder = new StringBuilder();
+                    while ((line = br.readLine()) != null) {
+                        builder.append(line);
+                    }
+//                    System.out.println(builder.toString());
+                    br.close();
+                }
+            }
+            JsonNode operationResult = mapper.readTree(builder.toString());
+            return operationResult;
 
         } catch (IOException e) {
             e.printStackTrace();  // TODO: Customise this generated block
         }
 
+        return null;
     }
 
     private List<PROPERTY_VALUE> pathToAddress(String path) {
@@ -237,4 +261,9 @@ public class ASConnection {
         return url2;
     }
 
+    public String getFailureDescription(JsonNode jsonNode) {
+        JsonNode node = jsonNode.findValue("failure-description");
+        return node.getValueAsText();
+
+    }
 }

@@ -26,11 +26,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlEnum;
 
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
-
 /**
  * Used to request the desired diplay format for resource ancestry.
- * @see {@link ResourceManagerRemote#getResourcesAncestry(org.rhq.core.domain.auth.Subject, Integer[], ResourceAncestryFormat)}
  * 
  * @author Jay Shaughnessy
  */

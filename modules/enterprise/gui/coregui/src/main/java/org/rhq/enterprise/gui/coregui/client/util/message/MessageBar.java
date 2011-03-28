@@ -62,7 +62,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         label = new LocatableLabel(extendLocatorId("Label"));
         label.setAlign(Alignment.CENTER);
-        label.setWidth("600px");
+        label.setWidth100();
         label.setHeight("30px");
         label.setCanSelectText(true);
         addMember(label);

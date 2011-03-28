@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria.Restriction;
 import org.rhq.core.domain.util.PageList;
@@ -73,9 +74,9 @@ public class Footer extends LocatableHLayout {
         // leave space for the RPC Activity Spinner 
         addMember(createHSpacer(16));
 
-        addMember(alertsMessage);
-
         addMember(messageBar);
+
+        addMember(alertsMessage);
 
         VLayout favoritesLayout = new VLayout();
         favoritesLayout.setHeight100();
@@ -153,18 +154,31 @@ public class Footer extends LocatableHLayout {
         public AlertsMessage(String locatorId) {
             super(locatorId);
             setHeight100();
+            setWidth(25);
             setPadding(5);
-
-            setIcon("subsystems/alert/Alert_LOW_16.png");
+            setHoverWidth(200);
             setIconSize(16);
             setWrap(false);
-
+            changeIcon(0);
             addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     History.newItem(ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
                         + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID);
                 }
             });
+        }
+
+        private void changeIcon(int alertCount) {
+            if (alertCount == 0) {
+                setPrompt(MSG.view_core_noRecentAlerts());
+                setContents(imgHTML("subsystems/alert/Alerts_16.png", 16, 16));
+            } else {
+                setPrompt(MSG.view_core_recentAlerts(String.valueOf(alertCount)));
+                String link = '#' + ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
+                    + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID;
+                setContents("<a href=\"" + link + "\">" + imgHTML(ImageManager.getAlertIcon(AlertPriority.HIGH))
+                    + "</a>");
+            }
         }
 
         public void refreshLoggedIn() {
@@ -179,13 +193,7 @@ public class Footer extends LocatableHLayout {
                     }
 
                     public void onSuccess(PageList<Alert> result) {
-                        if (result.getTotalSize() == 0) {
-                            setContents(MSG.view_core_recentAlerts("0"));
-                            setIcon("subsystems/alert/Alert_LOW_16.png");
-                        } else {
-                            setContents(MSG.view_core_recentAlerts(String.valueOf(result.getTotalSize())));
-                            setIcon("subsystems/alert/Alert_HIGH_16.png");
-                        }
+                        changeIcon(result.getTotalSize());
                     }
                 });
         }

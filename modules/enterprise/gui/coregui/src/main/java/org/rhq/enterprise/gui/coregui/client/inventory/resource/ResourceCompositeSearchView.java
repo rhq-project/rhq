@@ -175,10 +175,4 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
             .valueOf(parentResourceComposite.getResource().getId())), MSG.view_inventory_resources_title_children());
     }
-
-    public static ResourceCompositeSearchView getMembersOf(String locatorId, int groupId) {
-        return new ResourceCompositeSearchView(locatorId, (ResourceComposite) null, new Criteria("groupId", String
-            .valueOf(groupId)), MSG.view_inventory_resources_title_members());
-    }
-
 }

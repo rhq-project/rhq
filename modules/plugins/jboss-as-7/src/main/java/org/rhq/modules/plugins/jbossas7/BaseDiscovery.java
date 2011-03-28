@@ -1,23 +1,19 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -68,7 +64,7 @@ public class BaseDiscovery implements ResourceDiscoveryComponent
                     serverName = serverNameFull;
 
             }
-            String logFile = getLogFieFromCommandLine(commandLine);
+            String logFile = getLogFileFromCommandLine(commandLine);
             initLogEventSourcesConfigProp(logFile,config);
             String javaClazz = psr.getProcessInfo().getName();
 
@@ -118,7 +114,7 @@ public class BaseDiscovery implements ResourceDiscoveryComponent
 //-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log
 //-Dlogging.configuration=file:/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/configuration/logging.properties
 
-    String getLogFieFromCommandLine(String[] commandLine) {
+    String getLogFileFromCommandLine(String[] commandLine) {
 
         for (String line: commandLine) {
             if (line.startsWith(DORG_JBOSS_BOOT_LOG_FILE))

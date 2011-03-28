@@ -51,7 +51,7 @@
         version="4.0.0-SNAPSHOT"
         >
 
-    <depends plugin="JMX"/>
+    <depends plugin="JMX" useClasses="true"/>
 
 
     <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
@@ -78,18 +78,33 @@
             <!-- TODO supply parameters and return values -->
         </operation>
 
-        <!--
-        <server name="ProcessManager JVM"
-                description="JVM of the ProcessManager"
-                sourcePlugin="JMX"
-                sourceType="JMX Server"
-                discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
-                class="org.rhq.plugins.jmx.JMXServerComponent"
-                singleton="true"
-        />
-        -->
+
+    </server>
+
+    <server name="Domain"
+            discovery="DomainDiscovery"
+            class="BaseComponent"
+            description="An AS7 management profile">
 
 
+        <server name="Profile"
+                description="One profile in a domain"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent">
+
+            <plugin-configuration>
+                <c:simple-property name="path" default="/profile/*" readOnly="true"/>
+            </plugin-configuration>
+        </server>
+        <server name="ServerGroups"
+                description="Server groups on this domain"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent">
+            <plugin-configuration>
+                <c:simple-property name="path" default="/server-group/*" readOnly="true"/>
+            </plugin-configuration>
+
+        </server>
 
     </server>
 
@@ -116,16 +131,7 @@
         <operation name="dummyOperation">
             <!-- TODO supply parameters and return values -->
         </operation>
-        <!--
-        <server name="JBoss AS standalone JVM"
-                description="JVM of the standalone JBossAS"
-                sourcePlugin="JMX"
-                sourceType="JMX Server"
-                discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
-                class="org.rhq.plugins.jmx.JMXServerComponent"
-                singleton="true"
-        />
-        -->
+
 
         <resource-configuration>
             <c:list-property name="schema-locations" displayName="Schema locations">
@@ -139,118 +145,6 @@
             </c:list-property>
         </resource-configuration>
 
-        <server name="Messaging"
-                discovery="SubsystemDiscovery"
-                class="BaseComponent"
-                singleton="true"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
-            </plugin-configuration>
-
-            <resource-configuration>
-                <c:simple-property name="journal-min-files" />
-                <c:simple-property name="journal-type" />
-            </resource-configuration>
-
-
-            <service name="Acceptor"
-                     discovery="SubsystemDiscovery"
-                     class="BaseComponent"
-                    >
-                <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true" default="/subsystem/messaging/acceptor"/>
-                </plugin-configuration>
-
-
-            </service>
-
-        </server>
-
-        <server name="JBossWeb"
-                discovery="SubsystemDiscovery"
-                class="BaseComponent"
-                singleton="true"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/subsystem/web"/>
-            </plugin-configuration>
-
-            <service name="Connector"
-                     discovery="SubsystemDiscovery"
-                     class="BaseComponent"
-                    >
-                <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true" default="/subsystem/web/connector/*"/>
-                </plugin-configuration>
-
-
-                <metric property="bytesSent" measurementType="trendsup"/>
-                <metric property="bytesReceived" measurementType="trendsup"/>
-                <metric property="processingTime" measurementType="trendsup"/>
-                <metric property="errorCount" measurementType="trendsup"/>
-                <metric property="maxTime" />
-                <metric property="requestCount" measurementType="trendsup"/>
-
-                <resource-configuration>
-                    <c:simple-property name="protocol" required="false" description="The web connector protocol."/>
-                    <c:simple-property name="socket-binding" required="false" description="The web connector socket-binding reference, this connector should be bound to."/>
-                    <c:simple-property name="scheme" required="false" description="The web connector scheme"/>
-                </resource-configuration>
-
-            </service>
-
-            <service name="VHost"
-                     discovery="SubsystemDiscovery"
-                     class="BaseComponent">
-                <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true" default="/subsystem/web/virtual-server/*"/>
-                </plugin-configuration>
-
-                <resource-configuration>
-                    <c:simple-property name="access-log"/>
-                    <c:list-property name="alias" description="The virtual server aliases"/>
-                    <c:simple-property name="rewrite"/>
-                </resource-configuration>
-
-            </service>
-
-
-        </server>
-
-        <service name="NetworkInterface"
-                 discovery="InterfaceDiscovery"
-                 class="BaseComponent"
-                 description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/"/>
-            </plugin-configuration>
-        </service>
-
-        <service name="SocketBindingGroup"
-                 discovery="SocketBindingGroupDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
-            </plugin-configuration>
-
-            <resource-configuration>
-                <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
-                <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
-                <c:list-property name="socket-binding">
-                    <c:map-property name="binding">
-                        <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name."/>
-                        <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
-                        <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
-                        <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
-                        <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." />
-                        <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer"/>
-                    </c:map-property>
-                </c:list-property>
-            </resource-configuration>
-
-        </service>
 
 
     </server>
@@ -278,15 +172,165 @@
             <!--</c:group>-->
         </resource-configuration>
 
-        <server name="JBoss AS managed JVM"
-                description="JVM of the managed JBossAS"
-                sourcePlugin="JMX"
-                sourceType="JMX Server"
-                discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
-                class="org.rhq.plugins.jmx.JMXServerComponent"
-                singleton="true"
-                />
 
     </server>
+
+
+<!--
+    <server name="JBoss AS JVM"
+            description="JVM of the standalone JBossAS"
+            sourcePlugin="JMX"
+            sourceType="JMX Server"
+            discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
+            class="org.rhq.plugins.jmx.JMXServerComponent"
+            singleton="true"
+    >
+        <runs-inside>
+            <parent-resource-type name="JBossAS-Managed"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="ProcessController"  plugin="jboss-as-7"/>
+        </runs-inside>
+    </server>
+-->
+
+    <server name="Messaging"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="journal-min-files" />
+            <c:simple-property name="journal-type" />
+        </resource-configuration>
+
+
+        <service name="Acceptor"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/acceptor"/>
+            </plugin-configuration>
+
+
+        </service>
+
+    </server>
+
+    <server name="JBossWeb"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="/subsystem/web"/>
+        </plugin-configuration>
+
+        <service name="Connector"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/connector/*"/>
+            </plugin-configuration>
+
+
+            <metric property="bytesSent" measurementType="trendsup"/>
+            <metric property="bytesReceived" measurementType="trendsup"/>
+            <metric property="processingTime" measurementType="trendsup"/>
+            <metric property="errorCount" measurementType="trendsup"/>
+            <metric property="maxTime" />
+            <metric property="requestCount" measurementType="trendsup"/>
+
+            <resource-configuration>
+                <c:simple-property name="protocol" required="false" description="The web connector protocol."/>
+                <c:simple-property name="socket-binding" required="false" description="The web connector socket-binding reference, this connector should be bound to."/>
+                <c:simple-property name="scheme" required="false" description="The web connector scheme"/>
+            </resource-configuration>
+
+        </service>
+
+        <service name="VHost"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent">
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/virtual-server/*"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="access-log"/>
+                <c:list-property name="alias" description="The virtual server aliases"/>
+                <c:simple-property name="rewrite"/>
+            </resource-configuration>
+
+        </service>
+
+
+    </server>
+
+        <service name="NetworkInterface"
+                 discovery="InterfaceDiscovery"
+                 class="BaseComponent"
+                 description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
+
+            <runs-inside>
+                <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+                <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            </runs-inside>
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/"/>
+            </plugin-configuration>
+        </service>
+
+        <service name="SocketBindingGroup"
+                 discovery="SocketBindingGroupDiscovery"
+                 class="BaseComponent"
+                >
+            <runs-inside>
+                <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+                <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            </runs-inside>
+
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
+                <!-- note: at domain level there is no port-offset -->
+                <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
+                <c:list-property name="include">
+                    <c:simple-property name="binding" displayName="Included bindings" description="Other bindings that are included in this one"/>
+                </c:list-property>
+                <c:list-property name="socket-binding">
+                    <c:map-property name="binding">
+                        <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name."/>
+                        <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
+                        <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
+                        <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
+                        <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." />
+                        <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer"/>
+                    </c:map-property>
+                </c:list-property>
+            </resource-configuration>
+
+        </service>
 
 </plugin>

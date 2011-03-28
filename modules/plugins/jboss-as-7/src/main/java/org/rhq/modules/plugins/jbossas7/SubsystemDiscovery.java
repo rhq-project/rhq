@@ -63,6 +63,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         String cpath = config.getSimpleValue("path", null);
         boolean recursive = false;
 
+        String parentPath = parentComponent.getPath();
+
         String path;
         if (cpath.endsWith("/*")) {
             path = cpath.substring(0,cpath.length()-2);
@@ -70,6 +72,14 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         }
         else
             path = cpath;
+
+        if (parentPath!=null && !parentPath.isEmpty()) {
+            if (parentPath.endsWith("/") || path.startsWith("/"))
+                path = parentPath + path;
+            else
+                path = parentPath + "/" + path;
+        }
+        System.out.println("total path: [" + path + "]");
 
 
         JsonNode json = connection.getLevelData(path,recursive, false);
@@ -86,6 +96,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                     String key = entry.getKey();
                     Subsystem subsystem = entry.getValue();
+                    String newPath = cpath.replaceAll("\\*",key);
+                    config.getSimple("path").setStringValue(newPath);
 
                     String resKey = context.getParentResourceContext().getResourceKey() + "/" + key;
                     String name = resKey.substring(resKey.lastIndexOf("/") + 1);
@@ -108,6 +120,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                 String resKey = path;
                 String name = resKey.substring(resKey.lastIndexOf("/") + 1);
+                config.getSimple("path").setStringValue(path);
 
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(

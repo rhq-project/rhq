@@ -155,8 +155,14 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         for (PropertyDefinition propDef: configDef.getNonGroupedProperties()) {
             JsonNode sub = json.findValue(propDef.getName());
             if (propDef instanceof PropertyDefinitionSimple) {
-                PropertySimple propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
-                ret.put(propertySimple);
+                PropertySimple propertySimple;
+
+                if (sub!=null)
+                    propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
+                else {
+                    propertySimple = new PropertySimple(propDef.getName(),null); // TODO store it at all?
+                }
+                    ret.put(propertySimple);
             } else if (propDef instanceof PropertyDefinitionList) {
                 PropertyList propertyList = new PropertyList(propDef.getName());
                 PropertyDefinition memberDefinition = ((PropertyDefinitionList) propDef).getMemberDefinition();

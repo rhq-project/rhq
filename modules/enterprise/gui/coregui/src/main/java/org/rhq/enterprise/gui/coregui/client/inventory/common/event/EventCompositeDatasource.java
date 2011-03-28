@@ -109,6 +109,13 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final EventCriteria criteria) {
+        if (criteria == null) {
+            // the user selected no severities in the filter - it makes sense from the UI perspective to show 0 rows
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+            return;
+        }
+
         GWTServiceLookup.getEventService().findEventCompositesByCriteria(criteria,
             new AsyncCallback<PageList<EventComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -128,6 +135,11 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
     @Override
     protected EventCriteria getFetchCriteria(final DSRequest request) {
+        EventSeverity[] severities = getArrayFilter(request, "severities", EventSeverity.class);
+        if (severities == null || severities.length == 0) {
+            return null; // user didn't select any severities - return null to indicate no data should be displayed
+        }
+
         EventCriteria criteria = new EventCriteria();
 
         PageControl pageControl = getPageControl(request);
@@ -144,10 +156,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         criteria.addFilterSourceName((String) criteriaMap.get("source"));
         criteria.addFilterDetail((String) criteriaMap.get("details"));
 
-        if (criteriaMap.get("severities") != null) {
-            EventSeverity[] severities = getArrayFilter(request, "severities", EventSeverity.class);
-            criteria.addFilterSeverities(severities);
-        }
+        criteria.addFilterSeverities(severities);
 
         criteria.addFilterEntityContext(entityContext);
 

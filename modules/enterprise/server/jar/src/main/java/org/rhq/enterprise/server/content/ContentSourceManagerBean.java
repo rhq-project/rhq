@@ -58,6 +58,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Advisory;
@@ -849,8 +851,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     conn = dataSource.getConnection();
                     // The blob has been initialized to EMPTY_BLOB already by createPackageBits...
                     // we need to lock the row which will be updated so we are using FOR UPDATE
-                    ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME
-                        + " WHERE ID = ? FOR UPDATE");
+                    if (DatabaseTypeFactory.isSQLServer(conn)) {
+                        ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME
+                            + " " + SQLServerDatabaseType.LOCK_FRAGMENT + " WHERE ID = ?");
+                    } else {
+                        ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME
+                            + " WHERE ID = ? FOR UPDATE");
+                    }
                     ps.setInt(1, packageBits.getId());
                     ResultSet rs = ps.executeQuery();
                     if (rs != null) {
@@ -1084,9 +1091,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     conn = dataSource.getConnection();
                     //we are loading the PackageBits saved in the previous step
                     //we need to lock the row which will be updated so we are using FOR UPDATE
-                    ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME
-                        + " WHERE ID = ? FOR UPDATE");
-                    ps.setInt(1, packageBits.getId());
+                    if (DatabaseTypeFactory.isSQLServer(conn)) {
+                        ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME
+                            + " " + SQLServerDatabaseType.LOCK_FRAGMENT + " WHERE ID = ?");
+                    } else {
+                        ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME
+                            + " WHERE ID = ? FOR UPDATE");
+                    }
+                    
+                    ps.setInt(1, packageBits.getId());                    
                     ResultSet rs = ps.executeQuery();
                     if (rs != null) {
                         while (rs.next()) {

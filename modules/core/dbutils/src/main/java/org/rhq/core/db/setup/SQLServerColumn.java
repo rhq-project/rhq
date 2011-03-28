@@ -106,23 +106,10 @@ class SQLServerColumn extends Column {
         return strCmd;
     }
 
+    @SuppressWarnings("unchecked")
     protected void getDropCommands(List cmds) {
-        if (this.hasDefault()) {
-            switch (this.getDefault()) {
-            case Column.DEFAULT_AUTO_INCREMENT:
-            case Column.DEFAULT_SEQUENCE_ONLY: {
-                // there's apparently no way to remove the IDENTITY property via T-SQL
-                // it needs to be done through system tables
-                cmds.add("sp_configure 'allow update', 1");
-                cmds.add("reconfigure with override");
-                cmds.add("update syscolumns set colstat = colstat - 1 " //
-                    + "where id = object_id('" + this.m_strTableName.toUpperCase() + "') " //
-                    + "and name = '" + this.getName().toUpperCase() + "'");
-                cmds.add("exec sp_configure 'allow update', 0");
-                cmds.add("reconfigure with override");
-                break;
-            }
-            }
-        }
+        //nothing needs to be done here for the identity. 
+        //Unlike in the other databases the identity is an actual column in a table 
+        //and no additional "entities" like sequences in other db types exist.
     }
 }

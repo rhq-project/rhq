@@ -60,6 +60,7 @@ import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
 import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -1898,7 +1899,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
             //we are loading the PackageBits saved in the previous step
             //we need to lock the row which will be updated so we are using FOR UPDATE
-            ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ? FOR UPDATE");
+            if (DatabaseTypeFactory.isSQLServer(conn)) {
+                ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " " + SQLServerDatabaseType.LOCK_FRAGMENT + " WHERE ID = ?");
+            } else {
+                ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ? FOR UPDATE");
+            }
             ps.setInt(1, bits.getId());
             ResultSet rs = ps.executeQuery();
             if (rs != null) {
@@ -1929,8 +1934,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             conn.close();
         } catch (Exception e) {
             log.error("An error occurred while updating Blob with stream for PackageBits[" + bits.getId() + "], "
-                + e.getMessage());
-            e.printStackTrace();
+                + e.getMessage(), e);
         } finally {
             if (ps != null) {
                 try {

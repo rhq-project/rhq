@@ -34,6 +34,8 @@ public abstract class SQLServerDatabaseType extends DatabaseType {
     public static final String BAD_SEQ_NAME = "Sequences named must end in " + SEQ_SUFFIX;
     public static final String SEQ_ERROR_MSG = "SQL Server does not support sequences, use identifier columns instead";
 
+    public static final String LOCK_FRAGMENT = "WITH(ROWLOCK, UPDLOCK)";
+    
     /**
      * The vendor name for all SQL Server databases.
      */

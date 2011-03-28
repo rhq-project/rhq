@@ -40,6 +40,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.resource.security.SecureIdentityLoginModule;
 
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
@@ -644,7 +645,7 @@ public class ConfigurationBean {
             } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
                 dialect = "org.hibernate.dialect.SQLServerDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.MSSQLDelegate";
-                quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WITH (HOLDLOCK,XLOCK) WHERE LOCK_NAME = ?";
+                quartzSelectWithLockSQL = "UPDATE {0}LOCKS SET LOCK_NAME = LOCK_NAME WHERE LOCK_NAME = ?";
                 quartzLockHandlerClass = "org.quartz.impl.jdbcjobstore.UpdateLockRowSemaphore";
             } else if (db.toLowerCase().indexOf("mysql") > -1) {
                 dialect = "org.hibernate.dialect.MySQL5InnoDBDialect";

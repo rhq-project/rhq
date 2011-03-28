@@ -250,7 +250,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         setAllValuesToItem.setAlign(Alignment.RIGHT);
         setAllItems.add(setAllValuesToItem);
 
-        PropertySimple masterPropertySimple = new PropertySimple(aggregatePropertySimple.getName(), null);
+        PropertySimple masterPropertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
         final FormItem masterValueItem = super.buildSimpleField(propertyDefinitionSimple, masterPropertySimple);
         masterValueItem.setDisabled(false);
 
@@ -286,7 +286,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         masterValueItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 applyButton.enable();
-                applyButton.focus();
+                //applyButton.focus();
             }
         });
 
@@ -332,7 +332,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         // Add data rows.
         final List<FormItem> valueItems = new ArrayList<FormItem>(this.memberConfigurations.size());
         final Map<String, PropertySimple> valueItemNameToPropertySimpleMap = new HashMap<String, PropertySimple>();
-        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+        List<GroupMemberConfiguration> memberConfigurations1 = this.memberConfigurations;
+        for (int i = 0, memberConfigurations1Size = memberConfigurations1.size(); i < memberConfigurations1Size; i++) {
+            GroupMemberConfiguration memberConfiguration = memberConfigurations1.get(i);
             String memberName = memberConfiguration.getLabel();
             StaticTextItem memberItem = new StaticTextItem();
             memberItem.setShowTitle(false);
@@ -340,8 +342,11 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             items.add(memberItem);
             Configuration configuration = memberConfiguration.getConfiguration();
             PropertySimple memberPropertySimple = (PropertySimple) getProperty(configuration, aggregatePropertySimple,
-                index);
+                    index);
             FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
+            // All of the member props have the same name, so add an index to the item name to ensure it's unique
+            // to the form.
+            valueItem.setName(propertyDefinitionSimple.getName() + "-" + i);
             valueItems.add(valueItem);
             valueItemNameToPropertySimpleMap.put(valueItem.getName(), memberPropertySimple);
             FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, memberPropertySimple, valueItem);
@@ -420,6 +425,10 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             @Override
             public void onClick(ClickEvent clickEvent) {
                 Object value = masterValueItem.getValue();
+                // Update the aggregate property.
+                aggregatePropertySimple.setValue(value);
+
+                // Update the member properties.
                 for (FormItem valueItem : valueItems) {
                     setValue(valueItem, value);
 

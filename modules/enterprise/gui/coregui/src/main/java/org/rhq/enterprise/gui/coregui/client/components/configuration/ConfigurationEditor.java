@@ -1316,17 +1316,20 @@ public class ConfigurationEditor extends LocatableVLayout {
             List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
             valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
-            valueItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent changedEvent) {
-                    updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
-                    // Only fire a prop value change event if the prop's a top-level simple or a simple within a
-                    // top-level map.
-                    if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
-                        boolean isValid = changedEvent.getItem().validate();
-                        firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+            if ((propertySimple.getConfiguration() != null) || (propertySimple.getParentMap() != null) ||
+                    (propertySimple.getParentList() != null)) {
+                valueItem.addChangedHandler(new ChangedHandler() {
+                    public void onChanged(ChangedEvent changedEvent) {
+                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                        // Only fire a prop value change event if the prop's a top-level simple or a simple within a
+                        // top-level map.
+                        if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
+                            boolean isValid = changedEvent.getItem().validate();
+                            firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         // for more robust and repeatable item locators (not positional) assign a name and title
@@ -1356,9 +1359,9 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     protected boolean fireEventOnPropertyValueChange(PropertyDefinitionSimple propertyDefinitionSimple,
                                                      PropertySimple propertySimple) {
-        PropertyDefinitionMap parentPropertyMapDefinition = propertyDefinitionSimple.getParentPropertyMapDefinition();
-        return propertyDefinitionSimple.getConfigurationDefinition() != null
-            || (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null);
+        PropertyMap parentMap = propertySimple.getParentMap();
+        return propertySimple.getConfiguration() != null
+            || (parentMap != null && parentMap.getConfiguration() != null);
     }
 
     protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,

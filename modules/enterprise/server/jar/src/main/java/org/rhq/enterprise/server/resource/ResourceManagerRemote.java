@@ -35,6 +35,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.jaxb.WebServiceMapAdapter;
 import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -153,6 +154,7 @@ public interface ResourceManagerRemote {
      * @return A Map of ResourceIds to FormattedAncestryStrings, one entry for each unique, valid, resourceId passed in. 
      */
     @WebMethod
+    @XmlJavaTypeAdapter(value = WebServiceMapAdapter.class)
     Map<Integer, String> getResourcesAncestry( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") Integer[] resourceIds, //

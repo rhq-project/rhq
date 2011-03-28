@@ -41,6 +41,8 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -60,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Greg Hinkle
  */
-public class ResourceSearchView extends Table {
+public class ResourceSearchView extends Table<RPCDataSource<Resource, ResourceCriteria>> {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
 
@@ -106,17 +108,11 @@ public class ResourceSearchView extends Table {
             addHeaderIcon(headerIcon);
         }
 
-        //        DynamicForm searchPanel = new DynamicForm();
-        //        final TextItem searchBox = new TextItem("query", "Search Resources");
-        //        searchBox.setValue("");
-        //        searchPanel.setWrapItemTitles(false);
-        //        searchPanel.setFields(searchBox);
-
-        final RPCDataSource datasource = getDataSourceInstance();
+        final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
     }
 
-    protected RPCDataSource getDataSourceInstance() {
+    protected RPCDataSource<Resource, ResourceCriteria> getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }
 

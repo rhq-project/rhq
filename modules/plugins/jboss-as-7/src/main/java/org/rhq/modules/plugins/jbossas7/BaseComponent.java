@@ -53,6 +53,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+
 public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet
 {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -147,13 +149,22 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        BaseComponent parentComponent = (BaseComponent) context.getParentResourceComponent();
+        ResourceComponent parentResourceComponent = context.getParentResourceComponent();
+        String parentPath =null;
         String myPath;
-        String parentPath = parentComponent.getPath();
-        if (parentPath.endsWith("/") || path.startsWith("/"))
-            myPath = parentPath + path;
+        if (parentResourceComponent instanceof BaseComponent) {
+            BaseComponent parentComponent = (BaseComponent) parentResourceComponent;
+            parentPath = parentComponent.getPath();
+        }
+
+        if (parentPath!=null) {
+            if (parentPath.endsWith("/") || path.startsWith("/"))
+                myPath = parentPath + path;
+            else
+                myPath = parentPath + "/" + path;
+        }
         else
-            myPath = parentPath + "/" + path;
+            myPath = path;
 
 
         JsonNode json = connection.getLevelData(myPath,true,false);
@@ -169,19 +180,30 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 if (sub!=null)
                     propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
                 else {
-                    propertySimple = new PropertySimple(propDef.getName(),null); // TODO store it at all?
+                    propertySimple = new PropertySimple(propDef.getName(),null); // TODO store it at all when it is null?
                 }
                     ret.put(propertySimple);
             } else if (propDef instanceof PropertyDefinitionList) {
                 PropertyList propertyList = new PropertyList(propDef.getName());
                 PropertyDefinition memberDefinition = ((PropertyDefinitionList) propDef).getMemberDefinition();
                 if (memberDefinition ==null) {
-                    Iterator<JsonNode> values = sub.getElements();
-                    while (values.hasNext()) {
-                        JsonNode node = values.next();
-                        String value = node.getTextValue();
-                        PropertySimple propertySimple = new PropertySimple(propDef.getName(),value);
-                        propertyList.add(propertySimple);
+                    if (sub.isObject()) {
+                        Iterator<String> fields = sub.getFieldNames();
+                        while(fields.hasNext()) {
+                            String fieldName = fields.next();
+                            JsonNode subNode = sub.get(fieldName);
+                            PropertySimple propertySimple = new PropertySimple(propDef.getName(),fieldName);
+                            propertyList.add(propertySimple);
+                        }
+                    } else {
+                        System.out.println("===Sub not object==="); // TODO evaluate this branch again
+                        Iterator<JsonNode> values = sub.getElements();
+                        while (values.hasNext()) {
+                            JsonNode node = values.next();
+                            String value = node.getTextValue();
+                            PropertySimple propertySimple = new PropertySimple(propDef.getName(),value);
+                            propertyList.add(propertySimple);
+                        }
                     }
                 }
                 else if (memberDefinition instanceof PropertyDefinitionMap) {

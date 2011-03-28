@@ -104,6 +104,26 @@
                 <c:simple-property name="path" default="/server-group/*" readOnly="true"/>
             </plugin-configuration>
 
+            <resource-configuration>
+                <c:simple-property name="profile" />
+                <c:simple-property name="socket-binding-group"/>
+                <c:simple-property name="jvm"/>
+                <c:simple-property name="deployment" required="false"/> <!-- TODO change structure. Or put below as resource? -->
+            </resource-configuration>
+        </server>
+        <server name="Host"
+                description="Host involved in this domain"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="path" default="/host/*" readOnly="true"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:list-property name="server-config" />
+            </resource-configuration>
+
         </server>
 
     </server>
@@ -126,11 +146,6 @@
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
-
-
-        <operation name="dummyOperation">
-            <!-- TODO supply parameters and return values -->
-        </operation>
 
 
         <resource-configuration>
@@ -161,17 +176,6 @@
         </plugin-configuration>
 
         <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
-
-
-        <metric property="serverGroup" dataType="trait" displayType="summary" />
-        <resource-configuration>
-            <!--<c:group name="interfaces">-->
-            <c:simple-property name="loopback" default="127.0.0.1" />
-            <c:simple-property name="external" default="any" />
-            <c:simple-property name="public" default="any" />
-            <!--</c:group>-->
-        </resource-configuration>
-
 
     </server>
 
@@ -290,6 +294,7 @@
 
         <runs-inside>
             <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+            <parent-resource-type name="Host"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
         </runs-inside>
 

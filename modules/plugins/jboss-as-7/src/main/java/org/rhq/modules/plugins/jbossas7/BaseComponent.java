@@ -147,7 +147,16 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        JsonNode json = connection.getLevelData(path,true,false); // TODO path ? key?
+        BaseComponent parentComponent = (BaseComponent) context.getParentResourceComponent();
+        String myPath;
+        String parentPath = parentComponent.getPath();
+        if (parentPath.endsWith("/") || path.startsWith("/"))
+            myPath = parentPath + path;
+        else
+            myPath = parentPath + "/" + path;
+
+
+        JsonNode json = connection.getLevelData(myPath,true,false);
 
         Configuration ret = new Configuration();
         ObjectMapper mapper = new ObjectMapper();

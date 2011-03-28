@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -89,6 +90,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                 String subPath = path.substring(i+1);
 
                 JsonNode subNode = json.findPath(subPath);
+                if (subNode==null || subNode.isNull())
+                    subNode = json.get(subPath);  // TODO clean this up. to get the 'key' in a path from the AS we need to use get()
 
                 Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
 
@@ -97,7 +100,9 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                     String key = entry.getKey();
                     Subsystem subsystem = entry.getValue();
                     String newPath = cpath.replaceAll("\\*",key);
-                    config.getSimple("path").setStringValue(newPath);
+                    Configuration config2 = context.getDefaultPluginConfiguration();
+                    PropertySimple pathProp = new PropertySimple("path",newPath);
+                    config2.put(pathProp);
 
                     String resKey = context.getParentResourceContext().getResourceKey() + "/" + key;
                     String name = resKey.substring(resKey.lastIndexOf("/") + 1);
@@ -109,7 +114,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                             name, // Name
                             null, // Version
                             subsystem.description, // Description
-                            config,
+                            config2,
                             null);
                     details.add(detail);
                 }
@@ -120,7 +125,10 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                 String resKey = path;
                 String name = resKey.substring(resKey.lastIndexOf("/") + 1);
-                config.getSimple("path").setStringValue(path);
+                Configuration config2 = context.getDefaultPluginConfiguration();
+                PropertySimple pathProp = new PropertySimple("path",path);
+                config2.put(pathProp);
+
 
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
@@ -129,7 +137,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                         name, // Name
                         null, // Version
                         path, // Description
-                        config,
+                        config2,
                         null);
                 details.add(detail);
             }

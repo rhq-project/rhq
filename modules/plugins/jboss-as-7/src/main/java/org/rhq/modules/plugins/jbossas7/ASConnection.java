@@ -138,6 +138,9 @@ public class ASConnection {
 
 
     boolean isErrorReply(JsonNode in) {
+        if (in == null)
+            return true;
+
         if (in.has("outcome")) {
             String outcome = null;
             try {
@@ -262,6 +265,8 @@ public class ASConnection {
     }
 
     public String getFailureDescription(JsonNode jsonNode) {
+        if (jsonNode==null)
+            return "getFailureDescription: -input was null-";
         JsonNode node = jsonNode.findValue("failure-description");
         return node.getValueAsText();
 

@@ -96,7 +96,7 @@
                 <c:simple-property name="path" default="/profile/*" readOnly="true"/>
             </plugin-configuration>
         </server>
-        <server name="ServerGroups"
+        <server name="ServerGroup"
                 description="Server groups on this domain"
                 discovery="SubsystemDiscovery"
                 class="BaseComponent">
@@ -283,54 +283,54 @@
 
     </server>
 
-        <service name="NetworkInterface"
-                 discovery="InterfaceDiscovery"
-                 class="BaseComponent"
-                 description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
+    <service name="NetworkInterface"
+             discovery="InterfaceDiscovery"
+             class="BaseComponent"
+             description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
 
-            <runs-inside>
-                <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
-                <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
-            </runs-inside>
+        <runs-inside>
+            <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
 
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/"/>
-            </plugin-configuration>
-        </service>
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="/"/>
+        </plugin-configuration>
+    </service>
 
-        <service name="SocketBindingGroup"
-                 discovery="SocketBindingGroupDiscovery"
-                 class="BaseComponent"
-                >
-            <runs-inside>
-                <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
-                <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
-            </runs-inside>
+    <service name="SocketBindingGroup"
+             discovery="SocketBindingGroupDiscovery"
+             class="BaseComponent"
+            >
+        <runs-inside>
+            <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
 
 
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
-            </plugin-configuration>
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
+        </plugin-configuration>
 
-            <resource-configuration>
-                <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
-                <!-- note: at domain level there is no port-offset -->
-                <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
-                <c:list-property name="include">
-                    <c:simple-property name="binding" displayName="Included bindings" description="Other bindings that are included in this one"/>
-                </c:list-property>
-                <c:list-property name="socket-binding">
-                    <c:map-property name="binding">
-                        <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name."/>
-                        <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
-                        <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
-                        <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
-                        <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." />
-                        <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer"/>
-                    </c:map-property>
-                </c:list-property>
-            </resource-configuration>
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
+            <!-- note: at domain level there is no port-offset -->
+            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
+            <c:list-property name="include">
+                <c:simple-property name="binding" displayName="Included bindings" description="Other bindings that are included in this one"/>
+            </c:list-property>
+            <c:list-property name="socket-binding">
+                <c:map-property name="binding">
+                    <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name."/>
+                    <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
+                    <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
+                    <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
+                    <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." />
+                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
 
-        </service>
+    </service>
 
 </plugin>

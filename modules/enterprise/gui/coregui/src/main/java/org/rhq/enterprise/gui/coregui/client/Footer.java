@@ -87,9 +87,33 @@ public class Footer extends LocatableHLayout {
 
         addMember(getMessageCenterButton());
 
+        addMember(getRefreshButton());
+
         addMember(createHSpacer(0));
 
         alertsMessage.schedule(60000);
+    }
+
+    private LocatableVLayout getRefreshButton() {
+        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("refreshLayout"));
+        layout.setHeight100();
+        layout.setAlign(Alignment.CENTER);
+        layout.setAutoWidth();
+
+        LocatableIButton button = new LocatableIButton(extendLocatorId("refreshButton"), "");
+        button.setAlign(Alignment.CENTER);
+        button.setAutoFit(true);
+        button.setIcon("[SKIN]/actions/refresh.png");
+        button.setPrompt(CoreGUI.getMessages().common_button_refresh());
+        button.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                CoreGUI.refresh();
+            }
+        });
+
+        layout.addMember(button);
+        return layout;
     }
 
     private LocatableVLayout getMessageCenterButton() {

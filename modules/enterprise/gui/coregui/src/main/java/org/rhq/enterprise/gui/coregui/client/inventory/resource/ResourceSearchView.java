@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Greg Hinkle
  */
-public class ResourceSearchView extends Table<RPCDataSource<Resource, ResourceCriteria>> {
+public class ResourceSearchView extends Table {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
 
@@ -112,7 +112,9 @@ public class ResourceSearchView extends Table<RPCDataSource<Resource, ResourceCr
         setDataSource(datasource);
     }
 
-    protected RPCDataSource<Resource, ResourceCriteria> getDataSourceInstance() {
+    // surpress unchecked warnings because the subclasses may have different generic types for the datasource
+    @SuppressWarnings("unchecked")
+    protected RPCDataSource getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }
 

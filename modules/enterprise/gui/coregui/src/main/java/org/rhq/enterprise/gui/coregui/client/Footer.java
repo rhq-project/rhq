@@ -87,7 +87,9 @@ public class Footer extends LocatableHLayout {
 
         addMember(getMessageCenterButton());
 
-        addMember(getRefreshButton());
+        // people don't like the refresh and CoreGUI.refresh() isn't refreshing everything I want
+        // if we ever want to reintroduce the refresh button to manually call CoreGUI.refresh(), just uncomment this line
+        // addMember(getRefreshButton());
 
         addMember(createHSpacer(0));
 
@@ -195,13 +197,15 @@ public class Footer extends LocatableHLayout {
         private void changeIcon(int alertCount) {
             if (alertCount == 0) {
                 setPrompt(MSG.view_core_noRecentAlerts());
-                setContents(imgHTML("subsystems/alert/Alerts_16.png", 16, 16));
+                setContents(imgHTML("subsystems/alert/Alerts_16.png", 16, 16)
+                    + "<span style=\"display:inline-block; vertical-align:middle\">0</span>");
             } else {
                 setPrompt(MSG.view_core_recentAlerts(String.valueOf(alertCount)));
                 String link = '#' + ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
                     + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID;
                 setContents("<a href=\"" + link + "\">" + imgHTML(ImageManager.getAlertIcon(AlertPriority.HIGH))
-                    + "</a>");
+                    + "<span style=\"display:inline-block; vertical-align:middle\">" + String.valueOf(alertCount)
+                    + "</span></a>");
             }
         }
 

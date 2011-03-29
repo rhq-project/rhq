@@ -20,7 +20,9 @@ package org.rhq.enterprise.server.resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -66,6 +68,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -84,6 +87,7 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
@@ -825,6 +829,147 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return resourceLineage;
+    }
+
+    public Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds,
+        ResourceAncestryFormat format) {
+        Map<Integer, String> result = new HashMap<Integer, String>(resourceIds.length);
+
+        if (resourceIds.length == 0) {
+            return result;
+        }
+
+        ResourceCriteria resourceCriteria = new ResourceCriteria();
+        resourceCriteria.addFilterIds(resourceIds);
+        resourceCriteria.fetchResourceType(true);
+        List<Resource> resources = findResourcesByCriteria(subject, resourceCriteria);
+
+        if (ResourceAncestryFormat.RAW == format) {
+            for (Resource resource : resources) {
+                result.put(resource.getId(), resource.getAncestry());
+            }
+            return result;
+        }
+
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
+        for (Resource resource : resources) {
+            ResourceType type = resource.getResourceType();
+            if (type != null) {
+                typesSet.add(type.getId());
+            }
+            ancestries.add(resource.getAncestry());
+        }
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        typesSet.addAll(getAncestryTypeIds(ancestries));
+
+        ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
+        resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
+        List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
+
+        for (Resource resource : resources) {
+            String decodedAncestry = getDecodedAncestry(resource, types, format);
+            result.put(resource.getId(), decodedAncestry);
+        }
+        return result;
+    }
+
+    /**
+     * Get the complete set of resource type Ids in the ancestries provided. This is useful for
+     * being able to load all the types in advance of generating decoded values.
+     *  
+     * @return
+     */
+    private HashSet<Integer> getAncestryTypeIds(Collection<String> ancestries) {
+        HashSet<Integer> result = new HashSet<Integer>();
+
+        for (String ancestry : ancestries) {
+            if (null == ancestry) {
+                continue;
+            }
+            String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+            for (int i = 0; i < ancestryEntries.length; ++i) {
+                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                int rtId = Integer.valueOf(entryTokens[0]);
+                result.add(rtId);
+            }
+        }
+
+        return result;
+    }
+
+    private String getDecodedAncestry(Resource resource, List<ResourceType> typeList, ResourceAncestryFormat format) {
+        String ancestry = resource.getAncestry();
+        StringBuilder sb = new StringBuilder();
+
+        if (ResourceAncestryFormat.VERBOSE != format) {
+            if (null == ancestry) {
+                sb.append("");
+            }
+
+            String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+            for (int i = 0; i < ancestryEntries.length; ++i) {
+                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                String ancestorName = entryTokens[2];
+
+                sb.append((i > 0) ? " < " : "");
+                sb.append(ancestorName);
+            }
+        } else {
+            Map<Integer, ResourceType> types = new HashMap<Integer, ResourceType>(typeList.size());
+            for (ResourceType type : typeList) {
+                types.put(type.getId(), type);
+            }
+
+            ResourceType type = types.get(resource.getResourceType().getId());
+            String resourceLongName = getResourceLongName(resource.getName(), type);
+
+            // decode ancestry
+            if (null != ancestry) {
+                String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+                for (int i = ancestryEntries.length - 1, j = 0; i >= 0; --i, ++j) {
+                    String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                    int ancestorTypeId = Integer.valueOf(entryTokens[0]);
+                    String ancestorName = entryTokens[2];
+
+                    // indent with spaces
+                    if (j > 0) {
+                        sb.append("\n");
+                        for (int k = 0; k < j; ++k) {
+                            sb.append("  ");
+                        }
+                    }
+                    type = types.get(ancestorTypeId);
+                    sb.append(getResourceLongName(ancestorName, type));
+                }
+
+                // add target resource, indent with spaces
+                sb.append("\n");
+                for (int k = 0; k <= ancestryEntries.length; ++k) {
+                    sb.append("  ");
+                }
+                sb.append(resourceLongName);
+
+            } else {
+                // just show the resource name/type info
+                sb.append(resourceLongName);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private String getResourceLongName(String resourceName, ResourceType type) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(resourceName);
+        sb.append(" [");
+        sb.append(type.getPlugin());
+        sb.append(", ");
+        sb.append(type.getName());
+        sb.append("]");
+
+        return sb.toString();
     }
 
     @NotNull

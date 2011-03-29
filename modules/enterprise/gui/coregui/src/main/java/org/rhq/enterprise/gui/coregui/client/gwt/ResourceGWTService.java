@@ -59,6 +59,8 @@ public interface ResourceGWTService extends RemoteService {
 
     List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException;
 
+    void deleteResourceErrors(int[] resourceErrorIds) throws RuntimeException;
+
     PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException;
 
     Resource getPlatformForResource(int resourceId) throws RuntimeException;

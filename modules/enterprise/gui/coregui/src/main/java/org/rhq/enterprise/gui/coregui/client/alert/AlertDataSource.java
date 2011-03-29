@@ -181,19 +181,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             });
             fields.add(resourceNameField);
 
-            ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
-            ancestryField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                    return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-                }
-            });
-            ancestryField.setShowHover(true);
-            ancestryField.setHoverCustomizer(new HoverCustomizer() {
-
-                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                    return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-                }
-            });
+            ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
             ctimeField.setWidth(125);
@@ -216,6 +204,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
+        if (criteria == null) {
+            // the user selected no severities in the filter - it makes sense from the UI perspective to show 0 rows
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+            return;
+        }
+
         final long start = System.currentTimeMillis();
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
@@ -284,10 +279,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
     @Override
     protected AlertCriteria getFetchCriteria(DSRequest request) {
+        AlertPriority[] severitiesFilter = getArrayFilter(request, "severities", AlertPriority.class);
+
+        if (severitiesFilter == null || severitiesFilter.length == 0) {
+            return null; // user didn't select any severities - return null to indicate no data should be displayed
+        }
+
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
 
-        criteria.addFilterPriorities(getArrayFilter(request, "severities", AlertPriority.class));
+        criteria.addFilterPriorities(severitiesFilter);
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 

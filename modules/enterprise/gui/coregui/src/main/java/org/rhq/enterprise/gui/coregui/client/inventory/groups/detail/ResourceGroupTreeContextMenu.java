@@ -43,8 +43,8 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
     public void showContextMenu(ResourceGroupEnhancedTreeNode node) {
 
-        final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
-        if (clusterKey != null) {
+        if (node.isAutoClusterNode()) {
+            final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
             GWTServiceLookup.getClusterService().createAutoClusterBackingGroup(clusterKey, true,
                 new AsyncCallback<ResourceGroup>() {
                     @Override
@@ -58,7 +58,8 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
                         showContextMenu(result);
                     }
                 });
-        } else {
+
+        } else if (node.isCompatibleGroupTopNode()) {
             ResourceGroupCriteria criteria = new ResourceGroupCriteria();
             criteria.addFilterId(Integer.parseInt(node.getAttribute("id")));
             GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,

@@ -23,6 +23,11 @@ import java.util.HashSet;
 import java.util.Map;
 
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
@@ -49,6 +54,52 @@ public abstract class AncestryUtil {
 
     private static final String TITLE_ANCESTRY = CoreGUI.getMessages().util_ancestry_parentAncestry() + " ";
     private static final String TITLE_PLATFORM = CoreGUI.getMessages().common_title_platform() + ": ";
+
+    /**
+     * Convienence method that creates a standard ancestry ListGridField.
+     * @return ancestry field
+     */
+    public static ListGridField setupAncestryListGridField() {
+        ListGridField ancestryField;
+        ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
+        ancestryField.setAlign(Alignment.LEFT);
+        ancestryField.setCellAlign(Alignment.LEFT);
+        setupAncestryListGridFieldCellFormatter(ancestryField);
+        setupAncestryListGridFieldHover(ancestryField);
+        return ancestryField;
+    }
+
+    /**
+     * Convienence method that creates a standard ancestry ListGridField where the field already exists
+     * in the given list grid.
+     * 
+     * @return ancestry field
+     */
+    public static ListGridField setupAncestryListGridField(ListGrid listGrid) {
+        ListGridField ancestryField = listGrid.getField(AncestryUtil.RESOURCE_ANCESTRY);
+        ancestryField.setAlign(Alignment.LEFT);
+        ancestryField.setCellAlign(Alignment.LEFT);
+        setupAncestryListGridFieldCellFormatter(ancestryField);
+        setupAncestryListGridFieldHover(ancestryField);
+        return ancestryField;
+    }
+
+    public static void setupAncestryListGridFieldHover(ListGridField ancestryField) {
+        ancestryField.setShowHover(true);
+        ancestryField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+            }
+        });
+    }
+
+    public static void setupAncestryListGridFieldCellFormatter(ListGridField ancestryField) {
+        ancestryField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
+            }
+        });
+    }
 
     /**
      * Get the complete set of resource types in the ancestries provided. This is useful for
@@ -208,12 +259,20 @@ public abstract class AncestryUtil {
         ResourceType type = types.get(resourceTypeId);
         String resourceLongName = getResourceLongName(resourceName, type);
 
-        width = (width <= 0) ? 500 : width;
+        // note: if width is negative, we do not explicitly define a width in the HTML, thus enabling auto-resizing.
+        Integer widthObj = null;
+        if (width >= 0) {
+            widthObj = (width == 0) ? Integer.valueOf(500) : Integer.valueOf(width);
+        }
 
         // decode ancestry
-        StringBuilder sb = new StringBuilder("<p style='width:");
-        sb.append(width);
-        sb.append("px'>");
+        StringBuilder sb = new StringBuilder("<p");
+        if (widthObj != null) {
+            sb.append(" style='width:");
+            sb.append(widthObj.toString());
+            sb.append("px'");
+        }
+        sb.append(">");
         String title = (null != ancestry) ? TITLE_ANCESTRY : TITLE_PLATFORM;
         sb.append(title);
         sb.append(resourceLongName);
@@ -282,11 +341,20 @@ public abstract class AncestryUtil {
         Map<Integer, ResourceType> types = ((MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES)).getMap();
         Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
         ResourceType type = types.get(resourceTypeId);
-        width = (width <= 0) ? 500 : width;
 
-        StringBuilder sb = new StringBuilder("<p style='width:");
-        sb.append(width);
-        sb.append("px'>");
+        // note: if width is negative, we do not explicitly define a width in the HTML, thus enabling auto-resizing.
+        Integer widthObj = null;
+        if (width >= 0) {
+            widthObj = (width == 0) ? Integer.valueOf(500) : Integer.valueOf(width);
+        }
+
+        StringBuilder sb = new StringBuilder("<p");
+        if (widthObj != null) {
+            sb.append(" style='width:");
+            sb.append(widthObj.toString());
+            sb.append("px'");
+        }
+        sb.append(">");
 
         sb.append(getResourceLongName(resourceName, type));
 

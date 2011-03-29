@@ -27,10 +27,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceDateTimeField;
-import com.smartgwt.client.data.fields.DataSourceEnumField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -42,21 +38,19 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
- *
  * @author Lukas Krejci
  * @author Simeon Pinder
+ * @author John Mazzitelli
  */
 public class ResourceErrorsDataSource extends RPCDataSource<ResourceError, Criteria> {
 
     public static abstract class Field {
+        public static final String ID = "id";
         public static final String SUMMARY = "summary";
         public static final String DETAIL = "detail";
         public static final String ERROR_TYPE = "errorType";
         public static final String TIME_OCCURED = "timeOccured";
-        public static final String ICON = "icon";
     }
-
-    private static final String ERROR_ICON = "[SKIN]/Dialog/warn.png";
 
     ResourceGWTServiceAsync resourceService;
     int resourceId;
@@ -68,25 +62,6 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError, Crite
         addFields(fields);
     }
 
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        List<DataSourceField> fields = super.addDataSourceFields();
-
-        fields.add(new DataSourceEnumField(Field.ERROR_TYPE, MSG.dataSource_resourceErrors_field_errorType()));
-        fields.add(new DataSourceDateTimeField(Field.TIME_OCCURED, MSG.dataSource_resourceErrors_field_timeOccured()));
-        fields.add(new DataSourceTextField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary()));
-        DataSourceTextField details = new DataSourceTextField(Field.DETAIL, MSG
-            .dataSource_resourceErrors_field_detail());
-        details.setHidden(true);//won't be displaying this value directly in the listgrid
-        fields.add(details);
-        fields.add(new DataSourceImageField(Field.ICON, MSG.dataSource_resourceErrors_field_detail()));
-
-        return fields;
-    }
-
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.gui.coregui.client.util.RPCDataSource#executeFetch(com.smartgwt.client.data.DSRequest, com.smartgwt.client.data.DSResponse)
-     */
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
         resourceService.findResourceErrors(resourceId, new AsyncCallback<List<ResourceError>>() {
@@ -110,16 +85,18 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError, Crite
         return null;
     }
 
+    @Override
     public ResourceError copyValues(Record from) {
         //This is read-only datasource, so no need to implement this.
         return null;
     }
 
+    @Override
     public ListGridRecord copyValues(ResourceError from) {
         ListGridRecord record = new ListGridRecord();
 
+        record.setAttribute(Field.ID, from.getId());
         record.setAttribute(Field.DETAIL, from.getDetail());
-        record.setAttribute(Field.ICON, ERROR_ICON);
         record.setAttribute(Field.ERROR_TYPE, from.getErrorType().name());
         record.setAttribute(Field.SUMMARY, from.getSummary());
         record.setAttribute(Field.TIME_OCCURED, new Date(from.getTimeOccurred()));

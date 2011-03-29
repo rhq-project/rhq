@@ -226,7 +226,7 @@ public abstract class TestConfigurationFactory {
         string2Prop.setErrorMessage("illegal value!");
         configuration.put(string2Prop);
         configuration.put(new PropertySimple("LongString", "blah blah blah\nblah blah blah"));
-        configuration.put(new PropertySimple("Password", null));
+        configuration.put(new PropertySimple("Password", "ou812"));
         configuration.put(new PropertySimple("Boolean", false));
         configuration.put(new PropertySimple("Integer", 666));
         configuration.put(new PropertySimple("Float", Math.PI));

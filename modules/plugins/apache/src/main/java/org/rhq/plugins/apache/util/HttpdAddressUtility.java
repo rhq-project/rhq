@@ -369,7 +369,8 @@ public enum HttpdAddressUtility {
         }
         
         if (address.host == null || address.isHostDefault() || address.isHostWildcard()) {
-            address = getLocalhost(address.port);
+            Address localhost = getLocalhost(address.port);
+            address.host = localhost.host;
         }
         
         updateWithServerName(address, ag);

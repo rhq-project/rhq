@@ -43,12 +43,11 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletConfigurationDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -56,7 +55,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.PortletAlertSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -77,6 +75,7 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
     public static final String RESOURCES_SELECTED = MSG.common_label_selected_resources();
     public static final String defaultResourceValue = RESOURCES_ALL;
     public static final String ID = "id";
+    private boolean currentlyRefreshing = false;
 
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
@@ -216,7 +215,6 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
-                String selectedValue;
                 //alert severity
                 portletConfig = AbstractActivityView.saveAlertPrioritySettings(alertPrioritySelector, portletConfig);
 
@@ -260,35 +258,19 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
         }
     }
 
-    @Override
     public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-
-            refreshTimer = new Timer() {
-                public void run() {
-                    redraw();
-                }
-            };
-
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
 
         super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return this.currentlyRefreshing;
     }
 
     @Override
@@ -339,7 +321,6 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
     protected void onInit() {
         super.onInit();
         initializeUi();
-        //        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 
     @Override
@@ -350,6 +331,12 @@ public class GroupAlertsPortlet extends AlertHistoryView implements CustomSettin
             getTableInfo().setContents(
                 MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }
+    }
+
+    @Override
+    public void redraw() {
+        super.redraw();
+        refresh();//is table so need to call this to reload
     }
 }
 
@@ -363,7 +350,6 @@ final class AlertResourceSelectorRegion extends LocatableVLayout {
         this.currentlyAssignedIds = assigned;
     }
 
-    private static final Messages MSG = CoreGUI.getMessages();
     private PortletAlertSelector selector = null;
 
     private Integer[] currentlyAssignedIds;

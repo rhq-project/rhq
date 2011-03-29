@@ -64,6 +64,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
@@ -727,9 +728,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();
-        Map<String, String> alertMessage = emailManager.getAlertEmailMessage(
-            prettyPrintResourceHierarchy(alertDefinition.getResource()), //
-            alertDefinition.getResource().getName(), //
+        Resource resource = alertDefinition.getResource();
+        Map<Integer, String> ancestry = resourceManager.getResourcesAncestry(subjectManager.getOverlord(),
+            new Integer[] { resource.getId() }, ResourceAncestryFormat.VERBOSE);
+        Map<String, String> alertMessage = emailManager.getAlertEmailMessage(ancestry.get(resource.getId()), //
+            resource.getName(), //
             alertDefinition.getName(), //
             alertDefinition.getPriority().toString(), //
             new Date(alert.getCtime()).toString(), //
@@ -754,40 +757,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     private static String NEW_LINE = System.getProperty("line.separator");
-
-    private String prettyPrintResourceHierarchy(Resource resource) {
-        StringBuilder builder = new StringBuilder();
-
-        List<Resource> lineage = resourceManager.getResourceLineage(resource.getId());
-
-        int depth = 0;
-        for (Resource res : lineage) {
-            if (depth == 0) {
-                builder.append(" - ");
-            } else {
-                builder.append(NEW_LINE);
-
-                for (int i = 0; i < depth; i++) {
-                    builder.append("   ");
-                }
-
-                builder.append("|");
-                builder.append(NEW_LINE);
-
-                for (int i = 0; i < depth; i++) {
-                    builder.append("   ");
-                }
-
-                builder.append("+- ");
-            }
-
-            builder.append(res.getName());
-
-            depth++;
-        }
-
-        return builder.toString();
-    }
 
     /**
      * Create a human readable description of the conditions that led to this alert.

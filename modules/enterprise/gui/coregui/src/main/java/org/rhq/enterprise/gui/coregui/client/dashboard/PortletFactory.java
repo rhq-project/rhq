@@ -24,7 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
+
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
@@ -53,6 +57,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.Inventor
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Simeon Pinder
@@ -177,9 +183,31 @@ public class PortletFactory {
         PortletViewFactory viewFactory = registeredPortletFactoryMap.get(storedPortlet.getPortletKey());
         if (viewFactory == null) {//check group view factory
             viewFactory = registeredGroupPortletFactoryMap.get(storedPortlet.getPortletKey());
-        }
-        if (viewFactory == null) {//check resource view factory
-            viewFactory = registeredResourcePortletFactoryMap.get(storedPortlet.getPortletKey());
+
+            if (viewFactory == null) {//check resource view factory
+                viewFactory = registeredResourcePortletFactoryMap.get(storedPortlet.getPortletKey());
+
+                if (viewFactory == null) {
+                    Message msg = new Message("Bad portlet: " + storedPortlet, Severity.Warning);
+                    CoreGUI.getMessageCenter().notify(msg);
+                    class InvalidPortlet extends Label implements Portlet {
+                        InvalidPortlet() {
+                            super(CoreGUI.getMessages().view_portlet_factory_invalidPortlet());
+                        }
+
+                        @Override
+                        public Canvas getHelpCanvas() {
+                            return new Label(getContents());
+                        }
+
+                        @Override
+                        public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+                        }
+                    }
+                    ;
+                    return new InvalidPortlet();
+                }
+            }
         }
 
         Portlet view = viewFactory.getInstance(locatorId);

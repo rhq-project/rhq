@@ -344,10 +344,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public void reload() {
-        /*if (this.loaded && !this.reloadable) {
-            return;
-        }*/
-
         if (this.configurationDefinition == null || this.configuration == null) {
             // Wait for both to load.
             return;
@@ -364,13 +360,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             Log.info("Building structured configuration editor...");
-            LocatableVLayout structuredConfigLayout = null;
-            try {
-                structuredConfigLayout = buildStructuredPane();
-            } catch (RuntimeException e) {
-                e.printStackTrace();
-                throw e;
-            }
+            LocatableVLayout structuredConfigLayout = buildStructuredPane();
             addMember(structuredConfigLayout);
         } else {
             Label label = new Label("Structured configuration is not supported.");
@@ -458,11 +448,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
         for (SectionStackSection section : sectionStack.getSections()) {
             MenuItem item = new MenuItem(section.getTitle());
+            item.setAttribute("name", section.getName());
             item.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    int x = event.getMenu().getItemNum(event.getItem());
-                    sectionStack.expandSection(x);
-                    sectionStack.showSection(x);
+                    int index = event.getMenu().getItemNum(event.getItem());
+                    sectionStack.expandSection(index);
+                    sectionStack.showSection(index);
                 }
             });
             menu.addItem(item);
@@ -491,13 +482,14 @@ public class ConfigurationEditor extends LocatableVLayout {
             section = new SectionStackSection(MSG.common_title_generalProp());
             section.setExpanded(true);
         } else {
-            section = new SectionStackSection(
-                "<div style=\"float:left; font-weight: bold;\">"
+            String title = "<div style=\"float:left; font-weight: bold;\">"
                     + group.getDisplayName()
                     + "</div>"
                     + (group.getDescription() != null ? ("<div style='padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
-                        + " - " + group.getDescription() + "</div>")
-                        : ""));
+                    + " - " + group.getDescription() + "</div>")
+                    : "");
+            section = new SectionStackSection(title);
+            section.setName(group.getName());
             section.setExpanded(!group.isDefaultHidden());
         }
 
@@ -1265,12 +1257,11 @@ public class ConfigurationEditor extends LocatableVLayout {
         FormItem valueItem = null;
 
         boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple);
-
-        if (propertyIsReadOnly) {
+        // TODO (ips, 03/25/11): We eventually want to use StaticTextItems for read-only PASSWORD props too, but we have
+        //                       to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
+        if (propertyIsReadOnly && propertyDefinitionSimple.getType() != PropertySimpleType.PASSWORD) {
             valueItem = new StaticTextItem();
         } else {
-
-
             List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
             if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
                 LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();
@@ -1320,22 +1311,25 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             }
 
-            valueItem.setDisabled(isUnset(propertyDefinitionSimple, propertySimple));
+            valueItem.setDisabled(propertyIsReadOnly || isUnset(propertyDefinitionSimple, propertySimple));
 
             List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
             valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
-            valueItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent changedEvent) {
-                    updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
-                    // Only fire a prop value change event if the prop's a top-level simple or a simple within a
-                    // top-level map.
-                    if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
-                        boolean isValid = changedEvent.getItem().validate();
-                        firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+            if ((propertySimple.getConfiguration() != null) || (propertySimple.getParentMap() != null) ||
+                    (propertySimple.getParentList() != null)) {
+                valueItem.addChangedHandler(new ChangedHandler() {
+                    public void onChanged(ChangedEvent changedEvent) {
+                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                        // Only fire a prop value change event if the prop's a top-level simple or a simple within a
+                        // top-level map.
+                        if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
+                            boolean isValid = changedEvent.getItem().validate();
+                            firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         // for more robust and repeatable item locators (not positional) assign a name and title
@@ -1349,7 +1343,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         valueItem.setWidth(220);
 
         /*
-                Click handlers seem to be turned off for disabled fields... need an alternative
+                TODO: Click handlers seem to be turned off for disabled fields... need to find an alternative.
                 valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         com.allen_sauer.gwt.log.client.Log.info("Click in value field");
@@ -1365,9 +1359,9 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     protected boolean fireEventOnPropertyValueChange(PropertyDefinitionSimple propertyDefinitionSimple,
                                                      PropertySimple propertySimple) {
-        PropertyDefinitionMap parentPropertyMapDefinition = propertyDefinitionSimple.getParentPropertyMapDefinition();
-        return propertyDefinitionSimple.getConfigurationDefinition() != null
-            || (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null);
+        PropertyMap parentMap = propertySimple.getParentMap();
+        return propertySimple.getConfiguration() != null
+            || (parentMap != null && parentMap.getConfiguration() != null);
     }
 
     protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
@@ -1533,7 +1527,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private void displayMapEditor(final ListGrid summaryTable, final PropertyMapListGridRecord existingRecord,
                                   PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map,
-                                  boolean mapReadOnly) {
+                                  final boolean mapReadOnly) {
 
         final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(definition
             .getPropertyDefinitions().values());
@@ -1543,7 +1537,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertyMap workingMap = (newRow) ? new PropertyMap(definition.getName()) : map.deepCopy(true);
 
         final LocatableWindow popup = new LocatableWindow(extendLocatorId("MapEditor"));
-        popup.setTitle(MSG.view_configEdit_editRow());
+        String title = (mapReadOnly) ? MSG.view_configEdit_viewRow() : MSG.view_configEdit_editRow();
+        popup.setTitle(title);
         popup.setWidth(800);
         popup.setHeight(600);
         popup.setIsModal(true);
@@ -1569,31 +1564,33 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (!childForm.validate()) {
-                    okButton.disable();
-                    return;
-                }
-                if (newRow) {
-                    try {
-                        list.add(workingMap);
-                        int index = list.getList().size() - 1;
-                        PropertyMapListGridRecord record = new PropertyMapListGridRecord(workingMap, index,
-                                memberDefinitions);
-                        summaryTable.addData(record);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                if (!mapReadOnly) {
+                    if (!childForm.validate()) {
+                        okButton.disable();
+                        return;
                     }
-                } else {
-                    try {
-                        mergePropertyMap(workingMap, map, memberDefinitions);
-                        existingRecord.refresh();
-                        summaryTable.updateData(existingRecord);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if (newRow) {
+                        try {
+                            list.add(workingMap);
+                            int index = list.getList().size() - 1;
+                            PropertyMapListGridRecord record = new PropertyMapListGridRecord(workingMap, index,
+                                    memberDefinitions);
+                            summaryTable.addData(record);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        try {
+                            mergePropertyMap(workingMap, map, memberDefinitions);
+                            existingRecord.refresh();
+                            summaryTable.updateData(existingRecord);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
+                    firePropertyChangedEvent(list, null, true);
+                    summaryTable.redraw();
                 }
-                firePropertyChangedEvent(list, null, true);
-                summaryTable.redraw();
 
                 layout.destroy();
                 popup.destroy();
@@ -1609,20 +1606,21 @@ public class ConfigurationEditor extends LocatableVLayout {
                 okButton.setDisabled(false);
             }
         });
+        buttonBar.addMember(okButton);
 
-        final IButton cancelButton = new LocatableIButton(buttonBar.extendLocatorId("Cancel"), MSG.common_button_cancel());
-        cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                layout.destroy();
-                popup.destroy();
-            }
-        });
+        if (!mapReadOnly) {
+            final IButton cancelButton = new LocatableIButton(buttonBar.extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    layout.destroy();
+                    popup.destroy();
+                }
+            });
+            buttonBar.addMember(cancelButton);
+        }
 
-        buttonBar.setMembers(okButton, cancelButton);
         layout.addMember(buttonBar);
-
         popup.addItem(layout);
-
         popup.show();
     }
 

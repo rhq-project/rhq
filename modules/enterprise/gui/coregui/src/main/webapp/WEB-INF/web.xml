@@ -7,6 +7,15 @@
 
     <display-name>RHQ GUI</display-name>
 
+    <filter>
+       <filter-name>CacheControlFilter</filter-name>
+       <filter-class>org.rhq.enterprise.gui.coregui.server.filter.CacheControlFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+       <filter-name>CacheControlFilter</filter-name>
+       <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>

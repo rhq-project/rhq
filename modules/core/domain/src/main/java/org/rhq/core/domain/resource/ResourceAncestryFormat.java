@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,22 +20,28 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard;
+package org.rhq.core.domain.resource;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlEnum;
 
 /**
- * @author Simeon Pinder
+ * Used to request the desired diplay format for resource ancestry.
+ * 
+ * @author Jay Shaughnessy
  */
-public interface AutoRefreshPortlet extends Portlet {
-
+@XmlEnum
+@XmlAccessorType(XmlAccessType.FIELD)
+public enum ResourceAncestryFormat {
     /**
-     * Each portlet implements to define the refresh cycle.  Note that once refresh is started it
-     * should be canceled when the portlet goes out of scope (typically in an onDestroy() override).
+     * <ul>
+     *    <li>RAW: The raw, encoded value.  This is already provided by the Resource.ancestry field. 
+     *    
+     *    <li>SIMPLE: Short, name only format: (eg. parentName < grandParentName < etc...)
+     *                 
+     *    <li>VERBOSE: Verbose, MultiLine format incorporating name, type and indentation.
+     * </ul>
      */
-    void startRefreshCycle();
-
-    /**     
-     * @return true if the portlet is currently responding to a refresh (i.e. reloading data). This can be used
-     * to ignore refresh requests until a prior request is completed. 
-     */
-    boolean isRefreshing();
+    RAW, SIMPLE, VERBOSE
 }

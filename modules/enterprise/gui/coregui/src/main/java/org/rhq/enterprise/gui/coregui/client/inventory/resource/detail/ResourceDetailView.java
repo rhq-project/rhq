@@ -85,7 +85,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     public static class Tab {
         public static final String OPERATIONS = "Operations";
         public static final String CONFIGURATION = "Configuration";
-        // TODO: other tabs
     }
 
     public static class OperationsSubTab {
@@ -142,6 +141,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     public ResourceDetailView(String locatorId) {
         super(locatorId, BASE_VIEW_PATH);
+
+        // hide until we have our tabs in place
         this.hide();
     }
 

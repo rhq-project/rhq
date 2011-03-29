@@ -41,6 +41,8 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -106,16 +108,12 @@ public class ResourceSearchView extends Table {
             addHeaderIcon(headerIcon);
         }
 
-        //        DynamicForm searchPanel = new DynamicForm();
-        //        final TextItem searchBox = new TextItem("query", "Search Resources");
-        //        searchBox.setValue("");
-        //        searchPanel.setWrapItemTitles(false);
-        //        searchPanel.setFields(searchBox);
-
-        final RPCDataSource datasource = getDataSourceInstance();
+        final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
     }
 
+    // surpress unchecked warnings because the subclasses may have different generic types for the datasource
+    @SuppressWarnings("unchecked")
     protected RPCDataSource getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }
@@ -159,18 +157,7 @@ public class ResourceSearchView extends Table {
             }
         });
 
-        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, MSG.common_title_ancestry());
-        ancestryField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return listGridRecord.getAttributeAsString(AncestryUtil.RESOURCE_ANCESTRY_VALUE);
-            }
-        });
-        ancestryField.setShowHover(true);
-        ancestryField.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
-            }
-        });
+        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
 

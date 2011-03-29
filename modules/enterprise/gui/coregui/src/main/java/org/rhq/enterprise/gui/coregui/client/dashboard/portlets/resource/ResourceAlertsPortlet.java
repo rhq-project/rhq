@@ -20,16 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletConfigurationDataSource;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -139,44 +134,12 @@ public class ResourceAlertsPortlet extends GroupAlertsPortlet {
 
     }
 
-    public AlertPortletConfigurationDataSource getDataSource() {
-        return dataSource;
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
 
             return new ResourceAlertsPortlet(locatorId);
-        }
-    }
-
-    @Override
-    protected void configureTable() {
-        super.configureTable();
-
-        setListGridDoubleClickHandler(new DoubleClickHandler() {
-            @Override
-            public void onDoubleClick(DoubleClickEvent event) {
-                ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
-                if (selectedRows != null && selectedRows.length == 1) {
-                    Integer recordId = getId(selectedRows[0]);
-                    Integer resourceId = selectedRows[0].getAttributeAsInt("resourceId");
-                    CoreGUI.goToView(LinkManager.getSubsystemAlertHistoryLink(resourceId, recordId));
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void refreshTableInfo() {
-        super.refreshTableInfo();
-        if (getTableInfo() != null) {
-            int count = getListGrid().getSelection().length;
-            getTableInfo().setContents(
-                MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }
     }
 }

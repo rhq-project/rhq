@@ -90,29 +90,26 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
      */
     public void showMessageCenterWindow() {
         try {
-            createWindow().show();
+            if (window == null) {
+                window = new MessageCenterWindow("MessageCenterViewWindow");
+                window.addItem(this);
+                window.addCloseClickHandler(new CloseClickHandler() {
+                    @Override
+                    public void onCloseClick(CloseClientEvent event) {
+                        try {
+                            window.hide();
+                        } catch (Throwable e) {
+                            Log.warn("Cannot destroy message center", e);
+                        }
+                    }
+                });
+            }
+
+            window.show();
+            markForRedraw(); // need this to ensure the list grid rows are selectable
         } catch (Throwable e) {
             Log.error("Cannot show message center window", e);
         }
-    }
-
-    private Window createWindow() {
-        if (window == null) {
-            window = new MessageCenterWindow("MessageCenterViewWindow");
-            window.addItem(this);
-            window.addCloseClickHandler(new CloseClickHandler() {
-                @Override
-                public void onCloseClick(CloseClientEvent event) {
-                    try {
-                        window.hide();
-                    } catch (Throwable e) {
-                        Log.warn("Cannot destroy message center", e);
-                    }
-                }
-            });
-        }
-
-        return window;
     }
 
     @Override
@@ -317,8 +314,18 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         return record;
     }
 
-    private void showDetails(Message message) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("Details"));
+    /**
+     * This is a static utility method that is package protected so the message center view
+     * and the message bar can pop up a dialog showing a message's details.
+     * 
+     * @param message the message whose details are to be shown
+     */
+    static void showDetails(Message message) {
+        if (message == null) {
+            return;
+        }
+
+        DynamicForm form = new LocatableDynamicForm("MessageCenterDetailsForm");
         form.setWrapItemTitles(false);
         form.setAlign(Alignment.LEFT);
 
@@ -340,7 +347,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
 
         form.setItems(title, severity, date, detail);
 
-        final Window dialogWin = new LocatableWindow(this.extendLocatorId("MessageWindow"));
+        final Window dialogWin = new LocatableWindow("MessageCenterDetailsWindow");
         dialogWin.setTitle(MSG.common_title_message());
         dialogWin.setWidth(600);
         dialogWin.setHeight(400);
@@ -360,7 +367,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         });
     }
 
-    private String getSeverityIcon(Message.Severity severity) {
+    private static String getSeverityIcon(Message.Severity severity) {
         if (severity == null) {
             severity = Severity.Blank;
         }

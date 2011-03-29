@@ -32,13 +32,15 @@ public class GwtRelativeDurationConverter {
     public static TimeZone tz = null;
 
     public static String format(long eventMillis) {
-        int dayOfYearToday = Integer.parseInt(dayFormatter.format(new Date(System.currentTimeMillis())));
+        long now = System.currentTimeMillis();
+        int dayOfYearToday = Integer.parseInt(dayFormatter.format(new Date(now)));
         int dayOfYearEvent = Integer.parseInt(dayFormatter.format(new Date(eventMillis)));
         String result = null;
-        if (dayOfYearEvent == dayOfYearToday) {
+        //add additional check to fix when dayOfYear and dayOfYearToday is same but month apart.
+        if ((dayOfYearEvent == dayOfYearToday) & ((now - eventMillis) < MILLIS_IN_DAY)) {
             // <time>
             result = formatter.format(new Date(eventMillis));
-        } else if (dayOfYearEvent == dayOfYearToday - 1) {
+        } else if ((dayOfYearEvent == dayOfYearToday - 1) & ((now - eventMillis) < MILLIS_IN_DAY * 28)) {
             // "yesterday" <time>
             result = MSG.common_label_yesterday() + ", " + formatter.format(new Date(eventMillis));
         } else {

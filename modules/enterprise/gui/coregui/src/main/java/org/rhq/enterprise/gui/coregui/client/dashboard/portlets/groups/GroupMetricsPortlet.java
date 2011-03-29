@@ -51,9 +51,9 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -121,6 +121,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     @Override
     protected void onInit() {
         super.onInit();
+        setRefreshing(true);
         initializeUi();
         loadData();
     }
@@ -274,6 +275,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
                         + caught.getMessage());
+                    setRefreshing(false);
                 }
 
                 @Override
@@ -325,6 +327,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                     Log
                                                         .debug("Error retrieving recent metrics charting data for group ["
                                                             + groupId + "]:" + caught.getMessage());
+                                                    setRefreshing(false);
                                                 }
 
                                                 @Override
@@ -433,6 +436,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                 AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                         column.addMember(row);
                                                     }
+                                                    setRefreshing(false);
                                                 }
                                             });
                                     }
@@ -442,6 +446,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentMeasurementsContent
                             .extendLocatorId("None"), AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                         column.addMember(row);
+                        setRefreshing(false);
                     }
                 }
             });
@@ -456,35 +461,22 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
 
     @Override
     public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-
-            refreshTimer = new Timer() {
-                public void run() {
-                    if (!currentlyLoading) {
-                        loadData();
-                        redraw();
-                    }
-                }
-            };
-
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        //call out to 3rd party javascript lib
+        BrowserUtility.graphSparkLines();
+        recentMeasurementsContent.markForRedraw();
     }
 
     @Override
     protected void onDestroy() {
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+
         super.onDestroy();
+    }
+
+    @Override
+    public boolean isRefreshing() {
+        return this.currentlyLoading;
     }
 
     @Override
@@ -503,5 +495,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
 
     public String getBaseViewPath() {
         return baseViewPath;
+    }
+
+    protected void setRefreshing(boolean currentlyRefreshing) {
+        this.currentlyLoading = currentlyRefreshing;
     }
 }

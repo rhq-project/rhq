@@ -67,6 +67,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, null, criteria, title, headerIcons);
     }
 
+    // surpress unchecked warnings because the superclass has different generic types for the datasource
+    @SuppressWarnings("unchecked")
     @Override
     protected RPCDataSource getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
@@ -173,10 +175,4 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
             .valueOf(parentResourceComposite.getResource().getId())), MSG.view_inventory_resources_title_children());
     }
-
-    public static ResourceCompositeSearchView getMembersOf(String locatorId, int groupId) {
-        return new ResourceCompositeSearchView(locatorId, (ResourceComposite) null, new Criteria("groupId", String
-            .valueOf(groupId)), MSG.view_inventory_resources_title_members());
-    }
-
 }

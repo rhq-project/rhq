@@ -43,8 +43,8 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -54,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -214,6 +213,7 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
             public void onFailure(Throwable caught) {
                 Log.debug("Error retrieving installed package history for group [" + groupId + "]:"
                     + caught.getMessage());
+                currentlyLoading = false;
             }
 
             @Override
@@ -256,42 +256,24 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
                 recentPkgHistoryContent.addChild(column);
                 recentPkgHistoryContent.markForRedraw();
                 markForRedraw();
+                currentlyLoading = false;
             }
         });
     }
 
-    @Override
     public void startRefreshCycle() {
-        //current setting
-        final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-
-        //cancel any existing timer
-        if (refreshTimer != null) {
-            refreshTimer.cancel();
-        }
-
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
-
-            refreshTimer = new Timer() {
-                public void run() {
-                    if (!currentlyLoading) {
-                        loadData();
-                        redraw();
-                    }
-                }
-            };
-
-            refreshTimer.scheduleRepeating(refreshInterval);
-        }
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        if (refreshTimer != null) {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
 
-            refreshTimer.cancel();
-        }
         super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return this.currentlyLoading;
     }
 
     @Override

@@ -144,7 +144,8 @@ public class ConditionsEditor extends LocatableVLayout {
             });
 
             table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
-                .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+                .view_alert_definition_condition_editor_delete_confirm(), new AbstractTableAction(
+                TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     for (ListGridRecord record : selection) {
                         AlertCondition cond = getDataSource().copyValues(record);

@@ -39,7 +39,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -69,6 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -78,8 +78,8 @@ public class LoginView extends LocatableCanvas {
 
     private static boolean loginShowing = false;
 
-    private Window window;
-    private DynamicForm form;
+    private LocatableWindow window;
+    private LocatableDynamicForm form;
     private LocatableDynamicForm inputForm;
 
     private SubmitItem loginButton;
@@ -157,7 +157,7 @@ public class LoginView extends LocatableCanvas {
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
-            window = new Window();
+            window = new LocatableWindow(extendLocatorId("LoginWindow"));
             window.setWidth(400);
             window.setHeight(275);
             window.setTitle(MSG.common_title_welcome());
@@ -367,7 +367,7 @@ public class LoginView extends LocatableCanvas {
             row.addMember(logoutLabel);
             column.addMember(row);
 
-            window = new Window();
+            window = new LocatableWindow(extendLocatorId("RegistrationWindow"));
             window.setWidth(670);
             window.setHeight(330);
             window.setTitle(MSG.view_login_registerUser());

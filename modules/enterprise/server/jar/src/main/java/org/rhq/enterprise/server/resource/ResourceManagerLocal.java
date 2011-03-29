@@ -32,6 +32,7 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
@@ -506,4 +507,7 @@ public interface ResourceManagerLocal {
     List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds);
 
     Integer getResourceCount(List<Integer> resourceTypeIds);
+
+    Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds, ResourceAncestryFormat format);
+
 }

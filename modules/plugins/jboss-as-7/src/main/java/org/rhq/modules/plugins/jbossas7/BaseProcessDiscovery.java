@@ -23,7 +23,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 /**
  * Discovery class
  */
-public class BaseDiscovery implements ResourceDiscoveryComponent
+public class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
 {
 

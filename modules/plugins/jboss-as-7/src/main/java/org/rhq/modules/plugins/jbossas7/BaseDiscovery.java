@@ -55,10 +55,21 @@ public class BaseDiscovery implements ResourceDiscoveryComponent
             } else if (psName.equals("ASManager")) {
                 serverName = "ASManager";
                 serverNameFull = "ASManager";
+            } else if (psName.equals("HostController")) {
+                serverName = "HostController";
+                serverNameFull = "HostController";
             } else {
                 serverNameFull = getBaseDirFromCommandLine(commandLine);
-                if (serverNameFull==null || serverNameFull.isEmpty())
-                    serverNameFull="JBossAS7";
+                if (serverNameFull==null || serverNameFull.isEmpty()) {
+                    // Try to obtain the server name
+                    //  -Dorg.jboss.boot.log.file=domain/servers/server-one/log/boot.log
+                    // This is a hack until I know a better way to do so.
+                    String tmp = getLogFileFromCommandLine(commandLine);
+                    int i = tmp.indexOf("servers/");
+                    tmp = tmp.substring( i + 8);
+                    tmp = tmp.substring(0,tmp.indexOf("/"));
+                    serverNameFull = tmp;
+                }
                 serverName = serverNameFull.substring(serverNameFull.lastIndexOf("/")+1);
                 if (serverName.isEmpty())
                     serverName = serverNameFull;

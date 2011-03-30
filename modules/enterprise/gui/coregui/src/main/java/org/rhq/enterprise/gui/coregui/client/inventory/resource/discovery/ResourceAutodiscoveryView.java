@@ -50,6 +50,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
@@ -130,6 +131,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         description = new TreeGridField("description");
         status = new TreeGridField("statusLabel");
         ctime = new TreeGridField("ctime");
+        TimestampCellFormatter.prepareDateField(ctime, "ctime");
 
         if (!simple) {
             treeGrid.setFields(name, key, type, description, status, ctime);

@@ -22,7 +22,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AutoFitWidthApproach;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsDataSource.Field;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -75,9 +75,11 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         ListGridField timeField = new ListGridField(Field.TIME_OCCURED, MSG
             .dataSource_resourceErrors_field_timeOccured());
         timeField.setType(ListGridFieldType.DATE);
-        timeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        timeField.setCellFormatter(new TimestampCellFormatter());
         timeField.setAlign(Alignment.CENTER);
         timeField.setWidth("20%");
+        timeField.setShowHover(true);
+        timeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(Field.TIME_OCCURED));
 
         ListGridField summaryField = new ListGridField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary());
         summaryField.setAlign(Alignment.CENTER);

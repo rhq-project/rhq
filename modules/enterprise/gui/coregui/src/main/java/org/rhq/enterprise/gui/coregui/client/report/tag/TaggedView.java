@@ -113,14 +113,15 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
             Tab tab;
 
-            BundlesListView bundlesView = new BundlesListView(getLocatorId(), criteria, null);
+            BundlesListView bundlesView = new BundlesListView(extendLocatorId("bundleListView"), criteria, null);
             viewsWithTags.add(bundlesView);
             tab = new LocatableTab(extendLocatorId("bundleList"), MSG.view_bundle_bundles());
             tab.setIcon(ImageManager.getBundleIcon());
             tab.setPane(bundlesView);
             container.addTab(tab);
 
-            BundleVersionListView bundleVersionListView = new BundleVersionListView(getLocatorId(), criteria);
+            BundleVersionListView bundleVersionListView = new BundleVersionListView(
+                extendLocatorId("bundleVersionListView"), criteria);
             viewsWithTags.add(bundleVersionListView);
             tab = new LocatableTab(extendLocatorId("bundleVersionList"), MSG.view_bundle_bundleVersions());
             tab.setIcon("subsystems/bundle/BundleVersion_16.png");
@@ -128,23 +129,23 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             container.addTab(tab);
 
             // TODO: get manage_bundle perm, if user has it pass true
-            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(getLocatorId(), criteria,
-                false);
+            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(
+                extendLocatorId("bundleDeploymentListView"), criteria, false);
             viewsWithTags.add(bundleDeploymentListView);
             tab = new LocatableTab(extendLocatorId("bundleDeploymentsList"), MSG.view_bundle_bundleDeployments());
             tab.setIcon("subsystems/bundle/BundleDeployment_16.png");
             tab.setPane(bundleDeploymentListView);
             container.addTab(tab);
 
-            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(getLocatorId(),
-                criteria);
+            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(
+                extendLocatorId("bundleDestinationListView"), criteria);
             viewsWithTags.add(bundleDestinationListView);
             tab = new LocatableTab(extendLocatorId("bundleDestinationsList"), MSG.view_bundle_bundleDestinations());
             tab.setIcon("subsystems/bundle/BundleDestination_16.png");
             tab.setPane(bundleDestinationListView);
             container.addTab(tab);
 
-            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, MSG
+            ResourceSearchView resourceView = new ResourceSearchView(extendLocatorId("resourceView"), criteria, MSG
                 .view_taggedResources_title());
             viewsWithTags.add(resourceView);
             tab = new LocatableTab(extendLocatorId("resourceList"), MSG.view_taggedResources_title());

@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -182,6 +183,8 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         timeField.setType(ListGridFieldType.TIME);
         timeField.setAttribute("displayFormat", TimeFormatter.TOPADDEDTIME);
         timeField.setAlign(Alignment.LEFT);
+        timeField.setShowHover(true);
+        timeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(FIELD_TIME));
 
         ListGridField messageField = new ListGridField(FIELD_CONCISEMESSAGE, MSG.common_title_message());
 
@@ -339,7 +342,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         severity.setValue(message.severity.name());
 
         StaticTextItem date = new StaticTextItem("time", MSG.view_messageCenter_messageTime());
-        date.setValue(message.fired);
+        date.setValue(TimestampCellFormatter.format(message.fired, TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
 
         StaticTextItem detail = new StaticTextItem("detail", MSG.view_messageCenter_messageDetail());
         detail.setTitleVAlign(VerticalAlignment.TOP);

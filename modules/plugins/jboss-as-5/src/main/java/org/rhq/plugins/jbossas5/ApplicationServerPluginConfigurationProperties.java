@@ -35,6 +35,8 @@ public class ApplicationServerPluginConfigurationProperties {
     public static final String JAVA_HOME = "javaHome";
     public static final String BIND_ADDRESS = "bindAddress";
     public static final String START_SCRIPT_CONFIG_PROP = "startScript";
+    public static final String START_WAIT_MAX_PROP = "startWaitMax";
+    public static final String STOP_WAIT_MAX_PROP = "stopWaitMax";
     public static final String SHUTDOWN_SCRIPT_CONFIG_PROP = "shutdownScript";
     public static final String SHUTDOWN_MBEAN_CONFIG_PROP = "shutdownMBeanName";
     public static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMBeanOperation";

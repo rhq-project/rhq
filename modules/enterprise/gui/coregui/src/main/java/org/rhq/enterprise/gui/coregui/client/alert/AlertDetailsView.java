@@ -29,6 +29,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -209,6 +210,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
             ListGridField status = new ListGridField("status", MSG.view_alert_common_tab_notifications_status());
             status.setWidth("50");
             status.setAlign(Alignment.CENTER);
+            status.setType(ListGridFieldType.IMAGE);
             status.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                     String statusStr = record.getAttribute("status");

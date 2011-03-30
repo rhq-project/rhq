@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
@@ -169,7 +170,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
-                    return (hasWriteAccess && grid != null && !grid.getResultSet().isEmpty());
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
                 }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -180,7 +182,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
-                    return (hasWriteAccess && grid != null && !grid.getResultSet().isEmpty());
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
                 }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {

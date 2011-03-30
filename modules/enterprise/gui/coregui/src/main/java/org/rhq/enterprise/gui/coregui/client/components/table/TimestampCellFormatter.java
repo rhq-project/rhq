@@ -92,12 +92,16 @@ public class TimestampCellFormatter implements CellFormatter {
 
     public static HoverCustomizer getHoverCustomizer(final String dateTimeAttributeName) {
         return new HoverCustomizer() {
-
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                StringBuilder sb = new StringBuilder("<p style='width:300px'>");
-                sb.append(format(record.getAttributeAsDate(dateTimeAttributeName), DATE_TIME_FORMAT_FULL));
-                sb.append("</p>");
-                return sb.toString();
+                Date attribValue = record.getAttributeAsDate(dateTimeAttributeName);
+                if (attribValue != null) {
+                    StringBuilder sb = new StringBuilder("<p style='width:300px'>");
+                    sb.append(format(attribValue, DATE_TIME_FORMAT_FULL));
+                    sb.append("</p>");
+                    return sb.toString();
+                } else {
+                    return null;
+                }
             }
         };
     }

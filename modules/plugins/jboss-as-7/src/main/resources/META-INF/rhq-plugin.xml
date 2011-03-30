@@ -199,7 +199,7 @@
 
     <server name="JBossAS-Managed"
             discovery="BaseProcessDiscovery"
-            class="BaseComponent"
+            class="DomainComponent"
             >
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" required="true"/>
@@ -209,6 +209,11 @@
         </plugin-configuration>
 
         <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
+
+        <operation name="server:start" description="Start this server instance."/>
+        <operation name="server:stop" description="Stop this server instance."/>
+        <operation name="server:restart" description="Restart this server instance."/>
+
 
     </server>
 

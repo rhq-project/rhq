@@ -291,7 +291,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         return ret;
     }
 
-    private String getResultingPath() {
+    protected String getResultingPath() {
         ResourceComponent parentResourceComponent = context.getParentResourceComponent();
         String parentPath =null;
         String myPath;
@@ -328,7 +328,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     }
 
-    private List<PROPERTY_VALUE> pathToAddress(String path) {
+    protected List<PROPERTY_VALUE> pathToAddress(String path) {
         if (path.endsWith("/"))
             path = path.substring(0,path.length()-1);
 

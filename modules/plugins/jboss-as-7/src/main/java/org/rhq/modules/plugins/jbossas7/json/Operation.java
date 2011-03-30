@@ -64,6 +64,13 @@ public class Operation {
 
     }
 
+    public Operation(String operation, List<PROPERTY_VALUE> address) {
+        this.operation = operation;
+        this.address = address;
+        additionalProperties = Collections.emptyMap();
+
+    }
+
     public Operation() {
         // needed for Jackson
     }

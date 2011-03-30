@@ -199,7 +199,6 @@ public class ASConnection {
                 in.close();
             }
             else {
-                System.out.println(conn.getResponseCode());
                 InputStream errorStream = conn.getErrorStream();
                 if (errorStream!=null) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(errorStream));
@@ -254,6 +253,12 @@ public class ASConnection {
         if (node==null)
             node = jsonNode.findValue("domain-failure-description"); // TODO JBAS-9182
         return node.getValueAsText();
+    }
 
+    public String getSuccessDescription(JsonNode jsonNode) {
+        if (jsonNode==null)
+            return "No message found";
+        JsonNode node = jsonNode.findValue("result");
+        return node.getValueAsText();
     }
 }

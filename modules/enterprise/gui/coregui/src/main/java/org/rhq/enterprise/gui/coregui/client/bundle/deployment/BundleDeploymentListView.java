@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
  * @author Greg Hinkle
@@ -70,9 +70,8 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
             .common_title_status());
         ListGridField deployTimeField = new ListGridField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME, MSG
             .view_bundle_deploy_time());
-
+        TimestampCellFormatter.prepareDateField(deployTimeField);
         deployTimeField.setType(ListGridFieldType.DATE);
-        deployTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
 
         // only users that are authorized can see deployments
         if (canManageBundles) {

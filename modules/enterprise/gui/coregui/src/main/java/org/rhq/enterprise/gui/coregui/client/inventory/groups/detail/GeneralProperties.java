@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -40,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -199,11 +199,11 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(recursiveItem);
 
         StaticTextItem createdItem = new StaticTextItem("created", MSG.common_title_dateCreated());
-        createdItem.setValue(new Date(group.getCtime()));
+        createdItem.setValue(TimestampCellFormatter.format(group.getCtime()));
         formItems.add(createdItem);
 
         StaticTextItem lastModifiedItem = new StaticTextItem("lastModified", MSG.common_title_lastUpdated());
-        lastModifiedItem.setValue(new Date(group.getMtime()));
+        lastModifiedItem.setValue(TimestampCellFormatter.format(group.getMtime()));
         formItems.add(lastModifiedItem);
 
         StaticTextItem lastModifiedByItem = new StaticTextItem("lastModifiedBy", MSG.common_title_lastUpdatedBy());

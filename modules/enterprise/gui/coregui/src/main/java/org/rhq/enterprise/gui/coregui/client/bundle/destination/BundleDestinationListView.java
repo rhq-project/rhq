@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.destination;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
@@ -38,6 +37,7 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
  * @author Greg Hinkle
@@ -74,7 +74,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
             BundleDestinationDataSource.FIELD_LATEST_DEPLOY_STATUS, MSG.view_bundle_dest_lastDeploymentStatus());
 
         latestDeploymentDateField.setType(ListGridFieldType.DATE);
-        latestDeploymentDateField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(latestDeploymentDateField);
 
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -107,6 +107,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         latestDeploymentStatusField.setValueIcons(statusIcons);
         latestDeploymentStatusField.setValueIconHeight(11);
         latestDeploymentStatusField.setValueIconWidth(11);
+        latestDeploymentStatusField.setShowValueIconOnly(true);
 
         idField.setWidth(50);
         nameField.setWidth("20%");

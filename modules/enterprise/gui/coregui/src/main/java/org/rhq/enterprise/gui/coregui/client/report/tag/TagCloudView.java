@@ -24,26 +24,42 @@ package org.rhq.enterprise.gui.coregui.client.report.tag;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.criteria.TagCriteria;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.tagging.compsite.TagReportComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * Shows the tags in a large HTML block, where the most used tags are shown in bigger fonts.
+ * 
  * @author Greg Hinkle
+ * @author John  Mazzitelli
  */
 public class TagCloudView extends LocatableVLayout {
 
-    private PageList<TagReportComposite> tags;
+    private static final String REMOVE_ICON = "[skin]/images/actions/remove.png";
+    private static final int MIN_FONTSIZE = 8;
+    private static final int MAX_FONTSIZE = 22;
 
+    private PageList<TagReportComposite> tags;
     private String selectedTag;
+    private IButton deleteButton;
 
     public TagCloudView(String locatorId) {
         super(locatorId);
@@ -52,10 +68,16 @@ public class TagCloudView extends LocatableVLayout {
     @Override
     protected void onDraw() {
         super.onDraw();
+        refresh();
+    }
 
+    private void refresh() {
         removeMembers(getMembers());
 
-        GWTServiceLookup.getTagService().findTagReportCompositesByCriteria(new TagCriteria(),
+        TagCriteria tagCriteria = new TagCriteria();
+        tagCriteria.setPageControl(PageControl.getUnlimitedInstance());
+
+        GWTServiceLookup.getTagService().findTagReportCompositesByCriteria(tagCriteria,
             new AsyncCallback<PageList<TagReportComposite>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tagCloud_error_fetchFailure(), caught);
@@ -68,36 +90,34 @@ public class TagCloudView extends LocatableVLayout {
     }
 
     private void drawTags(PageList<TagReportComposite> tags) {
-
         if (tags == null) {
-            return; // Tags still loading
+            return; // tags are still loading
         }
 
         this.tags = tags;
 
+        // determine the maximum number of times any single tag is used
         long max = 0;
-        long total = 0;
         for (TagReportComposite tag : tags) {
             if (tag.getTotal() > max) {
                 max = tag.getTotal();
             }
-            total += tag.getTotal();
         }
 
+        // sort the tags so they appear alphabetically
         Collections.sort(tags, new Comparator<TagReportComposite>() {
             public int compare(TagReportComposite o1, TagReportComposite o2) {
                 return o1.getTag().toString().compareTo(o2.getTag().toString());
             }
         });
 
+        // build the HTML block that contains all the tags with variable font sizes
+        // where the font size represents the relative number of times the tag is used
         StringBuilder buf = new StringBuilder();
-
-        int minFont = 8;
-        int maxFont = 22;
-
         for (TagReportComposite tag : tags) {
 
-            int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
+            int font = (int) ((((double) tag.getTotal()) / (double) max) * (MAX_FONTSIZE - MIN_FONTSIZE))
+                + MIN_FONTSIZE;
 
             buf.append("<a href=\"").append(LinkManager.getTagLink(tag.getTag().toString())).append(
                 "\" style=\"font-size: ").append(font).append("pt; margin: 8px;\"");
@@ -111,16 +131,93 @@ public class TagCloudView extends LocatableVLayout {
 
             buf.append(">").append(tag.getTag()).append("</a> ");
         }
-
         HTMLFlow flow = new HTMLFlow(buf.toString());
-
         addMember(flow);
     }
 
-    public void setSelectedTag(String selectedTag) {
-        this.selectedTag = selectedTag;
-        removeMembers(getMembers());
-        drawTags(tags);
+    public String getSelectedTag() {
+        return this.selectedTag;
     }
 
+    /**
+     * Determines which, if any, tag is currently selected.
+     * 
+     * @param selectedTag the full tag name, or <code>null</code> if nothing is selected
+     */
+    public void setSelectedTag(String selectedTag) {
+        this.selectedTag = selectedTag;
+        TagReportComposite selected = getSelectedTagReportComposite();
+        getDeleteButton().setDisabled(selected == null || selected.getTotal() > 0); // don't be able to delete non-existent tag or tag that is used
+        removeMembers(getMembers());
+        drawTags(this.tags);
+    }
+
+    /**
+     * This view can provide a delete button that, when clicked, will delete the currently
+     * selected tag. This view doesn't put this delete button anywhere, the caller can place
+     * this button where ever it deems appropriate.
+     * 
+     * @return a delete button component that can be placed as a member of a canvas
+     */
+    public IButton getDeleteButton() {
+        if (this.deleteButton == null) {
+            final IButton button = new DeleteButton(extendLocatorId("deleteButton"));
+            button.setIcon(REMOVE_ICON);
+            button.setIconWidth(16);
+            button.setIconHeight(16);
+            button.setTitle(MSG.view_tagCloud_deleteTag());
+            button.setAutoFit(true);
+            button.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    final TagReportComposite selected = getSelectedTagReportComposite();
+                    if (selected != null) {
+                        HashSet<Tag> doomedTag = new HashSet<Tag>(1);
+                        doomedTag.add(selected.getTag());
+                        GWTServiceLookup.getTagService().removeTags(doomedTag, new AsyncCallback<Void>() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                tags.remove(selected);
+                                CoreGUI.goToView(LinkManager.getTagLink(null));
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_tagCloud_deleteTagSuccess(selected.getTag().toString()),
+                                        Severity.Info));
+                            }
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_tagCloud_deleteTagFailure(selected.getTag().toString()), caught);
+                            }
+                        });
+                    }
+                }
+            });
+            this.deleteButton = button;
+        }
+        return this.deleteButton;
+    }
+
+    private TagReportComposite getSelectedTagReportComposite() {
+        if (selectedTag != null && tags != null) {
+            for (TagReportComposite tag : tags) {
+                if (tag.getTag().toString().equals(selectedTag)) {
+                    return tag;
+                }
+            }
+        }
+        return null;
+    }
+
+    class DeleteButton extends LocatableIButton {
+        public DeleteButton(String locatorId) {
+            super(locatorId);
+        }
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            deleteButton = null;
+        }
+    }
 }

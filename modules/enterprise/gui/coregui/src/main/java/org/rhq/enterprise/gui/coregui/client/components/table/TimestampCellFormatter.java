@@ -23,7 +23,7 @@ public class TimestampCellFormatter implements CellFormatter {
     private DateTimeFormat dateTimeFormat;
 
     /**
-     * Uses SHORT format.
+     * Uses MEDIUM format.
      */
     public TimestampCellFormatter() {
         this(DATE_TIME_FORMAT_MEDIUM);
@@ -40,7 +40,7 @@ public class TimestampCellFormatter implements CellFormatter {
 
     /**
      * @param value
-     * @return SHORT format for value
+     * @return MEDIUM format for value
      */
     public static String format(Object value) {
         return format(value, DATE_TIME_FORMAT_MEDIUM);
@@ -94,15 +94,27 @@ public class TimestampCellFormatter implements CellFormatter {
         return new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                 Date attribValue = record.getAttributeAsDate(dateTimeAttributeName);
-                if (attribValue != null) {
-                    StringBuilder sb = new StringBuilder("<p style='width:300px'>");
-                    sb.append(format(attribValue, DATE_TIME_FORMAT_FULL));
-                    sb.append("</p>");
-                    return sb.toString();
-                } else {
-                    return null;
-                }
+                return getHoverDateString(attribValue);
             }
         };
+    }
+
+    /**
+     * Returns an HTML string that can be used in as hover for a date field.
+     * It formats the date in the FULL format.
+     * 
+     * @param date
+     * @return HTML string that shows the date in FULL format,
+     *         or <code>null</code> if <code>date</code> is <code>null</code>
+     */
+    public static String getHoverDateString(Date date) {
+        if (date != null) {
+            StringBuilder sb = new StringBuilder("<p style='width:300px'>");
+            sb.append(format(date, DATE_TIME_FORMAT_FULL));
+            sb.append("</p>");
+            return sb.toString();
+        } else {
+            return null;
+        }
     }
 }

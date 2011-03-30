@@ -86,7 +86,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
 
         // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field
         DataSourceTextField lastCalculationTimeIntervalField = new DataSourceTextField("lastCalculationTime", MSG
-            .view_dynagroup_recalculationInterval());
+            .view_dynagroup_lastCalculationTime());
         fields.add(lastCalculationTimeIntervalField);
 
         // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field

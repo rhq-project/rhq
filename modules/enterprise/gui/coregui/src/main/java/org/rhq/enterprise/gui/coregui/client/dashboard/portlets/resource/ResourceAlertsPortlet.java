@@ -19,26 +19,17 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.google.gwt.user.client.History;
-import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletConfigurationDataSource;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.PortletAlertSelector;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.AbstractRecentAlertsPortlet;
 
 /**
+ * @author Jay Shaughnessy
  * @author Simeon Pinder
  */
-public class ResourceAlertsPortlet extends GroupAlertsPortlet {
+public class ResourceAlertsPortlet extends AbstractRecentAlertsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceAlerts";
@@ -47,138 +38,34 @@ public class ResourceAlertsPortlet extends GroupAlertsPortlet {
 
     private int resourceId;
 
-    public ResourceAlertsPortlet(String locatorId) {
-        super(locatorId);
+    public ResourceAlertsPortlet(String locatorId, int resourceId) {
 
-        //override the shared datasource
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        this.resourceId = Integer.valueOf(elements[1]);
+        super(locatorId, EntityContext.forResource(resourceId));
+
+        this.resourceId = resourceId;
     }
 
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        //initalize the datasource
-        Integer[] resourceIds = new Integer[1];
-        resourceIds[0] = this.resourceId;
-        this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, null, resourceIds);
-        setDataSource(this.dataSource);
-
-        setShowHeader(false);
-        setShowFooter(true);
-        setShowFooterRefresh(false); //disable footer refresh
-        setShowFilterForm(false); //disable filter form for portlet
-
-        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-    }
-
-    /** Responsible for initialization and lazy configuration of the portlet values
-     */
-    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        //populate portlet configuration details
-        if (null == this.portletWindow && null != portletWindow) {
-            this.portletWindow = portletWindow;
-        }
-
-        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
-            return;
-        }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
-
-        if (!portletConfigInitialized) {
-            Integer[] resourceIds = new Integer[1];
-            resourceIds[0] = this.resourceId;
-            this.dataSource = new AlertPortletConfigurationDataSource(storedPortlet, portletConfig, null, resourceIds);
-            setDataSource(this.dataSource);
-            portletConfigInitialized = true;
-        }
-
-        //lazy init any elements not yet configured.
-        for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
-            if (portletConfig.getSimple(key) == null) {
-                portletConfig.put(new PropertySimple(key,
-                    PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.get(key)));
-            }
-        }
-
-        //resource ids to be conditionally included in the query
-        Integer[] filterResourceIds = null;
-        filterResourceIds = getDataSource().extractFilterResourceIds(storedPortlet, filterResourceIds);
-        //no defaults
-
-        if (filterResourceIds != null) {
-            getDataSource().setAlertFilterResourceId(filterResourceIds);
-        }
-
-        //        //conditionally display the selected resources ui
-        //        if (containerCanvas != null) {
-        //            //empty out earlier canvas
-        //            for (Canvas c : containerCanvas.getChildren()) {
-        //                c.destroy();
-        //            }
-        //            if ((resourceSelector != null) && getDataSource().getAlertResourcesToUse().equals(RESOURCES_SELECTED)) {
-        //                containerCanvas.addChild(resourceSelector.getCanvas());
-        //            } else {
-        //                containerCanvas.addChild(new Canvas());
-        //            }
-        //        }
-
+    public int getResourceId() {
+        return resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
+        /* (non-Javadoc)
+         * TODO:  This factory ASSUMES the user is currently navigated to a resource detail view, and generates a portlet
+         *        for that resource.  It will fail in other scenarios.  This mechanism should be improved such that the
+         *        factory method can take an EntityContext explicitly indicating, in this case, the resource. 
+         * @see org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory#getInstance(java.lang.String)
+         */
         public final Portlet getInstance(String locatorId) {
 
-            return new ResourceAlertsPortlet(locatorId);
+            String currentPage = History.getToken();
+            String[] elements = currentPage.split("/");
+            int resourceId = Integer.valueOf(elements[1]);
+
+            return new ResourceAlertsPortlet(locatorId, resourceId);
         }
     }
-}
 
-/** Bundles a ResourceSelector instance with labeling in Canvas for display.
- *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
- */
-class AlertResourceSelectorRegion extends LocatableVLayout {
-    public AlertResourceSelectorRegion(String locatorId, Integer[] assigned) {
-        super(locatorId);
-        this.currentlyAssignedIds = assigned;
-    }
-
-    private static final Messages MSG = CoreGUI.getMessages();
-    private PortletAlertSelector selector = null;
-
-    private Integer[] currentlyAssignedIds;
-
-    public Integer[] getCurrentlyAssignedIds() {
-        return currentlyAssignedIds;
-    }
-
-    public Integer[] getListGridValues() {
-        Integer[] listGridValues = new Integer[0];
-        if (null != selector) {
-            listGridValues = selector.getAssignedListGridValues();
-        }
-        return listGridValues;
-    }
-
-    public Canvas getCanvas() {
-        if (selector == null) {
-            selector = new PortletAlertSelector(extendLocatorId("AlertSelector"), this.currentlyAssignedIds,
-                ResourceType.ANY_PLATFORM_TYPE, false);
-        }
-        return selector;
-    }
-
-    public void setCurrentlyAssignedIds(Integer[] currentlyAssignedIds) {
-        this.currentlyAssignedIds = currentlyAssignedIds;
-    }
 }

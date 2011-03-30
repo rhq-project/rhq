@@ -165,11 +165,17 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         statusField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String ackSubject = record.getAttribute("acknowledgingSubject");
-                Date ackTime = record.getAttributeAsDate("acknowledgeTime");
-                String ackTimeString = TimestampCellFormatter.format(ackTime,
-                    TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
-                StringBuilder sb = new StringBuilder("<p style='width:500px'>");
-                sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackTimeString));
+                StringBuilder sb = new StringBuilder("<p");
+                if (ackSubject == null) {
+                    sb.append(" style='width:150px'>");
+                    sb.append(MSG.view_alerts_field_ack_status_noAckHover());
+                } else {
+                    sb.append(" style='width:500px'>");
+                    Date ackTime = record.getAttributeAsDate("acknowledgeTime");
+                    String ackTimeString = TimestampCellFormatter.format(ackTime,
+                        TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
+                    sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackTimeString));
+                }
                 sb.append("</p>");
                 return sb.toString();
             }

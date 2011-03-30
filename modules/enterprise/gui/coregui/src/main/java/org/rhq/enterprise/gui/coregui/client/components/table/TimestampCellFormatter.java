@@ -5,6 +5,7 @@ import java.util.Date;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 /**
@@ -77,6 +78,12 @@ public class TimestampCellFormatter implements CellFormatter {
         }
 
         return (null == dateTimeFormat) ? DATE_TIME_FORMAT_MEDIUM.format(date) : dateTimeFormat.format(date);
+    }
+
+    public static void prepareDateField(final ListGridField field, final String dateTimeAttributeName) {
+        field.setCellFormatter(new TimestampCellFormatter());
+        field.setShowHover(true);
+        field.setHoverCustomizer(getHoverCustomizer(dateTimeAttributeName));
     }
 
     public static HoverCustomizer getHoverCustomizer(final String dateTimeAttributeName) {

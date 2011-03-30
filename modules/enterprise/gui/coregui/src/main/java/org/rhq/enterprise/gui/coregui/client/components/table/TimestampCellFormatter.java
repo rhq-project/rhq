@@ -80,6 +80,10 @@ public class TimestampCellFormatter implements CellFormatter {
         return (null == dateTimeFormat) ? DATE_TIME_FORMAT_MEDIUM.format(date) : dateTimeFormat.format(date);
     }
 
+    public static void prepareDateField(final ListGridField field) {
+        prepareDateField(field, field.getName());
+    }
+
     public static void prepareDateField(final ListGridField field, final String dateTimeAttributeName) {
         field.setCellFormatter(new TimestampCellFormatter());
         field.setShowHover(true);

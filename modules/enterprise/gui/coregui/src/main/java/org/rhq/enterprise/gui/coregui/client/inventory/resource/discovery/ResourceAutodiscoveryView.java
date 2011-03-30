@@ -131,7 +131,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         description = new TreeGridField("description");
         status = new TreeGridField("statusLabel");
         ctime = new TreeGridField("ctime");
-        TimestampCellFormatter.prepareDateField(ctime, "ctime");
+        TimestampCellFormatter.prepareDateField(ctime);
 
         if (!simple) {
             treeGrid.setFields(name, key, type, description, status, ctime);

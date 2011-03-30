@@ -75,11 +75,9 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         ListGridField timeField = new ListGridField(Field.TIME_OCCURED, MSG
             .dataSource_resourceErrors_field_timeOccured());
         timeField.setType(ListGridFieldType.DATE);
-        timeField.setCellFormatter(new TimestampCellFormatter());
         timeField.setAlign(Alignment.CENTER);
         timeField.setWidth("20%");
-        timeField.setShowHover(true);
-        timeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(Field.TIME_OCCURED));
+        TimestampCellFormatter.prepareDateField(timeField);
 
         ListGridField summaryField = new ListGridField(Field.SUMMARY, MSG.dataSource_resourceErrors_field_summary());
         summaryField.setAlign(Alignment.CENTER);

@@ -29,6 +29,7 @@ import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -38,13 +39,17 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
@@ -129,6 +134,19 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     @Override
     protected String getDetailsLinkColumnName() {
         return AlertCriteria.SORT_FIELD_CTIME;
+    }
+
+    @Override
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                Integer alertHistoryId = getId(record);
+                String url = LinkManager.getSubsystemAlertHistoryLink(resourceId, alertHistoryId);
+                String formattedValue = TimestampCellFormatter.format(value);
+                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+            }
+        };
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {

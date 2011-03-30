@@ -161,7 +161,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         if (record.getAttribute("acknowledgingSubject") != null) {
             ackByItem.setValue(record.getAttribute("acknowledgingSubject"));
         } else {
-            ackByItem.setValue(MSG.view_alerts_field_ack_status_empty());
+            ackByItem.setValue(MSG.view_alerts_field_ack_status_noAck());
         }
         items.add(ackByItem);
 
@@ -170,7 +170,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         if (ack_time != null) {
             ackTimeItem.setValue(TimestampCellFormatter.format(ack_time));
         } else {
-            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_empty());
+            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_noAck());
         }
         items.add(ackTimeItem);
 

@@ -111,6 +111,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
             .view_alerts_field_created_time());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
+        ctimeField.setShowHover(true);
+        ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
 
         ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
@@ -153,12 +155,23 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
                 if (ackSubject == null) {
-                    return MSG.view_alerts_field_ack_status_empty();
+                    return MSG.view_alerts_field_ack_status_noAck();
                 } else {
-                    Date ackTime = listGridRecord.getAttributeAsDate("acknowledgeTime");
-                    String formattedTime = TimestampCellFormatter.format(ackTime);
-                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
+                    return MSG.view_alerts_field_ack_status_ack(ackSubject);
                 }
+            }
+        });
+        statusField.setShowHover(true);
+        statusField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String ackSubject = record.getAttribute("acknowledgingSubject");
+                Date ackTime = record.getAttributeAsDate("acknowledgeTime");
+                String ackTimeString = TimestampCellFormatter.format(ackTime,
+                    TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
+                StringBuilder sb = new StringBuilder("<p style='width:500px'>");
+                sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackTimeString));
+                sb.append("</p>");
+                return sb.toString();
             }
         });
         fields.add(statusField);
@@ -184,17 +197,17 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
-            ctimeField.setWidth(125);
-            nameField.setWidth("20%");
-            conditionField.setWidth("30%");
+            ctimeField.setWidth(100);
+            nameField.setWidth("15%");
+            conditionField.setWidth("35%");
             priorityField.setWidth(50);
-            statusField.setWidth("80");
+            statusField.setWidth(100);
             resourceNameField.setWidth("25%");
             ancestryField.setWidth("25%");
         } else {
-            ctimeField.setWidth(125);
-            nameField.setWidth("35%");
-            conditionField.setWidth("40%");
+            ctimeField.setWidth(200);
+            nameField.setWidth("15%");
+            conditionField.setWidth("60%");
             priorityField.setWidth(50);
             statusField.setWidth("25%");
         }

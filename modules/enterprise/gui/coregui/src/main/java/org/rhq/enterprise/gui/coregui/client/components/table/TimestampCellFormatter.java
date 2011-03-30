@@ -4,6 +4,7 @@ import java.util.Date;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 /**
@@ -12,10 +13,36 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
  * @author Ian Springer
  */
 public class TimestampCellFormatter implements CellFormatter {
-    public static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
+
+    public static final DateTimeFormat DATE_TIME_FORMAT_FULL = DateTimeFormat.getFullDateTimeFormat();
+    public static final DateTimeFormat DATE_TIME_FORMAT_LONG = DateTimeFormat.getLongDateTimeFormat();
+    public static final DateTimeFormat DATE_TIME_FORMAT_MEDIUM = DateTimeFormat.getMediumDateTimeFormat();
+    public static final DateTimeFormat DATE_TIME_FORMAT_SHORT = DateTimeFormat.getShortDateTimeFormat();
+
+    private DateTimeFormat dateTimeFormat;
+
+    /**
+     * Uses SHORT format.
+     */
+    public TimestampCellFormatter() {
+        this(DATE_TIME_FORMAT_MEDIUM);
+    }
+
+    public TimestampCellFormatter(DateTimeFormat dateTimeFormat) {
+        super();
+        this.dateTimeFormat = dateTimeFormat;
+    }
 
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-        return format(value);
+        return format(value, dateTimeFormat);
+    }
+
+    /**
+     * @param value
+     * @return SHORT format for value
+     */
+    public static String format(Object value) {
+        return format(value, DATE_TIME_FORMAT_MEDIUM);
     }
 
     /**
@@ -24,10 +51,11 @@ public class TimestampCellFormatter implements CellFormatter {
      * consistent across the app, whether the data is in a cell or not.
      * 
      * @param value the date to format as a Date, Long, Integer or a String
+     * @param dateTimeFormat the format to use. If null defaults to SHORT format
      *
      * @return the formatted date string
      */
-    public static String format(Object value) {
+    public static String format(Object value, DateTimeFormat dateTimeFormat) {
         if (value == null) {
             return "";
         }
@@ -47,6 +75,19 @@ public class TimestampCellFormatter implements CellFormatter {
             }
             date = new Date(longValue);
         }
-        return DATE_TIME_FORMAT.format(date);
+
+        return (null == dateTimeFormat) ? DATE_TIME_FORMAT_MEDIUM.format(date) : dateTimeFormat.format(date);
+    }
+
+    public static HoverCustomizer getHoverCustomizer(final String dateTimeAttributeName) {
+        return new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                StringBuilder sb = new StringBuilder("<p style='width:300px'>");
+                sb.append(format(record.getAttributeAsDate(dateTimeAttributeName), DATE_TIME_FORMAT_FULL));
+                sb.append("</p>");
+                return sb.toString();
+            }
+        };
     }
 }

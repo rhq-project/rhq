@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -185,7 +184,7 @@ public class RecentlyAddedResourceDS extends DataSource {
             setAttribute("id", id);
             setAttribute("parentId", parentId);
             setAttribute("name", recentlyAdded.getName());
-            setAttribute("timestamp", DateTimeFormat.getMediumDateTimeFormat().format(dateAdded));
+            setAttribute("timestamp", dateAdded);
             setIsFolder(recentlyAdded.getParentId() == 0);
         }
     }

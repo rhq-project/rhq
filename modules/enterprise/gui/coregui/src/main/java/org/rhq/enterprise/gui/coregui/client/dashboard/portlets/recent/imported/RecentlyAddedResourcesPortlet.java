@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -95,7 +96,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         });
 
         ListGridField timestampField = new ListGridField("timestamp", MSG.common_title_timestamp());
-
+        TimestampCellFormatter.prepareDateField(timestampField);
         treeGrid.setFields(resourceNameField, timestampField);
 
         if (!simple) {

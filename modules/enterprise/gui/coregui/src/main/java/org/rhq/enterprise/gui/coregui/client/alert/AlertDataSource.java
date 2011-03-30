@@ -398,7 +398,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         for (AlertNotificationLog log : from.getAlertNotificationLogs()) {
             DataClass dc = new DataClass();
             dc.setAttribute("sender", log.getSender());
-            dc.setAttribute("status", log.getResultState());
+            dc.setAttribute("status", log.getResultState().name());
             dc.setAttribute("message", log.getMessage());
 
             notifications[i++] = dc;

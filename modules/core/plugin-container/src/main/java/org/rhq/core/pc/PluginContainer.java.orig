@@ -82,6 +82,14 @@ public class PluginContainer implements ContainerService {
 
     private final Log log = LogFactory.getLog(PluginContainer.class);
 
+<<<<<<< HEAD
+=======
+    private static final class NullRebootRequestListener implements RebootRequestListener {
+        @Override
+        public void reboot() {
+        }
+    }
+
     /**
      * Invoked by the plugin container immediately after it is initialized
      */
@@ -93,6 +101,7 @@ public class PluginContainer implements ContainerService {
         void initialized();
     }
 
+>>>>>>> a12a99c... [BZ 677349] Adding logic to avoid deadlock during PC initialization
     // our management interface
     private PluginContainerMBeanImpl mbean;
 
@@ -286,6 +295,8 @@ public class PluginContainer implements ContainerService {
             releaseLock(lock);
         }
 
+<<<<<<< HEAD
+=======
         synchronized (initListenersLock) {
             if (started) {
                 for (InitializationListener listener : initListeners) {
@@ -295,6 +306,7 @@ public class PluginContainer implements ContainerService {
             initListeners.clear();
         }
 
+>>>>>>> a12a99c... [BZ 677349] Adding logic to avoid deadlock during PC initialization
         return;
     }
 
@@ -607,6 +619,16 @@ public class PluginContainer implements ContainerService {
     public boolean isInsideAgent() {
         return (this.configuration != null && this.configuration.isInsideAgent());
     }
+<<<<<<< HEAD
+=======
+
+    public void setRebootRequestListener(RebootRequestListener listener) {
+        rebootListener = listener;
+    }
+
+    public void notifyRebootRequestListener() {
+        rebootListener.reboot();
+    }
 
     /**
      * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
@@ -623,4 +645,5 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+>>>>>>> a12a99c... [BZ 677349] Adding logic to avoid deadlock during PC initialization
 }

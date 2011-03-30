@@ -20,10 +20,14 @@ package org.rhq.modules.plugins.jbossas7.json;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonAnyGetter;
+import org.codehaus.jackson.annotate.JsonAnySetter;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonValue;
 
 /**
  * Operation to run on the server
@@ -31,23 +35,71 @@ import org.codehaus.jackson.annotate.JsonValue;
  */
 public class Operation {
 
+    private String operation;
+    @JsonProperty
+    private List<PROPERTY_VALUE> address = Collections.emptyList();
+    private Map<String,String> additionalProperties;
+
+
     public Operation(String operation, List<PROPERTY_VALUE> address, NameValuePair payload) {
         this.operation = operation;
         this.address = address;
-        this.name = payload.name;
-        this.value = payload.value;
+        additionalProperties = new HashMap<String,String>(2);
+        additionalProperties.put("name",payload.name);
+        additionalProperties.put("value",payload.value);
+
+    }
+
+    public Operation(String operation, List<PROPERTY_VALUE> address, Map<String,String> payload) {
+        this.operation = operation;
+        this.address = address;
+        this.additionalProperties = payload;
+    }
+
+    public Operation(String operation, List<PROPERTY_VALUE> address, String key, String value) {
+        this.operation = operation;
+        this.address = address;
+        additionalProperties = new HashMap<String,String>(1);
+        additionalProperties.put(key,value);
+
     }
 
     public Operation() {
         // needed for Jackson
     }
 
-    private String operation;
-    @JsonProperty
-    private List<PROPERTY_VALUE> address = Collections.emptyList();
+    @JsonAnySetter
+    public void addAdditionalProperty(String key, String value) {
+        if (additionalProperties == null)
+            additionalProperties = new HashMap<String, String>();
+        additionalProperties.put(key,value);
+    }
 
-    private String name;
-    private String value;
+    public void setAdditionalProperties(Map<String, String> additionalProperties) {
+        this.additionalProperties = additionalProperties;
+    }
+
+    @JsonAnyGetter
+    public Map<String,String> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
+
+    @JsonIgnore
+    public String getName() {
+       return getProperty("name");
+    }
+
+    @JsonIgnore
+    public String getValue() {
+       return getProperty("value");
+    }
+
+    private String getProperty(String key) {
+            if (additionalProperties.containsKey(key))
+            return additionalProperties.get(key);
+        else
+            return null;
+    }
 
     public String getOperation() {
         return operation;
@@ -72,58 +124,5 @@ public class Operation {
         return address;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    /*
-        [localhost:9999 /subsystem=web/connector=http] :write-attribute(name=socket-binding,value=jndi)
-    yield JSON to send:
-    {
-        "operation" : "write-attribute",
-        "name" : "socket-binding",
-        "value" : "jndi",
-        "address" : [
-            {
-                "PROPERTY_VALUE" : {
-                    "subsystem" : "web"
-                }
-            },
-            {
-                "PROPERTY_VALUE" : {
-                    "connector" : "http"
-                }
-            }
-        ]
-    }
-    */
-
-//    @JsonValue
-//    public String toString() {
-//        StringBuilder b = new StringBuilder();
-//        b.append('{');
-//        b.append("\"operation\":\"").append(operation).append("\",");
-//        b.append("\"address\":");
-//        if (address!=null && !address.isEmpty())
-//            b.append(address);
-//        else
-//            b.append("[]");
-//        b.append(',');
-//        b.append(payload);
-//        b.append("}");
-//        return b.toString();
-//    }
 }
 

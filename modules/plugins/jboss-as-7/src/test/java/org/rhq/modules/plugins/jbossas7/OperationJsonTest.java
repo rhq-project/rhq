@@ -19,7 +19,9 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
@@ -69,5 +71,29 @@ public class OperationJsonTest {
 
         assert pv.getKey().equals("myKey") : "Key is " + pv.getKey();
         assert pv.getValue().equals("myValue"): "Value is " + pv.getValue();
+    }
+
+    public void anyPayloadTest() throws Exception {
+
+        List<PROPERTY_VALUE> address=new ArrayList<PROPERTY_VALUE>(2);
+        PROPERTY_VALUE part = new PROPERTY_VALUE("/server-group","newOne");
+        address.add(part);
+
+        Map<String,String> props = new HashMap<String, String>();
+        props.put("profile","default");
+
+        Operation operation = new Operation("add",address,props);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String result = mapper.writeValueAsString(operation);
+        System.out.println(result);
+
+        assert !result.contains("name") : "Result contains a name property but should not : " + result;
+        assert !result.contains("null") : "Result contains null values but should not : " + result;
+
+        Operation op = mapper.readValue(result,Operation.class);
+        assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
+
     }
 }

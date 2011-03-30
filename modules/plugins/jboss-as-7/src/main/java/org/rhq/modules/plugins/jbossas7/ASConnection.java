@@ -148,6 +148,8 @@ public class ASConnection {
                 outcome = outcomeNode.getTextValue();
                 if (outcome.equals("failed")) {
                     JsonNode reasonNode = in.findValue("failure-description");
+                    if (reasonNode==null)
+                        reasonNode = in.findValue("domain-failure-description");// TODO JBAS-9182
                     String reason = reasonNode.getTextValue();
                     log.info(reason);
                     return true;
@@ -163,11 +165,10 @@ public class ASConnection {
 
     /**
      * Execute an operation against the domain api
-     * @param path Node to manipulate
-     * @param operationName operation to run
-     * @param attributeValue attribute-name-value pair
+     * @return JsonNode that describes the result
+     * @param operation an Operation that should be run on the domain controller
      */
-    public JsonNode execute(String path, String operationName, NameValuePair attributeValue) {
+    public JsonNode execute(Operation operation) {
 
         try {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -176,8 +177,6 @@ public class ASConnection {
             OutputStream out = conn.getOutputStream();
 
             ObjectMapper mapper = new ObjectMapper();
-
-            Operation operation = new Operation(operationName,pathToAddress(path),attributeValue);
 
             String result = mapper.writeValueAsString(operation);
             System.out.println("Json to send: " + result);
@@ -224,22 +223,6 @@ public class ASConnection {
         return null;
     }
 
-    private List<PROPERTY_VALUE> pathToAddress(String path) {
-        if (path.endsWith("/"))
-            path = path.substring(0,path.length()-1);
-
-        if (path.startsWith("/"))
-            path = path.substring(1);
-
-        List<PROPERTY_VALUE> result = new ArrayList<PROPERTY_VALUE>();
-        String[] components = path.split("/");
-        for (int i = 0; i < components.length ; i+=2) {
-            PROPERTY_VALUE valuePair = new PROPERTY_VALUE(components[i],components[i+1]);
-            result.add(valuePair);
-        }
-
-        return result;
-    }
 
     private URL getBaseUrl(String base, String ops) throws MalformedURLException {
         String spec;
@@ -268,6 +251,8 @@ public class ASConnection {
         if (jsonNode==null)
             return "getFailureDescription: -input was null-";
         JsonNode node = jsonNode.findValue("failure-description");
+        if (node==null)
+            node = jsonNode.findValue("domain-failure-description"); // TODO JBAS-9182
         return node.getValueAsText();
 
     }

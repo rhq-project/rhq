@@ -105,8 +105,20 @@
 
     <server name="Domain"
             discovery="DomainDiscovery"
-            class="BaseComponent"
+            class="DomainComponent"
             description="An AS7 management profile">
+
+        <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
+            <parameters>
+                <c:simple-property name="name" description="Name of Group to add"/>
+                <c:simple-property name="profile" description="Profile to add this group to"/>
+            </parameters>
+        </operation>
+        <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
+            <parameters>
+                <c:simple-property name="name" description="Name of Group to add"/>
+            </parameters>
+        </operation>
 
 
         <server name="Profile"
@@ -125,7 +137,6 @@
             <plugin-configuration>
                 <c:simple-property name="path" default="/server-group/*" readOnly="true"/>
             </plugin-configuration>
-
             <resource-configuration>
                 <c:simple-property name="profile" />
                 <c:simple-property name="socket-binding-group"/>

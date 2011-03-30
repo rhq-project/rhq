@@ -45,9 +45,13 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -149,22 +153,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ResourceComponent parentResourceComponent = context.getParentResourceComponent();
-        String parentPath =null;
-        String myPath;
-        if (parentResourceComponent instanceof BaseComponent) {
-            BaseComponent parentComponent = (BaseComponent) parentResourceComponent;
-            parentPath = parentComponent.getPath();
-        }
-
-        if (parentPath!=null) {
-            if (parentPath.endsWith("/") || path.startsWith("/"))
-                myPath = parentPath + path;
-            else
-                myPath = parentPath + "/" + path;
-        }
-        else
-            myPath = path;
+        String myPath = getResultingPath();
 
 
         JsonNode json = connection.getLevelData(myPath,true,false);
@@ -302,6 +291,26 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         return ret;
     }
 
+    private String getResultingPath() {
+        ResourceComponent parentResourceComponent = context.getParentResourceComponent();
+        String parentPath =null;
+        String myPath;
+        if (parentResourceComponent instanceof BaseComponent) {
+            BaseComponent parentComponent = (BaseComponent) parentResourceComponent;
+            parentPath = parentComponent.getPath();
+        }
+
+        if (parentPath!=null) {
+            if (parentPath.endsWith("/") || path.startsWith("/"))
+                myPath = parentPath + path;
+            else
+                myPath = parentPath + "/" + path;
+        }
+        else
+            myPath = path;
+        return myPath;
+    }
+
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
 
@@ -309,7 +318,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         for (Map.Entry<String, PropertySimple> entry : conf.getSimpleProperties().entrySet()) {
 
             NameValuePair nvp = new NameValuePair(entry.getKey(),entry.getValue().getStringValue());
-            JsonNode result= connection.execute(key,"write-attribute",nvp); // TODO path / key handling
+            Operation writeAttribute = new Operation("write-attribute",pathToAddress(getResultingPath()),nvp);
+            JsonNode result= connection.execute(writeAttribute);
             if(connection.isErrorReply(result)) {
                 report.setStatus(ConfigurationUpdateStatus.FAILURE);
                 report.setErrorMessage(connection.getFailureDescription(result));
@@ -317,4 +327,22 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
 
     }
+
+    private List<PROPERTY_VALUE> pathToAddress(String path) {
+        if (path.endsWith("/"))
+            path = path.substring(0,path.length()-1);
+
+        if (path.startsWith("/"))
+            path = path.substring(1);
+
+        List<PROPERTY_VALUE> result = new ArrayList<PROPERTY_VALUE>();
+        String[] components = path.split("/");
+        for (int i = 0; i < components.length ; i+=2) {
+            PROPERTY_VALUE valuePair = new PROPERTY_VALUE(components[i],components[i+1]);
+            result.add(valuePair);
+        }
+
+        return result;
+    }
+
 }

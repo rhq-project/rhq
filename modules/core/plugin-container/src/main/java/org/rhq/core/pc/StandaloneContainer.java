@@ -42,7 +42,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -56,8 +55,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
-import org.rhq.core.pc.operation.OperationManager;
-import org.rhq.core.pc.operation.OperationServicesAdapter;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
@@ -369,7 +366,10 @@ public class StandaloneContainer {
             showResourceConfig();
             break;
         case SR_CONFIG:
-            setResourceConfig(tokens);
+            setResourcePluginConfig(tokens, false);
+            break;
+        case SP_CONFIG:
+            setResourcePluginConfig(tokens,true);
             break;
         }
 
@@ -431,7 +431,7 @@ public class StandaloneContainer {
 
     }
 
-    private void setResourceConfig(String[] tokens) {
+    private void setResourcePluginConfig(String[] tokens,boolean pluginConfig) {
         if (resourceId == 0) {
             System.err.println("No resource set");
             return;
@@ -450,7 +450,10 @@ public class StandaloneContainer {
 
         ConfigurationManager cm = pc.getConfigurationManager();
 
-        cm.updateResourceConfiguration(request);
+        if (pluginConfig) {
+            pc.getInventoryManager().getResourceContainer(resourceId).getResource().setPluginConfiguration(config);
+        } else
+            cm.updateResourceConfiguration(request);
 
 
 
@@ -534,7 +537,12 @@ public class StandaloneContainer {
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void children(String[] tokens) {
-        int id = Integer.valueOf(tokens[1]);
+
+        int id;
+        if (tokens.length>1)
+            id = Integer.valueOf(tokens[1]);
+        else
+            id = resourceId;
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
         if (resourceContainer != null) {
             Resource r = resourceContainer.getResource();
@@ -623,7 +631,7 @@ public class StandaloneContainer {
 
         if (comm.startsWith("plu")) {
             //pluginName = arg;
-        } else if (comm.startsWith("r")) {
+        } else if (comm.startsWith("r") || comm.equals("id")) {
             try {
                 if (arg.equals("$r")) {
                     resourceId = dollarR;
@@ -654,7 +662,6 @@ public class StandaloneContainer {
     private void discover(String[] tokens) {
 
         Set<Resource> existing = getResources();
-        InventoryReport report;
         String what = tokens[1];
         long t1 = System.currentTimeMillis();
         if (what.startsWith("s"))
@@ -755,10 +762,10 @@ public class StandaloneContainer {
 
     /**
      * Creates a configuration object from the passed String. The string must consist
-     * of individual key-value pairs, that are spearated by || keys and values are separated by
+     * of individual key-value pairs, that are separated by || keys and values are separated by
      * =.  Only simple properties are supported for the configuration.
      * @param input The input string, may be null
-     * @return a Configuration object or null if input was null
+     * @return a Configuration object or null if input was null or if one of the pairs was invalid.
      */
     private Configuration createConfigurationFromString(String input) {
         if (input == null)
@@ -768,6 +775,10 @@ public class StandaloneContainer {
         String[] pairs = input.split("\\|\\|");
         for (String pair : pairs) {
             String[] kv = pair.split("=");
+            if (kv.length %2 ==1 ) {
+                System.err.println("Token " + pair + " is invalid as it contains no '='");
+                return null;
+            }
             PropertySimple ps = new PropertySimple(kv[0], kv[1]);
             config.put(ps);
         }
@@ -805,7 +816,7 @@ public class StandaloneContainer {
         ASCAN("as", "", 0, "Triggers an availability scan"), //
         AVAIL("a", " ( id )", 0,
             "Shows an availability report. If id is given, only shows availability for resource with id id"), //
-        CHILDREN("chi", "id", 1, "Shows the direct children of the resource with the passed id"), //
+        CHILDREN("chi", "[id]", 0, "Shows the direct children of the resource with the passed id, or if no id passed of the current resource"), //
         DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
         FIND("find", "r | t  | rt <name>", 2,
@@ -817,12 +828,13 @@ public class StandaloneContainer {
         QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovered resources"), //
         SET("set", "'resource' N", 2,
-            "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
+            "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call. 'id' is an alias for 'res'"), //
         STDIN("stdin","",0, "Stop reading the batch file and wait for commands on stdin"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
         P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
         R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource."),
-        SR_CONFIG("src", "", 0, "[parameters] set resource config ")
+        SR_CONFIG("rcs", "", 0, "[parameters] set resource config "),
+        SP_CONFIG("pcs", "", 0, "[parameters] set plugin config ")
         ;
 
         private String abbrev;

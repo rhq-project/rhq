@@ -65,6 +65,8 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
+import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -713,7 +715,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected void firePropertyChangedEvent(Property property, PropertyDefinition propertyDefinition, boolean isValid) {
-        boolean wasValidBefore = this.invalidPropertyNameToDisplayNameMap.isEmpty();
         PropertyDefinition topLevelPropertyDefinition = getTopLevelPropertyDefinition(propertyDefinition);
         boolean invalidPropertySetChanged;
         if (isValid) {
@@ -1404,14 +1405,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertySimple propertySimple, final FormItem valueItem) {
         FormItem item;
         if (!propertyDefinitionSimple.isRequired()) {
-            final CheckboxItem unsetItem = new CheckboxItem();
+            final CheckboxItem unsetItem = new CheckboxItem("unset-" + valueItem.getName());
             boolean unset = isUnset(propertyDefinitionSimple, propertySimple);
             unsetItem.setValue(unset);
             unsetItem.setDisabled(isReadOnly(propertyDefinitionSimple, propertySimple));
             unsetItem.setShowLabel(false);
             unsetItem.setShowTitle(false);
             unsetItem.setLabelAsTitle(false);
-            unsetItem.setColSpan(1);
 
             unsetItem.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent changeEvent) {
@@ -1429,6 +1429,14 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
+            valueItem.addBlurHandler(new BlurHandler() {
+                public void onBlur(BlurEvent event) {
+                    boolean isUnset = (event.getItem().getValue() == null);
+                    unsetItem.setValue(isUnset);
+                    valueItem.disable();
+                }
+            });
+
             item = unsetItem;
         } else {
             item = new SpacerItem();
@@ -1441,7 +1449,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return (!propertyDefinition.isRequired() && (propertySimple == null || propertySimple.getStringValue() == null));
     }
 
-    private boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
+    protected boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
         if (this.readOnly) {
             return true;
         }

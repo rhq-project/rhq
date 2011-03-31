@@ -137,7 +137,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                     ResourceGroupComposite resultComposite = result.get(0);
                     setGroupIcons(resultComposite);
 
-                    generalProperties = new GeneralProperties(extendLocatorId("genProps"), resultComposite);
+                    generalProperties = new GeneralProperties(extendLocatorId("genProps"), resultComposite,
+                        ResourceGroupTitleBar.this);
                     generalProperties.setVisible(false);
                     ResourceGroupTitleBar.this.addMember(generalProperties);
                     expandCollapseArrow.addClickHandler(new ClickHandler() {
@@ -234,6 +235,21 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.group = groupComposite.getResourceGroup();
         update();
 
+        displayGroupName(group.getName());
+
+        Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
+        this.favorite = favorites.contains(group.getId());
+        updateFavoriteButton();
+
+        setGroupIcons(groupComposite);
+        markForRedraw();
+    }
+
+    void displayGroupName(String groupName) {
+        if (!group.getName().equals(groupName)) {
+            group.setName(groupName); // the name must have been changed by the user via the editable field
+        }
+
         String catName = null;
         switch (group.getGroupCategory()) {
         case COMPATIBLE: {
@@ -248,13 +264,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
         this.title.setContents("<span class=\"SectionHeader\">" + group.getName()
             + "</span>&nbsp;<span class=\"subtitle\">" + catName + "</span>");
-
-        Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
-        this.favorite = favorites.contains(group.getId());
-        updateFavoriteButton();
-
-        setGroupIcons(groupComposite);
-        markForRedraw();
+        this.title.markForRedraw();
     }
 
     private void setGroupIcons(ResourceGroupComposite groupComposite) {

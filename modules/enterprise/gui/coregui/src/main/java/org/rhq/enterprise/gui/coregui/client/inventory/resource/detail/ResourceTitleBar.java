@@ -49,9 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewForm;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -243,7 +240,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         detailsForm.setHeight(10);
         detailsForm.setAlign(Alignment.LEFT);
 
-        detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite);
+        detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite, this);
         detailsFormSummary.setWidth100();
         detailsFormSummary.setPadding(3);
         detailsFormSummary.setMargin(3);
@@ -294,8 +291,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             this.resourceComposite = resourceComposite;
             update();
 
-            this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
-                + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+            displayResourceName(resource.getName());
 
             Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
             this.favorite = favorites.contains(resource.getId());
@@ -308,6 +304,15 @@ public class ResourceTitleBar extends LocatableVLayout {
 
             markForRedraw();
         }
+    }
+
+    void displayResourceName(String resourceName) {
+        if (!resource.getName().equals(resourceName)) {
+            resource.setName(resourceName); // the name must have been changed by the user via the editable field
+        }
+        this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
+            + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+        this.title.markForRedraw();
     }
 
     private void updateFavoriteButton() {

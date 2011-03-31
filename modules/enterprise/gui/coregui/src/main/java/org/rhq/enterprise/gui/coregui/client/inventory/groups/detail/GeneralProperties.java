@@ -54,10 +54,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class GeneralProperties extends LocatableVLayout {
     private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
     private ResourceGroupComposite groupComposite;
+    private final ResourceGroupTitleBar titleBar;
 
-    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite) {
+    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar) {
         super(locatorId);
         this.groupComposite = groupComposite;
+        this.titleBar = titleBar;
     }
 
     @Override
@@ -108,6 +110,8 @@ public class GeneralProperties extends LocatableVLayout {
                             }
 
                             public void onSuccess(Void result) {
+                                titleBar.displayGroupName(newName);
+
                                 CoreGUI.getMessageCenter().notify(
                                     new Message(MSG.view_group_summary_nameUpdateSuccessful(String.valueOf(group
                                         .getId()), oldName, newName), Message.Severity.Info));

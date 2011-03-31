@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,10 +61,12 @@ public class OverviewForm extends EnhancedDynamicForm {
     private ResourceComposite resourceComposite;
     private boolean headerEnabled = true;
     private boolean displayCondensed = false;
+    private final ResourceTitleBar titleBar;
 
-    public OverviewForm(String locatorId, ResourceComposite resourceComposite) {
+    public OverviewForm(String locatorId, ResourceComposite resourceComposite, ResourceTitleBar titleBar) {
         super(locatorId);
         this.resourceComposite = resourceComposite;
+        this.titleBar = titleBar;
     }
 
     @Override
@@ -184,6 +186,7 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
+                            titleBar.displayResourceName(newName);
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(String
                                     .valueOf(resource.getId()), oldName, newName), Message.Severity.Info));

@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -62,6 +63,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
+        setEscapeHtmlInDetailsLinkColumn(true);
     }
 
     @Override
@@ -108,6 +110,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         fields.add(nameField);
 
         ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION);
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(descriptionField);
 
         return fields;

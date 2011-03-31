@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -42,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  */
 public abstract class AncestryUtil {
+
     // ListGrid Record attribute names expected to be set on records processed by the utility  
     public static final String RESOURCE_ANCESTRY = "resourceAncestry";
     public static final String RESOURCE_ANCESTRY_VALUE = "resourceAncestryDecoded";
@@ -115,8 +117,8 @@ public abstract class AncestryUtil {
                 continue;
             }
             String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
-            for (int i = 0; i < ancestryEntries.length; ++i) {
-                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+            for (String ancestryEntry : ancestryEntries) {
+                String[] entryTokens = ancestryEntry.split(Resource.ANCESTRY_ENTRY_DELIM);
                 int rtId = Integer.valueOf(entryTokens[0]);
                 result.add(rtId);
             }
@@ -148,7 +150,7 @@ public abstract class AncestryUtil {
             String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
             int ancestorTypeId = Integer.valueOf(entryTokens[0]);
             int ancestorResourceId = Integer.valueOf(entryTokens[1]);
-            String ancestorName = entryTokens[2];
+            String ancestorName = StringUtility.escapeHtml(entryTokens[2]);
 
             sbResources.append((i > 0) ? " < " : "");
             //sbResources.append(" < ");
@@ -201,17 +203,15 @@ public abstract class AncestryUtil {
             return "";
         }
 
-        Integer resourceId = record.getAttributeAsInt(RESOURCE_ID);
-        // if not set assume the standard "id" attr is a resourceId
-        resourceId = (null != resourceId) ? resourceId : record.getAttributeAsInt("id");
+        Integer resourceId = getResourceId(record);
         StringBuilder sbResources = new StringBuilder();
         String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
         for (int i = 0; i < ancestryEntries.length; ++i) {
             String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
             int ancestorResourceId = Integer.valueOf(entryTokens[1]);
-            String ancestorName = entryTokens[2];
+            String ancestorName = StringUtility.escapeHtml(entryTokens[2]);
 
-            sbResources.append((i > 0) ? " < " : "");
+            sbResources.append((i > 0) ? " &lt; " : "");
             if (generateLinks) {
                 String url = LinkManager.getResourceLink(ancestorResourceId);
                 String suffix = resourceId + "_" + entryTokens[1];
@@ -231,18 +231,14 @@ public abstract class AncestryUtil {
             return ancestryHover;
         }
 
-        Integer resourceId = listGridRecord.getAttributeAsInt(RESOURCE_ID);
-        // if not set assume the standard "id" attr is a resourceId
-        resourceId = (null != resourceId) ? resourceId : listGridRecord.getAttributeAsInt("id");
-        String resourceName = listGridRecord.getAttribute(RESOURCE_NAME);
-        // if not set assume the standard "name" attr is a resourceName
-        resourceName = (null != resourceName) ? resourceName : listGridRecord.getAttribute("name");
+        String resourceName = getResourceName(listGridRecord);
+
         Map<Integer, ResourceType> types = ((MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES))
             .getMap();
         Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
         String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
 
-        String result = getAncestryHoverHTMLString(resourceId, resourceName, ancestry, resourceTypeId, types, width);
+        String result = getAncestryHoverHTMLString(resourceName, ancestry, resourceTypeId, types, width);
 
         listGridRecord.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
         return result;
@@ -250,12 +246,12 @@ public abstract class AncestryUtil {
 
     public static String getAncestryHoverHTMLForResource(Resource resource, Map<Integer, ResourceType> types, int width) {
 
-        return getAncestryHoverHTMLString(resource.getId(), resource.getName(), resource.getAncestry(), resource
+        return getAncestryHoverHTMLString(resource.getName(), resource.getAncestry(), resource
             .getResourceType().getId(), types, width);
     }
 
-    private static String getAncestryHoverHTMLString(int resourceId, String resourceName, String ancestry,
-        int resourceTypeId, Map<Integer, ResourceType> types, int width) {
+    private static String getAncestryHoverHTMLString(String resourceName, String ancestry,
+                                                     int resourceTypeId, Map<Integer, ResourceType> types, int width) {
         ResourceType type = types.get(resourceTypeId);
         String resourceLongName = getResourceLongName(resourceName, type);
 
@@ -282,7 +278,7 @@ public abstract class AncestryUtil {
             for (int i = ancestryEntries.length - 1, j = 0; i >= 0; --i, ++j) {
                 String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
                 int ancestorTypeId = Integer.valueOf(entryTokens[0]);
-                String ancestorName = entryTokens[2];
+                String ancestorName = StringUtility.escapeHtml(entryTokens[2]);
 
                 // indent with spaces
                 if (j > 0) {
@@ -323,9 +319,10 @@ public abstract class AncestryUtil {
 
     /**
      * Get a resource name that combines type and resource information. This is useful for when we want to
-     * use a single column for dispay of the resource "name". The name is wrapped in a navigable link.
+     * use a single column for display of the resource "name". The name is wrapped in a navigable link.
      * 
-     * @param resource The resource
+     * @param record the resource record
+     * @param width the width, in pixels, of the returned HTML <code>p</code> tag
      *
      * @return the long name for the resource
      */
@@ -335,9 +332,7 @@ public abstract class AncestryUtil {
             return resourceHover;
         }
 
-        String resourceName = record.getAttribute(RESOURCE_NAME);
-        // if not set assume the standard "name" attr is a resourceName
-        resourceName = (null != resourceName) ? resourceName : record.getAttribute("name");
+        String resourceName = getResourceName(record);
         Map<Integer, ResourceType> types = ((MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES)).getMap();
         Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
         ResourceType type = types.get(resourceTypeId);
@@ -363,6 +358,21 @@ public abstract class AncestryUtil {
         String result = sb.toString();
         record.setAttribute(RESOURCE_HOVER, result);
         return result;
+    }
+
+    private static Integer getResourceId(Record record) {
+        Integer resourceId = record.getAttributeAsInt(RESOURCE_ID);
+        // if not set assume the standard "id" attr is a resourceId
+        resourceId = (null != resourceId) ? resourceId : record.getAttributeAsInt("id");
+        return resourceId;
+    }
+
+    private static String getResourceName(Record record) {
+        String resourceName = record.getAttribute(RESOURCE_NAME);
+        // if not set assume the standard "name" attr is a resourceName
+        resourceName = (null != resourceName) ? resourceName : record.getAttribute("name");
+        resourceName = StringUtility.escapeHtml(resourceName);
+        return resourceName;
     }
 
     // We do not want smargwt to see we are storing our map into an attribute because it barfs on our key/value pairs

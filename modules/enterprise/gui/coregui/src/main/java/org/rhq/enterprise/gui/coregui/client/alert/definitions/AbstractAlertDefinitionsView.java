@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -34,9 +35,11 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed
@@ -48,6 +51,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
 
     public AbstractAlertDefinitionsView(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
+
+        setEscapeHtmlInDetailsLinkColumn(true);
     }
 
     @Override
@@ -65,6 +70,12 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         listGrid.setWrapCells(true);
         listGrid.setFixedRecordHeights(false);
         //listGrid.getField("id").setWidth(55);
+
+        // name and description are user-editable, so escape HTML to prevent XSS attacks
+        ListGridField nameField = listGrid.getField(AbstractAlertDefinitionsDataSource.FIELD_NAME);
+        nameField.setCellFormatter(new EscapedHtmlCellFormatter());
+        ListGridField descriptionField = listGrid.getField(AbstractAlertDefinitionsDataSource.FIELD_DESCRIPTION);
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
         boolean permitted = isAllowedToModifyAlertDefinitions();
 

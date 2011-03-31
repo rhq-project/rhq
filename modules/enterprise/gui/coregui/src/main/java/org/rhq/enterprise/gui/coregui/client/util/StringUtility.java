@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,53 +19,72 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A collection of utility methods for working with Strings.
- * 
- * TODO: I18N. The logic here may need to be pluggable for different localizations.
  *
  * @author Ian Springer
  */
 public class StringUtility {
 
     /**
-     * Split a string on delimiter boundaries, and place each element into a List.
+     * Escapes HTML in a string to eliminate cross site scripting (XSS) vulnerabilities. Note, this impl is designed
+     * to be highly efficient to minimize the impact on performance.
      *
-     * @param  s     String to split up
-     * @param  delim Delimiting token, ala StringTokenizer
+     * @param string the string to be escaped
      *
-     * @return a List comprised of elements split by the tokenizing
+     * @return the escaped string
      */
-
-    public static List<String> explode(String s, String delim) {
-        List<String> res = new ArrayList<String>();
-        if (s == null)
-            return res;
-
-        String[] tokens = s.split(delim);
-        for (String token : tokens) {
-            res.add(token);
+    public static String escapeHtml(String string) {
+        if (string == null) {
+            return null;
         }
-
-        return res;
+        StringBuilder buffer = null;
+        for (int i = 0; i < string.length(); i++) {
+            char c = string.charAt(i);
+            if (c == '&') {
+                if (buffer == null) {
+                    buffer = new StringBuilder(string.substring(0, i));
+                }
+                buffer.append("&amp;");
+            } else if (c == '<') {
+                if (buffer == null) {
+                    buffer = new StringBuilder(string.substring(0, i));
+                }
+                buffer.append("&lt;");
+            } else if (c == '>') {
+                if (buffer == null) {
+                    buffer = new StringBuilder(string.substring(0, i));
+                }
+                buffer.append("&gt;");
+            } else {
+                if (buffer != null) {
+                    buffer.append(c);
+                }
+            }
+        }
+        return (buffer != null) ? buffer.toString() : string;
     }
 
-    public static String pluralize(String singularNoun) {
-        String pluralNoun;
-        if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey")
-            && !singularNoun.endsWith("oy")) {
-            pluralNoun = singularNoun.substring(0, singularNoun.length() - 1) + "ies";
-        } else if (!singularNoun.endsWith("s")) {
-            pluralNoun = singularNoun + "s";
-        } else {
-            pluralNoun = singularNoun;
+    /**
+     * Sanitizes HTML (i.e. removes unsafe HTML such as SCRIPT tags) in a string to eliminate cross site scripting (XSS)
+     * vulnerabilities.
+     *
+     * @param string the string to be sanitized
+     *
+     * @return the sanitized string
+     */
+    // TODO (ips, 03/31/11): Replace this lame impl with a much more robust one - easiest way would be to upgrade to GWT
+    //                       2.1 or later and use the new Safe HTML APIs. See also
+    //                       http://tomerdoron.blogspot.com/2011/03/less-simple-safe-html-sanitizer.html.
+    public static String sanitizeHtml(String string) {
+        if (string == null) {
+            return null;
         }
-        return pluralNoun;
+
+        return string.replaceAll("<script", "&lt;script").replaceAll("<SCRIPT", "&lt;SCRIPT");
     }
 
     private StringUtility() {
     }
+
 }

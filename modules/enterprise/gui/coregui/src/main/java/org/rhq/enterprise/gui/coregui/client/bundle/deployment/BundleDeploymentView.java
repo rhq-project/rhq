@@ -77,6 +77,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -146,7 +147,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
         bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
-        bundleName.setLinkTitle(bundle.getName());
+        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
         bundleName.setTarget("_self");
 
         CanvasItem actionItem = new CanvasItem("actions");
@@ -172,14 +173,14 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
         destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
-        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
+        destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
 
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
         StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
-        description.setValue(deployment.getDescription());
+        description.setValue(StringUtility.escapeHtml(deployment.getDescription()));
 
         StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
         status.setValue(deployment.getStatus().name());

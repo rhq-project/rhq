@@ -49,6 +49,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
@@ -139,12 +140,9 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
 
         ListGridField alertsField = new ListGridField(ALERTS.propertyName(), ALERTS.title(), 70);
 
-        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
-        availabilityField.setType(ListGridFieldType.IMAGE);
-        availabilityField.setAlign(Alignment.CENTER);
+        IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
 
         setListGridFields(resourceField, ancestryField, alertsField, availabilityField);
-
     }
 
     @Override

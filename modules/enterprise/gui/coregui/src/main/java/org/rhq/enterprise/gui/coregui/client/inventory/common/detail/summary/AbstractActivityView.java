@@ -401,7 +401,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
     /** Create empty display row(LocatableDynamicForm) that is constently defined and displayed.
      *
-     * @param column Locatable parent colum.
+     * @param locatorId locator ID of Locatable parent column
      * @param emptyMessage Contents of the empty region
      * @return
      */

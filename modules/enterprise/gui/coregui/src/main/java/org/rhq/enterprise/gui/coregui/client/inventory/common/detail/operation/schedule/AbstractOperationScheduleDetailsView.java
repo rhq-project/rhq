@@ -263,7 +263,9 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         Integer integerValue = TypeConversionUtility.toInteger(value);
         timeoutItem.setValue(integerValue, UnitType.TIME);
 
-        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        StaticTextItem notesItem = (StaticTextItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        // Notes field is user-editable, so escape HTML to prevent an XSS attack.
+        notesItem.setOutputAsHTML(true);
         notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
 
         this.parameters = (Configuration) record.getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);

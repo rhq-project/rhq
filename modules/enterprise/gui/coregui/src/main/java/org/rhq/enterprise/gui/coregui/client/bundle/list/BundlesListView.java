@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -80,7 +81,6 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
     @Override
     protected void configureTable() {
-
         ListGridField idField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_ID, MSG.common_title_id());
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth("50");
@@ -89,15 +89,20 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             .common_title_name());
         nameField.setWidth("33%");
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord record, int i, int i1) {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
                 return "<a href=\"" + record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK) + "\">"
-                    + String.valueOf(o) + "</a>";
+                    + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
             }
         });
 
         ListGridField descField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
         descField.setWidth("33%");
+        descField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                return StringUtility.escapeHtml(String.valueOf(value));
+            }
+        });
 
         ListGridField latestVersionField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_LATEST_VERSION,
             MSG.view_bundle_latestVersion());

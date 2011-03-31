@@ -1261,7 +1261,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         // TODO (ips, 03/25/11): We eventually want to use StaticTextItems for read-only PASSWORD props too, but we have
         //                       to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
         if (propertyIsReadOnly && propertyDefinitionSimple.getType() != PropertySimpleType.PASSWORD) {
-            valueItem = new StaticTextItem();
+            StaticTextItem staticItem = new StaticTextItem();
+            // Property values are user-editable, so escape HTML to prevent an XSS attack.
+            staticItem.setOutputAsHTML(true);
+            valueItem = staticItem;
         } else {
             List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
             if (enumeratedValues != null && !enumeratedValues.isEmpty()) {

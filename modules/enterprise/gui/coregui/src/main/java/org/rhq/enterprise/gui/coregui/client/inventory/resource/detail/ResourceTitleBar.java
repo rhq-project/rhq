@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -310,7 +311,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         if (!resource.getName().equals(resourceName)) {
             resource.setName(resourceName); // the name must have been changed by the user via the editable field
         }
-        this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
+        this.title.setContents("<span class=\"SectionHeader\">" + StringUtility.escapeHtml(resourceName)
             + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
         this.title.markForRedraw();
     }

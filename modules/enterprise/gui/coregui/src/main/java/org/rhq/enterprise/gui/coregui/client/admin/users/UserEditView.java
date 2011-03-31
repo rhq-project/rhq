@@ -137,6 +137,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             nameItem = new TextItem(UsersDataSource.Field.NAME);
         } else {
             nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
+            ((StaticTextItem)nameItem).setOutputAsHTML(true);
         }
         items.add(nameItem);
 
@@ -167,20 +168,25 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
         TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
         firstNameItem.setShowTitle(true);
+        firstNameItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(firstNameItem);
 
         TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
         lastNameItem.setShowTitle(true);
+        lastNameItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(lastNameItem);
 
         TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
         emailAddressItem.setShowTitle(true);
+        emailAddressItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(emailAddressItem);
 
         TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
+        phoneNumberItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(phoneNumberItem);
 
         TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
+        departmentItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(departmentItem);
 
         boolean userBeingEditedIsRhqadmin = (getRecordId() == SUBJECT_ID_RHQADMIN);

@@ -60,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -98,7 +99,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(),
             BundleTopView.VIEW_ID.getTitle());
-        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
+        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", StringUtility.escapeHtml(bundle.getName()));
         tabs = new LocatableTabSet(getLocatorId());
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
@@ -188,7 +189,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
 
         StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
-        descriptionItem.setValue(bundle.getDescription());
+        descriptionItem.setValue(StringUtility.escapeHtml(bundle.getDescription()));
 
         form.setFields(versionCountItem, actionItem, destinationsCountItem, descriptionItem);
 

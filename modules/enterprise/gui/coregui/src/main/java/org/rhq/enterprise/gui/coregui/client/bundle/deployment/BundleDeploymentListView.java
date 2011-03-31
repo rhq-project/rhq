@@ -40,8 +40,10 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
@@ -76,15 +78,20 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         // only users that are authorized can see deployments
         if (canManageBundles) {
             nameField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord record, int i, int i1) {
+                public String format(Object value, ListGridRecord record, int i, int i1) {
                     return "<a href=\""
                         + LinkManager.getBundleDeploymentLink(record
                             .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
-                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">" + String.valueOf(o)
+                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">"
+                        + StringUtility.escapeHtml(String.valueOf(value))
                         + "</a>";
                 }
             });
+        } else {
+            nameField.setCellFormatter(new EscapedHtmlCellFormatter());
         }
+
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
         bundleVersionField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {

@@ -199,6 +199,9 @@ public class StandaloneContainer {
         if (tokens[0].startsWith("#"))
             return false;
 
+        if (tokens[0].isEmpty())
+            return false;
+
         Command com = Command.get(tokens[0]);
         if (com == null) {
             System.err.println("Command " + tokens[0] + " is unknown");
@@ -486,7 +489,7 @@ public class StandaloneContainer {
         String pattern = tokens[2];
         pattern = pattern.replaceAll("\\*", "\\.\\*");
 
-        if (tokens[1].equals("r")) {
+        if (tokens[1].equals("r") || tokens[1].startsWith("res")) {
             Set<Resource> resources = getResources();
             for (Resource res : resources) {
                 if (res.getName().matches(pattern)) {

@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -79,6 +80,9 @@ public class HistoryGroupResourceConfigurationTable extends Table<HistoryGroupRe
         ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG.common_title_lastUpdated());
         ListGridField fieldStatus = new ListGridField(DataSource.Field.STATUS, MSG.common_title_status());
         ListGridField fieldUser = new ListGridField(DataSource.Field.USER, MSG.common_title_user());
+
+        TimestampCellFormatter.prepareDateField(fieldDateCreated);
+        TimestampCellFormatter.prepareDateField(fieldLastUpdated);
 
         fieldId.setWidth("10%");
         fieldDateCreated.setWidth("35%");

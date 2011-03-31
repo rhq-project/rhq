@@ -397,6 +397,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         //recalculationInterval.setWrapTitle(false); // do not set this - it causes the form to grow abnormally width-wise for some reason
         recalculationInterval.setMin(0);
         recalculationInterval.setDefaultValue(0);
+        recalculationInterval.setStep(60000); // the recalc interval is in milliseconds, step up one minute at a time
     }
 
     public static LinkedHashMap<String, String> getTemplates() {

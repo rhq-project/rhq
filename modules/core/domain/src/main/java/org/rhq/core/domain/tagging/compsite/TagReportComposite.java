@@ -31,7 +31,6 @@ public class TagReportComposite extends Tag {
 
     private static final long serialVersionUID = 1L;
 
-    private Tag tag;
     private long total;
     private long resourceCount;
     private long resourceGroupCount;
@@ -46,8 +45,8 @@ public class TagReportComposite extends Tag {
     public TagReportComposite(int id, String namespace, String semantic, String name, long total, long resourceCount,
         long resourceGroupCount, long bundleCount, long bundleVersionCount, long bundleDeploymentCount,
         long bundleDestinationCount) {
-        this.tag = new Tag(namespace, semantic, name);
-        this.tag.setId(id);
+        super(namespace, semantic, name);
+        setId(id);
         this.total = total;
         this.resourceCount = resourceCount;
         this.resourceGroupCount = resourceGroupCount;
@@ -58,7 +57,7 @@ public class TagReportComposite extends Tag {
     }
 
     public Tag getTag() {
-        return tag;
+        return this;
     }
 
     public long getTotal() {

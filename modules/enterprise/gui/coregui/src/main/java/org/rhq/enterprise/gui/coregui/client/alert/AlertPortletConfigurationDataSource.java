@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /** Customize the AlertDataSource to pull fetch criteria information from
@@ -221,8 +220,7 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
     }
 
     public Integer[] extractFilterResourceIds(DashboardPortlet storedPortlet, Integer[] filterResourceIds) {
-        PropertyList propertyList = storedPortlet.getConfiguration().getList(
-            RecentAlertsPortlet.ALERT_RANGE_RESOURCE_IDS);
+        PropertyList propertyList = storedPortlet.getConfiguration().getList("alert-range-resource-ids");
         if ((propertyList != null) && (propertyList.getList() != null) && (!propertyList.getList().isEmpty())
             && (propertyList.getList().get(0) != null)) {
             Property container = propertyList.getList().get(0);

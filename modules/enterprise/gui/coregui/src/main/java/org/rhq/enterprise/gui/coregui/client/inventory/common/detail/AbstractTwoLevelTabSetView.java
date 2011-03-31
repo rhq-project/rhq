@@ -247,12 +247,19 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // select the subTab (this does not fire an event, just sets the subtab)
             tab.getLayout().selectSubTab(subtab);
 
-            // now that the tab/subtab is determined, if currently selected tab is not the desired tab, then
-            // select it now (firing a new event).
+            // the target tab/subtab is now determined. if the currently selected tab is not the target tab then
+            // select it now.
             if (!tab.equals(this.tabSet.getSelectedTab())) {
-                this.tabSet.setIgnoreSelectEvents(false);
+
+                // Fire a tab selection event only if we're at the end of the path. If not then it is assumed that
+                // the subtab view is a BookmarkableView and the navigation will continue in that way, below.
+                if (viewPath.isEnd()) {
+                    this.tabSet.setIgnoreSelectEvents(false);
+                    this.tabSet.selectTab(tab);
+                    return;
+                }
+
                 this.tabSet.selectTab(tab);
-                return;
             }
 
             // if the desired tab/subtab are already selected, now we can render the subtab canvas

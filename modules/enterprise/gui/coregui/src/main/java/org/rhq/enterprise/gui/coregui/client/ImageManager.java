@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -403,6 +404,25 @@ public class ImageManager {
         }
 
         return "subsystems/event/Events" + icon + "_16.png";
+    }
+
+    public static String getAlertNotificationResultIcon(ResultState status) {
+        if (status == null) {
+            status = ResultState.UNKNOWN;
+        }
+        switch (status) {
+        case SUCCESS:
+            return ImageManager.getAvailabilityIcon(Boolean.TRUE);
+        case FAILURE:
+            return ImageManager.getAvailabilityIcon(Boolean.FALSE);
+        case PARTIAL:
+            return ImageManager.getAvailabilityYellowIcon();
+        case DEFERRED:
+            return "[skin]/actions/redo.png"; // for lack of a better icon
+        case UNKNOWN:
+        default:
+            return ImageManager.getAvailabilityIcon(null);
+        }
     }
 
     /**

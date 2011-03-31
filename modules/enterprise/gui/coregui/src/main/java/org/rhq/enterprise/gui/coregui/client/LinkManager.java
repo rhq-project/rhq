@@ -383,7 +383,11 @@ public class LinkManager {
     }
 
     public static String getTagLink(String tag) {
-        return "#Reports/Subsystems/Tags/" + tag;
+        if (tag == null) {
+            return "#Reports/Subsystems/Tags";
+        } else {
+            return "#Reports/Subsystems/Tags/" + tag;
+        }
     }
 
     public static String getBundleLink(int bundleId) {

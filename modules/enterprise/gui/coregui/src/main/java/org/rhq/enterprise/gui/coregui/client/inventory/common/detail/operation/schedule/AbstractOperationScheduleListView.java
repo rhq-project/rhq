@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.enterprise.gui.coregui.client.components.table.SubjectRecordCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
  * @author Ian Springer
@@ -51,7 +52,8 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
         subjectField.setCellFormatter(new SubjectRecordCellFormatter());
 
         ListGridField nextFireTimeField = new ListGridField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
-                190);
+            190);
+        TimestampCellFormatter.prepareDateField(nextFireTimeField);
 
         ListGridField descriptionField = new ListGridField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
 

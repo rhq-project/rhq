@@ -26,7 +26,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -43,6 +42,7 @@ import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -155,13 +155,13 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
         ListGridField submittedTimeField = new ListGridField(Field.CREATED_TIME, MSG
             .dataSource_configurationHistory_dateSubmitted());
         submittedTimeField.setType(ListGridFieldType.DATE);
-        submittedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(submittedTimeField);
         fields.add(submittedTimeField);
 
         ListGridField completedTimeField = new ListGridField(Field.MODIFIED_TIME, MSG
             .dataSource_configurationHistory_dateCompleted());
         completedTimeField.setType(ListGridFieldType.DATE);
-        completedTimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(completedTimeField);
         fields.add(completedTimeField);
 
         ListGridField statusField = new ListGridField(Field.STATUS, MSG.common_title_status());

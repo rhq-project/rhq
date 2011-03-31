@@ -111,6 +111,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
             .view_alerts_field_created_time());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
+        ctimeField.setShowHover(true);
+        ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
 
         ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
@@ -153,12 +155,29 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
                 if (ackSubject == null) {
-                    return MSG.view_alerts_field_ack_status_empty();
+                    return MSG.view_alerts_field_ack_status_noAck();
                 } else {
-                    Date ackTime = listGridRecord.getAttributeAsDate("acknowledgeTime");
-                    String formattedTime = TimestampCellFormatter.format(ackTime);
-                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
+                    return MSG.view_alerts_field_ack_status_ack(ackSubject);
                 }
+            }
+        });
+        statusField.setShowHover(true);
+        statusField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String ackSubject = record.getAttribute("acknowledgingSubject");
+                StringBuilder sb = new StringBuilder("<p");
+                if (ackSubject == null) {
+                    sb.append(" style='width:150px'>");
+                    sb.append(MSG.view_alerts_field_ack_status_noAckHover());
+                } else {
+                    sb.append(" style='width:500px'>");
+                    Date ackTime = record.getAttributeAsDate("acknowledgeTime");
+                    String ackTimeString = TimestampCellFormatter.format(ackTime,
+                        TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
+                    sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackTimeString));
+                }
+                sb.append("</p>");
+                return sb.toString();
             }
         });
         fields.add(statusField);
@@ -184,17 +203,17 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
-            ctimeField.setWidth(125);
-            nameField.setWidth("20%");
-            conditionField.setWidth("30%");
+            ctimeField.setWidth(100);
+            nameField.setWidth("15%");
+            conditionField.setWidth("35%");
             priorityField.setWidth(50);
-            statusField.setWidth("80");
+            statusField.setWidth(100);
             resourceNameField.setWidth("25%");
             ancestryField.setWidth("25%");
         } else {
-            ctimeField.setWidth(125);
-            nameField.setWidth("35%");
-            conditionField.setWidth("40%");
+            ctimeField.setWidth(200);
+            nameField.setWidth("15%");
+            conditionField.setWidth("60%");
             priorityField.setWidth(50);
             statusField.setWidth("25%");
         }
@@ -225,56 +244,61 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
                 long fetchTime = System.currentTimeMillis() - start;
                 Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
 
-                if (entityContext.type != EntityContext.Type.Resource) {
-                    dataRetrieved(result, response, request);
-                } else {
-                    response.setData(buildRecords(result));
-                    response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-                    processResponse(request.getRequestId(), response);
-                }
+                dataRetrieved(result, response, request);
+                processResponse(request.getRequestId(), response);
             }
         });
     }
 
     /**
-     * Additional processing to support a cross-resource view)
-     * @param result
-     * @param response
-     * @param request
+     * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
     protected void dataRetrieved(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
-        HashSet<Integer> typesSet = new HashSet<Integer>();
-        HashSet<String> ancestries = new HashSet<String>();
-        for (Alert alert : result) {
-            Resource resource = alert.getAlertDefinition().getResource();
-            typesSet.add(resource.getResourceType().getId());
-            ancestries.add(resource.getAncestry());
-        }
+        switch (entityContext.type) {
 
-        // In addition to the types of the result resources, get the types of their ancestry
-        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+        // no need to disambiguate, the alerts are for a singe resource
+        case Resource:
+            response.setData(buildRecords(result));
+            // for paging to work we have to specify size of full result set
+            response.setTotalRows(result.getTotalSize());
+            break;
 
-        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
-        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
-            @Override
-            public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
-                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
-
-                Record[] records = buildRecords(result);
-                for (Record record : records) {
-                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
-                    // Store the types map off the records so we can build a detailed hover string as needed.                      
-                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
-
-                    // Build the decoded ancestry Strings now for display
-                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
-                }
-                response.setData(records);
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-                processResponse(request.getRequestId(), response);
+        // disambiguate as the results could be cross-resource
+        default:
+            HashSet<Integer> typesSet = new HashSet<Integer>();
+            HashSet<String> ancestries = new HashSet<String>();
+            for (Alert alert : result) {
+                Resource resource = alert.getAlertDefinition().getResource();
+                typesSet.add(resource.getResourceType().getId());
+                ancestries.add(resource.getAncestry());
             }
-        });
+
+            // In addition to the types of the result resources, get the types of their ancestry
+            typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+            ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+            typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+                @Override
+                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                    Record[] records = buildRecords(result);
+                    for (Record record : records) {
+                        // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                        // Build the decoded ancestry Strings now for display
+                        record
+                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                    }
+                    response.setData(records);
+                    // for paging to work we have to specify size of full result set
+                    response.setTotalRows(result.getTotalSize());
+                }
+            });
+        }
     }
 
     @Override
@@ -374,7 +398,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         for (AlertNotificationLog log : from.getAlertNotificationLogs()) {
             DataClass dc = new DataClass();
             dc.setAttribute("sender", log.getSender());
-            dc.setAttribute("status", log.getResultState());
+            dc.setAttribute("status", log.getResultState().name());
             dc.setAttribute("message", log.getMessage());
 
             notifications[i++] = dc;

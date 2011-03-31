@@ -29,9 +29,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -39,10 +42,12 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
@@ -161,7 +166,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         if (record.getAttribute("acknowledgingSubject") != null) {
             ackByItem.setValue(record.getAttribute("acknowledgingSubject"));
         } else {
-            ackByItem.setValue(MSG.view_alerts_field_ack_status_empty());
+            ackByItem.setValue(MSG.view_alerts_field_ack_status_noAck());
         }
         items.add(ackByItem);
 
@@ -170,7 +175,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         if (ack_time != null) {
             ackTimeItem.setValue(TimestampCellFormatter.format(ack_time));
         } else {
-            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_empty());
+            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_noAck());
         }
         items.add(ackTimeItem);
 
@@ -198,12 +203,44 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
             DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
             ListGrid grid = getListGrid();
             grid.setData((Record[]) input);
+
             ListGridField sender = new ListGridField("sender", MSG.view_alert_common_tab_notifications_sender());
             sender.setWidth("33%");
+
             ListGridField status = new ListGridField("status", MSG.view_alert_common_tab_notifications_status());
-            status.setWidth("33%");
+            status.setWidth("50");
+            status.setAlign(Alignment.CENTER);
+            status.setType(ListGridFieldType.IMAGE);
+            status.setCellFormatter(new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String statusStr = record.getAttribute("status");
+                    ResultState statusEnum = (statusStr == null) ? ResultState.UNKNOWN : ResultState.valueOf(statusStr);
+                    return imgHTML(ImageManager.getAlertNotificationResultIcon(statusEnum));
+                }
+            });
+            status.setShowHover(true);
+            status.setHoverCustomizer(new HoverCustomizer() {
+                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String statusStr = record.getAttribute("status");
+                    ResultState statusEnum = (statusStr == null) ? ResultState.UNKNOWN : ResultState.valueOf(statusStr);
+                    switch (statusEnum) {
+                    case SUCCESS:
+                        return MSG.common_status_success();
+                    case FAILURE:
+                        return MSG.common_status_failed();
+                    case PARTIAL:
+                        return MSG.common_status_partial();
+                    case DEFERRED:
+                        return MSG.common_status_deferred();
+                    case UNKNOWN:
+                    default:
+                        return MSG.common_status_unknown();
+                    }
+                }
+            });
+
             ListGridField message = new ListGridField("message", MSG.view_alert_common_tab_notifications_message());
-            message.setWidth("34%");
+            message.setWidth("*");
 
             grid.setFields(sender, status, message);
         }

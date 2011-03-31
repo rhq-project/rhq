@@ -26,9 +26,13 @@ import java.util.ArrayList;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
@@ -43,7 +47,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * The main tag cloud view which will show the actual tag cloud with a tabbed view
+ * underneath containing all the tables of data for the selected tag.
+ * 
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
@@ -52,6 +60,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
     private TagCloudView tagCloudView;
     private LocatableTabSet container;
     private ArrayList<Table> viewsWithTags = new ArrayList<Table>();
+    private int selectedTabNum = 0;
 
     public TaggedView(String locatorId) {
         super(locatorId);
@@ -73,68 +82,82 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
         addMember(tagCloudView);
     }
 
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-    }
-
     private void viewTag(String tagString) {
+
+        // if we are switching tags, remove all our tables - we need to recreate them with new criteria
+        if (tagString != null && !tagString.equals(tagCloudView.getSelectedTag())) {
+            destroyTagTables();
+        }
 
         tagCloudView.setSelectedTag(tagString);
 
-        Tag tag = new Tag(tagString);
-
-        Criteria criteria = new Criteria();
-        criteria.addCriteria("tagNamespace", tag.getNamespace());
-        criteria.addCriteria("tagSemantic", tag.getSemantic());
-        criteria.addCriteria("tagName", tag.getName());
-
         if (container == null) {
+
+            Tag tag = new Tag(tagString);
+
+            Criteria criteria = new Criteria();
+            criteria.addCriteria("tagNamespace", tag.getNamespace());
+            criteria.addCriteria("tagSemantic", tag.getSemantic());
+            criteria.addCriteria("tagName", tag.getName());
 
             container = new LocatableTabSet(extendLocatorId("tags"));
             container.setWidth100();
             container.setHeight100();
-            addMember(container);
+            container.setTabBarControls(tagCloudView.getDeleteButton());
+            container.addTabSelectedHandler(new TabSelectedHandler() {
+                public void onTabSelected(TabSelectedEvent event) {
+                    selectedTabNum = event.getTabNum();
+                }
+            });
+            container.setSelectedTab(selectedTabNum); // this is so we keep the same tab the user selected between tag selections
 
             Tab tab;
 
-            BundlesListView bundlesView = new BundlesListView(getLocatorId(), criteria, null);
+            BundlesListView bundlesView = new BundlesListView(extendLocatorId("bundleListView"), criteria, null);
             viewsWithTags.add(bundlesView);
             tab = new LocatableTab(extendLocatorId("bundleList"), MSG.view_bundle_bundles());
+            tab.setIcon(ImageManager.getBundleIcon());
             tab.setPane(bundlesView);
             container.addTab(tab);
 
-            BundleVersionListView bundleVersionListView = new BundleVersionListView(getLocatorId(), criteria);
+            BundleVersionListView bundleVersionListView = new BundleVersionListView(
+                extendLocatorId("bundleVersionListView"), criteria);
             viewsWithTags.add(bundleVersionListView);
             tab = new LocatableTab(extendLocatorId("bundleVersionList"), MSG.view_bundle_bundleVersions());
+            tab.setIcon("subsystems/bundle/BundleVersion_16.png");
             tab.setPane(bundleVersionListView);
             container.addTab(tab);
 
             // TODO: get manage_bundle perm, if user has it pass true
-            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(getLocatorId(), criteria,
-                false);
+            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(
+                extendLocatorId("bundleDeploymentListView"), criteria, false);
             viewsWithTags.add(bundleDeploymentListView);
             tab = new LocatableTab(extendLocatorId("bundleDeploymentsList"), MSG.view_bundle_bundleDeployments());
+            tab.setIcon("subsystems/bundle/BundleDeployment_16.png");
             tab.setPane(bundleDeploymentListView);
             container.addTab(tab);
 
-            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(getLocatorId(),
-                criteria);
+            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(
+                extendLocatorId("bundleDestinationListView"), criteria);
             viewsWithTags.add(bundleDestinationListView);
             tab = new LocatableTab(extendLocatorId("bundleDestinationsList"), MSG.view_bundle_bundleDestinations());
+            tab.setIcon("subsystems/bundle/BundleDestination_16.png");
             tab.setPane(bundleDestinationListView);
             container.addTab(tab);
 
-            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, MSG
+            ResourceSearchView resourceView = new ResourceSearchView(extendLocatorId("resourceView"), criteria, MSG
                 .view_taggedResources_title());
             viewsWithTags.add(resourceView);
             tab = new LocatableTab(extendLocatorId("resourceList"), MSG.view_taggedResources_title());
+            tab.setIcon(ImageManager.getResourceIcon(ResourceCategory.SERVICE));
             tab.setPane(resourceView);
             container.addTab(tab);
 
             for (Table t : viewsWithTags) {
                 t.setShowFooter(false);
             }
+
+            addMember(container);
         }
 
         for (Table t : viewsWithTags) {
@@ -142,10 +165,22 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
         }
     }
 
+    private void destroyTagTables() {
+        if (this.container != null) {
+            this.viewsWithTags.clear();
+            removeMember(this.container);
+            this.container.destroy();
+            this.container = null;
+        }
+    }
+
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {
             String tagString = viewPath.getCurrent().getPath();
             viewTag(tagString);
+        } else {
+            destroyTagTables();
+            tagCloudView.setSelectedTag(null);
         }
     }
 }

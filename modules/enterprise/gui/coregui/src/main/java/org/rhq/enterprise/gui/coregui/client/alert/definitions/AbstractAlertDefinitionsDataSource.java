@@ -30,7 +30,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -42,6 +41,7 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -87,13 +87,13 @@ public abstract class AbstractAlertDefinitionsDataSource extends
 
         ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.view_alerts_field_created_time());
         ctimeField.setType(ListGridFieldType.DATE);
-        ctimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(ctimeField);
         ctimeField.setWidth("15%");
         fields.add(ctimeField);
 
         ListGridField mtimeField = new ListGridField(FIELD_MTIME, MSG.view_alerts_field_modified_time());
         mtimeField.setType(ListGridFieldType.DATE);
-        mtimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(mtimeField);
         mtimeField.setWidth("15%");
         fields.add(mtimeField);
 

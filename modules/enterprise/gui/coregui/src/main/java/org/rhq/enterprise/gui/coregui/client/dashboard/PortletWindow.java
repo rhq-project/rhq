@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.events.MouseOverHandler;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -244,6 +245,19 @@ public class PortletWindow extends LocatableWindow {
 
     public Set<Permission> getGlobalPermissions() {
         return dashboardView.getGlobalPermissions();
+    }
+
+    public ResourcePermission getResourcePermissions() {
+
+        ResourcePermission result = null;
+
+        if (null != dashboardView.getResourceComposite()) {
+            result = dashboardView.getResourceComposite().getResourcePermission();
+        } else if (null != dashboardView.getGroupComposite()) {
+            result = dashboardView.getGroupComposite().getResourcePermission();
+        }
+
+        return result;
     }
 
 }

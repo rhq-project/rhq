@@ -889,4 +889,13 @@ public class DashboardView extends LocatableVLayout {
     public Dashboard getStoredDashboard() {
         return storedDashboard;
     }
+
+    public ResourceGroupComposite getGroupComposite() {
+        return groupComposite;
+    }
+
+    public ResourceComposite getResourceComposite() {
+        return resourceComposite;
+    }
+
 }

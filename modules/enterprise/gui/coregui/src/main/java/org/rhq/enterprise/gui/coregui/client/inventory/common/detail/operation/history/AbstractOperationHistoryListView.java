@@ -19,10 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
@@ -46,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -143,16 +142,19 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME);
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
-        startedTimeField.setCellFormatter(new CellFormatter() {
+        startedTimeField.setCellFormatter(new TimestampCellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 if (value != null) {
-                    Date date = (Date) value;
-                    return DateTimeFormat.getMediumDateTimeFormat().format(date);
+                    return super.format(value, record, rowNum, colNum);
                 } else {
                     return "<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>";
                 }
             }
         });
+        startedTimeField.setShowHover(true);
+        startedTimeField.setHoverCustomizer(TimestampCellFormatter
+            .getHoverCustomizer(AbstractOperationHistoryDataSource.Field.STARTED_TIME));
+
         return startedTimeField;
     }
 

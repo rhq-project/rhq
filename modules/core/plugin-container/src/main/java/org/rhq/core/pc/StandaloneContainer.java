@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -42,7 +39,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -56,9 +52,9 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
-import org.rhq.core.pc.operation.OperationManager;
-import org.rhq.core.pc.operation.OperationServicesAdapter;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.pc.standaloneContainer.Command;
+import org.rhq.core.pc.standaloneContainer.History;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.pluginapi.operation.OperationServicesResult;
@@ -83,29 +79,25 @@ public class StandaloneContainer {
     InventoryManager inventoryManager;
     /** Global operation counter */
     Integer opId = 0;
-    /** Holder for the command history */
-    List<String> history = new ArrayList<String>(10);
     /** Map of resource plugin configurations */
     Map<Integer, Configuration> resConfigMap = new HashMap<Integer, Configuration>();
     /** variable set by find() and which can be used in set() */
     int dollarR = 0;
-
-    private static final String HISTORY_HELP = "!! : repeat the last action\n" + //
-        "!? : show the history of commands issued\n" + //
-        "!h : show this help\n" + //
-        "!nn : repeat history item with number nn\n" + //
-        "!w fileName : write history to file with name fileName\n" + //
-        "!dnn : delete history item with number nn";
+    /** Do we read from stdin ? */
+    static boolean isStdin;
 
     public static void main(String[] argv) {
         StandaloneContainer sc = new StandaloneContainer();
         BufferedReader br = null;
 
-        if (argv.length == 0)
+        if (argv.length == 0) {
             br = new BufferedReader(new InputStreamReader(System.in));
+            isStdin = true;
+        }
         else {
             try {
                 br = new BufferedReader(new InputStreamReader(new FileInputStream(argv[0])));
+                isStdin=false;
             } catch (FileNotFoundException fnfe) {
                 System.err.println("File " + argv[0] + " not found");
                 System.exit(1);
@@ -153,6 +145,8 @@ public class StandaloneContainer {
 
         System.out.println("\nReady.");
 
+        History history = new History();
+
         // Run the main loop
         while (!shouldQuit) {
             try {
@@ -161,13 +155,16 @@ public class StandaloneContainer {
                 if (answer == null) {
                     break;
                 }
+                if (!isStdin)
+                    System.out.println(answer);
 
                 if (answer.equalsIgnoreCase(Command.STDIN.toString())) {
                     br = new BufferedReader(new InputStreamReader(System.in));
+                    isStdin=true;
                 }
 
                 // Check for history commands
-                answer = handleHistory(answer);
+                answer = history.handleHistory(answer);
 
                 // If we have a 'real' command, dispatch it
                 if (!answer.startsWith("!")) {
@@ -187,104 +184,6 @@ public class StandaloneContainer {
 
     }
 
-    /**
-     * Handle processing of the command history. This gives some csh like commands
-     * and records the commands given. Nice side effect is the possibility to write the
-     * history to disk and to use this later as input so that testing can be scripted.
-     * Commands are:
-     * <ul>
-     * <li>!! : repeat the last action</li>
-     * <li>!? : show the history</li>
-     * <li>!h : show history help</li>
-     * <li>!<i>nnn</i> : repeat history item with number <i>nnn</i></li>
-     * <li>!w <i>file</i> : write the history to the file <i>file</i></li>
-     * <li>!d<i>nnn</i> : delete the history item with number <i>nnn</i>
-     * </ul>
-     * @param answer the input given on the command line
-     * @return a command or '!' if no command substitution from the history was possible.
-     */
-    private String handleHistory(String answer) {
-
-        // Normal command - just return it
-        if (!answer.startsWith("!")) {
-            history.add(answer);
-            return answer;
-        }
-
-        // History commands
-        if (answer.startsWith("!?")) {
-            for (int i = 0; i < history.size(); i++)
-                System.out.println("[" + i + "]: " + history.get(i));
-        } else if (answer.startsWith("!h")) {
-            System.out.println(HISTORY_HELP);
-            return "!";
-        } else if (answer.startsWith("!!")) {
-            String text = history.get(history.size() - 1);
-            System.out.println(text);
-            history.add(text);
-            return text;
-        } else if (answer.matches("![0-9]+")) {
-            String id = answer.substring(1);
-            Integer i;
-            try {
-                i = Integer.valueOf(id);
-            } catch (NumberFormatException nfe) {
-                System.err.println(id + " is no valid history position");
-                return "!";
-            }
-            if (i > history.size()) {
-                System.err.println(i + " is no valid history position");
-                return "!";
-            } else {
-                String text = history.get(i);
-                System.out.println(text);
-                history.add(text);
-                return text;
-            }
-        } else if (answer.startsWith("!w")) {
-            String[] tokens = answer.split(" ");
-            if (tokens.length < 2) {
-                System.err.println("Not enough parameters. You need to give a file name");
-            }
-            File file = new File(tokens[1]);
-            try {
-                file.createNewFile();
-                if (file.canWrite()) {
-                    Writer writer = new FileWriter(file);
-                    for (String item : history) {
-                        writer.write(item);
-                        writer.write("\n");
-                    }
-                    writer.flush();
-                    writer.close();
-                } else {
-                    System.err.println("Can not write to file " + file);
-                }
-            } catch (IOException ioe) {
-                System.err.println("Saving the history to file " + file + " failed: " + ioe.getMessage());
-            }
-            return "!";
-        } else if (answer.matches("!d[0-9]+")) {
-            String id = answer.substring(2);
-            Integer i;
-            try {
-                i = Integer.valueOf(id);
-            } catch (NumberFormatException nfe) {
-                System.err.println(id + " is no valid history position");
-                return "!";
-            }
-            if (i > history.size()) {
-                System.err.println(i + " is no valid history position");
-                return "!";
-            }
-            history.remove(i.intValue());
-            return "!";
-        } else {
-            System.err.println(answer + " is no valid history command");
-            return "!";
-        }
-        return "!";
-    }
 
     /**
      * Dispatches the input to various commands that do the actual work.
@@ -298,6 +197,9 @@ public class StandaloneContainer {
             return false;
 
         if (tokens[0].startsWith("#"))
+            return false;
+
+        if (tokens[0].isEmpty())
             return false;
 
         Command com = Command.get(tokens[0]);
@@ -369,7 +271,10 @@ public class StandaloneContainer {
             showResourceConfig();
             break;
         case SR_CONFIG:
-            setResourceConfig(tokens);
+            setResourcePluginConfig(tokens, false);
+            break;
+        case SP_CONFIG:
+            setResourcePluginConfig(tokens,true);
             break;
         }
 
@@ -431,7 +336,7 @@ public class StandaloneContainer {
 
     }
 
-    private void setResourceConfig(String[] tokens) {
+    private void setResourcePluginConfig(String[] tokens,boolean pluginConfig) {
         if (resourceId == 0) {
             System.err.println("No resource set");
             return;
@@ -450,7 +355,10 @@ public class StandaloneContainer {
 
         ConfigurationManager cm = pc.getConfigurationManager();
 
-        cm.updateResourceConfiguration(request);
+        if (pluginConfig) {
+            pc.getInventoryManager().getResourceContainer(resourceId).getResource().setPluginConfiguration(config);
+        } else
+            cm.updateResourceConfiguration(request);
 
 
 
@@ -534,7 +442,12 @@ public class StandaloneContainer {
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void children(String[] tokens) {
-        int id = Integer.valueOf(tokens[1]);
+
+        int id;
+        if (tokens.length>1)
+            id = Integer.valueOf(tokens[1]);
+        else
+            id = resourceId;
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(id);
         if (resourceContainer != null) {
             Resource r = resourceContainer.getResource();
@@ -576,7 +489,7 @@ public class StandaloneContainer {
         String pattern = tokens[2];
         pattern = pattern.replaceAll("\\*", "\\.\\*");
 
-        if (tokens[1].equals("r")) {
+        if (tokens[1].equals("r") || tokens[1].startsWith("res")) {
             Set<Resource> resources = getResources();
             for (Resource res : resources) {
                 if (res.getName().matches(pattern)) {
@@ -623,7 +536,7 @@ public class StandaloneContainer {
 
         if (comm.startsWith("plu")) {
             //pluginName = arg;
-        } else if (comm.startsWith("r")) {
+        } else if (comm.startsWith("r") || comm.equals("id")) {
             try {
                 if (arg.equals("$r")) {
                     resourceId = dollarR;
@@ -654,7 +567,6 @@ public class StandaloneContainer {
     private void discover(String[] tokens) {
 
         Set<Resource> existing = getResources();
-        InventoryReport report;
         String what = tokens[1];
         long t1 = System.currentTimeMillis();
         if (what.startsWith("s"))
@@ -755,10 +667,10 @@ public class StandaloneContainer {
 
     /**
      * Creates a configuration object from the passed String. The string must consist
-     * of individual key-value pairs, that are spearated by || keys and values are separated by
+     * of individual key-value pairs, that are separated by || keys and values are separated by
      * =.  Only simple properties are supported for the configuration.
      * @param input The input string, may be null
-     * @return a Configuration object or null if input was null
+     * @return a Configuration object or null if input was null or if one of the pairs was invalid.
      */
     private Configuration createConfigurationFromString(String input) {
         if (input == null)
@@ -768,6 +680,10 @@ public class StandaloneContainer {
         String[] pairs = input.split("\\|\\|");
         for (String pair : pairs) {
             String[] kv = pair.split("=");
+            if (kv.length %2 ==1 ) {
+                System.err.println("Token " + pair + " is invalid as it contains no '='");
+                return null;
+            }
             PropertySimple ps = new PropertySimple(kv[0], kv[1]);
             config.put(ps);
         }
@@ -798,77 +714,4 @@ public class StandaloneContainer {
         System.out.println(config.getProperties());
     }
 
-    /**
-     * List of possible commands
-     */
-    private enum Command {
-        ASCAN("as", "", 0, "Triggers an availability scan"), //
-        AVAIL("a", " ( id )", 0,
-            "Shows an availability report. If id is given, only shows availability for resource with id id"), //
-        CHILDREN("chi", "id", 1, "Shows the direct children of the resource with the passed id"), //
-        DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
-        //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
-        FIND("find", "r | t  | rt <name>", 2,
-            "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
-                + " Will set $r for the last resource shown."), HELP("h", "", 0, "Shows this help"), //
-        INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations"), //
-        MEASURE("m", "datatype property+", 1, "Triggers getting metric values. All need to be of the same data type. If datatype is '-list' it shows the defined metrics"), //
-        NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
-        QUIT("quit", "", 0, "Terminates the application"), //
-        RESOURCES("res", "", 0, "Shows the discovered resources"), //
-        SET("set", "'resource' N", 2,
-            "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
-        STDIN("stdin","",0, "Stop reading the batch file and wait for commands on stdin"), //
-        WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
-        P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
-        R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource."),
-        SR_CONFIG("src", "", 0, "[parameters] set resource config ")
-        ;
-
-        private String abbrev;
-        private String args;
-        private String help;
-        private int minArgs; // minimum number of args needed
-
-        public String getArgs() {
-            return args;
-        }
-
-        public String getHelp() {
-            return help;
-        }
-
-        public int getMinArgs() {
-            return minArgs;
-        }
-
-        /**
-         * Construct a new Command
-         * @param abbrev Abbreviation for this command
-         * @param args Description of expected arguments
-         * @param minArgs Minumum number of arguments that need to be present
-         * @param help A short description of the command
-         */
-        private Command(String abbrev, String args, int minArgs, String help) {
-            this.abbrev = abbrev;
-            this.args = args;
-            this.minArgs = minArgs;
-            this.help = help;
-        }
-
-        public String getAbbrev() {
-            return abbrev;
-        }
-
-        public static Command get(String s) {
-
-            String upper = s.toUpperCase();
-
-            for (Command c : EnumSet.allOf(Command.class)) {
-                if (c.name().equals(upper) || c.getAbbrev().equals(s.toLowerCase()))
-                    return c;
-            }
-            return null;
-        }
-    }
 }

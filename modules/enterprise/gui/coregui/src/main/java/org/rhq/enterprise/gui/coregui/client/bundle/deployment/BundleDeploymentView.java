@@ -23,14 +23,12 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.AutoFitWidthApproach;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -74,6 +72,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -164,8 +163,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         bundleVersionName.setTarget("_self");
 
         StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
-        deployed.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
-        deployed.setValue(new Date(deployment.getCtime()));
+        deployed.setValue(TimestampCellFormatter.format(deployment.getCtime(),
+            TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
 
         StaticTextItem deployedBy = new StaticTextItem("deployedBy", MSG.view_bundle_deploy_deployedBy());
         deployedBy.setValue(deployment.getSubjectName());

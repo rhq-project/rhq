@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import java.util.Date;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -25,6 +26,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -47,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class GroupDefinitionListView extends TableSection {
+public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSource> {
     private static final String TITLE = MSG.view_dynagroup_definitions();
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
@@ -84,6 +86,17 @@ public class GroupDefinitionListView extends TableSection {
                 return super.format(value, record, rowNum, colNum);
             }
         });
+        lastCalculationTimeField.setShowHover(true);
+        lastCalculationTimeField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String attribValue = record.getAttribute("lastCalculationTime");
+                if (attribValue != null) {
+                    return TimestampCellFormatter.getHoverDateString(new Date(Long.valueOf(attribValue).longValue()));
+                } else {
+                    return null;
+                }
+            }
+        });
 
         ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime", MSG
             .view_dynagroup_nextCalculationTime(), 175);
@@ -95,6 +108,18 @@ public class GroupDefinitionListView extends TableSection {
                 return super.format(value, record, rowNum, colNum);
             }
         });
+        nextCalculationTimeField.setShowHover(true);
+        nextCalculationTimeField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String attribValue = record.getAttribute("nextCalculationTime");
+                if (attribValue != null && !("0".equals(attribValue.toString()))) {
+                    return TimestampCellFormatter.getHoverDateString(new Date(Long.valueOf(attribValue).longValue()));
+                } else {
+                    return null;
+                }
+            }
+        });
+
         setListGridFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 

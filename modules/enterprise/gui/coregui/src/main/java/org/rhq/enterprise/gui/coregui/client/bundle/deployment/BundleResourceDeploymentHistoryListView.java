@@ -50,6 +50,7 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -103,6 +104,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         user.setHidden(true);
 
         ListGridField timestamp = new ListGridField("timestamp", MSG.common_title_timestamp());
+        TimestampCellFormatter.prepareDateField(timestamp);
         timestamp.setWidth("40%");
 
         ListGridField status = new ListGridField("status", MSG.common_title_status());

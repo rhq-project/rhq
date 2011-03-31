@@ -43,6 +43,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -186,6 +187,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         ListGridField timeRecent = new ListGridField(RecentOperationsDataSource.Field.TIME.propertyName(),
             RecentOperationsDataSource.Field.TIME.title(), WIDTH_RECENT_TIME);
+        TimestampCellFormatter.prepareDateField(timeRecent);
 
         ListGridField statusRecent = new ListGridField(RecentOperationsDataSource.Field.STATUS.propertyName(),
             RecentOperationsDataSource.Field.STATUS.title(), WIDTH_RECENT_STATUS);
@@ -215,6 +217,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         ListGridField timeNext = new ListGridField(ScheduledOperationsDataSource.Field.TIME.propertyName(),
             ScheduledOperationsDataSource.Field.TIME.title(), WIDTH_SCHEDULED_TIME);
+        TimestampCellFormatter.prepareDateField(timeNext);
 
         scheduledOperationsGrid.setFields(resourceNext, ancestryNext, operationNext, timeNext);
     }

@@ -25,6 +25,7 @@ import java.util.List;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -36,6 +37,29 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  */
 @SuppressWarnings("unused")
 public class DomainComponent extends BaseComponent implements OperationFacet{
+
+    @Override
+    public AvailabilityType getAvailability() {
+
+        if (context.getResourceType().getName().equals("JBossAS-Managed")) {
+            List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>(2);
+            String host = conf.getSimpleValue("domainHost","local");
+            address.add(new PROPERTY_VALUE("host",host));
+            address.add(new PROPERTY_VALUE("server-config",myServerName));
+            Operation getStatus = new Operation("read-attribute",address,"name","status");
+            JsonNode result = connection.execute(getStatus);
+            if (connection.isErrorReply(result))
+                return AvailabilityType.DOWN;
+
+            String msg = connection.getSuccessDescription(result);
+            if (msg.contains("STARTED"))
+                return AvailabilityType.UP;
+            else
+                return AvailabilityType.DOWN;
+        }
+
+        return super.getAvailability();    // TODO: Customise this generated block
+    }
 
     @Override
     public OperationResult invokeOperation(String name,

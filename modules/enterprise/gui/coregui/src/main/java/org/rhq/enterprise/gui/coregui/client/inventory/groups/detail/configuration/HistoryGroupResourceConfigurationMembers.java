@@ -52,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -121,8 +122,10 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
             ListGridField fieldAncestry = AncestryUtil.setupAncestryListGridField();
             ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED, MSG
                 .common_title_dateCreated());
+            TimestampCellFormatter.prepareDateField(fieldDateCreated);
             ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG
                 .common_title_lastUpdated());
+            TimestampCellFormatter.prepareDateField(fieldLastUpdated);
             ListGridField fieldStatus = new ListGridField(DataSource.Field.STATUS, MSG.common_title_status());
             ListGridField fieldUser = new ListGridField(DataSource.Field.USER, MSG.common_title_user());
 

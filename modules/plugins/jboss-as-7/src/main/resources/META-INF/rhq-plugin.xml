@@ -120,7 +120,6 @@
             </parameters>
         </operation>
 
-
         <server name="Profile"
                 description="One profile in a domain"
                 discovery="SubsystemDiscovery"
@@ -147,11 +146,30 @@
         <server name="Host"
                 description="Host involved in this domain"
                 discovery="SubsystemDiscovery"
-                class="BaseComponent"
+                class="DomainComponent"
                 >
             <plugin-configuration>
                 <c:simple-property name="path" default="/host/*" readOnly="true"/>
             </plugin-configuration>
+
+            <operation name="server:add" displayName="Create server" description="Add a new server to this host.">
+                <parameters>
+                    <c:simple-property name="name" description="Name of this new server" required="true"/>
+                    <c:simple-property name="group" displayName="Server Group" description="Server group to put this sever in" default="" required="false"/>
+                    <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="false"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="result" description="Outcome of the create server operation"/>
+                </results>
+            </operation>
+            <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
+                <parameters>
+                    <c:simple-property name="name" description="Name of this new server" required="true"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="result" description="Outcome of the delete server operation"/>
+                </results>
+            </operation>
 
             <resource-configuration>
                 <c:list-property name="server-config" />
@@ -210,9 +228,10 @@
 
         <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
 
-        <operation name="server:start" description="Start this server instance."/>
-        <operation name="server:stop" description="Stop this server instance."/>
-        <operation name="server:restart" description="Restart this server instance."/>
+        <operation name="server:start" description="Start this server instance." displayName="Start"/>
+        <operation name="server:stop" description="Stop this server instance." displayName="Stop"/>
+        <operation name="server:restart" description="Restart this server instance." displayName="Restart"/>
+
 
 
     </server>

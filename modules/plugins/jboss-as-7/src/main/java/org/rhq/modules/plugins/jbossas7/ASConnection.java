@@ -210,10 +210,18 @@ public class ASConnection {
                     br.close();
                 }
             }
-            String outcome = builder.toString();
+            String outcome;
+            JsonNode operationResult=null;
+            if (builder!=null) {
+                outcome= builder.toString();
+                operationResult = mapper.readTree(outcome);
+            }
+            else {
+                outcome="- no response from server -";
+            }
             System.out.println("==> " + outcome);
-            JsonNode operationResult = mapper.readTree(outcome);
             return operationResult;
+
 
         } catch (IOException e) {
             e.printStackTrace();  // TODO: Customise this generated block

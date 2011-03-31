@@ -20,7 +20,9 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 
@@ -87,12 +89,27 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
         } else if (what.equals("server")) {
             List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
 
-            String host = conf.getSimpleValue("domainHost","local");
+            if (context.getResourceType().getName().equals("JBossAS-Managed")) {
+                String host = conf.getSimpleValue("domainHost","local");
+                address.add(new PROPERTY_VALUE("host",host));
+                address.add(new PROPERTY_VALUE("server-config",myServerName));
+                operation = new Operation(op,address);
+            }
+            else if (context.getResourceType().getName().equals("Host")) {
+                address.addAll(pathToAddress(getPath()));
+                String serverName = parameters.getSimpleValue("name",null);
+                address.add(new PROPERTY_VALUE("server-config",serverName));
+                Map<String,String> props = new HashMap<String, String>();
+                String serverGroup = parameters.getSimpleValue("group",null);
+                props.put("name",serverName);
+                props.put("group",serverGroup);
+//                boolean autoStart = parameters.getSimple("auto-start").getBooleanValue();
+//                props.put("auto-start",String.valueOf(autoStart));
+                // TODO put more properties in
 
-            address.add(new PROPERTY_VALUE("host",host));
-            address.add(new PROPERTY_VALUE("server-config",myServerName));
+                operation = new Operation(op,address,props);
+            }
 
-            operation = new Operation(op,address);
         }
 
         OperationResult operationResult = new OperationResult();

@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
@@ -30,7 +34,7 @@ import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
@@ -39,20 +43,17 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVStack
-        implements BookmarkableView {
+public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVStack implements
+    BookmarkableView {
 
     private T operationHistory;
 
@@ -110,11 +111,11 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
             OperationDefinition operationDefinition = operationHistory.getOperationDefinition();
             ConfigurationDefinition parametersConfigurationDefinition = operationDefinition
-                    .getParametersConfigurationDefinition();
-            if (parametersConfigurationDefinition != null &&
-                    !parametersConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
+                .getParametersConfigurationDefinition();
+            if (parametersConfigurationDefinition != null
+                && !parametersConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
                 ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"),
-                        parametersConfigurationDefinition, operationHistory.getParameters());
+                    parametersConfigurationDefinition, operationHistory.getParameters());
                 editor.setReadOnly(true);
                 parametersSection.addMember(editor);
             } else {
@@ -150,7 +151,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME, MSG
             .view_operationHistoryDetails_dateSubmitted());
-        submittedItem.setValue(new Date(operationHistory.getStartedTime()));
+        submittedItem.setValue(TimestampCellFormatter.format(operationHistory.getStartedTime()));
         items.add(submittedItem);
 
         StaticTextItem completedItem = new StaticTextItem("completed", MSG.view_operationHistoryDetails_dateCompleted());
@@ -159,7 +160,8 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         } else if (status == OperationRequestStatus.CANCELED) {
             completedItem.setValue(MSG.common_val_never());
         } else {
-            completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
+            completedItem.setValue(TimestampCellFormatter.format(new Date(operationHistory.getStartedTime()
+                + operationHistory.getDuration())));
         }
         items.add(completedItem);
 

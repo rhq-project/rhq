@@ -67,6 +67,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);
         setShowFooterRefresh(false); //disable footer refresh button as redundant for portlets
+        setShowHeader(false);//disable header for portlets
     }
 
     public Timer getRefreshTimer() {

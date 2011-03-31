@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,12 +19,50 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A collection of utility methods for working with Strings.
  *
  * @author Ian Springer
  */
 public class StringUtility {
+
+    /**
+     * Split a string on delimiter boundaries, and place each element into a List.
+     *
+     * @param  s     String to split up
+     * @param  delim Delimiting token, ala StringTokenizer
+     *
+     * @return a List comprised of elements split by the tokenizing
+     */
+    public static List<String> explode(String s, String delim) {
+        List<String> res = new ArrayList<String>();
+        if (s == null)
+            return res;
+
+        String[] tokens = s.split(delim);
+        for (String token : tokens) {
+            res.add(token);
+        }
+
+        return res;
+    }
+
+    // TODO: I18N. The logic here may need to be pluggable for different localizations.
+    public static String pluralize(String singularNoun) {
+        String pluralNoun;
+        if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey")
+            && !singularNoun.endsWith("oy")) {
+            pluralNoun = singularNoun.substring(0, singularNoun.length() - 1) + "ies";
+        } else if (!singularNoun.endsWith("s")) {
+            pluralNoun = singularNoun + "s";
+        } else {
+            pluralNoun = singularNoun;
+        }
+        return pluralNoun;
+    }
 
     /**
      * Escapes HTML in a string to eliminate cross site scripting (XSS) vulnerabilities. Note, this impl is designed

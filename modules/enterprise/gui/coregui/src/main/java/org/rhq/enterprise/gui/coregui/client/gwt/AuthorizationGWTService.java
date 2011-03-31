@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.Collection;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.RemoteService;
@@ -71,5 +72,18 @@ public interface AuthorizationGWTService extends RemoteService {
      * @return the set of global permissions that the current user possesses - never null
      */
     Set<Permission> getExplicitGlobalPermissions() throws RuntimeException;
+
+    /**
+     * Returns true if the current user possesses either: 1) the specified resource permission for *all* of the
+     * specified resources, or 2) the global MANAGE_INVENTORY permission which, by definition, gives full access to the
+     * inventory (all resources and all groups) NOTE: The size of the collection must be less than or equal to 1000 (due
+     * to an Oracle limitation).
+     *
+     * @param  permission  a resource permission (i.e. permission.getTarget() == Permission.Target.RESOURCE)
+     * @param  resourceIds the ids of some Resources to check permissions against (size of collection must be <= 1000)
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+    boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds);
 
 }

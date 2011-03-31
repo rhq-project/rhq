@@ -26,10 +26,12 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -41,13 +43,15 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -100,6 +104,7 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
+    @SuppressWarnings("unchecked")
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
         String[] excludeFields, String... headerIcons) {
         super(locatorId, title, criteria, sortSpecifier, excludeFields);
@@ -177,7 +182,19 @@ public class ResourceSearchView extends Table {
             categoryField, availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
-            .view_inventory_resources_uninventoryConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            .view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(ResourceSearchView.this,
+            TableActionEnablement.ANY, Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("id"));
+                    }
+
+                    return result;
+                }
+            }) {
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 int[] resourceIds = TableUtility.getIds(selection);
                 ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();

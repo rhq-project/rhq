@@ -40,12 +40,14 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -169,7 +171,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
 
         if (this.showDeleteButton) {
             addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-                new AbstractTableAction(TableActionEnablement.ANY) {
+                new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
+
                     public void executeAction(ListGridRecord[] selections, Object actionValue) {
                         int[] groupIds = new int[selections.length];
                         int index = 0;
@@ -195,7 +198,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         if (this.showNewButton) {
-            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
+            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AuthorizedTableAction(this,
+                Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new GroupCreateWizard(ResourceGroupListView.this).startWizard();
                 }

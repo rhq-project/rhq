@@ -277,8 +277,9 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         // Version
         StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
-        versionItem.setValue((resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
-            + "</i>");
+        String version = (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
+                + "</i>";
+        versionItem.setValue(version);
         versionItem.setEndRow(true);
         formItems.add(versionItem);
 

@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Joseph Marques
@@ -175,6 +176,20 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         setupTableInteractions();
 
         super.configureTable();
+    }
+
+    protected String getDetailsLinkColumnName() {
+        return "timestamp";
+    }
+
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                Integer recordId = getId(record);
+                String detailsUrl = "#" + getBasePath() + "/" + recordId;
+                return SeleniumUtility.getLocatableHref(detailsUrl, TimestampCellFormatter.format(value), null);
+            }
+        };
     }
 
     private void setupTableInteractions() {

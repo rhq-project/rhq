@@ -22,11 +22,14 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 @XmlRootElement
@@ -42,6 +45,7 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
     private ConfigurationUpdateStatus filterStatus;
+    private List<ConfigurationUpdateStatus> filterStatuses; // requires overrides
 
     private boolean fetchConfiguration;
 
@@ -52,6 +56,7 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
 
         filterOverrides.put("startTime", "ctime >= ?");
         filterOverrides.put("endTime", "ctime <= ?");
+        filterOverrides.put("statuses", "status IN ( ? )");
 
         sortOverrides.put(SORT_FIELD_STATUS, "status");
     }
@@ -70,6 +75,10 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
 
     public void addFilterStatus(ConfigurationUpdateStatus status) {
         this.filterStatus = status;
+    }
+
+    public void addFilterStatuses(ConfigurationUpdateStatus... configUpdateStatus) {
+        this.filterStatuses = CriteriaUtils.getListIgnoringNulls(configUpdateStatus);
     }
 
     public void fetchConfiguration(boolean configuration) {

@@ -485,4 +485,12 @@ public class ImageManager {
     public static String getBundleIcon() {
         return "subsystems/content/Content_16.png";
     }
+
+    public static String getConfigureLargeIcon() {
+        return "subsystems/configure/Configure_24.png";
+    }
+
+    public static String getConfigureIcon() {
+        return "subsystems/configure/Configure_16.png";
+    }
 }

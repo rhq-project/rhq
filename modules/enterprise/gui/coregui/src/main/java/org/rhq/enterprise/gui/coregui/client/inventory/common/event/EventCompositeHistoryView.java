@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -101,6 +102,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     @Override
     protected void configureTable() {
         ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp());
+        TimestampCellFormatter.prepareDateField(timestampField);
 
         ListGridField severityField = new ListGridField("severity", MSG.view_inventory_eventHistory_severity());
         severityField.setAlign(Alignment.CENTER);

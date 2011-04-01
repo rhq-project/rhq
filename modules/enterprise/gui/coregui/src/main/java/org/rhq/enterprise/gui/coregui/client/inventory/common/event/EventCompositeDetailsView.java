@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -114,7 +115,8 @@ public class EventCompositeDetailsView extends LocatableVLayout implements Bookm
         source.setValue(composite.getSourceLocation());
 
         StaticTextItem timestamp = new StaticTextItem("timestamp", MSG.view_inventory_eventHistory_timestamp());
-        timestamp.setValue(composite.getTimestamp());
+        timestamp.setValue(TimestampCellFormatter.format(composite.getTimestamp(),
+            TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
 
         TextAreaItem detail = new TextAreaItem("details", MSG.view_inventory_eventHistory_details());
         detail.setValue(composite.getEventDetail());

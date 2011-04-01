@@ -58,7 +58,7 @@
                     icon = "/images/icn_create_child.png"; // TODO
             }
 
-            String link = "/rhq/resource/inventory/view.xhtml?id=" + resourceId ;
+            String link = "/coregui/CoreGUI.html#Resource/" + resourceId ;
 
             %>
 
@@ -95,7 +95,7 @@
                     icon = "/images/icn_delete_child.png"; // TODO
             }
 
-            String link = "/rhq/resource/inventory/view.xhtml?id=" + resourceId ;
+            String link = "/coregui/CoreGUI.html#Resource/" + resourceId ;
 
     %>
 { "start" : "<%=sdf.format(entry.getCreatedTime())%>",

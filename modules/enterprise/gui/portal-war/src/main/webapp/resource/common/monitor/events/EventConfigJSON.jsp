@@ -43,7 +43,7 @@
 
             String icon = FunctionTagLibrary.getResourceConfigStatusURL(configUpdate.getStatus());
 
-            String link = "/rhq/resource/configuration/history.xhtml?id=" + resourceId + "&configId=" + configUpdate.getId();
+            String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Configuration/History/" + configUpdate.getId();
 
             %>
 { "start" : "<%=sdf.format(configUpdate.getCreatedTime())%>",

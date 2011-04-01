@@ -53,7 +53,7 @@
                     break;
             }
 
-            String link = "/rhq/resource/inventory/history.xhtml?id=" + resourceId + "&configId=" + configUpdate.getId();
+            String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Inventory/PluginConfigurationHistoryView/" + configUpdate.getId();
 
             %>
 

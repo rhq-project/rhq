@@ -1434,9 +1434,10 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             valueItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent event) {
-                    boolean isUnset = (event.getItem().getValue() == null);
-                    unsetItem.setValue(isUnset);
-                    valueItem.disable();
+                    if (event.getItem().getValue() == null) {
+                        unsetItem.setValue(true);
+                        valueItem.disable();
+                    }
                 }
             });
 

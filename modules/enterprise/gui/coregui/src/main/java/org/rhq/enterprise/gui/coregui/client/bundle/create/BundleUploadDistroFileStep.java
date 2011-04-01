@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetriever
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -231,7 +232,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             }
 
             public void onFailure(Throwable caught) {
-                wizard.getView().showMessage(caught.getMessage());
+                // Escape it, since it contains the URL, which the user entered.
+                String message = StringUtility.escapeHtml(caught.getMessage());
+                wizard.getView().showMessage(message);
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                 wizard.setBundleVersion(null);
                 setButtonsDisableMode(false);

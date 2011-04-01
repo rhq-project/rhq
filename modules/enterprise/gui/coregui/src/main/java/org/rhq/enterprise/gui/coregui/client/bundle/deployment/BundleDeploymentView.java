@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
@@ -347,9 +348,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         resource.setAutoFitWidth(true);
         resource.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         resource.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
-                    + "\">" + o + "</a>";
+                    + "\">" + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
 
             }
         });
@@ -367,7 +368,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         status.setShowValueIconOnly(true);
         status.setWidth("*");
 
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
             Resource rr = rd.getResource();

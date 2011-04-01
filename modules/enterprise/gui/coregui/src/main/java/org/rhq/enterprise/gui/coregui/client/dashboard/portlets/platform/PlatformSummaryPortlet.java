@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  */
 public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
 
-    public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
+    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms());
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";

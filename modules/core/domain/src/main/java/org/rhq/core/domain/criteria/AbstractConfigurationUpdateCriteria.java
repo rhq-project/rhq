@@ -38,7 +38,8 @@ import org.rhq.core.domain.util.PageOrdering;
 public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    public static final String SORT_FIELD_CTIME = "ctime";
+    public static final String SORT_FIELD_CTIME = "createdTime";
+
     public static final String SORT_FIELD_STATUS = "status";
 
     private Integer filterId;
@@ -54,8 +55,8 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
 
     public AbstractConfigurationUpdateCriteria() {
 
-        filterOverrides.put("startTime", "ctime >= ?");
-        filterOverrides.put("endTime", "ctime <= ?");
+        filterOverrides.put("startTime", "createdTime >= ?");
+        filterOverrides.put("endTime", "createdTime <= ?");
         filterOverrides.put("statuses", "status IN ( ? )");
 
         sortOverrides.put(SORT_FIELD_STATUS, "status");

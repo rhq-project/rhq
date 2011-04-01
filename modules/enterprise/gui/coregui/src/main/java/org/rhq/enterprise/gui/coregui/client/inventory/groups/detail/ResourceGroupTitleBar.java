@@ -316,7 +316,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
             } else {
                 m = MSG.view_titleBar_common_removedFavFailure(ResourceGroupTitleBar.this.group.getName());
             }
-            CoreGUI.getMessageCenter().notify(new Message(m, Message.Severity.Error));
+            CoreGUI.getErrorHandler().handleError(m, throwable);
             // Revert back to our original favorite status, since the server update failed.
             toggleFavoriteLocally();
         }

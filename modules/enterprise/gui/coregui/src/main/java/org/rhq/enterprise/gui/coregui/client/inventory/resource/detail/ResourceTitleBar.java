@@ -356,7 +356,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             } else {
                 msg = MSG.view_titleBar_common_removedFavFailure(resource.getName());
             }
-            CoreGUI.getMessageCenter().notify(new Message(msg, Message.Severity.Info));
+            CoreGUI.getErrorHandler().handleError(msg, throwable);
 
             // Revert back to our original favorite status, since the server update failed.
             toggleFavoriteLocally();

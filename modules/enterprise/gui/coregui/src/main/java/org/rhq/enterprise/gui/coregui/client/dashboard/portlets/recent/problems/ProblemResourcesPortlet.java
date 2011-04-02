@@ -92,7 +92,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
 
     //constants
     public static final String unlimited = MSG.common_label_unlimited();
-    public static final String defaultValue = unlimited;
+    public static final String defaultValue = "20";
 
     private Timer refreshTimer;
 

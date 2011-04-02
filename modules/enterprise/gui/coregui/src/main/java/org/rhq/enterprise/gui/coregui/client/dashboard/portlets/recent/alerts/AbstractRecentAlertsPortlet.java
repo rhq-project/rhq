@@ -62,7 +62,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     private Timer refreshTimer;
 
     public AbstractRecentAlertsPortlet(String locatorId, EntityContext entityContext) {
-        super(locatorId, entityContext);
+        super(locatorId, null, entityContext);
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);

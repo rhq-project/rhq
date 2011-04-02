@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -54,7 +55,8 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
 
     @SuppressWarnings("unchecked")
     public PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc) {
-        pc.initDefaultOrderingField("res.name");
+        pc.initDefaultOrderingField("COUNT(DISTINCT alert.id)", PageOrdering.DESC);
+        pc.addDefaultOrderingField("res.name");
 
         Query queryCount;
         Query query;

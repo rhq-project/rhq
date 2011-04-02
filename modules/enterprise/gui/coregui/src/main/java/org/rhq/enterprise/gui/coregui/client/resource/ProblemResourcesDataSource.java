@@ -131,7 +131,8 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
 
     @Override
     protected Criteria getFetchCriteria(DSRequest request) {
-        // we don't use criterias for this datasource, just return null
+        // we don't use criteria fetch for this datasource, just return null
+
         return null;
     }
 
@@ -207,7 +208,13 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
                     record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                // for paging to work we have to specify size of full result set, but if a limit has been set,
+                // respect the limit
+                int resultSize = result.getTotalSize();
+                if (maximumProblemResourcesToDisplay > 0 && maximumProblemResourcesToDisplay < resultSize) {
+                    resultSize = maximumProblemResourcesToDisplay;
+                }
+                response.setTotalRows(resultSize);
                 processResponse(request.getRequestId(), response);
             }
         });

@@ -132,7 +132,7 @@
         <server name="ServerGroup"
                 description="Server groups on this domain"
                 discovery="SubsystemDiscovery"
-                class="BaseComponent">
+                class="ServerGroupComponent">
             <plugin-configuration>
                 <c:simple-property name="path" default="/server-group/*" readOnly="true"/>
             </plugin-configuration>
@@ -156,7 +156,7 @@
                 <parameters>
                     <c:simple-property name="name" description="Name of this new server" required="true"/>
                     <c:simple-property name="group" displayName="Server Group" description="Server group to put this sever in" default="" required="false"/>
-                    <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="false"/>
+                    <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="true"/>
                 </parameters>
                 <results>
                     <c:simple-property name="result" description="Outcome of the create server operation"/>
@@ -228,9 +228,21 @@
 
         <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
 
-        <operation name="server:start" description="Start this server instance." displayName="Start"/>
-        <operation name="server:stop" description="Stop this server instance." displayName="Stop"/>
-        <operation name="server:restart" description="Restart this server instance." displayName="Restart"/>
+        <operation name="server:start" description="Start this server instance." displayName="Start">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="server:stop" description="Stop this server instance." displayName="Stop">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="server:restart" description="Restart this server instance." displayName="Restart">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
 
 
 
@@ -256,7 +268,7 @@
 
     <server name="Messaging"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="DomainComponent"
             singleton="true"
             >
         <runs-inside>
@@ -267,6 +279,29 @@
         <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
         </plugin-configuration>
+
+        <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
+            <parameters>
+                <c:simple-property name="name" description="Name of the Destination" required="true"/>
+                <c:simple-property name="type" description="Type of Destination to create" default="Queue">
+                    <c:property-options>
+                        <c:option value="Queue"/>
+                        <c:option value="Topic"/>
+                    </c:property-options>
+                </c:simple-property>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="destination:remove" displayName="Remove Destination" description="Remove a destination">
+            <parameters>
+                <c:simple-property name="name" description="Name of the Destination" required="true"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
 
         <resource-configuration>
             <c:simple-property name="journal-min-files" />
@@ -281,10 +316,23 @@
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="/acceptor"/>
             </plugin-configuration>
-
-
         </service>
-
+        <service name="MessagingConnector"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/connector"/>
+            </plugin-configuration>
+        </service>
+        <service name="Queue"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/queue/"/>
+            </plugin-configuration>
+        </service>
     </server>
 
     <server name="JBossWeb"
@@ -341,6 +389,56 @@
 
         </service>
 
+
+    </server>
+
+    <server name="Datasources"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="/subsystem/datasources"/>
+        </plugin-configuration>
+
+        <service name="DataSource"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/data-source/*"/>
+            </plugin-configuration>
+        </service>
+
+        <service name="XADataSource"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/xa-data-source/*"/>
+            </plugin-configuration>
+        </service>
+
+        <service name="JdbcDriver"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="/jdbc-driver/*"/>
+            </plugin-configuration>
+        </service>
 
     </server>
 

@@ -79,8 +79,9 @@ public class OperationJsonTest {
         PROPERTY_VALUE part = new PROPERTY_VALUE("/server-group","newOne");
         address.add(part);
 
-        Map<String,String> props = new HashMap<String, String>();
+        Map<String,Object> props = new HashMap<String, Object>();
         props.put("profile","default");
+        props.put("someBool",true);
 
         Operation operation = new Operation("add",address,props);
 
@@ -94,6 +95,10 @@ public class OperationJsonTest {
 
         Operation op = mapper.readValue(result,Operation.class);
         assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
+        assert op.getAdditionalProperties().containsKey("someBool") : "Key someBool not found ";
+        Object someBool = op.getAdditionalProperties().get("someBool");
+        assert Boolean.valueOf((String) someBool) : "someBool was not true";
+
 
     }
 }

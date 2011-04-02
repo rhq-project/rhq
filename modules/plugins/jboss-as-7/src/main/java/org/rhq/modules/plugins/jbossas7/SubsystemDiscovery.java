@@ -95,6 +95,12 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                 Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
 
+                if (subsystemMap==null) {
+                    log.warn("SubsystemMap was null for path [" + path + "] and subPath ["+ subPath + "] and subNode [" + subNode + "]");
+                    return Collections.emptySet();
+                }
+
+
                 for (Map.Entry<String,Subsystem> entry: subsystemMap.entrySet()) {
 
                     String key = entry.getKey();

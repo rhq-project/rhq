@@ -78,16 +78,16 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
         String op = name.substring(colonPos+1);
         Operation operation=null;
 
+        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
+
         if (what.equals("server-group")) {
             String groupName = parameters.getSimpleValue("name",null);
             String profile = parameters.getSimpleValue("profile","default");
 
-            List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>(1);
             address.add(new PROPERTY_VALUE("server-group",groupName));
 
             operation = new Operation(op,address,"profile",profile);
         } else if (what.equals("server")) {
-            List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
 
             if (context.getResourceType().getName().equals("JBossAS-Managed")) {
                 String host = conf.getSimpleValue("domainHost","local");
@@ -99,17 +99,24 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
                 address.addAll(pathToAddress(getPath()));
                 String serverName = parameters.getSimpleValue("name",null);
                 address.add(new PROPERTY_VALUE("server-config",serverName));
-                Map<String,String> props = new HashMap<String, String>();
+                Map<String,Object> props = new HashMap<String, Object>();
                 String serverGroup = parameters.getSimpleValue("group",null);
-                props.put("name",serverName);
                 props.put("group",serverGroup);
-//                boolean autoStart = parameters.getSimple("auto-start").getBooleanValue();
-//                props.put("auto-start",String.valueOf(autoStart));
-                // TODO put more properties in
+                if (op.equals("add")) {
+                    props.put("name",serverName);
+                    boolean autoStart = parameters.getSimple("auto-start").getBooleanValue();
+                    props.put("auto-start",autoStart);
+                    // TODO put more properties in
+                }
 
                 operation = new Operation(op,address,props);
             }
-
+        } else if (what.equals("destination")) {
+            address.addAll(pathToAddress(getPath()));
+            String newName = parameters.getSimpleValue("name","");
+            String type = parameters.getSimpleValue("type","Queue").toLowerCase();
+            address.add(new PROPERTY_VALUE(type,newName));
+            operation = new Operation(op,address);
         }
 
         OperationResult operationResult = new OperationResult();

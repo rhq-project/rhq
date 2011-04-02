@@ -38,28 +38,28 @@ public class Operation {
     private String operation;
     @JsonProperty
     private List<PROPERTY_VALUE> address = Collections.emptyList();
-    private Map<String,String> additionalProperties;
+    private Map<String,Object> additionalProperties;
 
 
     public Operation(String operation, List<PROPERTY_VALUE> address, NameValuePair payload) {
         this.operation = operation;
         this.address = address;
-        additionalProperties = new HashMap<String,String>(2);
+        additionalProperties = new HashMap<String,Object>(2);
         additionalProperties.put("name",payload.name);
         additionalProperties.put("value",payload.value);
 
     }
 
-    public Operation(String operation, List<PROPERTY_VALUE> address, Map<String,String> payload) {
+    public Operation(String operation, List<PROPERTY_VALUE> address, Map<String,Object> payload) {
         this.operation = operation;
         this.address = address;
         this.additionalProperties = payload;
     }
 
-    public Operation(String operation, List<PROPERTY_VALUE> address, String key, String value) {
+    public Operation(String operation, List<PROPERTY_VALUE> address, String key, Object value) {
         this.operation = operation;
         this.address = address;
-        additionalProperties = new HashMap<String,String>(1);
+        additionalProperties = new HashMap<String,Object>(1);
         additionalProperties.put(key,value);
 
     }
@@ -78,30 +78,30 @@ public class Operation {
     @JsonAnySetter
     public void addAdditionalProperty(String key, String value) {
         if (additionalProperties == null)
-            additionalProperties = new HashMap<String, String>();
+            additionalProperties = new HashMap<String, Object>();
         additionalProperties.put(key,value);
     }
 
-    public void setAdditionalProperties(Map<String, String> additionalProperties) {
+    public void setAdditionalProperties(Map<String, Object> additionalProperties) {
         this.additionalProperties = additionalProperties;
     }
 
     @JsonAnyGetter
-    public Map<String,String> getAdditionalProperties() {
+    public Map<String,Object> getAdditionalProperties() {
         return this.additionalProperties;
     }
 
     @JsonIgnore
     public String getName() {
-       return getProperty("name");
+       return (String) getProperty("name");
     }
 
     @JsonIgnore
     public String getValue() {
-       return getProperty("value");
+       return (String) getProperty("value");
     }
 
-    private String getProperty(String key) {
+    private Object getProperty(String key) {
             if (additionalProperties.containsKey(key))
             return additionalProperties.get(key);
         else

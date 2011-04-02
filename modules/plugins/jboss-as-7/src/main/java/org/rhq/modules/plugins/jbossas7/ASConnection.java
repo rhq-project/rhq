@@ -150,6 +150,9 @@ public class ASConnection {
                     JsonNode reasonNode = in.findValue("failure-description");
                     if (reasonNode==null)
                         reasonNode = in.findValue("domain-failure-description");// TODO JBAS-9182
+                    if (reasonNode==null)
+                        reasonNode = in.findValue("host-failure-descriptions"); // TODO JBAS-9182
+
                     String reason = reasonNode.getTextValue();
                     log.info(reason);
                     return true;
@@ -260,6 +263,8 @@ public class ASConnection {
         JsonNode node = jsonNode.findValue("failure-description");
         if (node==null)
             node = jsonNode.findValue("domain-failure-description"); // TODO JBAS-9182
+        if (node==null)
+            node = jsonNode.findValue("host-failure-descriptions"); // TODO JBAS-9182
         return node.getValueAsText();
     }
 

@@ -247,6 +247,16 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         super.setupTableInteractions(hasWriteAccess);
     }
 
+    @Override
+    protected void refreshTableInfo() {
+        super.refreshTableInfo();
+        if (getTableInfo() != null) {
+            int count = getListGrid().getSelection().length;
+            getTableInfo().setContents(
+                MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
+        }
+    }
+
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }

@@ -124,9 +124,12 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         //figure out which page we're loading
         String currentPage = History.getToken();
         String[] elements = currentPage.split("/");
-        int currentGroupId = AbstractActivityView.groupIdLookup(currentPage);
-        this.groupId = currentGroupId;
+        this.groupId = groupId;
         baseViewPath = elements[0];
+    }
+
+    public GroupConfigurationUpdatesPortlet(String locatorId) {
+        super(locatorId);
     }
 
     /**Defines layout for the portlet page.

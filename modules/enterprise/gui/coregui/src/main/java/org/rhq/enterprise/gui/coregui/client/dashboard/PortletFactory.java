@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operation
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
@@ -151,6 +152,8 @@ public class PortletFactory {
             ResourcePkgHistoryPortlet.Factory.INSTANCE);
         registeredResourcePortletFactoryMap.put(ResourceBundleDeploymentsPortlet.KEY,
             ResourceBundleDeploymentsPortlet.Factory.INSTANCE);
+        registeredResourcePortletFactoryMap.put(ResourceConfigurationUpdatesPortlet.KEY,
+            ResourceConfigurationUpdatesPortlet.Factory.INSTANCE);
 
         //register resource portlet names
         registeredResourcePortletNameMap = new HashMap<String, String>(registeredResourcePortletFactoryMap.size());
@@ -162,6 +165,8 @@ public class PortletFactory {
         registeredResourcePortletNameMap.put(ResourceAlertsPortlet.KEY, ResourceAlertsPortlet.NAME);
         registeredResourcePortletNameMap.put(ResourceBundleDeploymentsPortlet.KEY,
             ResourceBundleDeploymentsPortlet.NAME);
+        registeredResourcePortletNameMap.put(ResourceConfigurationUpdatesPortlet.KEY,
+            ResourceConfigurationUpdatesPortlet.NAME);
 
         //############## Portlet icon mappings  ############################################
         //register portlet names
@@ -181,6 +186,7 @@ public class PortletFactory {
         registeredPortletIconMap.put(GroupBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
         registeredPortletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
         registeredPortletIconMap.put(GroupConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+        registeredPortletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
     }
 
     public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet) {

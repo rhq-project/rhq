@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -268,6 +269,12 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
             DashboardPortlet ops = new DashboardPortlet(GroupOperationsPortlet.NAME, GroupOperationsPortlet.KEY, 220);
             dashboard.addPortlet(ops, colRight, rowRight++);
             groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
+        }
+        if (groupKeyNameMap.containsKey(GroupConfigurationUpdatesPortlet.KEY)) {//operations if available
+            DashboardPortlet ops = new DashboardPortlet(GroupConfigurationUpdatesPortlet.NAME,
+                GroupConfigurationUpdatesPortlet.KEY, 220);
+            dashboard.addPortlet(ops, colRight, rowRight++);
+            groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
         }
 
         //Fill out left column(typically smaller portlets) then alternate cols with remaining

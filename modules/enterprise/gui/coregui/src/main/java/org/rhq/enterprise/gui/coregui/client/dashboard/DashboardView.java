@@ -67,11 +67,13 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.ColorButtonItem;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
@@ -495,6 +497,10 @@ public class DashboardView extends LocatableVLayout {
                 if (!facets.contains(ResourceTypeFacet.EVENT)) {
                     resourceKeyNameMap.remove(ResourceEventsPortlet.KEY);
                 }
+                //Configuration related portlets
+                if (!facets.contains(ResourceTypeFacet.CONFIGURATION)) {
+                    resourceKeyNameMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
+                }
             }
             //Bundle related portlet
             if (!resource.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
@@ -536,6 +542,10 @@ public class DashboardView extends LocatableVLayout {
                     //CONTENT related portlets(CONTENT)
                     if (!facets.contains(ResourceTypeFacet.CONTENT)) {
                         groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
+                    }
+                    //CONFIGURATION related portlets(CONFIGURATION)
+                    if (!facets.contains(ResourceTypeFacet.CONFIGURATION)) {
+                        groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
                     }
                 }
             }

@@ -30,6 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -198,6 +199,12 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
                 220);
             dashboard.addPortlet(ops, colRight, rowRight++);
             resKeyNameMap.remove(ResourceOperationsPortlet.KEY);
+        }
+        if (resKeyNameMap.containsKey(ResourceConfigurationUpdatesPortlet.KEY)) {//configuration if available
+            DashboardPortlet ops = new DashboardPortlet(ResourceConfigurationUpdatesPortlet.NAME,
+                ResourceConfigurationUpdatesPortlet.KEY, 220);
+            dashboard.addPortlet(ops, colRight, rowRight++);
+            resKeyNameMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
         }
 
         //Fill out left column(typically smaller portlets) then alternate cols with remaining

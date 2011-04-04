@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -73,7 +72,8 @@ public class PermissionsEditor extends LocatableVStack {
 
         this.roleEditView = roleEditView;
         this.isReadOnly = isReadOnly;
-        this.selectedPermissions = new HashSet<Permission>();
+        // Default permission set
+        this.selectedPermissions = EnumSet.of(Permission.VIEW_RESOURCE);
 
         setWidth("95%");
         setHeight100();
@@ -337,7 +337,6 @@ public class PermissionsEditor extends LocatableVStack {
                     Permission permission = Permission.valueOf(permissionName);
                     if (permission == Permission.VIEW_RESOURCE) {
                         event.getItem().setValue(true);
-                        event.getItem().disable();
                         String permissionDisplayName = record.getAttribute("displayName");
                         Message message = new Message(
                             MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName),

@@ -251,6 +251,8 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
 
     public static Set<Permission> toPermissionSet(Record[] permissionRecords) {
         Set<Permission> permissions = new HashSet<Permission>();
+        // VIEW_RESOURCE is implied, so make sure it's always in the returned Set.
+        permissions.add(Permission.VIEW_RESOURCE);
         for (Record permissionRecord : permissionRecords) {
             String permissionName = permissionRecord.getAttribute("name");
             Permission permission = Permission.valueOf(permissionName);

@@ -112,7 +112,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     protected boolean portletConfigInitialized = false;
     protected boolean currentlyLoading = false;
     protected String baseViewPath = "";
-    private HistoryGroupResourceConfigurationTable groupHistoryTable;
+    private GroupConfigurationHistoryCriteriaTable groupHistoryTable;
 
     protected static HashMap<String, String> updatedMapping = new HashMap<String, String>();
     static {
@@ -300,16 +300,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         loadData();
     }
 
-    //    @Override
-    //    protected void refreshTableInfo() {
-    //        super.refreshTableInfo();
-    //        if (getTableInfo() != null) {
-    //            int count = getListGrid().getSelection().length;
-    //            getTableInfo().setContents(
-    //                MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
-    //        }
-    //    }
-
     @Override
     public boolean isRefreshing() {
         return this.currentlyLoading;
@@ -370,29 +360,18 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                         filterResourceGroupIds.add(groupId);
                         criteria.addFilterResourceGroupIds(filterResourceGroupIds);
 
-                        groupHistoryTable = new HistoryGroupResourceConfigurationTable(extendLocatorId("Table"),
+                        groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(extendLocatorId("Table"),
                             groupComposite);
-                        //                        groupHistoryTable.setDataSource(new GroupConfigurationUdpatesCriteriaDataSource(portletConfig,
-                        //                            groupId));
-                        //                        groupHistoryTable.setShowHeader(false);
-                        //                        groupHistoryTable.setShowFooterRefresh(false);
                     } else {
-                        //TODO: spinder fix for empties
-                        //                        Criteria criteria = new Criteria();
                         ResourceGroup emptyGroup = new ResourceGroup("");
                         emptyGroup.setId(-1);
                         Long zero = new Long(0);
                         groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, emptyGroup);
-                        //                        groupOperations = new GroupOperationsCriteriaHistoryListView(locatorId,
-                        //                            new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
-                        groupHistoryTable = new HistoryGroupResourceConfigurationTable(extendLocatorId("Table"),
+                        groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(extendLocatorId("Table"),
                             groupComposite);
-                        //                        groupHistoryTable.setDataSource(new GroupConfigurationUdpatesCriteriaDataSource(portletConfig,
-                        //                            groupId));
-                        //                        groupHistoryTable.setShowHeader(false);
-                        //                        groupHistoryTable.setShowFooterRefresh(false);
                     }
 
+                    //update table for portlet display.
                     groupHistoryTable.setDataSource(new GroupConfigurationUdpatesCriteriaDataSource(portletConfig,
                         groupId));
                     groupHistoryTable.setShowHeader(false);
@@ -419,6 +398,24 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
     public String getBaseViewPath() {
         return baseViewPath;
+    }
+
+    class GroupConfigurationHistoryCriteriaTable extends HistoryGroupResourceConfigurationTable {
+
+        public GroupConfigurationHistoryCriteriaTable(String locatorId, ResourceGroupComposite groupComposite) {
+            super(locatorId, groupComposite);
+            getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
+        }
+
+        @Override
+        protected void refreshTableInfo() {
+            super.refreshTableInfo();
+            if (getTableInfo() != null) {
+                int count = getListGrid().getSelection().length;
+                getTableInfo().setContents(
+                    MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
+            }
+        }
     }
 
     class GroupConfigurationUdpatesCriteriaDataSource extends GroupResourceConfigurationDataSource {

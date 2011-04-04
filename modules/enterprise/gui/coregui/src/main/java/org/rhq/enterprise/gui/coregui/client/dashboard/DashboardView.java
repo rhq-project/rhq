@@ -527,6 +527,7 @@ public class DashboardView extends LocatableVLayout {
                 groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
                 groupKeyNameMap.remove(GroupOobsPortlet.KEY);
                 groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
+                groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
             } else {
                 //for compatible may still need to do some pruning.
                 if (!facets.isEmpty()) {

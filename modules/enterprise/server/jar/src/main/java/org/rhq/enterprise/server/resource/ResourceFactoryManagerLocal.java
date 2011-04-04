@@ -131,6 +131,7 @@ public interface ResourceFactoryManagerLocal {
      * These requests may be completed or still in progress; it represents the history of creation attempts for this
      * parent resource.
      *
+     * @param  subject          the user making the request
      * @param  parentResourceId resource to check for child resource creations
      * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
      * @param  endDate          filter used to show only results occurring before this epoch millis parameter, nullable
@@ -138,14 +139,15 @@ public interface ResourceFactoryManagerLocal {
      *
      * @return list of requests
      */
-    PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
-        PageControl pageControl);
+    PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl);
 
     /**
      * Returns a pagination enabled list of requests to delete a child resource on the specified parent. These requests
      * may be complete or still in progress; it represents the history of all delete attempts of child resources to this
      * resource.
      *
+     * @param  subject          the user making the request
      * @param  parentResourceId resource to check for deleted child resources
      * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
      * @param  endate           filter used to show only results occurring before this epoch millis parameter, nullable
@@ -153,8 +155,8 @@ public interface ResourceFactoryManagerLocal {
      *
      * @return list of requests
      */
-    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
-        PageControl pageControl);
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl);
 
     /**
      * Persists a record in the resource history to indicate a request has been made to create a configuration-backed

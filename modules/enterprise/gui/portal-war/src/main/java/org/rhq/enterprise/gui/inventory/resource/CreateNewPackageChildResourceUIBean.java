@@ -120,8 +120,8 @@ public class CreateNewPackageChildResourceUIBean {
         //store information about uploaded file for packageDetails as most of it is already available
         Map<String, String> packageUploadDetails = new HashMap<String, String>();
         packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
-        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String
-            .valueOf(System.currentTimeMillis()));
+        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
+            .currentTimeMillis()));
         packageUploadDetails.put(ContentManagerLocal.UPLOAD_OWNER, user.getName());
         packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_NAME, fileItem.getFileName());
 
@@ -319,12 +319,13 @@ public class CreateNewPackageChildResourceUIBean {
      * @return list of failed create history requests
      */
     public SelectItem[] getFailedCreateHistory() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
 
         ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         PageControl pageControl = new PageControl(0, 1000);
-        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(parentResource
-            .getId(), null, null, pageControl);
+        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(subject,
+            parentResource.getId(), null, null, pageControl);
 
         List<SelectItem> selectItemsList = new ArrayList<SelectItem>();
         for (CreateResourceHistory history : pageList) {

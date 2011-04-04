@@ -120,6 +120,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -1261,10 +1262,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         // TODO (ips, 03/25/11): We eventually want to use StaticTextItems for read-only PASSWORD props too, but we have
         //                       to wait until we implement masking/unmasking of PASSWORD props at the SLSB layer first.
         if (propertyIsReadOnly && propertyDefinitionSimple.getType() != PropertySimpleType.PASSWORD) {
-            StaticTextItem staticItem = new StaticTextItem();
-            // Property values are user-editable, so escape HTML to prevent an XSS attack.
-            staticItem.setOutputAsHTML(true);
-            valueItem = staticItem;
+            valueItem = new StaticTextItem();
         } else {
             List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
             if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
@@ -1336,13 +1334,20 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
-        // for more robust and repeatable item locators (not positional) assign a name and title
+        // For more robust and repeatable item locators (not positional), assign a name and a title.
         valueItem.setName(propertySimple.getName());
         valueItem.setTitle("none");
         valueItem.setShowTitle(false);
+
+        String value = propertySimple.getStringValue();
+        if (valueItem instanceof StaticTextItem) {
+            // Property values are user-editable, so escape HTML when displayed as static text, to prevent XSS attacks.
+            value = StringUtility.escapeHtml(value);
+        }
         // TODO (ips): I don't think we want to use setDefaultValue(), as it will cause the input to be reset to the
         //             value if the user clears it.
-        valueItem.setDefaultValue(propertySimple.getStringValue());
+        valueItem.setDefaultValue(value);
+
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
         valueItem.setWidth(220);
 

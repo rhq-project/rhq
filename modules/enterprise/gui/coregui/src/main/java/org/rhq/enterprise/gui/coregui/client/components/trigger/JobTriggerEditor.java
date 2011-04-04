@@ -190,12 +190,12 @@ public class JobTriggerEditor extends LocatableVLayout {
         modeItem.setValueMap(modeValueMap);
         modeItem.setVertical(false);
         modeItem.setShowTitle(true);
+        modeItem.setValue("calendar");
 
         this.modeForm.setFields(modeItem);
         addMember(this.modeForm);
 
         this.calendarModeLayout = new LocatableVLayout(extendLocatorId("CalendarModeLayout"));
-        this.calendarModeLayout.setVisible(false);
 
         this.calendarTypeForm = new EnhancedDynamicForm(extendLocatorId("CalendarTypeForm"), this.isReadOnly);
 
@@ -209,6 +209,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         calendarTypeValueMap.put("laterAndRepeat", MSG.widget_jobTriggerEditor_value_laterAndRepeat());
         calendarTypeItem.setValueMap(calendarTypeValueMap);
         calendarTypeItem.setVertical(false);
+        calendarTypeItem.setValue("now");
 
         this.calendarTypeForm.setFields(calendarTypeItem);
         

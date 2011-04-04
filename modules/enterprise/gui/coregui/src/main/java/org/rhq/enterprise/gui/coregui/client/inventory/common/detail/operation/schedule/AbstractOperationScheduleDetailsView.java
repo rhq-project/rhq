@@ -218,6 +218,13 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     }
 
     @Override
+    protected ButtonBar buildButtonBar() {
+        ButtonBar buttonBar = super.buildButtonBar();
+        buttonBar.getSaveButton().setTitle(MSG.common_button_schedule());
+        return buttonBar;
+    }
+
+    @Override
     protected String getTitleFieldName() {
         return ResourceOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
     }

@@ -68,9 +68,6 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         setOverflow(Overflow.VISIBLE);
         setShowFooterRefresh(false); //disable footer refresh button as redundant for portlets
         setShowHeader(false);//disable header for portlets
-        if (getListGrid() != null) {
-            getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
-        }
     }
 
     public Timer getRefreshTimer() {
@@ -395,5 +392,11 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
             return criteria;
         }
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 }

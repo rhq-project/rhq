@@ -353,6 +353,11 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         return false;
     }
 
+    @Override
+    public void redraw() {
+        super.refresh();
+        markForRedraw();
+    }
 }
 
 /**Construct table widget Label to display timerange settings used with latest datasource query.

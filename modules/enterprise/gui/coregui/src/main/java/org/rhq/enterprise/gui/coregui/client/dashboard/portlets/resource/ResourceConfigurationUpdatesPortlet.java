@@ -195,6 +195,12 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
         protected String getBasePath() {
             return "Resource/" + resourceComposite.getResource().getId() + "/Configuration/History";
         }
+
+        @Override
+        protected void onInit() {
+            super.onInit();
+            getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
+        }
     }
 
     class ConfigurationUdpatesCriteriaDataSource extends ConfigurationHistoryDataSource {

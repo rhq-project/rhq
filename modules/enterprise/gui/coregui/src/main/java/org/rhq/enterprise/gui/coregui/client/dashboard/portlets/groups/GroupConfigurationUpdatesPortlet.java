@@ -404,7 +404,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
         public GroupConfigurationHistoryCriteriaTable(String locatorId, ResourceGroupComposite groupComposite) {
             super(locatorId, groupComposite);
-            getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
         }
 
         @Override
@@ -416,6 +415,13 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                     MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
             }
         }
+
+        @Override
+        protected void onInit() {
+            super.onInit();
+            getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
+        }
+
     }
 
     class GroupConfigurationUdpatesCriteriaDataSource extends GroupResourceConfigurationDataSource {

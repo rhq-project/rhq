@@ -883,7 +883,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceFactoryManager.deleteResources(subject, resourceIds);
     }
 
-    //RESOURCEFACTORYMANAGER: END ----------------------------------
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
+        return resourceFactoryManager.findCreateChildResourceHistory(subject, parentResourceId, beginDate, endDate,
+            pageControl);
+    }
+
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
+        return resourceFactoryManager.findDeleteChildResourceHistory(subject, parentResourceId, beginDate, endDate,
+            pageControl);
+    }
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {

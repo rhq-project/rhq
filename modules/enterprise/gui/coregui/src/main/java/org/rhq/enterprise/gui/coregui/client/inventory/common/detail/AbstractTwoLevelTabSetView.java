@@ -228,7 +228,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : null;
             SubTab subtab = null;
 
-            // if the requested tab is not available for the tabset then select the defaults (firing a new event) 
+            // if the requested tab is not available for the tabset then select the default tab/subtab. Fire
+            // an event in order to navigate to the new path 
             if (tab == null || tab.getDisabled()) {
                 this.tabSet.setIgnoreSelectEvents(false);
                 subtab = selectDefaultTabAndSubTab();
@@ -239,39 +240,36 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
 
             // due to our attempt to perform sticky tabbing we may request an invalid subtab when
-            // switching resources. If the requested subtab is not available the select the default subtab for the tab
+            // switching resources. If the requested subtab is not available the select the default subtab
+            // for the tab. Fire an event in order to navigate to the new path. 
             if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
-                subtab = tab.getLayout().getDefaultSubTab();
+                this.tabSet.setIgnoreSelectEvents(false);
+                subtab = selectDefaultSubTab(tab);
+                return;
             }
 
-            // select the subTab (this does not fire an event, just sets the subtab)
+            // the requested tab/subtab are valid, continue with this path
+
+            // select the tab and subTab (no event fired, we're already dealing with the correct path)
+            this.tabSet.selectTab(tab);
+            // this call adds the subtab canvas as a member of the subtablayout
             tab.getLayout().selectSubTab(subtab);
 
-            // the target tab/subtab is now determined. if the currently selected tab is not the target tab then
-            // select it now.
-            if (!tab.equals(this.tabSet.getSelectedTab())) {
-
-                // Fire a tab selection event only if we're at the end of the path. If not then it is assumed that
-                // the subtab view is a BookmarkableView and the navigation will continue in that way, below.
-                if (viewPath.isEnd()) {
-                    this.tabSet.setIgnoreSelectEvents(false);
-                    this.tabSet.selectTab(tab);
-                    return;
-                }
-
-                this.tabSet.selectTab(tab);
-            }
-
-            // if the desired tab/subtab are already selected, now we can render the subtab canvas
+            // get the target canvas
             Canvas subView = subtab.getCanvas();
 
+            // if this is a bookmarkable view then further rendering is deferred to its renderView method. This
+            // will set the basePath as well as handle any remaining view items (e.g. id of a selected item in
+            // a subtab that contains a Master-Details view). Otherwise, make sure we perform any required
+            // refresh.
             if (subView instanceof BookmarkableView) {
-                // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
                 ((BookmarkableView) subView).renderView(viewPath);
+
             } else if (subView instanceof RefreshableView && subView.isDrawn()) {
                 // Refresh the data on the subtab, so it's not stale.
                 Log.debug("Refreshing data for [" + subView.getClass().getName() + "]...");
                 ((RefreshableView) subView).refresh();
+
             }
 
             // ensure the tabset is enabled (disabled in onTabSelected), and redraw
@@ -290,6 +288,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         if (tab == null) {
             throw new IllegalStateException("No default tab is defined.");
         }
+
+        return selectDefaultSubTab(tab);
+    }
+
+    private SubTab selectDefaultSubTab(TwoLevelTab tab) {
 
         SubTab subTab = tab.getDefaultSubTab();
         if (subTab == null || tab.getLayout().isSubTabDisabled(subTab)) {

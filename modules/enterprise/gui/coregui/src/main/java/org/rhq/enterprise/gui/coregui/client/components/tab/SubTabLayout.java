@@ -210,7 +210,7 @@ public class SubTabLayout extends LocatableVLayout {
         }
 
         if (foundTab) {
-            refresh();
+            setCurrentlySelected();
         }
 
         return foundTab;
@@ -248,7 +248,7 @@ public class SubTabLayout extends LocatableVLayout {
                 return false;
             }
             this.currentlySelected = subTab.getLocatorId();
-            refresh();
+            setCurrentlySelected();
             return true;
         }
     }
@@ -293,8 +293,8 @@ public class SubTabLayout extends LocatableVLayout {
         }
     }
 
-    private void refresh() {
-        if (isDrawn() && null != this.currentlySelected) {
+    private void setCurrentlySelected() {
+        if (null != this.currentlySelected) {
             Button button = this.subTabs.get(this.currentlySelected).getButton();
             button.select();
 

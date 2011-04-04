@@ -33,6 +33,8 @@ import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -165,4 +167,45 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds);
 
+    /**
+     * Returns a pagination enabled list of requests for the creation of new child resources to the specified parent.
+     * These requests may be completed or still in progress; it represents the history of creation attempts for this
+     * parent resource.
+     *
+     * @param  subject          the user making the request
+     * @param  parentResourceId resource to check for child resource creations
+     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate          filter used to show only results occurring before this epoch millis parameter, nullable
+     * @param  pageControl      control for pagination
+     *
+     * @return list of requests
+     */
+    @WebMethod
+    PageList<CreateResourceHistory> findCreateChildResourceHistory( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "beginDate") Long beginDate, //
+        @WebParam(name = "endDate") Long endDate, //
+        @WebParam(name = "pageControl") PageControl pageControl);
+
+    /**
+     * Returns a pagination enabled list of requests to delete a child resource on the specified parent. These requests
+     * may be complete or still in progress; it represents the history of all delete attempts of child resources to this
+     * resource.
+     *
+     * @param  subject          the user making the request
+     * @param  parentResourceId resource to check for deleted child resources
+     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endate           filter used to show only results occurring before this epoch millis parameter, nullable
+     * @param  pageControl      control for pagination
+     *
+     * @return list of requests
+     */
+    @WebMethod
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "beginDate") Long beginDate, //
+        @WebParam(name = "endDate") Long endDate, //
+        @WebParam(name = "pageControl") PageControl pageControl);
 }

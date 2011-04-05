@@ -308,6 +308,8 @@ public class UserPreferences {
             }
             return result;
         } catch (Exception e) {
+            // value was probably in be the old comma-delimited format used by portal-war -
+            // throw it away and return an empty list
             return new ArrayList<Integer>();
         }
     }

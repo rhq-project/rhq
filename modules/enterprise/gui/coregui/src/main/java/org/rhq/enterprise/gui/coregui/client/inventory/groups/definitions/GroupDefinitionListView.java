@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -56,8 +57,8 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
         super(locatorId, TITLE);
 
         setHeaderIcon(headerIcon);
-
         setDataSource(GroupDefinitionDataSource.getInstance());
+        setEscapeHtmlInDetailsLinkColumn(true);
     }
 
     @Override
@@ -67,7 +68,9 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
         idField.setWidth(50);
 
         ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 150);
+        nameField.setCellFormatter(new EscapedHtmlCellFormatter());
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
         ListGridField expressionField = new ListGridField("expression", MSG.view_dynagroup_expressionSet(), 250);
         expressionField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {

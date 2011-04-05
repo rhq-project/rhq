@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -73,10 +73,12 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -139,11 +141,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         form.setDataSource(GroupDefinitionDataSource.getInstance());
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
-        if (groupDefinition.getId() == 0) {
-            form.setSaveOperationType(DSOperationType.ADD);
-        } else {
-            form.setSaveOperationType(DSOperationType.UPDATE);
-        }
+        DSOperationType saveOperationType = (groupDefinition.getId() == 0) ? DSOperationType.ADD : DSOperationType.UPDATE;
+        form.setSaveOperationType(saveOperationType);
 
         final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(extendLocatorId("DynaGroups"),
             groupDefinitionId);
@@ -201,7 +200,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                         } else {
                             Record newRecord = results[0];
                             GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance().copyValues(
-                                (ListGridRecord) newRecord);
+                                    newRecord);
                             if (recalc) {
                                 recalculate(dynaGroupChildrenView, newGroupDefinition.getId());
                             }
@@ -257,12 +256,13 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                     String linkName = record.getAttributeAsString(NAME.propertyName());
                     String linkUrl = LinkManager.getResourceGroupLink(record.getAttributeAsInt("id"));
-                    return "<a href=\"" + linkUrl + "\">" + linkName + "</a>";
+                    return "<a href=\"" + linkUrl + "\">" + StringUtility.escapeHtml(linkName) + "</a>";
                 }
             });
 
             ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
             descriptionField.setWidth("300");
+            descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
             ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
             typeNameField.setWidth("100");
@@ -350,12 +350,12 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         templateSelectorTitleSpacer.setColSpan(1);
         templateSelectorTitleSpacer.setEndRow(false);
 
-        templateSelector = new SelectItem("templateSelector");
+        // TODO: i18n title
+        templateSelector = new SelectItem("templateSelector", "Saved Expression");
         templateStrings = getTemplates();
         templateSelector.setValueMap(templateStrings.keySet().toArray(new String[templateStrings.size()]));
         templateSelector.setAllowEmptyValue(true);
         templateSelector.setWidth(300);
-        templateSelector.setShowTitle(false);
         templateSelector.setColSpan(1);
         templateSelector.setEndRow(true);
         templateSelector.setStartRow(false);

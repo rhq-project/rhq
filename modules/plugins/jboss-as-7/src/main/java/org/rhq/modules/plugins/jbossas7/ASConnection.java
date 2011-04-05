@@ -173,6 +173,8 @@ public class ASConnection {
      */
     public JsonNode execute(Operation operation) {
 
+        InputStream inputStream = null;
+        BufferedReader br=null;
         try {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
@@ -188,23 +190,22 @@ public class ASConnection {
             out.flush();
             out.close();
 
-            InputStream inputStream;
             if (conn.getResponseCode()==HttpURLConnection.HTTP_OK) {
                 inputStream = conn.getInputStream();
 
-                BufferedReader in = new BufferedReader(new InputStreamReader(
+                 br = new BufferedReader(new InputStreamReader(
                         inputStream));
                 String line;
                 builder = new StringBuilder();
-                while ((line = in.readLine()) != null) {
+                while ((line = br.readLine()) != null) {
                     builder.append(line);
                 }
-                in.close();
+                br.close();
             }
             else {
                 InputStream errorStream = conn.getErrorStream();
                 if (errorStream!=null) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(errorStream));
+                    br = new BufferedReader(new InputStreamReader(errorStream));
                     String line;
                     builder = new StringBuilder();
                     while ((line = br.readLine()) != null) {
@@ -213,6 +214,9 @@ public class ASConnection {
                     br.close();
                 }
             }
+            if (br!=null)
+                br.close();
+
             String outcome;
             JsonNode operationResult=null;
             if (builder!=null) {

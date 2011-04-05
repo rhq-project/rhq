@@ -304,13 +304,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         };
         updateSubTab(this.inventoryTab, this.inventoryChildren, visible, true, viewFactory);
 
-        updateSubTab(this.inventoryTab, this.inventoryChildHistory, visible, true, new ViewFactory() {
+        visible = !type.getChildResourceTypes().isEmpty();
+        viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                // TODO
-                return new Canvas();
+                return new ChildHistoryView(inventoryTab.extendLocatorId("ChildHistory"), resourceComposite);
             }
-        });
+        };
+        updateSubTab(this.inventoryTab, this.inventoryChildHistory, visible, true, viewFactory);
 
         visible = facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION);
         viewFactory = (!visible) ? null : new ViewFactory() {

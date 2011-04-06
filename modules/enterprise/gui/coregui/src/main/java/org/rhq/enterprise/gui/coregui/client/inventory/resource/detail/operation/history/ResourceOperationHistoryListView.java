@@ -19,24 +19,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history;
 
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
+
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 
 /**
  * A table that displays all of the operation histories for a particular Resource.
  *
  * @author Ian Springer
+ * @author Jay Shaughnessy 
  */
-public class ResourceOperationHistoryListView extends AbstractOperationHistoryListView {
+public class ResourceOperationHistoryListView extends OperationHistoryView {
 
     private ResourceComposite resourceComposite;
 
     public ResourceOperationHistoryListView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, new ResourceOperationHistoryDataSource(), null, 
-            new Criteria(ResourceOperationHistoryDataSource.CriteriaField.RESOURCE_ID,
-            String.valueOf(resourceComposite.getResource().getId())));
+        super(locatorId, null, EntityContext.forResource(resourceComposite.getResource().getId()));
+
         this.resourceComposite = resourceComposite;
     }
 

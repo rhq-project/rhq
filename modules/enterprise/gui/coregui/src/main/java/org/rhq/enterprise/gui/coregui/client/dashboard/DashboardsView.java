@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -390,12 +390,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                     ProblemResourcesPortlet.defaultValue));
         dashboard.addPortlet(problemResources, 1, 1);
 
-        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 350);
-        //initialize config for the operations portlet.
-        operations.getConfiguration().put(
-            new PropertySimple(OperationsPortlet.OPERATIONS_RANGE_COMPLETED, OperationsPortlet.defaultValue));
-        operations.getConfiguration().put(
-            new PropertySimple(OperationsPortlet.OPERATIONS_RANGE_SCHEDULED, OperationsPortlet.defaultValue));
+        DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY,
+            200);
         dashboard.addPortlet(operations, 1, 2);
 
         return dashboard;

@@ -38,6 +38,7 @@ public abstract class SubjectPreferencesBase {
     /** delimiter for preferences that are multi-valued and stringified */
     protected static final String PREF_LIST_DELIM = ",";
     protected static final String PREF_ITEM_DELIM = "|";
+    protected static final String PREF_ITEM_DELIM_REGEX = "\\|";
 
     private int subjectId;
     private Set<String> changed;
@@ -50,7 +51,6 @@ public abstract class SubjectPreferencesBase {
     /**
      * Get the value of a preference as a boolean.
      * @param key the preference to get
-     * @param ifNull if the pref is undefined, return this value instead
      * @return the boolean value of 'key', or if key is null, returns the
      * 'ifNull' value.
      */
@@ -204,11 +204,11 @@ public abstract class SubjectPreferencesBase {
 
     protected List<Integer> getPreferenceAsIntegerList(String key, String delimiter) {
         try {
-            List<String> value = getPreferenceAsList(key, delimiter);
+            List<String> values = getPreferenceAsList(key, delimiter);
 
-            List<Integer> result = new ArrayList<Integer>(value.size());
-            for (int i = 0; i < value.size(); i++) {
-                String trimmed = value.get(i).trim();
+            List<Integer> result = new ArrayList<Integer>(values.size());
+            for (String value : values) {
+                String trimmed = value.trim();
                 if (trimmed.length() > 0) {
                     result.add(Integer.valueOf(trimmed));
                 }
@@ -230,7 +230,7 @@ public abstract class SubjectPreferencesBase {
     }
 
     public void setPreference(String key, Object value) throws IllegalArgumentException {
-        String val = null;
+        String val;
         if (value == null) {
             val = "";
         } else if (value instanceof String) {

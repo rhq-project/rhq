@@ -52,6 +52,7 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -329,6 +330,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     }
 
     protected List<PROPERTY_VALUE> pathToAddress(String path) {
+        if (path==null || path.isEmpty())
+            return Collections.emptyList();
+
         if (path.endsWith("/"))
             path = path.substring(0,path.length()-1);
 

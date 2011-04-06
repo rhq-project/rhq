@@ -23,11 +23,13 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.modules.plugins.jbossas7.json.Subsystem;
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -35,7 +37,6 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 
 /**
  * Discover subsystems
@@ -83,46 +84,62 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         System.out.println("total path: [" + path + "]");
 
 
-        JsonNode json = connection.getLevelData(path,recursive, false);
+        JsonNode json ;
+        if (!recursive)
+            json = connection.getLevelData(path,recursive, false);
+        else {
+            List<PROPERTY_VALUE> addr ;
+            addr = parentComponent.pathToAddress(parentPath);
+            String childType = cpath.substring(0, cpath.length() - 2);
+            if (childType.startsWith("/"))
+                childType = childType.substring(1);
+            json = connection.execute(new ReadChildrenNames(addr, childType));
+        }
         if (!connection.isErrorReply(json)) {
             if (recursive) {
                 int i = path.lastIndexOf("/");
                 String subPath = path.substring(i+1);
 
-                JsonNode subNode = json.findPath(subPath);
+                JsonNode subNode = json.findPath("result");
                 if (subNode==null || subNode.isNull())
                     subNode = json.get(subPath);  // TODO clean this up. to get the 'key' in a path from the AS we need to use get()
 
-                Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
+//                Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
+                if (subNode.isArray()) {
 
-                if (subsystemMap==null) {
-                    log.warn("SubsystemMap was null for path [" + path + "] and subPath ["+ subPath + "] and subNode [" + subNode + "]");
-                    return Collections.emptySet();
-                }
+                   Iterator<JsonNode> iter = subNode.getElements();
+//                if (subsystemMap==null) {
+//                    log.warn("SubsystemMap was null for path [" + path + "] and subPath ["+ subPath + "] and subNode [" + subNode + "]");
+//                    return Collections.emptySet();
+//                }
+                    while (iter.hasNext()) {
+
+                        JsonNode node = iter.next();
+                    String val = node.getTextValue();
 
 
-                for (Map.Entry<String,Subsystem> entry: subsystemMap.entrySet()) {
-
-                    String key = entry.getKey();
-                    Subsystem subsystem = entry.getValue();
-                    String newPath = cpath.replaceAll("\\*",key);
+                    String newPath = cpath.replaceAll("\\*",val);
                     Configuration config2 = context.getDefaultPluginConfiguration();
                     PropertySimple pathProp = new PropertySimple("path",newPath);
                     config2.put(pathProp);
 
-                    String resKey = context.getParentResourceContext().getResourceKey() + "/" + key;
+                    String resKey = context.getParentResourceContext().getResourceKey() + "/" + val;
                     String name = resKey.substring(resKey.lastIndexOf("/") + 1);
 
 
                     DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                             context.getResourceType(), // DataType
-                            path + "/" + key, // Key
+                            path + "/" + val, // Key
                             name, // Name
                             null, // Version
-                            subsystem.description, // Description
+                            "TODO", // subsystem.description, // Description
                             config2,
                             null);
                     details.add(detail);
+                }
+                }
+                else {
+                    System.out.println("subnode was no array");
                 }
 
             }

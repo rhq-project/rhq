@@ -51,7 +51,7 @@
         version="4.0.0-SNAPSHOT"
         >
 
-    <depends plugin="JMX" useClasses="true"/>
+<!--    <depends plugin="JMX" useClasses="true"/> -->
 
 
     <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
@@ -284,6 +284,7 @@
     <server name="Messaging"
             discovery="SubsystemDiscovery"
             class="DomainComponent"
+            description="The underlying HornetQ based messaging subsystem"
             singleton="true"
             >
         <runs-inside>
@@ -298,12 +299,15 @@
         <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
             <parameters>
                 <c:simple-property name="name" description="Name of the Destination" required="true"/>
+                <c:simple-property name="queue-address" description="The queue address defines what address is used for routing messages." required="true"/>
                 <c:simple-property name="type" description="Type of Destination to create" default="Queue">
                     <c:property-options>
                         <c:option value="Queue"/>
                         <c:option value="Topic"/>
                     </c:property-options>
                 </c:simple-property>
+                <c:simple-property name="filter" description="The queue message filter definition."/>
+                <c:simple-property name="durable" description="Defines whether the queue is durable." type="boolean" default="false"/>
             </parameters>
             <results>
                 <c:simple-property name="operationResult"/>
@@ -329,7 +333,7 @@
                  class="BaseComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/acceptor"/>
+                <c:simple-property name="path" readOnly="true" default="acceptor"/>
             </plugin-configuration>
         </service>
         <service name="MessagingConnector"
@@ -337,17 +341,65 @@
                  class="BaseComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/connector"/>
+                <c:simple-property name="path" readOnly="true" default="connector"/>
             </plugin-configuration>
         </service>
-        <service name="Queue"
+        <service name="HQueue"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/queue/*"/>
+                <c:simple-property name="path" readOnly="true" default="queue/*"/>
+            </plugin-configuration>
+            <resource-configuration>
+                <c:simple-property name="queue-address" required="true"/>
+                <c:simple-property name="filter" />
+                <c:simple-property name="durable" type="boolean"/>
+            </resource-configuration>
+
+        </service>
+    </server>
+
+    <server name="JMS"
+            discovery="SubsystemDiscovery"
+            class="DomainComponent"
+            description="The JMS messaging subsystem"
+            singleton="true"
+            >
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="/subsystem/jms"/>
+        </plugin-configuration>
+
+        <service name="Queue"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="queue/*"/>
             </plugin-configuration>
         </service>
+        <service name="Topic"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="topic/*"/>
+            </plugin-configuration>
+        </service>
+        <service name="Connection-Factory"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="connection-factory/*"/>
+            </plugin-configuration>
+        </service>
+
     </server>
 
     <server name="JBossWeb"
@@ -377,9 +429,9 @@
             <metric property="bytesSent" measurementType="trendsup"/>
             <metric property="bytesReceived" measurementType="trendsup"/>
             <metric property="processingTime" measurementType="trendsup"/>
-            <metric property="errorCount" measurementType="trendsup"/>
+            <metric property="errorCount" measurementType="trendsup" displayType="summary"/>
             <metric property="maxTime" />
-            <metric property="requestCount" measurementType="trendsup"/>
+            <metric property="requestCount" measurementType="trendsup" displayType="summary"/>
 
             <resource-configuration>
                 <c:simple-property name="protocol" required="false" description="The web connector protocol."/>
@@ -431,7 +483,7 @@
                 >
 
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/data-source/*"/>
+                <c:simple-property name="path" readOnly="true" default="data-source/*"/>
             </plugin-configuration>
         </service>
 
@@ -442,7 +494,7 @@
                 >
 
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/xa-data-source/*"/>
+                <c:simple-property name="path" readOnly="true" default="xa-data-source/*"/>
             </plugin-configuration>
         </service>
 
@@ -453,7 +505,7 @@
                 >
 
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/jdbc-driver/*"/>
+                <c:simple-property name="path" readOnly="true" default="jdbc-driver/*"/>
             </plugin-configuration>
         </service>
 

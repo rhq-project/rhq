@@ -59,4 +59,11 @@ public class PROPERTY_VALUE implements Serializable{
         this.value = value;
     }
 
+    @Override
+    public String toString() {
+        return "PROPERTY_VALUE{" +
+                "key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
 }

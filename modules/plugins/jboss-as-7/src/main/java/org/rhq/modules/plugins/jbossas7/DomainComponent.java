@@ -114,8 +114,11 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
         } else if (what.equals("destination")) {
             address.addAll(pathToAddress(getPath()));
             String newName = parameters.getSimpleValue("name","");
-            String type = parameters.getSimpleValue("type","Queue").toLowerCase();
-            address.add(new PROPERTY_VALUE(type,newName));
+//            String type = parameters.getSimpleValue("type","Queue").toLowerCase();
+//            address.add(new PROPERTY_VALUE(type,newName));
+            String queueName = parameters.getSimpleValue("queue-address","");
+            Map<String,Object> props = new HashMap<String, Object>();
+            props.put("queue-address",queueName);
             operation = new Operation(op,address);
         }
 

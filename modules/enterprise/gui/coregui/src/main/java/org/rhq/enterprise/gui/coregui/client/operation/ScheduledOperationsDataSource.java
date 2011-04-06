@@ -212,7 +212,13 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
                     record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                // for paging to work we have to specify size of full result set, but if a limit has been set,
+                // respect the limit
+                int resultSize = result.getTotalSize();
+                if (operationsRangeScheduled > 0 && operationsRangeScheduled < resultSize) {
+                    resultSize = operationsRangeScheduled;
+                }
+                response.setTotalRows(resultSize);
                 processResponse(request.getRequestId(), response);
             }
         });

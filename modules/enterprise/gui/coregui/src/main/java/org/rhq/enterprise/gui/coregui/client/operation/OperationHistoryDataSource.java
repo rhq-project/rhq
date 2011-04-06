@@ -123,10 +123,6 @@ public class OperationHistoryDataSource extends
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField idField = new ListGridField(Field.ID, MSG.common_title_id());
-        idField.setWidth(70);
-        fields.add(idField);
-
         ListGridField startTimeField = createStartedTimeField();
         fields.add(startTimeField);
 

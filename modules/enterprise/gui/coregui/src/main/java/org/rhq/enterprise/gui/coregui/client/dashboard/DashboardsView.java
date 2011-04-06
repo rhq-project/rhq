@@ -268,7 +268,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
     }
 
     /**
-     * The stored name for a dashboard is initally set to a generated, localizable name. It can later be edited
+     * The stored name for a dashboard is initially set to a generated, localizable name. It can later be edited
      * by the user. Automation tests must be valid independent of localization so we must use repeatable locators.
      * This method checks for generated dash names and returns a repeatable locator for them.
      * 
@@ -363,8 +363,6 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
         // Left Column
         DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 250);
-        welcome.getConfiguration().put(
-            new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
         dashboard.addPortlet(welcome, 0, 0);
 
         DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 250);

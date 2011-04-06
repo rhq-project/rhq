@@ -71,7 +71,7 @@
             &logSources;
         </plugin-configuration>
 
-        <process-scan name="ProcessManager" query="process|basename|match=^java.*,arg|org.jboss.as.process-controller|match=.*"/>
+        <process-scan name="ProcessController" query="process|basename|match=^java.*,arg|org.jboss.as.process-controller|match=.*"/>
 
 
         <operation name="dummyOperation">
@@ -93,7 +93,7 @@
             &logSources;
         </plugin-configuration>
 
-        <process-scan name="ProcessManager" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
+        <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
 
 
         <operation name="dummyOperation">
@@ -132,16 +132,25 @@
         <server name="ServerGroup"
                 description="Server groups on this domain"
                 discovery="SubsystemDiscovery"
-                class="ServerGroupComponent">
+                class="ServerGroupComponent"
+                >
+            <!-- TODO move operation to createDeletePolicy="create-only" -->
+
             <plugin-configuration>
                 <c:simple-property name="path" default="/server-group/*" readOnly="true"/>
             </plugin-configuration>
+
+
+            <content name="deployment" category="deployable" isCreationType="true" description="Deployments on this domain">
+            </content>
+
             <resource-configuration>
                 <c:simple-property name="profile" />
                 <c:simple-property name="socket-binding-group"/>
                 <c:simple-property name="jvm"/>
                 <c:simple-property name="deployment" required="false"/> <!-- TODO change structure. Or put below as resource? -->
             </resource-configuration>
+            <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only"/>
         </server>
         <server name="Host"
                 description="Host involved in this domain"
@@ -171,9 +180,11 @@
                 </results>
             </operation>
 
+<!--
             <resource-configuration>
                 <c:list-property name="server-config" />
             </resource-configuration>
+-->
 
         </server>
 
@@ -216,16 +227,20 @@
     </server>
 
     <server name="JBossAS-Managed"
-            discovery="BaseProcessDiscovery"
+            discovery="ManagedASDiscovery"
             class="DomainComponent"
             >
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" required="true"/>
             <c:simple-property name="port" default="9990" type="integer" required="true"/>
+            <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
+            <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
 
             &logSources;
         </plugin-configuration>
 
+        <!-- Scan for host controller is intentional -->
+        <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
         <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
 
         <operation name="server:start" description="Start this server instance." displayName="Start">
@@ -330,7 +345,7 @@
                  class="BaseComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/queue/"/>
+                <c:simple-property name="path" readOnly="true" default="/queue/*"/>
             </plugin-configuration>
         </service>
     </server>
@@ -383,7 +398,9 @@
 
             <resource-configuration>
                 <c:simple-property name="access-log"/>
-                <c:list-property name="alias" description="The virtual server aliases"/>
+                <c:list-property name="alias" description="The virtual server aliases">
+                    <c:simple-property name="alias"/>
+                </c:list-property>
                 <c:simple-property name="rewrite"/>
             </resource-configuration>
 

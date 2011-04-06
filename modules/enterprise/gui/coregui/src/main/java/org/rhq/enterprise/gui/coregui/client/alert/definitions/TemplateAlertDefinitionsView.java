@@ -23,15 +23,20 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
@@ -46,6 +51,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     public static final String CRITERIA_RESOURCE_TYPE_ID = "resourceTypeId";
 
     private ResourceType resourceType;
+    private Set<Permission> globalPermissions;
 
     public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
         super(locatorId, "Alert Templates");
@@ -71,6 +77,13 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         }
+
+        this.globalPermissions = Collections.emptySet();
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
+                TemplateAlertDefinitionsView.this.globalPermissions = globalPermissions;
+            }
+        });
     }
 
     @Override
@@ -102,8 +115,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected boolean isAllowedToModifyAlertDefinitions() {
-        // TODO: see if user can modify template alerts
-        return true;
+        return globalPermissions.contains(Permission.MANAGE_SETTINGS);
     }
 
     @Override

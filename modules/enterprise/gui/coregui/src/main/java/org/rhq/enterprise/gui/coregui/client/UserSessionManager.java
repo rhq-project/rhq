@@ -39,7 +39,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 
 /**
  * Upon application load, if already loggedIn on the server-side, local loggedIn bit will be set to true.
@@ -612,7 +611,8 @@ public class UserSessionManager {
 
     /**
      * Obtain an object that you can use to add/modify/remove/retrieve user preferences.
-     * You can optionally wrap the returned object with a {@link MeasurementPreferences}
+     * You can optionally wrap the returned object with a
+     * {@link org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences}
      * object to work with measurement preferences.
      * 
      * @return user preferences object

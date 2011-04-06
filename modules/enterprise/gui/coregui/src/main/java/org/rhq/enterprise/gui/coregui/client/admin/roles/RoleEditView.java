@@ -305,11 +305,13 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         TextItem nameItem = new TextItem(RolesDataSource.Field.NAME);
         nameItem.setShowTitle(true);
+        nameItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(nameItem);
 
         TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION);
         descriptionItem.setShowTitle(true);
         descriptionItem.setColSpan(form.getNumCols());
+        descriptionItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(descriptionItem);
 
         return items;

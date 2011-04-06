@@ -84,6 +84,10 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
     }
 
+    public AlertHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
+        this(locatorId, tableTitle, entityContext, false);
+    }
+
     protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;

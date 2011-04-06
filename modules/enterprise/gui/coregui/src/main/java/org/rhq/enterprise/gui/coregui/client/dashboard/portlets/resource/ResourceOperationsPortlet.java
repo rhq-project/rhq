@@ -253,6 +253,12 @@ class ResourceOperationsCriteriaHistoryListView extends
     protected String getBasePath() {
         return "Resource/" + resourceComposite.getResource().getId() + "/Operations/History";
     }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
+    }
 }
 
 /** Provide implementation of ResourceOperationHistoryDataSource that dynamically

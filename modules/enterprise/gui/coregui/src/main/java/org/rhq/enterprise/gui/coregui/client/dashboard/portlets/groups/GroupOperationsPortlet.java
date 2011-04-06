@@ -198,8 +198,6 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     /**Defines layout for the portlet page.
      */
     protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
         setHeight("*");
         setWidth100();
 

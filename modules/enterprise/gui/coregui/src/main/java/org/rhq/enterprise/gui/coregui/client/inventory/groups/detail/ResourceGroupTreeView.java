@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -281,7 +281,9 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         ResourceGroupTreeView.this.rootResourceGroup = group;
                         ResourceGroupTreeView.this.rootGroupId = rootResourceGroup.getId();
                         ResourceGroupEnhancedTreeNode fakeRoot = new ResourceGroupEnhancedTreeNode("fakeRootNode");
-                        ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(group.getName());
+                        String groupName = group.getName();
+                        String escapedGroupName = StringUtility.escapeHtml(groupName);
+                        ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(escapedGroupName);
                         String icon = ImageManager.getGroupIcon(GroupCategory.MIXED);
                         rootNode.setIcon(icon);
                         rootNode.setID(String.valueOf(rootResourceGroup.getId()));
@@ -387,7 +389,9 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         ResourceGroupEnhancedTreeNode fakeRoot = new ResourceGroupEnhancedTreeNode("fakeRootNode");
         fakeRoot.setID(FAKE_ROOT_ID);
 
-        ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(rootResourceGroup.getName());
+        String groupName = rootResourceGroup.getName();
+        String escapedGroupName = StringUtility.escapeHtml(groupName);
+        ResourceGroupEnhancedTreeNode rootNode = new ResourceGroupEnhancedTreeNode(escapedGroupName);
         rootNode.setID(rootKey.getKey());
         rootNode.setParentID(fakeRoot.getID());
 

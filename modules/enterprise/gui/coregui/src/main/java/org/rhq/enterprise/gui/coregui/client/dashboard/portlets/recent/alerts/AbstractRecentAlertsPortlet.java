@@ -62,10 +62,12 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     private Timer refreshTimer;
 
     public AbstractRecentAlertsPortlet(String locatorId, EntityContext entityContext) {
-        super(locatorId, entityContext);
+        super(locatorId, null, entityContext);
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);
+        setShowFooterRefresh(false); //disable footer refresh button as redundant for portlets
+        setShowHeader(false);//disable header for portlets
     }
 
     public Timer getRefreshTimer() {
@@ -171,6 +173,8 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
                 // persist and reload portlet
                 storedPortlet.setConfiguration(portletConfig);
                 configure(portletWindow, storedPortlet);
+                //apply latest settings to the visible result set
+                refresh();
             }
         });
 
@@ -243,6 +247,16 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         super.setupTableInteractions(hasWriteAccess);
     }
 
+    @Override
+    protected void refreshTableInfo() {
+        super.refreshTableInfo();
+        if (getTableInfo() != null) {
+            int count = getListGrid().getSelection().length;
+            getTableInfo().setContents(
+                MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
+        }
+    }
+
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }
@@ -257,6 +271,12 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
 
         super.onDestroy();
+    }
+
+    @Override
+    public void redraw() {
+        super.refresh();
+        markForRedraw();
     }
 
     static public class AlertsPortletDataSource extends AlertDataSource {
@@ -372,5 +392,11 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
             return criteria;
         }
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
+        getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
 }

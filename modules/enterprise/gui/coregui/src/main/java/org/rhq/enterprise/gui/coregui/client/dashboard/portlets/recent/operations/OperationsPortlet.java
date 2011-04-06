@@ -98,7 +98,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     private RecentOperationsDataSource dataSourceCompleted;
     private ScheduledOperationsDataSource dataSourceScheduled;
     public static String unlimited = MSG.common_label_unlimited();
-    public static String defaultValue = unlimited;
+    public static String defaultValue = "5";
     public static boolean defaultEnabled = true;
 
     private Timer refreshTimer;
@@ -133,8 +133,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         recentOperationsGrid.setHeaderSpans(new HeaderSpan(RECENT_OPERATIONS, completedRows));
         recentOperationsGrid.setHeaderSpanHeight(20);
         recentOperationsGrid.setHeaderHeight(40);
-        recentOperationsGrid.setResizeFieldsInRealTime(true);
-        recentOperationsGrid.setCellHeight(50);
+        //recentOperationsGrid.setResizeFieldsInRealTime(true);
         recentOperationsGrid.setWrapCells(true);
         addMember(recentOperationsGrid);
 
@@ -154,8 +153,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         scheduledOperationsGrid.setHeaderHeight(40);
 
         scheduledOperationsGrid.setTitle(SCHEDULED_OPERATIONS);
-        scheduledOperationsGrid.setResizeFieldsInRealTime(true);
-        scheduledOperationsGrid.setCellHeight(50);
+        //scheduledOperationsGrid.setResizeFieldsInRealTime(true);
         scheduledOperationsGrid.setWrapCells(true);
 
         addMember(scheduledOperationsGrid);

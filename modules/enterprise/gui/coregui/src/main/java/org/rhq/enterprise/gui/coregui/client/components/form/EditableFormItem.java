@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import java.util.Date;
@@ -54,11 +53,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  * but can be toggled into an "editable" form that allows the user to enter a different value.
  * 
  * This default implementation provides editing the value within a text field. However, this class
- * is designed to be extended, thus allowing the subclasses to edit values via
- * checkboxes, radio buttons, etc.
+ * is designed to be extended, thus allowing the subclasses to edit values via checkboxes, radio buttons, etc.
  * 
  * @author John Mazzitelli
- *
  */
 public class EditableFormItem extends CanvasItem {
 
@@ -103,7 +100,6 @@ public class EditableFormItem extends CanvasItem {
 
         // if we are not in edit-mode, we want to show the edit icon, but only if the mouse hovers over us
         this.innerForm.addMouseOutHandler(new MouseOutHandler() {
-            @Override
             public void onMouseOut(MouseOutEvent event) {
                 if (!isEditing()) {
                     EditableFormItem.this.staticItem.setIcons(blankIcon);
@@ -112,7 +108,6 @@ public class EditableFormItem extends CanvasItem {
             }
         });
         this.innerForm.addMouseOverHandler(new MouseOverHandler() {
-            @Override
             public void onMouseOver(MouseOverEvent event) {
                 if (!isEditing() && !isReadOnly()) {
                     EditableFormItem.this.staticItem.setIcons(editIcon);
@@ -135,12 +130,14 @@ public class EditableFormItem extends CanvasItem {
         item.setIconWidth(16);
         item.setShowIcons(true);
         item.setShowIfCondition(new FormItemIfFunction() {
-            @Override
             public boolean execute(FormItem item, Object value, DynamicForm form) {
                 return !isEditing();
             }
         });
         item.setTextBoxStyle("editableText");
+        if (item instanceof StaticTextItem) {
+            ((StaticTextItem)item).setOutputAsHTML(true);
+        }
 
         return item;
     }
@@ -156,7 +153,6 @@ public class EditableFormItem extends CanvasItem {
         item.setIconWidth(16);
         item.setShowIcons(true);
         item.setShowIfCondition(new FormItemIfFunction() {
-            @Override
             public boolean execute(FormItem item, Object value, DynamicForm form) {
                 return isEditing();
             }
@@ -183,6 +179,7 @@ public class EditableFormItem extends CanvasItem {
      * @return the form item used to show the static (read-only) value
      */
     protected FormItem instantiateStaticFormItem() {
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
         StaticTextItem item = new StaticTextItem();
         return item;
     }
@@ -197,6 +194,7 @@ public class EditableFormItem extends CanvasItem {
      * @return the form item used to edit the value
      */
     protected FormItem instantiateEditFormItem() {
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
         TextItem item = new TextItem();
         return item;
     }
@@ -206,7 +204,6 @@ public class EditableFormItem extends CanvasItem {
         editIcon.setSrc(ImageManager.getEditIcon());
         editIcon.setPrompt(MSG.common_button_edit()); // TODO have better message?
         editIcon.addFormItemClickHandler(new FormItemClickHandler() {
-            @Override
             public void onFormItemClick(FormItemIconClickEvent event) {
                 // should never get here if read-only (the icon is hidden) but just to be sure, check read-only status again
                 if (!isReadOnly()) {
@@ -222,7 +219,6 @@ public class EditableFormItem extends CanvasItem {
         approveIcon.setSrc(ImageManager.getApproveIcon());
         approveIcon.setPrompt(MSG.common_button_ok()); // TODO have better message?
         approveIcon.addFormItemClickHandler(new FormItemClickHandler() {
-            @Override
             public void onFormItemClick(FormItemIconClickEvent event) {
                 if (EditableFormItem.this.innerForm.validate(false)) {
                     Object newValue = event.getItem().getValue();
@@ -239,7 +235,6 @@ public class EditableFormItem extends CanvasItem {
         cancelIcon.setSrc(ImageManager.getCancelIcon());
         cancelIcon.setPrompt(MSG.common_button_cancel()); // TODO have better message?
         cancelIcon.addFormItemClickHandler(new FormItemClickHandler() {
-            @Override
             public void onFormItemClick(FormItemIconClickEvent event) {
                 switchToStaticMode();
             }
@@ -434,4 +429,5 @@ public class EditableFormItem extends CanvasItem {
     public static interface ValueEditedHandler {
         public void editedValue(Object newValue);
     }
+
 }

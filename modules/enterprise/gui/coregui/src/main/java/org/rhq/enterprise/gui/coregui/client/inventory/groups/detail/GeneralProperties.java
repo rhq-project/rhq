@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.Va
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -54,10 +55,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class GeneralProperties extends LocatableVLayout {
     private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
     private ResourceGroupComposite groupComposite;
+    private final ResourceGroupTitleBar titleBar;
 
-    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite) {
+    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar) {
         super(locatorId);
         this.groupComposite = groupComposite;
+        this.titleBar = titleBar;
     }
 
     @Override
@@ -74,20 +77,18 @@ public class GeneralProperties extends LocatableVLayout {
 
         List<FormItem> formItems = new ArrayList<FormItem>();
 
-        boolean dynamic = (group.getGroupDefinition() != null);
+        boolean isDynaGroup = (group.getGroupDefinition() != null);
+        boolean hasInventoryPermission = (this.groupComposite.getResourcePermission().isInventory());
+        boolean isEditable = (!isDynaGroup && hasInventoryPermission);
 
         StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
         StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
 
-        final FormItem nameItem = (dynamic) ? new StaticTextItem() : new EditableFormItem();
-        nameItem.setName("name");
-        nameItem.setTitle(MSG.common_title_name());
-        nameItem.setValue(group.getName());
-        if (nameItem instanceof EditableFormItem) {
-            final EditableFormItem togglableNameItem = (EditableFormItem) nameItem;
+        final FormItem nameItem;
+        if (isEditable) {
+            final EditableFormItem togglableNameItem = new EditableFormItem();
             togglableNameItem.setValidators(notEmptyOrNullValidator);
             togglableNameItem.setValueEditedHandler(new ValueEditedHandler() {
-                @Override
                 public void editedValue(Object newValue) {
                     final String newName = newValue.toString();
                     final String oldName = group.getName();
@@ -104,10 +105,12 @@ public class GeneralProperties extends LocatableVLayout {
                                 // We failed to update it on the Server, so change back the ResourceGroup and the form item
                                 // to the original value.
                                 group.setName(oldName);
-                                nameItem.setValue(oldName);
+                                togglableNameItem.setValue(oldName);
                             }
 
                             public void onSuccess(Void result) {
+                                titleBar.displayGroupName(newName);
+
                                 CoreGUI.getMessageCenter().notify(
                                     new Message(MSG.view_group_summary_nameUpdateSuccessful(String.valueOf(group
                                         .getId()), oldName, newName), Message.Severity.Info));
@@ -115,16 +118,28 @@ public class GeneralProperties extends LocatableVLayout {
                         });
                 }
             });
+            nameItem = togglableNameItem;
+        } else {
+            StaticTextItem staticNameItem = new StaticTextItem();
+            staticNameItem.setOutputAsHTML(true);
+            nameItem = staticNameItem;
         }
+
+        nameItem.setName("name");
+        nameItem.setTitle(MSG.common_title_name());
+        nameItem.setValue(group.getName());
+
         formItems.add(nameItem);
 
         StaticTextItem typeItem = new StaticTextItem("memberType", MSG.view_group_summary_memberType());
         ResourceType type = group.getResourceType();
         if (type != null) {
+            // compatible group
             typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>"
                 + MSG.common_title_type() + ": " + type.getName());
             typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
         } else {
+            // mixed group
             typeItem.setValue("<i>" + MSG.view_group_summary_mixed() + "</i>");
         }
         formItems.add(typeItem);
@@ -134,15 +149,12 @@ public class GeneralProperties extends LocatableVLayout {
         countItem.setValue(memberCount);
         formItems.add(countItem);
 
-        final FormItem descriptionItem = (dynamic) ? new StaticTextItem() : new EditableFormItem();
-        descriptionItem.setName("description");
-        descriptionItem.setTitle(MSG.common_title_description());
-        descriptionItem.setValue(group.getDescription());
-        if (descriptionItem instanceof EditableFormItem) {
-            final EditableFormItem togglableDescriptionItem = (EditableFormItem) descriptionItem;
+        final FormItem descriptionItem;
+        String value;
+        if (isEditable) {
+            final EditableFormItem togglableDescriptionItem = new EditableFormItem();
             togglableDescriptionItem.setValidators(notNullValidator);
             togglableDescriptionItem.setValueEditedHandler(new ValueEditedHandler() {
-                @Override
                 public void editedValue(Object newValue) {
                     final String newDescription = newValue.toString();
                     final String oldDescription = group.getDescription();
@@ -158,7 +170,7 @@ public class GeneralProperties extends LocatableVLayout {
                                 // We failed to update it on the Server, so change back the ResourceGroup and the form item
                                 // to the original value.
                                 group.setDescription(oldDescription);
-                                descriptionItem.setValue(oldDescription);
+                                togglableDescriptionItem.setValue(oldDescription);
                             }
 
                             public void onSuccess(Void result) {
@@ -168,33 +180,46 @@ public class GeneralProperties extends LocatableVLayout {
                         });
                 }
             });
+            descriptionItem = togglableDescriptionItem;
+            value = group.getDescription();
+        } else {
+            descriptionItem = new StaticTextItem();
+            value = StringUtility.escapeHtml(group.getDescription());
         }
+
+        descriptionItem.setName("description");
+        descriptionItem.setTitle(MSG.common_title_description());
+        descriptionItem.setValue(value);
+
         formItems.add(descriptionItem);
 
         StaticTextItem dynamicItem = new StaticTextItem("dynamic", MSG.view_group_summary_dynamic());
-        dynamicItem.setValue(dynamic ? MSG.common_val_yes() : MSG.common_val_no());
+        dynamicItem.setValue(isDynaGroup ? MSG.common_val_yes() : MSG.common_val_no());
         formItems.add(dynamicItem);
 
-        EditableFormItem recursiveItem = new CheckboxEditableFormItem("recursive", MSG.view_group_summary_recursive());
-        recursiveItem.setValueEditedHandler(new ValueEditedHandler() {
-            @Override
-            public void editedValue(Object newValue) {
-                boolean isRecursive = (newValue != null) ? ((Boolean) newValue).booleanValue() : false;
-                resourceGroupService.setRecursive(group.getId(), isRecursive, new AsyncCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_group_detail_recursiveChange(group.getName())));
-                    }
+        FormItem recursiveItem;
+        if (isEditable) {
+            CheckboxEditableFormItem editableRecursiveItem = new CheckboxEditableFormItem("recursive", MSG.view_group_summary_recursive());
+            editableRecursiveItem.setValueEditedHandler(new ValueEditedHandler() {
+                public void editedValue(Object newValue) {
+                    boolean isRecursive = ((newValue != null) && (Boolean)newValue);
+                    resourceGroupService.setRecursive(group.getId(), isRecursive, new AsyncCallback<Void>() {
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_group_detail_recursiveChange(group.getName())));
+                        }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_group_detail_failRecursiveChange(String.valueOf(group.getName())));
-                    }
-                });
-            }
-        });
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_group_detail_failRecursiveChange(String.valueOf(group.getName())));
+                        }
+                    });
+                }
+            });
+            recursiveItem = editableRecursiveItem;
+        } else {
+            recursiveItem = new StaticTextItem("recursive", MSG.view_group_summary_recursive());
+        }
         recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes() : MSG.common_val_no());
         formItems.add(recursiveItem);
 
@@ -210,20 +235,21 @@ public class GeneralProperties extends LocatableVLayout {
         lastModifiedByItem.setValue(group.getModifiedBy());
         formItems.add(lastModifiedByItem);
 
-        if (dynamic) {
+        if (isDynaGroup) {
             StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", MSG
                 .view_group_summary_groupDefinition());
             GroupDefinition groupDefinition = group.getGroupDefinition();
             String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
+            String groupDefinitionName = StringUtility.escapeHtml(groupDefinition.getName());
             groupDefinitionItem
-                .setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinition.getName() + "</a>");
+                .setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinitionName + "</a>");
             formItems.add(groupDefinitionItem);
         }
 
         generalPropsForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
         addMember(generalPropsForm);
 
-        if (dynamic) {
+        if (isDynaGroup) {
             spacer = new HLayout();
             spacer.setHeight(10);
             addMember(spacer);

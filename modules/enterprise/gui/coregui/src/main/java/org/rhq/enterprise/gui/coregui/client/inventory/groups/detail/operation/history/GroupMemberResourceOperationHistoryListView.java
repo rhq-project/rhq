@@ -47,7 +47,7 @@ public class GroupMemberResourceOperationHistoryListView extends
         resourceField.setWidth("25%");
         resourceField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id"));
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                 return SeleniumUtility.getLocatableHref(url, o.toString(), null);
             }
         });

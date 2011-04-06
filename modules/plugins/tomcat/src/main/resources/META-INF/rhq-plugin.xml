@@ -96,6 +96,19 @@
                description="The path to the script used by the 'Shutdown' operation to shutdown this Tomcat server;
                                             if the path is not absolute it will be resolved relative to {installationPath}." />
             
+            <c:simple-property name="startWaitMax" required="false"
+                              description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to start up. The default is 5 minutes.">
+                  <c:constraint>
+                      <c:integer-constraint minimum="1"/>
+                  </c:constraint>
+            </c:simple-property>
+            <c:simple-property name="stopWaitMax" required="false"
+                              description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to stop. The default is 2.5 minutes.">
+                  <c:constraint>
+                      <c:integer-constraint minimum="1"/>
+                  </c:constraint>
+            </c:simple-property>
+
             <c:list-property 
                 name="startScriptEnvironment" 
                 displayName="Start Script Environment Variables" 

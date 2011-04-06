@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
  * @author Ian Springer
  */
 public class EnhancedTreeNode extends TreeNode {
+
     public EnhancedTreeNode() {
         super();
     }
@@ -55,7 +56,7 @@ public class EnhancedTreeNode extends TreeNode {
     public void setName(String name) {
         super.setName(name);
         if (name != null && getTitle() == null) {
-            setTitle(name);
+            super.setTitle(name);
         }
     }
 
@@ -110,4 +111,5 @@ public class EnhancedTreeNode extends TreeNode {
         private Attributes() {
         }
     }
+
 }

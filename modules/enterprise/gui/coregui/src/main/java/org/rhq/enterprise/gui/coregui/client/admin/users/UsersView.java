@@ -33,6 +33,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -64,6 +65,7 @@ public class UsersView extends TableSection<UsersDataSource> {
 
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
+        setEscapeHtmlInDetailsLinkColumn(true);
 
         fetchManageSecurityPermissionAsync();
     }
@@ -131,12 +133,15 @@ public class UsersView extends TableSection<UsersDataSource> {
         fields.add(ldapField);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
+        firstNameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(firstNameField);
 
         ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 150);
+        lastNameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(lastNameField);
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
+        departmentField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(departmentField);
 
         // TODO: instead of fetching roles, use a composite object that will pull the role count across the wire.

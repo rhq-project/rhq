@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -61,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  */
 public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
 
-    public static final ViewName VIEW_ID = new ViewName("CpuAndMemoryUtilization", MSG.view_reports_platforms());
+    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms());
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";
@@ -79,7 +80,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
     public PlatformSummaryPortlet(String locatorId) {
         super(locatorId);
-
         setWidth100();
         setHeight100();
 
@@ -89,7 +89,8 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setShowRecordComponentsByCell(true);
 
         setUseAllDataSourceFields(true);
-        setAutoFitData(Autofit.HORIZONTAL);
+        setAutoFitData(Autofit.VERTICAL);
+        setOverflow(Overflow.AUTO);
 
         setDataSource(new PlatformMetricDataSource(this));
         setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
@@ -386,5 +387,14 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
             return new PlatformSummaryPortlet(locatorId);
         }
+    }
+
+    /** Custom refresh operation as we are not directly extending Table
+         */
+    @Override
+    public void redraw() {
+        super.redraw();
+        invalidateCache();
+        markForRedraw();
     }
 }

@@ -74,6 +74,19 @@
                                description="The absolute path to a JRE or JDK installation directory containing
                                             the JVM that should be used to start and shutdown the JBossAS instance;
                                             defaults to the home directory of the RHQ agent JRE."/>
+                                            
+             <c:simple-property name="startWaitMax" required="false"
+                               description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to start up. The default is 5 minutes.">
+                         <c:constraint>
+                             <c:integer-constraint minimum="1"/>
+                         </c:constraint>
+             </c:simple-property>
+             <c:simple-property name="stopWaitMax" required="false"
+                               description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to stop. The default is 2.5 minutes.">
+                         <c:constraint>
+                             <c:integer-constraint minimum="1"/>
+                         </c:constraint>
+             </c:simple-property>
          </c:group>
 
          <c:group name="event" displayName="Events">

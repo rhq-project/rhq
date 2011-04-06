@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.io.File;
@@ -34,6 +34,7 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.mc4j.ems.connection.bean.parameter.EmsParameter;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
@@ -51,7 +52,7 @@ import org.rhq.core.system.SystemInfo;
 public class JBossASServerOperationsDelegate {
 
     /** max amount of time to wait for server to show as unavailable after executing stop - in milliseconds */
-    private static final long STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
+    private static long STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
 
     /** amount of time to wait between availability checks when performing a stop - in milliseconds */
     private static final long STOP_WAIT_INTERVAL = 1000L * 10; // 10 seconds
@@ -61,7 +62,7 @@ public class JBossASServerOperationsDelegate {
     private static final long STOP_WAIT_FINAL = 1000L * 30; // 30 seconds
 
     /** max amount of time to wait for start to complete - in milliseconds */
-    private static final long START_WAIT_MAX = 1000L * 300; // 5 minutes
+    private static long START_WAIT_MAX = 1000L * 300; // 5 minutes
 
     /** amount of time to wait between availability checks when performing a start - in milliseconds */
     private static final long START_WAIT_INTERVAL = 1000L * 10; // 10 seconds
@@ -369,24 +370,34 @@ public class JBossASServerOperationsDelegate {
         try {
             shutdown();
         } catch (Exception e) {
-            throw new RuntimeException("Shutdown may have failed: " +e );
+            throw new RuntimeException("Shutdown may have failed: " + e);
         }
-
 
         try {
             // Perform the restart.
             start();
 
         } catch (Exception e) {
-            throw new RuntimeException("Re-Startup may have failed: " +e );
+            throw new RuntimeException("Re-Startup may have failed: " + e);
         }
 
-        return"Server has been restarted.";
+        return "Server has been restarted.";
 
     }
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {
         AvailabilityType avail;
+        //detect whether startWaitMax property has been set.
+        Configuration pluginConfig = serverComponent.getPluginConfiguration();
+        PropertySimple property = pluginConfig.getSimple(JBossASServerComponent.START_WAIT_MAX_PROP);
+        //if set and valid, update startWaitMax value
+        if ((property != null) && (property.getIntegerValue() != null)) {
+            int newValue = property.getIntegerValue();
+            if (newValue >= 1) {
+                START_WAIT_MAX = 1000L * 60 * newValue;
+            }
+        }
+
         while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
             && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
             try {
@@ -399,6 +410,17 @@ public class JBossASServerOperationsDelegate {
     }
 
     private AvailabilityType waitForServerToShutdown() {
+        //detect whether stopWaitMax property has been set.
+        Configuration pluginConfig = serverComponent.getPluginConfiguration();
+        PropertySimple property = pluginConfig.getSimple(JBossASServerComponent.STOP_WAIT_MAX_PROP);
+        //if set and valid, update startWaitMax value
+        if ((property != null) && (property.getIntegerValue() != null)) {
+            int newValue = property.getIntegerValue();
+            if (newValue >= 1) {
+                STOP_WAIT_MAX = 1000L * 60 * newValue;
+            }
+        }
+
         for (long wait = 0L; (wait < STOP_WAIT_MAX) && (AvailabilityType.UP == this.serverComponent.getAvailability()); wait += STOP_WAIT_INTERVAL) {
             try {
                 Thread.sleep(STOP_WAIT_INTERVAL);

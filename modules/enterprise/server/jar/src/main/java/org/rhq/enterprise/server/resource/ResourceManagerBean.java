@@ -267,6 +267,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
+        // TODO: There is a pretty good argument for this being replaced with MANAGE_INVENTORY.  It takes an
+        // inventory manager to import resources, so why not to remove them?  But, since no one has complained
+        // we're timid about making a change that may hamstring existing setups. 
         if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resourceId)) {
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }

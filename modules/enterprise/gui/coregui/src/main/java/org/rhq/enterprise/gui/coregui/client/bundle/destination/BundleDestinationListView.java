@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
@@ -77,24 +78,27 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         TimestampCellFormatter.prepareDateField(latestDeploymentDateField);
 
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer bundleId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
                 Integer bundleDestId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_ID);
-                return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">"
+                        + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
         groupNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer groupId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);
-                return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">"
+                        + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
         bundleNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer bid = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
-                return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">"
+                        + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 

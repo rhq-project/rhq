@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  * @author Ian Springer
  */
 public class EnhancedDynamicForm extends LocatableDynamicForm {
+
+    public static final String OUTPUT_AS_HTML_ATTRIBUTE = "outputAsHTML";
 
     private static final String FIELD_ID = "id";
 
@@ -116,6 +118,10 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     staticItem.setTooltip(item.getTooltip());
                     staticItem.setValue(item.getDisplayValue());
                     staticItem.setColSpan(item.getAttribute("colSpan"));
+                    Boolean outputAsHtml = item.getAttributeAsBoolean(OUTPUT_AS_HTML_ATTRIBUTE);
+                    if (Boolean.TRUE.equals(outputAsHtml)) {
+                        staticItem.setOutputAsHTML(true);
+                    }
                     // TODO: Any other fields we should copy? icons?
 
                     if ((item instanceof BooleanItem) || (item instanceof CheckboxItem)) {

@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -56,6 +57,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     private VLayout detailsHolder;
     private Canvas detailsView;
     private String basePath;
+    private boolean escapeHtmlInDetailsLinkColumn;
 
     protected TableSection(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
@@ -110,7 +112,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
 
     /**
      * The default implementation wraps the {@link getDetailsLinkColumnCellFormatter()} column with the
-     * {@link getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
+     * {@link #getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
      * view, given the 'id'. Also, establishes a double click handler for the row which invokes
      * {@link showDetails()}</br>
      * </br>
@@ -146,6 +148,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         return true;
     }
 
+    public void setEscapeHtmlInDetailsLinkColumn(boolean escapeHtmlInDetailsLinkColumn) {
+        this.escapeHtmlInDetailsLinkColumn = escapeHtmlInDetailsLinkColumn;
+    }
+
     /**
      * Override if you don't want FIELD_NAME to be wrapped ina link.
      * @return the name of the field to be wrapped, or null if no field should be wrapped. 
@@ -161,9 +167,13 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected CellFormatter getDetailsLinkColumnCellFormatter() {
         return new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
+                if (value == null) {
+                    return "";
+                }
                 Integer recordId = getId(record);
                 String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString()) : value.toString();
+                return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
             }
         };
     }

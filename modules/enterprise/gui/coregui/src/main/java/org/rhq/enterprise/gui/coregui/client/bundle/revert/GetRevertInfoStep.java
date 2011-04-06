@@ -31,6 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
@@ -68,24 +69,27 @@ public class GetRevertInfoStep extends AbstractWizardStep {
                 .getId(), //
                 new AsyncCallback<String>() {
 
-                    public void onSuccess(String result) {
+                    public void onSuccess(String bundleDeploymentName) {
                         final StaticTextItem nameTextItem = new StaticTextItem("name", MSG
                             .view_bundle_revertWizard_getInfoStep_revertDeployName());
                         nameTextItem.setWidth(300);
-                        wizard.setSubtitle(result);
-                        nameTextItem.setValue(result);
+                        String escapedBundleDeploymentName = StringUtility.escapeHtml(bundleDeploymentName);
+                        wizard.setSubtitle(escapedBundleDeploymentName);
+                        nameTextItem.setValue(escapedBundleDeploymentName);
 
                         final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
                             .view_bundle_revertWizard_getInfoStep_revertDeployDesc());
                         descriptionTextAreaItem.setWidth(300);
                         String liveDesc = wizard.getLiveDeployment().getDescription();
                         liveDesc = (null == liveDesc) ? wizard.getLiveDeployment().getName() : liveDesc;
+                        String escapedLiveDesc = StringUtility.escapeHtml(liveDesc);
                         String prevDesc = wizard.getPreviousDeployment().getDescription();
                         prevDesc = (null == prevDesc) ? wizard.getPreviousDeployment().getName() : prevDesc;
-                        wizard.setDeploymentDescription("[REVERT From]\n" + liveDesc + "\n\n[REVERT To]\n" + prevDesc);
+                        String escapedPrevDesc = StringUtility.escapeHtml(prevDesc);
+                        wizard.setDeploymentDescription("[REVERT From]\n" + escapedLiveDesc + "\n\n[REVERT To]\n" + escapedPrevDesc);
                         wizard.setDeploymentDescription(MSG.view_bundle_revertWizard_getInfoStep_revertDeployDescFull(
-                            liveDesc, prevDesc));
-                        descriptionTextAreaItem.setValue(wizard.getDeploymentDescription());
+                            escapedLiveDesc, escapedPrevDesc));
+                        descriptionTextAreaItem.setValue(StringUtility.escapeHtml(wizard.getDeploymentDescription()));
                         descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                             public void onChanged(ChangedEvent event) {
                                 Object value = event.getValue();

@@ -47,8 +47,11 @@ public class EventsTimelineUIBean {
 
         context = WebUtility.getEntityContext();
 
+        /* see BZ 610791
         EventSeverity[] eventsCounts = eventManager.getSeverityBucketsByContext(user.getSubject(), context, begin, end,
             numberOfBuckets);
+        */
+        EventSeverity[] eventsCounts = new EventSeverity[numberOfBuckets]; // dummy event counts, all nulls, for BZ 610791 
 
         data = new ArrayList<TimelineBean>();
         long interval = TimeUtil.getInterval(begin, end, numberOfBuckets);

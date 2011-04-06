@@ -218,6 +218,13 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     }
 
     @Override
+    protected ButtonBar buildButtonBar() {
+        ButtonBar buttonBar = super.buildButtonBar();
+        buttonBar.getSaveButton().setTitle(MSG.common_button_schedule());
+        return buttonBar;
+    }
+
+    @Override
     protected String getTitleFieldName() {
         return ResourceOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
     }
@@ -263,7 +270,9 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         Integer integerValue = TypeConversionUtility.toInteger(value);
         timeoutItem.setValue(integerValue, UnitType.TIME);
 
-        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        StaticTextItem notesItem = (StaticTextItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        // Notes field is user-editable, so escape HTML to prevent an XSS attack.
+        notesItem.setOutputAsHTML(true);
         notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
 
         this.parameters = (Configuration) record.getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);

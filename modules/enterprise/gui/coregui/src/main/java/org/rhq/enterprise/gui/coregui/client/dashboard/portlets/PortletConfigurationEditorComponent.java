@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -68,6 +69,8 @@ public class PortletConfigurationEditorComponent {
         String CUSTOM_REFRESH = "CUSTOM_REFRESH";
         String OPERATION_STATUS = "OPERATION_STATUS";
         String OPERATION_STATUS_DEFAULT = "";//empty
+        String CONFIG_UPDATE_STATUS = "CONFIG_UPDATE_STATUS";
+        String CONFIG_UPDATE_STATUS_DEFAULT = "";
     }
 
     //configuration map initialization
@@ -90,6 +93,8 @@ public class PortletConfigurationEditorComponent {
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.METRIC_RANGE_UNIT, Constant.METRIC_RANGE_UNIT_DEFAULT);
         //operation status, if empty initialize to "" i.e. all stati
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.OPERATION_STATUS, Constant.OPERATION_STATUS_DEFAULT);
+        //config update status, if empty initialize to "" i.e. all stati
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.CONFIG_UPDATE_STATUS, Constant.CONFIG_UPDATE_STATUS_DEFAULT);
     }
 
     /* Single select combobox for number of items to display on the dashboard
@@ -99,9 +104,9 @@ public class PortletConfigurationEditorComponent {
     public static SelectItem getResultCountEditor(Configuration portletConfig) {
 
         final SelectItem maximumResultsComboBox = new SelectItem(Constant.RESULT_COUNT);
-        maximumResultsComboBox.setTitle("Results Count");
+        maximumResultsComboBox.setTitle(MSG.common_title_results_count());
         maximumResultsComboBox.setWrapTitle(false);
-        maximumResultsComboBox.setTooltip("<nobr><b> " + "Displays N results with alerts" + "</b></nobr>");
+        maximumResultsComboBox.setTooltip("<nobr><b> " + MSG.common_title_results_count_tooltip() + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumResultsComboBox.setType("selection");
         //set width of dropdown display region
@@ -176,9 +181,9 @@ public class PortletConfigurationEditorComponent {
      * @return Populated selectItem instance.
      */
     public static SelectItem getResulSortOrderEditor(Configuration portletConfig) {
-        SelectItem sortPrioritySelection = new SelectItem(Constant.RESULT_SORT_PRIORITY, "Sort Order");
+        SelectItem sortPrioritySelection = new SelectItem(Constant.RESULT_SORT_PRIORITY, MSG.common_title_sort_order());
         sortPrioritySelection.setWrapTitle(false);
-        sortPrioritySelection.setTooltip("Sets sort order for results.");
+        sortPrioritySelection.setTooltip(MSG.common_title_sort_order_tooltip());
         LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(2);
         priorities.put(PageOrdering.ASC.name(), "Ascending");
         priorities.put(PageOrdering.DESC.name(), "Descending");
@@ -213,7 +218,7 @@ public class PortletConfigurationEditorComponent {
     }
 
     public static SelectItem getOperationStatusEditor(Configuration portletConfig) {
-        SelectItem priorityFilter = new SelectItem(Constant.OPERATION_STATUS, "Operation Status");
+        SelectItem priorityFilter = new SelectItem(Constant.OPERATION_STATUS, MSG.common_title_operation_status());
         priorityFilter.setWrapTitle(false);
         priorityFilter.setWidth(325);
         priorityFilter.setMultiple(true);
@@ -281,6 +286,84 @@ public class PortletConfigurationEditorComponent {
                 priorityFilter.setValues(OperationRequestStatus.CANCELED.name(), OperationRequestStatus.FAILURE.name());
             } else if (currentValue.equalsIgnoreCase("FAILURE")) {
                 priorityFilter.setValues(OperationRequestStatus.FAILURE.name());
+            }
+        }
+        return priorityFilter;
+    }
+
+    public static SelectItem getConfigurationUpdateStatusEditor(Configuration portletConfig) {
+        SelectItem priorityFilter = new SelectItem(Constant.CONFIG_UPDATE_STATUS, MSG
+            .common_title_config_update_status());
+        priorityFilter.setWrapTitle(false);
+        priorityFilter.setWidth(335);
+        priorityFilter.setMultiple(true);
+        priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
+
+        LinkedHashMap<String, String> stati = new LinkedHashMap<String, String>(4);
+        stati.put(ConfigurationUpdateStatus.SUCCESS.name(), MSG.common_status_success());
+        stati.put(ConfigurationUpdateStatus.INPROGRESS.name(), MSG.common_status_inprogress());
+        stati.put(ConfigurationUpdateStatus.NOCHANGE.name(), MSG.common_status_nochange());
+        stati.put(ConfigurationUpdateStatus.FAILURE.name(), MSG.common_status_failed());
+
+        LinkedHashMap<String, String> statusIcons = new LinkedHashMap<String, String>(3);
+        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
+            .getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+        priorityFilter.setValueMap(stati);
+        priorityFilter.setValueIcons(statusIcons);
+        //reload current settings if they exist, otherwise enable all.
+        String currentValue = portletConfig.getSimple(Constant.CONFIG_UPDATE_STATUS).getStringValue();
+        if (currentValue.isEmpty() || currentValue.split(",").length == ConfigurationUpdateStatus.values().length) {
+            priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
+                .name(), ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE.name());
+        } else {
+            //spinder:3/4/11 doing this nonsense due to some weird smartgwt issue with SelectItem in VLayout.
+            if (currentValue.equalsIgnoreCase(ConfigurationUpdateStatus.SUCCESS.name())) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,NOCHANGE,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
+                    .name(), ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,NOCHANGE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
+                    .name(), ConfigurationUpdateStatus.NOCHANGE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
+                    .name(), ConfigurationUpdateStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,INPROGRESS")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.INPROGRESS
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,NOCHANGE,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.NOCHANGE
+                    .name(), ConfigurationUpdateStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,NOCHANGE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.NOCHANGE
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("SUCCESS,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.SUCCESS.name(), ConfigurationUpdateStatus.FAILURE
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS,NOCHANGE,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name(),
+                    ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE.name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS,NOCHANGE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name(),
+                    ConfigurationUpdateStatus.NOCHANGE.name());
+            } else if (currentValue.equalsIgnoreCase("INPROGRESS,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.INPROGRESS.name(), ConfigurationUpdateStatus.FAILURE
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("NOCHANGE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.NOCHANGE.name());
+            } else if (currentValue.equalsIgnoreCase("NOCHANGE,FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.NOCHANGE.name(), ConfigurationUpdateStatus.FAILURE
+                    .name());
+            } else if (currentValue.equalsIgnoreCase("FAILURE")) {
+                priorityFilter.setValues(ConfigurationUpdateStatus.FAILURE.name());
             }
         }
         return priorityFilter;

@@ -334,10 +334,14 @@ public class ResourceTreeDatasource extends DataSource {
             }
             this.setParentID(parentId);
 
+            // name and description are user-editable, so escape HTML to prevent XSS attacks
             String name = resource.getName();
-            setName(name);
+            String escapedName = StringUtility.escapeHtml(name);
+            setName(escapedName);
 
-            setAttribute(Attributes.DESCRIPTION, resource.getDescription());
+            String description = resource.getDescription();
+            String escapedDescription = StringUtility.escapeHtml(description);
+            setAttribute(Attributes.DESCRIPTION, escapedDescription);
 
             Set<ResourceType> childTypes = resource.getResourceType().getChildResourceTypes();
             setIsFolder((childTypes != null && !childTypes.isEmpty()));

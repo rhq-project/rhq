@@ -120,6 +120,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -952,8 +953,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 PropertyMapListGridRecord record = (PropertyMapListGridRecord) recordClickEvent.getRecord();
                 PropertyMap memberPropertyMap = (PropertyMap) record.getPropertyMap();
                 Log.debug("Editing property map: " + memberPropertyMap);
-                displayMapEditor(summaryTable, record, memberPropertyDefinitionMap, propertyList, memberPropertyMap,
-                        mapReadOnly);
+                displayMapEditor(summaryTable, record, propertyDefinitionList, propertyList,
+                        memberPropertyDefinitionMap, memberPropertyMap, mapReadOnly);
             }
         });
         fieldsList.add(editField);
@@ -1005,8 +1006,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    displayMapEditor(summaryTable, null, memberPropertyDefinitionMap,
-                        propertyList, null, mapReadOnly);
+                    displayMapEditor(summaryTable, null, propertyDefinitionList, propertyList,
+                            memberPropertyDefinitionMap, null, mapReadOnly);
                 }
             });
             toolStrip.addMember(addRowButton);
@@ -1333,13 +1334,20 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
-        // for more robust and repeatable item locators (not positional) assign a name and title
+        // For more robust and repeatable item locators (not positional), assign a name and a title.
         valueItem.setName(propertySimple.getName());
         valueItem.setTitle("none");
         valueItem.setShowTitle(false);
+
+        String value = propertySimple.getStringValue();
+        if (valueItem instanceof StaticTextItem) {
+            // Property values are user-editable, so escape HTML when displayed as static text, to prevent XSS attacks.
+            value = StringUtility.escapeHtml(value);
+        }
         // TODO (ips): I don't think we want to use setDefaultValue(), as it will cause the input to be reset to the
         //             value if the user clears it.
-        valueItem.setDefaultValue(propertySimple.getStringValue());
+        valueItem.setDefaultValue(value);
+
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
         valueItem.setWidth(220);
 
@@ -1431,9 +1439,10 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             valueItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent event) {
-                    boolean isUnset = (event.getItem().getValue() == null);
-                    unsetItem.setValue(isUnset);
-                    valueItem.disable();
+                    if (event.getItem().getValue() == null) {
+                        unsetItem.setValue(true);
+                        valueItem.disable();
+                    }
                 }
             });
 
@@ -1534,15 +1543,15 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void displayMapEditor(final ListGrid summaryTable, final PropertyMapListGridRecord existingRecord,
-                                  PropertyDefinitionMap definition, final PropertyList list, final PropertyMap map,
+                                  final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList, PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap,
                                   final boolean mapReadOnly) {
 
-        final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(definition
+        final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(memberMapDefinition
             .getPropertyDefinitions().values());
         Collections.sort(memberDefinitions, new PropertyDefinitionComparator());
 
-        final boolean newRow = (map == null);
-        final PropertyMap workingMap = (newRow) ? new PropertyMap(definition.getName()) : map.deepCopy(true);
+        final boolean newRow = (memberMap == null);
+        final PropertyMap workingMap = (newRow) ? new PropertyMap(memberMapDefinition.getName()) : memberMap.deepCopy(true);
 
         final LocatableWindow popup = new LocatableWindow(extendLocatorId("MapEditor"));
         String title = (mapReadOnly) ? MSG.view_configEdit_viewRow() : MSG.view_configEdit_editRow();
@@ -1578,25 +1587,17 @@ public class ConfigurationEditor extends LocatableVLayout {
                         return;
                     }
                     if (newRow) {
-                        try {
-                            list.add(workingMap);
-                            int index = list.getList().size() - 1;
-                            PropertyMapListGridRecord record = new PropertyMapListGridRecord(workingMap, index,
-                                    memberDefinitions);
-                            summaryTable.addData(record);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        propertyList.add(workingMap);
+                        int index = propertyList.getList().size() - 1;
+                        PropertyMapListGridRecord record = new PropertyMapListGridRecord(workingMap, index,
+                                memberDefinitions);
+                        summaryTable.addData(record);
                     } else {
-                        try {
-                            mergePropertyMap(workingMap, map, memberDefinitions);
-                            existingRecord.refresh();
-                            summaryTable.updateData(existingRecord);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        mergePropertyMap(workingMap, memberMap, memberDefinitions);
+                        existingRecord.refresh();
+                        summaryTable.updateData(existingRecord);
                     }
-                    firePropertyChangedEvent(list, null, true);
+                    firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
                     summaryTable.redraw();
                 }
 

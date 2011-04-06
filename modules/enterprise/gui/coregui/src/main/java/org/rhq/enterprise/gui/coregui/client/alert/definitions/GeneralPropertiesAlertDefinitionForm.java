@@ -209,11 +209,15 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             nameTextField.setWidth(300);
             nameTextField.setDefaultValue("");
             nameStatic = new StaticTextItem("nameStatic", MSG.common_title_name());
+            // name is user-editable, so escape HTML to prevent XSS attacks
+            nameStatic.setOutputAsHTML(true);
 
             descriptionTextField = new TextAreaItem("description", MSG.common_title_description());
             descriptionTextField.setWidth(300);
             descriptionTextField.setDefaultValue("");
             descriptionStatic = new StaticTextItem("descriptionStatic", MSG.common_title_description());
+            // description is user-editable, so escape HTML to prevent XSS attacks
+            descriptionStatic.setOutputAsHTML(true);
 
             prioritySelection = new SelectItem("priority", MSG.view_alerts_field_priority());
             LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);

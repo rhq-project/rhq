@@ -68,7 +68,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView3;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -113,7 +112,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private TwoLevelTab contentTab;
 
     private SubTab summaryActivity;
-    private SubTab summaryActivity2;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorTables;
@@ -153,12 +151,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
         summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity", MSG
             .view_tabs_common_activity()), null);
-        summaryActivity2 = new SubTab(summaryTab.extendLocatorId("Activity2"), new ViewName("Activity2", MSG
-            .view_tabs_common_activity()
-            + "2"), null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline", MSG
             .view_tabs_common_timeline()), null);
-        summaryTab.registerSubTabs(summaryActivity, summaryActivity2, summaryTimeline);
+        summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
@@ -282,13 +277,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             @Override
             public Canvas createView() {
                 return new ActivityView(summaryActivity.extendLocatorId("View"), resourceComposite);
-            }
-        });
-
-        updateSubTab(this.summaryTab, this.summaryActivity2, true, true, new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return new ActivityView3(summaryActivity2.extendLocatorId("View"), resourceComposite);
             }
         });
 

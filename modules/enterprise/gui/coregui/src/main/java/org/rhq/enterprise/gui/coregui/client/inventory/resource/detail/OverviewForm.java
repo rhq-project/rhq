@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,10 +60,12 @@ public class OverviewForm extends EnhancedDynamicForm {
     private ResourceComposite resourceComposite;
     private boolean headerEnabled = true;
     private boolean displayCondensed = false;
+    private final ResourceTitleBar titleBar;
 
-    public OverviewForm(String locatorId, ResourceComposite resourceComposite) {
+    public OverviewForm(String locatorId, ResourceComposite resourceComposite, ResourceTitleBar titleBar) {
         super(locatorId);
         this.resourceComposite = resourceComposite;
+        this.titleBar = titleBar;
     }
 
     @Override
@@ -161,6 +162,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         nameItem.setName("name");
         nameItem.setTitle(MSG.view_summaryOverviewForm_field_name());
         nameItem.setValue(resource.getName());
+        nameItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         if (nameItem instanceof EditableFormItem) {
             EditableFormItem togglableNameItem = (EditableFormItem) nameItem;
             togglableNameItem.setValidators(notEmptyOrNullValidator);
@@ -184,6 +186,7 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
+                            titleBar.displayResourceName(newName);
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(String
                                     .valueOf(resource.getId()), oldName, newName), Message.Severity.Info));
@@ -199,6 +202,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         descriptionItem.setName("description");
         descriptionItem.setTitle(MSG.view_summaryOverviewForm_field_description());
         descriptionItem.setValue(resource.getDescription());
+        descriptionItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         if (descriptionItem instanceof EditableFormItem) {
             EditableFormItem togglableDescriptionItem = (EditableFormItem) descriptionItem;
             togglableDescriptionItem.setValidators(notNullValidator);
@@ -239,6 +243,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         locationItem.setName("location");
         locationItem.setTitle(MSG.view_summaryOverviewForm_field_location());
         locationItem.setValue(resource.getLocation());
+        locationItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         if (locationItem instanceof EditableFormItem) {
             EditableFormItem togglableLocationItem = (EditableFormItem) locationItem;
             togglableLocationItem.setValidators(notNullValidator);
@@ -274,8 +279,9 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         // Version
         StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
-        versionItem.setValue((resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
-            + "</i>");
+        String version = (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
+                + "</i>";
+        versionItem.setValue(version);
         versionItem.setEndRow(true);
         formItems.add(versionItem);
 

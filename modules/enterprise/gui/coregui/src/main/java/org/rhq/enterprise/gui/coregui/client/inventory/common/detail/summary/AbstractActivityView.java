@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -401,7 +402,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
     /** Create empty display row(LocatableDynamicForm) that is constently defined and displayed.
      *
-     * @param column Locatable parent colum.
+     * @param locatorId locator ID of Locatable parent column
      * @param emptyMessage Contents of the empty region
      * @return
      */
@@ -501,6 +502,25 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, ""));
         } else {//some subset of available alertPriorities will be used
             portletConfig.put(new PropertySimple(Constant.OPERATION_STATUS, selectedValue));
+        }
+        return portletConfig;
+    }
+
+    /** Takes the current value of the widget and persists it into the configuration object passed in.
+    *
+    * @param configUpdateStatusSelector
+    * @param portletConfig
+    * returns populated configuration object.
+    */
+    public static Configuration saveConfigUpdateStatusSelectorSettings(final SelectItem configStatusSelector,
+        final Configuration portletConfig) {
+        String selectedValue;
+        selectedValue = configStatusSelector.getValue().toString();
+        if ((selectedValue.trim().isEmpty())
+            || (selectedValue.split(",").length == ConfigurationUpdateStatus.values().length)) {//then no operation status specified
+            portletConfig.put(new PropertySimple(Constant.CONFIG_UPDATE_STATUS, Constant.CONFIG_UPDATE_STATUS_DEFAULT));
+        } else {//some subset of available configUpdate statuses will be used
+            portletConfig.put(new PropertySimple(Constant.CONFIG_UPDATE_STATUS, selectedValue));
         }
         return portletConfig;
     }

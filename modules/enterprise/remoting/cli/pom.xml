@@ -126,6 +126,7 @@
                            <property name="opencsv.version" value="${opencsv.version}" />
                            <property name="concurrent.version" value="${concurrent.version}" />
                            <property name="getopt.version" value="${getopt.version}" />
+                           <property name="hibernate-annotations.version" value="${hibernate-annotations.version}" />
                            <property name="i18nlog.version" value="${i18nlog.version}" />
                            <property name="jboss-common.version" value="${jboss-common.version}" />
                            <property name="jboss.version" value="${jboss.version}" />

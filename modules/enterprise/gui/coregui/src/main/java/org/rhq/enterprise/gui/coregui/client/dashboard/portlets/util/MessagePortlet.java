@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 
 /**
@@ -46,15 +47,17 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_message();
 
+    private static final String MESSAGE_PROPERTY = "message";
+
     public MessagePortlet(String locatorId) {
         super(locatorId);
         setContentsType(ContentsType.PAGE);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        String contents = storedPortlet.getConfiguration().getSimpleValue("message", null);
+        String contents = storedPortlet.getConfiguration().getSimpleValue(MESSAGE_PROPERTY, null);
         if (contents != null) {
-            setContents(contents);
+            setContents(StringUtility.sanitizeHtml(contents));
         } else {
             setContents("<br/><i>" + MSG.view_portlet_configure_needed() + "</i>");
         }
@@ -68,7 +71,7 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
         ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
             MSG.view_portlet_configure_definitionDesc());
 
-        definition.put(new PropertyDefinitionSimple("message", MSG.view_portlet_message_title(), true,
+        definition.put(new PropertyDefinitionSimple(MESSAGE_PROPERTY, MSG.view_portlet_message_title(), true,
             PropertySimpleType.LONG_STRING));
 
         return definition;
@@ -78,8 +81,8 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-
             return new MessagePortlet(locatorId);
         }
     }
+
 }

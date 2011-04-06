@@ -167,6 +167,8 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT, MSG
             .view_operationHistoryDetails_requestor());
+
+        requesterItem.setOutputAsHTML(true);
         requesterItem.setValue(operationHistory.getSubjectName());
         items.add(requesterItem);
 

@@ -26,13 +26,13 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -41,19 +41,23 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -100,6 +104,7 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
+    @SuppressWarnings("unchecked")
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
         String[] excludeFields, String... headerIcons) {
         super(locatorId, title, criteria, sortSpecifier, excludeFields);
@@ -120,14 +125,9 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 25);
-        iconField.setType(ListGridFieldType.IMAGE);
-        iconField.setShowDefaultContextMenu(false);
-        iconField.setCanSort(false);
-        iconField.setTitle("&nbsp;");
+        IconField iconField = new IconField();
         iconField.setShowHover(true);
         iconField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String resCat = record.getAttribute(CATEGORY.propertyName());
                 switch (ResourceCategory.valueOf(resCat)) {
@@ -144,14 +144,14 @@ public class ResourceSearchView extends Table {
 
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id"));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                String name = StringUtility.escapeHtml(value.toString());
+                return SeleniumUtility.getLocatableHref(url, name, null);
             }
         });
         nameField.setShowHover(true);
         nameField.setHoverCustomizer(new HoverCustomizer() {
-
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                 return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
             }
@@ -169,15 +169,25 @@ public class ResourceSearchView extends Table {
         categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
         categoryField.setHidden(true); // the icon field already shows us this, no need to show it in another column
 
-        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
-        availabilityField.setType(ListGridFieldType.IMAGE);
-        availabilityField.setAlign(Alignment.CENTER);
+        IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
 
         setListGridFields(iconField, nameField, ancestryField, descriptionField, typeNameField, pluginNameField,
             categoryField, availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
-            .view_inventory_resources_uninventoryConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            .view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(ResourceSearchView.this,
+            TableActionEnablement.ANY, Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("id"));
+                    }
+
+                    return result;
+                }
+            }) {
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 int[] resourceIds = TableUtility.getIds(selection);
                 ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();

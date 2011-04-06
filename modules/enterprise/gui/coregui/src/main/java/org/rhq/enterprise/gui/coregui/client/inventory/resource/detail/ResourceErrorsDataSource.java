@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.Date;
 import java.util.List;

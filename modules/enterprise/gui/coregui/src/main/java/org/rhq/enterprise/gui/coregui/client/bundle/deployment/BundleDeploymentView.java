@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
@@ -77,6 +78,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -146,7 +148,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
         bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
-        bundleName.setLinkTitle(bundle.getName());
+        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
         bundleName.setTarget("_self");
 
         CanvasItem actionItem = new CanvasItem("actions");
@@ -172,14 +174,14 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
         destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
-        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
+        destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
 
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
         StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
-        description.setValue(deployment.getDescription());
+        description.setValue(StringUtility.escapeHtml(deployment.getDescription()));
 
         StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
         status.setValue(deployment.getStatus().name());
@@ -346,9 +348,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         resource.setAutoFitWidth(true);
         resource.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         resource.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
-                    + "\">" + o + "</a>";
+                    + "\">" + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
 
             }
         });
@@ -366,7 +368,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         status.setShowValueIconOnly(true);
         status.setWidth("*");
 
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
             Resource rr = rd.getResource();

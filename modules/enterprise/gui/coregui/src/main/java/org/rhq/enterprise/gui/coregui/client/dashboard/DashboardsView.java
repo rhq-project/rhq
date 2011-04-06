@@ -61,13 +61,10 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -294,6 +291,66 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         return dashboardName;
     }
 
+    /*
+        protected Dashboard getDefaultDashboard() {
+
+            Dashboard dashboard = new Dashboard();
+            dashboard.setName(MSG.common_title_default());
+            dashboard.setCategory(DashboardCategory.INVENTORY);
+            dashboard.setColumns(2);
+            // only leftmost column width is currently settable, the rest are equally divided        
+            dashboard.setColumnWidths("32%");
+            dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
+
+            // Left Column
+            DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 210);
+            dashboard.addPortlet(summary, 0, 0);
+
+            DashboardPortlet discoveryQueue = new DashboardPortlet(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY, 230);
+            dashboard.addPortlet(discoveryQueue, 0, 1);
+
+            DashboardPortlet recentlyAdded = new DashboardPortlet(RecentlyAddedResourcesPortlet.NAME,
+                RecentlyAddedResourcesPortlet.KEY, 230);
+            dashboard.addPortlet(recentlyAdded, 0, 2);
+
+            DashboardPortlet tagCloud = new DashboardPortlet(TagCloudPortlet.NAME, TagCloudPortlet.KEY, 230);
+            dashboard.addPortlet(tagCloud, 0, 3);
+
+            // Right Column
+            DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 210);
+            welcome.getConfiguration().put(
+                new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
+            dashboard.addPortlet(welcome, 1, 0);
+
+            DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 230);
+            dashboard.addPortlet(recentAlerts, 1, 1);
+
+            DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
+                ProblemResourcesPortlet.KEY, 230);
+            //initialize config for the problemResources portlet.
+            problemResources.getConfiguration()
+                .put(
+                    new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_MAX,
+                        ProblemResourcesPortlet.defaultValue));
+            problemResources.getConfiguration()
+                .put(
+                    new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
+                        ProblemResourcesPortlet.defaultValue));
+            dashboard.addPortlet(problemResources, 1, 2);
+
+            DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 420);
+            dashboard.addPortlet(operations, 1, 3);
+
+            DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 350);
+            news.getConfiguration().put(
+                new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
+            dashboard.addPortlet(news, 1, 4);
+
+            return dashboard;
+
+        }
+    */
+
     protected Dashboard getDefaultDashboard() {
 
         Dashboard dashboard = new Dashboard();
@@ -305,30 +362,25 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         // Left Column
-        DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 210);
-        dashboard.addPortlet(summary, 0, 0);
-
-        DashboardPortlet discoveryQueue = new DashboardPortlet(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY, 230);
-        dashboard.addPortlet(discoveryQueue, 0, 1);
-
-        DashboardPortlet recentlyAdded = new DashboardPortlet(RecentlyAddedResourcesPortlet.NAME,
-            RecentlyAddedResourcesPortlet.KEY, 230);
-        dashboard.addPortlet(recentlyAdded, 0, 2);
-
-        DashboardPortlet tagCloud = new DashboardPortlet(TagCloudPortlet.NAME, TagCloudPortlet.KEY, 230);
-        dashboard.addPortlet(tagCloud, 0, 3);
-
-        // Right Column
-        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 210);
+        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 250);
         welcome.getConfiguration().put(
             new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
-        dashboard.addPortlet(welcome, 1, 0);
+        dashboard.addPortlet(welcome, 0, 0);
 
-        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 230);
-        dashboard.addPortlet(recentAlerts, 1, 1);
+        DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 250);
+        dashboard.addPortlet(summary, 0, 1);
+
+        DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
+        news.getConfiguration().put(
+            new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
+        dashboard.addPortlet(news, 0, 2);
+
+        // Right Column
+        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
+        dashboard.addPortlet(recentAlerts, 1, 0);
 
         DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
-            ProblemResourcesPortlet.KEY, 230);
+            ProblemResourcesPortlet.KEY, 250);
         //initialize config for the problemResources portlet.
         problemResources.getConfiguration()
             .put(
@@ -338,18 +390,17 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             .put(
                 new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
                     ProblemResourcesPortlet.defaultValue));
-        dashboard.addPortlet(problemResources, 1, 2);
+        dashboard.addPortlet(problemResources, 1, 1);
 
-        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 420);
-        dashboard.addPortlet(operations, 1, 3);
-
-        DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 350);
-        news.getConfiguration().put(
-            new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
-        dashboard.addPortlet(news, 1, 4);
+        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 350);
+        //initialize config for the operations portlet.
+        operations.getConfiguration().put(
+            new PropertySimple(OperationsPortlet.OPERATIONS_RANGE_COMPLETED, OperationsPortlet.defaultValue));
+        operations.getConfiguration().put(
+            new PropertySimple(OperationsPortlet.OPERATIONS_RANGE_SCHEDULED, OperationsPortlet.defaultValue));
+        dashboard.addPortlet(operations, 1, 2);
 
         return dashboard;
-
     }
 
     public void addNewDashboard() {

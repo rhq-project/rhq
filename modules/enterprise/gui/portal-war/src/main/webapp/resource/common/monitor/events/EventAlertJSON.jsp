@@ -62,7 +62,7 @@
                 buf.append("<b>Value:</b>" + log.getValue() + "</b>");
             }
 
-            String link = "/alerts/Alerts.do?mode=viewAlert&id=" + resourceId + "&a=" + alert.getId();
+            String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Alerts/History/" + alert.getId();
 %>
 
 { "start" : "<%=sdf.format(new Date(alert.getCtime()))%>",

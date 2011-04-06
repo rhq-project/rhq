@@ -107,7 +107,9 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         fields.add(idDataField);
 
         DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100, true);
-
+        // Don't allow characters that could be used in HTML intended for an XSS attack.
+        RegExpValidator regExpValidator = new RegExpValidator("[^&<]*");
+        usernameField.setValidators(regExpValidator);
         fields.add(usernameField);
 
         DataSourceTextField ldapField = createBooleanField(Field.LDAP, MSG.dataSource_users_field_ldap(), true);

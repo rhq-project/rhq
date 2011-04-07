@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
+import org.rhq.enterprise.gui.coregui.client.test.async.TestAsyncView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
@@ -68,6 +69,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
     private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("RemoteServiceStatistics");
+    private static final ViewName PAGE_ASYNC = new ViewName("Async");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -174,7 +176,14 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, remoteServiceStatisticsItem);
+        NavigationItem asyncItem = new NavigationItem(PAGE_ASYNC, null,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new TestAsyncView(extendLocatorId(PAGE_ASYNC.getName()));
+                }
+            });
+
+        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, remoteServiceStatisticsItem, asyncItem);
     }
 
 }

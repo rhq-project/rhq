@@ -692,8 +692,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     } else {
                         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
                             lineage,
-                            EnumSet.of(ResourceTypeRepository.MetadataType.operations,
-                                ResourceTypeRepository.MetadataType.children,
+                            EnumSet.of(ResourceTypeRepository.MetadataType.children,
                                 ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 

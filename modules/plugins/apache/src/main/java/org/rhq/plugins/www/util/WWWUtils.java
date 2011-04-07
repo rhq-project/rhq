@@ -28,9 +28,11 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.xml.ws.handler.LogicalHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,8 +43,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public abstract class WWWUtils {
 
-    private static final Log log = LogFactory.getLog(WWWUtils.class);
-
         /**
          * Sends a HEAD request to the passed url and returns if the server was reachable
          * @param  httpURL a http or https URL to check
@@ -50,6 +50,7 @@ public abstract class WWWUtils {
          */
 
     public static boolean isAvailable(URL httpURL, boolean disableCertValidation) {
+        String failMsg = "URL [" + httpURL + "] returned unavailable";
         try {
             HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
             connection.setRequestMethod("HEAD");
@@ -62,7 +63,13 @@ public abstract class WWWUtils {
             connection.connect();
             // get the respone code to actually trigger sending the Request.
             connection.getResponseCode();
+        } catch (SSLException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
+            log.warn(failMsg + " due to: " + e.getLocalizedMessage(), e);
+            return false;
         } catch (IOException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
+            log.debug(failMsg + " due to: " + e.getLocalizedMessage(), e);
             return false;
         }
 
@@ -118,8 +125,10 @@ public abstract class WWWUtils {
                 }
             });
         } catch (NoSuchAlgorithmException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
             log.warn("Failed to disable certificate validation.", e);
         } catch (KeyManagementException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
             log.warn("Failed to disable certificate validation.", e);
         }
     }

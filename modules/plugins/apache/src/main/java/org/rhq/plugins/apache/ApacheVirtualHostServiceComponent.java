@@ -130,7 +130,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        PropertySimple disableCertValidation = pluginConfig.getSimple("disableCertificateValidation");
+        return (this.url != null && WWWUtils.isAvailable(this.url, disableCertValidation.getBooleanValue())) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {

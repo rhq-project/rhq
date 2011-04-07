@@ -42,6 +42,7 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -230,10 +231,12 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         //       try to find a pid file under the server root, and then check if the
         //       process is running.
         boolean available;
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        PropertySimple disableCertValidation = pluginConfig.getSimple("disableCertificateValidation");
         try {
             if (this.url != null) {
                 long t1 = System.currentTimeMillis();
-                available = WWWUtils.isAvailable(this.url);
+                available = WWWUtils.isAvailable(this.url, disableCertValidation.getBooleanValue());
                 availPingTime = System.currentTimeMillis() - t1;
             } else {
                 available = getSNMPSession().ping();

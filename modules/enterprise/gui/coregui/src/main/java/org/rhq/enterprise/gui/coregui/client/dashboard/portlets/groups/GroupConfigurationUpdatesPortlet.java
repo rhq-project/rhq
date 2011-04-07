@@ -293,7 +293,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
     @Override
     protected void onInit() {
-        super.onInit();
         //disable the refresh timer for this run
         currentlyLoading = true;
         initializeUi();
@@ -312,10 +311,12 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
-    private void loadData() {
+    protected void loadData() {
         //populate composite data
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();

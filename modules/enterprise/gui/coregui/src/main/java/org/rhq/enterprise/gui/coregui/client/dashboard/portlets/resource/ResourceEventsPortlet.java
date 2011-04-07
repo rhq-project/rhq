@@ -64,21 +64,6 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
         this.resourceId = Integer.valueOf(elements[1]);
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        addMember(recentEventsContent);
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -87,15 +72,11 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
         }
     }
 
-    protected void loadData() {
-        currentlyLoading = true;
-        getRecentEventUpdates();
-    }
-
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */
-    private void getRecentEventUpdates() {
+    @Override
+    protected void getRecentEventUpdates() {
         final int resourceId = this.resourceId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);

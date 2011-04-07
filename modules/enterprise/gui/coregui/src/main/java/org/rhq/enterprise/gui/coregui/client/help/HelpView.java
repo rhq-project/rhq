@@ -95,7 +95,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about()),
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
-                    final AboutModalWindow aboutModalWindow = new AboutModalWindow();
+                    final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
                     if (PRODUCT_INFO == null) {
                         GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
                             public void onFailure(Throwable caught) {
@@ -114,6 +114,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                     return aboutModalWindow;
                 }
             });
+        aboutItem.setRefreshRequired(true);
 
         return new NavigationSection(SECTION_PRODUCT_VIEW_ID, aboutItem);
     }

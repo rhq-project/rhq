@@ -158,11 +158,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             }
         });
 
+        /* after having this enabled for a while, the majority opinion is that this is more annoying than helpful
         Window.addWindowClosingHandler(new Window.ClosingHandler() {
             public void onWindowClosing(Window.ClosingEvent event) {
                 event.setMessage("Are you sure you want to leave RHQ?");
             }
         });
+        */
 
         messageCenter = new MessageCenter();
 

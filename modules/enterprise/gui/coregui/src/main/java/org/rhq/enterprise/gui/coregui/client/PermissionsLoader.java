@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.EnumSet;
@@ -46,7 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class PermissionsLoader {
 
-    private static Messages MSG = CoreGUI.getMessages();
+    private static final Messages MSG = CoreGUI.getMessages();
+
     private Throwable lastError;
 
     /**
@@ -59,31 +59,28 @@ public class PermissionsLoader {
     }
 
     public void loadExplicitGlobalPermissions(final PermissionsLoadedListener callback) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
-
-            @Override
-            public void onSuccess(Set<Permission> result) {
-                callback.onPermissionsLoaded(result);
-            }
-
-            @Override
-            public void onFailure(Throwable caught) {
-                processFailure(MSG.util_userPerm_loadFailGlobal(), caught);
-                callback.onPermissionsLoaded(null); // indicate an error by passing in null
-            }
-        });
-    }
-
-    public void loadExplicitGroupPermissions(final int groupId, final PermissionsLoadedListener callback) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGroupPermissions(groupId,
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
             new AsyncCallback<Set<Permission>>() {
 
-                @Override
                 public void onSuccess(Set<Permission> result) {
                     callback.onPermissionsLoaded(result);
                 }
 
-                @Override
+                public void onFailure(Throwable caught) {
+                    processFailure(MSG.util_userPerm_loadFailGlobal(), caught);
+                    callback.onPermissionsLoaded(null); // indicate an error by passing in null
+                }
+        });
+    }
+
+    public void loadGroupPermissions(final int groupId, final PermissionsLoadedListener callback) {
+        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(groupId,
+            new AsyncCallback<Set<Permission>>() {
+
+                public void onSuccess(Set<Permission> result) {
+                    callback.onPermissionsLoaded(result);
+                }
+
                 public void onFailure(Throwable caught) {
                     processFailure(MSG.util_userPerm_loadFailGroup(String.valueOf(groupId)), caught);
                     callback.onPermissionsLoaded(null); // indicate an error by passing in null
@@ -91,16 +88,14 @@ public class PermissionsLoader {
             });
     }
 
-    public void loadExplicitResourcePermissions(final int resourceId, final PermissionsLoadedListener callback) {
-        GWTServiceLookup.getAuthorizationService().getExplicitResourcePermissions(resourceId,
+    public void loadResourcePermissions(final int resourceId, final PermissionsLoadedListener callback) {
+        GWTServiceLookup.getAuthorizationService().getImplicitResourcePermissions(resourceId,
             new AsyncCallback<Set<Permission>>() {
 
-                @Override
                 public void onSuccess(Set<Permission> result) {
                     callback.onPermissionsLoaded(result);
                 }
 
-                @Override
                 public void onFailure(Throwable caught) {
                     processFailure(MSG.util_userPerm_loadFailResource(String.valueOf(resourceId)), caught);
                     callback.onPermissionsLoaded(null); // indicate an error by passing in null
@@ -114,4 +109,5 @@ public class PermissionsLoader {
         Severity severity = Message.Severity.Error;
         CoreGUI.getMessageCenter().notify(new Message(msg, caught, severity, options));
     }
+
 }

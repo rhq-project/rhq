@@ -55,7 +55,7 @@ public class TestAsyncView extends LocatableVLayout implements AsyncOperationCal
 
         this.resourcePermsAsyncOperation = new AsyncOperation() {
             public void execute(final AsyncOperationCallback callback, Object... params) {
-                new PermissionsLoader().loadExplicitResourcePermissions(10001, new PermissionsLoadedListener() {
+                new PermissionsLoader().loadResourcePermissions(10001, new PermissionsLoadedListener() {
                     public void onPermissionsLoaded(Set<Permission> permissions) {
                         resourcePerms = permissions;
                         Timer timer = new Timer() {

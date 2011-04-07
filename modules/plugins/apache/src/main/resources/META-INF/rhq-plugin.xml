@@ -280,6 +280,14 @@
                             description="the UDP port of the Apache SNMP agent (typically '1610')"/>
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
+         <c:simple-property name="disableCertificateValidation" type="boolean" default="false"
+                            description="If you use HTTPS URLs for availability checks and the certificates aren't
+                                trusted by the JVM that runs the agent or the certificates aren't issued for the
+                                hostname that you use for the availability checks, you can use this property to switch
+                                off the certificate validation. Note that this opens up a possilibity of
+                                man-in-the-middle attacks and other SSL related security issues. The agent will switch
+                                off the validation only for the duration of the request to the configured URL and will
+                                contact no other URL than the one configured."/>
 
          <c:simple-property name="restartAfterConfigurationUpdate" type="boolean" default="true" required="true">
             <c:description>
@@ -492,6 +500,14 @@
          <plugin-configuration>
             <c:simple-property name="url" displayName="URL"
                                description="the http or https URL that will be used to check availability for this virtual host"/>
+            <c:simple-property name="disableCertificateValidation" type="boolean" default="false"
+                            description="If you use HTTPS URLs for availability checks and the certificates aren't
+                                trusted by the JVM that runs the agent or the certificates aren't issued for the
+                                hostname that you use for the availability checks, you can use this property to switch
+                                off the certificate validation. Note that this opens up a possilibity of
+                                man-in-the-middle attacks and other SSL related security issues. The agent will switch
+                                off the validation only for the duration of the request to the configured URL and will
+                                contact no other URL than the one configured."/>
             <c:group name="ResponseTime">
                <c:simple-property name="responseTimeLogFile" required="false"
                                   description="the full path to the log file containing response-time stats for this virtual host"/>

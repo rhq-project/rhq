@@ -359,9 +359,6 @@ public class UserSessionManager {
                                                     return;
                                                 }
                                             });
-
-                                        //indicate success to 'login' Callback
-                                        callback.onSuccess(validSessionSubject);
                                     }
                                 });
                         }//end of server side session check;

@@ -50,6 +50,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -506,6 +507,8 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
             return (S[]) new AlertPriority[size];
         } else if (genericEnumType == EventSeverity.class) {
             return (S[]) new EventSeverity[size];
+        } else if (genericEnumType == OperationRequestStatus.class) {
+            return (S[]) new OperationRequestStatus[size];
         } else if (genericEnumType == ResourceCategory.class) {
             return (S[]) new ResourceCategory[size];
         } else {

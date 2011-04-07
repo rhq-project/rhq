@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
@@ -116,11 +117,11 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem recentOperationsItem = new NavigationItem(SubsystemOperationHistoryListView.VIEW_ID,
+        NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemOperationHistoryListView(
-                        extendLocatorId(SubsystemOperationHistoryListView.VIEW_ID.getName()));
+                    return new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
+                        .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 

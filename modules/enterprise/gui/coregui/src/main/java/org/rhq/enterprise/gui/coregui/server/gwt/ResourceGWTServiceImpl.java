@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -266,6 +267,26 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         try {
             return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
                 "ResourceService.deleteResources");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
+        PageControl pc) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(resourceFactoryManager.findCreateChildResourceHistory(getSessionSubject(),
+                parentId, beginDate, endDate, pc), "ResourceService.findCreateChildResourceHistory");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentId, Long beginDate, Long endDate,
+        PageControl pc) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(resourceFactoryManager.findDeleteChildResourceHistory(getSessionSubject(),
+                parentId, beginDate, endDate, pc), "ResourceService.findDeleteChildResourceHistory");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

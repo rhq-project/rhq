@@ -45,7 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resour
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationSchedulePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
@@ -96,7 +97,8 @@ public class PortletFactory {
         registeredPortletFactoryMap.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
         registeredPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.Factory.INSTANCE);
+        registeredPortletFactoryMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.Factory.INSTANCE);
 
         // defines portlet name mappings for global Dashboard
         registeredPortletNameMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
@@ -112,7 +114,8 @@ public class PortletFactory {
         registeredPortletNameMap.put(MashupPortlet.KEY, MashupPortlet.NAME);
         registeredPortletNameMap.put(MessagePortlet.KEY, MessagePortlet.NAME);
         registeredPortletNameMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.NAME);
-        registeredPortletNameMap.put(OperationsPortlet.KEY, OperationsPortlet.NAME);
+        registeredPortletNameMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.NAME);
+        registeredPortletNameMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.NAME);
 
         //############## Group Activity Dashboard  ############################################
         //defines mapping for Group Activity Dashboard

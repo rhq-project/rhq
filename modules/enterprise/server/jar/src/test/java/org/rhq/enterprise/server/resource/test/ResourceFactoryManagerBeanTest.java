@@ -55,7 +55,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -94,9 +93,9 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         prepareScheduler();
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.resourceFactoryService = mockAgentService;
-        
+
         //the server plugins are in play when package types are involved
-        StandardServerPluginService serverPluginService = new StandardServerPluginService();        
+        StandardServerPluginService serverPluginService = new StandardServerPluginService();
         prepareCustomServerPluginService(serverPluginService);
         serverPluginService.startMasterPluginContainer();
     }
@@ -353,7 +352,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
         PageControl pageControl = new PageControl(0, 10000);
         pageControl.initDefaultOrderingField("createdResourceName");
-        PageList<CreateResourceHistory> historyList = resourceFactoryManager.findCreateChildResourceHistory(
+        PageList<CreateResourceHistory> historyList = resourceFactoryManager.findCreateChildResourceHistory(overlord,
             parentResource.getId(), null, null, pageControl);
 
         assert historyList.getTotalSize() == 3 : "Incorrect number of entries in page list. Expected: 3, Found: "
@@ -386,7 +385,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
         PageControl pageControl = new PageControl(0, 10000);
         pageControl.initDefaultOrderingField("drh.id");
-        PageList<DeleteResourceHistory> historyList = resourceFactoryManager.findDeleteChildResourceHistory(
+        PageList<DeleteResourceHistory> historyList = resourceFactoryManager.findDeleteChildResourceHistory(overlord,
             parentResource.getId(), null, null, pageControl);
 
         assert historyList.getTotalSize() == 3 : "Incorrect number of entries in page list. Expected: 3, Found: "
@@ -406,7 +405,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         resourceConfiguration.getMap();
         resourceFactoryManager.createResource(overlord, parentResource.getId(), childResourceType.getId(),
             "NewResource", null, resourceConfiguration);
-        PageList<CreateResourceHistory> historyList = resourceFactoryManager.findCreateChildResourceHistory(
+        PageList<CreateResourceHistory> historyList = resourceFactoryManager.findCreateChildResourceHistory(overlord,
             parentResource.getId(), null, null, new PageControl(0, 1000));
         int historyItemId = historyList.get(0).getId();
 

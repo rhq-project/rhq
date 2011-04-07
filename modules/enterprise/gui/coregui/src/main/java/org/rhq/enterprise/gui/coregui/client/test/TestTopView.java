@@ -22,8 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 
+import com.smartgwt.client.widgets.Label;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -38,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGrou
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -73,10 +75,18 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>" + MSG.view_testTop_title() + "</h1>\n" + MSG.view_testTop_description();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        vLayout.setWidth100();
+
+        // TODO: Help icon.
+        TitleBar titleBar = new TitleBar(this,  MSG.view_testTop_title());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_testTop_description());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     @Override

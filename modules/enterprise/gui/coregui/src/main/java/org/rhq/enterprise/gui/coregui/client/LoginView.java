@@ -157,7 +157,12 @@ public class LoginView extends LocatableCanvas {
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
-            window = new LocatableWindow(extendLocatorId("LoginWindow"));
+            // we ant the login window to have the same locator regardless of its parent.  It can be
+            // created from at least two different paths (LoginView, UserSessionManager) but for test purposes
+            // we want a single login script. There will only be one login dialog at any time, so it is safe
+            // to use a non-extended locator.
+            // is parented by the Login 
+            window = new LocatableWindow("Login");
             window.setWidth(400);
             window.setHeight(275);
             window.setTitle(MSG.common_title_welcome());

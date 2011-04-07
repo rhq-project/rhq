@@ -20,11 +20,13 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DateRange;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
@@ -33,6 +35,8 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -65,11 +69,29 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
     public static final String CHILD_DELETED_ICON = "[skin]/images/MultiUploadItem/icon_remove_files.png";
 
     private final ResourceComposite resourceComposite;
+    private FormItem dateRangeItem;
 
     public ChildHistoryView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId, VIEW_ID.getTitle());
         this.resourceComposite = resourceComposite;
         setDataSource(new DataSource());
+    }
+
+    @Override
+    protected void configureTableFilters() {
+        dateRangeItem = new SpinnerItem("filterDateRange", MSG.view_resource_inventory_childhistory_filterTitle());
+        dateRangeItem.setValue(30);
+
+        /* smartgwt has a bad bug that prohibits us from using this - its getValue throws exception
+        dateRangeItem = new DateRangeItem("filterDateRange", MSG.common_title_dateRange());
+        dateRangeItem.setAllowRelativeDates(true);
+        DateRange dateRange = new DateRange();
+        dateRange.setRelativeStartDate(new RelativeDate("-1m"));
+        dateRange.setRelativeEndDate(RelativeDate.TODAY);
+        dateRangeItem.setValue(dateRange);
+        */
+
+        setFilterFormItems(dateRangeItem);
     }
 
     @Override
@@ -239,8 +261,18 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
-            final Long beginDate = System.currentTimeMillis() - (1000L * 60 * 60 * 24 * 30);
-            final Long endDate = System.currentTimeMillis();
+
+            long now = System.currentTimeMillis();
+            DateRange beginEndRange = null;
+            if (dateRangeItem != null) {
+                beginEndRange = new DateRange();
+                beginEndRange.setStartDate(new Date(now
+                    - (1000L * 60 * 60 * 24 * Integer.parseInt(dateRangeItem.getValue().toString())))); // user entered # of days
+                beginEndRange.setEndDate(new Date(now));
+            }
+            final Long beginDate = (beginEndRange != null) ? beginEndRange.getStartDate().getTime() : now
+                - (1000L * 60 * 60 * 24 * 30);
+            final Long endDate = (beginEndRange != null) ? beginEndRange.getEndDate().getTime() : now;
             final PageControl pc1 = PageControl.getUnlimitedInstance();
             final PageControl pc2 = PageControl.getUnlimitedInstance();
 

@@ -102,7 +102,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
     @Override
     protected void onInit() {
-        super.onInit();
         //disable the refresh timer for this run
         currentlyLoading = true;
         initializeUi();
@@ -190,7 +189,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */
-    private void getRecentEventUpdates() {
+    protected void getRecentEventUpdates() {
         final int groupId = this.groupId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);

@@ -120,7 +120,6 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
 
     @Override
     protected void onInit() {
-        super.onInit();
         setRefreshing(true);
         initializeUi();
         loadData();
@@ -208,7 +207,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
      * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant
      * digits.
      */
-    private void getRecentMetrics() {
+    protected void getRecentMetrics() {
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack
@@ -482,7 +481,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
     private boolean isAutoGroup() {

@@ -93,7 +93,7 @@ public class MenuBarView extends LocatableVLayout {
     }
 
     private Canvas getLogoSection() {
-        final AboutModalWindow aboutModalWindow = new AboutModalWindow();
+        final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
         Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
         logo.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -171,4 +171,5 @@ public class MenuBarView extends LocatableVLayout {
 
         return layout;
     }
+
 }

@@ -98,7 +98,6 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
 
     @Override
     protected void onInit() {
-        super.onInit();
         initializeUi();
         loadData();
     }
@@ -185,7 +184,7 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
 
     /** Fetches recent package history information and updates the DynamicForm instance with details.
      */
-    private void getRecentPkgHistory() {
+    protected void getRecentPkgHistory() {
         final int groupId = this.groupId;
         InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
 
@@ -279,7 +278,9 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
 }

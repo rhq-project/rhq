@@ -80,8 +80,7 @@ public class UploadAndDeployTest {
         assert ret.get("outcome").getTextValue().equals("success") : "add to sg was no success " + ret.getTextValue();
 
 
-        // Now teat down stuff again
-/*
+        // Now tear down stuff again
 
         Operation undeploy = new Operation("remove",serverGroupAddress);
         ret = connection.execute(undeploy);
@@ -100,10 +99,8 @@ public class UploadAndDeployTest {
 
         System.out.flush();
 
-*/
     }
 
-    @Test(enabled = false)
     public void testUploadComposite() throws Exception {
 
         String bytes_value = prepare();

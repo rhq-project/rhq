@@ -50,7 +50,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     @Override
     public ProductInfo getProductInfo() throws RuntimeException {
         try {
-            return systemManager.getServerDetails(getSessionSubject()).getProductInfo();
+            return systemManager.getProductInfo(getSessionSubject());
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

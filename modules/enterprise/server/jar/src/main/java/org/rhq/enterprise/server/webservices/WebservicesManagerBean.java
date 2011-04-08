@@ -49,6 +49,7 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -1126,6 +1127,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SUPPORTMANAGER: END ------------------------------------
 
     //SYSTEMMANAGER: BEGIN ------------------------------------
+
+    public ProductInfo getProductInfo(Subject subject) {
+        return systemManager.getProductInfo(subject);
+    }
 
     public ServerDetails getServerDetails(Subject subject) {
         return systemManager.getServerDetails(subject);

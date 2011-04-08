@@ -186,7 +186,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // set the resource deleted and update the db in case it matters to the child operations
             resource.setInventoryStatus(InventoryStatus.DELETED);
-            resource.setParentResource(null);
+            //resource.setParentResource(null); can't null this out since the query DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID needs it
             resource.setItime(System.currentTimeMillis());
             entityManager.merge(resource);
 
@@ -262,7 +262,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType resourceType = entityManager.getReference(ResourceType.class, resourceTypeId);
 
         // CreateResourceHistory.configuration is one-to-one, so make sure to clone the config, zeroing out all id's.
-        Configuration configurationClone = configuration.deepCopy(false);
+        Configuration configurationClone = (configuration != null) ? configuration.deepCopy(false) : null;
 
         // Persist and establish relationships
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
